@@ -1,0 +1,1548 @@
+INFO{
+{'comment': None, 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/caae9209-25e5-35cd-a71a-ed55c03f294d/SharedProcessorPool'}
+END OF SECTION}
+HEADERS{
+{'x-powered-by': 'Servlet/3.0', 'transfer-encoding': 'chunked', 'set-cookie': 'JSESSIONID=0000xpnw0wcrfjvFxAa4Dl1ZxW0:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Wed, 31 Jul 2013 17:26:12 GMT', 'etag': '798417269', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Wed, 31 Jul 2013 17:26:16 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>3b86a848-b48c-393f-9435-c92d0522bf38</id>
+    <updated>2013-07-31T13:26:12.905-04:00</updated>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>0e909de5-158a-3769-a722-4e60a5c0bac3</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.541-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0e909de5-158a-3769-a722-4e60a5c0bac3</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">61</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool61</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>15a377fe-e02f-3572-ba2f-e94a88ac39b2</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.635-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>15a377fe-e02f-3572-ba2f-e94a88ac39b2</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">7</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool07</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>8b6dea5f-328a-31bd-b750-f6383ef275cb</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.294-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8b6dea5f-328a-31bd-b750-f6383ef275cb</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">47</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool47</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>a770966c-95a1-38fa-8c18-be9055869ad7</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.701-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a770966c-95a1-38fa-8c18-be9055869ad7</AtomID>
+            <AtomCreated>1375291572993</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">11</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool11</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>7fcbe481-3f11-3126-804f-1f4e1e7aa161</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.651-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7fcbe481-3f11-3126-804f-1f4e1e7aa161</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">8</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool08</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>4900f2a3-bbd4-3377-b990-7bcc2801ed93</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.170-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4900f2a3-bbd4-3377-b990-7bcc2801ed93</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">39</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool39</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>f5ef7694-fdf6-366d-86a0-39f2c481ee5c</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.533-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f5ef7694-fdf6-366d-86a0-39f2c481ee5c</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">1</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool01</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>faf9cdba-0c1d-3208-9a1d-c6cecbbb50ec</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.916-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>faf9cdba-0c1d-3208-9a1d-c6cecbbb50ec</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">23</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool23</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>b3f0caaf-f17a-3330-990d-129801a2ea18</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.687-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b3f0caaf-f17a-3330-990d-129801a2ea18</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">10</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool10</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>d72a15b7-ebad-3042-a1b0-76bbd63f2f9e</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.993-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d72a15b7-ebad-3042-a1b0-76bbd63f2f9e</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">28</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool28</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>770e024d-50fd-3f4e-9080-a71c7bf82ec5</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.308-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>770e024d-50fd-3f4e-9080-a71c7bf82ec5</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">48</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool48</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>53fe7c69-bea8-3b4c-a3f9-d3dc7d305c82</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.803-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>53fe7c69-bea8-3b4c-a3f9-d3dc7d305c82</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">17</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool17</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>26b80496-0c53-3e3c-9603-58baa28ebc42</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.740-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>26b80496-0c53-3e3c-9603-58baa28ebc42</AtomID>
+            <AtomCreated>1375291572993</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">13</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool13</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>69f165cf-9cdc-36f5-96b7-aa65b225114e</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.598-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>69f165cf-9cdc-36f5-96b7-aa65b225114e</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">5</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool05</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>d48ff78d-4a08-3a0e-88d0-cc1211035412</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.392-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d48ff78d-4a08-3a0e-88d0-cc1211035412</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">53</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool53</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>c965169b-7322-38b9-8c54-12fbbb432cc4</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.246-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c965169b-7322-38b9-8c54-12fbbb432cc4</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">44</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool44</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>2a54229f-05a3-3a8c-8371-661c43c07a80</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.155-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>2a54229f-05a3-3a8c-8371-661c43c07a80</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">38</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool38</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>97d18d5e-c8e9-3266-8518-1d46f6b8866c</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.478-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>97d18d5e-c8e9-3266-8518-1d46f6b8866c</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">57</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool57</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>398703d9-85d1-39a5-a6a6-e82db1b621a5</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.361-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>398703d9-85d1-39a5-a6a6-e82db1b621a5</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">51</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool51</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>bc431512-e03b-3afd-85ef-74706aee1387</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.090-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>bc431512-e03b-3afd-85ef-74706aee1387</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">34</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool34</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>587ec423-0da9-3fc1-9c8c-e7ec905209e5</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.507-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>587ec423-0da9-3fc1-9c8c-e7ec905209e5</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">59</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool59</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>f90a35f1-d3e0-3a92-b1c4-01e19b4749d8</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.140-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f90a35f1-d3e0-3a92-b1c4-01e19b4749d8</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">37</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool37</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>9db81dfb-0d2d-3387-a0c2-19d492363d40</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.869-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9db81dfb-0d2d-3387-a0c2-19d492363d40</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">20</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool20</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>fd914c85-f526-3517-934c-bc2478ca69f8</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.422-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>fd914c85-f526-3517-934c-bc2478ca69f8</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">54</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool54</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>8519c972-0dd0-3289-88d1-7db9eb9c4200</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.755-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8519c972-0dd0-3289-88d1-7db9eb9c4200</AtomID>
+            <AtomCreated>1375291572993</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">14</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool14</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>4c93b199-3b36-3775-b6de-40438a5d212d</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.277-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4c93b199-3b36-3775-b6de-40438a5d212d</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">46</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool46</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>b3a7efac-a396-3f21-9371-b69cf0e30f12</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.931-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b3a7efac-a396-3f21-9371-b69cf0e30f12</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">24</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool24</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>b9e9a290-7154-3d7b-b93a-08f6f11d6037</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.122-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b9e9a290-7154-3d7b-b93a-08f6f11d6037</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">36</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool36</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>7ecba8a7-9fe0-3f2b-be4f-4cc87725ea59</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.853-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7ecba8a7-9fe0-3f2b-be4f-4cc87725ea59</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">19</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool19</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>1ec6b678-2fd9-3ef8-9a86-e5c7ed1cbec4</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.552-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>1ec6b678-2fd9-3ef8-9a86-e5c7ed1cbec4</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">2</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool02</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>93526df1-161e-3a88-bf2b-13481b0d41c6</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.261-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>93526df1-161e-3a88-bf2b-13481b0d41c6</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">45</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool45</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>52678ff5-d397-3510-ac10-464b521d9965</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.946-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>52678ff5-d397-3510-ac10-464b521d9965</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">25</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool25</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>fa178b46-9747-3fe5-9d31-c5cde7595b62</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.902-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>fa178b46-9747-3fe5-9d31-c5cde7595b62</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">22</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool22</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>79e17290-ca24-39ae-b988-6e13a9ccc3dd</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.773-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>79e17290-ca24-39ae-b988-6e13a9ccc3dd</AtomID>
+            <AtomCreated>1375291572993</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">15</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool15</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>9a3f464e-1107-33cb-84dd-533664d3581a</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.026-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9a3f464e-1107-33cb-84dd-533664d3581a</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">30</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool30</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>f2b33279-e9b7-3444-b388-70c6e6fa74b6</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.518-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f2b33279-e9b7-3444-b388-70c6e6fa74b6</AtomID>
+            <AtomCreated>1375291572991</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <PoolID kb="ROR" kxe="false">0</PoolID>
+    <PoolName kxe="false" kb="CUR">DefaultPool</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>f1c8826a-489e-3404-b281-cacf507638da</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.343-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f1c8826a-489e-3404-b281-cacf507638da</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">50</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool50</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>d438a002-2ad0-3039-a287-a6bdbb298afd</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.818-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d438a002-2ad0-3039-a287-a6bdbb298afd</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">18</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool18</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>b99b936f-8666-3622-8fdb-c4c807909b8c</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.567-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b99b936f-8666-3622-8fdb-c4c807909b8c</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">3</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool03</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>0424373b-aec4-3b2d-9395-c142433e9e89</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.452-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0424373b-aec4-3b2d-9395-c142433e9e89</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">56</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool56</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>6916b8fe-138f-3429-93ae-bb9a2fc90ca3</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.044-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6916b8fe-138f-3429-93ae-bb9a2fc90ca3</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">31</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool31</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>fa3f62e8-7f98-3c78-a4be-0cfc50b7598e</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.556-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>fa3f62e8-7f98-3c78-a4be-0cfc50b7598e</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">62</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool62</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>59402720-3458-3b64-998f-f95bc9d11ee5</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.377-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>59402720-3458-3b64-998f-f95bc9d11ee5</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">52</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool52</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>f71f2b2e-59f4-3092-9ccc-988cf7e1b5fd</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.788-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f71f2b2e-59f4-3092-9ccc-988cf7e1b5fd</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">16</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool16</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>4a0324ec-c18a-3066-939c-dfeb5b610f01</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.613-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4a0324ec-c18a-3066-939c-dfeb5b610f01</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">6</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool06</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>d5d06651-0eb4-308d-9d0c-4a3ead37f804</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.665-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d5d06651-0eb4-308d-9d0c-4a3ead37f804</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">9</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool09</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>299125e7-6edf-371b-8b95-2346268539e7</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.527-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>299125e7-6edf-371b-8b95-2346268539e7</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">60</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool60</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>6cefea7e-6d0d-3723-b122-f0a5b8825cdc</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.216-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6cefea7e-6d0d-3723-b122-f0a5b8825cdc</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">42</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool42</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>ad280500-84a8-35c4-aab6-4be79aae0e9a</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.492-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>ad280500-84a8-35c4-aab6-4be79aae0e9a</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">58</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool58</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>ffb2155c-575e-3576-bead-2e6ff39aff37</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.185-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>ffb2155c-575e-3576-bead-2e6ff39aff37</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">40</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool40</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>bb4566be-f666-35cd-a553-f41083c2c568</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.437-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>bb4566be-f666-35cd-a553-f41083c2c568</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">55</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool55</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>09f89994-77e4-3222-a599-3a9588259104</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.327-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>09f89994-77e4-3222-a599-3a9588259104</AtomID>
+            <AtomCreated>1375291572998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">49</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool49</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>8dee6430-7281-37aa-8105-5aa1cc6575b6</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.583-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8dee6430-7281-37aa-8105-5aa1cc6575b6</AtomID>
+            <AtomCreated>1375291572999</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">63</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool63</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>161f3c09-88de-3aa2-b5c1-f0034519189c</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.231-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>161f3c09-88de-3aa2-b5c1-f0034519189c</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">43</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool43</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>257f1f4f-4c1d-30e8-b7fa-42460ac3174a</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.978-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>257f1f4f-4c1d-30e8-b7fa-42460ac3174a</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">27</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool27</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>b39db93a-419b-35cf-87d0-d07cc005ce5f</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.060-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b39db93a-419b-35cf-87d0-d07cc005ce5f</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">32</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool32</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>42ff3cd1-cfc7-33e2-8ec5-078dd4136da5</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.962-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>42ff3cd1-cfc7-33e2-8ec5-078dd4136da5</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">26</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool26</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>726b8a6a-5911-3f45-b24d-b2f0e3e3bcb8</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.008-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>726b8a6a-5911-3f45-b24d-b2f0e3e3bcb8</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">29</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool29</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>0a81357b-6c22-331c-b818-3f8dd04314f6</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.075-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0a81357b-6c22-331c-b818-3f8dd04314f6</AtomID>
+            <AtomCreated>1375291572996</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">33</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool33</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>3c668734-e76f-3c9a-9a34-12ee135626d7</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.104-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>3c668734-e76f-3c9a-9a34-12ee135626d7</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">35</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool35</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>8ab095e8-8f13-35d0-a0a4-8d25fa76f14e</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.886-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8ab095e8-8f13-35d0-a0a4-8d25fa76f14e</AtomID>
+            <AtomCreated>1375291572995</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">21</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool21</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>6775078e-6cb4-39b3-88ee-f7a48c4966f2</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.583-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6775078e-6cb4-39b3-88ee-f7a48c4966f2</AtomID>
+            <AtomCreated>1375291572992</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">4</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool04</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>2994c0b9-e144-3fe3-bc28-5b4a7f0af95f</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:16.716-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>2994c0b9-e144-3fe3-bc28-5b4a7f0af95f</AtomID>
+            <AtomCreated>1375291572993</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">12</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool12</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+    <entry>
+        <id>a0d826ad-852b-3835-b0df-c1094102d67d</id>
+        <title>SharedProcessorPool</title>
+        <published>2013-07-31T13:26:17.200-04:00</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SharedProcessorPool">
+            <SharedProcessorPool:SharedProcessorPool xmlns:SharedProcessorPool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a0d826ad-852b-3835-b0df-c1094102d67d</AtomID>
+            <AtomCreated>1375291572997</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssignedPartitions kb="CUD" kxe="false"/>
+    <CurrentReservedProcessingUnits kb="ROR" kxe="false">0.00</CurrentReservedProcessingUnits>
+    <MaximumProcessingUnits kb="CUD" kxe="false">0.00</MaximumProcessingUnits>
+    <PendingReservedProcessingUnits kb="CUD" kxe="false">0.00</PendingReservedProcessingUnits>
+    <PoolID kb="ROR" kxe="false">41</PoolID>
+    <PoolName kxe="false" kb="CUR">SharedPool41</PoolName>
+</SharedProcessorPool:SharedProcessorPool>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

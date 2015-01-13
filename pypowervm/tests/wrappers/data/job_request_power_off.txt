@@ -1,0 +1,36 @@
+INFO{
+{'comment': 'For power on-off testing', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'VirtualIOServer/20414ABB-D6F0-4B3D-BB46-3822240BC4E9'}
+END OF SECTION}
+HEADERS{
+{'content-length': '20079', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000gMeCzUqIZcs3oxLu4apVINO:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'cache-control': 'no-cache="set-cookie, set-cookie2"', 'date': 'Tue, 30 Jul 2013 14:43:59 GMT', 'content-type': 'application/xml'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>b4c1df63-ad28-444b-a63e-8c5b4946b8bb</id>
+    <title>JobRequest</title>
+    <published>2013-08-02T11:18:44.030-04:00</published>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=JobRequest">
+        <JobRequest:JobRequest xmlns:JobRequest="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <RequestedOperation kb="CUR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <OperationName kb="ROR" kxe="false">PowerOff</OperationName>
+        <GroupName kb="ROR" kxe="false">LogicalPartition</GroupName>
+    </RequestedOperation>
+    <JobParameters kb="CUR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </JobParameters>
+</JobRequest:JobRequest>
+    </content>
+</entry>
+
+END OF SECTION}

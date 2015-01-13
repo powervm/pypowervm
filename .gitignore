@@ -1,0 +1,12 @@
+/build/
+.testrepository
+.tox/
+*.pyc
+pypowervm.egg-info/
+.coverage
+cover/
+/.idea/
+*.orig
+*.sw[pon]
+*.*~
+.gitreview
