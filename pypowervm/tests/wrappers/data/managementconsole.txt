@@ -1,0 +1,81 @@
+INFO{
+{'comment': 'Created from query of ManagementConsole', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagementConsole'}
+END OF SECTION}
+HEADERS{
+{'content-length': '3385', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000UQJf2tlhLW_9or9fo1Or2v3:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Fri, 26 Jul 2013 12:10:52 GMT', 'etag': '526441970', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Fri, 26 Jul 2013 12:10:52 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>1051acae-86dc-3b80-a9c6-ac12ff893126</id>
+    <updated>2013-07-26T08:10:52.919-04:00</updated>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>b3416a32-46f9-3df9-819e-39349001af0c</id>
+        <title>ManagementConsole</title>
+        <published>2013-07-26T08:10:53.191-04:00</published>
+        <link rel="SELF" href="/rest/api/uom/ManagementConsole/b3416a32-46f9-3df9-819e-39349001af0c"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=ManagementConsole">
+            <ManagementConsole:ManagementConsole xmlns:ManagementConsole="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b3416a32-46f9-3df9-819e-39349001af0c</AtomID>
+            <AtomCreated>1374840653035</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MachineTypeModelAndSerialNumber kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kb="CUR" kxe="false">Ve57</MachineType>
+        <Model kb="CUR" kxe="false">f93</Model>
+        <SerialNumber kb="CUR" kxe="false">2911559</SerialNumber>
+    </MachineTypeModelAndSerialNumber>
+    <ManagedFrames kb="CUD" kxe="false"/>
+    <ManagedSystems kxe="false" kb="CUD">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/b3416a32-46f9-3df9-819e-39349001af0c/ManagedSystem/a168a3ec-bb3e-3ead-86c1-7d98b9d50239" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/b3416a32-46f9-3df9-819e-39349001af0c/ManagedSystem/caae9209-25e5-35cd-a71a-ed55c03f294d" rel="related"/>
+    </ManagedSystems>
+    <ManagementConsoleName kb="CUR" kxe="false">hmc7</ManagementConsoleName>
+    <NetworkInterfaces kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <ManagementConsoleNetworkInterface schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <InterfaceName kb="CUD" kxe="false">eth0</InterfaceName>
+            <NetworkAddress kb="CUR" kxe="false">9.1.2.3 fe80:0:0:0:5054:ff:fed8:a951</NetworkAddress>
+        </ManagementConsoleNetworkInterface>
+    </NetworkInterfaces>
+    <TemplateObjectModelVersion kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </TemplateObjectModelVersion>
+    <UserObjectModelVersion kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </UserObjectModelVersion>
+    <VersionInfo kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VersionInfo>
+    <WebObjectModelVersion kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </WebObjectModelVersion>
+    <PowerEnterprisePools kb="CUD" kxe="false"/>
+</ManagementConsole:ManagementConsole>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
