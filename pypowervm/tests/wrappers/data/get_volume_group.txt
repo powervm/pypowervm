@@ -1,0 +1,365 @@
+INFO{
+{'comment': 'Use for media rep processor testing.  Get of a volume group', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': '/; HttpOnly'}
+END OF SECTION}
+HEADERS{
+{'cache-control': 'no-cache="set-cookie, set-cookie2"', 'content-length': '16539', 'x-powered-by': 'Servlet/3.0', 'date': 'Wed, 07 Aug 2013 11:42:46 GMT', 'set-cookie': 'JSESSIONID=0000NmgK-pjcupBNwMN5_d4RMRf:537630eb-a35f-4f87-b20c-6e02059b963e; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'content-type': 'application/xml', 'etag': '1782236641'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>8731bf3a-1f11-30a1-9d8b-c26d4cbe7ccf</id>
+    <title>VolumeGroup</title>
+    <published>2013-09-04T13:54:02.827Z</published>
+    <link rel="SELF" href="https://9.1.2.7:12443/rest/api/uom/VirtualIOServer/18C441ED-0EFF-43A5-BEED-F0F599892592/VolumeGroup/8731bf3a-1f11-30a1-9d8b-c26d4cbe7ccf"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.7:12443/rest/api/uom/ManagementConsole/ba0204b8-81ab-3417-828e-431169bc0a12"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.uom+xml; type=VolumeGroup">
+<VolumeGroup:VolumeGroup xmlns:VolumeGroup="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8731bf3a-1f11-30a1-9d8b-c26d4cbe7ccf</AtomID>
+            <AtomCreated>1378302838563</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AvailableSize kb="ROR" kxe="false">558.9111</AvailableSize>
+    <FreeSpace kb="ROR" kxe="false">558.9111</FreeSpace>
+    <GroupCapacity kb="CUR" kxe="false">558.9111</GroupCapacity>
+    <GroupName kxe="false" kb="CUR">rootvg</GroupName>
+    <GroupSerialID kb="ROR" kxe="false">00004d4a00007a00000001405006c06b</GroupSerialID>
+    <MaximumLogicalVolumes kb="ROR" kxe="false">0</MaximumLogicalVolumes>
+    <MediaRepositories kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualMediaRepository schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <OpticalMedia kb="CUD" kxe="false" schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_089ee7c70e47480892bc20148a45d955</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_089ee7c70e47480892bc20148a45d955</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_1cdb7958692945c58da79d761f7e8f6a</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_1cdb7958692945c58da79d761f7e8f6a</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_2731b9382a7a4f19849c977861be894e</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_2731b9382a7a4f19849c977861be894e</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_39fc7a67ec124d6c89f1eb064fd5e94b</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_39fc7a67ec124d6c89f1eb064fd5e94b</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_3a1b36dda62f4d85a0acb3d3577ccc75</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_3a1b36dda62f4d85a0acb3d3577ccc75</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_41078229067949d1911af20d7bf2df0b</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_41078229067949d1911af20d7bf2df0b</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_444b0be71be640b1b51c971e5b4df1a2</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_444b0be71be640b1b51c971e5b4df1a2</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_4903b73ee95b443eb5d784fdbf3d8ea3</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_4903b73ee95b443eb5d784fdbf3d8ea3</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_4fac13f3dceb470bb2d200688246f04e</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_4fac13f3dceb470bb2d200688246f04e</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_51eae35ab0ff47f7b90d25bff08737c5</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_51eae35ab0ff47f7b90d25bff08737c5</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_53c9937e8ae647199eba895fb5ba9455</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_53c9937e8ae647199eba895fb5ba9455</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_5e091301829a45228a8b0bb26e705906</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_5e091301829a45228a8b0bb26e705906</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_69d22f6b548d42b7bb2747cd99f5c302</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_69d22f6b548d42b7bb2747cd99f5c302</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_6c0762b2abbd458aba2c71d3185d158b</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_6c0762b2abbd458aba2c71d3185d158b</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_6d56f428db8f42dbbbd4d16b24a71c28</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_6d56f428db8f42dbbbd4d16b24a71c28</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_70ae8e68ab68449c95a41231ffaa39ec</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_70ae8e68ab68449c95a41231ffaa39ec</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_74539131037443eb9eb482e6c29d28cf</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_74539131037443eb9eb482e6c29d28cf</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_771d01d4f7114a5cb0fdd424329047f4</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_771d01d4f7114a5cb0fdd424329047f4</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_7f3e5855ff50436b8907fc8cafec165a</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_7f3e5855ff50436b8907fc8cafec165a</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_998bfd2bfbf64fcbb48544cb2879a9bb</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_998bfd2bfbf64fcbb48544cb2879a9bb</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_a00dc2c9535047ff95a91ab5155a9c23</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_a00dc2c9535047ff95a91ab5155a9c23</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_a75065604cfe4785ad2018f914975518</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_a75065604cfe4785ad2018f914975518</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_a755d19d6c0b4ce2a0122abec9cde473</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_a755d19d6c0b4ce2a0122abec9cde473</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_b17310c19c70495eac828f38fbac36d9</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_b17310c19c70495eac828f38fbac36d9</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_c03ce43687ae450ca82d277c1d12b448</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_c03ce43687ae450ca82d277c1d12b448</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_c1685c355165434db239972bb9ddc789</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_c1685c355165434db239972bb9ddc789</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_c1e7cd84917c48929aa8ef260d812403</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_c1e7cd84917c48929aa8ef260d812403</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_c3a5de26201045368a643ff33db18d4c</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_c3a5de26201045368a643ff33db18d4c</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_c850de703d314f829a876c4d52354e9a</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_c850de703d314f829a876c4d52354e9a</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_ccfce05ce9e44b93a6ba7e6ee609e2f0</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_ccfce05ce9e44b93a6ba7e6ee609e2f0</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_daa2573bba0f487abac96090677cd91c</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_daa2573bba0f487abac96090677cd91c</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+                <VirtualOpticalMedia schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">vopt_fe426d6d6ad34c78a66be771ed070149</MediaName>
+                    <MediaUDID kb="ROR" kxe="false">0evopt_fe426d6d6ad34c78a66be771ed070149</MediaUDID>
+                    <MountType kb="CUD" kxe="false">rw</MountType>
+                    <Size kb="CUR" kxe="false">0.000000</Size>
+                </VirtualOpticalMedia>
+            </OpticalMedia>
+            <RepositoryName kb="CUR" kxe="false">VMLibrary</RepositoryName>
+            <RepositorySize kb="CUR" kxe="false">1</RepositorySize>
+        </VirtualMediaRepository>
+    </MediaRepositories>
+    <PhysicalVolumes kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PhysicalVolume schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Description kb="CUD" kxe="false">SAS Disk Drive</Description>
+            <LocationCode kb="ROR" kxe="false">U78AB.001.WZSHFLF-P3-D1</LocationCode>
+            <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
+            <ReservePolicyAlgorithm kb="CUD" kxe="false">Round_Robin</ReservePolicyAlgorithm>
+            <UniqueDeviceID kb="ROR" kxe="false">01M0lCTU1CRjI2MDBSQzUwMDAwMzk0ODgwMDI5QkM=</UniqueDeviceID>
+            <Usage kb="CUD" kxe="false">false</Usage>
+            <VolumeCapacity kb="CUR" kxe="false">572325</VolumeCapacity>
+            <VolumeName kb="CUR" kxe="false">hdisk0</VolumeName>
+            <VolumeState kb="ROR" kxe="false">active</VolumeState>
+            <VolumeUniqueID kb="ROR" kxe="false">2811350000394880029BC09MBF2600RC03IBMsas</VolumeUniqueID>
+        </PhysicalVolume>
+    </PhysicalVolumes>
+    <UniqueDeviceID kb="ROR" kxe="false">0400004d4a00007a00000001405006c06b</UniqueDeviceID>
+    <VirtualDisks kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualDisks>
+</VolumeGroup:VolumeGroup>
+    </content>
+</entry>
+END OF SECTION}

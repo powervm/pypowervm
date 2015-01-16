@@ -1,0 +1,102 @@
+INFO{
+{'comment': 'For power on-off testing', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'VirtualIOServer/20414ABB-D6F0-4B3D-BB46-3822240BC4E9'}
+END OF SECTION}
+HEADERS{
+{'content-length': '20079', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000gMeCzUqIZcs3oxLu4apVINO:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'cache-control': 'no-cache="set-cookie, set-cookie2"', 'date': 'Tue, 30 Jul 2013 14:43:59 GMT', 'content-type': 'application/xml'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>e3bfe81d-4a5d-33a9-992e-3575200ee194</id>
+    <title>JobResponse</title>
+    <published>2013-08-14T08:38:45.894-04:00</published>
+    <link rel="SELF" href="nulljobs/1376478617707"/>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/jobs/1376478617707"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/23aae3d1-ab35-356e-87ed-037675aad292"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=JobResponse">
+        <JobResponse:JobResponse xmlns:JobResponse="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <RequestURL kb="ROR" kxe="false" href="LogicalPartition/67A8308B-2CCA-4407-A1BC-632E108B479A/do/PowerOff" rel="via" title="The URL to which the JobRequest was submitted."/>
+    <TargetUuid kb="ROR" kxe="false">67A8308B-2CCA-4407-A1BC-632E108B479A</TargetUuid>
+    <JobID kb="ROR" kxe="false">1376478617707</JobID>
+    <TimeStarted kb="ROR" kxe="false">1376483923381</TimeStarted>
+    <TimeCompleted kb="ROR" kxe="false">1376483924729</TimeCompleted>
+    <Status kb="ROR" kxe="false">COMPLETED_WITH_ERROR</Status>
+    <JobRequestInstance kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <RequestedOperation kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <OperationName kb="ROR" kxe="false">PowerOff</OperationName>
+            <GroupName kb="ROR" kxe="false">LogicalPartition</GroupName>
+        </RequestedOperation>
+        <JobParameters kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <JobParameter schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <ParameterName kb="ROR" kxe="false">operation</ParameterName>
+                <ParameterValue kxe="false" kb="CUR">shutdown</ParameterValue>
+            </JobParameter>
+        </JobParameters>
+    </JobRequestInstance>
+    <Progress kb="ROO" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <CompletedTasks kb="ROR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <NLSMessage schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <UntranslatedMessage kb="ROR" kxe="false">Started</UntranslatedMessage>
+                <MessageKey kb="ROR" kxe="false">STARTED</MessageKey>
+            </NLSMessage>
+            <NLSMessage schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <UntranslatedMessage kb="ROR" kxe="false">Completed with error</UntranslatedMessage>
+                <MessageKey kb="ROR" kxe="false">COMPLETE</MessageKey>
+            </NLSMessage>
+        </CompletedTasks>
+        <LinearProgress kb="ROR" kxe="false">1.0</LinearProgress>
+    </Progress>
+    <Results kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <JobParameter schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ParameterName kb="ROR" kxe="false">returnCode</ParameterName>
+            <ParameterValue kxe="false" kb="CUR">1</ParameterValue>
+        </JobParameter>
+        <JobParameter schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ParameterName kb="ROR" kxe="false">result</ParameterName>
+            <ParameterValue kxe="false" kb="CUR">HSCL05DF The partition is not in a state under which this operation can be performed. Check the state of the partition.
+</ParameterValue>
+        </JobParameter>
+    </Results>
+</JobResponse:JobResponse>
+    </content>
+</entry>
+
+END OF SECTION}
