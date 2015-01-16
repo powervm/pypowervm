@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import logging
 import re
 
@@ -108,7 +109,7 @@ def crt_scsi_map_to_vdisk(adapter, host_uuid, client_lpar_uuid, disk_name):
 
     # Now bundle the components together.  Order is important.
     opts = [lpar, _NEW_CLIENT_ADAPTER, _NEW_SERVER_ADAPTER, stor]
-    return adpt.Element(VIO_SCSI_MAP, attrib=c.DEFAULT_SCHEMA_ATTR,
+    return adpt.Element(VIO_SCSI_MAP, attrib=_crt_attrs('ViosSCSIMapping'),
                         children=opts)
 
 
@@ -172,7 +173,7 @@ def crt_scsi_map_to_vopt(adapter, host_uuid, client_lpar_uuid, media_name):
 
     # Now bundle the components together.  Order is important.
     opts = [lpar, _NEW_CLIENT_ADAPTER, _NEW_SERVER_ADAPTER, stor]
-    return adpt.Element(VIO_SCSI_MAP, attrib=c.DEFAULT_SCHEMA_ATTR,
+    return adpt.Element(VIO_SCSI_MAP, attrib=_crt_attrs('ViosSCSIMapping'),
                         children=opts)
 
 
@@ -182,6 +183,12 @@ def _crt_related_href(adapter, host_uuid, client_lpar_uuid):
                                      client_lpar_uuid)
     return adpt.Element(MAP_CLIENT_LPAR, attrib={'href': client_href,
                                                  'rel': 'related'})
+
+
+def _crt_attrs(group):
+    schema = copy.copy(c.DEFAULT_SCHEMA_ATTR)
+    schema['group'] = group
+    return schema
 
 
 class VirtualIOServer(ewrap.EntryWrapper):
