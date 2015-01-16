@@ -1,0 +1,4 @@
+# Generate .mo file via:
+# msgfmt -o pypowervm.mo pypowervm.po
+msgid "This is a test"
+msgstr "This is an English test"
