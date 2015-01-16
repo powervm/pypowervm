@@ -1,0 +1,33 @@
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>69cf8099-87a7-3852-9a90-7cc0fdfe7d2d</id>
+    <updated>2014-07-23T04:29:09.130Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Event"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/64cff7a6-b6be-3bd7-b795-92d09c75b536"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>248c622f-d4aa-3202-b833-ccbeceefaf35</id>
+        <title>Event</title>
+        <published>2014-07-23T04:29:09.137Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Event/248c622f-d4aa-3202-b833-ccbeceefaf35"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">
+             581561747
+        </etag:etag>
+       <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>248c622f-d4aa-3202-b833-ccbeceefaf35</AtomID>
+                        <AtomCreated>1406089749131</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <EventType kb="ROR" kxe="false">NEW_CLIENT</EventType>
+                <EventID kxe="false" kb="ROR">1404864263191</EventID>
+                <EventData kxe="false" kb="ROR"/>
+                <EventDetail kb="ROR" kxe="false"/>
+            </Event:Event>
+        </content>
+    </entry>
+</feed>

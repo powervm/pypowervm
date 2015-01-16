@@ -1,0 +1,4 @@
+[gerrit]
+host=morpheus.rch.stglabs.ibm.com
+port=29418
+project=pypowervm.git

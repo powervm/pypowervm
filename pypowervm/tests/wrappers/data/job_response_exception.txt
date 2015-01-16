@@ -1,0 +1,78 @@
+INFO{
+{'comment': 'For power on-off testing', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'VirtualIOServer/20414ABB-D6F0-4B3D-BB46-3822240BC4E9'}
+END OF SECTION}
+HEADERS{
+{'content-length': '20079', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000gMeCzUqIZcs3oxLu4apVINO:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'cache-control': 'no-cache="set-cookie, set-cookie2"', 'date': 'Tue, 30 Jul 2013 14:43:59 GMT', 'content-type': 'application/xml'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>ed556d14-0bed-304a-ad9d-4ad8db203166</id>
+    <title>JobResponse</title>
+    <published>2013-08-14T08:44:06.029-04:00</published>
+    <link rel="SELF" href="nulljobs/1376474747145"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=JobResponse">
+        <JobResponse:JobResponse xmlns:JobResponse="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <RequestURL kb="ROR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/do/CLIRunner" rel="via" title="The URL to which the JobRequest was submitted."/>
+    <JobID kb="ROR" kxe="false">1376474747145</JobID>
+    <TimeStarted kb="ROR" kxe="false">1376484245981</TimeStarted>
+    <TimeCompleted kb="ROR" kxe="false">1376484245982</TimeCompleted>
+    <Status kb="ROR" kxe="false">FAILED_BEFORE_COMPLETION</Status>
+    <ResponseException kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <Message kb="ROR" kxe="false">com.ibm.pmc.jaxb.api.server.jobs.PmcJobException: Unsupported commmand lssyscfg</Message>
+        <StackTrace kb="ROR" kxe="false">com.ibm.pmc.jaxb.api.server.jobs.PmcJobException: Unsupported commmand lssyscfg
+	at com.ibm.pmc.rest.servlet.uom.phyp.internal.operations.uom.ManagementConsoleCLIRunner.execute(ManagementConsoleCLIRunner.java:75)
+	at com.ibm.pmc.jaxb.api.server.jobs.AbstractPmcJob.execute(AbstractPmcJob.java:633)
+	at org.quartz.core.JobRunShell.run(JobRunShell.java:216)
+	at org.quartz.simpl.SimpleThreadPool$WorkerThread.run(SimpleThreadPool.java:549)
+Caused by: java.lang.Exception
+	... 4 more
+</StackTrace>
+    </ResponseException>
+    <JobRequestInstance kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <RequestedOperation kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <OperationName kb="ROR" kxe="false">CLIRunner</OperationName>
+            <GroupName kb="ROR" kxe="false">ManagementConsole</GroupName>
+        </RequestedOperation>
+        <JobParameters kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <JobParameter schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <ParameterName kb="ROR" kxe="false">cmd</ParameterName>
+                <ParameterValue kxe="false" kb="CUR">lssyscfg -r sys -F name</ParameterValue>
+            </JobParameter>
+        </JobParameters>
+    </JobRequestInstance>
+    <Progress kb="ROO" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </Progress>
+    <Results kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </Results>
+</JobResponse:JobResponse>
+    </content>
+</entry>
+
+END OF SECTION}

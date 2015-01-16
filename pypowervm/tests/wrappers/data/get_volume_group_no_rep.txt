@@ -1,0 +1,59 @@
+INFO{
+{'comment': 'Use for media rep processor testing.  Get of a volume group with no media repository', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': '/; HttpOnly'}
+END OF SECTION}
+HEADERS{
+{'cache-control': 'no-cache="set-cookie, set-cookie2"', 'content-length': '16539', 'x-powered-by': 'Servlet/3.0', 'date': 'Wed, 07 Aug 2013 11:42:46 GMT', 'set-cookie': 'JSESSIONID=0000NmgK-pjcupBNwMN5_d4RMRf:537630eb-a35f-4f87-b20c-6e02059b963e; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'content-type': 'application/xml', 'etag': '1782236641'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>4be4d406-5626-35bf-9d68-e7611d9782c9</id>
+    <title>VolumeGroup</title>
+    <published>2013-08-15T17:12:43.998-04:00</published>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/6C6C1BFF-3213-4295-AEDC-A560430701FF/VolumeGroup/4be4d406-5626-35bf-9d68-e7611d9782c9"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.uom+xml; type=VolumeGroup">
+  <VolumeGroup:VolumeGroup xmlns:VolumeGroup="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4be4d406-5626-35bf-9d68-e7611d9782c9</AtomID>
+            <AtomCreated>1376601163978</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AvailableSize kb="ROR" kxe="false">370</AvailableSize>
+    <FreeSpace kb="ROR" kxe="false">370</FreeSpace>
+    <GroupCapacity kb="CUR" kxe="false">558</GroupCapacity>
+    <GroupName kb="CUR" kxe="false">rootvg</GroupName>
+    <GroupSerialID kxe="false" kb="ROR">00004c6a00007a000000013d8e2e09ae</GroupSerialID>
+    <MaximumLogicalVolumes kb="ROR" kxe="false">256</MaximumLogicalVolumes>
+    <PartitionSize kb="CUR" kxe="false">1</PartitionSize>
+    <PhysicalVolumes kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PhysicalVolume schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Description kb="CUD" kxe="false">SAS Disk Drive</Description>
+            <LocationCode kxe="false" kb="ROR">U78AB.001.WZSJA7T-P3-D1</LocationCode>
+            <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
+            <ReservePolicyAlgorithm kb="CUD" kxe="false">Failover</ReservePolicyAlgorithm>
+            <Usage kb="CUD" kxe="false">false</Usage>
+            <VolumeCapacity kb="CUR" kxe="false">572325</VolumeCapacity>
+            <VolumeName kb="CUR" kxe="false">hdisk0</VolumeName>
+            <VolumeState kb="ROR" kxe="false">active</VolumeState>
+            <VolumeUniqueID kb="ROR" kxe="false">281135000039488006C7C09MBF2600RC03IBMsas</VolumeUniqueID>
+            <IsFibreChannelBacked kb="ROR" kxe="false">false</IsFibreChannelBacked>
+        </PhysicalVolume>
+    </PhysicalVolumes>
+    <VirtualDisks kb="CUD" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualDisks>
+</VolumeGroup:VolumeGroup>
+    </content>
+</entry>
+END OF SECTION}
