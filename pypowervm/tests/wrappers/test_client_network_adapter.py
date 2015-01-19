@@ -67,23 +67,35 @@ class TestClientNetworkAdapterWrapper(unittest.TestCase):
 
     def test_attrs(self):
         """Test getting the attributes."""
-        self.assertEqual(32, self.cna.get_slot())
-        self.assertEqual("FAD4433ED120", self.cna.get_mac())
-        self.assertEqual(100, self.cna.get_pvid())
+        self.assertEqual(32, self.cna.slot)
+        self.assertEqual("FAD4433ED120", self.cna.mac)
+        self.assertEqual(100, self.cna.pvid)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/'
                          '0A68CFAB-F62B-46D4-A6A0-F4EBE0264AD5/'
                          'ClientNetworkAdapter/'
                          '6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8',
-                         self.cna.get_href())
+                         self.cna.href)
         self.assertEqual('U8246.L2C.0604C7A-V24-C32',
-                         self.cna.get_loc_code())
+                         self.cna.loc_code)
         self.assertEqual([53, 54, 55],
                          self.cna.get_tagged_vlans())
-        self.assertEqual(True, self.cna.is_tagged_vlan_supported())
+        self.assertEqual(True, self.cna.is_tagged_vlan_supported)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                          '726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/'
                          '9e42d4a9-9725-3007-9932-d85374ebf5cf',
-                         self.cna.get_vswitch_uri())
+                         self.cna.vswitch_uri)
+
+    def test_get_slot(self):
+        """Test getting the VirtualSlotID."""
+        self.assertEqual(32, self.cna.slot)
+
+    def test_get_mac(self):
+        """Test that we can get the mac address."""
+        self.assertEqual("FAD4433ED120", self.cna.mac)
+
+    def test_get_pvid(self):
+        """Test that the PVID returns properly."""
+        self.assertEqual(100, self.cna.pvid)
 
 if __name__ == "__main__":
     unittest.main()

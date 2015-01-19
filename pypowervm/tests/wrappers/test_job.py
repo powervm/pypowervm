@@ -134,20 +134,24 @@ class TestJobEntryWrapper(unittest.TestCase):
 
         # Use __getattribute__ to dynamically call the method
         value = wrapper.__getattribute__(
-            method_name)()
+            method_name)
+        if callable(value):
+            value = value()
         self.verify_equal(method_name, value, expected_value)
 
         bad_value = TestJobEntryWrapper._bad_wrapper.__getattribute__(
-            method_name)()
+            method_name)
+        if callable(bad_value):
+            bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
     def test_get_job_id(self):
         self.call_simple_getter(TestJobEntryWrapper._ok_wrapper,
-                                "get_job_id", EXPECTED_ID, None)
+                                "job_id", EXPECTED_ID, None)
 
     def test_get_job_status(self):
         self.call_simple_getter(TestJobEntryWrapper._failed_wrapper,
-                                "get_job_status", EXPECTED_STATUS, None)
+                                "job_status", EXPECTED_STATUS, None)
 
     def test_get_job_message(self):
         self.call_simple_getter(TestJobEntryWrapper._exception_wrapper,

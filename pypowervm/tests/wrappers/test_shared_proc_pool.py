@@ -108,11 +108,15 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
         # Use __getattribute__ to dynamically call the method
         wrapper = TestShrPrcPoolTestCase._proc_pool_wrapper
 
-        value = wrapper.__getattribute__(method_name)()
+        value = wrapper.__getattribute__(method_name)
+        if callable(value):
+            value = value()
         self.verify_equal(method_name, value, expected_value)
 
         bad_value = TestShrPrcPoolTestCase._bad_wrapper.__getattribute__(
-            method_name)()
+            method_name)
+        if callable(bad_value):
+            bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
     def test_get_parm_value(self):
@@ -130,10 +134,10 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
             "get_parm_value for BogusName ", value, expected_value)
 
     def test_get_pool_id(self):
-        self.call_simple_getter("get_id", int(POOLID), int(ZERO_STR))
+        self.call_simple_getter("id", int(POOLID), int(ZERO_STR))
 
     def test_get_curr_rsrv_proc_units(self):
-        self.call_simple_getter("get_curr_rsrv_proc_units",
+        self.call_simple_getter("curr_rsrv_proc_units",
                                 EXPECTED_CURR_RSRV_PROC_UNITS, ZERO_STR)
 
 if __name__ == "__main__":

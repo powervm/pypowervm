@@ -74,10 +74,14 @@ class TestMSEntryWrapper(unittest.TestCase):
                            expected_bad_value):
 
         # Use __getattribute__ to dynamically call the method
-        value = self.wrapper.__getattribute__(method_name)()
+        value = self.wrapper.__getattribute__(method_name)
+        if callable(value):
+            value = value()
         self.verify_equal(method_name, value, expected_value)
 
-        bad_value = self.bad_wrapper.__getattribute__(method_name)()
+        bad_value = self.bad_wrapper.__getattribute__(method_name)
+        if callable(bad_value):
+            bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
     def test_get_parm_value(self):
@@ -93,42 +97,42 @@ class TestMSEntryWrapper(unittest.TestCase):
             "get_parm_value for BogusName ", value, expected_value)
 
     def test_get_model(self):
-        self.assertEqual(self.wrapper.get_model(), "E4A")
+        self.assertEqual(self.wrapper.model, "E4A")
 
     def test_get_type(self):
-        self.assertEqual(self.wrapper.get_type(), "8203")
+        self.assertEqual(self.wrapper.machine_type, "8203")
 
     def test_get_serial(self):
-        self.assertEqual(self.wrapper.get_serial(), "ACE0001")
+        self.assertEqual(self.wrapper.serial, "ACE0001")
 
     def test_get_proc_units(self):
-        self.call_simple_getter("get_proc_units", "500", 0)
+        self.call_simple_getter("proc_units", "500", 0)
 
     def test_get_proc_units_configurable(self):
-        self.call_simple_getter("get_proc_units_configurable", "500", 0)
+        self.call_simple_getter("proc_units_configurable", "500", 0)
 
     def test_get_proc_units_avail(self):
-        self.call_simple_getter("get_proc_units_avail", "500", 0)
+        self.call_simple_getter("proc_units_avail", "500", 0)
 
     def test_get_memory_total(self):
-        self.call_simple_getter("get_memory_total", 5767168, 0)
+        self.call_simple_getter("memory_total", 5767168, 0)
 
     def test_get_memory_free(self):
-        self.call_simple_getter("get_memory_free", 5242752, 0)
+        self.call_simple_getter("memory_free", 5242752, 0)
 
     def test_get_host_ip_address(self):
-        self.call_simple_getter("get_host_ip_address", '127.0.0.1', None)
+        self.call_simple_getter("host_ip_address", '127.0.0.1', None)
 
     def test_get_firmware_memory(self):
-        self.call_simple_getter("get_firmware_memory", 1536, 0)
+        self.call_simple_getter("firmware_memory", 1536, 0)
 
     def test_get_system_name(self):
         self.wrapper.set_parm_value(c.SYSTEM_NAME, 'XYZ')
-        name = self.wrapper.get_system_name()
-        self.verify_equal("get_system_name", name, 'XYZ')
+        name = self.wrapper.system_name
+        self.verify_equal("system_name", name, 'XYZ')
         self.wrapper.set_parm_value(c.SYSTEM_NAME, 'ABC')
-        name = self.wrapper.get_system_name()
-        self.verify_equal("get_system_name", name, 'ABC')
+        name = self.wrapper.system_name
+        self.verify_equal("system_name", name, 'ABC')
 
 if __name__ == "__main__":
     unittest.main()

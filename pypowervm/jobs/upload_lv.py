@@ -78,7 +78,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # The new Virtual Disk should be created.  Find the one we created.
     n_vdisk = None
     for vdisk in vol_grp.get_virtual_disks():
-        if vdisk.get_name() == d_name:
+        if vdisk.name == d_name:
             n_vdisk = vdisk
             break
     if not n_vdisk:
@@ -90,7 +90,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     f_meta = _create_file(adapter, d_name, wc.BROKERED_DISK_IMAGE, v_uuid,
-                          f_size=d_size, tdev_udid=n_vdisk.get_udid(),
+                          f_size=d_size, tdev_udid=n_vdisk.udid,
                           sha_chksum=sha_chksum)
 
     # Finally, upload the file

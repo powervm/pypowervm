@@ -189,7 +189,8 @@ def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
 
 class LogicalPartition(ewrap.EntryWrapper):
 
-    def get_state(self):
+    @property
+    def state(self):
         """See LogicalPartitionStateEnum.
 
         e.g. 'not activated', 'running', 'migrating running', etc.
@@ -197,15 +198,18 @@ class LogicalPartition(ewrap.EntryWrapper):
         partition_state = self.get_parm_value(c.PARTITION_STATE)
         return partition_state
 
-    def get_name(self):
+    @property
+    def name(self):
         """Short name (not ID, MTMS, or hostname)."""
         return self.get_parm_value(c.PARTITION_NAME)
 
-    def get_id(self):
+    @property
+    def id(self):
         """Short ID (not UUID)."""
         return int(self.get_parm_value(c.PARTITION_ID, c.ZERO))
 
-    def get_type(self):
+    @property
+    def env(self):
         """See LogicalPartitionEnvironmentEnum.
 
         Should always be 'AIX/Linux' for LPAREntry.  'Virtual IO Server'
@@ -213,118 +217,159 @@ class LogicalPartition(ewrap.EntryWrapper):
         """
         return self.get_parm_value(c.PARTITION_TYPE)
 
-    def get_current_mem(self):
+    @property
+    def current_mem(self):
         return self.get_parm_value(c.CURR_MEM, c.ZERO)
 
-    def get_current_max_mem(self):
+    @property
+    def current_max_mem(self):
         return self.get_parm_value(c.CURR_MAX_MEM, c.ZERO)
 
-    def get_current_min_mem(self):
+    @property
+    def current_min_mem(self):
         return self.get_parm_value(c.CURR_MIN_MEM, c.ZERO)
 
-    def get_desired_mem(self):
+    @property
+    def desired_mem(self):
         return self.get_parm_value(c.DES_MEM, c.ZERO)
 
-    def get_max_mem(self):
+    @property
+    def max_mem(self):
         return self.get_parm_value(c.DES_MAX_MEM, c.ZERO)
 
-    def get_min_mem(self):
+    @property
+    def min_mem(self):
         return self.get_parm_value(c.DES_MIN_MEM, c.ZERO)
 
-    def get_run_mem(self):
+    @property
+    def run_mem(self):
         return self.get_parm_value(c.RUN_MEM, c.ZERO)
 
-    def get_current_mem_share_enabled(self):
+    @property
+    def current_mem_share_enabled(self):
         # The default is None instead of False so that the caller
         # can know if the value is not set
         return self.get_parm_value_bool(c.SHARED_MEM_ENABLED, None)
 
-    def is_current_proc_mode_dedicated(self):
+    @property
+    def current_proc_mode_is_dedicated(self):
         """Returns 'true' (string) if dedicated or 'false' if shared."""
         # TODO(efried): change to boolean
         return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
 
-    def is_proc_mode_dedicated(self):
+    @property
+    def proc_mode_is_dedicated(self):
         """Returns 'true' (string) if dedicated or 'false' if shared."""
         # TODO(efried): change to boolean
         return self.get_parm_value(c.USE_DED_PROCS, c.FALSE).lower()
 
-    def get_current_procs(self):
+    @property
+    def current_procs(self):
         return self.get_parm_value(c.CURR_PROCS, c.ZERO)
 
-    def get_current_max_procs(self):
+    @property
+    def current_max_procs(self):
         return self.get_parm_value(c.CURR_MAX_PROCS, c.ZERO)
 
-    def get_current_min_procs(self):
+    @property
+    def current_min_procs(self):
         return self.get_parm_value(c.CURR_MIN_PROCS, c.ZERO)
 
-    def get_desired_procs(self):
+    @property
+    def desired_procs(self):
         return self.get_parm_value(c.DES_PROCS, c.ZERO)
 
-    def get_max_procs(self):
+    @property
+    def max_procs(self):
         return self.get_parm_value(c.DES_MAX_PROCS, c.ZERO)
 
-    def get_min_procs(self):
+    @property
+    def min_procs(self):
         return self.get_parm_value(c.DES_MIN_PROCS, c.ZERO)
 
-    def get_current_vcpus(self):
+    @property
+    def current_vcpus(self):
         return self.get_parm_value(c.CURR_VCPU, c.ZERO)
 
-    def get_current_max_vcpus(self):
+    @property
+    def current_max_vcpus(self):
         return self.get_parm_value(c.CURR_MAX_VCPU, c.ZERO)
 
-    def get_current_min_vcpus(self):
+    @property
+    def current_min_vcpus(self):
         return self.get_parm_value(c.CURR_MIN_VCPU, c.ZERO)
 
-    def get_desired_vcpus(self):
+    @property
+    def desired_vcpus(self):
         return self.get_parm_value(c.DES_VCPU, c.ZERO)
 
-    def get_max_vcpus(self):
+    @property
+    def max_vcpus(self):
         return self.get_parm_value(c.DES_MAX_VCPU, c.ZERO)
 
-    def get_min_vcpus(self):
+    @property
+    def min_vcpus(self):
         return self.get_parm_value(c.DES_MIN_VCPU, c.ZERO)
 
-    def get_current_proc_units(self):
+    @property
+    def current_proc_units(self):
         return self.get_parm_value(c.CURR_PROC_UNITS, c.ZERO)
 
-    def get_current_max_proc_units(self):
+    @property
+    def current_max_proc_units(self):
         return self.get_parm_value(c.CURR_MAX_PROC_UNITS, c.ZERO)
 
-    def get_current_min_proc_units(self):
+    @property
+    def current_min_proc_units(self):
         return self.get_parm_value(c.CURR_MIN_PROC_UNITS, c.ZERO)
 
-    def get_desired_proc_units(self):
+    @property
+    def desired_proc_units(self):
         return self.get_parm_value(c.DES_PROC_UNITS, c.ZERO)
 
-    def get_max_proc_units(self):
+    @property
+    def max_proc_units(self):
         return self.get_parm_value(c.MAX_PROC_UNITS, c.ZERO)
 
-    def get_min_proc_units(self):
+    @property
+    def min_proc_units(self):
         return self.get_parm_value(c.MIN_PROC_UNITS, c.ZERO)
 
-    def get_run_procs(self):
+    @property
+    def run_procs(self):
         return self.get_parm_value(c.RUN_PROCS, c.ZERO)
 
-    def get_run_vcpus(self):
+    @property
+    def run_vcpus(self):
         return self.get_parm_value(c.RUN_VCPU, c.ZERO)
 
-    def get_curr_uncapped_weight(self):
+    @property
+    def current_uncapped_weight(self):
         return self.get_parm_value(c.CURR_UNCAPPED_WEIGHT, c.ZERO)
 
-    def get_uncapped_weight(self):
+    @property
+    def uncapped_weight(self):
         return self.get_parm_value(c.UNCAPPED_WEIGHT, c.ZERO)
 
-    def get_shared_proc_pool_id(self):
+    @property
+    def shared_proc_pool_id(self):
         return int(self.get_parm_value(c.SHARED_PROC_POOL_ID, c.ZERO))
 
-    def get_avail_priority(self):
+    @property
+    def avail_priority(self):
         return self.get_parm_value(c.AVAIL_PRIORITY, c.ZERO)
 
-    def get_current_sharing_mode(self):
+    @property
+    def sharing_mode(self):
+        """Sharing mode.
+
+        Note that the getter retrieves the CURRENT sharing mode; and the
+        setter sets the (PENDING) sharing mode.
+        """
         return self.get_parm_value(c.CURR_SHARING_MODE)
 
-    def get_migration_state(self):
+    @property
+    def migration_state(self):
         """See PartitionMigrationStateEnum.
 
         e.g. 'Not_Migrating', 'Migration_Starting', 'Migration_Failed', etc.
@@ -332,18 +377,26 @@ class LogicalPartition(ewrap.EntryWrapper):
         """
         return self.get_parm_value(c.MIGRATION_STATE, 'Not_Migrating')
 
-    def get_proc_compat_modes(self):
-        """Tuple containing current and pending processor compatibility modes.
+    @property
+    def proc_compat_mode(self):
+        """*Current* processor compatibility mode.
 
         See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
-        current = self.get_parm_value(c.CURRENT_PROC_MODE)
-        pending = self.get_parm_value(c.PENDING_PROC_MODE)
+        return self.get_parm_value(c.CURRENT_PROC_MODE)
 
-        return current, pending
+    @property
+    def pending_proc_compat_mode(self):
+        """Pending processor compatibility mode.
 
-    def get_operating_system(self):
+        See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
+        'POWER7_Plus', 'POWER8', etc.
+        """
+        return self.get_parm_value(c.PENDING_PROC_MODE)
+
+    @property
+    def operating_system(self):
         """String representing the OS and version, or 'Unknown'."""
         return self.get_parm_value(c.OPERATING_SYSTEM_VER, 'Unknown')
 
@@ -359,17 +412,20 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         return ret_links
 
-    def get_rmc_state(self):
+    @property
+    def rmc_state(self):
         """See ResourceMonitoringControlStateEnum.
 
         e.g. 'active', 'inactive', 'busy', etc.
         """
         return self.get_parm_value(c.RMC_STATE)
 
-    def get_ref_code(self):
+    @property
+    def ref_code(self):
         return self.get_parm_value(c.REF_CODE)
 
-    def get_restrictedio(self):
+    @property
+    def restrictedio(self):
         return self.get_parm_value_bool(c.RESTRICTED_IO, False)
 
     def check_dlpar_connectivity(self):
@@ -388,54 +444,81 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         return dlpar, rmc
 
-    def set_desired_mem(self, value):
+    @desired_mem.setter
+    def desired_mem(self, value):
         self.set_parm_value(c.DES_MEM, value)
 
-    def set_max_mem(self, value):
+    @max_mem.setter
+    def max_mem(self, value):
         self.set_parm_value(c.DES_MAX_MEM, value)
 
-    def set_min_mem(self, value):
+    @min_mem.setter
+    def min_mem(self, value):
         self.set_parm_value(c.DES_MIN_MEM, value)
 
-    def set_proc_compat_mode(self, value):
+    @proc_compat_mode.setter
+    def proc_compat_mode(self, value):
+        """Sets *PENDING* proc compat mode.
+
+        Note that corresponding getter retrieves the *CURRENT* proc compat
+        mode.
+        """
         self.set_parm_value(c.PENDING_PROC_MODE, value)
 
-    def set_avail_priority(self, value):
+    @avail_priority.setter
+    def avail_priority(self, value):
         self.set_parm_value(c.AVAIL_PRIORITY, value)
 
-    def set_sharing_mode(self, value):
+    @sharing_mode.setter
+    def sharing_mode(self, value):
+        """Sharing mode.
+
+        Note that the getter retrieves the CURRENT sharing mode; and the
+        setter sets the (PENDING) sharing mode.
+        """
         self.set_parm_value(c.SHARING_MODE, value)
 
-    def set_desired_procs(self, value):
+    @desired_procs.setter
+    def desired_procs(self, value):
         self.set_parm_value(c.DES_PROCS, value)
 
-    def set_max_procs(self, value):
+    @max_procs.setter
+    def max_procs(self, value):
         self.set_parm_value(c.DES_MAX_PROCS, value)
 
-    def set_min_procs(self, value):
+    @min_procs.setter
+    def min_procs(self, value):
         self.set_parm_value(c.DES_MIN_PROCS, value)
 
-    def set_desired_vcpus(self, value):
+    @desired_vcpus.setter
+    def desired_vcpus(self, value):
         self.set_parm_value(c.DES_VCPU, value)
 
-    def set_max_vcpus(self, value):
+    @max_vcpus.setter
+    def max_vcpus(self, value):
         self.set_parm_value(c.DES_MAX_VCPU, value)
 
-    def set_min_vcpus(self, value):
+    @min_vcpus.setter
+    def min_vcpus(self, value):
         self.set_parm_value(c.DES_MIN_VCPU, value)
 
-    def set_desired_proc_units(self, value):
+    @desired_proc_units.setter
+    def desired_proc_units(self, value):
         self.set_parm_value(c.DES_PROC_UNITS, value)
 
-    def set_max_proc_units(self, value):
+    @max_proc_units.setter
+    def max_proc_units(self, value):
         self.set_parm_value(c.MAX_PROC_UNITS, value)
 
-    def set_min_proc_units(self, value):
+    @min_proc_units.setter
+    def min_proc_units(self, value):
         self.set_parm_value(c.MIN_PROC_UNITS, value)
 
-    def set_uncapped_weight(self, value):
+    @uncapped_weight.setter
+    def uncapped_weight(self, value):
         return self.set_parm_value(c.UNCAPPED_WEIGHT, value)
 
-    def set_proc_mode(self, value):
+    @proc_mode_is_dedicated.setter
+    def proc_mode_is_dedicated(self, value):
         """Expects 'true' (string) for dedicated or 'false' for shared."""
         self.set_parm_value(c.USE_DED_PROCS, value)

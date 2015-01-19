@@ -89,10 +89,12 @@ def crt_cna(pvid, vswitch_href, slot_num=None, mac_addr=None,
 class ClientNetworkAdapter(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
-    def get_slot(self):
+    @property
+    def slot(self):
         return int(self.get_parm_value(c.VIR_SLOT_NUM))
 
-    def get_mac(self):
+    @property
+    def mac(self):
         """Returns the Mac Address for the adapter.
 
         Typical format would be: AABBCCDDEEFF
@@ -100,11 +102,13 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         """
         return self.get_parm_value(c.MAC_ADDRESS)
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Port VLAN ID."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
-    def get_loc_code(self):
+    @property
+    def loc_code(self):
         """The device's location code."""
         return self.get_parm_value(LOCATION_CODE)
 
@@ -116,11 +120,13 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         addl_vlans = self.get_parm_value(VADPT_TAGGED_VLANS, '')
         return [int(i) for i in addl_vlans.split(' ')]
 
+    @property
     def is_tagged_vlan_supported(self):
         """Returns if addl tagged VLANs are supported."""
         return self.get_parm_value_bool(VADPT_TAGGED_VLAN_SUPPORT)
 
-    def get_vswitch_uri(self):
+    @property
+    def vswitch_uri(self):
         """Returns the URI for the associated vSwitch."""
         vswitches = self._entry.element.findall(VADPT_VSWITCH + c.DELIM +
                                                 'link')

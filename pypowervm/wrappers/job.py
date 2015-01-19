@@ -72,14 +72,16 @@ class Job(ewrap.EntryWrapper):
         for parm in add_parms:
             job_parms.append(parm)
 
-    def get_job_id(self):
+    @property
+    def job_id(self):
         """Gets the job ID string.
 
         :returns: String containing the job ID
         """
         return self.get_parm_value(c.JOB_ID)
 
-    def get_job_status(self):
+    @property
+    def job_status(self):
         """Gets the job status string.
 
         :returns: String containing the job status

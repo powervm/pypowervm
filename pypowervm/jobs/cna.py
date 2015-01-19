@@ -55,8 +55,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
                                 child_type=network.VSW_ROOT)
     for vs_entry in vswitch_resp.feed.entries:
         vs_w = network.VirtualSwitch(vs_entry)
-        if vs_w.get_name() == vswitch:
-            vswitch_href = vs_w.get_href()
+        if vs_w.name == vswitch:
+            vswitch_href = vs_w.href
 
     if vswitch_href is None:
         raise exc.Error(_('Unable to find the Virtual Switch %s on the '
