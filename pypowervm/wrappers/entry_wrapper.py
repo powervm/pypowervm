@@ -193,6 +193,18 @@ class EntryWrapper(Wrapper):
     def _element(self):
         return self._entry.element
 
+    def get_href(self):
+        """Finds the reference to the entity.
+
+        Assumes that the entity has a link element that references self.  If
+        it does not, returns None.
+        """
+        val = self._entry.properties.get('links', {}).get('SELF', None)
+        if val is not None and len(val) > 0:
+            return val[0]
+        else:
+            return None
+
     def get_uuid(self):
         """Returns the uuid of the entry."""
         if self._entry is None:

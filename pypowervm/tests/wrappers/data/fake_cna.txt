@@ -41,7 +41,8 @@ BODY{
     <PortVLANID kb="CUR" kxe="false">100</PortVLANID>
     <QualityOfServicePriority kb="CUD" kxe="false">0</QualityOfServicePriority>
     <QualityOfServicePriorityEnabled kb="CUD" kxe="false">true</QualityOfServicePriorityEnabled>
-    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+    <TaggedVLANIDs kxe="false" kb="CUA">53 54 55</TaggedVLANIDs>
+    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
     <AssociatedVirtualSwitch kb="CUD" kxe="false">
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/9e42d4a9-9725-3007-9932-d85374ebf5cf" rel="related"/>
     </AssociatedVirtualSwitch>
