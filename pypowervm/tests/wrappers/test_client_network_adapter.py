@@ -35,15 +35,15 @@ class TestClientNetworkAdapterWrapper(unittest.TestCase):
 
     def test_get_slot(self):
         """Test getting the VirtualSlotID."""
-        self.assertEqual(32, self.cna.get_slot())
+        self.assertEqual(32, self.cna.slot)
 
     def test_get_mac(self):
         """Test that we can get the mac address."""
-        self.assertEqual("FAD4433ED120", self.cna.get_mac())
+        self.assertEqual("FAD4433ED120", self.cna.mac)
 
     def test_get_pvid(self):
         """Test that the PVID returns properly."""
-        self.assertEqual(100, self.cna.get_pvid())
+        self.assertEqual(100, self.cna.pvid)
 
 if __name__ == "__main__":
     unittest.main()

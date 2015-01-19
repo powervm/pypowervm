@@ -80,7 +80,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                     (for PowerOff suffix only)
     """
     complete = False
-    uuid = lpar.get_uuid()
+    uuid = lpar.uuid
     try:
         while not complete:
             resp = adapter.read(c.LPAR, uuid, suffix_type=c.SUFFIX_TYPE_DO,

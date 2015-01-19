@@ -25,10 +25,12 @@ import pypowervm.wrappers.constants as c
 
 class SharedProcPool(ewrap.EntryWrapper):
 
-    def get_id(self):
+    @property
+    def id(self):
         """Integer shared processor pool ID."""
         return self.get_parm_value_int(c.POOL_ID)
 
-    def get_curr_rsrv_proc_units(self):
+    @property
+    def curr_rsrv_proc_units(self):
         """Floating point string: number of reserved processing units."""
         return self.get_parm_value(c.CURR_RSRV_PROC_UNITS, c.ZERO)

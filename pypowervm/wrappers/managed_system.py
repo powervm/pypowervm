@@ -24,34 +24,44 @@ LOG = logging.getLogger(__name__)
 
 class ManagedSystem(ewrap.EntryWrapper):
 
-    def get_system_name(self):
+    @property
+    def system_name(self):
         return self.get_parm_value(c.SYSTEM_NAME)
 
-    def get_model(self):
+    @property
+    def model(self):
         return self.get_parm_value(c.MACHINE_MODEL)
 
-    def get_type(self):
+    @property
+    def machine_type(self):
         return self.get_parm_value(c.MACHINE_TYPE)
 
-    def get_serial(self):
+    @property
+    def serial(self):
         return self.get_parm_value(c.MACHINE_SERIAL)
 
-    def get_system_state(self):
+    @property
+    def system_state(self):
         return self.get_parm_value(c.STATE, 'unknown')
 
-    def get_proc_units(self):
+    @property
+    def proc_units(self):
         return self.get_parm_value(c.PROC_UNITS_INSTALLED, 0)
 
-    def get_proc_units_configurable(self):
+    @property
+    def proc_units_configurable(self):
         return self.get_parm_value(c.PROC_UNITS_CONFIGURABLE, 0)
 
-    def get_proc_units_avail(self):
+    @property
+    def proc_units_avail(self):
         return self.get_parm_value(c.PROC_UNITS_AVAIL, 0)
 
-    def get_max_sys_procs_limit(self):
+    @property
+    def max_sys_procs_limit(self):
         return self.get_parm_value_int(c.MAX_PROCS_PER_PARTITION, 0)
 
-    def get_max_procs_per_aix_linux_lpar(self):
+    @property
+    def max_procs_per_aix_linux_lpar(self):
         val = self.get_parm_value_int(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum procs per lpar based on
         # partition type. In that case, use system max procs per partition.
@@ -60,10 +70,12 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         return val
 
-    def get_max_sys_vcpus_limit(self):
+    @property
+    def max_sys_vcpus_limit(self):
         return self.get_parm_value_int(c.MAX_VCPUS_PER_PARTITION, 0)
 
-    def get_max_vcpus_per_aix_linux_lpar(self):
+    @property
+    def max_vcpus_per_aix_linux_lpar(self):
         val = self.get_parm_value_int(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum vcpus per lpar based on
         # partition type. In that case, use system max vcpus per partition.
@@ -72,22 +84,28 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         return val
 
-    def get_memory_total(self):
+    @property
+    def memory_total(self):
         return self.get_parm_value_int(c.MEMORY_INSTALLED, 0)
 
-    def get_memory_free(self):
+    @property
+    def memory_free(self):
         return self.get_parm_value_int(c.MEMORY_AVAIL, 0)
 
-    def get_memory_configurable(self):
+    @property
+    def memory_configurable(self):
         return self.get_parm_value_int(c.MEMORY_CONFIGURABLE, 0)
 
-    def get_memory_region_size(self):
+    @property
+    def memory_region_size(self):
         return self.get_parm_value_int(c.MEMORY_REGION_SIZE, 0)
 
-    def get_firmware_memory(self):
+    @property
+    def firmware_memory(self):
         return self.get_parm_value_int(c.SYS_FIRMWARE_MEM, 0)
 
-    def get_host_ip_address(self):
+    @property
+    def host_ip_address(self):
         prop = c.HOST_IP_ADDRESS
         val = self.get_parm_value(prop)
 

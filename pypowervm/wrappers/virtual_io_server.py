@@ -193,38 +193,49 @@ def _crt_attrs(group):
 
 class VirtualIOServer(ewrap.EntryWrapper):
 
-    def get_name(self):
+    @property
+    def name(self):
         return self.get_parm_value(c.PARTITION_NAME)
 
-    def get_partition_id(self):
+    @property
+    def partition_id(self):
         return int(self.get_parm_value(c.VIOS_ID, c.ZERO))
 
-    def get_state(self):
+    @property
+    def state(self):
         return self.get_parm_value(c.PARTITION_STATE)
 
+    @property
     def is_running(self):
         return self.get_state() == 'running'
 
-    def get_rmc_state(self):
+    @property
+    def rmc_state(self):
         return self.get_parm_value(c.RMC_STATE)
 
+    @property
     def is_rmc_active(self):
         return self.get_rmc_state() == 'active'
 
-    def get_virtual_scsi_mappings(self):
+    @property
+    def virtual_scsi_mappings(self):
         return self._entry.element.find(c.VIRT_SCSI_MAPPINGS)
 
-    def get_media_repository(self):
+    @property
+    def media_repository(self):
         return self._entry.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
 
-    def get_wwpns(self):
+    @property
+    def wwpns(self):
         """Returns a list of the wwpn pairs for the vios."""
         return self.get_parm_values(c.WWPNS_PATH)
 
-    def license_accepted(self):
+    @property
+    def is_license_accepted(self):
         return self.get_parm_value_bool(c.VIOS_LICENSE, default=True)
 
-    def get_hdisk_reserve_policy(self, disk_uuid):
+    @property
+    def hdisk_reserve_policy(self, disk_uuid):
         """Get the reserve policy for an hdisk.
 
         :param disk_uuid: The uuid of the hdisk.
@@ -244,7 +255,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
         return policy
 
-    def get_hdisk_from_uuid(self, disk_uuid):
+    @property
+    def hdisk_from_uuid(self, disk_uuid):
         """Get the hdisk name from the volume uuid.
 
         :param disk_uuid: The uuid of the hdisk.
@@ -266,19 +278,24 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
         return name
 
-    def get_current_mem(self):
+    @property
+    def current_mem(self):
         return self.get_parm_value(c.CURR_MEM, c.ZERO)
 
-    def get_current_proc_mode(self):
+    @property
+    def current_proc_mode(self):
         # Returns true if dedicated or false if shared
         return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
 
-    def get_current_procs(self):
+    @property
+    def current_procs(self):
         return self.get_parm_value(c.CURR_PROCS, c.ZERO)
 
-    def get_current_proc_units(self):
+    @property
+    def current_proc_units(self):
         return self.get_parm_value(c.CURR_PROC_UNITS, c.ZERO)
 
+    @property
     def is_mover_service_partition(self):
         return self.get_parm_value_bool(c.MOVER_SERVICE_PARTITION, False)
 
@@ -348,7 +365,8 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
     new mapping.
     """
 
-    def get_client_lpar_href(self):
+    @property
+    def client_lpar_href(self):
         """Returns the Client LPAR (if any) URI.
 
         If None - then no client is connected.
@@ -358,7 +376,8 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
             return elem.get('href')
         return None
 
-    def get_client_adapter(self):
+    @property
+    def client_adapter(self):
         """Returns the Client side VirtualSCSIClientAdapter.
 
         If None - then no client is connected.
@@ -368,11 +387,13 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
             return VirtualSCSIClientAdapter(elem)
         return None
 
-    def get_server_adapter(self):
+    @property
+    def server_adapter(self):
         """Returns the Virtual I/O Server side VirtualSCSIServerAdapter."""
         return VirtualSCSIServerAdapter(self._element.find(MAP_SERVER_ADAPTER))
 
-    def get_backing_storage(self):
+    @property
+    def backing_storage(self):
         """The backing storage element (if applicable).
 
         Refer to the 'volume_group' wrapper.  This element may be a
@@ -410,7 +431,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
     new mapping.
     """
 
-    def get_client_lpar_href(self):
+    @property
+    def client_lpar_href(self):
         """Returns the Client LPAR (if any) URI.
 
         If None - then no client is connected.
@@ -420,7 +442,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
             return elem.get('href')
         return None
 
-    def get_client_adapter(self):
+    @property
+    def client_adapter(self):
         """Returns the Client Virtual FC Adapter.
 
         If None - then no client is connected.
@@ -430,7 +453,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
             return VirtualFCClientAdapter(elem)
         return None
 
-    def get_backing_port(self):
+    @property
+    def backing_port(self):
         """The Virtual I/O Server backing PhysicalFCPort.
 
         If None - then the vfcmap isn't done and no physical port is backing
@@ -441,7 +465,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
             return PhysicalFCPort(elem)
         return None
 
-    def get_server_adapter(self):
+    @property
+    def server_adapter(self):
         """Returns the Virtual I/O Server Virtual FC Adapter."""
         return VirtualFCServerAdapter(self._element.find(MAP_SERVER_ADAPTER))
 
@@ -449,7 +474,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
 class VirtualStorageAdapter(ewrap.ElementWrapper):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
 
-    def get_type(self):
+    @property
+    def side(self):
         """Will return either Server or Client.
 
         A Server indicates that this is a virtual adapter that resides on the
@@ -459,15 +485,18 @@ class VirtualStorageAdapter(ewrap.ElementWrapper):
         """
         return self.get_parm_value(VADPT_TYPE)
 
+    @property
     def is_varied_on(self):
         """True if the adapter is varied on."""
         return self.get_parm_value(VADPT_VARIED_ON)
 
-    def get_slot_number(self):
+    @property
+    def slot_number(self):
         """The (int) slot number that the adapter is in."""
         return self.get_parm_value_int(VADPT_SLOT_NUM)
 
-    def get_loc_code(self):
+    @property
+    def loc_code(self):
         """The device's location code."""
         return self.get_parm_value(LOCATION_CODE)
 
@@ -478,7 +507,8 @@ class VirtualSCSIClientAdapter(VirtualStorageAdapter):
     Paired with a VirtualSCSIServerAdapter.
     """
 
-    def get_lpar_id(self):
+    @property
+    def lpar_id(self):
         """The LPAR ID the contains this client adapter."""
         return self.get_parm_value(VADPT_LPAR_ID)
 
@@ -489,15 +519,18 @@ class VirtualSCSIServerAdapter(VirtualStorageAdapter):
     Paired with a VirtualSCSIClientAdapter.
     """
 
-    def get_name(self):
+    @property
+    def name(self):
         """The adapter's name on the Virtual I/O Server."""
         return self.get_parm_value(VADPT_NAME)
 
-    def get_backing_dev_name(self):
+    @property
+    def backing_dev_name(self):
         """The backing device name that this virtual adapter is hooked into."""
         return self.get_parm_value(VADPT_BACK_DEV_NAME)
 
-    def get_udid(self):
+    @property
+    def udid(self):
         """The device's Unique Device Identifier."""
         return self.get_parm_value(VADPT_UDID)
 
@@ -508,11 +541,13 @@ class VirtualFCClientAdapter(VirtualStorageAdapter):
     Paired with a VirtualFCServerAdapter.
     """
 
-    def get_wwpns(self):
+    @property
+    def wwpns(self):
         """Returns a String (delimited by spaces) that contains the WWPNs."""
         return self.get_parm_value(VADPT_WWPNS)
 
-    def get_lpar_id(self):
+    @property
+    def lpar_id(self):
         """The ID of the LPAR that contains this client adapter."""
         return self.get_parm_value(VADPT_LPAR_ID)
 
@@ -523,15 +558,18 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
     Paired with a VirtualFCClientAdapter.
     """
 
-    def get_name(self):
+    @property
+    def name(self):
         """The adapter's name on the Virtual I/O Server."""
         return self.get_parm_value(VADPT_NAME)
 
-    def get_udid(self):
+    @property
+    def udid(self):
         """The device's Unique Device Identifier."""
         return self.get_parm_value(VADPT_UDID)
 
-    def get_map_port(self):
+    @property
+    def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
         return self.get_parm_value(VADPT_MAP_PORT)
 
@@ -539,26 +577,32 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
 class PhysicalFCPort(ewrap.ElementWrapper):
     """A physical FibreChannel port on the Virtual I/O Server."""
 
-    def get_loc_code(self):
+    @property
+    def loc_code(self):
         """Returns the location code."""
         return self.get_parm_value(LOCATION_CODE)
 
-    def get_name(self):
+    @property
+    def name(self):
         """The name of the port."""
         return self.get_parm_value(PFC_NAME)
 
-    def get_udid(self):
+    @property
+    def udid(self):
         """The Unique Device ID."""
         return self.get_parm_value(PFC_UDID)
 
-    def get_wwpn(self):
+    @property
+    def wwpn(self):
         """The port's world wide port name."""
         return self.get_parm_value(PFC_WWPN)
 
-    def get_available_ports(self):
+    @property
+    def available_ports(self):
         """The number of available NPIV ports.  Int value."""
         return self.get_parm_value_int(PFC_AVAILABLE_PORTS)
 
-    def get_total_ports(self):
+    @property
+    def total_ports(self):
         """The total number of NPIV ports.  Int value."""
         return self.get_parm_value_int(PFC_TOTAL_PORTS)

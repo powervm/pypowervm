@@ -159,25 +159,31 @@ def crt_voptical_media(name, size, mount_type='rw'):
 class VolumeGroup(ewrap.EntryWrapper):
     """Represents a Volume Group that resides on the Virtual I/O Server."""
 
-    def get_name(self):
+    @property
+    def name(self):
         return self.get_parm_value(VG_NAME)
 
-    def get_capacity(self):
+    @property
+    def capacity(self):
         """Overall capacity in MB (int)."""
         return self.get_parm_value_int(VG_CAPACITY)
 
-    def get_available_size(self):
+    @property
+    def available_size(self):
         """Available size for new volumes in MB (int)."""
         return self.get_parm_value_int(VG_AVAILABLE_SIZE)
 
-    def get_free_space(self):
+    @property
+    def free_space(self):
         """Current free space in MB (int)."""
         return self.get_parm_value_int(VG_FREE_SPACE)
 
-    def get_serial_id(self):
+    @property
+    def serial_id(self):
         return self.get_parm_value(VG_SERIAL_ID)
 
-    def get_vmedia_repos(self):
+    @property
+    def vmedia_repos(self):
         """Returns a list of VirtualMediaRepository wrappers."""
         vmedia_repos = []
         path = c.ROOT + VG_MEDIA_REPOS + c.DELIM + VREPO_ROOT
@@ -186,7 +192,8 @@ class VolumeGroup(ewrap.EntryWrapper):
             vmedia_repos.append(VirtualMediaRepository(vmedia_repo))
         return vmedia_repos
 
-    def set_vmedia_repos(self, repos):
+    @vmedia_repos.setter
+    def vmedia_repos(self, repos):
         """Replaces the VirtualMediaRepositories with the new value.
 
         :param repos: A list of VirtualMediaRepository objects that will
@@ -252,10 +259,12 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
         """
         self.replace_list(VREPO_OPTICAL_MEDIA_ROOT, new_media)
 
-    def get_name(self):
+    @property
+    def name(self):
         return self.get_parm_value(VREPO_NAME)
 
-    def get_size(self):
+    @property
+    def size(self):
         """Returns the size in GB (int)."""
         return self.get_parm_value_int(VREPO_SIZE)
 
@@ -263,59 +272,74 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
 class VirtualOpticalMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
 
-    def get_media_name(self):
+    @property
+    def media_name(self):
         return self.get_parm_value(VOPT_NAME)
 
-    def get_size(self):
+    @property
+    def size(self):
         """Size is a str.  Represented in GB - has decimal precision."""
         return self.get_parm_value(VOPT_SIZE)
 
-    def get_udid(self):
+    @property
+    def udid(self):
         return self.get_parm_value(VOPT_UDID)
 
-    def get_mount_type(self):
+    @property
+    def mount_type(self):
         return self.get_parm_value(VOPT_MOUNT_TYPE)
 
 
 class PhysicalVolume(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
-    def get_udid(self):
+    @property
+    def udid(self):
         """The unique device id."""
         return self.get_parm_value(PV_UDID)
 
-    def get_capacity(self):
+    @property
+    def capacity(self):
         """Returns the capacity as an int in MB."""
         return self.get_parm_value_int(PV_VOL_SIZE)
 
-    def get_name(self):
+    @property
+    def name(self):
         return self.get_parm_value(PV_VOL_NAME)
 
-    def get_state(self):
+    @property
+    def state(self):
         return self.get_parm_value(PV_VOL_STATE)
 
+    @property
     def is_fc_backed(self):
         return self.get_parm_value_bool(PV_FC_BACKED)
 
-    def get_description(self):
+    @property
+    def description(self):
         return self.get_parm_value(PV_VOL_DESC)
 
-    def get_loc_code(self):
+    @property
+    def loc_code(self):
         return self.get_parm_value(PV_LOC_CODE)
 
 
 class VirtualDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
 
-    def get_name(self):
+    @property
+    def name(self):
         return self.get_parm_value(DISK_NAME)
 
-    def get_label(self):
+    @property
+    def label(self):
         return self.get_parm_value(DISK_LABEL)
 
-    def get_capacity(self):
+    @property
+    def capacity(self):
         """Returns the capacity in GB (float)."""
         return float(self.get_parm_value(DISK_CAPACITY))
 
-    def get_udid(self):
+    @property
+    def udid(self):
         return self.get_parm_value(DISK_UDID)
