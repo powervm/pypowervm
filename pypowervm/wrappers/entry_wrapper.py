@@ -75,15 +75,17 @@ class Wrapper(object):
             root_elem.append(new_elem)
         # If it existed, we need to maintain the order in the tree.
 
-    def get_pvm_type(self):
+    @property
+    def pvm_type(self):
         """Object type of the element from the tag value of the attribute.
 
         (ManagedSystem, LogicalPartition, etc)
         """
         return self._element.tag  # May be None
 
+    @property
     @abc.abstractmethod
-    def get_type_and_uuid(self):
+    def type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
         This is useful for error messages, logging, etc.
@@ -168,7 +170,7 @@ class Wrapper(object):
                   "in object %(pvmobject)s") % {
                     "property_name": property_name,
                     "value": value,
-                    "pvmobject": self.get_type_and_uuid()})
+                    "pvmobject": self.type_and_uuid})
 
             LOG.error(message)
 
@@ -179,7 +181,7 @@ class Wrapper(object):
             _('The expected parameter of %(param)s was not found in '
               '%(identifier)s') % {
                 "param": param,
-                "identifier": self.get_type_and_uuid()})
+                "identifier": self.type_and_uuid})
         LOG.warn(error_message)
 
 
@@ -193,7 +195,8 @@ class EntryWrapper(Wrapper):
     def _element(self):
         return self._entry.element
 
-    def get_uuid(self):
+    @property
+    def uuid(self):
         """Returns the uuid of the entry."""
         if self._entry is None:
             return None
@@ -201,13 +204,14 @@ class EntryWrapper(Wrapper):
         uuid = self._entry.properties[c.UUID]
         return uuid
 
-    def get_type_and_uuid(self):
+    @property
+    def type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
         This is useful for error messages, logging, etc.
         """
-        entry_type = self.get_pvm_type()
-        uuid = self.get_uuid()
+        entry_type = self.pvm_type
+        uuid = self.uuid
 
         if entry_type is None:
             entry_type = "UnknownType"
@@ -224,12 +228,13 @@ class ElementWrapper(Wrapper):
     def __init__(self, element):
         self._element = element
 
-    def get_type_and_uuid(self):
+    @property
+    def type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
         This is useful for error messages, logging, etc.
         """
-        entry_type = self.get_pvm_type()
+        entry_type = self.pvm_type
 
         if entry_type is None:
             entry_type = "UnknownType"

@@ -41,7 +41,8 @@ EXPECTED_CURR_PROC_UNITS = 0.5
 EXPECTED_CURR_MIN_PROC_UNITS = 0.5
 EXPECTED_CURR_UNCAPPED_WEIGHT = 128
 EXPECTED_AVAIL_PRIORITY = 127
-EXPECTED_PROC_COMPAT_MODES = ('POWER6_Plus', 'default')
+EXPECTED_CURR_PROC_COMPAT_MODE = 'POWER6_Plus'
+EXPECTED_PENDING_PROC_COMPAT_MODE = 'default'
 EXPECTED_OPERATING_SYSTEM_VER = 'Linux/Red Hat 2.6.32-358.el6.ppc64 6.4'
 
 EXPECTED_CURRENT_SHARE_MODE = "uncapped"
@@ -195,11 +196,15 @@ class TestLogicalPartition(unittest.TestCase):
         else:
             wrapper = TestLogicalPartition._shared_wrapper
 
-        value = wrapper.__getattribute__(method_name)()
+        value = wrapper.__getattribute__(method_name)
+        if callable(value):
+            value = value()
         self.verify_equal(method_name, value, expected_value)
 
         bad_value = TestLogicalPartition._bad_wrapper.__getattribute__(
-            method_name)()
+            method_name)
+        if callable(bad_value):
+            bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
     def test_get_parm_value(self):
@@ -224,100 +229,103 @@ class TestLogicalPartition(unittest.TestCase):
         self.assertEqual(1, len(lpar_wrapper.get_cna_uris()))
 
     def test_get_state(self):
-        self.call_simple_getter("get_state", EXPECTED_LPAR_STATE, None)
+        self.call_simple_getter("state", EXPECTED_LPAR_STATE, None)
 
     def test_get_name(self):
-        self.call_simple_getter("get_name", SHARED_LPAR_NAME, None)
+        self.call_simple_getter("name", SHARED_LPAR_NAME, None)
 
     def test_get_id(self):
-        self.call_simple_getter("get_id", 9, ZERO_INT)
+        self.call_simple_getter("id", 9, ZERO_INT)
 
     def test_get_current_mem(self):
         self.call_simple_getter(
-            "get_current_mem", str(EXPECTED_CURR_MEM), ZERO_STR)
+            "current_mem", str(EXPECTED_CURR_MEM), ZERO_STR)
 
     def test_get_current_max_mem(self):
         self.call_simple_getter(
-            "get_current_max_mem", str(EXPECTED_CURR_MAX_MEM), ZERO_STR)
+            "current_max_mem", str(EXPECTED_CURR_MAX_MEM), ZERO_STR)
 
     def test_get_current_min_mem(self):
         self.call_simple_getter(
-            "get_current_min_mem", str(EXPECTED_CURR_MIN_MEM), ZERO_STR)
+            "current_min_mem", str(EXPECTED_CURR_MIN_MEM), ZERO_STR)
 
     def test_get_current_sharing_mode(self):
         self.call_simple_getter(
-            "get_current_sharing_mode", EXPECTED_CURRENT_SHARE_MODE, None)
+            "sharing_mode", EXPECTED_CURRENT_SHARE_MODE, None)
 
     def test_get_current_proc_mode(self):
         self.call_simple_getter(
-            "is_current_proc_mode_dedicated", "true", "false",
+            "current_proc_mode_is_dedicated", "true", "false",
             use_dedicated=True)
 
     def test_get_current_procs(self):
         self.call_simple_getter(
-            "get_current_procs", str(EXPECTED_CURR_PROCS), ZERO_STR,
+            "current_procs", str(EXPECTED_CURR_PROCS), ZERO_STR,
             use_dedicated=True)
 
     def test_get_current_max_procs(self):
         self.call_simple_getter(
-            "get_current_max_procs", str(EXPECTED_CURR_MAX_PROCS), ZERO_STR,
+            "current_max_procs", str(EXPECTED_CURR_MAX_PROCS), ZERO_STR,
             use_dedicated=True)
 
     def test_get_current_min_procs(self):
         self.call_simple_getter(
-            "get_current_min_procs", str(EXPECTED_CURR_MIN_PROCS), ZERO_STR,
+            "current_min_procs", str(EXPECTED_CURR_MIN_PROCS), ZERO_STR,
             use_dedicated=True)
 
     def test_get_current_vcpus(self):
         self.call_simple_getter(
-            "get_current_vcpus", str(EXPECTED_CURR_VCPU), ZERO_STR)
+            "current_vcpus", str(EXPECTED_CURR_VCPU), ZERO_STR)
 
     def test_get_current_max_vcpus(self):
         self.call_simple_getter(
-            "get_current_max_vcpus", str(EXPECTED_CURR_MAX_VCPU), ZERO_STR)
+            "current_max_vcpus", str(EXPECTED_CURR_MAX_VCPU), ZERO_STR)
 
     def test_get_current_min_vcpus(self):
         self.call_simple_getter(
-            "get_current_min_vcpus", str(EXPECTED_CURR_MIN_VCPU), ZERO_STR)
+            "current_min_vcpus", str(EXPECTED_CURR_MIN_VCPU), ZERO_STR)
 
     def test_get_current_proc_units(self):
         self.call_simple_getter(
-            "get_current_proc_units", str(EXPECTED_CURR_PROC_UNITS), ZERO_STR)
+            "current_proc_units", str(EXPECTED_CURR_PROC_UNITS), ZERO_STR)
 
     def test_get_current_max_proc_units(self):
         self.call_simple_getter(
-            "get_current_max_proc_units",
+            "current_max_proc_units",
             str(EXPECTED_CURR_MAX_PROC_UNITS), ZERO_STR)
 
     def test_get_current_min_proc_units(self):
         self.call_simple_getter(
-            "get_current_min_proc_units",
+            "current_min_proc_units",
             str(EXPECTED_CURR_MIN_PROC_UNITS), ZERO_STR)
 
     def test_get_curr_uncapped_weight(self):
         self.call_simple_getter(
-            "get_curr_uncapped_weight",
+            "current_uncapped_weight",
             str(EXPECTED_CURR_UNCAPPED_WEIGHT), ZERO_STR)
 
     def test_get_avail_priority(self):
         self.call_simple_getter(
-            "get_avail_priority", str(EXPECTED_AVAIL_PRIORITY), ZERO_STR)
+            "avail_priority", str(EXPECTED_AVAIL_PRIORITY), ZERO_STR)
 
     def test_get_proc_compat_modes(self):
         self.call_simple_getter(
-            "get_proc_compat_modes", EXPECTED_PROC_COMPAT_MODES, (None, None))
+            "proc_compat_mode", EXPECTED_CURR_PROC_COMPAT_MODE, None)
+        self.call_simple_getter(
+            "pending_proc_compat_mode", EXPECTED_PENDING_PROC_COMPAT_MODE,
+            None)
 
     def test_get_shared_proc_pool_id(self):
         self.call_simple_getter(
-            "get_shared_proc_pool_id", 0, 0)
+            "shared_proc_pool_id", 0, 0)
 
     def test_get_type(self):
         self.call_simple_getter(
-            "get_type", 'AIX/Linux', None)
+            "env", 'AIX/Linux', None)
 
     def test_get_operating_system(self):
         self.call_simple_getter(
-            "get_operating_system",
+            "operating_system",
             EXPECTED_OPERATING_SYSTEM_VER, 'Unknown')
 
 

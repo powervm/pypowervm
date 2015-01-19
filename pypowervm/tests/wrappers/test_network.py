@@ -32,11 +32,11 @@ class TestNetwork(unittest.TestCase):
         self.wrapper = net_br.NetworkBridge(nb)
 
     def test_pvid(self):
-        self.assertEqual(1, self.wrapper.get_pvid())
+        self.assertEqual(1, self.wrapper.pvid)
 
     def test_uuid(self):
         self.assertEqual(
-            '764f3423-04c5-3b96-95a3-4764065400bd', self.wrapper.get_uuid())
+            '764f3423-04c5-3b96-95a3-4764065400bd', self.wrapper.uuid)
 
     def test_virtual_network_uri_list(self):
         uri_list = self.wrapper.get_virtual_network_uri_list()
@@ -44,9 +44,9 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual('http', uri_list[0][:4])
 
     def test_load_groups(self):
-        prim_ld_grp = self.wrapper.get_prim_load_grp()
+        prim_ld_grp = self.wrapper.prim_load_grp
         self.assertIsNotNone(prim_ld_grp)
-        self.assertEqual(1, prim_ld_grp.get_pvid())
+        self.assertEqual(1, prim_ld_grp.pvid)
         self.assertEqual(1, len(prim_ld_grp.get_trunk_adapters()))
 
         addl_ld_grps = self.wrapper.get_addl_load_grps()
@@ -83,33 +83,33 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(1, len(seas))
 
         sea = seas[0]
-        self.assertEqual(1, sea.get_pvid())
+        self.assertEqual(1, sea.pvid)
 
     def test_sea_trunks(self):
         """Tests the trunk adapters on the SEA."""
         sea = self.wrapper.get_seas()[0]
 
         # The primary adapter testing
-        prim_t = sea.get_primary_adpt()
+        prim_t = sea.primary_adpt
         self.assertIsNotNone(prim_t)
-        self.assertEqual(1, prim_t.get_pvid())
+        self.assertEqual(1, prim_t.pvid)
         self.assertFalse(prim_t.has_tag_support())
         self.assertEqual(0, len(prim_t.get_tagged_vlans()))
-        self.assertEqual(2, prim_t.get_vswitch_id())
-        self.assertEqual('ent4', prim_t.get_dev_name())
-        self.assertEqual(1, prim_t.get_trunk_pri())
+        self.assertEqual(2, prim_t.vswitch_id)
+        self.assertEqual('ent4', prim_t.dev_name)
+        self.assertEqual(1, prim_t.trunk_pri)
 
         # The secondary adapter.
         addl_adpts = sea.get_addl_adpts()
         self.assertIsNotNone(addl_adpts)
         self.assertEqual(1, len(addl_adpts))
         addl_adpt = addl_adpts[0]
-        self.assertEqual(4094, addl_adpt.get_pvid())
+        self.assertEqual(4094, addl_adpt.pvid)
         self.assertTrue(addl_adpt.has_tag_support())
         self.assertEqual(12, len(addl_adpt.get_tagged_vlans()))
-        self.assertEqual(2, addl_adpt.get_vswitch_id())
-        self.assertEqual('ent5', addl_adpt.get_dev_name())
-        self.assertEqual(1, addl_adpt.get_trunk_pri())
+        self.assertEqual(2, addl_adpt.vswitch_id)
+        self.assertEqual('ent5', addl_adpt.dev_name)
+        self.assertEqual(1, addl_adpt.trunk_pri)
 
 if __name__ == "__main__":
     unittest.main()

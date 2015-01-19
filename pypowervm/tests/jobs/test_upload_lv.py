@@ -69,11 +69,11 @@ class TestUploadLV(unittest.TestCase):
 
         mock_create_file.assert_called_once_with(
             mock_adpt, 'test2', wc.BROKERED_DISK_IMAGE, self.v_uuid, f_size=50,
-            tdev_udid=n_vdisk.get_udid(), sha_chksum='abc123')
+            tdev_udid=n_vdisk.udid, sha_chksum='abc123')
         self.assertEqual('FakeText', f_uuid)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.3',
-                         n_vdisk.get_udid())
-        self.assertEqual('test2', n_vdisk.get_name())
+                         n_vdisk.udid)
+        self.assertEqual('test2', n_vdisk.name)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.jobs.upload_lv._create_file')

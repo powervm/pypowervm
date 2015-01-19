@@ -25,10 +25,12 @@ LOG = logging.getLogger(__name__)
 class ClientNetworkAdapter(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
-    def get_slot(self):
+    @property
+    def slot(self):
         return int(self.get_parm_value(c.VIR_SLOT_NUM))
 
-    def get_mac(self):
+    @property
+    def mac(self):
         """Returns the Mac Address for the adapter.
 
         Typical format would be: AABBCCDDEEFF
@@ -36,6 +38,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         """
         return self.get_parm_value(c.MAC_ADDRESS)
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Port VLAN ID."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)

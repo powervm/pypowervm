@@ -47,15 +47,15 @@ class TestVIOSWrapper(unittest.TestCase):
 
     def test_license_accept(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.license_accepted())
+        self.assertEqual(True, vios_wrapper.is_license_accepted)
 
     def test_is_running(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.is_running())
+        self.assertEqual(True, vios_wrapper.is_running)
 
     def test_is_rmc_active(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.is_rmc_active())
+        self.assertEqual(True, vios_wrapper.is_rmc_active)
 
 
 class TestViosMappings(unittest.TestCase):
@@ -111,33 +111,33 @@ class TestViosMappings(unittest.TestCase):
         found_client_uri = False
         static_map = None
         for mapping in mappings:
-            if (mapping.get_client_lpar_href() and
-                    mapping.get_backing_storage() is not None):
+            if (mapping.client_lpar_href and
+                    mapping.backing_storage is not None):
                 found_client_uri = True
                 static_map = mapping
         self.assertTrue(found_client_uri)
 
         # We'll use the previous mapping as a baseline for further validation
-        self.assertIsNotNone(static_map.get_client_adapter())
-        self.assertIsNotNone(static_map.get_backing_storage())
-        self.assertIsNotNone(static_map.get_server_adapter())
+        self.assertIsNotNone(static_map.client_adapter)
+        self.assertIsNotNone(static_map.backing_storage)
+        self.assertIsNotNone(static_map.server_adapter)
 
         # Deeper check on each of these.
-        ca = static_map.get_client_adapter()
-        self.assertIsNotNone(ca.get_lpar_id())
-        self.assertTrue(ca.is_varied_on())
-        self.assertIsNotNone(ca.get_slot_number())
-        self.assertIsNotNone(ca.get_loc_code())
-        self.assertEqual(ca.get_type(), 'Client')
+        ca = static_map.client_adapter
+        self.assertIsNotNone(ca.lpar_id)
+        self.assertTrue(ca.is_varied_on)
+        self.assertIsNotNone(ca.slot_number)
+        self.assertIsNotNone(ca.loc_code)
+        self.assertEqual(ca.side, 'Client')
 
-        sa = static_map.get_server_adapter()
-        self.assertIsNotNone(sa.get_name())
-        self.assertIsNotNone(sa.get_backing_dev_name())
-        self.assertIsNotNone(sa.get_udid())
-        self.assertEqual(sa.get_type(), 'Server')
-        self.assertTrue(sa.is_varied_on())
-        self.assertIsNotNone(sa.get_slot_number())
-        self.assertIsNotNone(sa.get_loc_code())
+        sa = static_map.server_adapter
+        self.assertIsNotNone(sa.name)
+        self.assertIsNotNone(sa.backing_dev_name)
+        self.assertIsNotNone(sa.udid)
+        self.assertEqual(sa.side, 'Server')
+        self.assertTrue(sa.is_varied_on)
+        self.assertIsNotNone(sa.slot_number)
+        self.assertIsNotNone(sa.loc_code)
 
     def test_get_vfc_mappings(self):
         mappings = self.vios_obj.get_vfc_mappings()
@@ -146,41 +146,41 @@ class TestViosMappings(unittest.TestCase):
         found_client_uri = False
         static_map = None
         for mapping in mappings:
-            if mapping.get_client_lpar_href():
+            if mapping.client_lpar_href:
                 found_client_uri = True
                 static_map = mapping
         self.assertTrue(found_client_uri)
 
         # We'll use the previous mapping as a baseline for further validation
-        self.assertIsNotNone(static_map.get_client_adapter())
-        self.assertIsNotNone(static_map.get_backing_port())
-        self.assertIsNotNone(static_map.get_server_adapter())
+        self.assertIsNotNone(static_map.client_adapter)
+        self.assertIsNotNone(static_map.backing_port)
+        self.assertIsNotNone(static_map.server_adapter)
 
         # Deeper check on each of these.
-        ca = static_map.get_client_adapter()
-        self.assertIsNotNone(ca.get_wwpns())
-        self.assertIsNotNone(ca.get_lpar_id())
-        self.assertTrue(ca.is_varied_on())
-        self.assertIsNotNone(ca.get_slot_number())
-        self.assertIsNotNone(ca.get_loc_code())
-        self.assertEqual(ca.get_type(), 'Client')
+        ca = static_map.client_adapter
+        self.assertIsNotNone(ca.wwpns)
+        self.assertIsNotNone(ca.lpar_id)
+        self.assertTrue(ca.is_varied_on)
+        self.assertIsNotNone(ca.slot_number)
+        self.assertIsNotNone(ca.loc_code)
+        self.assertEqual(ca.side, 'Client')
 
-        bp = static_map.get_backing_port()
-        self.assertIsNotNone(bp.get_loc_code())
-        self.assertIsNotNone(bp.get_name())
-        self.assertIsNotNone(bp.get_udid())
-        self.assertIsNotNone(bp.get_wwpn())
-        self.assertIsNotNone(bp.get_available_ports())
-        self.assertIsNotNone(bp.get_total_ports())
+        bp = static_map.backing_port
+        self.assertIsNotNone(bp.loc_code)
+        self.assertIsNotNone(bp.name)
+        self.assertIsNotNone(bp.udid)
+        self.assertIsNotNone(bp.wwpn)
+        self.assertIsNotNone(bp.available_ports)
+        self.assertIsNotNone(bp.total_ports)
 
-        sa = static_map.get_server_adapter()
-        self.assertIsNotNone(sa.get_name())
-        self.assertIsNotNone(sa.get_map_port())
-        self.assertIsNotNone(sa.get_udid())
-        self.assertEqual(sa.get_type(), 'Server')
-        self.assertTrue(sa.is_varied_on())
-        self.assertIsNotNone(sa.get_slot_number())
-        self.assertIsNotNone(sa.get_loc_code())
+        sa = static_map.server_adapter
+        self.assertIsNotNone(sa.name)
+        self.assertIsNotNone(sa.map_port)
+        self.assertIsNotNone(sa.udid)
+        self.assertEqual(sa.side, 'Server')
+        self.assertTrue(sa.is_varied_on)
+        self.assertIsNotNone(sa.slot_number)
+        self.assertIsNotNone(sa.loc_code)
 
 if __name__ == "__main__":
     unittest.main()

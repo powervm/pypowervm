@@ -31,7 +31,8 @@ class NetworkBridge(ewrap.EntryWrapper):
     Adapters belonging to different Virtual I/O Servers.
     """
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
@@ -51,7 +52,8 @@ class NetworkBridge(ewrap.EntryWrapper):
             sea_list.append(SharedEthernetAdapter(sea_elem))
         return sea_list
 
-    def get_prim_load_grp(self):
+    @property
+    def prim_load_grp(self):
         """Returns the primary Load Group for the Network Bridge."""
         return self._get_load_grps()[0]
 
@@ -97,7 +99,7 @@ class NetworkBridge(ewrap.EntryWrapper):
         ld_grps = self._get_load_grps()
 
         # First load group is the primary
-        if ld_grps[0].get_pvid() == vlan:
+        if ld_grps[0].pvid == vlan:
             return True
 
         # Now walk through all the load groups and check the adapters' vlans
@@ -117,7 +119,8 @@ class NetworkBridge(ewrap.EntryWrapper):
 class SharedEthernetAdapter(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
@@ -128,7 +131,8 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         """
         return self._get_trunks()[1:]
 
-    def get_primary_adpt(self):
+    @property
+    def primary_adpt(self):
         """Returns the primary TrunkAdapter for this Shared Ethernet Adapter.
 
         Can not be None.
@@ -151,11 +155,13 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
 class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
-    def get_dev_name(self):
+    @property
+    def dev_name(self):
         """Returns the name of the device as represented by the hosting VIOS.
 
         If RMC is down, will not be available.
@@ -177,11 +183,13 @@ class TrunkAdapter(ewrap.ElementWrapper):
             return []
         return [int(vid) for vid in vids.split()]
 
-    def get_vswitch_id(self):
+    @property
+    def vswitch_id(self):
         """Returns the virtual switch identifier."""
         return int(self.get_parm_value_int(c.VIRTUAL_SWITCH_ID))
 
-    def get_trunk_pri(self):
+    @property
+    def trunk_pri(self):
         """Returns the trunk priority of the adapter."""
         return int(self.get_parm_value_int(c.TRUNK_PRIORITY))
 
@@ -193,7 +201,8 @@ class LoadGroup(ewrap.ElementWrapper):
     Trunk Adapters, each with their own unique Trunk Priority.
     """
 
-    def get_pvid(self):
+    @property
+    def pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
