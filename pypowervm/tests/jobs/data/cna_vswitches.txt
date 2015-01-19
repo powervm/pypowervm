@@ -1,0 +1,55 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh cna_vswitches.txt
+#
+####################################################
+INFO{
+{'comment': 'Use for Client Network Adapter Testing.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch'}
+END OF SECTION}
+HEADERS{
+{'content-length': '31567', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000qnsHzMw-UAQPrFwtNaS5qcC:945f5b75-c329-4322-89cf-e90b74473dc9; Path=/; Secure; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Wed, 05 Feb 2014 13:53:20 GMT', 'etag': '378412626', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Wed, 05 Feb 2014 13:53:19 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>b9eb81ac-a98d-3b65-a055-431219689198</id>
+    <updated>2015-01-20T00:11:02.465Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>4d9735ae-feaf-32c2-a1bc-102026df9168</id>
+        <title>VirtualSwitch</title>
+        <published>2015-01-20T00:11:02.740Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/4d9735ae-feaf-32c2-a1bc-102026df9168"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-465528264</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSwitch">
+            <VirtualSwitch:VirtualSwitch xmlns:VirtualSwitch="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4d9735ae-feaf-32c2-a1bc-102026df9168</AtomID>
+            <AtomCreated>1421712662473</AtomCreated>
+        </Atom>
+    </Metadata>
+    <SwitchID kb="ROR" kxe="false">0</SwitchID>
+    <SwitchMode kxe="false" kb="CUD">Veb</SwitchMode>
+    <SwitchName kb="CUD" kxe="false">ETHERNET0(Default)</SwitchName>
+    <VirtualNetworks kb="CUD" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/f3259c07-1db9-3aac-a2b5-eeb72a0388f8" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/c4e38a65-221d-3e4e-8151-601dae8f5b66" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/cbcbf31c-c8e2-30b3-9dd9-a76cd4aa6e2f" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/75a3560c-86d2-3a95-a7b0-ae37cd09e863" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/1f5dbf15-e646-3f5b-8599-63969ff7457e" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualNetwork/500b7432-a178-3805-8c96-295598a3df1b" rel="related"/>
+    </VirtualNetworks>
+</VirtualSwitch:VirtualSwitch>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

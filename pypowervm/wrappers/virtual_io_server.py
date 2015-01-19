@@ -64,15 +64,13 @@ _NEW_SERVER_ADAPTER = (
     adpt.Element(MAP_SERVER_ADAPTER,
                  attrib=c.DEFAULT_SCHEMA_ATTR,
                  children=[adpt.Element(VADPT_TYPE, text='Server'),
-                           adpt.Element('UseNextAvailableSlotID',
-                                        text='true')]))
+                           adpt.Element(c.NEXT_SLOT, text='true')]))
 
 _NEW_CLIENT_ADAPTER = (
     adpt.Element(MAP_CLIENT_ADAPTER,
                  attrib=c.DEFAULT_SCHEMA_ATTR,
                  children=[adpt.Element(VADPT_TYPE, text='Client'),
-                           adpt.Element('UseNextAvailableSlotID',
-                                        text='true')]))
+                           adpt.Element(c.NEXT_SLOT, text='true')]))
 
 
 def crt_scsi_map_to_vdisk(adapter, host_uuid, client_lpar_uuid, disk_name):

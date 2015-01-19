@@ -20,6 +20,24 @@ from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.network as net_br
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
+VSWITCH_FEED_FILE = 'fake_vswitch_feed.txt'
+
+
+class TestVSwitch(unittest.TestCase):
+
+    def setUp(self):
+        super(TestVSwitch, self).setUp()
+        vswitches = pvmhttp.load_pvm_resp(VSWITCH_FEED_FILE).get_response()
+        self.wrapper = net_br.VirtualSwitch(vswitches.feed.entries[0])
+
+    def test_data(self):
+        self.assertEqual('ETHERNET0', self.wrapper.get_name())
+        self.assertEqual(0, self.wrapper.get_switch_id())
+        self.assertEqual('Veb', self.wrapper.get_mode())
+        self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+                         '4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/'
+                         '4d9735ae-feaf-32c2-a1bc-102026df9168',
+                         self.wrapper.get_href())
 
 
 class TestNetwork(unittest.TestCase):
