@@ -42,6 +42,8 @@ VOL_GROUP = 'VolumeGroup'
 JOBS = 'jobs'
 VSWITCH = 'VirtualSwitch'
 
+NEXT_SLOT = 'UseNextAvailableSlotID'
+
 # PVM adapter xpaths
 PARTITION_NAME = ROOT + 'PartitionName'
 PARTITION_ID = ROOT + 'PartitionID'

@@ -21,9 +21,65 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
 
+VSW_ROOT = 'VirtualSwitch'
+VSW_NAME = 'SwitchName'
+VSW_ID = 'SwitchID'
+VSW_MODE = 'SwitchMode'
+VSW_DEFAULT_VSWITCH = 'ETHERNET0'
+_VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
+
+NB_PVID = 'PortVLANID'
+NB_VNETS = 'VirtualNetworks'
+NB_SEAS = 'SharedEthernetAdapters'
+NB_SEA = 'SharedEthernetAdapter'
+NB_LG = 'LoadGroup'
+NB_LGS = 'LoadGroups'
+
+SEA_ROOT = 'SharedEthernetAdapter'
+SEA_TRUNKS = 'TrunkAdapters'
+
+TA_ROOT = 'TrunkAdapter'
+TA_PVID = 'PortVLANID'
+TA_DEV_NAME = 'DeviceName'
+TA_TAG_SUPP = 'TaggedVLANSupported'
+TA_VLAN_IDS = 'TaggedVLANIDs'
+TA_VS_ID = 'VirtualSwitchID'
+TA_TRUNK_PRI = 'TrunkPriority'
+
+LG_ROOT = 'LoadGroup'
+LG_PVID = 'PortVLANID'
+LG_TRUNKS = 'TrunkAdapters'
+LG_VNETS = 'VirtualNetworks'
+
+
+class VirtualSwitch(ewrap.EntryWrapper):
+    """Wraps the Virtual Switch entries.
+
+    The virtual switch in PowerVM is an independent plane of traffic.  If
+    Ethernet packets are traveling on different virtual switches, the only
+    time they can communicate is on the physical network plane (or if two
+    logical adapters are bridged together).  They are important for data
+    plane segregation.
+    """
+
+    def get_name(self):
+        """The name associated with the Virtual Switch."""
+        name = self.get_parm_value(VSW_NAME)
+        if name == _VSW_DEFAULT_VSWITCH_API:
+            return VSW_DEFAULT_VSWITCH
+        return name
+
+    def get_switch_id(self):
+        """The internal ID (not UUID) for the Virtual Switch."""
+        return self.get_parm_value_int(VSW_ID)
+
+    def get_mode(self):
+        """The mode that the switch is in (ex. VEB)."""
+        return self.get_parm_value(VSW_MODE)
+
 
 class NetworkBridge(ewrap.EntryWrapper):
-    """Wrapper object for the NetworkBridge element.
+    """Wrapper object for the NetworkBridge entry.
 
     A NetworkBridge represents an aggregate entity comprising Shared
     Ethernet Adapters.  If Failover or Load-Balancing is in use, the
@@ -33,11 +89,11 @@ class NetworkBridge(ewrap.EntryWrapper):
 
     def get_pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
-        return self.get_parm_value_int(c.PORT_VLAN_ID)
+        return self.get_parm_value_int(NB_PVID)
 
     def get_virtual_network_uri_list(self):
         """Returns a list of the Virtual Network URIs."""
-        virt_net_list = self._entry.element.find(c.VIRTUAL_NETWORKS)
+        virt_net_list = self._entry.element.find(NB_VNETS)
         uri_resp_list = []
         for virt_net in virt_net_list.findall(c.LINK):
             uri_resp_list.append(virt_net.get('href'))
@@ -45,7 +101,7 @@ class NetworkBridge(ewrap.EntryWrapper):
 
     def get_seas(self):
         """Returns a list of SharedEthernetAdapter wrappers."""
-        sea_elem_list = self._entry.element.findall(c.SHARED_ETHERNET_ADAPTER)
+        sea_elem_list = self._entry.element.findall(NB_SEAS + c.DELIM + NB_SEA)
         sea_list = []
         for sea_elem in sea_elem_list:
             sea_list.append(SharedEthernetAdapter(sea_elem))
@@ -69,7 +125,7 @@ class NetworkBridge(ewrap.EntryWrapper):
         The first element is the primary Load Group.  All others are
         subordinates.
         """
-        ld_grp_list = self._entry.element.findall(c.LOAD_GROUP)
+        ld_grp_list = self._entry.element.findall(NB_LGS + c.DELIM + NB_LG)
         ld_grps = []
         for ld_grp in ld_grp_list:
             ld_grps.append(LoadGroup(ld_grp))
@@ -141,7 +197,7 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         The first is the primary adapter.  All others are the additional
         adapters.
         """
-        trunk_elem_list = self._element.findall(c.TRUNK_ADAPTER)
+        trunk_elem_list = self._element.findall(SEA_TRUNKS + c.DELIM + TA_ROOT)
         trunks = []
         for trunk_elem in trunk_elem_list:
             trunks.append(TrunkAdapter(trunk_elem))
@@ -153,18 +209,18 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
     def get_pvid(self):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
-        return self.get_parm_value_int(c.PORT_VLAN_ID)
+        return self.get_parm_value_int(TA_PVID)
 
     def get_dev_name(self):
         """Returns the name of the device as represented by the hosting VIOS.
 
         If RMC is down, will not be available.
         """
-        return self.get_parm_value(c.DEVICE_NAME)
+        return self.get_parm_value(TA_DEV_NAME)
 
     def has_tag_support(self):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
-        return self.get_parm_value_bool(c.TAGGED_VLAN_SUPPORTED)
+        return self.get_parm_value_bool(TA_TAG_SUPP)
 
     def get_tagged_vlans(self):
         """Returns the tagged VLAN IDs that are allowed to pass through.
@@ -172,18 +228,18 @@ class TrunkAdapter(ewrap.ElementWrapper):
         Assumes has_tag_support() returns True.  If not, an empty list will
         be returned.
         """
-        vids = self.get_parm_value(c.TAGGED_VLAN_IDS)
+        vids = self.get_parm_value(TA_VLAN_IDS)
         if vids is None:
             return []
         return [int(vid) for vid in vids.split()]
 
     def get_vswitch_id(self):
         """Returns the virtual switch identifier."""
-        return int(self.get_parm_value_int(c.VIRTUAL_SWITCH_ID))
+        return int(self.get_parm_value_int(TA_VS_ID))
 
     def get_trunk_pri(self):
         """Returns the trunk priority of the adapter."""
-        return int(self.get_parm_value_int(c.TRUNK_PRIORITY))
+        return int(self.get_parm_value_int(TA_TRUNK_PRI))
 
 
 class LoadGroup(ewrap.ElementWrapper):
@@ -195,7 +251,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
     def get_pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
-        return self.get_parm_value_int(c.PORT_VLAN_ID)
+        return self.get_parm_value_int(LG_PVID)
 
     def get_trunk_adapters(self):
         """Returns the Trunk Adapters for the Load Group.
@@ -205,7 +261,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
         :return: list of TrunkAdapter objects.
         """
-        trunk_elem_list = self._element.findall(c.TRUNK_ADAPTER)
+        trunk_elem_list = self._element.findall(LG_TRUNKS + c.DELIM + TA_ROOT)
         trunks = []
         for trunk_elem in trunk_elem_list:
             trunks.append(TrunkAdapter(trunk_elem))
@@ -213,7 +269,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
     def get_virtual_network_uri_list(self):
         """Returns a list of the Virtual Network URIs."""
-        virt_net_list = self._element.find(c.VIRTUAL_NETWORKS)
+        virt_net_list = self._element.find(LG_VNETS)
         uri_resp_list = []
         for virt_net in virt_net_list.findall(c.LINK):
             uri_resp_list.append(virt_net.get('href'))

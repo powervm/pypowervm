@@ -184,3 +184,15 @@ def convert_bytes_to_gb(bytes_, low_value=.0001):
     if gb_size < low_value:
         return low_value
     return gb_size
+
+
+def sanitize_mac_for_api(mac):
+    """Converts a generalized mac address to one for the API.
+
+    Takes any standard mac (case-insensitive, with or without colons) and
+    formats it to uppercase and removes colons.  This is the format for
+    the API.
+    :param mac: The input mac.
+    :returns: The sanitized mac.
+    """
+    return mac.replace(':', '').upper()
