@@ -188,12 +188,17 @@ class Wrapper(object):
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""
 
-    def __init__(self, entry):
+    def __init__(self, entry, etag=None):
         self._entry = entry
+        self._etag = etag
 
     @property
     def _element(self):
         return self._entry.element
+
+    @property
+    def etag(self):
+        return self._etag
 
     @property
     def href(self):
