@@ -188,12 +188,26 @@ class Wrapper(object):
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""
 
-    def __init__(self, entry):
+    def __init__(self, entry, etag=None):
         self._entry = entry
+        self._etag = etag
+
+    @classmethod
+    def load_from_response(cls, resp):
+        if resp.entry is None:
+            raise KeyError
+
+        etag = resp.headers['etag']
+        wrap = cls(resp.entry, etag=etag)
+        return wrap
 
     @property
     def _element(self):
         return self._entry.element
+
+    @property
+    def etag(self):
+        return self._etag
 
     @property
     def href(self):
