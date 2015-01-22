@@ -123,10 +123,10 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                     LOG.exception(_('Error: %s') % emsg)
                     if suffix == c.SUFFIX_PARM_POWER_OFF:
                         raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=lpar.get_name())
+                                                     lpar_nm=lpar.name)
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=lpar.get_name())
+                                                    lpar_nm=lpar.name)
             except pexc.JobRequestFailed as error:
                 emsg = six.text_type(error)
                 LOG.exception(_('Error: %s') % emsg)
@@ -141,14 +141,14 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                         force_immediate = True
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=lpar.get_name())
+                                                     lpar_nm=lpar.name)
                 else:
                     # If already powered on, don't send exception
                     if 'HSCL3681' in emsg:
                         complete = True
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=lpar.get_name())
+                                                    lpar_nm=lpar.name)
 
     # Invalidate the LPARentry in the adapter cache so the consumers get
     # the current LPAR state by forcing a subsequent read. Feeds must be
@@ -162,5 +162,5 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
         except Exception as e:
             LOG.exception(_('Error invalidating adapter cache for LPAR '
                             ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %
-                          {'lpar_name': lpar.get_name(), 'lpar_uuid': uuid,
+                          {'lpar_name': lpar.name, 'lpar_uuid': uuid,
                            'exc': six.text_type(e)})
