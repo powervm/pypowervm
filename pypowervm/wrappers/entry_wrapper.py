@@ -194,12 +194,29 @@ class EntryWrapper(Wrapper):
 
     @classmethod
     def load_from_response(cls, resp):
-        if resp.entry is None:
-            raise KeyError
+        """Loads an entry (or list of entries) from a response.
 
-        etag = resp.headers['etag']
-        wrap = cls(resp.entry, etag=etag)
-        return wrap
+        If the response has a single entry, then a single entry will be
+        returned.  This is NOT a list.
+
+        If the response has a feed, a List of entries will be returned.
+
+        :param resp: The response from an adapter read request.
+        :returns: A list of wrappers if a Feed.  A single wrapper if single
+                  entry.
+        """
+        if resp.entry is not None:
+            etag = resp.headers['etag']
+            wrap = cls(resp.entry, etag=etag)
+            return wrap
+        elif resp.feed is not None:
+            etag = resp.headers['etag']
+            wraps = []
+            for entry in resp.feed.entries:
+                wraps.append(cls(entry, etag=etag))
+            return wraps
+        else:
+            raise KeyError
 
     @property
     def _element(self):

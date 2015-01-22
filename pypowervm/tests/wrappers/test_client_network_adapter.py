@@ -28,7 +28,8 @@ class TestClientNetworkAdapterWrapper(unittest.TestCase):
         super(TestClientNetworkAdapterWrapper, self).setUp()
 
         cna_resp = pvmhttp.load_pvm_resp(CNA_FILE).get_response()
-        self.cna = cna.ClientNetworkAdapter(cna_resp.entry)
+        self.cna = cna.ClientNetworkAdapter.load_from_response(cna_resp)
+        self.assertIsNotNone(self.cna.etag)
 
     def tearDown(self):
         super(TestClientNetworkAdapterWrapper, self).tearDown()
