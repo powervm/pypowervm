@@ -1,0 +1,45 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh upload_file.txt
+#
+####################################################
+INFO{
+{'comment': 'A file get', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'File/6233b070-31cc-4b57-99bd-37f80e845de9'}
+END OF SECTION}
+HEADERS{
+{'content-length': '31567', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000qnsHzMw-UAQPrFwtNaS5qcC:945f5b75-c329-4322-89cf-e90b74473dc9; Path=/; Secure; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Wed, 05 Feb 2014 13:53:20 GMT', 'etag': '378412626', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Wed, 05 Feb 2014 13:53:19 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>6233b070-31cc-4b57-99bd-37f80e845de9</id>
+    <title>File</title>
+    <published>2015-01-23T02:53:59.301Z</published>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=File">
+        <File:File xmlns:File="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6233b070-31cc-4b57-99bd-37f80e845de9</AtomID>
+            <AtomCreated>1421385014513</AtomCreated>
+        </Atom>
+    </Metadata>
+    <Filename kb="COR" kxe="false">boot_c3f7b1e7</Filename>
+    <DateModified kb="ROR" kxe="false">1421385016137</DateModified>
+    <InternetMediaType kb="COR" kxe="false">application/octet-stream</InternetMediaType>
+    <FileUUID kb="ROR" kxe="false">6233b070-31cc-4b57-99bd-37f80e845de9</FileUUID>
+    <ExpectedFileSizeInBytes kb="COD" kxe="false">4550656</ExpectedFileSizeInBytes>
+    <CurrentFileSizeInBytes kb="ROR" kxe="false">4550656</CurrentFileSizeInBytes>
+    <FileEnumType kb="COR" kxe="false">BROKERED_DISK_IMAGE</FileEnumType>
+    <TargetVirtualIOServerUUID kb="COR" kxe="false">14B854F7-42CE-4FF0-BD57-1D117054E701</TargetVirtualIOServerUUID>
+    <TargetDeviceUniqueDeviceID kxe="false" kb="COR">0300f8d6de00004b000000014a54555cd9.17</TargetDeviceUniqueDeviceID>
+</File:File>
+    </content>
+</entry>
+
+
+END OF SECTION}

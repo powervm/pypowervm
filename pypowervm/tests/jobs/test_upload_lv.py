@@ -22,6 +22,7 @@ from pypowervm import exceptions as exc
 from pypowervm.jobs import upload_lv
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.constants as wc
+from pypowervm.wrappers import vios_file as vf
 
 import unittest
 
@@ -29,6 +30,7 @@ import unittest
 VIOS_FILE = 'upload_vios.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
+UPLOADED_FILE = 'upload_file.txt'
 
 
 class TestUploadLV(unittest.TestCase):
@@ -48,7 +50,7 @@ class TestUploadLV(unittest.TestCase):
         f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
                                        f_size=50)
 
-        self.assertEqual('FakeText', f_uuid)
+        self.assertEqual('6233b070-31cc-4b57-99bd-37f80e845de9', f_uuid)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.jobs.upload_lv._create_file')
@@ -70,7 +72,7 @@ class TestUploadLV(unittest.TestCase):
         mock_create_file.assert_called_once_with(
             mock_adpt, 'test2', wc.BROKERED_DISK_IMAGE, self.v_uuid, f_size=50,
             tdev_udid=n_vdisk.udid, sha_chksum='abc123')
-        self.assertEqual('FakeText', f_uuid)
+        self.assertEqual('6233b070-31cc-4b57-99bd-37f80e845de9', f_uuid)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.3',
                          n_vdisk.udid)
         self.assertEqual('test2', n_vdisk.name)
@@ -127,7 +129,5 @@ class TestUploadLV(unittest.TestCase):
 
     def _fake_meta(self):
         """Returns a fake meta class for the _create_file mock."""
-        class FakeMeta():
-            def findtext(self, text):
-                return "FakeText"
-        return FakeMeta()
+        resp = self._load_file(UPLOADED_FILE)
+        return vf.File.load_from_response(resp)
