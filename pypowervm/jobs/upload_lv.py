@@ -16,11 +16,10 @@
 
 import math
 
-from pypowervm import adapter as a
-from pypowervm import const as c
 from pypowervm import exceptions as exc
 from pypowervm import util
 from pypowervm.wrappers import constants as wc
+from pypowervm.wrappers import vios_file as vf
 from pypowervm.wrappers import volume_group as vg
 
 FILE_UUID = 'FileUUID'
@@ -89,19 +88,19 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
 
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
-    f_meta = _create_file(adapter, d_name, wc.BROKERED_DISK_IMAGE, v_uuid,
-                          f_size=d_size, tdev_udid=n_vdisk.udid,
-                          sha_chksum=sha_chksum)
+    vio_file = _create_file(adapter, d_name, wc.BROKERED_DISK_IMAGE, v_uuid,
+                            f_size=d_size, tdev_udid=n_vdisk.udid,
+                            sha_chksum=sha_chksum)
 
     # Finally, upload the file
-    adapter.upload_file(f_meta, d_stream)
+    adapter.upload_file(vio_file._entry.element, d_stream)
 
-    f_uuid = f_meta.findtext(FILE_UUID)
+    f_uuid = vio_file.uuid
     return f_uuid, n_vdisk
 
 
-def upload_vopt(adapter, v_uuid, d_stream, f_name,
-                f_size=None, sha_chksum=None):
+def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
+                sha_chksum=None):
     """Upload a file/stream into a virtual media repository on the VIOS.
 
     :param adapter: The adapter to talk over the API.
@@ -117,16 +116,13 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name,
     :returns: The file's UUID once uploaded.
     """
     # First step is to create the 'file' on the system.
-    f_meta = _create_file(adapter, f_name, wc.BROKERED_MEDIA_ISO, v_uuid,
-                          sha_chksum, f_size)
+    vio_file = _create_file(adapter, f_name, wc.BROKERED_MEDIA_ISO, v_uuid,
+                            sha_chksum, f_size)
 
     # Next, upload the file
-    adapter.upload_file(f_meta, d_stream)
+    adapter.upload_file(vio_file._entry.element, d_stream)
 
-    # Determine the UUID
-    f_uuid = f_meta.findtext(FILE_UUID)
-
-    return f_uuid
+    return vio_file.uuid
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
@@ -145,38 +141,11 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     :param f_size: (OPTIONAL) The size of the file to upload.  Useful for
                    integrity checks.
     :param tdev_udid: The device UDID that the file will back into.
-    :returns: The Element that represents the newly created File.
+    :returns: The File Wrapper
     """
-    # Metadata needs to be in a specific order.  These are required
-    metadata = [
-        a.Element('Filename', ns=c.WEB_NS, text=f_name),
-        a.Element('InternetMediaType', ns=c.WEB_NS,
-                  text='application/octet-stream')
-    ]
-
-    # Optionals should not be included in the Element if None.
-    if sha_chksum:
-        metadata.append(a.Element('SHA256', ns=c.WEB_NS, text=sha_chksum))
-
-    if f_size:
-        metadata.append(a.Element('ExpectedFileSizeInBytes', ns=c.WEB_NS,
-                                  text=str(f_size)))
-
-    # These are required
-    metadata.append(a.Element('FileEnumType', ns=c.WEB_NS,
-                              text=f_type))
-    metadata.append(a.Element('TargetVirtualIOServerUUID', ns=c.WEB_NS,
-                              text=v_uuid))
-
-    # Optical media doesn't need to cite a target dev for file upload
-    if tdev_udid:
-        metadata.append(a.Element('TargetDeviceUniqueDeviceID', ns=c.WEB_NS,
-                                  text=tdev_udid))
-
-    # Metadata about the file done.  Add that to a root element.
-    fd = a.Element('File', ns=c.WEB_NS, attrib=wc.DEFAULT_SCHEMA_ATTR,
-                   children=metadata)
+    fd = vf.crt_file(f_name, f_type, v_uuid, sha_chksum=sha_chksum,
+                     f_size=f_size, tdev_udid=tdev_udid)
 
     # Create the file.
-    fmeta = adapter.create(fd, 'File', service='web')
-    return fmeta.entry.element
+    resp = adapter.create(fd, vf.FILE_ROOT, service='web')
+    return vf.File.load_from_response(resp)
