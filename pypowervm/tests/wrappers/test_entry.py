@@ -38,11 +38,31 @@ class TestEntryWrapper(unittest.TestCase):
         resp = apt.Response('reqmethod', 'reqpath', 'status',
                             'reason', dict(etag=etag))
 
-        # Entry is not set, so expect an exception
+        # Entry or Feed is not set, so expect an exception
         self.assertRaises(KeyError,
                           ewrap.EntryWrapper.load_from_response, resp)
 
+        # Set an entry...
         resp.entry = 'entry'
+
+        # Run
         ew = ewrap.EntryWrapper.load_from_response(resp)
+
+        # Validate
         self.assertEqual('entry', ew._entry)
         self.assertEqual(etag, ew.etag)
+
+        # Wipe our entry, add feed.
+        resp.entry = None
+        resp.feed = apt.Feed([], ['entry', 'entry2'])
+
+        # Run
+        ew = ewrap.EntryWrapper.load_from_response(resp)
+
+        # Validate
+        self.assertEqual('entry', ew[0]._entry)
+        self.assertEqual('entry2', ew[1]._entry)
+
+        # These are none for now.
+        self.assertIsNone(ew[0].etag)
+        self.assertIsNone(ew[1].etag)
