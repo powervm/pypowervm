@@ -33,7 +33,7 @@ class TestEntryWrapper(unittest.TestCase):
         ew = ewrap.EntryWrapper('fake_entry')
         self.assertEqual(None, ew.etag)
 
-    def test_load(self):
+    def test_load_fail(self):
         etag = '1234'
         resp = apt.Response('reqmethod', 'reqpath', 'status',
                             'reason', dict(etag=etag))
@@ -42,7 +42,34 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertRaises(KeyError,
                           ewrap.EntryWrapper.load_from_response, resp)
 
+    def test_load_entry(self):
+        # Setup
+        etag = '1234'
+        resp = apt.Response('reqmethod', 'reqpath', 'status',
+                            'reason', dict(etag=etag))
         resp.entry = 'entry'
+
+        # Run
         ew = ewrap.EntryWrapper.load_from_response(resp)
+
+        # Validate
         self.assertEqual('entry', ew._entry)
         self.assertEqual(etag, ew.etag)
+
+    def test_load_feed(self):
+        # Setup
+        etag = '1234'
+        resp = apt.Response('reqmethod', 'reqpath', 'status',
+                            'reason', dict(etag=etag))
+        resp.feed = apt.Feed([], ['entry', 'entry2'])
+
+        # Exec.
+        ew = ewrap.EntryWrapper.load_from_response(resp)
+
+        # Validate
+        self.assertEqual('entry', ew[0]._entry)
+        self.assertEqual('entry2', ew[1]._entry)
+
+        # These are none for now.
+        self.assertIsNone(ew[0].etag)
+        self.assertIsNone(ew[1].etag)
