@@ -207,7 +207,10 @@ class EntryWrapper(Wrapper):
                   entry.
         """
         if resp.entry is not None:
-            etag = resp.headers['etag']
+            try:
+                etag = resp.headers['etag']
+            except KeyError:
+                etag = None
             wrap = cls(resp.entry, etag=etag)
             return wrap
         elif resp.feed is not None:
