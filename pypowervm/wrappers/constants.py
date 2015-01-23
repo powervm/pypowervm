@@ -130,10 +130,7 @@ SYS_FIRMWARE_MEM = (SYS_MEM_CONFIG + DELIM + 'MemoryUsedByHypervisor')
 HOST_IP_ADDRESS = ROOT + PRIMARY_IP_ADDRESS
 
 # VIOS
-VIOS_ID = PARTITION_ID
-VIOS_UUID = PARTITION_UUID
 VIOS_LINK = ROOT + "AssociatedVirtualIOServers" + DELIM + "link"
-VIOS_LICENSE = ROOT + 'VirtualIOServerLicenseAccepted'
 
 
 # procs
