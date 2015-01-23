@@ -53,6 +53,7 @@ VREPO_SIZE = 'RepositorySize'
 VREPO_ROOT = 'VirtualMediaRepository'
 
 # Volume Group Constants
+VG_ROOT = 'VolumeGroup'
 VG_NAME = 'GroupName'
 VG_CAPACITY = 'GroupCapacity'
 VG_SERIAL_ID = 'GroupSerialID'

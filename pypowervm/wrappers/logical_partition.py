@@ -53,6 +53,7 @@ LPAR_TYPE_AIXLINUX = 'AIX/Linux'
 MAX_IO_SLOT = 'MaximumVirtualIOSlots'
 
 LPAR = 'LogicalPartition'
+LPAR_ROOT = 'LogicalPartition'
 LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
 LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
 LPAR_IO_CFG = 'PartitionIOConfiguration'
