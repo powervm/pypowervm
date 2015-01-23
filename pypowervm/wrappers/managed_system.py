@@ -21,6 +21,8 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+MS_ROOT = 'ManagedSystem'
+
 
 class ManagedSystem(ewrap.EntryWrapper):
 

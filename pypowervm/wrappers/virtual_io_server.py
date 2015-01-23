@@ -29,10 +29,13 @@ LOG = logging.getLogger(__name__)
 LOCATION_CODE = 'LocationCode'
 
 # VIO Constants
+VIO_ROOT = 'VirtualIOServer'
 VIO_VFC_MAPPINGS = 'VirtualFibreChannelMappings'
 VIO_VFC_MAP = 'VirtualFibreChannelMapping'
 VIO_SCSI_MAPPINGS = 'VirtualSCSIMappings'
 VIO_SCSI_MAP = 'VirtualSCSIMapping'
+VIO_LICENSE = 'VirtualIOServerLicenseAccepted'
+VIO_PARTITION_ID = 'PartitionID'
 
 # Mapping Constants
 MAP_CLIENT_ADAPTER = 'ClientAdapter'
@@ -197,7 +200,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def partition_id(self):
-        return int(self.get_parm_value(c.VIOS_ID, c.ZERO))
+        return int(self.get_parm_value(c.ROOT + VIO_PARTITION_ID, c.ZERO))
 
     @property
     def state(self):
@@ -229,7 +232,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def is_license_accepted(self):
-        return self.get_parm_value_bool(c.VIOS_LICENSE, default=True)
+        return self.get_parm_value_bool(c.ROOT + VIO_LICENSE, default=True)
 
     @property
     def hdisk_reserve_policy(self, disk_uuid):
