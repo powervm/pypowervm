@@ -211,8 +211,8 @@ class Job(ewrap.EntryWrapper):
                             completion
         """
         if job_id is None:
-            job_id = self.get_job_id()
-        status = self.get_job_status()
+            job_id = self.job_id
+        status = self.job_status
         start_time = time.time()
         timed_out = False
         while (status == c.PVM_JOB_STATUS_RUNNING or
@@ -225,7 +225,7 @@ class Job(ewrap.EntryWrapper):
             time.sleep(1)
             pvmresp = adapter.read_job(job_id, sensitive=sensitive)
             self._entry = pvmresp.entry
-            status = self.get_job_status()
+            status = self.job_status
 
         message = ''
         if not timed_out and status != c.PVM_JOB_STATUS_COMPLETED_OK:
@@ -244,7 +244,7 @@ class Job(ewrap.EntryWrapper):
         expected timeout.
         """
 
-        job_id = self.get_job_id()
+        job_id = self.job_id
         try:
             adapter.update(None, None, root_type=c.JOBS, root_id=job_id,
                            suffix_type='cancel')
@@ -271,9 +271,9 @@ class Job(ewrap.EntryWrapper):
         :raise JobRequestFailed: if the Job is detected to be running.
         """
         if not job_id:
-            job_id = self.get_job_id()
+            job_id = self.job_id
         if not status:
-            status = self.get_job_status()
+            status = self.job_status
         if status == c.PVM_JOB_STATUS_RUNNING:
             error = (_("Job %s not deleted. Job is in running state.")
                      % job_id)
