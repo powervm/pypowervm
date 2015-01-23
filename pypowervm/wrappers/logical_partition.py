@@ -439,11 +439,10 @@ class LogicalPartition(ewrap.EntryWrapper):
         # Pull the dlpar and rmc values from PowerVM
         mem_dlpar = self.get_parm_value_bool(c.DLPAR_MEM_CAPABLE)
         proc_dlpar = self.get_parm_value_bool(c.DLPAR_PROC_CAPABLE)
-        rmc = self.get_rmc_state()
 
         dlpar = mem_dlpar and proc_dlpar
 
-        return dlpar, rmc
+        return dlpar, self.rmc_state
 
     @desired_mem.setter
     def desired_mem(self, value):

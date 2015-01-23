@@ -232,7 +232,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def is_license_accepted(self):
-        return self.get_parm_value_bool(c.ROOT + VIO_LICENSE, default=True)
+        return self.get_parm_value_bool(c.ROOT + VIO_LICENSE,
+                                        default=True)
 
     @property
     def hdisk_reserve_policy(self, disk_uuid):
