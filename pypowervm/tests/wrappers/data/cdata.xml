@@ -1,0 +1,129 @@
+INFO{
+{'comment': 'For power on-off testing', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'VirtualIOServer/20414ABB-D6F0-4B3D-BB46-3822240BC4E9'}
+END OF SECTION}
+HEADERS{
+{'content-length': '20079', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000gMeCzUqIZcs3oxLu4apVINO:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'cache-control': 'no-cache="set-cookie, set-cookie2"', 'date': 'Tue, 30 Jul 2013 14:43:59 GMT', 'content-type': 'application/xml'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>716224d8-afc2-4bcd-84f0-763873291dd0</id>
+    <title>JobResponse</title>
+    <published>2013-08-02T07:01:44.225-04:00</published>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/jobs/1375391227297"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=JobResponse">
+        <JobResponse:JobResponse xmlns:JobResponse="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <RequestURL kb="ROR" kxe="false" href="LogicalPartition/6D459A1E-D028-4F36-83FF-207F29700FB8/do/ActivateCurrentProfile" rel="via" title="The URL to which the JobRequest was submitted."/>
+    <TargetUuid kb="ROR" kxe="false">6D459A1E-D028-4F36-83FF-207F29700FB8</TargetUuid>
+    <JobID kxe="false" kb="ROR">1375391227297</JobID>
+    <TimeStarted kb="ROR" kxe="false">1375441290642</TimeStarted>
+    <TimeCompleted kb="ROR" kxe="false">1375441301998</TimeCompleted>
+    <Status kb="ROR" kxe="false">COMPLETED_OK</Status>
+    <JobRequestInstance kxe="false" kb="ROR" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <RequestedOperation kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <OperationName kb="ROR" kxe="false">ActivateCurrentProfile</OperationName>
+            <GroupName kb="ROR" kxe="false">LogicalPartition</GroupName>
+        </RequestedOperation>
+        <JobParameters kb="CUR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <JobParameter schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <ParameterName kb="ROR" kxe="false">inputXML</ParameterName>
+                <ParameterValue kb="CUR" kxe="false"><![CDATA[<XML_LIST><general><version>1</version></general><reliableITL>true</reliableITL><deviceList><device><vendor>IBM</vendor><deviceID>6005076802810B0FD00000000000049F042145</deviceID><itlList><itl><Iwwpn>21000024FF409CD0</Iwwpn><Twwpn>500507680245CAC0</Twwpn><Lua>6000000000000</Lua></itl></itlList></device></deviceList></XML_LIST>]]></ParameterValue>
+            </JobParameter>
+        </JobParameters>
+    </JobRequestInstance>
+    <Progress kb="ROO" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <CompletedTasks kxe="false" kb="ROR" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <NLSMessage schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <UntranslatedMessage kb="ROR" kxe="false">Waiting</UntranslatedMessage>
+                <MessageKey kb="ROR" kxe="false">WAITING</MessageKey>
+            </NLSMessage>
+            <NLSMessage schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <UntranslatedMessage kb="ROR" kxe="false">Complete</UntranslatedMessage>
+                <MessageKey kb="ROR" kxe="false">COMPLETE</MessageKey>
+            </NLSMessage>
+        </CompletedTasks>
+        <DiscreteProgress kb="ROR" kxe="false" schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <CompletedStates kb="ROR" kxe="false" schemaVersion="V1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <NLSStaticMessage schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <UntranslatedMessage kb="ROR" kxe="false">ActivateCurrentProfile not yet started</UntranslatedMessage>
+                    <MessageKey kb="ROR" kxe="false">NOT STARTED</MessageKey>
+                </NLSStaticMessage>
+                <NLSStaticMessage schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <UntranslatedMessage kb="ROR" kxe="false">ActivateCurrentProfile in progress</UntranslatedMessage>
+                    <MessageKey kb="ROR" kxe="false">ACTIVATECURRENTPROFILE INPROGRESS</MessageKey>
+                </NLSStaticMessage>
+                <NLSStaticMessage schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <UntranslatedMessage kb="ROR" kxe="false">ActivateCurrentProfile Completed</UntranslatedMessage>
+                    <MessageKey kb="ROR" kxe="false">ACTIVATECURRENTPROFILE COMPLETED</MessageKey>
+                </NLSStaticMessage>
+            </CompletedStates>
+        </DiscreteProgress>
+    </Progress>
+    <Results kb="ROR" kxe="false" schemaVersion="V1_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <JobParameter schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ParameterName kb="ROR" kxe="false">returnCode</ParameterName>
+            <ParameterValue kb="CUR" kxe="false">0</ParameterValue>
+        </JobParameter>
+        <JobParameter schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ParameterName kb="ROR" kxe="false">inputXML</ParameterName>
+            <ParameterValue kb="CUR" kxe="false"><![CDATA[<XML_LIST><general><version>1</version></general><reliableITL>true</reliableITL><deviceList><device><vendor>IBM</vendor><deviceID>6005076802810B0FD00000000000049F042145</deviceID><itlList><itl><Iwwpn>21000024FF409CD0</Iwwpn><Twwpn>500507680245CAC0</Twwpn><Lua>6000000000000</Lua></itl></itlList></device></deviceList></XML_LIST>]]></ParameterValue>
+        </JobParameter>
+    </Results>
+</JobResponse:JobResponse>
+    </content>
+</entry>
+
+END OF SECTION}
