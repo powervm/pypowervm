@@ -134,5 +134,25 @@ class TestMSEntryWrapper(unittest.TestCase):
         name = self.wrapper.system_name
         self.verify_equal("system_name", name, 'ABC')
 
+    def test_max_procs_per_aix_linux_lpar(self):
+        self.call_simple_getter("max_procs_per_aix_linux_lpar", 32, 0)
+        # Test setter
+        self.wrapper.max_procs_per_aix_linux_lpar = 64
+        self.call_simple_getter("max_procs_per_aix_linux_lpar", 64, 0)
+        # Test fallback condition.  Should retrieve max_sys_procs_limit
+        self.wrapper.max_procs_per_aix_linux_lpar = 0
+        self.call_simple_getter("max_procs_per_aix_linux_lpar",
+                                self.wrapper.max_sys_procs_limit, 0)
+
+    def test_max_vcpus_per_aix_linux_lpar(self):
+        self.call_simple_getter("max_vcpus_per_aix_linux_lpar", 30, 0)
+        # Test setter
+        self.wrapper.max_vcpus_per_aix_linux_lpar = 60
+        self.call_simple_getter("max_vcpus_per_aix_linux_lpar", 60, 0)
+        # Test fallback condition.  Should retrieve max_sys_vcpus_limit
+        self.wrapper.max_vcpus_per_aix_linux_lpar = 0
+        self.call_simple_getter("max_vcpus_per_aix_linux_lpar",
+                                self.wrapper.max_sys_vcpus_limit, 0)
+
 if __name__ == "__main__":
     unittest.main()

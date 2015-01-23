@@ -66,9 +66,13 @@ class ManagedSystem(ewrap.EntryWrapper):
         # Some systems will not have maximum procs per lpar based on
         # partition type. In that case, use system max procs per partition.
         if val == 0:
-            val = self.get_max_sys_procs_limit()
+            val = self.max_sys_procs_limit
 
         return val
+
+    @max_procs_per_aix_linux_lpar.setter
+    def max_procs_per_aix_linux_lpar(self, value):
+        self.set_parm_value(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, str(value))
 
     @property
     def max_sys_vcpus_limit(self):
@@ -80,9 +84,13 @@ class ManagedSystem(ewrap.EntryWrapper):
         # Some systems will not have maximum vcpus per lpar based on
         # partition type. In that case, use system max vcpus per partition.
         if val == 0:
-            val = self.get_max_sys_vcpus_limit()
+            val = self.max_sys_vcpus_limit
 
         return val
+
+    @max_vcpus_per_aix_linux_lpar.setter
+    def max_vcpus_per_aix_linux_lpar(self, value):
+        self.set_parm_value(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, str(value))
 
     @property
     def memory_total(self):

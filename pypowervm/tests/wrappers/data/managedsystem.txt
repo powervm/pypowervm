@@ -1395,7 +1395,7 @@ BODY{
         <CurrentAvailableSystemProcessorUnits kb="ROR" kxe="false">500</CurrentAvailableSystemProcessorUnits>
         <CurrentMaximumProcessorsPerAIXOrLinuxPartition kb="ROR" kxe="false">32</CurrentMaximumProcessorsPerAIXOrLinuxPartition>
         <CurrentMaximumProcessorsPerIBMiPartition kxe="false" kb="ROR">32</CurrentMaximumProcessorsPerIBMiPartition>
-        <CurrentMaximumProcessorsPerPartition kb="ROR" kxe="false">512</CurrentMaximumProcessorsPerPartition>
+        <CurrentMaximumAllowedProcessorsPerPartition kb="ROR" kxe="false">512</CurrentMaximumAllowedProcessorsPerPartition>
         <CurrentMaximumProcessorsPerVirtualIOServerPartition kb="ROR" kxe="false">20</CurrentMaximumProcessorsPerVirtualIOServerPartition>
         <CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition kxe="false" kb="ROR">30</CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition>
         <CurrentMaximumVirtualProcessorsPerIBMiPartition kb="ROR" kxe="false">10</CurrentMaximumVirtualProcessorsPerIBMiPartition>
@@ -1403,7 +1403,7 @@ BODY{
         <DeconfiguredSystemProcessorUnits kxe="false" kb="ROR">2</DeconfiguredSystemProcessorUnits>
         <InstalledSystemProcessorUnits kxe="false" kb="ROR">500</InstalledSystemProcessorUnits>
         <MaximumProcessorUnitsPerIBMiPartition kb="ROR" kxe="false">0</MaximumProcessorUnitsPerIBMiPartition>
-        <MaximumVirtualProcessorsPerPartition kb="ROR" kxe="false">24</MaximumVirtualProcessorsPerPartition>
+        <MaximumAllowedVirtualProcessorsPerPartition kb="ROR" kxe="false">24</MaximumAllowedVirtualProcessorsPerPartition>
         <MinimumProcessorUnitsPerVirtualProcessor kb="ROR" kxe="false">0.05</MinimumProcessorUnitsPerVirtualProcessor>
         <PendingAvailableSystemProcessorUnits kb="CUD" kxe="false">500</PendingAvailableSystemProcessorUnits>
         <SharedProcessorPoolCount kb="ROR" kxe="false">64</SharedProcessorPoolCount>
