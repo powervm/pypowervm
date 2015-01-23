@@ -52,6 +52,14 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertEqual('entry', ew._entry)
         self.assertEqual(etag, ew.etag)
 
+        # Create a response with no headers
+        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2.entry = 'entry'
+        # Run
+        ew = ewrap.EntryWrapper.load_from_response(resp2)
+        # Validate the etag is None since there were no headers
+        self.assertEqual(None, ew.etag)
+
         # Wipe our entry, add feed.
         resp.entry = None
         resp.feed = apt.Feed([], ['entry', 'entry2'])
