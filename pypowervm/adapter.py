@@ -45,15 +45,17 @@ from pypowervm import const
 import pypowervm.exceptions as pvmex
 from pypowervm import util
 
+# Preserve CDATA on the way in (also ensures it is not mucked with on the way
+# out)
+etree.set_default_parser(etree.XMLParser(strip_cdata=False, encoding='utf-8'))
 
-ElementTree = etree
 QName = etree.QName
 
 
 # Setup logging
 LOG = logging.getLogger(__name__)
 
-register_namespace = ElementTree.register_namespace
+register_namespace = etree.register_namespace
 
 # Register the namespaces we'll use
 register_namespace('atom', const.ATOM_NS)
@@ -379,8 +381,7 @@ class Session(object):
             raise
 
         # parse out X-API-Session value
-        root = ElementTree.fromstring(
-            resp.body.encode('utf-8'), etree.XMLParser(encoding='utf-8'))
+        root = etree.fromstring(resp.body.encode('utf-8'))
 
         with self._lock:
             tok = root.findtext('./{%s}X-API-Session' % const.WEB_NS)
@@ -932,7 +933,7 @@ class Adapter(object):
             return
 
         resp = None
-        root = ElementTree.fromstring(feed_resp.body)
+        root = etree.fromstring(feed_resp.body)
         entry_body, entry_etag = get_entry_from_feed(root, uuid)
         if entry_body:
             # generate reqpath based on the feed and including uuid
@@ -1136,7 +1137,7 @@ class Response(object):
         if self.body:
             root = None
             try:
-                root = ElementTree.fromstring(self.body)
+                root = etree.fromstring(self.body)
             except Exception as e:
                 err_reason = ('Error parsing XML response from PowerVM: %s' %
                               str(e))
@@ -1304,7 +1305,7 @@ class Element(object):
         return e
 
     def toxmlstring(self):
-        return ElementTree.tostring(self._element)
+        return etree.tostring(self._element)
 
     @property
     def tag(self):
@@ -1621,7 +1622,7 @@ class _EventHandler(EventHandler):
 def unmarshal_httperror(resp):
     # Attempt to extract PowerVM API's HttpErrorResponse object
     try:
-        root = ElementTree.fromstring(resp.body)
+        root = etree.fromstring(resp.body)
         if root is not None and root.tag == str(QName(const.ATOM_NS, 'entry')):
             resp.err = Entry.unmarshal_atom_entry(root).element
     except Exception:
@@ -1654,7 +1655,7 @@ def get_entry_from_feed(feedelem, uuid):
                         etag = e_elem.text
                     elif param_name == 'id':
                         if e_elem.text.lower() == uuid:
-                            entry = ElementTree.tostring(f_elem)
+                            entry = etree.tostring(f_elem)
 
         if entry is not None:
             return entry, etag
