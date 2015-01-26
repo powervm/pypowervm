@@ -1267,6 +1267,46 @@ class Entry(object):
         return cls(entryprops, element)
 
 
+def _element_equality(one, two):
+    """Tests lxml element equality."""
+
+    # Make sure that the children length is equal
+    one_children = one.getchildren()
+    two_children = two.getchildren()
+    if len(one_children) != len(two_children):
+        return False
+
+    # If there are no children, different set of tests
+    if len(one_children) == 0:
+        if one.text != two.text:
+            return False
+
+        if one.attrib != two.attrib:
+            return False
+
+        if one.tag != two.tag:
+            return False
+    else:
+        # Recursively validate
+        for one_child in one_children:
+            found = _find_equivalent(one_child, two_children)
+            if found is None:
+                return False
+
+            # Found a match, remove it as it is no longer a valid match.
+            # Its equivalence was validated by the upper block.
+            two_children.remove(found)
+
+    return True
+
+
+def _find_equivalent(one_elem, two_list):
+    for elem in two_list:
+        if _element_equality(elem, one_elem):
+            return elem
+    return None
+
+
 class Element(object):
     def __init__(self, tag, ns=const.UOM_NS, attrib=None, text='',
                  children=()):
@@ -1295,6 +1335,11 @@ class Element(object):
 
     def __delitem__(self, index):
         del self._element[index]
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return _element_equality(self._element, other._element)
 
     @classmethod
     def wrapelement(cls, element):
@@ -1448,6 +1493,11 @@ class Element(object):
 
         for e in it:
             yield Element.wrapelement(e)
+
+    def replace(self, existing, new_element):
+        """Replaces the existing child Element with the new one."""
+        self._element.replace(existing._element,
+                              new_element._element)
 
     def remove(self, subelement):
         """Removes subelement from the element.
