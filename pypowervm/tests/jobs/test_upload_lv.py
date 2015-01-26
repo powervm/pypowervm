@@ -52,6 +52,16 @@ class TestUploadLV(unittest.TestCase):
 
         self.assertEqual('6233b070-31cc-4b57-99bd-37f80e845de9', f_uuid)
 
+        # Test cleanup failure
+        mock_adpt.reset_mock()
+        mock_adpt.delete.side_effect = exc.Error('Something bad')
+        f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                       f_size=50)
+
+        mock_adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.jobs.upload_lv._create_file')
     def test_upload_new_vdisk(self, mock_create_file, mock_adpt):
@@ -94,6 +104,16 @@ class TestUploadLV(unittest.TestCase):
                           upload_lv.upload_new_vdisk, mock_adpt,
                           self.v_uuid, self.vg_uuid, None, 'test3', 50)
 
+        # Test cleanup failure
+        mock_adpt.delete.side_effect = exc.Error('Something bad')
+        f_uuid, n_vdisk = upload_lv.upload_new_vdisk(mock_adpt, self.v_uuid,
+                                                     self.vg_uuid, None,
+                                                     'test2', 50, 'abc123')
+
+        mock_adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+
     @mock.patch('pypowervm.adapter.Adapter')
     def test_create_file(self, mock_adpt):
         """Validates that the _create_file builds the Element properly."""
@@ -131,3 +151,13 @@ class TestUploadLV(unittest.TestCase):
         """Returns a fake meta class for the _create_file mock."""
         resp = self._load_file(UPLOADED_FILE)
         return vf.File.load_from_response(resp)
+
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_upload_cleanup(self, mock_adpt):
+        """Tests the upload cleanup."""
+
+        upload_lv.upload_cleanup(mock_adpt, '123')
+
+        mock_adpt.delete.assert_called_once_with(vf.FILE_ROOT,
+                                                 service='web',
+                                                 root_id='123')

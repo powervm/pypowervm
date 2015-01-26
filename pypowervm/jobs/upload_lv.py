@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import math
 
 from pypowervm import exceptions as exc
@@ -23,6 +24,9 @@ from pypowervm.wrappers import vios_file as vf
 from pypowervm.wrappers import volume_group as vg
 
 FILE_UUID = 'FileUUID'
+
+# Setup logging
+LOG = logging.getLogger(__name__)
 
 
 def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
@@ -92,11 +96,18 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
                             f_size=d_size, tdev_udid=n_vdisk.udid,
                             sha_chksum=sha_chksum)
 
-    # Finally, upload the file
-    adapter.upload_file(vio_file._element, d_stream)
+    try:
+        # Finally, upload the file
+        adapter.upload_file(vio_file._element, d_stream)
+    finally:
+        try:
+            # Cleanup after the upload
+            upload_cleanup(adapter, vio_file.uuid)
+        except Exception:
+            LOG.exception('Unable to cleanup after file upload.'
+                          ' File uuid: %s' % vio_file.uuid)
 
-    f_uuid = vio_file.uuid
-    return f_uuid, n_vdisk
+    return vio_file.uuid, n_vdisk
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -119,10 +130,36 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     vio_file = _create_file(adapter, f_name, wc.BROKERED_MEDIA_ISO, v_uuid,
                             sha_chksum, f_size)
 
-    # Next, upload the file
-    adapter.upload_file(vio_file._element, d_stream)
+    try:
+        # Next, upload the file
+        adapter.upload_file(vio_file._element, d_stream)
+    finally:
+        try:
+            # Cleanup after the upload
+            upload_cleanup(adapter, vio_file.uuid)
+        except Exception:
+            LOG.exception('Unable to cleanup after file upload.'
+                          ' File uuid: %s' % vio_file.uuid)
 
     return vio_file.uuid
+
+
+def upload_cleanup(adapter, f_uuid):
+    """Cleanup after a file upload.
+
+    When files are uploaded to either VIOS or the HMC, they create artifacts
+    on the HMC.  These artifacts must be cleaned up because there is a 100
+    file limit.  When the file UUID is cleaned, two things can happend:
+    1) if the file is an HMC file, then both the file and the metadata
+    artifacts are cleaned up.
+    2) if the file is a VIOS file, then just the HMC artifacts are cleaned up.
+    It's safe to cleanup VIOS file artifacts directly after uploading, as it
+    will not affect the VIOS entity.
+
+    :param adapter: The adapter to talk over the API.
+    :param f_uuid: The file UUID to clean up.
+    """
+    return adapter.delete(vf.FILE_ROOT, root_id=f_uuid, service='web')
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
