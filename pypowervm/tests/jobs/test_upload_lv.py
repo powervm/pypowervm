@@ -131,3 +131,13 @@ class TestUploadLV(unittest.TestCase):
         """Returns a fake meta class for the _create_file mock."""
         resp = self._load_file(UPLOADED_FILE)
         return vf.File.load_from_response(resp)
+
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_upload_cleanup(self, mock_adpt):
+        """Tests the upload cleanup."""
+
+        upload_lv.upload_cleanup(mock_adpt, '123')
+
+        mock_adpt.delete.assert_called_once_with(vf.FILE_ROOT,
+                                                 service='web',
+                                                 root_id='123')
