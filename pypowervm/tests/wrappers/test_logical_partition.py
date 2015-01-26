@@ -226,7 +226,7 @@ class TestLogicalPartition(unittest.TestCase):
         lpar_resp = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE).get_response()
         lpar_wrapper = lpar.LogicalPartition(lpar_resp.feed.entries[2])
 
-        self.assertEqual(1, len(lpar_wrapper.get_cna_uris()))
+        self.assertEqual(1, len(lpar_wrapper.cna_uris))
 
     def test_get_state(self):
         self.call_simple_getter("state", EXPECTED_LPAR_STATE, None)
@@ -308,7 +308,7 @@ class TestLogicalPartition(unittest.TestCase):
         self.call_simple_getter(
             "avail_priority", str(EXPECTED_AVAIL_PRIORITY), ZERO_STR)
 
-    def test_get_proc_compat_modes(self):
+    def test_proc_compat_modes(self):
         self.call_simple_getter(
             "proc_compat_mode", EXPECTED_CURR_PROC_COMPAT_MODE, None)
         self.call_simple_getter(
