@@ -49,7 +49,8 @@ class Wrapper(object):
 
         return found_value  # May be None
 
-    def replace_list(self, prop_name, prop_children):
+    def replace_list(self, prop_name, prop_children,
+                     attrib=c.DEFAULT_SCHEMA_ATTR):
         """Replaces a property on this Entry that contains a children list.
 
         The prop_children represent the new elements for the property.
@@ -60,10 +61,12 @@ class Wrapper(object):
         :param prop_name: The property name to replace with the new value.
         :param prop_children: A list of ElementWrapper objects that represent
                               the new children for the property list.
+        :param attrib: The attributes to use if the property.  Defaults to
+                       the DEFAULT_SCHEM_ATTR.
         """
         root_elem = self._element
         new_elem = adpt.Element(prop_name,
-                                attrib=c.DEFAULT_SCHEMA_ATTR,
+                                attrib=attrib,
                                 children=[x._element for
                                           x in prop_children])
         # Find existing

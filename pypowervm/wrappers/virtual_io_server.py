@@ -110,7 +110,7 @@ def crt_scsi_map_to_vdisk(adapter, host_uuid, client_lpar_uuid, disk_name):
 
     # Now bundle the components together.  Order is important.
     opts = [lpar, _NEW_CLIENT_ADAPTER, _NEW_SERVER_ADAPTER, stor]
-    return adpt.Element(VIO_SCSI_MAP, attrib=_crt_attrs('ViosSCSIMapping'),
+    return adpt.Element(VIO_SCSI_MAP, attrib=c.DEFAULT_SCHEMA_ATTR,
                         children=opts)
 
 
@@ -174,7 +174,7 @@ def crt_scsi_map_to_vopt(adapter, host_uuid, client_lpar_uuid, media_name):
 
     # Now bundle the components together.  Order is important.
     opts = [lpar, _NEW_CLIENT_ADAPTER, _NEW_SERVER_ADAPTER, stor]
-    return adpt.Element(VIO_SCSI_MAP, attrib=_crt_attrs('ViosSCSIMapping'),
+    return adpt.Element(VIO_SCSI_MAP, attrib=c.DEFAULT_SCHEMA_ATTR,
                         children=opts)
 
 
@@ -333,7 +333,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     def set_vfc_mappings(self, new_mappings):
         """Replaces the current VirtualFCMapping objects with the new list."""
-        self.replace_list(VIO_VFC_MAPPINGS, new_mappings)
+        self.replace_list(VIO_VFC_MAPPINGS, new_mappings,
+                          attrib=_crt_attrs('ViosSCSIMapping'))
 
     def get_scsi_mappings(self):
         """Returns a list of the VirtualSCSIMapping objects."""
@@ -348,7 +349,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     def set_scsi_mappings(self, new_mappings):
         """Replaces the current SCSI mappings with the new mappings."""
-        self.replace_list(VIO_SCSI_MAPPINGS, new_mappings)
+        self.replace_list(VIO_SCSI_MAPPINGS, new_mappings,
+                          attrib=_crt_attrs('ViosSCSIMapping'))
 
 
 class VirtualSCSIMapping(ewrap.ElementWrapper):
