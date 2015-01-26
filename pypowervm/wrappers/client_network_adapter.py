@@ -102,28 +102,55 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         """
         return self.get_parm_value(c.MAC_ADDRESS)
 
+    @mac.setter
+    def mac(self, new_val):
+        new_mac = u.sanitize_mac_for_api(new_val)
+        self.set_parm_value(c.MAC_ADDRESS, new_mac)
+
     @property
     def pvid(self):
         """Returns the Port VLAN ID."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
+
+    @pvid.setter
+    def pvid(self, new_val):
+        self.set_parm_value(c.PORT_VLAN_ID, str(new_val))
 
     @property
     def loc_code(self):
         """The device's location code."""
         return self.get_parm_value(LOCATION_CODE)
 
-    def get_tagged_vlans(self):
+    @property
+    def tagged_vlans(self):
         """Returns a list of additional VLANs on this adapter.
 
         Only valid if tagged vlan support is on.
         """
         addl_vlans = self.get_parm_value(VADPT_TAGGED_VLANS, '')
-        return [int(i) for i in addl_vlans.split(' ')]
+        list_data = []
+        if addl_vlans != '':
+            list_data = [int(i) for i in addl_vlans.split(' ')]
+
+        def update_list(new_list):
+            data = ' '.join([str(i) for i in new_list])
+            self.set_parm_value(VADPT_TAGGED_VLANS, data)
+
+        return ewrap.ActionableList(list_data, update_list)
+
+    @tagged_vlans.setter
+    def tagged_vlans(self, new_list):
+        data = ' '.join([str(i) for i in new_list])
+        self.set_parm_value(VADPT_TAGGED_VLANS, data)
 
     @property
     def is_tagged_vlan_supported(self):
         """Returns if addl tagged VLANs are supported."""
         return self.get_parm_value_bool(VADPT_TAGGED_VLAN_SUPPORT)
+
+    @is_tagged_vlan_supported.setter
+    def is_tagged_vlan_supported(self, new_val):
+        self.set_parm_value(VADPT_TAGGED_VLAN_SUPPORT, str(new_val))
 
     @property
     def vswitch_uri(self):
@@ -134,3 +161,11 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
             return ''
         vs_elem = vswitches[0]
         return vs_elem.attrib['href']
+
+    @vswitch_uri.setter
+    def vswitch_uri(self, new_val):
+        vswitches = self._entry.element.findall(VADPT_VSWITCH + c.DELIM +
+                                                'link')
+        if len(vswitches) != 1:
+            return ''
+        vswitches[0].attrib['href'] = new_val

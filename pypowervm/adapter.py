@@ -1296,6 +1296,11 @@ class Element(object):
     def __delitem__(self, index):
         del self._element[index]
 
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return util.element_equality(self._element, other._element)
+
     @classmethod
     def wrapelement(cls, element):
         if element is None:
@@ -1448,6 +1453,11 @@ class Element(object):
 
         for e in it:
             yield Element.wrapelement(e)
+
+    def replace(self, existing, new_element):
+        """Replaces the existing child Element with the new one."""
+        self._element.replace(existing._element,
+                              new_element._element)
 
     def remove(self, subelement):
         """Removes subelement from the element.
