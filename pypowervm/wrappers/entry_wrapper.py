@@ -19,6 +19,7 @@ import logging
 
 from pypowervm import adapter as adpt
 from pypowervm.i18n import _
+from pypowervm import util
 import pypowervm.wrappers.constants as c
 
 import six
@@ -48,6 +49,28 @@ class Wrapper(object):
             found_value = element.find(property_name)
 
         return found_value  # May be None
+
+    def _find_or_seed(self, prop_name, attrib=c.DEFAULT_SCHEMA_ATTR):
+        """Will find the existing element, or create if needed.
+
+        If the element is not found, it will be added to the child list
+        of this element.
+        :param prop_name: The property name to replace with the new value.
+        :param attrib: The attributes to use for the property.  Defaults to
+                       the DEFAULT_SCHEM_ATTR.
+        :returns: The existing element, or a newly created one if not found.
+        """
+        root_elem = self._element
+
+        # Find existing
+        existing = root_elem.find(prop_name)
+        if existing:
+            return existing
+        else:
+            new_elem = adpt.Element(prop_name, attrib=attrib,
+                                    children=[])
+            root_elem.append(new_elem)
+            return new_elem
 
     def replace_list(self, prop_name, prop_children,
                      attrib=c.DEFAULT_SCHEMA_ATTR):
@@ -290,3 +313,135 @@ class ElementWrapper(Wrapper):
             entry_type = "UnknownType"
 
         return entry_type
+
+    def __eq__(self, other):
+        """Tests equality."""
+        return self._element == other._element
+
+
+class ElementSet(list):
+    """The wrappers can create complex Lists (from a Group from the response).
+
+    The lists that they wrap tend to be generated on each 'get' from the
+    property.  This set allows for modification of the 'wrappers' that
+    get returned, which update the backing elements.
+
+    This is not a full implementation of a list.  Only the 'common use' methods
+    are supported
+
+    Functions that are provided:
+     - Getting via index (ex. list[1])
+     - Obtaining the length (ex. len(list))
+     - Extending the list (ex. list.extend(other_list))
+     - Appending to the list (ex. list.append(other_elem))
+     - Removing from the list (ex. list.remove(other_elem))
+    """
+
+    def __init__(self, root_elem, child_type, child_class):
+        """Creates a new set backed by an Element anchor and child type.
+
+        :param root_elem: The container element.  Should be the backing
+                          element, not a wrapper.
+                          Ex. The element for 'SharedEthernetAdapters'.
+        :param child_type: The type of child element.  Should be a string.
+                           Ex. 'SharedEthernetAdapter.
+        :param child_class: The child class (subclass of ElementWrapper).
+        """
+        self.root_elem = root_elem
+        self.child_type = child_type
+        self.child_class = child_class
+
+    def __getitem__(self, idx):
+        if isinstance(idx, slice):
+            all_elems = self.root_elem.findall(self.child_type)
+            all_elems = all_elems[idx.start:idx.stop:idx.step]
+            return [self.child_class(x) for x in all_elems]
+
+        elem = self.root_elem.findall(self.child_type)[idx]
+        return self.child_class(elem)
+
+    def __getslice__(self, i, j):
+        elems = self.root_elem.findall(self.child_type)
+        return [self.child_class(x) for x in elems[i:j]]
+
+    def __len__(self, *args, **kwargs):
+        return len(self.root_elem.findall(self.child_type))
+
+    def __iter__(self):
+        elems = self.root_elem.findall(self.child_type)
+        for elem in elems:
+            yield self.child_class(elem)
+
+    def __str__(self):
+        elems = self.root_elem.findall(self.child_type)
+        string = '['
+        for elem in elems:
+            string += str(elem)
+            if elem != elems[len(elems) - 1]:
+                string += ', '
+        string += ']'
+        return string
+
+    def extend(self, seq):
+        for elem in seq:
+            self.append(elem)
+
+    def append(self, elem):
+        self.root_elem._element.append(elem._element._element)
+
+    def remove(self, elem):
+        # Try this way first...if there is a value error, that means
+        # that the identical method isn't here...need to try 'functionally
+        # equivalent' -> slower...
+        try:
+            self.root_elem.remove(elem._element)
+            return
+        except ValueError:
+            pass
+
+        # Onto the slower path.  Get children and see if any are equivalent
+        children = self.root_elem._element.getchildren()
+        equiv = util.find_equivalent(elem._element._element,
+                                     children)
+        if equiv is None:
+            raise ValueError('Element is not a child.')
+        self.root_elem._element.remove(equiv)
+
+
+class ActionableList(list):
+    """Provides a List that will call back to a function on modification.
+
+    Does not support lower level modifications (ex. list[5] = other_elem),
+    but does support extend, append, remove, insert and pop.
+    """
+
+    def __init__(self, list_data, action):
+        """Creations the action list.
+
+        :param list_data: The list data
+        :param action: The action to call back to.  Should take in a list
+                       as a parameter (this is then list post modification).
+        """
+        super(ActionableList, self).__init__(list_data)
+        self.action = action
+
+    def extend(self, seq):
+        super(ActionableList, self).extend(seq)
+        self.action(self)
+
+    def append(self, elem):
+        super(ActionableList, self).append(elem)
+        self.action(self)
+
+    def remove(self, elem):
+        super(ActionableList, self).remove(elem)
+        self.action(self)
+
+    def insert(self, index, obj):
+        super(ActionableList, self).insert(index, obj)
+        self.action(self)
+
+    def pop(self, index):
+        elem = super(ActionableList, self).pop(index)
+        self.action(self)
+        return elem

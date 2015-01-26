@@ -138,12 +138,20 @@ class ManagedSystem(ewrap.EntryWrapper):
                     }
         return cap_data
 
-    def get_proc_compat_modes(self):
-        """List of strings containing the processor compatibility modes."""
+    @property
+    def proc_compat_modes(self):
+        """List of strings containing the processor compatibility modes.
+
+        This is a READ-ONLY list.
+        """
         return self.get_parm_values(c.PROC_COMPAT_MODES)
 
-    def get_migration_data(self):
-        """returns: The migration properties from PowerVM."""
+    @property
+    def migration_data(self):
+        """returns: The migration properties from PowerVM.
+
+        This is a READ-ONLY dictionary.
+        """
 
         max_migr_sup = self.get_parm_value_int(c.MAX_FIRMWARE_MIGR)
         act_migr_sup = self.get_parm_value_int(c.MAX_ACTIVE_MIGR)
@@ -165,8 +173,12 @@ class ManagedSystem(ewrap.EntryWrapper):
                      }
         return migr_data
 
-    def get_vios_links(self):
-        """List of hrefs from AssociatedVirtualIOServers."""
+    @property
+    def vios_links(self):
+        """List of hrefs from AssociatedVirtualIOServers.
+
+        This is a READ-ONLY list.
+        """
         ret_links = []
         vios_links = self._entry.element.findall(c.VIOS_LINK)
 
