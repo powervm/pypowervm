@@ -16,6 +16,7 @@
 
 import logging
 
+from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -95,46 +96,38 @@ class NetworkBridge(ewrap.EntryWrapper):
         """Returns the Primary VLAN ID of the Network Bridge."""
         return self.get_parm_value_int(NB_PVID)
 
-    def get_virtual_network_uri_list(self):
-        """Returns a list of the Virtual Network URIs."""
+    @property
+    def virtual_network_uri_list(self):
+        """Returns a list of the Virtual Network URIs.
+
+        This is a READ-ONLY list.  Modification should take place through the
+        LoadGroup virtual_network_uri_list.
+        """
         virt_net_list = self._entry.element.find(NB_VNETS)
         uri_resp_list = []
         for virt_net in virt_net_list.findall(c.LINK):
             uri_resp_list.append(virt_net.get('href'))
         return uri_resp_list
 
-    def get_seas(self):
+    @property
+    def seas(self):
         """Returns a list of SharedEthernetAdapter wrappers."""
-        sea_elem_list = self._entry.element.findall(NB_SEAS + c.DELIM + NB_SEA)
-        sea_list = []
-        for sea_elem in sea_elem_list:
-            sea_list.append(SharedEthernetAdapter(sea_elem))
-        return sea_list
+        return ewrap.ElementSet(self._entry.element.find(NB_SEAS),
+                                NB_SEA, SharedEthernetAdapter)
+
+    @seas.setter
+    def seas(self, new_list):
+        self.replace_list(NB_SEAS, new_list)
 
     @property
-    def prim_load_grp(self):
-        """Returns the primary Load Group for the Network Bridge."""
-        return self._get_load_grps()[0]
+    def load_grps(self):
+        """Returns the load groups.  The first in the list is the primary."""
+        return ewrap.ElementSet(self._entry.element.find(NB_LGS),
+                                NB_LG, LoadGroup)
 
-    def get_addl_load_grps(self):
-        """Ordered list of additional Load Groups on the Network Bridge.
-
-        Does not include the primary Load Group.
-        """
-
-        return self._get_load_grps()[1:]
-
-    def _get_load_grps(self):
-        """Returns all of the Load Groups.
-
-        The first element is the primary Load Group.  All others are
-        subordinates.
-        """
-        ld_grp_list = self._entry.element.findall(NB_LGS + c.DELIM + NB_LG)
-        ld_grps = []
-        for ld_grp in ld_grp_list:
-            ld_grps.append(LoadGroup(ld_grp))
-        return ld_grps
+    @load_grps.setter
+    def load_grps(self, new_list):
+        self.replace_list(NB_LGS, new_list)
 
     def supports_vlan(self, vlan):
         """Determines if the VLAN can flow through the Network Bridge.
@@ -155,7 +148,7 @@ class NetworkBridge(ewrap.EntryWrapper):
         vlan = int(vlan)
 
         # Load groups - pull once for speed
-        ld_grps = self._get_load_grps()
+        ld_grps = self.load_grps
 
         # First load group is the primary
         if ld_grps[0].pvid == vlan:
@@ -166,9 +159,8 @@ class NetworkBridge(ewrap.EntryWrapper):
             # All load groups have at least one trunk adapter.  Those
             # are kept in sync, so we only need to look at the first
             # trunk adapter.
-            trunk = ld_grp.get_trunk_adapters()[0]
-            tagged_vlans = trunk.get_tagged_vlans()
-            if vlan in tagged_vlans:
+            trunk = ld_grp.trunk_adapters[0]
+            if vlan in trunk.tagged_vlans:
                 return True
 
         # Wasn't found,
@@ -183,8 +175,11 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
         return self.get_parm_value_int(c.PORT_VLAN_ID)
 
-    def get_addl_adpts(self):
+    @property
+    def addl_adpts(self):
         """Non-primary TrunkAdapters on this Shared Ethernet Adapter.
+
+        READ ONLY - modification is done through the Load Groups.
 
         :return: List of TrunkAdapter wrappers.  May be the empty list.
         """
@@ -219,6 +214,10 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
         return self.get_parm_value_int(TA_PVID)
 
+    @pvid.setter
+    def pvid(self, value):
+        return self.get_parm_value_int(TA_PVID, value)
+
     @property
     def dev_name(self):
         """Returns the name of the device as represented by the hosting VIOS.
@@ -227,20 +226,37 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """
         return self.get_parm_value(TA_DEV_NAME)
 
+    @property
     def has_tag_support(self):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
         return self.get_parm_value_bool(TA_TAG_SUPP)
 
-    def get_tagged_vlans(self):
+    @has_tag_support.setter
+    def has_tag_support(self, new_val):
+        self.set_parm_value(TA_TAG_SUPP, str(new_val))
+
+    @property
+    def tagged_vlans(self):
         """Returns the tagged VLAN IDs that are allowed to pass through.
 
         Assumes has_tag_support() returns True.  If not, an empty list will
         be returned.
         """
-        vids = self.get_parm_value(TA_VLAN_IDS)
-        if vids is None:
-            return []
-        return [int(vid) for vid in vids.split()]
+        addl_vlans = self.get_parm_value(TA_VLAN_IDS, '')
+        list_data = []
+        if addl_vlans != '':
+            list_data = [int(i) for i in addl_vlans.split(' ')]
+
+        def update_list(new_list):
+            data = ' '.join([str(i) for i in new_list])
+            self.set_parm_value(TA_VLAN_IDS, data)
+
+        return ewrap.ActionableList(list_data, update_list)
+
+    @tagged_vlans.setter
+    def tagged_vlans(self, new_list):
+        data = ' '.join([str(i) for i in new_list])
+        self.set_parm_value(TA_VLAN_IDS, data)
 
     @property
     def vswitch_id(self):
@@ -265,7 +281,8 @@ class LoadGroup(ewrap.ElementWrapper):
         """Returns the Primary VLAN ID of the Load Group."""
         return self.get_parm_value_int(LG_PVID)
 
-    def get_trunk_adapters(self):
+    @property
+    def trunk_adapters(self):
         """Returns the Trunk Adapters for the Load Group.
 
         There is either one (no redundancy/load balancing) or two (typically
@@ -273,16 +290,33 @@ class LoadGroup(ewrap.ElementWrapper):
 
         :return: list of TrunkAdapter objects.
         """
-        trunk_elem_list = self._element.findall(LG_TRUNKS + c.DELIM + TA_ROOT)
-        trunks = []
-        for trunk_elem in trunk_elem_list:
-            trunks.append(TrunkAdapter(trunk_elem))
-        return trunks
+        return ewrap.ElementSet(self._element.find(LG_TRUNKS),
+                                TA_ROOT, TrunkAdapter)
 
-    def get_virtual_network_uri_list(self):
-        """Returns a list of the Virtual Network URIs."""
+    @trunk_adapters.setter
+    def trunk_adapters(self, new_list):
+        self.replace_list(LG_TRUNKS, new_list)
+
+    @property
+    def virtual_network_uri_list(self):
+        """Returns a list of the Virtual Network URIs.
+
+        If a VLAN/Virtual Network should be added, it should be done here.
+        """
         virt_net_list = self._element.find(LG_VNETS)
         uri_resp_list = []
         for virt_net in virt_net_list.findall(c.LINK):
             uri_resp_list.append(virt_net.get('href'))
-        return uri_resp_list
+
+        return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
+
+    @virtual_network_uri_list.setter
+    def virtual_network_uri_list(self, new_list):
+        self.__update_uri_list(new_list)
+
+    def __update_uri_list(self, new_list):
+        new_elems = []
+        for item in new_list:
+            new_elems.append(adpt.Element('link', attrib={'href': item}))
+        new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
+        self._element.replace(self._element.find(LG_VNETS), new_vnet_elem)

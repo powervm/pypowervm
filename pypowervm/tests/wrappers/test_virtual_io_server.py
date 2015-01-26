@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import mock
 
 import unittest
@@ -43,7 +45,7 @@ class TestVIOSWrapper(unittest.TestCase):
     def test_get_ip_addresses(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
         expected_ips = ['9.1.2.4', '10.10.10.5']
-        self.assertEqual(expected_ips, vios_wrapper.get_ip_addresses())
+        self.assertEqual(expected_ips, vios_wrapper.ip_addresses)
 
     def test_license_accept(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
@@ -103,7 +105,7 @@ class TestViosMappings(unittest.TestCase):
                          vmap.findtext('./Storage/VirtualDisk/DiskName'))
 
     def test_get_scsi_mappings(self):
-        mappings = self.vios_obj.get_scsi_mappings()
+        mappings = self.vios_obj.scsi_mappings
 
         # Ensure that at least one adapter has a client LPAR & storage
         found_client_uri = False
@@ -137,8 +139,19 @@ class TestViosMappings(unittest.TestCase):
         self.assertIsNotNone(sa.slot_number)
         self.assertIsNotNone(sa.loc_code)
 
-    def test_get_vfc_mappings(self):
-        mappings = self.vios_obj.get_vfc_mappings()
+        # Try copying the map and adding it in
+        new_map = copy.deepcopy(static_map)
+        orig_size = len(mappings)
+        mappings.append(new_map)
+        self.assertEqual(len(mappings), orig_size + 1)
+        self.assertEqual(len(self.vios_obj.scsi_mappings), orig_size + 1)
+
+        mappings.remove(new_map)
+        self.vios_obj.scsi_mappings = mappings
+        self.assertEqual(len(self.vios_obj.scsi_mappings), orig_size)
+
+    def test_vfc_mappings(self):
+        mappings = self.vios_obj.vfc_mappings
 
         # Ensure that at least one adapter has a client LPAR
         found_client_uri = False
@@ -179,6 +192,17 @@ class TestViosMappings(unittest.TestCase):
         self.assertTrue(sa.is_varied_on)
         self.assertIsNotNone(sa.slot_number)
         self.assertIsNotNone(sa.loc_code)
+
+        # Try copying the map and adding it in
+        new_map = copy.deepcopy(static_map)
+        orig_size = len(mappings)
+        mappings.append(new_map)
+        self.assertEqual(len(mappings), orig_size + 1)
+        self.assertEqual(len(self.vios_obj.vfc_mappings), orig_size + 1)
+
+        mappings.remove(new_map)
+        self.vios_obj.vfc_mappings = mappings
+        self.assertEqual(len(self.vios_obj.vfc_mappings), orig_size)
 
 if __name__ == "__main__":
     unittest.main()
