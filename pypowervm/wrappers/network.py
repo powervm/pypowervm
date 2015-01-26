@@ -167,8 +167,7 @@ class NetworkBridge(ewrap.EntryWrapper):
             # are kept in sync, so we only need to look at the first
             # trunk adapter.
             trunk = ld_grp.get_trunk_adapters()[0]
-            tagged_vlans = trunk.get_tagged_vlans()
-            if vlan in tagged_vlans:
+            if vlan in trunk.tagged_vlans:
                 return True
 
         # Wasn't found,
@@ -219,6 +218,10 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
         return self.get_parm_value_int(TA_PVID)
 
+    @pvid.setter
+    def pvid(self, value):
+        return self.get_parm_value_int(TA_PVID, value)
+
     @property
     def dev_name(self):
         """Returns the name of the device as represented by the hosting VIOS.
@@ -231,16 +234,28 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
         return self.get_parm_value_bool(TA_TAG_SUPP)
 
-    def get_tagged_vlans(self):
+    @property
+    def tagged_vlans(self):
         """Returns the tagged VLAN IDs that are allowed to pass through.
 
         Assumes has_tag_support() returns True.  If not, an empty list will
         be returned.
         """
-        vids = self.get_parm_value(TA_VLAN_IDS)
-        if vids is None:
-            return []
-        return [int(vid) for vid in vids.split()]
+        addl_vlans = self.get_parm_value(TA_VLAN_IDS, '')
+        list_data = []
+        if addl_vlans != '':
+            list_data = [int(i) for i in addl_vlans.split(' ')]
+
+        def update_list(new_list):
+            data = ' '.join([str(i) for i in new_list])
+            self.set_parm_value(TA_VLAN_IDS, data)
+
+        return ewrap.ActionableList(list_data, update_list)
+
+    @tagged_vlans.setter
+    def tagged_vlans(self, new_list):
+        data = ' '.join([str(i) for i in new_list])
+        self.set_parm_value(TA_VLAN_IDS, data)
 
     @property
     def vswitch_id(self):

@@ -290,3 +290,111 @@ class ElementWrapper(Wrapper):
             entry_type = "UnknownType"
 
         return entry_type
+
+    def __eq__(self, other):
+        """Tests equality."""
+        return self._element == other._element
+
+
+class ElementSet(list):
+    """The wrappers can create complex Lists (from a Group from the response).
+
+    The lists that they wrap tend to be generated on each 'get' from the
+    property.  This set allows for modification of the 'wrappers' that
+    get returned, which update the backing elements.
+
+    This is not a full implementation of a list.  Only the 'common use' methods
+    are supported
+
+    Functions that are provided:
+     - Getting via index (ex. list[1])
+     - Obtaining the length (ex. len(list))
+     - Extending the list (ex. list.extend(other_list))
+     - Appending to the list (ex. list.append(other_elem))
+     - Removing from the list (ex. list.remove(other_elem))
+    """
+
+    def __init__(self, root_elem, child_type, child_class):
+        """Creates a new set backed by an Element anchor and child type.
+
+        :param root_elem: The container element.  Should be the backing
+                          element, not a wrapper.
+                          Ex. The element for 'SharedEthernetAdapters'.
+        :param child_type: The type of child element.  Should be a string.
+                           Ex. 'SharedEthernetAdapter.
+        :param child_class: The child class (subclass of ElementWrapper).
+        """
+        self.root_elem = root_elem
+        self.child_type = child_type
+        self.child_class = child_class
+
+    def __getitem__(self, idx):
+        elem = self.root_elem.findall(self.child_type)[idx]
+        return self.child_class(elem)
+
+    def __len__(self, *args, **kwargs):
+        return len(self.root_elem.findall(self.child_type))
+
+    def extend(self, seq):
+        for elem in seq:
+            self.append(elem)
+
+    def append(self, elem):
+        self.root_elem._element.append(elem._element._element)
+
+    def remove(self, elem):
+        # Try this way first...if there is a value error, that means
+        # that the identical method isn't here...need to try 'functionally
+        # equivalent' -> slower...
+        try:
+            self.root_elem.remove(elem._element)
+            return
+        except ValueError:
+            pass
+
+        # Onto the slower path.  Get children and see if any are equivalent
+        children = self.root_elem._element.getchildren()
+        equiv = adpt._find_equivalent(elem._element._element,
+                                      children)
+        if equiv is None:
+            raise ValueError('Element is not a child.')
+        self.root_elem._element.remove(equiv)
+
+
+class ActionableList(list):
+    """Provides a List that will call back to a function on modification.
+
+    Does not support lower level modifications (ex. list[5] = other_elem),
+    but does support extend, append, remove, insert and pop.
+    """
+
+    def __init__(self, list_data, action):
+        """Creations the action list.
+
+        :param list_data: The list data
+        :param action: The action to call back to.  Should take in a list
+                       as a parameter (this is then list post modification).
+        """
+        super(ActionableList, self).__init__(list_data)
+        self.action = action
+
+    def extend(self, seq):
+        super(ActionableList, self).extend(seq)
+        self.action(self)
+
+    def append(self, elem):
+        super(ActionableList, self).append(elem)
+        self.action(self)
+
+    def remove(self, elem):
+        super(ActionableList, self).remove(elem)
+        self.action(self)
+
+    def insert(self, index, obj):
+        super(ActionableList, self).insert(index, obj)
+        self.action(self)
+
+    def pop(self, index):
+        elem = super(ActionableList, self).pop(index)
+        self.action(self)
+        return elem

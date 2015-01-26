@@ -78,13 +78,26 @@ class TestClientNetworkAdapterWrapper(unittest.TestCase):
                          self.cna.href)
         self.assertEqual('U8246.L2C.0604C7A-V24-C32',
                          self.cna.loc_code)
-        self.assertEqual([53, 54, 55],
-                         self.cna.get_tagged_vlans())
+        self.assertEqual([53, 54, 55], self.cna.tagged_vlans)
         self.assertEqual(True, self.cna.is_tagged_vlan_supported)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                          '726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/'
                          '9e42d4a9-9725-3007-9932-d85374ebf5cf',
                          self.cna.vswitch_uri)
+
+    def test_tagged_vlan_modification(self):
+        """Tests that the tagged vlans can be modified."""
+        # Update via getter and Actionable List
+        tags = self.cna.tagged_vlans
+        tags.append(56)
+        self.assertEqual(4, len(self.cna.tagged_vlans))
+        tags.remove(56)
+        self.assertEqual(3, len(self.cna.tagged_vlans))
+
+        # Update via setter
+        self.cna.tagged_vlans = [1, 2, 3]
+        self.assertEqual([1, 2, 3], self.cna.tagged_vlans)
+        self.cna.tagged_vlans = [53, 54, 55]
 
     def test_get_slot(self):
         """Test getting the VirtualSlotID."""

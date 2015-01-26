@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
@@ -112,7 +113,7 @@ class TestNetwork(unittest.TestCase):
         self.assertIsNotNone(prim_t)
         self.assertEqual(1, prim_t.pvid)
         self.assertFalse(prim_t.has_tag_support())
-        self.assertEqual(0, len(prim_t.get_tagged_vlans()))
+        self.assertEqual(0, len(prim_t.tagged_vlans))
         self.assertEqual(2, prim_t.vswitch_id)
         self.assertEqual('ent4', prim_t.dev_name)
         self.assertEqual(1, prim_t.trunk_pri)
@@ -124,10 +125,19 @@ class TestNetwork(unittest.TestCase):
         addl_adpt = addl_adpts[0]
         self.assertEqual(4094, addl_adpt.pvid)
         self.assertTrue(addl_adpt.has_tag_support())
-        self.assertEqual(12, len(addl_adpt.get_tagged_vlans()))
+        self.assertEqual(12, len(addl_adpt.tagged_vlans))
         self.assertEqual(2, addl_adpt.vswitch_id)
         self.assertEqual('ent5', addl_adpt.dev_name)
         self.assertEqual(1, addl_adpt.trunk_pri)
+
+        # Try setting the tagged vlans
+        orig_vlans = copy.copy(addl_adpt.tagged_vlans)
+        addl_adpt.tagged_vlans.append(5)
+        self.assertEqual(13, len(addl_adpt.tagged_vlans))
+        addl_adpt.tagged_vlans = [1]
+        self.assertEqual(1, len(addl_adpt.tagged_vlans))
+        addl_adpt.tagged_vlans = orig_vlans
+        self.assertEqual(12, len(addl_adpt.tagged_vlans))
 
 if __name__ == "__main__":
     unittest.main()
