@@ -300,12 +300,15 @@ class VirtualIOServer(ewrap.EntryWrapper):
     def is_mover_service_partition(self):
         return self.get_parm_value_bool(c.MOVER_SERVICE_PARTITION, False)
 
-    def get_ip_addresses(self):
+    @property
+    def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.
 
         Will only return the IP Addresses that can be made known to the system.
         This only includes online Shared Ethernet Adapters and Ethernet Backing
         Devices.  It will not include, for example, a VLAN adapter.
+
+        This is a READ-ONLY list.
         """
         ip_list = []
 
@@ -320,35 +323,31 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
         return ip_list
 
-    def get_vfc_mappings(self):
+    @property
+    def vfc_mappings(self):
         """Returns a list of the VirtualFCMapping objects."""
-        mappings = []
+        def_attrib = _crt_attrs('ViosFCMapping')
+        es = ewrap.ElementSet(self._find_or_seed(VIO_VFC_MAPPINGS,
+                                                 attrib=def_attrib),
+                              VIO_VFC_MAP, VirtualFCMapping)
+        return es
 
-        # Get all of the mapping elements
-        q = c.ROOT + VIO_VFC_MAPPINGS + c.DELIM + VIO_VFC_MAP
-        maps = self._entry.element.findall(q)
-        for mapping in maps:
-            mappings.append(VirtualFCMapping(mapping))
-        return mappings
-
-    def set_vfc_mappings(self, new_mappings):
-        """Replaces the current VirtualFCMapping objects with the new list."""
+    @vfc_mappings.setter
+    def vfc_mappings(self, new_mappings):
         self.replace_list(VIO_VFC_MAPPINGS, new_mappings,
                           attrib=_crt_attrs('ViosSCSIMapping'))
 
-    def get_scsi_mappings(self):
+    @property
+    def scsi_mappings(self):
         """Returns a list of the VirtualSCSIMapping objects."""
-        mappings = []
+        def_attrib = _crt_attrs('ViosSCSIMapping')
+        es = ewrap.ElementSet(self._find_or_seed(VIO_SCSI_MAPPINGS,
+                                                 attrib=def_attrib),
+                              VIO_SCSI_MAP, VirtualSCSIMapping)
+        return es
 
-        # Get all of the mapping elements
-        q = c.ROOT + VIO_SCSI_MAPPINGS + c.DELIM + VIO_SCSI_MAP
-        maps = self._entry.element.findall(q)
-        for mapping in maps:
-            mappings.append(VirtualSCSIMapping(mapping))
-        return mappings
-
-    def set_scsi_mappings(self, new_mappings):
-        """Replaces the current SCSI mappings with the new mappings."""
+    @scsi_mappings.setter
+    def scsi_mappings(self, new_mappings):
         self.replace_list(VIO_SCSI_MAPPINGS, new_mappings,
                           attrib=_crt_attrs('ViosSCSIMapping'))
 
