@@ -401,8 +401,12 @@ class LogicalPartition(ewrap.EntryWrapper):
         """String representing the OS and version, or 'Unknown'."""
         return self.get_parm_value(c.OPERATING_SYSTEM_VER, 'Unknown')
 
-    def get_cna_uris(self):
-        """Return a list of URI strings to the LPAR's ClientNetworkAdapters."""
+    @property
+    def cna_uris(self):
+        """Return a list of URI strings to the LPAR's ClientNetworkAdapters.
+
+        This is a READ ONLY list.
+        """
         ret_links = list()
         cna_links = self._entry.element.findall(c.CNA_LINKS)
 

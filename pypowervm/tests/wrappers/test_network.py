@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
@@ -64,22 +65,28 @@ class TestNetwork(unittest.TestCase):
             '764f3423-04c5-3b96-95a3-4764065400bd', self.wrapper.uuid)
 
     def test_virtual_network_uri_list(self):
-        uri_list = self.wrapper.get_virtual_network_uri_list()
+        uri_list = self.wrapper.virtual_network_uri_list
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
 
     def test_load_groups(self):
-        prim_ld_grp = self.wrapper.prim_load_grp
+        prim_ld_grp = self.wrapper.load_grps[0]
         self.assertIsNotNone(prim_ld_grp)
         self.assertEqual(1, prim_ld_grp.pvid)
-        self.assertEqual(1, len(prim_ld_grp.get_trunk_adapters()))
+        self.assertEqual(1, len(prim_ld_grp.trunk_adapters))
 
-        addl_ld_grps = self.wrapper.get_addl_load_grps()
+        addl_ld_grps = self.wrapper.load_grps[1:]
         self.assertIsNotNone(addl_ld_grps)
         self.assertEqual(1, len(addl_ld_grps))
 
         self.assertEqual(
-            12, len(addl_ld_grps[0].get_virtual_network_uri_list()))
+            12, len(addl_ld_grps[0].virtual_network_uri_list))
+        addl_ld_grps[0].virtual_network_uri_list.append('fake_uri')
+        self.assertEqual(
+            13, len(addl_ld_grps[0].virtual_network_uri_list))
+        addl_ld_grps[0].virtual_network_uri_list.remove('fake_uri')
+        self.assertEqual(
+            12, len(addl_ld_grps[0].virtual_network_uri_list))
 
     def test_supports_vlan(self):
         """Tests the supports_vlan method."""
@@ -104,37 +111,61 @@ class TestNetwork(unittest.TestCase):
         self.assertFalse(self.wrapper.supports_vlan(123))
 
     def test_seas(self):
-        seas = self.wrapper.get_seas()
-        self.assertEqual(1, len(seas))
+        self.assertEqual(1, len(self.wrapper.seas))
 
-        sea = seas[0]
+        sea = self.wrapper.seas[0]
         self.assertEqual(1, sea.pvid)
+
+        new_sea = copy.deepcopy(sea)
+        self.wrapper.seas.append(new_sea)
+
+        self.assertEqual(2, len(self.wrapper.seas))
+
+        sea_copy = copy.copy(self.wrapper.seas)
+        sea_copy.remove(new_sea)
+        self.wrapper.seas = sea_copy
+        self.assertEqual(1, len(self.wrapper.seas))
 
     def test_sea_trunks(self):
         """Tests the trunk adapters on the SEA."""
-        sea = self.wrapper.get_seas()[0]
+        sea = self.wrapper.seas[0]
 
         # The primary adapter testing
         prim_t = sea.primary_adpt
         self.assertIsNotNone(prim_t)
         self.assertEqual(1, prim_t.pvid)
-        self.assertFalse(prim_t.has_tag_support())
-        self.assertEqual(0, len(prim_t.get_tagged_vlans()))
+        self.assertFalse(prim_t.has_tag_support)
+        self.assertEqual(0, len(prim_t.tagged_vlans))
         self.assertEqual(2, prim_t.vswitch_id)
         self.assertEqual('ent4', prim_t.dev_name)
         self.assertEqual(1, prim_t.trunk_pri)
 
         # The secondary adapter.
-        addl_adpts = sea.get_addl_adpts()
+        addl_adpts = sea.addl_adpts
         self.assertIsNotNone(addl_adpts)
         self.assertEqual(1, len(addl_adpts))
         addl_adpt = addl_adpts[0]
         self.assertEqual(4094, addl_adpt.pvid)
-        self.assertTrue(addl_adpt.has_tag_support())
-        self.assertEqual(12, len(addl_adpt.get_tagged_vlans()))
+        self.assertTrue(addl_adpt.has_tag_support)
+        self.assertEqual(12, len(addl_adpt.tagged_vlans))
         self.assertEqual(2, addl_adpt.vswitch_id)
         self.assertEqual('ent5', addl_adpt.dev_name)
         self.assertEqual(1, addl_adpt.trunk_pri)
+
+        # Try setting the tagged vlans
+        orig_vlans = copy.copy(addl_adpt.tagged_vlans)
+        addl_adpt.tagged_vlans.append(5)
+        self.assertEqual(13, len(addl_adpt.tagged_vlans))
+        addl_adpt.tagged_vlans = [1]
+        self.assertEqual(1, len(addl_adpt.tagged_vlans))
+        addl_adpt.tagged_vlans = orig_vlans
+        self.assertEqual(12, len(addl_adpt.tagged_vlans))
+
+        # Modify the tag support
+        addl_adpt.has_tag_support = False
+        self.assertFalse(addl_adpt.has_tag_support)
+        addl_adpt.has_tag_support = True
+        self.assertTrue(addl_adpt.has_tag_support)
 
 if __name__ == "__main__":
     unittest.main()
