@@ -62,15 +62,15 @@ class TestEntryWrapper(unittest.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        resp.feed = apt.Feed([], ['entry', 'entry2'])
+        e1 = apt.Entry({'etag': '1'}, None)
+        e2 = apt.Entry({'etag': '2'}, None)
+        resp.feed = apt.Feed([], [e1, e2])
 
         # Run
         ew = ewrap.EntryWrapper.load_from_response(resp)
 
         # Validate
-        self.assertEqual('entry', ew[0]._entry)
-        self.assertEqual('entry2', ew[1]._entry)
-
-        # These are none for now.
-        self.assertIsNone(ew[0].etag)
-        self.assertIsNone(ew[1].etag)
+        self.assertEqual(e1, ew[0]._entry)
+        self.assertEqual('1', ew[0].etag)
+        self.assertEqual(e2, ew[1]._entry)
+        self.assertEqual('2', ew[1].etag)

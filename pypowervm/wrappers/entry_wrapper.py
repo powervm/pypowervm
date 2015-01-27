@@ -202,8 +202,8 @@ class EntryWrapper(Wrapper):
         If the response has a single entry, then a single entry will be
         returned.  This is NOT a list.
 
-        If the response has a feed, a List of entries will be returned.  Etags
-        are not available for each entry in a feed.
+        If the response has a feed, a List of entries will be returned.  Feeds
+        are not guaranteed to have etags (ex. from non-uom elements)
 
         :param resp: The response from an adapter read request.
         :returns: A list of wrappers if a Feed.  A single wrapper if single
@@ -219,7 +219,8 @@ class EntryWrapper(Wrapper):
         elif resp.feed is not None:
             wraps = []
             for entry in resp.feed.entries:
-                wraps.append(cls(entry, etag=None))
+                wraps.append(cls(entry, etag=entry.properties.get('etag',
+                                                                  None)))
             return wraps
         else:
             raise KeyError
