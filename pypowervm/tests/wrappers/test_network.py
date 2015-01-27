@@ -27,8 +27,15 @@ class TestVSwitch(unittest.TestCase):
 
     def setUp(self):
         super(TestVSwitch, self).setUp()
-        vswitches = pvmhttp.load_pvm_resp(VSWITCH_FEED_FILE).get_response()
-        self.wrapper = net_br.VirtualSwitch(vswitches.feed.entries[0])
+        self.vs_feed = pvmhttp.load_pvm_resp(VSWITCH_FEED_FILE).get_response()
+        self.wrapper = net_br.VirtualSwitch(self.vs_feed.feed.entries[0])
+
+    def test_feed(self):
+        """Tests the feed of virtual switches."""
+        vswitches = net_br.VirtualSwitch.load_from_response(self.vs_feed)
+        self.assertTrue(len(vswitches) >= 1)
+        for vswitch in vswitches:
+            self.assertIsNotNone(vswitch.etag)
 
     def test_data(self):
         self.assertEqual('ETHERNET0', self.wrapper.name)
