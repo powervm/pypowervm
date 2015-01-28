@@ -308,7 +308,7 @@ class TestLogicalPartition(unittest.TestCase):
         self.call_simple_getter(
             "avail_priority", str(EXPECTED_AVAIL_PRIORITY), ZERO_STR)
 
-    def test_proc_compat_modes(self):
+    def test_get_proc_compat_modes(self):
         self.call_simple_getter(
             "proc_compat_mode", EXPECTED_CURR_PROC_COMPAT_MODE, None)
         self.call_simple_getter(

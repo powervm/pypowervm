@@ -44,7 +44,7 @@ class TestVIOSWrapper(unittest.TestCase):
 
     def test_get_ip_addresses(self):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        expected_ips = ['9.1.2.4', '10.10.10.5']
+        expected_ips = ('9.1.2.4', '10.10.10.5')
         self.assertEqual(expected_ips, vios_wrapper.ip_addresses)
 
     def test_license_accept(self):

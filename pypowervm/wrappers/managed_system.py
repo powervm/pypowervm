@@ -144,13 +144,14 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         This is a READ-ONLY list.
         """
-        return self.get_parm_values(c.PROC_COMPAT_MODES)
+        return tuple(self.get_parm_values(c.PROC_COMPAT_MODES))
 
     @property
     def migration_data(self):
         """returns: The migration properties from PowerVM.
 
-        This is a READ-ONLY dictionary.
+        This information should not be changed and should be treated as read
+        only.
         """
 
         max_migr_sup = self.get_parm_value_int(c.MAX_FIRMWARE_MIGR)

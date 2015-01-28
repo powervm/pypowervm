@@ -102,8 +102,8 @@ class TestElementWrapper(unittest.TestCase):
         sea2._element._element.append(etree.Element('Bob'))
         self.assertFalse(sea1 == sea2)
 
-        # Reload, but change some text
-        self.nb2 = ewrap.EntryWrapper(self.resp2.feed.entries[0])
+    def test_inequality_by_subelem_change(self):
+        sea1 = self._find_seas(self.nb1._entry)[0]
         sea2 = self._find_seas(self.nb2._entry)[0]
         sea_trunk = sea2._element.findall('./TrunkAdapters/TrunkAdapter')[1]
         pvid = sea_trunk.find('PortVLANID')
@@ -112,58 +112,59 @@ class TestElementWrapper(unittest.TestCase):
 
     def _find_seas(self, entry):
         """Wrapper for the SEAs."""
-        return ewrap.ElementSet(entry.element.find('SharedEthernetAdapters'),
-                                'SharedEthernetAdapter', ewrap.ElementWrapper)
+        found = entry.element.find('SharedEthernetAdapters')
+        return ewrap.WrapperElemList(found, 'SharedEthernetAdapter',
+                                     ewrap.ElementWrapper)
 
 
-class TestElementList(unittest.TestCase):
-    """Tests for the ElementList class."""
+class TestWrapperElemList(unittest.TestCase):
+    """Tests for the WrapperElemList class."""
 
     def setUp(self):
-        super(TestElementList, self).setUp()
+        super(TestWrapperElemList, self).setUp()
         resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         nb = resp.feed.entries[0]
         self.wrapper = ewrap.EntryWrapper(nb)
         sea_elem = self.wrapper._element.find('SharedEthernetAdapters')
 
-        self.list = ewrap.ElementSet(sea_elem, 'SharedEthernetAdapter',
-                                     ewrap.ElementWrapper)
+        self.elem_set = ewrap.WrapperElemList(sea_elem,
+                                              'SharedEthernetAdapter',
+                                              ewrap.ElementWrapper)
 
     def test_get(self):
-        self.assertIsNotNone(self.list[0])
-        self.assertRaises(IndexError, lambda a, i: a[i], self.list, 1)
+        self.assertIsNotNone(self.elem_set[0])
+        self.assertRaises(IndexError, lambda a, i: a[i], self.elem_set, 1)
 
     def test_length(self):
-        self.assertEqual(1, len(self.list))
+        self.assertEqual(1, len(self.elem_set))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
-        self.assertEqual(1, len(self.list))
+        self.assertEqual(1, len(self.elem_set))
 
         # Test Append
-        self.list.append(sea_add)
-        self.assertEqual(2, len(self.list))
+        self.elem_set.append(sea_add)
+        self.assertEqual(2, len(self.elem_set))
 
         # Make sure we can also remove what was just added.
-        self.list.remove(sea_add)
-        self.assertEqual(1, len(self.list))
+        self.elem_set.remove(sea_add)
+        self.assertEqual(1, len(self.elem_set))
 
     def test_extend(self):
         seas = [
             ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter')),
             ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
         ]
-        self.assertEqual(1, len(self.list))
-        self.list.extend(seas)
-        self.assertEqual(3, len(self.list))
+        self.assertEqual(1, len(self.elem_set))
+        self.elem_set.extend(seas)
+        self.assertEqual(3, len(self.elem_set))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
-        e = ewrap.ElementWrapper(
-            apt.Element('SharedEthernetAdapter'))
-        self.list.remove(e)
-        self.list.remove(e)
-        self.assertEqual(1, len(self.list))
+        e = ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
+        self.elem_set.remove(e)
+        self.elem_set.remove(e)
+        self.assertEqual(1, len(self.elem_set))
 
 
 class TestActionableList(unittest.TestCase):
@@ -172,7 +173,57 @@ class TestActionableList(unittest.TestCase):
     def setUp(self):
         super(TestActionableList, self).setUp()
 
-    def test_higher_func(self):
+    def test_extend(self):
+        def test(new_list):
+            self.assertEqual([1, 2, 3, 4, 5], new_list)
+        l = ewrap.ActionableList([1, 2, 3], test)
+
+        # Extend here.
+        l.extend([4, 5])
+        self.assertEqual(5, len(l))
+        self.assertEqual(5, l[4])
+
+    def test_append(self):
+        def test(new_list):
+            self.assertEqual([1, 2, 3, 4], new_list)
+        l = ewrap.ActionableList([1, 2, 3], test)
+
+        # Append here.
+        l.append(4)
+        self.assertEqual(4, len(l))
+        self.assertEqual(4, l[3])
+
+    def test_remove(self):
+        def test(new_list):
+            self.assertEqual([1, 3], new_list)
+        l = ewrap.ActionableList([1, 2, 3], test)
+
+        # Remove here.
+        l.remove(2)
+        self.assertEqual(2, len(l))
+        self.assertEqual(3, l[1])
+
+    def test_insert(self):
+        def test(new_list):
+            self.assertEqual([1, 2, 3, 4], new_list)
+        l = ewrap.ActionableList([1, 2, 3], test)
+
+        # Insert here.
+        l.insert(3, 4)
+        self.assertEqual(4, len(l))
+        self.assertEqual(4, l[3])
+
+    def test_pop(self):
+        def test(new_list):
+            self.assertEqual([1, 2], new_list)
+        l = ewrap.ActionableList([1, 2, 3], test)
+
+        # Pop here.
+        l.pop(2)
+        self.assertEqual(2, len(l))
+        self.assertEqual(2, l[1])
+
+    def test_complex_path(self):
         function = mock.MagicMock()
 
         l = ewrap.ActionableList([1, 2, 3], function)

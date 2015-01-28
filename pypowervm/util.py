@@ -198,47 +198,6 @@ def sanitize_mac_for_api(mac):
     return mac.replace(':', '').upper()
 
 
-def element_equality(one, two):
-    """Tests element equality.
-
-    There is no common mechanism for defining 'equality' in the element tree.
-    This provides a good enough equality that meets the schema definition.
-
-    :param one: The first element.
-    :param two: The second element.
-    :returns: True if the children, text, attributes and tag are equal.
-    """
-
-    # Make sure that the children length is equal
-    one_children = one.getchildren()
-    two_children = two.getchildren()
-    if len(one_children) != len(two_children):
-        return False
-
-    # If there are no children, different set of tests
-    if len(one_children) == 0:
-        if one.text != two.text:
-            return False
-
-        if one.attrib != two.attrib:
-            return False
-
-        if one.tag != two.tag:
-            return False
-    else:
-        # Recursively validate
-        for one_child in one_children:
-            found = find_equivalent(one_child, two_children)
-            if found is None:
-                return False
-
-            # Found a match, remove it as it is no longer a valid match.
-            # Its equivalence was validated by the upper block.
-            two_children.remove(found)
-
-    return True
-
-
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 
@@ -248,11 +207,10 @@ def find_equivalent(elem, find_list):
 
     :param elem: The original element.
     :param find_list: The list to search through.
-    :returns: An element from the find_list that is functionally equivalent
-              (based on element_equality).  If it does not exist, None is
-              returned.
+    :returns: An element from the that is functionally equivalent (based on
+              __eq__).  If it does not exist, None is returned.
     """
     for find_elem in find_list:
-        if element_equality(find_elem, elem):
+        if find_elem == elem:
             return find_elem
     return None

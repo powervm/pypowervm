@@ -327,15 +327,15 @@ class VirtualIOServer(ewrap.EntryWrapper):
             if ip and ip not in ip_list:
                 ip_list.append(ip)
 
-        return ip_list
+        return tuple(ip_list)
 
     @property
     def vfc_mappings(self):
-        """Returns a list of the VirtualFCMapping objects."""
+        """Returns a WrapperElemList of the VirtualFCMapping objects."""
         def_attrib = _crt_attrs('ViosFCMapping')
-        es = ewrap.ElementSet(self._find_or_seed(VIO_VFC_MAPPINGS,
-                                                 attrib=def_attrib),
-                              VIO_VFC_MAP, VirtualFCMapping)
+        es = ewrap.WrapperElemList(self._find_or_seed(VIO_VFC_MAPPINGS,
+                                                      attrib=def_attrib),
+                                   VIO_VFC_MAP, VirtualFCMapping)
         return es
 
     @vfc_mappings.setter
@@ -345,11 +345,11 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def scsi_mappings(self):
-        """Returns a list of the VirtualSCSIMapping objects."""
+        """Returns a WrapperElemList of the VirtualSCSIMapping objects."""
         def_attrib = _crt_attrs('ViosSCSIMapping')
-        es = ewrap.ElementSet(self._find_or_seed(VIO_SCSI_MAPPINGS,
-                                                 attrib=def_attrib),
-                              VIO_SCSI_MAP, VirtualSCSIMapping)
+        es = ewrap.WrapperElemList(self._find_or_seed(VIO_SCSI_MAPPINGS,
+                                                      attrib=def_attrib),
+                                   VIO_SCSI_MAP, VirtualSCSIMapping)
         return es
 
     @scsi_mappings.setter

@@ -321,11 +321,11 @@ class ElementWrapper(Wrapper):
         return self._element == other._element
 
 
-class ElementSet(list):
+class WrapperElemList(list):
     """The wrappers can create complex Lists (from a Group from the response).
 
     The lists that they wrap tend to be generated on each 'get' from the
-    property.  This set allows for modification of the 'wrappers' that
+    property.  This list allows for modification of the 'wrappers' that
     get returned, which update the backing elements.
 
     This is not a full implementation of a list.  Only the 'common use' methods
@@ -340,7 +340,7 @@ class ElementSet(list):
     """
 
     def __init__(self, root_elem, child_type, child_class):
-        """Creates a new set backed by an Element anchor and child type.
+        """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
                           element, not a wrapper.
@@ -393,7 +393,7 @@ class ElementSet(list):
 
     def remove(self, elem):
         # Try this way first...if there is a value error, that means
-        # that the identical method isn't here...need to try 'functionally
+        # that the identical element isn't here...need to try 'functionally
         # equivalent' -> slower...
         try:
             self.root_elem.remove(elem._element)
@@ -402,12 +402,11 @@ class ElementSet(list):
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
-        children = self.root_elem._element.getchildren()
-        equiv = util.find_equivalent(elem._element._element,
-                                     children)
+        children = self.root_elem.getchildren()
+        equiv = util.find_equivalent(elem._element, children)
         if equiv is None:
-            raise ValueError('Element is not a child.')
-        self.root_elem._element.remove(equiv)
+            raise ValueError(_('No such child element.'))
+        self.root_elem.remove(equiv)
 
 
 class ActionableList(list):

@@ -166,6 +166,4 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     def vswitch_uri(self, new_val):
         vswitches = self._entry.element.findall(VADPT_VSWITCH + c.DELIM +
                                                 'link')
-        if len(vswitches) != 1:
-            return ''
         vswitches[0].attrib['href'] = new_val

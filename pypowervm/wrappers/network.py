@@ -107,13 +107,13 @@ class NetworkBridge(ewrap.EntryWrapper):
         uri_resp_list = []
         for virt_net in virt_net_list.findall(c.LINK):
             uri_resp_list.append(virt_net.get('href'))
-        return uri_resp_list
+        return tuple(uri_resp_list)
 
     @property
     def seas(self):
         """Returns a list of SharedEthernetAdapter wrappers."""
-        return ewrap.ElementSet(self._entry.element.find(NB_SEAS),
-                                NB_SEA, SharedEthernetAdapter)
+        return ewrap.WrapperElemList(self._entry.element.find(NB_SEAS),
+                                     NB_SEA, SharedEthernetAdapter)
 
     @seas.setter
     def seas(self, new_list):
@@ -122,8 +122,8 @@ class NetworkBridge(ewrap.EntryWrapper):
     @property
     def load_grps(self):
         """Returns the load groups.  The first in the list is the primary."""
-        return ewrap.ElementSet(self._entry.element.find(NB_LGS),
-                                NB_LG, LoadGroup)
+        return ewrap.WrapperElemList(self._entry.element.find(NB_LGS),
+                                     NB_LG, LoadGroup)
 
     @load_grps.setter
     def load_grps(self, new_list):
@@ -183,7 +183,7 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
 
         :return: List of TrunkAdapter wrappers.  May be the empty list.
         """
-        return self._get_trunks()[1:]
+        return tuple(self._get_trunks()[1:])
 
     @property
     def primary_adpt(self):
@@ -216,7 +216,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
     @pvid.setter
     def pvid(self, value):
-        return self.get_parm_value_int(TA_PVID, value)
+        self.set_parm_value_int(TA_PVID, value)
 
     @property
     def dev_name(self):
@@ -290,8 +290,8 @@ class LoadGroup(ewrap.ElementWrapper):
 
         :return: list of TrunkAdapter objects.
         """
-        return ewrap.ElementSet(self._element.find(LG_TRUNKS),
-                                TA_ROOT, TrunkAdapter)
+        return ewrap.WrapperElemList(self._element.find(LG_TRUNKS),
+                                     TA_ROOT, TrunkAdapter)
 
     @trunk_adapters.setter
     def trunk_adapters(self, new_list):

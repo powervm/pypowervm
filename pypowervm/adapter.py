@@ -1299,7 +1299,52 @@ class Element(object):
     def __eq__(self, other):
         if other is None:
             return False
-        return util.element_equality(self._element, other._element)
+        return self._element_equality(self, other)
+
+    def _element_equality(self, one, two):
+        """Tests element equality.
+
+        There is no common mechanism for defining 'equality' in the element
+        tree.  This provides a good enough equality that meets the schema
+        definition.
+
+        :param one: The first element.  Is the backing element.
+        :param two: The second element.  Is the backing element.
+        :returns: True if the children, text, attributes and tag are equal.
+        """
+
+        # Make sure that the children length is equal
+        one_children = one.getchildren()
+        two_children = two.getchildren()
+        if len(one_children) != len(two_children):
+            return False
+
+        # If there are no children, different set of tests
+        if len(one_children) == 0:
+            if one.text != two.text:
+                return False
+
+            if one.attrib != two.attrib:
+                return False
+
+            if one.tag != two.tag:
+                return False
+        else:
+            # Recursively validate
+            for one_child in one_children:
+                found = util.find_equivalent(one_child, two_children)
+                if found is None:
+                    return False
+
+                # Found a match, remove it as it is no longer a valid match.
+                # Its equivalence was validated by the upper block.
+                two_children.remove(found)
+
+        return True
+
+    def getchildren(self):
+        """Returns the children as a list of Elements."""
+        return [Element.wrapelement(i) for i in self._element.getchildren()]
 
     @classmethod
     def wrapelement(cls, element):

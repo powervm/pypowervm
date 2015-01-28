@@ -415,7 +415,7 @@ class LogicalPartition(ewrap.EntryWrapper):
             for link in cna_links:
                 ret_links.append(link.attrib['href'])
 
-        return ret_links
+        return tuple(ret_links)
 
     @property
     def rmc_state(self):

@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from lxml import etree
+
 import logging
 import unittest
 
@@ -24,12 +26,15 @@ import requests.structures as req_struct
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
+from pypowervm.tests.wrappers.util import pvmhttp
 
 logging.basicConfig()
 
 logon_text = testlib.file2b("logon.xml")
 
 response_text = testlib.file2b("event.xml")
+
+NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
 
 class TestAdapter(unittest.TestCase):
@@ -370,6 +375,41 @@ class TestAdapter(unittest.TestCase):
 
         # Get only the top
         self.assertEqual(_count_elem(top_element, 'Top'), 1)
+
+
+class TestElementWrapper(unittest.TestCase):
+    """Tests for the ElementWrapper class."""
+
+    def setUp(self):
+        super(TestElementWrapper, self).setUp()
+        self.resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
+        self.nb1 = self.resp.feed.entries[0]
+        self.resp2 = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
+        self.nb2 = self.resp2.feed.entries[0]
+
+    def test_equality(self):
+        """Validates that two elements loaded from the same data is equal."""
+        sea1 = self._find_seas(self.nb1)[0]
+        sea2 = self._find_seas(self.nb2)[0]
+        self.assertTrue(sea1 == sea2)
+
+        # Change the other SEA
+        sea2._element.append(etree.Element('Bob'))
+        self.assertFalse(sea1 == sea2)
+
+    def test_inequality_by_subelem_change(self):
+        sea1 = self._find_seas(self.nb1)[0]
+        sea2 = self._find_seas(self.nb2)[0]
+        sea_trunk = sea2.findall('./TrunkAdapters/TrunkAdapter')[1]
+        pvid = sea_trunk.find('PortVLANID')
+        pvid.text = '1'
+        self.assertFalse(sea1 == sea2)
+
+    def _find_seas(self, entry):
+        """Wrapper for the SEAs."""
+        return entry.element.findall('./SharedEthernetAdapters/'
+                                     'SharedEthernetAdapter')
+
 
 if __name__ == '__main__':
     unittest.main()
