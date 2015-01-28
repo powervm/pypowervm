@@ -28,6 +28,12 @@ LOG = logging.getLogger(__name__)
 
 LOCATION_CODE = 'LocationCode'
 
+# Extended Attribute Groups
+XAG_VIOS_NETWORK = 'ViosNetwork'
+XAG_VIOS_STORAGE = 'ViosStorage'
+XAG_VIOS_SCSI_MAPPING = 'ViosSCSIMapping'
+XAG_VIOS_FC_MAPPING = 'ViosFCMapping'
+
 # VIO Constants
 VIO_ROOT = 'VirtualIOServer'
 VIO_VFC_MAPPINGS = 'VirtualFibreChannelMappings'
