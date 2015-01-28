@@ -64,9 +64,8 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     new_vdisk = vg.VirtualDisk(vg.crt_virtual_disk_obj(d_name, gb_size))
 
     # Append it to the list.  Requires get then set.
-    vdisks = vol_grp.get_virtual_disks()
+    vdisks = vol_grp.virtual_disks
     vdisks.append(new_vdisk)
-    vol_grp.set_virtual_disks(vdisks)
 
     # Now perform an update on the adapter.
     resp = adapter.update(vol_grp._entry.element, vol_grp_data.headers['etag'],
@@ -76,7 +75,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
 
     # The new Virtual Disk should be created.  Find the one we created.
     n_vdisk = None
-    for vdisk in vol_grp.get_virtual_disks():
+    for vdisk in vol_grp.virtual_disks:
         if vdisk.name == d_name:
             n_vdisk = vdisk
             break
