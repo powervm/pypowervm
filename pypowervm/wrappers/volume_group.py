@@ -330,6 +330,10 @@ class VirtualDisk(ewrap.ElementWrapper):
     def name(self):
         return self.get_parm_value(DISK_NAME)
 
+    @name.setter
+    def name(self, name):
+        self.set_parm_value(DISK_NAME, name)
+
     @property
     def label(self):
         return self.get_parm_value(DISK_LABEL)
@@ -338,6 +342,10 @@ class VirtualDisk(ewrap.ElementWrapper):
     def capacity(self):
         """Returns the capacity in GB (float)."""
         return float(self.get_parm_value(DISK_CAPACITY))
+
+    @capacity.setter
+    def capacity(self, capacity):
+        self.set_parm_value(DISK_CAPACITY, str(capacity))
 
     @property
     def udid(self):

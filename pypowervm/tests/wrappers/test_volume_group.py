@@ -82,6 +82,11 @@ class TestVolumeGroup(unittest.TestCase):
         self.assertEqual(1, vdisk.capacity)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.1',
                          vdisk.udid)
+        # Test setters
+        vdisk.capacity = 2
+        self.assertEqual(2, vdisk.capacity)
+        vdisk.name = 'new_name'
+        self.assertEqual('new_name', vdisk.name)
 
     def test_add_vdisk(self):
         """Performs a test flow that adds a virtual disk."""
