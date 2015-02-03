@@ -183,16 +183,15 @@ class VolumeGroup(ewrap.EntryWrapper):
     def serial_id(self):
         return self.get_parm_value(VG_SERIAL_ID)
 
-    def get_vmedia_repos(self):
+    @property
+    def vmedia_repos(self):
         """Returns a list of VirtualMediaRepository wrappers."""
-        vmedia_repos = []
-        path = c.ROOT + VG_MEDIA_REPOS + c.DELIM + VREPO_ROOT
-        vmedia_repo_list = self._entry.element.findall(path)
-        for vmedia_repo in vmedia_repo_list:
-            vmedia_repos.append(VirtualMediaRepository(vmedia_repo))
-        return vmedia_repos
+        es = ewrap.WrapperElemList(self._find_or_seed(VG_MEDIA_REPOS),
+                                   VREPO_ROOT, VirtualMediaRepository)
+        return es
 
-    def set_vmedia_repos(self, repos):
+    @vmedia_repos.setter
+    def vmedia_repos(self, repos):
         """Replaces the VirtualMediaRepositories with the new value.
 
         :param repos: A list of VirtualMediaRepository objects that will
@@ -200,16 +199,15 @@ class VolumeGroup(ewrap.EntryWrapper):
         """
         self.replace_list(VG_MEDIA_REPOS, repos)
 
-    def get_phys_vols(self):
+    @property
+    def phys_vols(self):
         """Returns a list of the Physical Volumes that back this repo."""
-        phys_vols = []
-        path = VG_PHS_VOLS + c.DELIM + PV_ROOT
-        phys_vol_list = self._entry.element.findall(path)
-        for phys_vol in phys_vol_list:
-            phys_vols.append(PhysicalVolume(phys_vol))
-        return phys_vols
+        es = ewrap.WrapperElemList(self._find_or_seed(VG_PHS_VOLS),
+                                   PV_ROOT, PhysicalVolume)
+        return es
 
-    def set_phys_vols(self, phys_vols):
+    @phys_vols.setter
+    def phys_vols(self, phys_vols):
         """Replaces the physical volumes with the new value.
 
         :param phys_vols: A list of PhysicalVolume objects that will replace
@@ -217,16 +215,15 @@ class VolumeGroup(ewrap.EntryWrapper):
         """
         self.replace_list(VG_PHS_VOLS, phys_vols)
 
-    def get_virtual_disks(self):
+    @property
+    def virtual_disks(self):
         """Returns a list of the Virtual Disks that are in the repo."""
-        v_disks = []
-        path = VG_VDISKS + c.DELIM + DISK_ROOT
-        v_disk_list = self._entry.element.findall(path)
-        for v_disk in v_disk_list:
-            v_disks.append(VirtualDisk(v_disk))
-        return v_disks
+        es = ewrap.WrapperElemList(self._find_or_seed(VG_VDISKS),
+                                   DISK_ROOT, VirtualDisk)
+        return es
 
-    def set_virtual_disks(self, virt_disks):
+    @virtual_disks.setter
+    def virtual_disks(self, virt_disks):
         """Replaces the virtual disks with the new value.
 
         :param virt_disks: A list of VirtualDisk objects that will replace
@@ -241,17 +238,14 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
     Typically used to store an ISO file for image building.
     """
 
-    def get_optical_media(self):
+    @property
+    def optical_media(self):
         """Returns a list of the VirtualOpticalMedia devices in the repo."""
-        media_repos = []
-        path = (c.ROOT + c.DELIM + VREPO_OPTICAL_MEDIA_ROOT + c.DELIM +
-                VOPT_ROOT)
-        media_repo_list = self._element.findall(path)
-        for media_repo in media_repo_list:
-            media_repos.append(VirtualOpticalMedia(media_repo))
-        return media_repos
+        seed = self._find_or_seed(VREPO_OPTICAL_MEDIA_ROOT)
+        return ewrap.WrapperElemList(seed, VOPT_ROOT, VirtualOpticalMedia)
 
-    def set_optical_media(self, new_media):
+    @optical_media.setter
+    def optical_media(self, new_media):
         """Sets the list of VirtualOpticalMedia devices in the repo.
 
         :param new_media: The list of new VirtualOpticalMedia.

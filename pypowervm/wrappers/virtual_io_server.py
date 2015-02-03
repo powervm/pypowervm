@@ -417,7 +417,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
             # Check if virtual optical media
             e = elem.find(volume_group.VOPT_ROOT)
             if e is not None:
-                return volume_group.VOPT_ROOT
+                return volume_group.VirtualOpticalMedia(e)
 
             # Some unknown type, throw error
             raise Exception('Found unknown type %s' % e.toxmlstring())
