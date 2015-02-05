@@ -63,6 +63,13 @@ VG_MEDIA_REPOS = 'MediaRepositories'
 VG_PHS_VOLS = 'PhysicalVolumes'
 VG_VDISKS = 'VirtualDisks'
 
+# LogicalUnit Constants
+LU_THIN = 'ThinDevice'
+LU_UDID = c.UDID
+LU_CAPACITY = 'UnitCapacity'
+LU_NAME = 'UnitName'
+LU_TYPE = 'LogicalUnitType'
+
 
 def crt_virtual_disk_obj(name, capacity, label=None):
     """Creates the Element structure needed for a VirtualDisk.
@@ -344,3 +351,29 @@ class VirtualDisk(ewrap.ElementWrapper):
     @property
     def udid(self):
         return self.get_parm_value(DISK_UDID)
+
+
+class LogicalUnit(ewrap.ElementWrapper):
+    """A Logical Unit (usually part of a SharedStoragePool."""
+
+    @property
+    def name(self):
+        return self.get_parm_value(LU_NAME)
+
+    @property
+    def udid(self):
+        return self.get_parm_value(LU_UDID)
+
+    @property
+    def capacity(self):
+        """Float capacity in GB."""
+        return float(self.get_parm_value(LU_CAPACITY))
+
+    @property
+    def lu_type(self):
+        """String enum value e.g. "VirtualIO_Disk."""
+        return self.get_parm_value(LU_TYPE)
+
+    @property
+    def is_thin(self):
+        return self.get_parm_value_bool(LU_THIN)

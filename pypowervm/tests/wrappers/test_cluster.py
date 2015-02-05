@@ -67,5 +67,18 @@ class TestSharedStoragePool(unittest.TestCase):
         self.assertEqual(pv.name, 'hdisk3')
         # TODO(IBM): test setter
 
+    def test_logical_units(self):
+        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
+        lus = ssp_wrapper.logical_units
+        self.assertEqual(len(lus), 1)
+        lu = lus[0]
+        self.assertEqual(lu.udid, '27cfc907d2abf511e4b2d540f2e95daf301a02b090'
+                         '4778d755df5a46fe25e500d8')
+        self.assertEqual(lu.name, 'neolu1')
+        self.assertTrue(lu.is_thin)
+        self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
+        self.assertAlmostEqual(lu.capacity, 1, 1)
+        # TODO(IBM): test setter
+
 if __name__ == "__main__":
     unittest.main()
