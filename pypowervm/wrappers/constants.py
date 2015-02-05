@@ -362,10 +362,8 @@ RESERVE_POLICY = 'ReservePolicy'
 VOL_NAME = 'VolumeName'
 VOL_SIZE = 'VolumeCapacity'
 VOL_UID = 'VolumeUniqueID'
-# LU attribute
+
 UDID = 'UniqueDeviceID'
-UNIT_NAME = 'UnitName'
-UNIT_SIZE = 'UnitCapacity'
 
 # Target Device
 TARGET_DEV = 'TargetDevice'

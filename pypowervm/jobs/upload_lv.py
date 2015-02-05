@@ -20,8 +20,8 @@ import math
 from pypowervm import exceptions as exc
 from pypowervm import util
 from pypowervm.wrappers import constants as wc
+from pypowervm.wrappers import storage as stor
 from pypowervm.wrappers import vios_file as vf
-from pypowervm.wrappers import volume_group as vg
 
 FILE_UUID = 'FileUUID'
 
@@ -52,7 +52,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     """
     # Get the existing volume group
     vol_grp_data = adapter.read(wc.VIOS, v_uuid, wc.VOL_GROUP, vol_grp_uuid)
-    vol_grp = vg.VolumeGroup(vol_grp_data.entry)
+    vol_grp = stor.VolumeGroup(vol_grp_data.entry)
 
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
@@ -66,7 +66,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # TODO(IBM) Temporary - need to round up to the highest GB.  This should
     # be done by the platform in the future.
     gb_size = math.ceil(gb_size)
-    new_vdisk = vg.VirtualDisk(vg.crt_virtual_disk_obj(d_name, gb_size))
+    new_vdisk = stor.VirtualDisk(stor.crt_virtual_disk_obj(d_name, gb_size))
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)
@@ -75,7 +75,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     resp = adapter.update(vol_grp._entry.element, vol_grp_data.headers['etag'],
                           wc.VIOS, v_uuid, wc.VOL_GROUP, vol_grp_uuid,
                           xag=None)
-    vol_grp = vg.VolumeGroup(resp.entry)
+    vol_grp = stor.VolumeGroup(resp.entry)
 
     # The new Virtual Disk should be created.  Find the one we created.
     n_vdisk = None
