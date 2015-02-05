@@ -364,7 +364,6 @@ VOL_SIZE = 'VolumeCapacity'
 VOL_UID = 'VolumeUniqueID'
 # LU attribute
 UDID = 'UniqueDeviceID'
-UDID_PATH = ROOT
 UNIT_NAME = 'UnitName'
 UNIT_SIZE = 'UnitCapacity'
 

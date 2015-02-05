@@ -241,7 +241,6 @@ class VirtualIOServer(ewrap.EntryWrapper):
         return self.get_parm_value_bool(c.ROOT + VIO_LICENSE,
                                         default=True)
 
-    @property
     def hdisk_reserve_policy(self, disk_uuid):
         """Get the reserve policy for an hdisk.
 
@@ -262,7 +261,6 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
         return policy
 
-    @property
     def hdisk_from_uuid(self, disk_uuid):
         """Get the hdisk name from the volume uuid.
 
@@ -274,8 +272,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
         # Get all the physical volume elements and look for a diskname match
         volumes = self._entry.element.findall(c.PVS_PATH)
         for volume in volumes:
-            # TODO(IBM): c.UDID_PATH is './'.  This isn't right.  Fix it.
-            vol_uuid = volume.findtext(c.UDID_PATH)
+            vol_uuid = volume.findtext(c.UDID)
             if vol_uuid:
                 LOG.debug('get_hdisk_from_uuid match: %s' % vol_uuid)
                 LOG.debug('get_hdisk_from_uuid disk_uuid: %s' % disk_uuid)

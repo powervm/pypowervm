@@ -59,6 +59,32 @@ class TestVIOSWrapper(unittest.TestCase):
         vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
         self.assertEqual(True, vios_wrapper.is_rmc_active)
 
+    def test_hdisk_reserve_policy_found(self):
+        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
+        # Most are NoReserve; look for the only one that's SinglePath to make
+        # sure we're actually searching rather than picking first/last/random
+        found_policy = vios_wrapper.hdisk_reserve_policy(
+            '6005076300838041300000000000002B')
+        self.assertEqual('SinglePath', found_policy)
+
+    def test_hdisk_reserve_policy_notfound(self):
+        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
+        # Most are NoReserve; look for the only one that's SinglePath to make
+        # sure we're actually searching rather than picking first/last/random
+        found_policy = vios_wrapper.hdisk_reserve_policy('Bogus')
+        self.assertIsNone(found_policy)
+
+    def test_hdisk_from_uuid_found(self):
+        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
+        found_name = vios_wrapper.hdisk_from_uuid(
+            '01M0lCTTIxNDUyNEM2MDA1MDc2MzAwODM4MDQxMzAwMDAwMDAwMDAwMDhCNQ==')
+        self.assertEqual('hdisk7', found_name)
+
+    def test_hdisk_from_uuid_notfound(self):
+        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
+        found_name = vios_wrapper.hdisk_from_uuid('Bogus')
+        self.assertIsNone(found_name)
+
 
 class TestViosMappings(unittest.TestCase):
 
