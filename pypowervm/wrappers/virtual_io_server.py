@@ -21,7 +21,7 @@ import re
 from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
-from pypowervm.wrappers import volume_group
+from pypowervm.wrappers import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -106,8 +106,8 @@ def crt_scsi_map_to_vdisk(adapter, host_uuid, client_lpar_uuid, disk_name):
               VirtualSCSIMapping wrapper).
     """
     # Create the 'Storage' element of the mapping.
-    vdisk = adpt.Element(volume_group.DISK_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
-                         children=[adpt.Element(volume_group.DISK_NAME,
+    vdisk = adpt.Element(storage.DISK_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
+                         children=[adpt.Element(storage.DISK_NAME,
                                                 text=str(disk_name))])
     stor = adpt.Element(MAP_STORAGE, children=[vdisk])
 
@@ -170,8 +170,8 @@ def crt_scsi_map_to_vopt(adapter, host_uuid, client_lpar_uuid, media_name):
               VirtualSCSIMapping wrapper).
     """
     # Create the 'Storage' element of the mapping
-    vopt = adpt.Element(volume_group.VOPT_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
-                        children=[adpt.Element(volume_group.VOPT_NAME,
+    vopt = adpt.Element(storage.VOPT_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
+                        children=[adpt.Element(storage.VOPT_NAME,
                                                text=str(media_name))])
     stor = adpt.Element(MAP_STORAGE, children=[vopt])
 
@@ -407,14 +407,14 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
         elem = self._element.find(MAP_STORAGE)
         if elem is not None:
             # Check if virtual disk
-            e = elem.find(volume_group.DISK_ROOT)
+            e = elem.find(storage.DISK_ROOT)
             if e is not None:
-                return volume_group.VirtualDisk(e)
+                return storage.VirtualDisk(e)
 
             # Check if virtual optical media
-            e = elem.find(volume_group.VOPT_ROOT)
+            e = elem.find(storage.VOPT_ROOT)
             if e is not None:
-                return volume_group.VirtualOpticalMedia(e)
+                return storage.VirtualOpticalMedia(e)
 
             # Some unknown type, throw error
             raise Exception('Found unknown type %s' % e.toxmlstring())

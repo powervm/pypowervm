@@ -17,7 +17,7 @@
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.wrappers.volume_group as vol_grp
+import pypowervm.wrappers.storage as stor
 
 VOL_GROUP_FILE = 'fake_volume_group.txt'
 
@@ -27,7 +27,7 @@ class TestVolumeGroup(unittest.TestCase):
     def setUp(self):
         super(TestVolumeGroup, self).setUp()
         self.vol_gr_resp = pvmhttp.load_pvm_resp(VOL_GROUP_FILE).get_response()
-        self.vol_grp = vol_grp.VolumeGroup(self.vol_gr_resp.entry)
+        self.vol_grp = stor.VolumeGroup(self.vol_gr_resp.entry)
 
     def test_base(self):
         """Tests baseline function within the Volume Group."""
@@ -93,8 +93,8 @@ class TestVolumeGroup(unittest.TestCase):
 
         self.assertEqual(1, len(vdisks))
 
-        disk_elem = vol_grp.crt_virtual_disk_obj('disk_name', 10, 'label')
-        disk = vol_grp.VirtualDisk(disk_elem)
+        disk_elem = stor.crt_virtual_disk_obj('disk_name', 10, 'label')
+        disk = stor.VirtualDisk(disk_elem)
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -119,8 +119,8 @@ class TestVolumeGroup(unittest.TestCase):
 
         self.assertEqual(1, len(phys_vols))
 
-        phys_v = vol_grp.crt_phys_vol('disk1')
-        phys_vol = vol_grp.PhysicalVolume(phys_v)
+        phys_v = stor.crt_phys_vol('disk1')
+        phys_vol = stor.PhysicalVolume(phys_v)
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
@@ -138,8 +138,8 @@ class TestVolumeGroup(unittest.TestCase):
 
         self.assertEqual(1, len(media_repos))
 
-        vmedia_r = vol_grp.crt_vmedia_repo('repo', 10)
-        vmedia_repo = vol_grp.VirtualOpticalMedia(vmedia_r)
+        vmedia_r = stor.crt_vmedia_repo('repo', 10)
+        vmedia_repo = stor.VirtualOpticalMedia(vmedia_r)
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
@@ -160,8 +160,8 @@ class TestVolumeGroup(unittest.TestCase):
         vopt_medias = media_repos[0].optical_media
         self.assertEqual(2, len(vopt_medias))
 
-        new_m = vol_grp.crt_voptical_media('name', '0.123', 'r')
-        new_media = vol_grp.VirtualOpticalMedia(new_m)
+        new_m = stor.crt_voptical_media('name', '0.123', 'r')
+        new_media = stor.VirtualOpticalMedia(new_m)
         self.assertIsNotNone(new_media)
 
         vopt_medias.append(new_media)

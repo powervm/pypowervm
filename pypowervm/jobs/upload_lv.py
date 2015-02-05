@@ -20,8 +20,8 @@ import math
 from pypowervm import exceptions as exc
 from pypowervm import util
 from pypowervm.wrappers import constants as wc
+from pypowervm.wrappers import storage as vg
 from pypowervm.wrappers import vios_file as vf
-from pypowervm.wrappers import volume_group as vg
 
 FILE_UUID = 'FileUUID'
 
