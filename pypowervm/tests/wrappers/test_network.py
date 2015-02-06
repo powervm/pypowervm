@@ -17,65 +17,56 @@
 import copy
 import unittest
 
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net_br
 
-NET_BRIDGE_FILE = 'fake_network_bridge.txt'
-VSWITCH_FEED_FILE = 'fake_vswitch_feed.txt'
 
+class TestVSwitch(twrap.TestWrapper):
 
-class TestVSwitch(unittest.TestCase):
-
-    def setUp(self):
-        super(TestVSwitch, self).setUp()
-        self.vs_feed = pvmhttp.load_pvm_resp(VSWITCH_FEED_FILE).get_response()
-        self.wrapper = net_br.VirtualSwitch(self.vs_feed.feed.entries[0])
+    file = 'fake_vswitch_feed.txt'
+    wrapper_class_to_test = net_br.VirtualSwitch
 
     def test_feed(self):
         """Tests the feed of virtual switches."""
-        vswitches = net_br.VirtualSwitch.load_from_response(self.vs_feed)
+        vswitches = net_br.VirtualSwitch.load_from_response(self.resp)
         self.assertTrue(len(vswitches) >= 1)
         for vswitch in vswitches:
             self.assertIsNotNone(vswitch.etag)
 
     def test_data(self):
-        self.assertEqual('ETHERNET0', self.wrapper.name)
-        self.assertEqual(0, self.wrapper.switch_id)
-        self.assertEqual('Veb', self.wrapper.mode)
+        self.assertEqual('ETHERNET0', self.dwrap.name)
+        self.assertEqual(0, self.dwrap.switch_id)
+        self.assertEqual('Veb', self.dwrap.mode)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                          '4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/'
                          '4d9735ae-feaf-32c2-a1bc-102026df9168',
-                         self.wrapper.href)
+                         self.dwrap.href)
 
 
-class TestNetwork(unittest.TestCase):
+class TestNetwork(twrap.TestWrapper):
 
-    def setUp(self):
-        super(TestNetwork, self).setUp()
-        self.net_br_resp = pvmhttp.load_pvm_resp(
-            NET_BRIDGE_FILE).get_response()
-        nb = self.net_br_resp.feed.entries[0]
-        self.wrapper = net_br.NetworkBridge(nb)
+    file = 'fake_network_bridge.txt'
+    wrapper_class_to_test = net_br.NetworkBridge
 
     def test_pvid(self):
-        self.assertEqual(1, self.wrapper.pvid)
+        self.assertEqual(1, self.dwrap.pvid)
 
     def test_uuid(self):
         self.assertEqual(
-            '764f3423-04c5-3b96-95a3-4764065400bd', self.wrapper.uuid)
+            '764f3423-04c5-3b96-95a3-4764065400bd', self.dwrap.uuid)
 
     def test_virtual_network_uri_list(self):
-        uri_list = self.wrapper.virtual_network_uri_list
+        uri_list = self.dwrap.virtual_network_uri_list
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
 
     def test_load_groups(self):
-        prim_ld_grp = self.wrapper.load_grps[0]
+        prim_ld_grp = self.dwrap.load_grps[0]
         self.assertIsNotNone(prim_ld_grp)
         self.assertEqual(1, prim_ld_grp.pvid)
         self.assertEqual(1, len(prim_ld_grp.trunk_adapters))
 
-        addl_ld_grps = self.wrapper.load_grps[1:]
+        addl_ld_grps = self.dwrap.load_grps[1:]
         self.assertIsNotNone(addl_ld_grps)
         self.assertEqual(1, len(addl_ld_grps))
 
@@ -92,43 +83,43 @@ class TestNetwork(unittest.TestCase):
         """Tests the supports_vlan method."""
 
         # PVID of primary adapter
-        self.assertTrue(self.wrapper.supports_vlan(1))
-        self.assertTrue(self.wrapper.supports_vlan("1"))
+        self.assertTrue(self.dwrap.supports_vlan(1))
+        self.assertTrue(self.dwrap.supports_vlan("1"))
 
         # PVID of second adapter
-        self.assertFalse(self.wrapper.supports_vlan(4094))
-        self.assertFalse(self.wrapper.supports_vlan("4094"))
+        self.assertFalse(self.dwrap.supports_vlan(4094))
+        self.assertFalse(self.dwrap.supports_vlan("4094"))
 
         # Additional VLAN of second adapter.
-        self.assertTrue(self.wrapper.supports_vlan(100))
-        self.assertTrue(self.wrapper.supports_vlan("100"))
-        self.assertTrue(self.wrapper.supports_vlan(2228))
-        self.assertTrue(self.wrapper.supports_vlan("2228"))
-        self.assertTrue(self.wrapper.supports_vlan(2227))
-        self.assertTrue(self.wrapper.supports_vlan("2227"))
+        self.assertTrue(self.dwrap.supports_vlan(100))
+        self.assertTrue(self.dwrap.supports_vlan("100"))
+        self.assertTrue(self.dwrap.supports_vlan(2228))
+        self.assertTrue(self.dwrap.supports_vlan("2228"))
+        self.assertTrue(self.dwrap.supports_vlan(2227))
+        self.assertTrue(self.dwrap.supports_vlan("2227"))
 
         # A VLAN that isn't anywhere
-        self.assertFalse(self.wrapper.supports_vlan(123))
+        self.assertFalse(self.dwrap.supports_vlan(123))
 
     def test_seas(self):
-        self.assertEqual(1, len(self.wrapper.seas))
+        self.assertEqual(1, len(self.dwrap.seas))
 
-        sea = self.wrapper.seas[0]
+        sea = self.dwrap.seas[0]
         self.assertEqual(1, sea.pvid)
 
         new_sea = copy.deepcopy(sea)
-        self.wrapper.seas.append(new_sea)
+        self.dwrap.seas.append(new_sea)
 
-        self.assertEqual(2, len(self.wrapper.seas))
+        self.assertEqual(2, len(self.dwrap.seas))
 
-        sea_copy = copy.copy(self.wrapper.seas)
+        sea_copy = copy.copy(self.dwrap.seas)
         sea_copy.remove(new_sea)
-        self.wrapper.seas = sea_copy
-        self.assertEqual(1, len(self.wrapper.seas))
+        self.dwrap.seas = sea_copy
+        self.assertEqual(1, len(self.dwrap.seas))
 
     def test_sea_trunks(self):
         """Tests the trunk adapters on the SEA."""
-        sea = self.wrapper.seas[0]
+        sea = self.dwrap.seas[0]
 
         # The primary adapter testing
         prim_t = sea.primary_adpt

@@ -155,12 +155,10 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def vswitch_uri(self):
         """Returns the URI for the associated vSwitch."""
-        vswitches = self._entry.element.findall(VADPT_VSWITCH + c.DELIM +
-                                                'link')
-        if len(vswitches) != 1:
+        links = self.get_href(VADPT_VSWITCH + c.DELIM + 'link')
+        if len(links) != 1:
             return ''
-        vs_elem = vswitches[0]
-        return vs_elem.attrib['href']
+        return links[0]
 
     @vswitch_uri.setter
     def vswitch_uri(self, new_val):

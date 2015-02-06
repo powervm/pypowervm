@@ -16,69 +16,59 @@
 
 import unittest
 
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.cluster as clust
 
-SSP_FILE = 'ssp.txt'
 
+class TestCluster(twrap.TestWrapper):
 
-class TestSharedStoragePool(unittest.TestCase):
-
-    _ssp_resp = None
-
-    def setUp(self):
-        super(TestSharedStoragePool, self).setUp()
-        if TestSharedStoragePool._ssp_resp:
-            self.ssp_resp = TestSharedStoragePool._ssp_resp
-            return
-        TestSharedStoragePool._ssp_resp = pvmhttp.load_pvm_resp(
-            SSP_FILE).get_response()
-        self.ssp_resp = TestSharedStoragePool._ssp_resp
+    file = 'cluster.txt'
+    wrapper_class_to_test = clust.Cluster
 
     def test_name(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        self.assertEqual(ssp_wrapper.name, 'neossp1')
+        self.assertEqual(self.dwrap.name, 'neoclust1')
 
-    def test_udid(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        self.assertEqual(ssp_wrapper.udid, '24cfc907d2abf511e4b2d540f2e95daf3'
-                         '0000000000972FB370000000054D14EB8')
+    def test_id(self):
+        self.assertEqual(self.dwrap.id, '22cfc907d2abf511e4b2d540f2e95daf30')
 
-    def test_capacity(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        self.assertAlmostEqual(ssp_wrapper.capacity, 49.88, 3)
+    def test_ssp_uri(self):
+        self.assertEqual(self.dwrap.ssp_uri, 'https://9.1.2.3:12443/rest/api'
+                         '/uom/SharedStoragePool/e357a79a-7a3d-35b6-8405-55ab'
+                         '6a2d0de7')
 
-    def test_free_space(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        self.assertAlmostEqual(ssp_wrapper.free_space, 48.98, 3)
+    def test_ssp_uuid(self):
+        self.assertEqual(self.dwrap.ssp_uuid.lower(),
+                         'e357a79a-7a3d-35b6-8405-55ab6a2d0de7')
 
-    def test_total_lu_size(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        self.assertAlmostEqual(ssp_wrapper.total_lu_size, 1, 1)
+    def test_repos_pvs(self):
+        repos = self.dwrap.repos_pvs
+        self.assertEqual(len(repos), 1)
+        pv = repos[0]
+        # PhysicalVolume is tested elsewhere.  Minimal verification here.
+        self.assertEqual(pv.name, 'hdisk2')
+        # TODO(IBM): test setter
 
-    def test_physical_volumes(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        pvs = ssp_wrapper.physical_volumes
-        self.assertEqual(len(pvs), 1)
-        pv = pvs[0]
+    def test_nodes(self):
+        """Tests the Node and MTMS wrappers as well."""
+        nodes = self.dwrap.nodes
+        self.assertEqual(len(nodes), 2)
+        node = nodes[0]
+        self.assertEqual(node.hostname, 'foo.ibm.com')
+        self.assertEqual(node.lparid, 2)
         self.assertEqual(
-            pv.udid,
-            '01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDAwMw==')
-        self.assertEqual(pv.name, 'hdisk3')
-        # TODO(IBM): test setter
-
-    def test_logical_units(self):
-        ssp_wrapper = clust.SharedStoragePool(self.ssp_resp.entry)
-        lus = ssp_wrapper.logical_units
-        self.assertEqual(len(lus), 1)
-        lu = lus[0]
-        self.assertEqual(lu.udid, '27cfc907d2abf511e4b2d540f2e95daf301a02b090'
-                         '4778d755df5a46fe25e500d8')
-        self.assertEqual(lu.name, 'neolu1')
-        self.assertTrue(lu.is_thin)
-        self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
-        self.assertAlmostEqual(lu.capacity, 1, 1)
-        # TODO(IBM): test setter
+            node.vios_uri, 'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+            '98498bed-c78a-3a4f-b90a-4b715418fcb6/VirtualIOServer/58C9EB1D-'
+            '7213-4956-A011-77D43CC4ACCC')
+        self.assertEqual(
+            node.vios_uuid.upper(), '58C9EB1D-7213-4956-A011-77D43CC4ACCC')
+        # Make sure the different Node entries are there
+        self.assertEqual(nodes[1].hostname, 'bar.ibm.com')
+        # Test MTMS
+        mtms = node.mtms
+        self.assertEqual(mtms.machine_type, '8247')
+        self.assertEqual(mtms.model, '22L')
+        self.assertEqual(mtms.serial, '2125D1A')
+        # TODO(IBM): test nodes setter
 
 if __name__ == "__main__":
     unittest.main()
