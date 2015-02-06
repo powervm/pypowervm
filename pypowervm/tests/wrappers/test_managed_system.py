@@ -154,5 +154,12 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.call_simple_getter("max_vcpus_per_aix_linux_lpar",
                                 self.wrapper.max_sys_vcpus_limit, 0)
 
+    def test_vios_links(self):
+        self.call_simple_getter(
+            "vios_links",
+            ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/caae9209-25e5-'
+             '35cd-a71a-ed55c03f294d/VirtualIOServer/32F3530F-ECA0-4EAA-A37E-'
+             '4B792C21AF70',), ())
+
 if __name__ == "__main__":
     unittest.main()

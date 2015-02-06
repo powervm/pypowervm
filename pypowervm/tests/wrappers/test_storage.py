@@ -14,33 +14,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
 
-VOL_GROUP_FILE = 'fake_volume_group.txt'
 
+class TestVolumeGroup(twrap.TestWrapper):
 
-class TestVolumeGroup(unittest.TestCase):
-
-    def setUp(self):
-        super(TestVolumeGroup, self).setUp()
-        self.vol_gr_resp = pvmhttp.load_pvm_resp(VOL_GROUP_FILE).get_response()
-        self.vol_grp = stor.VolumeGroup(self.vol_gr_resp.entry)
+    file = 'fake_volume_group.txt'
+    wrapper_class_to_test = stor.VolumeGroup
 
     def test_base(self):
         """Tests baseline function within the Volume Group."""
-        self.assertEqual('image_pool', self.vol_grp.name)
-        self.assertEqual(1063, self.vol_grp.capacity)
-        self.assertEqual(1051, self.vol_grp.available_size)
-        self.assertEqual(1051, self.vol_grp.free_space)
+        self.assertEqual('image_pool', self.dwrap.name)
+        self.assertEqual(1063, self.dwrap.capacity)
+        self.assertEqual(1051, self.dwrap.available_size)
+        self.assertEqual(1051, self.dwrap.free_space)
         self.assertEqual('00f8d6de00004b000000014a54555cd9',
-                         self.vol_grp.serial_id)
+                         self.dwrap.serial_id)
 
     def test_vmedia_repos(self):
         """Tests the virtual media repositories."""
-        repos = self.vol_grp.vmedia_repos
+        repos = self.dwrap.vmedia_repos
         self.assertEqual(1, len(repos))
         self.assertEqual('VMLibrary', repos[0].name)
         self.assertEqual(11, repos[0].size)
@@ -56,7 +50,7 @@ class TestVolumeGroup(unittest.TestCase):
 
     def test_physical_volumes(self):
         """Tests the physical volumes in the VG."""
-        pvs = self.vol_grp.phys_vols
+        pvs = self.dwrap.phys_vols
         self.assertEqual(1, len(pvs))
 
         pv = pvs[0]
@@ -72,7 +66,7 @@ class TestVolumeGroup(unittest.TestCase):
 
     def test_virtual_disk(self):
         """Tests the virtual disk gets."""
-        vdisks = self.vol_grp.virtual_disks
+        vdisks = self.dwrap.virtual_disks
         self.assertEqual(1, len(vdisks))
 
         vdisk = vdisks[0]
@@ -89,7 +83,7 @@ class TestVolumeGroup(unittest.TestCase):
 
     def test_add_vdisk(self):
         """Performs a test flow that adds a virtual disk."""
-        vdisks = self.vol_grp.virtual_disks
+        vdisks = self.dwrap.virtual_disks
 
         self.assertEqual(1, len(vdisks))
 
@@ -98,24 +92,24 @@ class TestVolumeGroup(unittest.TestCase):
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
-        self.vol_grp.virtual_disks = vdisks
+        self.dwrap.virtual_disks = vdisks
 
-        self.assertEqual(2, len(self.vol_grp.virtual_disks))
+        self.assertEqual(2, len(self.dwrap.virtual_disks))
 
         # make sure the second virt disk matches what we put in
-        vdisk = self.vol_grp.virtual_disks[1]
+        vdisk = self.dwrap.virtual_disks[1]
         self.assertEqual('disk_name', vdisk.name)
         self.assertEqual(10, vdisk.capacity)
         self.assertEqual('label', vdisk.label)
         self.assertEqual(None, vdisk.udid)
 
         # Try a remove
-        self.vol_grp.virtual_disks.remove(vdisk)
-        self.assertEqual(1, len(self.vol_grp.virtual_disks))
+        self.dwrap.virtual_disks.remove(vdisk)
+        self.assertEqual(1, len(self.dwrap.virtual_disks))
 
     def test_add_phys_vol(self):
         """Performs a test flow that adds a physical volume to the vol grp."""
-        phys_vols = self.vol_grp.phys_vols
+        phys_vols = self.dwrap.phys_vols
 
         self.assertEqual(1, len(phys_vols))
 
@@ -124,17 +118,17 @@ class TestVolumeGroup(unittest.TestCase):
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
-        self.vol_grp.phys_vols = phys_vols
+        self.dwrap.phys_vols = phys_vols
 
-        self.assertEqual(2, len(self.vol_grp.phys_vols))
+        self.assertEqual(2, len(self.dwrap.phys_vols))
 
         # Make sure that the second physical volume matches
-        pvol = self.vol_grp.phys_vols[1]
+        pvol = self.dwrap.phys_vols[1]
         self.assertEqual('disk1', pvol.name)
 
     def test_add_media_repo(self):
         """Performs a simple add to the volume group of a new media repo."""
-        media_repos = self.vol_grp.vmedia_repos
+        media_repos = self.dwrap.vmedia_repos
 
         self.assertEqual(1, len(media_repos))
 
@@ -143,19 +137,19 @@ class TestVolumeGroup(unittest.TestCase):
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
-        self.vol_grp.vmedia_repos = media_repos
+        self.dwrap.vmedia_repos = media_repos
 
-        self.assertEqual(2, len(self.vol_grp.vmedia_repos))
+        self.assertEqual(2, len(self.dwrap.vmedia_repos))
 
         # Make sure that the second media repo matches
-        repo = self.vol_grp.vmedia_repos[1]
+        repo = self.dwrap.vmedia_repos[1]
         self.assertEqual('repo', repo.name)
         self.assertEqual(10, repo.size)
         self.assertEqual(0, len(repo.optical_media))
 
     def test_update_media_repo(self):
         """Performs a simple test to add optical media to an existing repo."""
-        media_repos = self.vol_grp.vmedia_repos
+        media_repos = self.dwrap.vmedia_repos
 
         vopt_medias = media_repos[0].optical_media
         self.assertEqual(2, len(vopt_medias))
