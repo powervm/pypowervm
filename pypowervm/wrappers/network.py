@@ -136,11 +136,7 @@ class NetworkBridge(ewrap.EntryWrapper):
         This is a READ-ONLY list.  Modification should take place through the
         LoadGroup virtual_network_uri_list.
         """
-        virt_net_list = self._entry.element.find(NB_VNETS)
-        uri_resp_list = []
-        for virt_net in virt_net_list.findall(c.LINK):
-            uri_resp_list.append(virt_net.get('href'))
-        return tuple(uri_resp_list)
+        return self.get_href(NB_VNETS + c.DELIM + c.LINK)
 
     @property
     def seas(self):
@@ -336,11 +332,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
         If a VLAN/Virtual Network should be added, it should be done here.
         """
-        virt_net_list = self._element.find(LG_VNETS)
-        uri_resp_list = []
-        for virt_net in virt_net_list.findall(c.LINK):
-            uri_resp_list.append(virt_net.get('href'))
-
+        uri_resp_list = list(self.get_href(LG_VNETS + c.DELIM + c.LINK))
         return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
 
     @virtual_network_uri_list.setter
@@ -360,8 +352,7 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
     @property
     def associated_switch_uri(self):
-        sw_elem = self._element.find(VNET_ASSOC_SW)
-        return sw_elem.attrib['href']
+        return self.get_href(VNET_ASSOC_SW, one_result=True)
 
     @property
     def name(self):

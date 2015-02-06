@@ -27,17 +27,112 @@ BODY = "BODY{"
 END_OF_SECTION = "END OF SECTION}"
 
 
-class PVMResp(object):
-
-    """Class to encapsulate the text serialization of a response."""
-
-    def __init__(self):
+class PVMFile(object):
+    def __init__(self, file_name=None):
         self.comment = None
         self.host = None
         self.user = None
         self.pw = None
         self.path = None
-        self.response = None
+        self.reason = None
+        self.status = None
+        self.headers = None
+        self.body = None
+
+        if file_name is not None:
+            self.load_file(file_name)
+
+    def load_file(self, file_name):
+        """First try to load the name as passed in."""
+        dirname = os.path.dirname(file_name)
+        if dirname is None or dirname == '':
+            dirname = os.path.dirname(os.path.dirname(__file__))
+            file_name = os.path.join(dirname, "data", file_name)
+
+        resp_file = open(file_name, "r")
+
+        if resp_file is None:
+            raise Exception("Could not load %s" % file_name)
+
+        while True:
+            line = resp_file.readline()
+            if line is None or len(line) == 0:
+                break
+
+            if len(line.strip()) == 0:
+                continue
+
+            if line.startswith(COMMENT):
+                continue
+
+            if line.startswith(INFO):
+                section = INFO
+            elif line.startswith(HEADERS):
+                section = HEADERS
+            elif line.startswith(BODY):
+                section = BODY
+            else:
+                resp_file.close()
+                raise Exception("Unknown line in file %s: %s" %
+                                (file_name, line))
+
+            buf = _read_section(section, file_name, resp_file)
+
+            if line.startswith(INFO):
+                info = eval(buf)
+                self.comment = info['comment']
+                self.host = info['host']
+                self.user = info['user']
+                self.pw = info['pw']
+                self.path = info['path']
+                self.reason = info['reason']
+                self.status = info['status']
+            elif line.startswith(HEADERS):
+                self.headers = eval(buf)
+            elif line.startswith(BODY):
+                self.body = buf
+
+        resp_file.close()
+
+
+class PVMResp(PVMFile):
+
+    """Class to encapsulate the text serialization of a response."""
+
+    def __init__(self, file_name=None, pvmfile=None):
+        """Initialize this PVMResp by loading a file or pulling a PVMFile.
+
+        :param file_name: Name of a file to load.
+        :param pvmfile: An existing PVMFile instance.  This PVMResp will use
+                        its attributes.  If both file_name and pvmfile are
+                        specified, the file will be reloaded into the passed-in
+                        PVMFile.  This is probably not what you intended.
+        """
+        super(PVMResp, self).__init__()
+        # Legacy no-arg constructor - allow caller to set fields manually
+        if pvmfile is None and file_name is None:
+            return
+        if pvmfile is None:
+            self.load_file(file_name)
+        else:
+            # Use pvmfile
+            if file_name is not None:
+                pvmfile.load_file(file_name)
+            # Copy in attrs from pvmfile
+            self.comment = pvmfile.comment
+            self.host = pvmfile.host
+            self.user = pvmfile.user
+            self.pw = pvmfile.pw
+            self.path = pvmfile.path
+            self.reason = pvmfile.reason
+            self.status = pvmfile.status
+            self.headers = pvmfile.headers
+            self.body = pvmfile.body
+
+        self.response = adp.Response(reqmethod=None, reqpath=None,
+                                     status=self.status, reason=self.reason,
+                                     headers=self.headers, body=self.body)
+        self.response._unmarshal_atom()
 
     def get_response(self):
         return self.response
@@ -109,70 +204,7 @@ class PVMResp(object):
 
 
 def load_pvm_resp(file_name):
-    new_resp = PVMResp()
-
-    """First try to load the name as passed in."""
-    dirname = os.path.dirname(file_name)
-    if dirname is None or dirname == '':
-        dirname = os.path.dirname(os.path.dirname(__file__))
-        file_name = os.path.join(dirname, "data", file_name)
-
-    resp_file = open(file_name, "r")
-
-    if resp_file is None:
-        raise Exception("Could not load %s" % file_name)
-
-    status = None
-    reason = None
-    headers = None
-    body = None
-
-    while True:
-        line = resp_file.readline()
-        if line is None or len(line) == 0:
-            break
-
-        if len(line.strip()) == 0:
-            continue
-
-        if line.startswith(COMMENT):
-            continue
-
-        if line.startswith(INFO):
-            section = INFO
-        elif line.startswith(HEADERS):
-            section = HEADERS
-        elif line.startswith(BODY):
-            section = BODY
-        else:
-            resp_file.close()
-            raise Exception("Unknown line in file %s: %s" %
-                            (file_name, line))
-
-        buf = _read_section(section, file_name, resp_file)
-
-        if line.startswith(INFO):
-            info = eval(buf)
-            new_resp.comment = info['comment']
-            new_resp.host = info['host']
-            new_resp.user = info['user']
-            new_resp.pw = info['pw']
-            new_resp.path = info['path']
-            reason = info['reason']
-            status = info['status']
-        elif line.startswith(HEADERS):
-            headers = eval(buf)
-        elif line.startswith(BODY):
-            body = buf
-
-    resp_file.close()
-
-    new_resp.response = adp.Response(reqmethod=None, reqpath=None,
-                                     status=status, reason=reason,
-                                     headers=headers, body=body)
-    new_resp.response._unmarshal_atom()
-
-    return new_resp
+    return PVMResp(file_name)
 
 
 def _read_section(section, file_name, resp_file):

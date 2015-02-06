@@ -14,25 +14,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.vios_file as vf
 
-FILE_FEED = 'file_feed.txt'
 
+class TestVIOSFile(twrap.TestWrapper):
 
-class TestVIOSFile(unittest.TestCase):
-
-    def setUp(self):
-        super(TestVIOSFile, self).setUp()
-        self.vio_feed_resp = pvmhttp.load_pvm_resp(FILE_FEED).get_response()
-        self.files = vf.File.load_from_response(self.vio_feed_resp)
+    file = 'file_feed.txt'
+    wrapper_class_to_test = vf.File
 
     def test_pvid(self):
-        self.assertTrue(len(self.files) > 0)
+        self.assertTrue(len(self.entries) > 0)
 
-        vio_file = self.files[0]
+        vio_file = self.entries[0]
         self.assertEqual('boot_9699a0f5', vio_file.file_name)
         self.assertEqual('1421736166276', vio_file.date_modified)
         self.assertEqual('application/octet-stream',

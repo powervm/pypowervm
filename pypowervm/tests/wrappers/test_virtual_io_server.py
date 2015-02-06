@@ -21,77 +21,55 @@ import mock
 import unittest
 
 from pypowervm import adapter as adpt
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.virtual_io_server as vios
 
 
-VIOS_FILE = 'fake_vios_ssp_npiv.txt'
-VIOS_MAPPINGS_FILE = 'fake_vios_mappings.txt'
+class TestVIOSWrapper(twrap.TestWrapper):
 
-
-class TestVIOSWrapper(unittest.TestCase):
-
-    _vios_resp = None
-
-    def setUp(self):
-        super(TestVIOSWrapper, self).setUp()
-        if TestVIOSWrapper._vios_resp:
-            self.vios_resp = TestVIOSWrapper._vios_resp
-            return
-        TestVIOSWrapper._vios_resp = pvmhttp.load_pvm_resp(
-            VIOS_FILE).get_response()
-        self.vios_resp = TestVIOSWrapper._vios_resp
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
 
     def test_get_ip_addresses(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
         expected_ips = ('9.1.2.4', '10.10.10.5')
-        self.assertEqual(expected_ips, vios_wrapper.ip_addresses)
+        self.assertEqual(expected_ips, self.dwrap.ip_addresses)
 
     def test_license_accept(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.is_license_accepted)
+        self.assertEqual(True, self.dwrap.is_license_accepted)
 
     def test_is_running(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.is_running)
+        self.assertEqual(True, self.dwrap.is_running)
 
     def test_is_rmc_active(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        self.assertEqual(True, vios_wrapper.is_rmc_active)
+        self.assertEqual(True, self.dwrap.is_rmc_active)
 
     def test_hdisk_reserve_policy_found(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
         # Most are NoReserve; look for the only one that's SinglePath to make
         # sure we're actually searching rather than picking first/last/random
-        found_policy = vios_wrapper.hdisk_reserve_policy(
+        found_policy = self.dwrap.hdisk_reserve_policy(
             '6005076300838041300000000000002B')
         self.assertEqual('SinglePath', found_policy)
 
     def test_hdisk_reserve_policy_notfound(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
         # Most are NoReserve; look for the only one that's SinglePath to make
         # sure we're actually searching rather than picking first/last/random
-        found_policy = vios_wrapper.hdisk_reserve_policy('Bogus')
+        found_policy = self.dwrap.hdisk_reserve_policy('Bogus')
         self.assertIsNone(found_policy)
 
     def test_hdisk_from_uuid_found(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        found_name = vios_wrapper.hdisk_from_uuid(
+        found_name = self.dwrap.hdisk_from_uuid(
             '01M0lCTTIxNDUyNEM2MDA1MDc2MzAwODM4MDQxMzAwMDAwMDAwMDAwMDhCNQ==')
         self.assertEqual('hdisk7', found_name)
 
     def test_hdisk_from_uuid_notfound(self):
-        vios_wrapper = vios.VirtualIOServer(self.vios_resp.entry)
-        found_name = vios_wrapper.hdisk_from_uuid('Bogus')
+        found_name = self.dwrap.hdisk_from_uuid('Bogus')
         self.assertIsNone(found_name)
 
 
-class TestViosMappings(unittest.TestCase):
+class TestViosMappings(twrap.TestWrapper):
 
-    def setUp(self):
-        super(TestViosMappings, self).setUp()
-        self.vio_res = pvmhttp.load_pvm_resp(VIOS_MAPPINGS_FILE).get_response()
-        self.vios_obj = vios.VirtualIOServer(self.vio_res.entry)
+    file = 'fake_vios_mappings.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.virtual_io_server._crt_related_href')
@@ -131,7 +109,7 @@ class TestViosMappings(unittest.TestCase):
                          vmap.findtext('./Storage/VirtualDisk/DiskName'))
 
     def test_get_scsi_mappings(self):
-        mappings = self.vios_obj.scsi_mappings
+        mappings = self.dwrap.scsi_mappings
 
         # Ensure that at least one adapter has a client LPAR & storage
         found_client_uri = False
@@ -170,14 +148,14 @@ class TestViosMappings(unittest.TestCase):
         orig_size = len(mappings)
         mappings.append(new_map)
         self.assertEqual(len(mappings), orig_size + 1)
-        self.assertEqual(len(self.vios_obj.scsi_mappings), orig_size + 1)
+        self.assertEqual(len(self.dwrap.scsi_mappings), orig_size + 1)
 
         mappings.remove(new_map)
-        self.vios_obj.scsi_mappings = mappings
-        self.assertEqual(len(self.vios_obj.scsi_mappings), orig_size)
+        self.dwrap.scsi_mappings = mappings
+        self.assertEqual(len(self.dwrap.scsi_mappings), orig_size)
 
     def test_vfc_mappings(self):
-        mappings = self.vios_obj.vfc_mappings
+        mappings = self.dwrap.vfc_mappings
 
         # Ensure that at least one adapter has a client LPAR
         found_client_uri = False
@@ -224,11 +202,11 @@ class TestViosMappings(unittest.TestCase):
         orig_size = len(mappings)
         mappings.append(new_map)
         self.assertEqual(len(mappings), orig_size + 1)
-        self.assertEqual(len(self.vios_obj.vfc_mappings), orig_size + 1)
+        self.assertEqual(len(self.dwrap.vfc_mappings), orig_size + 1)
 
         mappings.remove(new_map)
-        self.vios_obj.vfc_mappings = mappings
-        self.assertEqual(len(self.vios_obj.vfc_mappings), orig_size)
+        self.dwrap.vfc_mappings = mappings
+        self.assertEqual(len(self.dwrap.vfc_mappings), orig_size)
 
 if __name__ == "__main__":
     unittest.main()

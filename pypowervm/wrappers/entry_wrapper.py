@@ -210,6 +210,36 @@ class Wrapper(object):
                 "identifier": self.type_and_uuid})
         LOG.warn(error_message)
 
+    def get_href(self, propname, one_result=False):
+        """Returns the hrefs from AtomLink elements.
+
+        :param propname: The name of the schema element containing the 'href'
+                         attribute.
+        :param one_result: If True, we are expecting exactly one result, and
+                           will return that one (string) result, or None.  If
+                           False (the default), we will return a tuple of
+                           strings which may be empty.
+        """
+        ret_links = []
+        elements = self._find(propname, use_find_all=True)
+
+        # Loop through what was found, if anything
+        if elements:
+            for atomlink in elements:
+                # If the element doesn't have an href, ignore it.
+                try:
+                    ret_links.append(atomlink.attrib['href'])
+                except KeyError:
+                    pass
+
+        if one_result:
+            if len(ret_links) == 1:
+                return ret_links[0]
+            else:
+                return None
+        # Otherwise return a (possibly empty) tuple of the results
+        return tuple(ret_links)
+
 
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""

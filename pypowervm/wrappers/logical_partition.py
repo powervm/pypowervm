@@ -407,15 +407,7 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         This is a READ ONLY list.
         """
-        ret_links = list()
-        cna_links = self._entry.element.findall(c.CNA_LINKS)
-
-        # Loop through what was found, if anything
-        if cna_links:
-            for link in cna_links:
-                ret_links.append(link.attrib['href'])
-
-        return tuple(ret_links)
+        return self.get_href(c.CNA_LINKS)
 
     @property
     def rmc_state(self):

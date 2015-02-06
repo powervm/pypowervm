@@ -376,10 +376,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_LPAR)
-        if elem is not None:
-            return elem.get('href')
-        return None
+        return self.get_href(MAP_CLIENT_LPAR, one_result=True)
 
     @property
     def client_adapter(self):
@@ -442,10 +439,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_LPAR)
-        if elem is not None:
-            return elem.get('href')
-        return None
+        return self.get_href(MAP_CLIENT_LPAR, one_result=True)
 
     @property
     def client_adapter(self):
