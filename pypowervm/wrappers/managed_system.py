@@ -23,6 +23,10 @@ LOG = logging.getLogger(__name__)
 
 MS_ROOT = 'ManagedSystem'
 
+MTMS_MT = 'MachineType'
+MTMS_MODEL = 'Model'
+MTMS_SERIAL = 'SerialNumber'
+
 
 class ManagedSystem(ewrap.EntryWrapper):
 
@@ -180,12 +184,19 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         This is a READ-ONLY list.
         """
-        ret_links = []
-        vios_links = self._entry.element.findall(c.VIOS_LINK)
+        return self.get_href(c.VIOS_LINK)
 
-        # If we found some VIOSes
-        if vios_links:
-            for link in vios_links:
-                ret_links.append(link.getattrib()['href'])
 
-        return ret_links
+class MTMS(ewrap.ElementWrapper):
+
+    @property
+    def machine_type(self):
+        return self.get_parm_value(MTMS_MT)
+
+    @property
+    def model(self):
+        return self.get_parm_value(MTMS_MODEL)
+
+    @property
+    def serial(self):
+        return self.get_parm_value(MTMS_SERIAL)

@@ -16,11 +16,8 @@
 
 import unittest
 
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.job as jwrap
-
-job_with_cdata = jwrap.Job(
-    pvmhttp.load_pvm_resp("cdata.xml").response.entry)
 
 CORRECT_CDATA_PARAMVAL = (
     '<ParameterValue xmlns="http://www.ibm.com/xmlns/systems/power/firmware/'
@@ -43,17 +40,21 @@ CORRECT_CDATA_CONTENT = (
     '6000000000000</Lua></itl></itlList></device></deviceList></XML_LIST>')
 
 
-class TestCDATA(unittest.TestCase):
+class TestCDATA(twrap.TestWrapper):
+
+    file = 'cdata.xml'
+    wrapper_class_to_test = jwrap.Job
+
     """Verify CDATA segments survive going into and out of the Adapter."""
     def test_cdata_request(self):
-        pval = job_with_cdata._entry.element.find(
+        pval = self.dwrap._entry.element.find(
             './JobRequestInstance/JobParameters/JobParameter/ParameterValue')
         out = pval.toxmlstring()
         self.assertEqual(out, CORRECT_CDATA_PARAMVAL,
                          "CDATA was not preserved in JobRequest!\n%s" % out)
 
     def test_cdata_results(self):
-        resdict = job_with_cdata.get_job_results_as_dict()
+        resdict = self.dwrap.get_job_results_as_dict()
         out = resdict['inputXML']
         self.assertEqual(out, CORRECT_CDATA_CONTENT,
                          "CDATA was not preserved in Results!\n%s" % out)
