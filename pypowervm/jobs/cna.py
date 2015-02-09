@@ -18,6 +18,7 @@ from pypowervm import exceptions as exc
 from pypowervm.i18n import _
 from pypowervm.wrappers import client_network_adapter as cna
 from pypowervm.wrappers import constants as c
+from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import network
 
 
@@ -49,22 +50,52 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     if addl_vlans is not None:
         addl_tagged_vlans = " ".join(addl_vlans)
 
+    # Sanitize the pvid
+    pvid = str(pvid)
+
     # Find the appropriate virtual switch.
     vswitch_href = None
+    vswitch_w = None
     vswitch_resp = adapter.read(c.MGT_SYS, root_id=host_uuid,
                                 child_type=network.VSW_ROOT)
     for vs_entry in vswitch_resp.feed.entries:
         vs_w = network.VirtualSwitch(vs_entry)
         if vs_w.name == vswitch:
             vswitch_href = vs_w.href
+            vswitch_w = vs_w
+            break
 
     if vswitch_href is None:
         raise exc.Error(_('Unable to find the Virtual Switch %s on the '
-                          'system.')
-                        % vswitch)
+                          'system.') % vswitch)
 
-    net_adpt = cna.crt_cna(pvid, vswitch_href, slot_num, mac_addr,
-                           addl_tagged_vlans)
-    resp = adapter.create(net_adpt, c.MGT_SYS, root_id=host_uuid,
+    # Find the virtual network.  Ensures that the system is ready for this.
+    _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_href)
+
+    # Build and create the CNA
+    net_adpt = cna.crt_cna(pvid, vswitch_href,
+                           slot_num=slot_num, mac_addr=mac_addr,
+                           addl_tagged_vlans=addl_tagged_vlans)
+    resp = adapter.create(net_adpt, lpar.LPAR_ROOT, root_id=lpar_uuid,
                           child_type=cna.VADPT_ROOT)
     return resp.entry
+
+
+def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
+    # Read the existing virtual networks.  Try to locate...
+    vnet_feed_resp = adapter.read(c.MGT_SYS, host_uuid, network.VNET_ROOT)
+    vnets = network.VirtualNetwork.load_from_response(vnet_feed_resp)
+    for vnet in vnets:
+        if vlan == str(vnet.vlan) and vnet.vswitch_id == vswitch.switch_id:
+            return vnet
+
+    # Must not have found it.  Lets try to create it.
+    name = '%(vswitch)s-%(vlan)s' % {'vswitch': vswitch.name,
+                                     'vlan': str(vlan)}
+    # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
+    # used for 'Flat' networks most likely.
+    tagged = (vlan != '1')
+    vnet = network.crt_vnet(name, vlan, vswitch_href, tagged)
+    crt_resp = adapter.create(vnet, c.MGT_SYS, root_id=host_uuid,
+                              child_type=network.VNET_ROOT)
+    return network.VirtualNetwork.load_from_response(crt_resp)
