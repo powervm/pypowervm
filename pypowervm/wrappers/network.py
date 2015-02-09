@@ -17,6 +17,7 @@
 import logging
 
 from pypowervm import adapter as adpt
+from pypowervm import util
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -51,6 +52,38 @@ LG_ROOT = 'LoadGroup'
 LG_PVID = 'PortVLANID'
 LG_TRUNKS = 'TrunkAdapters'
 LG_VNETS = 'VirtualNetworks'
+
+VNET_ROOT = 'VirtualNetwork'
+VNETS_ROOT = 'VirtualNetworks'
+VNET_ASSOC_SW = 'AssociatedSwitch'
+VNET_NET_NAME = 'NetworkName'
+VNET_VLAN_ID = 'NetworkVLANID'
+VNET_SW_ID = 'VswitchID'
+VNET_TAG = 'TaggedNetwork'
+
+
+def crt_vnet(name, vlan_id, vswitch_uri, tagged):
+    """Creates the VirtualNetwork that can be used for a create operation.
+
+    This is used when creating a new Virtual Network within the system
+
+    :param name: The name for the virtual network.
+    :param vlan_id: The VLAN identifier (1 to 4094) for the network.
+    :param vswitch_uri: The URI that points to the appropriate vSwitch.
+    :param tagged: True if the packet should have the VLAN tag when it leaves
+                   the system.  False if the tag should only be on the packets
+                   while in the system (but tag-less when on the physical
+                   network).
+    :returns: The Element that represents the new VirtualNetwork.
+    """
+    tagged = util.sanitize_bool_for_api(tagged)
+    children = [adpt.Element(VNET_ASSOC_SW, attrib={'href': vswitch_uri,
+                                                    'rel': 'related'}),
+                adpt.Element(VNET_NET_NAME, text=name),
+                adpt.Element(VNET_VLAN_ID, text=str(vlan_id)),
+                adpt.Element(VNET_TAG, text=tagged)]
+    return adpt.Element(VNET_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
+                        children=children)
 
 
 class VirtualSwitch(ewrap.EntryWrapper):
@@ -320,3 +353,37 @@ class LoadGroup(ewrap.ElementWrapper):
             new_elems.append(adpt.Element('link', attrib={'href': item}))
         new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
         self._element.replace(self._element.find(LG_VNETS), new_vnet_elem)
+
+
+class VirtualNetwork(ewrap.EntryWrapper):
+    """The overall definition of a VLAN network within the hypervisor."""
+
+    @property
+    def associated_switch_uri(self):
+        sw_elem = self._element.find(VNET_ASSOC_SW)
+        return sw_elem.attrib['href']
+
+    @property
+    def name(self):
+        return self.get_parm_value(VNET_NET_NAME)
+
+    @name.setter
+    def name(self, value):
+        self.set_parm_value(VNET_NET_NAME, value)
+
+    @property
+    def vlan(self):
+        return self.get_parm_value_int(VNET_VLAN_ID)
+
+    @property
+    def vswitch_id(self):
+        """The vSwitch identifier.  0 through 15 (max number vSwitches).
+
+        Is not a UUID.
+        """
+        return self.get_parm_value_int(VNET_SW_ID)
+
+    @property
+    def tagged(self):
+        """If true, the VLAN tag is preserved when the packet leaves system."""
+        return self.get_parm_value_bool(VNET_TAG)

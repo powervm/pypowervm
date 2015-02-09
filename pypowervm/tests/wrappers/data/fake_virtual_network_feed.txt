@@ -1,0 +1,49 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh fake_virtual_network_feed.txt
+#
+####################################################
+INFO{
+{'comment': 'Used for testing virtual network wrapper.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'LogicalPartition/0A68CFAB-F62B-46D4-A6A0-F4EBE0264AD5/VirtualNetwork'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>00b2be3f-79f6-3d6e-951c-fabc1d6c7d0c</id>
+    <updated>2015-02-06T03:47:14.730Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/VirtualNetwork"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>20714b36-f66c-329f-b1c2-763c1c1a65a2</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-06T03:47:15.036Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/VirtualNetwork/20714b36-f66c-329f-b1c2-763c1c1a65a2"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1893269394</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>20714b36-f66c-329f-b1c2-763c1c1a65a2</AtomID>
+            <AtomCreated>1423194434792</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/VirtualSwitch/ec8aaa54-9837-3c23-a541-a4e4be3ae489" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">VLAN2227-ETHERNET0</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">2227</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">false</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

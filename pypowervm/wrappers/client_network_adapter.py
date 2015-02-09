@@ -31,6 +31,7 @@ VADPT_MAC_ADDR = 'MACAddress'
 VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 VADPT_VSWITCH = 'AssociatedVirtualSwitch'
+VADPT_VSWITCH_ID = 'VirtualSwitchID'
 VADPT_PVID = 'PortVLANID'
 
 
@@ -68,19 +69,20 @@ def crt_cna(pvid, vswitch_href, slot_num=None, mac_addr=None,
         mac_addr = u.sanitize_mac_for_api(mac_addr)
         attrs.append(adpt.Element(VADPT_MAC_ADDR, text=mac_addr))
 
+    #  The primary VLAN ID
+    attrs.append(adpt.Element(VADPT_PVID, text=str(pvid)))
+
+    # Additional VLANs
     if addl_tagged_vlans is not None:
         attrs.append(adpt.Element(VADPT_TAGGED_VLANS, text=addl_tagged_vlans))
         attrs.append(adpt.Element(VADPT_TAGGED_VLAN_SUPPORT, text='true'))
     else:
         attrs.append(adpt.Element(VADPT_TAGGED_VLAN_SUPPORT, text='false'))
 
-    attrs.append(adpt.Element(VADPT_PVID, text=str(pvid)))
-
     # Put in the vSwitch
     vswitch_child = adpt.Element('link', attrib={'href': vswitch_href,
                                                  'rel': 'related'})
-    assoc_vswitch = adpt.Element(VADPT_VSWITCH, children=[vswitch_child])
-    attrs.append(assoc_vswitch)
+    attrs.append(adpt.Element(VADPT_VSWITCH, children=[vswitch_child]))
 
     return adpt.Element(VADPT_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
                         children=attrs)

@@ -112,6 +112,12 @@ class TestUtil(unittest.TestCase):
         # Try changing the low value
         self.assertEqual(.0005, util.convert_bytes_to_gb(1, .0005))
 
+    def test_sanitize_bool_for_api(self):
+        self.assertEqual('true', util.sanitize_bool_for_api(True))
+        self.assertEqual('false', util.sanitize_bool_for_api(False))
+        self.assertEqual('true', util.sanitize_bool_for_api('True'))
+        self.assertEqual('false', util.sanitize_bool_for_api('False'))
+
 
 if __name__ == "__main__":
     unittest.main()

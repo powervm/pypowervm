@@ -17,11 +17,44 @@
 import copy
 import unittest
 
+from pypowervm import adapter
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.network as net_br
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 VSWITCH_FEED_FILE = 'fake_vswitch_feed.txt'
+VNET_FEED = 'fake_virtual_network_feed.txt'
+
+
+class TestVNetwork(unittest.TestCase):
+
+    def setUp(self):
+        super(TestVNetwork, self).setUp()
+        resp = pvmhttp.load_pvm_resp(VNET_FEED).get_response()
+        self.wrapper = net_br.VirtualNetwork.load_from_response(resp)[0]
+
+    def test_vnet(self):
+        self.assertEqual('https://9.1.2.3:12443/rest/api/uom/'
+                         'ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/'
+                         'VirtualSwitch/ec8aaa54-9837-3c23-a541-a4e4be3ae489',
+                         self.wrapper.associated_switch_uri)
+        self.assertEqual('VLAN2227-ETHERNET0', self.wrapper.name)
+        self.assertEqual(2227, self.wrapper.vlan)
+        self.assertEqual(0, self.wrapper.vswitch_id)
+        self.assertEqual(False, self.wrapper.tagged)
+
+    def test_name(self):
+        self.wrapper.name = 'Test'
+        self.assertEqual('Test', self.wrapper.name)
+
+    def test_crt_vnet(self):
+        """Tests the 'crt_vnet' method that returns an element back."""
+        elem = net_br.crt_vnet('name', 10, 'vswitch_uri', True)
+        vn_w = net_br.VirtualNetwork(adapter.Entry([], elem))
+
+        self.assertEqual('name', vn_w.name)
+        self.assertEqual(10, vn_w.vlan)
+        self.assertEqual(True, vn_w.tagged)
 
 
 class TestVSwitch(unittest.TestCase):

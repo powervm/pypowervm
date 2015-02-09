@@ -198,6 +198,11 @@ def sanitize_mac_for_api(mac):
     return mac.replace(':', '').upper()
 
 
+def sanitize_bool_for_api(bool_val):
+    """Sanitizes a boolean value for use in the API."""
+    return str(bool_val).lower()
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 
