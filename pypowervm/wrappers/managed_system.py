@@ -28,6 +28,38 @@ MTMS_MODEL = 'Model'
 MTMS_SERIAL = 'SerialNumber'
 
 
+def find_entry_by_mtms(resp, mtms):
+    """Queries through a query of ManagedSystem's to find a match.
+
+    :param mtms: The Machine Type Model Number & Serial.
+                 Example format: 8247-22L*1234567
+    :return: The ManagedSystem wrapper from the response that matches that
+             value.  None otherwise.
+    """
+    mt, md, serial = _parse_mtm(mtms)
+    entries = resp.feed.findentries(c.MACHINE_SERIAL, serial)
+    if entries is None:
+        return None
+    else:
+        LOG.info("Entry %s" % entries)
+
+    # Confirm same model and type
+    for entry in entries:
+        wrapper = ManagedSystem(entry)
+        if (wrapper.machine_type == mt and wrapper.model == md):
+            return wrapper
+
+    # No matching MTM Serial was found
+    return None
+
+
+def _parse_mtm(mtm_serial):
+    mtm, serial = mtm_serial.split('*', 1)
+    mt = mtm[0:4]
+    md = mtm[5:8]
+    return mt, md, serial
+
+
 class ManagedSystem(ewrap.EntryWrapper):
 
     @property
@@ -188,6 +220,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
 
 class MTMS(ewrap.ElementWrapper):
+    """The Machine Type, Model and Serial Number wrapper."""
 
     @property
     def machine_type(self):
