@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -23,9 +24,54 @@ LOG = logging.getLogger(__name__)
 
 MS_ROOT = 'ManagedSystem'
 
+MTMS_ROOT = 'MachineTypeModelAndSerialNumber'
 MTMS_MT = 'MachineType'
 MTMS_MODEL = 'Model'
 MTMS_SERIAL = 'SerialNumber'
+
+
+def find_entry_by_mtms(resp, mtms):
+    """Queries through a query of ManagedSystem's to find a match.
+
+    :param mtms: The Machine Type Model Number & Serial.
+                 Example format: 8247-22L*1234567
+    :return: The ManagedSystem wrapper from the response that matches that
+             value.  None otherwise.
+    """
+    mtms_w = MTMS(crt_mtms(mtms))
+    entries = resp.feed.findentries(c.MACHINE_SERIAL, mtms_w.serial)
+    if entries is None:
+        return None
+    else:
+        LOG.debug("Entry %s" % entries)
+
+    # Confirm same model and type
+    wrappers = [ManagedSystem(x) for x in entries]
+    for wrapper in wrappers:
+        if wrapper.mtms == mtms_w:
+            return wrapper
+
+    # No matching MTM Serial was found
+    return None
+
+
+def crt_mtms(mtms):
+    """Converts a MTMS String into an Element that can be used for MTMS Wrapper.
+
+    The MTMS String format is Machine Type - Model Number * Serial
+    Example: 8247-22L*1234567
+    """
+    mtm, sn = mtms.split('*', 1)
+    mt = mtm[0:4]
+    md = mtm[5:8]
+
+    meta = adpt.Element('Metadata', children=[adpt.Element('Atom')])
+
+    return adpt.Element(MTMS_ROOT, children=[meta,
+                                             adpt.Element(MTMS_MT, text=mt),
+                                             adpt.Element(MTMS_MODEL, text=md),
+                                             adpt.Element(MTMS_SERIAL,
+                                                          text=sn)])
 
 
 class ManagedSystem(ewrap.EntryWrapper):
@@ -35,16 +81,8 @@ class ManagedSystem(ewrap.EntryWrapper):
         return self.get_parm_value(c.SYSTEM_NAME)
 
     @property
-    def model(self):
-        return self.get_parm_value(c.MACHINE_MODEL)
-
-    @property
-    def machine_type(self):
-        return self.get_parm_value(c.MACHINE_TYPE)
-
-    @property
-    def serial(self):
-        return self.get_parm_value(c.MACHINE_SERIAL)
+    def mtms(self):
+        return MTMS(self._element.find(MTMS_ROOT))
 
     @property
     def system_state(self):
@@ -188,6 +226,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
 
 class MTMS(ewrap.ElementWrapper):
+    """The Machine Type, Model and Serial Number wrapper."""
 
     @property
     def machine_type(self):
