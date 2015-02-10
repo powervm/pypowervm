@@ -1324,9 +1324,6 @@ class Element(object):
             if one.text != two.text:
                 return False
 
-            if one.attrib != two.attrib:
-                return False
-
             if one.tag != two.tag:
                 return False
         else:

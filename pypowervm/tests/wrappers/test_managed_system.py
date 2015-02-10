@@ -33,12 +33,12 @@ class TestMSEntryWrapper(unittest.TestCase):
     def setUp(self):
         super(TestMSEntryWrapper, self).setUp()
 
-        ms_http = pvmhttp.load_pvm_resp(MS_HTTPRESP_FILE)
-        self.assertNotEqual(ms_http, None,
+        self.ms_http = pvmhttp.load_pvm_resp(MS_HTTPRESP_FILE)
+        self.assertNotEqual(self.ms_http, None,
                             "Could not load %s " %
                             MS_HTTPRESP_FILE)
 
-        entries = ms_http.response.feed.findentries(
+        entries = self.ms_http.response.feed.findentries(
             c.SYSTEM_NAME, MS_NAME)
 
         self.assertNotEqual(entries, None,
@@ -97,13 +97,13 @@ class TestMSEntryWrapper(unittest.TestCase):
             "get_parm_value for BogusName ", value, expected_value)
 
     def test_get_model(self):
-        self.assertEqual(self.wrapper.model, "E4A")
+        self.assertEqual(self.wrapper.mtms.model, "E4A")
 
     def test_get_type(self):
-        self.assertEqual(self.wrapper.machine_type, "8203")
+        self.assertEqual(self.wrapper.mtms.machine_type, "8203")
 
     def test_get_serial(self):
-        self.assertEqual(self.wrapper.serial, "ACE0001")
+        self.assertEqual(self.wrapper.mtms.serial, "ACE0001")
 
     def test_get_proc_units(self):
         self.call_simple_getter("proc_units", "500", 0)
@@ -160,6 +160,15 @@ class TestMSEntryWrapper(unittest.TestCase):
             ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/caae9209-25e5-'
              '35cd-a71a-ed55c03f294d/VirtualIOServer/32F3530F-ECA0-4EAA-A37E-'
              '4B792C21AF70',), ())
+
+    def test_find_entry_by_mtm_serial(self):
+        value = mswrap.find_entry_by_mtms(self.ms_http.get_response(),
+                                          "8203-E4A*ACE0001")
+        self.assertIsNotNone(value)
+
+        value = mswrap.find_entry_by_mtms(self.ms_http.get_response(),
+                                          "8203-E4A*ACE0011")
+        self.assertIsNone(value)
 
 if __name__ == "__main__":
     unittest.main()
