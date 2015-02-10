@@ -33,12 +33,12 @@ class TestMSEntryWrapper(unittest.TestCase):
     def setUp(self):
         super(TestMSEntryWrapper, self).setUp()
 
-        ms_http = pvmhttp.load_pvm_resp(MS_HTTPRESP_FILE)
-        self.assertNotEqual(ms_http, None,
+        self.ms_http = pvmhttp.load_pvm_resp(MS_HTTPRESP_FILE)
+        self.assertNotEqual(self.ms_http, None,
                             "Could not load %s " %
                             MS_HTTPRESP_FILE)
 
-        entries = ms_http.response.feed.findentries(
+        entries = self.ms_http.response.feed.findentries(
             c.SYSTEM_NAME, MS_NAME)
 
         self.assertNotEqual(entries, None,
@@ -153,6 +153,15 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.wrapper.max_vcpus_per_aix_linux_lpar = 0
         self.call_simple_getter("max_vcpus_per_aix_linux_lpar",
                                 self.wrapper.max_sys_vcpus_limit, 0)
+
+    def test_find_entry_by_mtm_serial(self):
+        value = mswrap.find_entry_by_mtm_serial(self.ms_http.get_response(),
+                                                "8203E4A_ACE0001")
+        self.assertIsNotNone(value)
+
+        value = mswrap.find_entry_by_mtm_serial(self.ms_http.get_response(),
+                                                "8203E4A_ACE0011")
+        self.assertIsNone(value)
 
 if __name__ == "__main__":
     unittest.main()

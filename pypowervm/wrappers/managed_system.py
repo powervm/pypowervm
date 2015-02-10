@@ -24,6 +24,38 @@ LOG = logging.getLogger(__name__)
 MS_ROOT = 'ManagedSystem'
 
 
+def find_entry_by_mtm_serial(resp, mtm_serial):
+    """Queries through a query of ManagedSystem's to find a match.
+
+    :param mtm_serial: The Machine Type Model Number & Serial.  Example
+                       format: 824722L_1234567
+    :return: The entry from the response that matches that value.  None
+             otherwise.
+    """
+    mt, md, serial = _parse_mtm(mtm_serial)
+    entries = resp.feed.findentries(c.MACHINE_SERIAL, serial)
+    if entries is None:
+        return None
+    else:
+        LOG.info("Entry %s" % entries)
+
+    # Confirm same model and type
+    for entry in entries:
+        wrapper = ManagedSystem(entry)
+        if (wrapper.machine_type == mt and wrapper.model == md):
+            return entry
+
+    # No matching MTM Serial was found
+    return None
+
+
+def _parse_mtm(mtm_serial):
+    mtm, serial = mtm_serial.split('_', 1)
+    mt = mtm[0:4]
+    md = mtm[4:7]
+    return mt, md, serial
+
+
 class ManagedSystem(ewrap.EntryWrapper):
 
     @property
