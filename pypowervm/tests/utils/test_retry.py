@@ -32,10 +32,14 @@ class TestRetry(unittest.TestCase):
         # Test normal call with return values
         @pvm_retry.retry(tries=4)
         def some_method(x, y):
+            global called_count
+            called_count += 1
             return x, y
 
+        called_count = 0
         val = some_method(1, 2)
         self.assertEqual(val, (1, 2))
+        self.assertEqual(called_count, 1)
 
         # Test with an unexpected exception
         class OurException(Exception):
@@ -47,6 +51,7 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             raise OurException()
 
+        called_count = 0
         self.assertRaises(OurException, except_method, 1, 2)
         self.assertEqual(called_count, 1)
 
