@@ -24,7 +24,7 @@ from pypowervm.wrappers import constants as const
 DFT_RETRY_CODES = frozenset([const.HTTP_STATUS_ETAG_MISMATCH])
 
 NO_TEST = lambda *args, **kwds: True
-NO_CHECKER = lambda *args, **kwds: True
+NO_CHECKER = lambda *args, **kwds: False
 NO_DELAY = lambda *args, **kwds: None
 
 
