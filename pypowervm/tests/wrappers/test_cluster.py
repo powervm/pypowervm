@@ -16,8 +16,10 @@
 
 import unittest
 
+import pypowervm.adapter as adp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.cluster as clust
+import pypowervm.wrappers.storage as stor
 
 
 class TestCluster(twrap.TestWrapper):
@@ -40,13 +42,20 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(self.dwrap.ssp_uuid.lower(),
                          'e357a79a-7a3d-35b6-8405-55ab6a2d0de7')
 
-    def test_repos_pvs(self):
-        repos = self.dwrap.repos_pvs
-        self.assertEqual(len(repos), 1)
-        pv = repos[0]
+    def test_repos_pv(self):
+        repos = self.dwrap.repos_pv
         # PhysicalVolume is tested elsewhere.  Minimal verification here.
-        self.assertEqual(pv.name, 'hdisk2')
-        # TODO(IBM): test setter
+        self.assertEqual(repos.name, 'hdisk2')
+        # Test setter
+        newrepos = stor.PhysicalVolume(
+            adp.Element(
+                "PhysicalVolume",
+                attrib={'schemaVersion': 'V1_2_0'},
+                children=[
+                    adp.Element('Metadata', children=[adp.Element('Atom')]),
+                    adp.Element('VolumeName', text='hdisk99')]))
+        self.dwrap.repos_pv = newrepos
+        self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
 
     def test_nodes(self):
         """Tests the Node and MTMS wrappers as well."""
@@ -68,7 +77,14 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(mtms.machine_type, '8247')
         self.assertEqual(mtms.model, '22L')
         self.assertEqual(mtms.serial, '2125D1A')
-        # TODO(IBM): test nodes setter
+        # Test nodes setters
+        node2 = nodes[1]
+        nodes.remove(node)
+        self.assertEqual(len(self.dwrap.nodes), 1)
+        node.hostname = 'blah.ibm.com'
+        self.dwrap.nodes = [node2, node]
+        self.assertEqual(len(self.dwrap.nodes), 2)
+        self.assertEqual(self.dwrap.nodes[1].hostname, 'blah.ibm.com')
 
 if __name__ == "__main__":
     unittest.main()
