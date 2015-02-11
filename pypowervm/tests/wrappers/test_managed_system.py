@@ -105,6 +105,9 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_get_serial(self):
         self.assertEqual(self.wrapper.mtms.serial, "ACE0001")
 
+    def test_get_mtms_str(self):
+        self.assertEqual(self.wrapper.mtms.mtms_str(), '8203-E4A*ACE0001')
+
     def test_get_proc_units(self):
         self.call_simple_getter("proc_units", "500", 0)
 

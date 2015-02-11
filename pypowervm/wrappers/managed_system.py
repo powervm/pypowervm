@@ -236,3 +236,11 @@ class MTMS(ewrap.ElementWrapper):
     @property
     def serial(self):
         return self.get_parm_value(MTMS_SERIAL)
+
+    def mtms_str(self):
+        """Builds a string representation of the MTMS.
+
+        Does not override default __str__ as that is useful for debug
+        purposes.
+        """
+        return self.machine_type + '-' + self.model + '*' + self.serial
