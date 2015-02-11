@@ -472,7 +472,7 @@ class ActionableList(list):
         super(ActionableList, self).insert(index, obj)
         self.action(self)
 
-    def pop(self, index):
+    def pop(self, index=-1):
         elem = super(ActionableList, self).pop(index)
         self.action(self)
         return elem
