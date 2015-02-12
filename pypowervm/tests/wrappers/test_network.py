@@ -134,6 +134,13 @@ class TestNetwork(twrap.TestWrapper):
         # A VLAN that isn't anywhere
         self.assertFalse(self.dwrap.supports_vlan(123))
 
+    def test_vswitch_id(self):
+        """Tests that the pass thru of the vswitch id works."""
+        self.assertEqual(2, self.dwrap.vswitch_id)
+
+    def test_arbitrary_pvids(self):
+        self.assertEqual([4094], self.dwrap.arbitrary_pvids)
+
     def test_seas(self):
         self.assertEqual(1, len(self.dwrap.seas))
 

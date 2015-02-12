@@ -159,6 +159,23 @@ class NetworkBridge(ewrap.EntryWrapper):
     def load_grps(self, new_list):
         self.replace_list(NB_LGS, new_list)
 
+    @property
+    def vswitch_id(self):
+        return self.seas[0].primary_adpt.vswitch_id
+
+    @property
+    def arbitrary_pvids(self):
+        """Lists all of the network bridges arbitrary PVIDs.
+
+        An arbitrary PVID is a 'primary VLAN ID' attached to an additional
+        Load Group.  These typically do not send traffic through them, and
+        are placeholder VLANs required by the backing 'additional' Trunk
+        Adapters.
+
+        :return: List of arbitrary PVIDs
+        """
+        return [x.pvid for x in self.load_grps[1:]]
+
     def supports_vlan(self, vlan):
         """Determines if the VLAN can flow through the Network Bridge.
 
