@@ -165,7 +165,7 @@ class NetworkBridge(ewrap.EntryWrapper):
 
     @property
     def arbitrary_pvids(self):
-        """Lists all of the network bridges arbitrary PVIDs.
+        """Lists all of the network bridges' arbitrary PVIDs.
 
         An arbitrary PVID is a 'primary VLAN ID' attached to an additional
         Load Group.  These typically do not send traffic through them, and

@@ -21,6 +21,7 @@ import re
 from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import network
 from pypowervm.wrappers import storage
 
 LOG = logging.getLogger(__name__)
@@ -353,6 +354,43 @@ class VirtualIOServer(ewrap.EntryWrapper):
     def scsi_mappings(self, new_mappings):
         self.replace_list(VIO_SCSI_MAPPINGS, new_mappings,
                           attrib=_crt_attrs('ViosSCSIMapping'))
+
+    @property
+    def seas(self):
+        def_attrib = _crt_attrs('ViosNetwork')
+        es = ewrap.WrapperElemList(self._find_or_seed(network.NB_SEAS,
+                                                      attrib=def_attrib),
+                                   network.NB_SEA,
+                                   network.SharedEthernetAdapter)
+        return es
+
+    @property
+    def trunk_adapters(self):
+        def_attrib = _crt_attrs('ViosNetwork')
+        es = ewrap.WrapperElemList(self._find_or_seed(network.SEA_TRUNKS,
+                                                      attrib=def_attrib),
+                                   network.TA_ROOT, network.TrunkAdapter)
+        return es
+
+    def derive_orphan_trunk_adapters(self):
+        """Builds a list of trunk adapters not attached to a SEA."""
+        sea_trunks = []
+        for sea in self.seas:
+            sea_trunks.append(sea.primary_adpt)
+            sea_trunks.extend(sea.addl_adpts)
+
+        # Subtract the list of our adapters from there.
+        orig_trunks = copy.copy(self.trunk_adapters)
+        orphan_trunks = copy.copy(self.trunk_adapters)
+        for sea_trunk in sea_trunks:
+            # We can't just remove because the trunk adapters from the SEA
+            # have the vswitch ref instead of id...  So we have to compare
+            # based off anchors.
+            for ta in orig_trunks:
+                if ta.dev_name == sea_trunk.dev_name:
+                    orphan_trunks.remove(ta)
+                    break
+        return orphan_trunks
 
 
 class VirtualSCSIMapping(ewrap.ElementWrapper):

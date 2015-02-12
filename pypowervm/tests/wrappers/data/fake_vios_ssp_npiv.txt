@@ -841,6 +841,28 @@ BODY{
             <DeviceName kb="CUD" kxe="false">ent5</DeviceName>
             <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
         </TrunkAdapter>
+        <TrunkAdapter schemaVersion="V1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L1C.0604CAA-V1-C15</DynamicReconfigurationConnectorName>
+            <LocationCode kb="ROR" kxe="false">U8246.L1C.0604CAA-V1-C15</LocationCode>
+            <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+            <VariedOn kb="CUD" kxe="true">true</VariedOn>
+            <VirtualSlotNumber kb="CUR" kxe="false">15</VirtualSlotNumber>
+            <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+            <MACAddress kb="CUR" kxe="false">BEEAB9E48207</MACAddress>
+            <PortVLANID kb="CUR" kxe="false">4093</PortVLANID>
+            <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+            <TaggedVLANIDs kb="CUA" kxe="false">1234 1235 1236</TaggedVLANIDs>
+            <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+            <AssociatedVirtualSwitch kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e955e11a-6ee0-3e04-987c-6fa319f8cb8c/VirtualSwitch/8b2397a3-b722-3e4e-943b-03b20f22c267" rel="related"/>
+            </AssociatedVirtualSwitch>
+            <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+            <DeviceName kb="CUD" kxe="false">ent6</DeviceName>
+            <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+        </TrunkAdapter>
     </TrunkAdapters>
     <VirtualIOServerLicenseAccepted kxe="false" kb="CUD">true</VirtualIOServerLicenseAccepted>
     <VirtualFibreChannelMappings kb="CUD" kxe="false" schemaVersion="V1_0">

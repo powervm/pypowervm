@@ -65,6 +65,23 @@ class TestVIOSWrapper(twrap.TestWrapper):
         found_name = self.dwrap.hdisk_from_uuid('Bogus')
         self.assertIsNone(found_name)
 
+    def test_seas(self):
+        self.assertEqual(1, len(self.dwrap.seas))
+        sea = self.dwrap.seas[0]
+        self.assertEqual(1, sea.pvid)
+        self.assertEqual(1, len(sea.addl_adpts))
+
+    def test_trunks(self):
+        self.assertEqual(3, len(self.dwrap.trunk_adapters))
+        self.assertEqual(1, self.dwrap.trunk_adapters[0].pvid)
+        self.assertEqual(4094, self.dwrap.trunk_adapters[1].pvid)
+        self.assertEqual(4093, self.dwrap.trunk_adapters[2].pvid)
+
+    def test_derive_orphan_trunk_adapters(self):
+        orphans = self.dwrap.derive_orphan_trunk_adapters()
+        self.assertEqual(1, len(orphans))
+        self.assertEqual(4093, orphans[0].pvid)
+
 
 class TestViosMappings(twrap.TestWrapper):
 
