@@ -30,6 +30,7 @@ VSW_MODE = 'SwitchMode'
 VSW_DEFAULT_VSWITCH = 'ETHERNET0'
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
 
+NB_ROOT = 'NetworkBridge'
 NB_PVID = 'PortVLANID'
 NB_VNETS = 'VirtualNetworks'
 NB_SEAS = 'SharedEthernetAdapters'
