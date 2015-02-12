@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import unittest
 
 from pypowervm import util
@@ -117,6 +118,17 @@ class TestUtil(unittest.TestCase):
         self.assertEqual('false', util.sanitize_bool_for_api(False))
         self.assertEqual('true', util.sanitize_bool_for_api('True'))
         self.assertEqual('false', util.sanitize_bool_for_api('False'))
+
+    def test_find_wrapper(self):
+        wrap1 = mock.MagicMock()
+        wrap1.uuid = 'a'
+        wrap2 = mock.MagicMock()
+        wrap2.uuid = 'b'
+        wraps = [wrap1, wrap2]
+
+        self.assertEqual(wrap1, util.find_wrapper(wraps, 'a'))
+        self.assertEqual(wrap2, util.find_wrapper(wraps, 'b'))
+        self.assertIsNone(util.find_wrapper(wraps, 'c'))
 
 
 if __name__ == "__main__":

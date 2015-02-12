@@ -219,3 +219,18 @@ def find_equivalent(elem, find_list):
         if find_elem == elem:
             return find_elem
     return None
+
+
+def find_wrapper(wrapper_list, needle_uuid):
+    """Finds the corresponding wrapper from a list given the UUID.
+
+    :param wrapper_list:  A list of wrappers.  Usually generated from a 'feed'
+                          that has been loaded via the wrapper
+                          load_from_response method.
+    :param needle_uuid: The UUID of the object to find in the list.
+    :return: The corresponding wrapper for that UUID.  If not found, None.
+    """
+    for wrapper in wrapper_list:
+        if wrapper.uuid == needle_uuid:
+            return wrapper
+    return None
