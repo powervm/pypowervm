@@ -93,6 +93,20 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
 
+    def test_crt_load_group(self):
+        # Create my mocked data
+        uri_list = ['a', 'b', 'c']
+        pvid = 1
+        lg = net_br.LoadGroup(net_br.crt_load_group(pvid, uri_list))
+
+        # Validate the data back
+        self.assertIsNotNone(lg)
+        self.assertEqual(1, lg.pvid)
+        self.assertEqual(3, len(lg.virtual_network_uri_list))
+        self.assertEqual('a', lg.virtual_network_uri_list[0])
+        self.assertEqual('b', lg.virtual_network_uri_list[1])
+        self.assertEqual('c', lg.virtual_network_uri_list[2])
+
     def test_load_groups(self):
         prim_ld_grp = self.dwrap.load_grps[0]
         self.assertIsNotNone(prim_ld_grp)

@@ -87,6 +87,25 @@ def crt_vnet(name, vlan_id, vswitch_uri, tagged):
                         children=children)
 
 
+def crt_load_group(pvid, vnet_uris):
+    """Create the LoadGroup element that can be used for a create operation.
+
+    This is used when adding a Load Group to a NetworkBridge.
+
+    :param pvid: The primary VLAN ID (ex. 1) for the Load Group.
+    :param vnet_uris: The virtual network URI list (mapping to each additional
+                      VLAN/vswitch combo).
+    :returns: The Element that represents the new LoadGroup.
+    """
+    vnet_elem_list = [adpt.Element('link',
+                                   attrib={'href': uri, 'rel': 'related'})
+                      for uri in vnet_uris]
+    children = [adpt.Element(LG_PVID, text=str(pvid)),
+                adpt.Element(LG_VNETS, children=vnet_elem_list)]
+    return adpt.Element(LG_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
+                        children=children)
+
+
 class VirtualSwitch(ewrap.EntryWrapper):
     """Wraps the Virtual Switch entries.
 
