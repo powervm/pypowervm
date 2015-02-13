@@ -28,9 +28,6 @@ NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
 class TestEntryWrapper(unittest.TestCase):
 
-    def setUp(self):
-        super(TestEntryWrapper, self).setUp()
-
     def test_etag(self):
         etag = '1234'
         ew = ewrap.EntryWrapper('fake_entry', etag=etag)
@@ -115,6 +112,35 @@ class TestElementWrapper(unittest.TestCase):
         found = entry.element.find('SharedEthernetAdapters')
         return ewrap.WrapperElemList(found, 'SharedEthernetAdapter',
                                      ewrap.ElementWrapper)
+
+    def test_fresh_element(self):
+        # Default: UOM namespace, no <Metadata/>
+        class MyElement(ewrap.ElementWrapper):
+            schema_type = 'SomePowerObject'
+        myel = MyElement(None)
+        self.assertEqual(myel.pvm_type, 'SomePowerObject')
+        self.assertEqual(
+            myel._element.toxmlstring(),
+            '<uom:SomePowerObject xmlns:uom="http://www.ibm.com/xmlns/systems'
+            '/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"/>'
+            .encode("utf-8"))
+
+        # Can't use no-arg constructor if schema_type isn't overridden
+        class MyElement2(ewrap.ElementWrapper):
+            pass
+        self.assertRaises(NotImplementedError, MyElement2)
+
+        # Can override namespace and attrs and trigger inclusion of <Metadata/>
+        class MyElement3(ewrap.ElementWrapper):
+            schema_type = 'SomePowerObject'
+            default_attrib = {'foo': 'bar'}
+            schema_ns = 'baz'
+            has_metadata = True
+        myel = MyElement3()
+        self.assertEqual(
+            myel._element.toxmlstring(),
+            '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
+            '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
 
 
 class TestWrapperElemList(unittest.TestCase):

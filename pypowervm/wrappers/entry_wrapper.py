@@ -18,9 +18,10 @@ import abc
 import logging
 
 from pypowervm import adapter as adpt
+import pypowervm.const as pc
 from pypowervm.i18n import _
 from pypowervm import util
-import pypowervm.wrappers.constants as c
+import pypowervm.wrappers.constants as wc
 
 import six
 
@@ -34,6 +35,37 @@ class Wrapper(object):
     Provides base support for operations.  Will define a few methods that need
     to be overridden by subclasses.
     """
+
+    @property
+    def schema_type(self):
+        """PowerVM REST API Schema type of the subclass, as a string.
+
+        This must be overridden by the subclass if the no-element/no-arg
+        constructor call is to work.
+        """
+        raise NotImplementedError()
+
+    @property
+    def default_attrib(self):
+        """Default attributes for fresh Element when no-arg constructor used.
+
+        Subclasses may override as appropriate.
+        """
+        return wc.DEFAULT_SCHEMA_ATTR
+
+    @property
+    def schema_ns(self):
+        """PowerVM REST API Schema namespace of the subclass."""
+        return pc.UOM_NS
+
+    @property
+    def has_metadata(self):
+        """Indicates whether the subclass needs a <Metadata/> child.
+
+        Should be logically equivalent to asking whether the PowerVM REST API
+        Schema object is a ROOT or CHILD (True) or DETAIL (False).
+        """
+        return False
 
     def _find(self, property_name, use_find_all=False):
         """Will find a given element within the object.
@@ -50,7 +82,7 @@ class Wrapper(object):
 
         return found_value  # May be None
 
-    def _find_or_seed(self, prop_name, attrib=c.DEFAULT_SCHEMA_ATTR):
+    def _find_or_seed(self, prop_name, attrib=wc.DEFAULT_SCHEMA_ATTR):
         """Will find the existing element, or create if needed.
 
         If the element is not found, it will be added to the child list
@@ -73,7 +105,7 @@ class Wrapper(object):
             return new_elem
 
     def replace_list(self, prop_name, prop_children,
-                     attrib=c.DEFAULT_SCHEMA_ATTR):
+                     attrib=wc.DEFAULT_SCHEMA_ATTR):
         """Replaces a property on this Entry that contains a children list.
 
         The prop_children represent the new elements for the property.
@@ -118,10 +150,21 @@ class Wrapper(object):
         """
         pass
 
-    def set_parm_value(self, property_name, value):
+    def set_parm_value(self, property_name, value, create=True):
+        """Set a child element value, possibly creating the child.
+
+        :param property_name: The schema name of the property to set.
+        :param value: The (string) value to assign to the property's 'text'.
+        :param create: If True, and the property is not found, it will be
+        created.  Otherwise this method will throw an exception.
+        """
         element_value = self._find(property_name)
         if element_value is None:
             self.log_missing_value(property_name)
+            if create:
+                element_value = adpt.Element(
+                    property_name, attrib=self.default_attrib, text=value)
+                self._element.append(element_value)
 
         element_value.text = value
 
@@ -294,7 +337,7 @@ class EntryWrapper(Wrapper):
         if self._entry is None:
             return None
 
-        uuid = self._entry.properties[c.UUID]
+        uuid = self._entry.properties[wc.UUID]
         return uuid
 
     @property
@@ -318,7 +361,23 @@ class EntryWrapper(Wrapper):
 class ElementWrapper(Wrapper):
     """Base wrapper for Elements."""
 
-    def __init__(self, element, **kwargs):
+    def __init__(self, element=None, **kwargs):
+        """Wrap an existing adapter.Element OR construct a fresh one.
+
+        :param element: An existing adapter.Element to wrap.  If None, a
+        new adapter.Element will be created.  This relies on the child class
+        having its schema_type property defined.
+        """
+        if element is None:
+            children = []
+            if self.has_metadata:
+                children.append(
+                    adpt.Element('Metadata', ns=self.schema_ns,
+                                 children=[adpt.Element(
+                                     'Atom', ns=self.schema_ns)]))
+            element = adpt.Element(
+                self.schema_type, ns=self.schema_ns,
+                attrib=self.default_attrib, children=children)
         self._element = element
 
     @property
