@@ -304,6 +304,9 @@ class VirtualOpticalMedia(ewrap.ElementWrapper):
 class PhysicalVolume(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
+    schema_type = 'PhysicalVolume'
+    has_metadata = True
+
     @property
     def udid(self):
         """The unique device id."""
@@ -317,6 +320,10 @@ class PhysicalVolume(ewrap.ElementWrapper):
     @property
     def name(self):
         return self.get_parm_value(PV_VOL_NAME)
+
+    @name.setter
+    def name(self, newname):
+        self.set_parm_value(PV_VOL_NAME, newname)
 
     @property
     def state(self):

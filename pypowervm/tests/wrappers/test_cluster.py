@@ -56,6 +56,11 @@ class TestCluster(twrap.TestWrapper):
                     adp.Element('VolumeName', text='hdisk99')]))
         self.dwrap.repos_pv = newrepos
         self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
+        # Now try the same thing, but using no-arg constructor to build PV
+        newrepos = stor.PhysicalVolume()
+        newrepos.name = 'hdisk123'
+        self.dwrap.repos_pv = newrepos
+        self.assertAlmostEqual(self.dwrap.repos_pv.name, 'hdisk123')
 
     def test_nodes(self):
         """Tests the Node and MTMS wrappers as well."""
