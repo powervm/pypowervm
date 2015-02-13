@@ -65,14 +65,29 @@ class Cluster(ewrap.EntryWrapper):
             return u.get_req_path_uuid(uri)
 
     @property
-    def repos_pvs(self):
-        """WrapperElemList of PhysicalVolume wrappers."""
-        return ewrap.WrapperElemList(self._find_or_seed(CL_REPOPVS),
-                                     CL_PV, stor.PhysicalVolume)
+    def repos_pv(self):
+        """Returns the (one) repository PV.
 
-    @repos_pvs.setter
-    def repos_pvs(self, pvs):
-        self.replace_list(CL_REPOPVS, pvs)
+        Although the schema technically allows a collection of PVs under the
+        RepositoryDisk element, a Cluster always has exactly one repository PV.
+        """
+        repos_elem = self._find_or_seed(CL_REPOPVS)
+        pv_list = repos_elem.findall(CL_PV)
+        # Check only relevant when building up a Cluster wrapper internally
+        if pv_list and len(pv_list) == 1:
+            return stor.PhysicalVolume(pv_list[0])
+        return None
+
+    @repos_pv.setter
+    def repos_pv(self, pv):
+        """Set the (single) PhysicalVolume member of RepositoryDisk.
+
+        You cannot change the repository disk of a live Cluster.  This setter
+        is useful only when constructing new Clusters.
+
+        :param pv: The PhysicalVolume (NOT a list) to set.
+        """
+        self.replace_list(CL_REPOPVS, [pv])
 
     @property
     def nodes(self):
@@ -89,15 +104,25 @@ class Node(ewrap.ElementWrapper):
     """A Node represents a VIOS member of a Cluster.
 
     A Cluster cannot simply contain VirtualIOServer links because it is
-    possible that some of the Cluster's members are not managed by the same
+    likely that some of the Cluster's members are not managed by the same
     instance of the PowerVM REST server, which would then have no way to
     construct said links.  In such cases, the Node object supplies enough
     information about the VIOS that it could be found by a determined consumer.
+
+    To add a new Node to a Cluster, only the hostname is required.
+    n = Node()
+    n.hostname = ...
+    cluster.nodes.append(n)
+    adapter.update(...)
     """
 
     @property
     def hostname(self):
         return self.get_parm_value(N_HOSTNAME)
+
+    @hostname.setter
+    def hostname(self, hn):
+        self.set_parm_value(N_HOSTNAME, hn)
 
     @property
     def lpar_id(self):
