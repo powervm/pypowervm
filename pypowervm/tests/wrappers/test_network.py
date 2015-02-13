@@ -141,6 +141,21 @@ class TestNetwork(twrap.TestWrapper):
     def test_arbitrary_pvids(self):
         self.assertEqual([4094], self.dwrap.arbitrary_pvids)
 
+    def test_list_vlans(self):
+        # 1 is the PVID.  4094 is the arbitrary (only one arbitrary)
+        self.assertListEqual([100, 150, 175, 200, 250, 300, 333, 350, 900,
+                              1001, 2227, 2228, 1],
+                             self.dwrap.list_vlans())
+        self.assertListEqual([4094, 100, 150, 175, 200, 250, 300, 333, 350,
+                              900, 1001, 2227, 2228],
+                             self.dwrap.list_vlans(pvid=False, arbitrary=True))
+        self.assertListEqual([100, 150, 175, 200, 250, 300, 333, 350, 900,
+                              1001, 2227, 2228],
+                             self.dwrap.list_vlans(pvid=False))
+        self.assertListEqual([1, 4094, 100, 150, 175, 200, 250, 300, 333, 350,
+                              900, 1001, 2227, 2228],
+                             self.dwrap.list_vlans(arbitrary=True))
+
     def test_seas(self):
         self.assertEqual(1, len(self.dwrap.seas))
 

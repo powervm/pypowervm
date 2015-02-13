@@ -176,6 +176,33 @@ class NetworkBridge(ewrap.EntryWrapper):
         """
         return [x.pvid for x in self.load_grps[1:]]
 
+    def list_vlans(self, pvid=True, arbitrary=False):
+        """Lists all of the VLANs on the Network Bridge.
+
+        :param pvid: True if the primary VLAN ID should be included in the
+                     response.  Defaults to True.
+        :param arbitrary: If True, the arbitrary PVIDs (see arbitrary_pvids
+                          property) will be included in the response.
+        :response: A list of all the VLANs.
+        """
+        resp = []
+
+        # Loop through all load groups (even primary) and add the VLANs.
+        for ld_grp in self.load_grps:
+            trunk = ld_grp.trunk_adapters[0]
+            if arbitrary:
+                resp.append(trunk.pvid)
+            resp.extend(trunk.tagged_vlans)
+
+        # Depending on if the arbitrary flag was set, the primary VLAN may
+        # be in already.  This is odd logic here...but keeps the code
+        # efficient.
+        if not pvid and arbitrary:
+            resp.remove(self.pvid)
+        elif pvid and not arbitrary:
+            resp.append(self.pvid)
+        return resp
+
     def supports_vlan(self, vlan):
         """Determines if the VLAN can flow through the Network Bridge.
 
