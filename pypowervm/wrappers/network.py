@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import logging
 
 from pypowervm import adapter as adpt
@@ -154,9 +155,25 @@ class NetworkBridge(ewrap.EntryWrapper):
         """Returns a list of the Virtual Network URIs.
 
         This is a READ-ONLY list.  Modification should take place through the
-        LoadGroup virtual_network_uri_list.
+        LoadGroup virtual_network_uri_list.  As the LoadGroups are modified,
+        this list will be dynamically updated.
         """
         return self.get_href(NB_VNETS + c.DELIM + c.LINK)
+
+    def _rebuild_vnet_list(self):
+        """A callback from the Load Group to rebuild the virtual network list.
+
+        Needed due to the API using both the LoadGroup and Network Bridge
+        as a source.  But usage at an API level should be through Load
+        Groups.
+        """
+        # Find all the children Virtual Networks.
+        search = './' + NB_LGS + '/' + LG_ROOT + '/' + LG_VNETS + '/link'
+        new_vnets = copy.deepcopy(self._element.findall(search))
+        # Find and replace the current element.
+        cur_vnets = self._element.find('./' + NB_VNETS)
+        self._element.replace(cur_vnets,
+                              adpt.Element(NB_VNETS, children=new_vnets))
 
     @property
     def seas(self):
@@ -172,7 +189,7 @@ class NetworkBridge(ewrap.EntryWrapper):
     def load_grps(self):
         """Returns the load groups.  The first in the list is the primary."""
         return ewrap.WrapperElemList(self._entry.element.find(NB_LGS),
-                                     NB_LG, LoadGroup)
+                                     NB_LG, LoadGroup, nb_root=self)
 
     @load_grps.setter
     def load_grps(self, new_list):
@@ -369,6 +386,13 @@ class LoadGroup(ewrap.ElementWrapper):
     Trunk Adapters, each with their own unique Trunk Priority.
     """
 
+    def __init__(self, element, **kwargs):
+        super(LoadGroup, self).__init__(element)
+
+        # If created from a Network Bridge this will be set.  Else it will
+        # be None (ex. crt_load_group method)
+        self._nb_root = kwargs.get('nb_root')
+
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
@@ -409,6 +433,11 @@ class LoadGroup(ewrap.ElementWrapper):
             new_elems.append(adpt.Element('link', attrib={'href': item}))
         new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
         self._element.replace(self._element.find(LG_VNETS), new_vnet_elem)
+
+        # If the Network Bridge was set, tell it to rebuild its VirtualNetwork
+        # list.
+        if self._nb_root is not None:
+            self._nb_root._rebuild_vnet_list()
 
 
 class VirtualNetwork(ewrap.EntryWrapper):

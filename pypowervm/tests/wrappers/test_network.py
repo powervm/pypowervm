@@ -126,6 +126,24 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(
             12, len(addl_ld_grps[0].virtual_network_uri_list))
 
+        # Make sure that the reference to the Network Bridge is there.
+        self.assertEqual(self.dwrap, prim_ld_grp._nb_root)
+
+    def test_load_group_modification(self):
+        """Verifies that the callbacks to the Network Bridge work.
+
+        When modifying the Virtual Network list in the Load Group, those
+        updates should be reflected back into the Network Bridge.
+        """
+        orig_len = len(self.dwrap.virtual_network_uri_list)
+        ld_grp = self.dwrap.load_grps[0]
+        lg_vnets = ld_grp.virtual_network_uri_list
+        first_vnet = lg_vnets[0]
+        lg_vnets.remove(first_vnet)
+
+        self.assertEqual(orig_len - 1,
+                         len(self.dwrap.virtual_network_uri_list))
+
     def test_supports_vlan(self):
         """Tests the supports_vlan method."""
 
