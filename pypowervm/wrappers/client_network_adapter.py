@@ -112,7 +112,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def pvid(self):
         """Returns the Port VLAN ID."""
-        return self.get_parm_value_int(c.PORT_VLAN_ID)
+        return self.get_parm_value(c.PORT_VLAN_ID, converter=int)
 
     @pvid.setter
     def pvid(self, new_val):

@@ -26,9 +26,9 @@ class TestVolumeGroup(twrap.TestWrapper):
     def test_base(self):
         """Tests baseline function within the Volume Group."""
         self.assertEqual('image_pool', self.dwrap.name)
-        self.assertEqual(1063, self.dwrap.capacity)
-        self.assertEqual(1051, self.dwrap.available_size)
-        self.assertEqual(1051, self.dwrap.free_space)
+        self.assertEqual(1063.3, self.dwrap.capacity)
+        self.assertEqual(1051.1, self.dwrap.available_size)
+        self.assertEqual(1051.2, self.dwrap.free_space)
         self.assertEqual('00f8d6de00004b000000014a54555cd9',
                          self.dwrap.serial_id)
 

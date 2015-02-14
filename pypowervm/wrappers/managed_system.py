@@ -99,11 +99,12 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def max_sys_procs_limit(self):
-        return self.get_parm_value_int(c.MAX_PROCS_PER_PARTITION, 0)
+        return self.get_parm_value(c.MAX_PROCS_PER_PARTITION, 0, converter=int)
 
     @property
     def max_procs_per_aix_linux_lpar(self):
-        val = self.get_parm_value_int(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0)
+        val = self.get_parm_value(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0,
+                                  converter=int)
         # Some systems will not have maximum procs per lpar based on
         # partition type. In that case, use system max procs per partition.
         if val == 0:
@@ -117,11 +118,12 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def max_sys_vcpus_limit(self):
-        return self.get_parm_value_int(c.MAX_VCPUS_PER_PARTITION, 0)
+        return self.get_parm_value(c.MAX_VCPUS_PER_PARTITION, 0, converter=int)
 
     @property
     def max_vcpus_per_aix_linux_lpar(self):
-        val = self.get_parm_value_int(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0)
+        val = self.get_parm_value(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0,
+                                  converter=int)
         # Some systems will not have maximum vcpus per lpar based on
         # partition type. In that case, use system max vcpus per partition.
         if val == 0:
@@ -135,23 +137,23 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def memory_total(self):
-        return self.get_parm_value_int(c.MEMORY_INSTALLED, 0)
+        return self.get_parm_value(c.MEMORY_INSTALLED, 0, converter=int)
 
     @property
     def memory_free(self):
-        return self.get_parm_value_int(c.MEMORY_AVAIL, 0)
+        return self.get_parm_value(c.MEMORY_AVAIL, 0, converter=int)
 
     @property
     def memory_configurable(self):
-        return self.get_parm_value_int(c.MEMORY_CONFIGURABLE, 0)
+        return self.get_parm_value(c.MEMORY_CONFIGURABLE, 0, converter=int)
 
     @property
     def memory_region_size(self):
-        return self.get_parm_value_int(c.MEMORY_REGION_SIZE, 0)
+        return self.get_parm_value(c.MEMORY_REGION_SIZE, 0, converter=int)
 
     @property
     def firmware_memory(self):
-        return self.get_parm_value_int(c.SYS_FIRMWARE_MEM, 0)
+        return self.get_parm_value(c.SYS_FIRMWARE_MEM, 0, converter=int)
 
     @property
     def host_ip_address(self):
@@ -193,13 +195,16 @@ class ManagedSystem(ewrap.EntryWrapper):
         only.
         """
 
-        max_migr_sup = self.get_parm_value_int(c.MAX_FIRMWARE_MIGR)
-        act_migr_sup = self.get_parm_value_int(c.MAX_ACTIVE_MIGR)
-        inact_migr_sup = self.get_parm_value_int(c.MAX_INACTIVE_MIGR)
+        max_migr_sup = self.get_parm_value(c.MAX_FIRMWARE_MIGR, converter=int)
+        act_migr_sup = self.get_parm_value(c.MAX_ACTIVE_MIGR, converter=int)
+        inact_migr_sup = self.get_parm_value(c.MAX_INACTIVE_MIGR,
+                                             converter=int)
         pref_act_migr_sup = act_migr_sup
         pref_inact_migr_sup = inact_migr_sup
-        act_migr_prog = self.get_parm_value_int(c.ACTIVE_MIGR_RUNNING)
-        inact_migr_prog = self.get_parm_value_int(c.INACTIVE_MIGR_RUNNING)
+        act_migr_prog = self.get_parm_value(c.ACTIVE_MIGR_RUNNING,
+                                            converter=int)
+        inact_migr_prog = self.get_parm_value(c.INACTIVE_MIGR_RUNNING,
+                                              converter=int)
 
         migr_data = {'max_migration_ops_supported': max_migr_sup,
                      'active_migrations_supported': act_migr_sup,

@@ -28,7 +28,7 @@ class SharedProcPool(ewrap.EntryWrapper):
     @property
     def id(self):
         """Integer shared processor pool ID."""
-        return self.get_parm_value_int(c.POOL_ID)
+        return self.get_parm_value(c.POOL_ID, default=0, converter=int)
 
     @property
     def curr_rsrv_proc_units(self):

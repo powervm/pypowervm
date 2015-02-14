@@ -530,7 +530,7 @@ class VirtualStorageAdapter(ewrap.ElementWrapper):
     @property
     def slot_number(self):
         """The (int) slot number that the adapter is in."""
-        return self.get_parm_value_int(VADPT_SLOT_NUM)
+        return self.get_parm_value(VADPT_SLOT_NUM, converter=int)
 
     @property
     def loc_code(self):
@@ -637,9 +637,9 @@ class PhysicalFCPort(ewrap.ElementWrapper):
     @property
     def available_ports(self):
         """The number of available NPIV ports.  Int value."""
-        return self.get_parm_value_int(PFC_AVAILABLE_PORTS)
+        return self.get_parm_value(PFC_AVAILABLE_PORTS, converter=int)
 
     @property
     def total_ports(self):
         """The total number of NPIV ports.  Int value."""
-        return self.get_parm_value_int(PFC_TOTAL_PORTS)
+        return self.get_parm_value(PFC_TOTAL_PORTS, converter=int)
