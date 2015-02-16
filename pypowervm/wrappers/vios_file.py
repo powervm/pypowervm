@@ -109,11 +109,11 @@ class File(ewrap.EntryWrapper):
 
     @property
     def expected_file_size(self):
-        return self.get_parm_value_int(FILE_EXP_SIZE)
+        return self.get_parm_value(FILE_EXP_SIZE, converter=int)
 
     @property
     def current_file_size(self):
-        return self.get_parm_value_int(FILE_CUR_SIZE)
+        return self.get_parm_value(FILE_CUR_SIZE, converter=int)
 
     @property
     def enum_type(self):

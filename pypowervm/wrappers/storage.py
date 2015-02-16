@@ -184,18 +184,18 @@ class VolumeGroup(ewrap.EntryWrapper):
 
     @property
     def capacity(self):
-        """Overall capacity in MB (int)."""
-        return self.get_parm_value_int(VG_CAPACITY)
+        """Overall capacity in GB (float)."""
+        return self.get_parm_value(VG_CAPACITY, converter=float)
 
     @property
     def available_size(self):
-        """Available size for new volumes in MB (int)."""
-        return self.get_parm_value_int(VG_AVAILABLE_SIZE)
+        """Available size for new volumes in GB (float)."""
+        return self.get_parm_value(VG_AVAILABLE_SIZE, converter=float)
 
     @property
     def free_space(self):
-        """Current free space in MB (int)."""
-        return self.get_parm_value_int(VG_FREE_SPACE)
+        """Current free space in GB (float)."""
+        return self.get_parm_value(VG_FREE_SPACE, converter=float)
 
     @property
     def serial_id(self):
@@ -277,7 +277,7 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
     @property
     def size(self):
         """Returns the size in GB (int)."""
-        return self.get_parm_value_int(VREPO_SIZE)
+        return self.get_parm_value(VREPO_SIZE, converter=int)
 
 
 class VirtualOpticalMedia(ewrap.ElementWrapper):
@@ -312,7 +312,7 @@ class PhysicalVolume(ewrap.ElementWrapper):
     @property
     def capacity(self):
         """Returns the capacity as an int in MB."""
-        return self.get_parm_value_int(PV_VOL_SIZE)
+        return self.get_parm_value(PV_VOL_SIZE, converter=int)
 
     @property
     def name(self):

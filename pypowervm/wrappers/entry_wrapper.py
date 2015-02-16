@@ -125,7 +125,7 @@ class Wrapper(object):
 
         element_value.text = value
 
-    def get_parm_value(self, property_name, default=None):
+    def get_parm_value(self, property_name, default=None, converter=None):
         element_value = self._find(property_name)
         if element_value is None:
             self.log_missing_value(property_name)
@@ -138,6 +138,19 @@ class Wrapper(object):
         if type(text) is str:
             text = text.strip()
 
+        if callable(converter):
+            try:
+                return converter(text)
+            except ValueError:
+                message = (
+                    _("Cannot convert %(property_name)s='%(value)s' "
+                      "in object %(pvmobject)s") % {
+                        "property_name": property_name,
+                        "value": text,
+                        "pvmobject": self.type_and_uuid})
+
+                LOG.error(message)
+                return default
         return text
 
     def get_parm_values(self, property_name):
@@ -176,31 +189,6 @@ class Wrapper(object):
             value = value.lower()
 
         return value == 'true'
-
-    def get_parm_value_int(self, property_name, default=0):
-        """Gets the integer value of a property.
-
-        param property_name: property to return
-        returns: integer value of property. Otherwise, default value
-        """
-        value = self.get_parm_value(property_name)
-        if value is None or len(value) == 0:
-            return default
-
-        try:
-            int_value = int(value)
-            return int_value
-        except ValueError:
-            message = (
-                _("Cannot convert %(property_name)s='%(value)s' to an integer "
-                  "in object %(pvmobject)s") % {
-                    "property_name": property_name,
-                    "value": value,
-                    "pvmobject": self.type_and_uuid})
-
-            LOG.error(message)
-
-        return default
 
     def log_missing_value(self, param):
         error_message = (

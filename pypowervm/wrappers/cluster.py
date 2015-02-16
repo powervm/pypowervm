@@ -127,7 +127,7 @@ class Node(ewrap.ElementWrapper):
     @property
     def lpar_id(self):
         """Small integer partition ID, not UUID."""
-        return self.get_parm_value_int(N_LPARID)
+        return self.get_parm_value(N_LPARID, converter=int)
 
     @property
     def mtms(self):

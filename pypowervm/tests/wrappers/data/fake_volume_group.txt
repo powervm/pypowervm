@@ -47,9 +47,9 @@ BODY{
             <AtomCreated>1418787514631</AtomCreated>
         </Atom>
     </Metadata>
-    <AvailableSize kb="ROR" kxe="false">1051</AvailableSize>
-    <FreeSpace kxe="false" kb="ROR">1051</FreeSpace>
-    <GroupCapacity kb="CUR" kxe="false">1063</GroupCapacity>
+    <AvailableSize kb="ROR" kxe="false">1051.1</AvailableSize>
+    <FreeSpace kxe="false" kb="ROR">1051.2</FreeSpace>
+    <GroupCapacity kb="CUR" kxe="false">1063.3</GroupCapacity>
     <GroupName kb="CUR" kxe="false">image_pool</GroupName>
     <GroupSerialID kb="ROR" kxe="false">00f8d6de00004b000000014a54555cd9</GroupSerialID>
     <MaximumLogicalVolumes kb="ROR" kxe="false">1024</MaximumLogicalVolumes>

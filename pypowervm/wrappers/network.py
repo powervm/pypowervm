@@ -127,7 +127,7 @@ class VirtualSwitch(ewrap.EntryWrapper):
     @property
     def switch_id(self):
         """The internal ID (not UUID) for the Virtual Switch."""
-        return self.get_parm_value_int(VSW_ID)
+        return self.get_parm_value(VSW_ID, converter=int)
 
     @property
     def mode(self):
@@ -147,7 +147,7 @@ class NetworkBridge(ewrap.EntryWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
-        return self.get_parm_value_int(NB_PVID)
+        return self.get_parm_value(NB_PVID, converter=int)
 
     @property
     def virtual_network_uri_list(self):
@@ -266,7 +266,7 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
-        return self.get_parm_value_int(c.PORT_VLAN_ID)
+        return self.get_parm_value(c.PORT_VLAN_ID, converter=int)
 
     @property
     def addl_adpts(self):
@@ -305,7 +305,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
-        return self.get_parm_value_int(TA_PVID)
+        return self.get_parm_value(TA_PVID, converter=int)
 
     @pvid.setter
     def pvid(self, value):
@@ -354,12 +354,12 @@ class TrunkAdapter(ewrap.ElementWrapper):
     @property
     def vswitch_id(self):
         """Returns the virtual switch identifier."""
-        return int(self.get_parm_value_int(TA_VS_ID))
+        return int(self.get_parm_value(TA_VS_ID, converter=int))
 
     @property
     def trunk_pri(self):
         """Returns the trunk priority of the adapter."""
-        return int(self.get_parm_value_int(TA_TRUNK_PRI))
+        return int(self.get_parm_value(TA_TRUNK_PRI, converter=int))
 
 
 class LoadGroup(ewrap.ElementWrapper):
@@ -372,7 +372,7 @@ class LoadGroup(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
-        return self.get_parm_value_int(LG_PVID)
+        return self.get_parm_value(LG_PVID, converter=int)
 
     @property
     def trunk_adapters(self):
@@ -428,7 +428,7 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
     @property
     def vlan(self):
-        return self.get_parm_value_int(VNET_VLAN_ID)
+        return self.get_parm_value(VNET_VLAN_ID, converter=int)
 
     @property
     def vswitch_id(self):
@@ -436,7 +436,7 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
         Is not a UUID.
         """
-        return self.get_parm_value_int(VNET_SW_ID)
+        return self.get_parm_value(VNET_SW_ID, converter=int)
 
     @property
     def tagged(self):
