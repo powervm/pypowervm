@@ -192,7 +192,14 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(1, len(self.dwrap.seas))
 
         sea = self.dwrap.seas[0]
+
+        # Test some properties
         self.assertEqual(1, sea.pvid)
+        self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+                         '726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer'
+                         '/691019AF-506A-4896-AADE-607E21FA93EE',
+                         sea.vio_uri)
+        self.assertEqual('ent8', sea.dev_name)
 
         new_sea = copy.deepcopy(sea)
         self.dwrap.seas.append(new_sea)
