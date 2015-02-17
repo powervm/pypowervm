@@ -40,6 +40,8 @@ NB_LG = 'LoadGroup'
 NB_LGS = 'LoadGroups'
 
 SEA_ROOT = 'SharedEthernetAdapter'
+SEA_DEV_NAME = 'DeviceName'
+SEA_VIO_HREF = 'AssignedVirtualIOServer'
 SEA_TRUNKS = 'TrunkAdapters'
 
 TA_ROOT = 'TrunkAdapter'
@@ -284,6 +286,15 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
     def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
         return self.get_parm_value(c.PORT_VLAN_ID, converter=int)
+
+    @property
+    def dev_name(self):
+        return self.get_parm_value(SEA_DEV_NAME)
+
+    @property
+    def vio_uri(self):
+        """The URI to the corresponding VIOS."""
+        return self.get_href(SEA_VIO_HREF, one_result=True)
 
     @property
     def addl_adpts(self):
