@@ -304,13 +304,27 @@ class VirtualOpticalMedia(ewrap.ElementWrapper):
 class PhysicalVolume(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
-    schema_type = 'PhysicalVolume'
+    schema_type = c.PV
     has_metadata = True
+
+    @classmethod
+    def new_instance(cls, udid=None, name=None):
+        pv = cls()
+        # Assignment order is significant
+        if udid:
+            pv.udid = udid
+        if name:
+            pv.name = name
+        return pv
 
     @property
     def udid(self):
         """The unique device id."""
         return self.get_parm_value(PV_UDID)
+
+    @udid.setter
+    def udid(self, new_udid):
+        self.set_parm_value(PV_UDID, new_udid)
 
     @property
     def capacity(self):
@@ -400,9 +414,33 @@ class LogicalUnit(ewrap.ElementWrapper):
 class SharedStoragePool(ewrap.EntryWrapper):
     """A Shared Storage Pool containing PVs and LUs."""
 
+    schema_type = c.SSP
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls, name=None, data_pv_list=()):
+        """Create a fresh SharedStoragePool EntryWrapper.
+
+        :param name: String name for the SharedStoragePool.
+        :param data_pv_list: Iterable of storage.PhysicalVolume instances
+                             representing the data volumes for the
+                             SharedStoragePool.
+        """
+        # Assignment order matters.
+        ssp = cls()
+        if data_pv_list:
+            ssp.physical_volumes = data_pv_list
+        if name:
+            ssp.name = name
+        return ssp
+
     @property
     def name(self):
         return self.get_parm_value(SSP_NAME)
+
+    @name.setter
+    def name(self, newname):
+        self.set_parm_value(SSP_NAME, newname)
 
     @property
     def udid(self):

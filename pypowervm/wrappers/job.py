@@ -46,11 +46,12 @@ class Job(ewrap.EntryWrapper):
         self.op = self.get_parm_value(c.JOB_OPERATION_NAME)
 
     @staticmethod
-    def create_job_parameter(name, value):
+    def create_job_parameter(name, value, cdata=False):
         """Creates a JobParameter Element.
 
            :param name: ParameterName text value
            :param value: ParameterValue text value
+           :param cdata: If True, the value text will be wrapped in CDATA tags
            :returns: JobParameter Element
         """
         job_parm = adp.Element('JobParameter',
@@ -59,7 +60,7 @@ class Job(ewrap.EntryWrapper):
         job_parm.append(adp.Element('ParameterName',
                                     text=name, ns=c.WEB_NS))
         job_parm.append(adp.Element('ParameterValue',
-                                    text=value, ns=c.WEB_NS))
+                                    text=value, ns=c.WEB_NS, cdata=cdata))
         return job_parm
 
     def add_job_parameters_to_existing(self, *add_parms):

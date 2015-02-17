@@ -41,6 +41,9 @@ SHR_PRC_PL = 'SharedProcessorPool'
 VOL_GROUP = 'VolumeGroup'
 JOBS = 'jobs'
 VSWITCH = 'VirtualSwitch'
+CLUSTER = 'Cluster'
+CLUST_NODE = 'Node'
+SSP = 'SharedStoragePool'
 
 NEXT_SLOT = 'UseNextAvailableSlotID'
 

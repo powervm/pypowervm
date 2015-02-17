@@ -58,7 +58,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <HostName kb="CUD" kxe="false">foo.ibm.com</HostName>
+            <HostName kb="CUD" kxe="false">foo.example.com</HostName>
             <PartitionID kb="CUD" kxe="false">2</PartitionID>
             <MachineTypeModelAndSerialNumber kxe="false" kb="CUD" schemaVersion="V1_2_0">
                 <Metadata>
@@ -75,7 +75,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <HostName kb="CUD" kxe="false">bar.ibm.com</HostName>
+            <HostName kb="CUD" kxe="false">bar.example.com</HostName>
             <PartitionID kb="CUD" kxe="false">1</PartitionID>
             <MachineTypeModelAndSerialNumber kxe="false" kb="CUD" schemaVersion="V1_2_0">
                 <Metadata>
