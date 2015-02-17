@@ -47,12 +47,11 @@ class TestUploadLV(unittest.TestCase):
 
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid, cleaned = upload_lv.upload_vopt(
-            mock_adpt, self.v_uuid, None, 'test2', f_size=50)
+        upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2', f_size=50)
 
         # Test that vopt was 'uploaded'
-        self.assertEqual('6233b070-31cc-4b57-99bd-37f80e845de9', f_uuid)
-        self.assertTrue(cleaned)
+        mock_adpt.upload_file.assert_called_with(mock.ANY, None)
+
         # Ensure cleanup was called
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -61,8 +60,7 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                       f_size=50)
+        upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2', f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -81,17 +79,16 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.update.return_value = vg_post_disk_create
         mock_create_file.return_value = self._fake_meta()
 
-        n_vdisk, f_uuid, cleaned = upload_lv.upload_new_vdisk(
-            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50, 'abc123')
+        upload_lv.upload_new_vdisk(
+            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
+            d_size=25, sha_chksum='abc123')
 
+        # Ensure the create file was called
         mock_create_file.assert_called_once_with(
             mock_adpt, 'test2', wc.BROKERED_DISK_IMAGE, self.v_uuid, f_size=50,
-            tdev_udid=n_vdisk.udid, sha_chksum='abc123')
-        self.assertEqual('6233b070-31cc-4b57-99bd-37f80e845de9', f_uuid)
-        self.assertEqual('0300f8d6de00004b000000014a54555cd9.3',
-                         n_vdisk.udid)
-        self.assertEqual('test2', n_vdisk.name)
-        self.assertTrue(cleaned)
+            tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
+            sha_chksum='abc123')
+
         # Ensure cleanup was called after the upload
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -116,13 +113,13 @@ class TestUploadLV(unittest.TestCase):
 
         # Test cleanup failure
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        n_vdisk, f_uuid, cleaned = upload_lv.upload_new_vdisk(
-            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50, 'abc123')
+        upload_lv.upload_new_vdisk(
+            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
+            sha_chksum='abc123')
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
-        self.assertFalse(cleaned)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_create_file(self, mock_adpt):
@@ -166,7 +163,7 @@ class TestUploadLV(unittest.TestCase):
     def test_upload_cleanup(self, mock_adpt):
         """Tests the upload cleanup."""
 
-        upload_lv.upload_cleanup(mock_adpt, '123')
+        upload_lv._upload_cleanup(mock_adpt, '123')
 
         mock_adpt.delete.assert_called_once_with(vf.FILE_ROOT,
                                                  service='web',
