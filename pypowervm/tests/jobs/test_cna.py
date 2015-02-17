@@ -17,9 +17,8 @@
 
 import mock
 
-import os
-
 from pypowervm.jobs import cna
+import pypowervm.tests.jobs.util as tju
 from pypowervm.tests.wrappers.util import pvmhttp
 
 import unittest
@@ -37,7 +36,7 @@ class TestCNA(unittest.TestCase):
     def test_crt_cna(self, mock_adpt, mock_vnet_find):
         """Tests the creation of Client Network Adapters."""
         # First need to load in the various test responses.
-        vs = self._load_file(VSWITCH_FILE)
+        vs = tju.load_file(VSWITCH_FILE)
         mock_adpt.read.return_value = vs
 
         # Create a side effect that can validate the input into the create
@@ -79,10 +78,3 @@ class TestCNA(unittest.TestCase):
                                              fake_vs, uri)
         self.assertIsNotNone(vnet_resp)
         self.assertEqual(1, mock_adpt.create.call_count)
-
-    def _load_file(self, file_name):
-        """Helper method to load the responses from a given location."""
-        data_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(data_dir, 'data')
-        file_path = os.path.join(data_dir, file_name)
-        return pvmhttp.load_pvm_resp(file_path).get_response()

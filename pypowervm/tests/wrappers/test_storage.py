@@ -14,7 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.storage as stor
 
 
@@ -211,3 +213,19 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
         # TODO(IBM): test setter
+
+    def test_fresh_ssp(self):
+        ssp = stor.SharedStoragePool.new_instance(
+            name='myssp',
+            data_pv_list=[stor.PhysicalVolume.new_instance(name=n) for n in (
+                'hdisk123', 'hdisk132', 'hdisk213', 'hdisk231', 'hdisk312',
+                'hdisk321')])
+        self.assertEqual(ssp.name, 'myssp')
+        self.assertEqual(ssp.pvm_type, wc.SSP)
+        self.assertEqual(ssp.schema_ns, pc.UOM_NS)
+        pvs = ssp.physical_volumes
+        self.assertEqual(len(pvs), 6)
+        pv = pvs[3]  # hdisk231
+        self.assertEqual(pv.pvm_type, wc.PV)
+        self.assertEqual(pv.schema_ns, pc.UOM_NS)
+        self.assertEqual(pv.name, 'hdisk231')

@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -38,7 +37,7 @@ def find_entry_by_mtms(resp, mtms):
     :return: The ManagedSystem wrapper from the response that matches that
              value.  None otherwise.
     """
-    mtms_w = MTMS(crt_mtms(mtms))
+    mtms_w = MTMS.new_instance(mtms)
     entries = resp.feed.findentries(c.MACHINE_SERIAL, mtms_w.serial)
     if entries is None:
         return None
@@ -51,24 +50,6 @@ def find_entry_by_mtms(resp, mtms):
 
     # No matching MTM Serial was found
     return None
-
-
-def crt_mtms(mtms):
-    """Converts a MTMS String into an Element that can be used for MTMS Wrapper.
-
-    The MTMS String format is Machine Type - Model Number * Serial
-    Example: 8247-22L*1234567
-    """
-    mtm, sn = mtms.split('*', 1)
-    mt, md = mtm.split('-', 1)
-
-    meta = adpt.Element('Metadata', children=[adpt.Element('Atom')])
-
-    return adpt.Element(MTMS_ROOT, children=[meta,
-                                             adpt.Element(MTMS_MT, text=mt),
-                                             adpt.Element(MTMS_MODEL, text=md),
-                                             adpt.Element(MTMS_SERIAL,
-                                                          text=sn)])
 
 
 class ManagedSystem(ewrap.EntryWrapper):
@@ -229,19 +210,53 @@ class ManagedSystem(ewrap.EntryWrapper):
 
 class MTMS(ewrap.ElementWrapper):
     """The Machine Type, Model and Serial Number wrapper."""
+    schema_type = 'MachineTypeModelAndSerialNumber'
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls, mtms):
+        """Parses a MTMS String into an MTMS Wrapper.
+
+        :param mtms: String representation of Machine Type, Model, and Serial
+                     Number.  The format is
+                     Machine Type - Model Number * Serial
+                     Example: 8247-22L*1234567
+        """
+        mtm, sn = mtms.split('*', 1)
+        mt, md = mtm.split('-', 1)
+
+        ret = cls()
+        # Assignment order is significant
+        ret.machine_type = mt
+        ret.model = md
+        ret.serial = sn
+        return ret
 
     @property
     def machine_type(self):
         return self.get_parm_value(MTMS_MT)
 
+    @machine_type.setter
+    def machine_type(self, mt):
+        self.set_parm_value(MTMS_MT, mt)
+
     @property
     def model(self):
         return self.get_parm_value(MTMS_MODEL)
+
+    @model.setter
+    def model(self, md):
+        self.set_parm_value(MTMS_MODEL, md)
 
     @property
     def serial(self):
         return self.get_parm_value(MTMS_SERIAL)
 
+    @serial.setter
+    def serial(self, sn):
+        self.set_parm_value(MTMS_SERIAL, sn)
+
+    @property
     def mtms_str(self):
         """Builds a string representation of the MTMS.
 

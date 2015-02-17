@@ -16,11 +16,9 @@
 
 import mock
 
-import os
-
 from pypowervm import exceptions as exc
 from pypowervm.jobs import upload_lv
-from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.jobs.util as tju
 import pypowervm.wrappers.constants as wc
 from pypowervm.wrappers import vios_file as vf
 
@@ -62,8 +60,7 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                       f_size=50)
+        upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2', f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -76,8 +73,8 @@ class TestUploadLV(unittest.TestCase):
         """Tests the uploads of the virtual disks."""
 
         # First need to load in the various test responses.
-        vg_orig = self._load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = self._load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
+        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
         mock_adpt.update.return_value = vg_post_disk_create
@@ -105,8 +102,8 @@ class TestUploadLV(unittest.TestCase):
         """Tests the failure path for uploading of the virtual disks."""
 
         # First need to load in the various test responses.
-        vg_orig = self._load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = self._load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
+        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
         mock_adpt.update.return_value = vg_post_disk_create
@@ -153,16 +150,9 @@ class TestUploadLV(unittest.TestCase):
                                'chk', 50, 'tdev_uuid')
         self.assertTrue(mock_adpt.create.called)
 
-    def _load_file(self, file_name):
-        """Helper method to load the responses from a given location."""
-        data_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(data_dir, 'data')
-        file_path = os.path.join(data_dir, file_name)
-        return pvmhttp.load_pvm_resp(file_path).get_response()
-
     def _fake_meta(self):
         """Returns a fake meta class for the _create_file mock."""
-        resp = self._load_file(UPLOADED_FILE)
+        resp = tju.load_file(UPLOADED_FILE)
         return vf.File.load_from_response(resp)
 
     @mock.patch('pypowervm.adapter.Adapter')
