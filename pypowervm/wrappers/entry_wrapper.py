@@ -318,7 +318,7 @@ class EntryWrapper(Wrapper):
 class ElementWrapper(Wrapper):
     """Base wrapper for Elements."""
 
-    def __init__(self, element):
+    def __init__(self, element, **kwargs):
         self._element = element
 
     @property
@@ -357,7 +357,7 @@ class WrapperElemList(list):
      - Removing from the list (ex. list.remove(other_elem))
     """
 
-    def __init__(self, root_elem, child_type, child_class):
+    def __init__(self, root_elem, child_type, child_class, **kwargs):
         """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
@@ -366,23 +366,26 @@ class WrapperElemList(list):
         :param child_type: The type of child element.  Should be a string.
                            Ex. 'SharedEthernetAdapter.
         :param child_class: The child class (subclass of ElementWrapper).
+        :param kwargs: Optional additional named arguments that may be passed
+                       into the wrapper on creation.
         """
         self.root_elem = root_elem
         self.child_type = child_type
         self.child_class = child_class
+        self.injects = kwargs
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
             all_elems = self.root_elem.findall(self.child_type)
             all_elems = all_elems[idx.start:idx.stop:idx.step]
-            return [self.child_class(x) for x in all_elems]
+            return [self.child_class(x, **self.injects) for x in all_elems]
 
         elem = self.root_elem.findall(self.child_type)[idx]
-        return self.child_class(elem)
+        return self.child_class(elem, **self.injects)
 
     def __getslice__(self, i, j):
         elems = self.root_elem.findall(self.child_type)
-        return [self.child_class(x) for x in elems[i:j]]
+        return [self.child_class(x, **self.injects) for x in elems[i:j]]
 
     def __len__(self, *args, **kwargs):
         return len(self.root_elem.findall(self.child_type))
@@ -390,7 +393,7 @@ class WrapperElemList(list):
     def __iter__(self):
         elems = self.root_elem.findall(self.child_type)
         for elem in elems:
-            yield self.child_class(elem)
+            yield self.child_class(elem, **self.injects)
 
     def __str__(self):
         elems = self.root_elem.findall(self.child_type)
