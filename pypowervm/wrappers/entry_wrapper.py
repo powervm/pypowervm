@@ -163,7 +163,7 @@ class Wrapper(object):
             self.log_missing_value(property_name)
             if create:
                 element_value = adpt.Element(
-                    property_name, attrib=self.default_attrib, text=value)
+                    property_name, attrib=None, text=value)
                 self._element.append(element_value)
 
         element_value.text = value
@@ -271,11 +271,59 @@ class Wrapper(object):
         # Otherwise return a (possibly empty) tuple of the results
         return tuple(ret_links)
 
+    def set_href(self, propname, href):
+        """Finds or creates the (single) named property and sets its href.
+
+        Limitation: if the indicated property does not exist, its parent must
+        exist and be unique.
+
+        :param propname: XPath to the property.
+        :param href: The URI value to assign to the href attribute.
+                     rel=related is automatically assigned.
+        """
+        links = self._find(propname, use_find_all=True)
+        if len(links) > 1:
+            msg = _('Refusing set href over multiple links.\nPath: %{path}s\n'
+                    'Number of links found: %{nlinks}d')
+            raise ValueError(msg % {'path': propname, 'nlinks': len(links)})
+        if len(links) == 1:
+            link = links[0]
+        else:
+            # Not found - create the property
+            l = propname.rsplit(wc.DELIM, 1)
+            if len(l) == 1:
+                root = self._element
+            else:
+                root = self._find(l[0])
+            link = adpt.Element(l[-1])
+            root.append(link)
+        # At this point we have found or created the propname element.  Its
+        # handle is in the link var.
+        link.attrib['href'] = href
+        link.attrib['rel'] = 'related'
+
+    def toxmlstring(self):
+        return self._element.toxmlstring()
+
 
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""
 
-    def __init__(self, entry, etag=None):
+    def __init__(self, entry=None, etag=None):
+        if entry is None:
+            children = []
+            if self.has_metadata:
+                children.append(
+                    adpt.Element('Metadata', ns=self.schema_ns,
+                                 children=[adpt.Element(
+                                     'Atom', ns=self.schema_ns)]))
+            element = adpt.Element(
+                self.schema_type, ns=self.schema_ns,
+                attrib=self.default_attrib, children=children)
+            # Properties are not needed under current implementation, as
+            # fresh-constructed Entry is only used for its element.
+            # (Properties belong to the Atom portion of the Entry.)
+            entry = adpt.Entry({}, element._element)
         self._entry = entry
         self._etag = etag
 
@@ -337,8 +385,11 @@ class EntryWrapper(Wrapper):
         if self._entry is None:
             return None
 
-        uuid = self._entry.properties[wc.UUID]
-        return uuid
+        try:
+            uuid = self._entry.properties[wc.UUID]
+            return uuid
+        except KeyError:
+            return None
 
     @property
     def type_and_uuid(self):

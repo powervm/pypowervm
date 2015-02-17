@@ -142,6 +142,52 @@ class TestElementWrapper(unittest.TestCase):
             '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
             '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
 
+    def test_href(self):
+        path = './LoadGroups/LoadGroup/VirtualNetworks/link'
+        # Get all
+        hrefs = self.nb1.get_href(path)
+        self.assertEqual(len(hrefs), 13)
+        self.assertEqual(
+            hrefs[2],
+            'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3d'
+            'f5-ab60-40893d51d074/VirtualNetwork/f417df1f-ff3a-35e5-a428-ab3b8'
+            '2be7717')
+        # Request one - should return None
+        hrefs = self.nb1.get_href(path, one_result=True)
+        self.assertIsNone(hrefs)
+        # set_href should refuse to set multiple links
+        self.assertRaises(ValueError, self.nb1.set_href, path, 'foo')
+
+        # Drill down to the (only) SEA
+        sea = ewrap.ElementWrapper(
+            self.nb1._find('./SharedEthernetAdapters/SharedEthernetAdapter'))
+        path = 'AssignedVirtualIOServer'
+        hrefs = sea.get_href(path)
+        self.assertEqual(len(hrefs), 1)
+        self.assertEqual(
+            hrefs[0],
+            'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3d'
+            'f5-ab60-40893d51d074/VirtualIOServer/691019AF-506A-4896-AADE-607E'
+            '21FA93EE')
+        # Now make sure one_result returns the string (not a list)
+        href = sea.get_href(path, one_result=True)
+        self.assertEqual(
+            href,
+            'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3d'
+            'f5-ab60-40893d51d074/VirtualIOServer/691019AF-506A-4896-AADE-607E'
+            '21FA93EE')
+        # Test setter
+        sea.set_href(path, 'foo')
+        self.assertEqual(sea.get_href(path, one_result=True), 'foo')
+        # Now try setting one that doesn't exist.  First on a top-level path.
+        path = 'NewElement'
+        sea.set_href(path, 'bar')
+        self.assertEqual(sea.get_href(path, one_result=True), 'bar')
+        # ...and now on a nested path.
+        path = './BackingDeviceChoice/EthernetBackingDevice/NewLink'
+        sea.set_href(path, 'baz')
+        self.assertEqual(sea.get_href(path, one_result=True), 'baz')
+
 
 class TestWrapperElemList(unittest.TestCase):
     """Tests for the WrapperElemList class."""
@@ -283,3 +329,6 @@ class TestActionableList(unittest.TestCase):
 
         # Make sure our function was called each time
         self.assertEqual(5, function.call_count)
+
+if __name__ == '__main__':
+    unittest.main()

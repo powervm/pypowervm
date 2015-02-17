@@ -43,9 +43,38 @@ N_MTMS = 'MachineTypeModelAndSerialNumber'
 class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
+    schema_type = c.CLUSTER
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls, name=None, repos_pv=None, node_list=()):
+        """Create a fresh Cluster EntryWrapper.
+
+        :param name: String name for the Cluster.
+        :param repos_pv: storage.PhysicalVolume representing the repository
+                         disk.
+        :param node_list: Iterable of Node wrappers representing the VIOS(es)
+        to host the Cluster.  Each VIOS must be able to see each disk.  Note
+        that this must contain exactly one Node if this Cluster wrapper is to
+        be used to create a new Cluster/SharedStoragePool pair.
+        """
+        # The order of these assignments IS significant.
+        cluster = cls()
+        if name:
+            cluster.name = name
+        if repos_pv:
+            cluster.repos_pv = repos_pv
+        if node_list:
+            cluster.nodes = node_list
+        return cluster
+
     @property
     def name(self):
         return self.get_parm_value(CL_NAME)
+
+    @name.setter
+    def name(self, newname):
+        self.set_parm_value(CL_NAME, newname)
 
     @property
     def id(self):
@@ -116,6 +145,35 @@ class Node(ewrap.ElementWrapper):
     adapter.update(...)
     """
 
+    schema_type = c.CLUST_NODE
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls,
+                     hostname=None, lpar_id=None, mtms=None, vios_uri=None):
+        """Create a fresh Node ElementWrapper.
+
+        :param hostname: String hostname (or IP) of the Node.
+        :param lpar_id: Integer LPAR ID of the Node.
+        :param mtms: String OR managed_system.MTMS wrapper representing the
+                     Machine Type, Model, and Serial Number of the system
+                     hosting the VIOS.  String format: 'MT-M*S'
+                     e.g. '8247-22L*1234A0B'.
+        :param vios_uri: String URI representing this Node.
+        """
+        # The order of these assignments IS significant
+        node = cls()
+        if hostname:
+            node.hostname = hostname
+        if lpar_id:
+            node.lpar_id = lpar_id
+        if mtms:
+            node.mtms = mtms
+        if vios_uri:
+            node.vios_uri = vios_uri
+
+        return node
+
     @property
     def hostname(self):
         return self.get_parm_value(N_HOSTNAME)
@@ -129,10 +187,26 @@ class Node(ewrap.ElementWrapper):
         """Small integer partition ID, not UUID."""
         return self.get_parm_value(N_LPARID, converter=int)
 
+    @lpar_id.setter
+    def lpar_id(self, new_lpar_id):
+        self.set_parm_value(N_LPARID, str(new_lpar_id))
+
     @property
     def mtms(self):
         """MTMS Element wrapper of the system hosting the Node (VIOS)."""
         return ms.MTMS(self._find(N_MTMS))
+
+    @mtms.setter
+    def mtms(self, new_mtms):
+        """Sets the MTMS of the Node.
+
+        :param new_mtms: May be either a string of the form 'MT-M*S' or a
+                         managed_system.MTMS ElementWrapper.
+        """
+        el = self._find_or_seed(N_MTMS)
+        if not isinstance(new_mtms, ms.MTMS):
+            new_mtms = ms.MTMS.new_instance(new_mtms)
+        self._element.replace(el, new_mtms._element)
 
     @property
     def vios_uri(self):
@@ -141,6 +215,10 @@ class Node(ewrap.ElementWrapper):
         This is only set if the VIOS is on this system!
         """
         return self.get_href(N_VIOS_LINK, one_result=True)
+
+    @vios_uri.setter
+    def vios_uri(self, new_uri):
+        self.set_href(N_VIOS_LINK, new_uri)
 
     @property
     def vios_uuid(self):
