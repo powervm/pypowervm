@@ -1269,7 +1269,7 @@ class Entry(object):
 
 class Element(object):
     def __init__(self, tag, ns=const.UOM_NS, attrib=None, text='',
-                 children=()):
+                 children=(), cdata=False):
         # Defaults shouldn't be mutable
         attrib = attrib if attrib else {}
         if ns:
@@ -1278,7 +1278,10 @@ class Element(object):
         else:
             self._element = etree.Element(tag, attrib=attrib)
         if text:
-            self._element.text = text
+            if cdata:
+                self._element.text = etree.CDATA(text)
+            else:
+                self._element.text = text
         for c in children:
             self._element.append(c._element)
 

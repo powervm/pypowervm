@@ -377,6 +377,20 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual(_count_elem(top_element, 'Top'), 1)
 
 
+class TestElement(unittest.TestCase):
+    def test_cdata(self):
+        no_cdata = adp.Element('tag', text='text', cdata=False)
+        with_cdata = adp.Element('tag', text='text', cdata=True)
+        self.assertEqual(
+            no_cdata.toxmlstring(),
+            '<uom:tag xmlns:uom="http://www.ibm.com/xmlns/systems/power/'
+            'firmware/uom/mc/2012_10/">text</uom:tag>'.encode('utf-8'))
+        self.assertEqual(
+            with_cdata.toxmlstring(),
+            '<uom:tag xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmwa'
+            're/uom/mc/2012_10/"><![CDATA[text]]></uom:tag>'.encode('utf-8'))
+
+
 class TestElementWrapper(unittest.TestCase):
     """Tests for the ElementWrapper class."""
 

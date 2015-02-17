@@ -106,7 +106,7 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.assertEqual(self.wrapper.mtms.serial, "ACE0001")
 
     def test_get_mtms_str(self):
-        self.assertEqual(self.wrapper.mtms.mtms_str(), '8203-E4A*ACE0001')
+        self.assertEqual(self.wrapper.mtms.mtms_str, '8203-E4A*ACE0001')
 
     def test_get_proc_units(self):
         self.call_simple_getter("proc_units", "500", 0)
@@ -172,6 +172,23 @@ class TestMSEntryWrapper(unittest.TestCase):
         value = mswrap.find_entry_by_mtms(self.ms_http.get_response(),
                                           "8203-E4A*ACE0011")
         self.assertIsNone(value)
+
+
+class TestMTMS(unittest.TestCase):
+    def test_mtms(self):
+        mtms = mswrap.MTMS.new_instance('1234-567*ABCDEF0')
+        self.assertEqual(mtms.machine_type, '1234')
+        self.assertEqual(mtms.model, '567')
+        self.assertEqual(mtms.serial, 'ABCDEF0')
+        self.assertEqual(mtms.mtms_str, '1234-567*ABCDEF0')
+        # Setters
+        mtms.machine_type = '4321'
+        self.assertEqual(mtms.machine_type, '4321')
+        mtms.model = '765'
+        self.assertEqual(mtms.model, '765')
+        mtms.serial = '0FEDCBA'
+        self.assertEqual(mtms.serial, '0FEDCBA')
+        self.assertEqual(mtms.mtms_str, '4321-765*0FEDCBA')
 
 if __name__ == "__main__":
     unittest.main()
