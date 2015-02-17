@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 
 
 def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
-                     d_name, d_size, sha_chksum=None):
+                     d_name, f_size, d_size=None, sha_chksum=None):
     """Creates a new Virtual Disk and uploads a data stream to it.
 
     :param adapter: The adapter to talk over the API.
@@ -42,13 +42,16 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
                      of bytes.
     :param d_name: The name that should be given to the disk on the Virtual
                    I/O Server that will contain the file.
-    :param d_size: The size (in bytes) of the stream to be uploaded.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param d_size: (OPTIONAL) The size of the file.  Not required if it should
+                   match the file.  Must be at least as large as the file.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :returns n_vdisk: The new VirtualDisk wrapper that was created as part of
-                      the operation.
-    :returns f_uuid: The File UUID that was created.
-    :returns: Boolean indication of whether the file was cleaned up.
+    :return: Normally this method will return None, indicating that the disk
+             and image were uploaded without issue.  If for some reason the
+             File metadata for the VIOS was not cleaned up, the return value
+             is the File UUID.  This is simply a metadata marker to be later
+             used as input to the 'upload_cleanup' method.
     """
     # Get the existing volume group
     vol_grp_data = adapter.read(wc.VIOS, v_uuid, wc.VOL_GROUP, vol_grp_uuid)
@@ -61,6 +64,8 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # volume group how much over it could go.
     #
     # See note below...temporary workaround needed.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size)
 
     # TODO(IBM) Temporary - need to round up to the highest GB.  This should
@@ -92,9 +97,8 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     vio_file = _create_file(adapter, d_name, wc.BROKERED_DISK_IMAGE, v_uuid,
-                            f_size=d_size, tdev_udid=n_vdisk.udid,
+                            f_size=f_size, tdev_udid=n_vdisk.udid,
                             sha_chksum=sha_chksum)
-    cleaned = False
     try:
         # Upload the file
         adapter.upload_file(vio_file._element, d_stream)
@@ -102,12 +106,11 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
         try:
             # Cleanup after the upload
             upload_cleanup(adapter, vio_file.uuid)
-            cleaned = True
         except Exception:
             LOG.exception('Unable to cleanup after file upload.'
                           ' File uuid: %s' % vio_file.uuid)
-
-    return n_vdisk, vio_file.uuid, cleaned
+            return vio_file.uuid
+    return None
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -124,14 +127,15 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
                    for integrity checks.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :returns: The file's UUID once uploaded.
-    :returns: Boolean indication of whether the file was cleaned up.
+    :return: Normally this method will return None, indicating that the disk
+             and image were uploaded without issue.  If for some reason the
+             File metadata for the VIOS was not cleaned up, the return value
+             is the File UUID.  This is simply a metadata marker to be later
+             used as input to the 'upload_cleanup' method.
     """
     # First step is to create the 'file' on the system.
     vio_file = _create_file(adapter, f_name, wc.BROKERED_MEDIA_ISO, v_uuid,
                             sha_chksum, f_size)
-
-    cleaned = False
     try:
         # Next, upload the file
         adapter.upload_file(vio_file._element, d_stream)
@@ -139,12 +143,11 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
         try:
             # Cleanup after the upload
             upload_cleanup(adapter, vio_file.uuid)
-            cleaned = True
         except Exception:
             LOG.exception('Unable to cleanup after file upload.'
                           ' File uuid: %s' % vio_file.uuid)
-
-    return vio_file.uuid, cleaned
+            return vio_file.uuid
+    return None
 
 
 def upload_cleanup(adapter, f_uuid):
