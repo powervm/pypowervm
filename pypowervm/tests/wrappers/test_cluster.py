@@ -17,8 +17,11 @@
 import unittest
 
 import pypowervm.adapter as adp
+import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.cluster as clust
+import pypowervm.wrappers.constants as wc
+import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.storage as stor
 
 
@@ -87,9 +90,45 @@ class TestCluster(twrap.TestWrapper):
         nodes.remove(node)
         self.assertEqual(len(self.dwrap.nodes), 1)
         node.hostname = 'blah.ibm.com'
+        node.lpar_id = 9
+        node.vios_uri = 'https://foo'
         self.dwrap.nodes = [node2, node]
         self.assertEqual(len(self.dwrap.nodes), 2)
-        self.assertEqual(self.dwrap.nodes[1].hostname, 'blah.ibm.com')
+        node = self.dwrap.nodes[1]
+        self.assertEqual(node.hostname, 'blah.ibm.com')
+        self.assertEqual(node.lpar_id, 9)
+        self.assertEqual(node.vios_uri, 'https://foo')
+        # MTMS needs a little more depth
+        node.mtms = '1234-567*ABCDEF0'
+        mtms = node.mtms
+        self.assertEqual(mtms.machine_type, '1234')
+        self.assertEqual(mtms.model, '567')
+        self.assertEqual(mtms.serial, 'ABCDEF0')
+        # Now try with a MTMS ElementWrapper
+        node.mtms = ms.MTMS.new_instance('4321-765*0FEDCBA')
+        mtms = node.mtms
+        self.assertEqual(mtms.machine_type, '4321')
+        self.assertEqual(mtms.model, '765')
+        self.assertEqual(mtms.serial, '0FEDCBA')
+
+    def test_fresh_cluster(self):
+        n1 = clust.Node()
+        n1.hostname = 'a.ibm.com'
+        n2 = clust.Node()
+        n2.hostname = 'b.ibm.com'
+        repos = stor.PhysicalVolume.new_instance(name='hdisk123')
+        cl = clust.Cluster.new_instance(name='foo', repos_pv=repos,
+                                        node_list=[n1, n2])
+        self.assertEqual(cl.name, 'foo')
+        self.assertEqual(cl.repos_pv.name, 'hdisk123')
+        self.assertEqual(cl.pvm_type, wc.CLUSTER)
+        self.assertEqual(cl.schema_ns, pc.UOM_NS)
+        nodes = cl.nodes
+        self.assertEqual(len(nodes), 2)
+        node = nodes[0]
+        self.assertEqual(node.hostname, 'a.ibm.com')
+        self.assertEqual(node.pvm_type, wc.CLUST_NODE)
+        self.assertEqual(node.schema_ns, pc.UOM_NS)
 
 if __name__ == "__main__":
     unittest.main()
