@@ -209,8 +209,8 @@ class Wrapper(object):
                 values.append(element.text)
         return values
 
-    # TODO(IBM): Make this return an actual boolean
-    def get_parm_value_bool(self, property_name, default='*unset*'):
+    # Keeping this method to support default=False rather than default=None
+    def get_parm_value_bool(self, property_name, default=False):
         """Gets the boolean value of a PowerVM property.
 
         :param property_name: property to return
@@ -222,16 +222,8 @@ class Wrapper(object):
             If the property does not exist, then the default value will be
             returned if specified, otherwise False will be returned.
         """
-        value = self.get_parm_value(property_name)
-        if value is None and default != '*unset*':
-            # The caller has set a default value.  Return their default
-            # value if the data does not have their property.
-            return default
-
-        if value:
-            value = value.lower()
-
-        return value == 'true'
+        return self.get_parm_value(property_name, default=default,
+                                   converter=util.convert_api_bool_str_to_bool)
 
     def log_missing_value(self, param):
         error_message = (

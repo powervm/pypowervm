@@ -254,15 +254,14 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @property
     def current_proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
-        # TODO(efried): change to boolean
-        return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
+        """Returns True (bool) if dedicated or False if shared."""
+        return self.get_parm_value_bool(c.CURR_USE_DED_PROCS)
 
     @property
     def proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
+        """Returns True (bool) if dedicated or False if shared."""
         # TODO(efried): change to boolean
-        return self.get_parm_value(c.USE_DED_PROCS, c.FALSE).lower()
+        return self.get_parm_value_bool(c.USE_DED_PROCS)
 
     @property
     def current_procs(self):
