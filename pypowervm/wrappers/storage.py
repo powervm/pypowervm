@@ -17,6 +17,7 @@
 import logging
 
 from pypowervm import adapter as adpt
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -331,7 +332,7 @@ class PhysicalVolume(ewrap.ElementWrapper):
 
     @property
     def is_fc_backed(self):
-        return self.get_parm_value_bool(PV_FC_BACKED)
+        return self.get_parm_value(PV_FC_BACKED, converter=u.str2bool)
 
     @property
     def description(self):
@@ -394,7 +395,7 @@ class LogicalUnit(ewrap.ElementWrapper):
 
     @property
     def is_thin(self):
-        return self.get_parm_value_bool(LU_THIN)
+        return self.get_parm_value(LU_THIN, converter=u.str2bool)
 
 
 class SharedStoragePool(ewrap.EntryWrapper):

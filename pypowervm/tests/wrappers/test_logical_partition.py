@@ -255,7 +255,12 @@ class TestLogicalPartition(unittest.TestCase):
 
     def test_get_current_proc_mode(self):
         self.call_simple_getter(
-            "current_proc_mode_is_dedicated", "true", "false",
+            "current_proc_mode_is_dedicated", True, None,
+            use_dedicated=True)
+
+    def test_get_proc_mode(self):
+        self.call_simple_getter(
+            "proc_mode_is_dedicated", True, None,
             use_dedicated=True)
 
     def test_get_current_procs(self):

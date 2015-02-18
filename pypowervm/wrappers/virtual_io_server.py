@@ -19,6 +19,7 @@ import logging
 import re
 
 from pypowervm import adapter as adpt
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import network
@@ -239,8 +240,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def is_license_accepted(self):
-        return self.get_parm_value_bool(c.ROOT + VIO_LICENSE,
-                                        default=True)
+        return self.get_parm_value(c.ROOT + VIO_LICENSE,
+                                   default=True, converter=u.str2bool)
 
     def hdisk_reserve_policy(self, disk_uuid):
         """Get the reserve policy for an hdisk.
@@ -302,7 +303,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def is_mover_service_partition(self):
-        return self.get_parm_value_bool(c.MOVER_SERVICE_PARTITION, False)
+        return self.get_parm_value(c.MOVER_SERVICE_PARTITION, default=False,
+                                   converter=u.str2bool)
 
     @property
     def ip_addresses(self):

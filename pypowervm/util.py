@@ -203,6 +203,16 @@ def sanitize_bool_for_api(bool_val):
     return str(bool_val).lower()
 
 
+def str2bool(bool_str):
+    """Converts bool string value from the API ('true' or 'false') to bool.
+
+    :param bool_str: Boolean string value from the PowerVM API - either 'true'
+                     or 'false'.
+    :return: A real boolean value, True if bool_str is 'true'; False otherwise.
+    """
+    return bool_str.lower() == 'true'
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 

@@ -350,7 +350,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
     @property
     def has_tag_support(self):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
-        return self.get_parm_value_bool(TA_TAG_SUPP)
+        return self.get_parm_value(TA_TAG_SUPP, converter=util.str2bool)
 
     @has_tag_support.setter
     def has_tag_support(self, new_val):
@@ -482,4 +482,4 @@ class VirtualNetwork(ewrap.EntryWrapper):
     @property
     def tagged(self):
         """If true, the VLAN tag is preserved when the packet leaves system."""
-        return self.get_parm_value_bool(VNET_TAG)
+        return self.get_parm_value(VNET_TAG, converter=util.str2bool)

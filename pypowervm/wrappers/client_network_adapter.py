@@ -148,7 +148,8 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def is_tagged_vlan_supported(self):
         """Returns if addl tagged VLANs are supported."""
-        return self.get_parm_value_bool(VADPT_TAGGED_VLAN_SUPPORT)
+        return self.get_parm_value(VADPT_TAGGED_VLAN_SUPPORT,
+                                   converter=u.str2bool)
 
     @is_tagged_vlan_supported.setter
     def is_tagged_vlan_supported(self, new_val):

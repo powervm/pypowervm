@@ -15,6 +15,7 @@
 #    under the License.
 
 import pypowervm.adapter as adr
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -250,19 +251,18 @@ class LogicalPartition(ewrap.EntryWrapper):
     def current_mem_share_enabled(self):
         # The default is None instead of False so that the caller
         # can know if the value is not set
-        return self.get_parm_value_bool(c.SHARED_MEM_ENABLED, None)
+        return self.get_parm_value(c.SHARED_MEM_ENABLED, converter=u.str2bool)
 
     @property
     def current_proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
-        # TODO(efried): change to boolean
-        return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
+        """Returns True (bool) if dedicated or False if shared."""
+        return self.get_parm_value(c.CURR_USE_DED_PROCS, converter=u.str2bool)
 
     @property
     def proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
+        """Returns True (bool) if dedicated or False if shared."""
         # TODO(efried): change to boolean
-        return self.get_parm_value(c.USE_DED_PROCS, c.FALSE).lower()
+        return self.get_parm_value(c.USE_DED_PROCS, converter=u.str2bool)
 
     @property
     def current_procs(self):
@@ -423,7 +423,8 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @property
     def restrictedio(self):
-        return self.get_parm_value_bool(c.RESTRICTED_IO, False)
+        return self.get_parm_value(c.RESTRICTED_IO, default=False,
+                                   converter=u.str2bool)
 
     def check_dlpar_connectivity(self):
         """Check the partition for DLPAR capability and rmc state.
@@ -433,8 +434,10 @@ class LogicalPartition(ewrap.EntryWrapper):
         """
 
         # Pull the dlpar and rmc values from PowerVM
-        mem_dlpar = self.get_parm_value_bool(c.DLPAR_MEM_CAPABLE)
-        proc_dlpar = self.get_parm_value_bool(c.DLPAR_PROC_CAPABLE)
+        mem_dlpar = self.get_parm_value(c.DLPAR_MEM_CAPABLE,
+                                        converter=u.str2bool)
+        proc_dlpar = self.get_parm_value(c.DLPAR_PROC_CAPABLE,
+                                         converter=u.str2bool)
 
         dlpar = mem_dlpar and proc_dlpar
 

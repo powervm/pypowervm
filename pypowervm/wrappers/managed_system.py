@@ -15,6 +15,7 @@
 #    under the License.
 
 from pypowervm import adapter as adpt
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -167,15 +168,20 @@ class ManagedSystem(ewrap.EntryWrapper):
         # VirtualEthernetCustomMACAddressCapable (custom_mac_addr_capable) will
         # default to True, which is the correct setting for POWER7 servers.
         cap_data = {'active_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.ACTIVE_LPM_CAP),
+                    self.get_parm_value(c.ACTIVE_LPM_CAP,
+                                        converter=u.str2bool),
                     'inactive_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.INACTIVE_LPM_CAP),
+                    self.get_parm_value(c.INACTIVE_LPM_CAP,
+                                        converter=u.str2bool),
                     'ibmi_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.IBMi_LPM_CAP, False),
+                    self.get_parm_value(c.IBMi_LPM_CAP, default=False,
+                                        converter=u.str2bool),
                     'custom_mac_addr_capable':
-                    self.get_parm_value_bool(c.VETH_MAC_ADDR_CAP, True),
+                    self.get_parm_value(c.VETH_MAC_ADDR_CAP, default=True,
+                                        converter=u.str2bool),
                     'ibmi_restrictedio_capable':
-                    self.get_parm_value_bool(c.IBMi_RESTRICTEDIO_CAP, False)
+                    self.get_parm_value(c.IBMi_RESTRICTEDIO_CAP, default=False,
+                                        converter=u.str2bool)
                     }
         return cap_data
 
