@@ -16,13 +16,29 @@
 
 import copy
 
+from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
 
+MAX_VLANS_PER_VEA = 20
+
 
 def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
     """Will make sure that the VLAN is assigned to the Network Bridge.
+
+    This method will reorder the arbitrary VLAN IDs as needed (those which are
+    the PVID of the VEAs, but not the primary VEA).
+
+    VLANs are always added to VEAs that are 'non-primary' (not the first VEA).
+    However, if the VLAN is on the primary VEA then it is left on the system.
+    The only 'untagged' VLAN that is allowed is the primary VEA's PVID.
+
+    If the VLAN specified is on another Network Bridge's VEA (which happens
+    to be on the same virtual switch):
+     - An error will be thrown if it is on the primary VEA.
+     - It will be removed off the Network Bridge if it is on the non-primary
+       VEA.
 
     :param adapter: The pypowervm Adapter.
     :param host_uuid: The Server's UUID
@@ -34,7 +50,7 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
                            child_type=pvm_net.NB_ROOT)
     nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
 
-    # Find our SEA
+    # Find the appropriate Network Bridge
     req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
 
     # If the VLAN is already on the SEA, no action
@@ -49,6 +65,7 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
             # We need to remove that VLAN.
             remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
                                 fail_if_pvid=True)
+            break
 
     # Determine if this VLAN is an arbitrary VID on any peer NB.  If so, we
     # need to re-order the arbitrary VID out.
@@ -87,9 +104,9 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
         # Group.
         #
         # First, create a new 'non-tagging' virtual network
-        arb_vid = _find_new_arbitrary_vid(all_nbs_on_vs)
+        arb_vid = _find_new_arbitrary_vid(all_nbs_on_vs, others=[vlan_id])
         arb_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, arb_vid,
-                                        vswitch_w, False)
+                                        vswitch_w, tagged=False)
 
         # Now create the new load group...
         vnet_uris = [arb_vnet.href, vid_vnet.href]
@@ -129,6 +146,10 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
                          tagged=True):
     """Will find (or create) the VirtualNetwork.
 
+    If the VirtualNetwork already exists but has a different tag attribute,
+    this method will delete the old virtual network, and then recreate with
+    the specified tagged value.
+
     :param adapter: The pypowervm adapter.
     :param host_uuid: The host_uuid for the system.
     :param vnets: The virtual network wrappers on the system.
@@ -164,13 +185,14 @@ def _find_available_ld_grp(nb):
     :returns: The LoadGroup within the NetworkBridge that can support a new
               VLAN.  If all are full, will return None.
     """
-    # Never provision to the first load group.
+    # Never provision to the first load group.  We do this to keep consistency
+    # with how projects have done in past.
     if len(nb.load_grps) == 1:
         return None
 
     ld_grps = nb.load_grps[1:]
     for ld_grp in ld_grps:
-        if len(ld_grp.virtual_network_uri_list) < 19:
+        if len(ld_grp.virtual_network_uri_list) < MAX_VLANS_PER_VEA:
             return ld_grp
     return None
 
@@ -188,11 +210,12 @@ def _is_arbitrary_vid(vlan, all_nbs):
     return None
 
 
-def _find_new_arbitrary_vid(all_nbs):
+def _find_new_arbitrary_vid(all_nbs, others=[]):
     """Returns a new VLAN ID that can be used as an arbitrary VID.
 
     :param all_nbs: All of the impacted network bridges.  Should all be on
                     the same vSwitch.
+    :param others: List of other VLANs that should not be used as an arbitrary.
     :return: A new VLAN ID that is not in use by any network bridge on this
              vSwitch.
     """
@@ -200,8 +223,10 @@ def _find_new_arbitrary_vid(all_nbs):
 
     for i_nb in all_nbs:
         all_vlans.extend(i_nb.list_vlans(pvid=True, arbitrary=True))
+    all_vlans.extend(others)
 
     # Start at 4094, and walk down to find one that isn't already used.
+    # Stop right before VLAN 1 as that is special in the system.
     for i in range(4094, 1, -1):
         if i not in all_vlans:
             return i
@@ -209,7 +234,7 @@ def _find_new_arbitrary_vid(all_nbs):
 
 
 def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
-    """Moves the arbitrary VLAN ID from one value to another.
+    """Moves the arbitrary VLAN ID from one Load Group to another.
 
     :param adapter: The adapter to powervm.
     :param host_uuid: The host system UUID.
@@ -231,8 +256,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     vnets = pvm_net.VirtualNetwork.load_from_response(vnet_resp_feed)
 
     # Read the old virtual network
-    vnet_resp = adapter.read_by_href(impacted_lg.virtual_network_uri_list[0])
-    old_vnet = pvm_net.VirtualNetwork.load_from_response(vnet_resp)
+    old_uri = _find_vnet_uri_from_lg(adapter, impacted_lg, old_vid)
 
     # Need to create the new Virtual Network
     new_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, new_vid,
@@ -240,21 +264,31 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
 
     # Now we need to clone the load group
     uris = copy.copy(impacted_lg.virtual_network_uri_list)
-    uris[0] = new_vnet.href
+    if old_uri is not None:
+        uris.remove(old_uri)
+    uris.insert(0, new_vnet.href)
     new_lg = pvm_net.crt_load_group(new_vid, uris)
-    new_lb_w = pvm_net.LoadGroup(new_lg)
+    new_lg_w = pvm_net.LoadGroup(new_lg)
 
     impacted_nb.load_grps.remove(impacted_lg)
-    impacted_nb.load_grps.append(new_lb_w)
 
-    # Update the network bridge
+    # Need two updates.  One to remove the load group.
+    nb_resp = adapter.update(impacted_nb._element, impacted_nb.etag,
+                             pvm_ms.MS_ROOT, root_id=host_uuid,
+                             child_type=pvm_net.NB_ROOT,
+                             child_id=impacted_nb.uuid)
+
+    # A second to add the new load group in
+    impacted_nb = pvm_net.NetworkBridge.load_from_response(nb_resp)
+    impacted_nb.load_grps.append(new_lg_w)
     adapter.update(impacted_nb._element, impacted_nb.etag, pvm_ms.MS_ROOT,
                    root_id=host_uuid, child_type=pvm_net.NB_ROOT,
                    child_id=impacted_nb.uuid)
 
     # Now that the old vid is detached from the load group, need to delete
     # the Virtual Network (because it was 'tagged' = False).
-    adapter.delete_by_href(old_vnet.href)
+    if old_uri is not None:
+        adapter.delete_by_href(old_uri)
 
 
 def _find_peer_nbs(nb_wraps, nb):
@@ -292,5 +326,64 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
     :param fail_if_pvid: If set to true, will raise an exception if this is
                          the PVID on a Network Bridge.
     """
-    # TODO(thorst) Implement
-    pass
+    # Get the updated feed of NetworkBridges
+    nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
+                           child_type=pvm_net.NB_ROOT)
+    nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
+
+    # Find our Network Bridge
+    req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
+
+    # TODO(thorst) need to handle removing the VLAN if it is an arbitrary VID.
+
+    # If the VLAN is not on the bridge, no action
+    if not req_nb.supports_vlan(vlan_id):
+        return
+
+    # Fail if we're the PVID.
+    if fail_if_pvid and req_nb.load_grps[0].pvid == vlan_id:
+        raise pvm_exc.PvidOfNetworkBridgeError(vlan_id=vlan_id)
+
+    # If this is on the first load group, we leave it.
+    if (req_nb.load_grps[0].pvid == vlan_id or
+            vlan_id in req_nb.load_grps[0].tagged_vlans or
+            len(req_nb.load_grps) == 1):
+        return
+
+    # Find the matching load group.  Since the 'supports_vlan' passed before,
+    # this will always return True.
+    matching_lg = None
+    for lg in req_nb.load_grps[1:]:
+        if vlan_id in lg.tagged_vlans:
+            matching_lg = lg
+            break
+
+    if len(matching_lg.tagged_vlans) == 1:
+        # If last VLAN in Load Group, remove the whole Load Group
+        req_nb.load_grps.remove(matching_lg)
+    else:
+        # Else just remove that virtual network
+        vnet_uri = _find_vnet_uri_from_lg(adapter, matching_lg, vlan_id)
+        matching_lg.virtual_network_uri_list.remove(vnet_uri)
+
+    # Now update the network bridge.
+    adapter.update(req_nb._element, req_nb._etag, pvm_ms.MS_ROOT,
+                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
+                   child_id=req_nb.uuid)
+
+
+def _find_vnet_uri_from_lg(adapter, lg, vlan):
+    """Finds the Virtual Network for a VLAN within a LoadGroup.
+
+    :param adapter: The pypowervm adapter to access the API.
+    :param lg: The LoadGroup wrapper.
+    :param vlan: The VLAN within the Load Group to look for.
+    :return: The Virtual Network URI for the vlan.  If not found within the
+             Load Group, None will be returned.
+    """
+    for vnet_uri in lg.virtual_network_uri_list:
+        vnet_resp = adapter.read_by_href(vnet_uri)
+        vnet_net = pvm_net.VirtualNetwork.load_from_response(vnet_resp)
+        if vnet_net.vlan == vlan:
+            return vnet_net.href
+    return None
