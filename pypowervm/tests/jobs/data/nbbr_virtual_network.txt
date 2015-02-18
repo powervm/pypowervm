@@ -1,0 +1,225 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: k2http.py -refresh sea_mgr_virtual_network.txt
+#
+####################################################
+INFO{
+{'comment': 'Created by thorst.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>7de032cc-a903-3fe1-a6ff-10522eedf373</id>
+    <updated>2015-02-17T22:59:32.400Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>6508ca79-c94c-3f73-8137-af2e9c669c61</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.508Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/6508ca79-c94c-3f73-8137-af2e9c669c61"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">297058899</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6508ca79-c94c-3f73-8137-af2e9c669c61</AtomID>
+            <AtomCreated>1424132682998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">ETHERNET0-1234</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">1234</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">true</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>36cf4d94-d682-3962-bc86-acad65af6fbf</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.509Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/36cf4d94-d682-3962-bc86-acad65af6fbf"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1187527277</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>36cf4d94-d682-3962-bc86-acad65af6fbf</AtomID>
+            <AtomCreated>1424132682998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">VLAN2227-ETHERNET0</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">2227</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">false</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>f6b2d900-fd4e-34fa-a2e8-2650392f724e</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.510Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/f6b2d900-fd4e-34fa-a2e8-2650392f724e"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2044974078</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>f6b2d900-fd4e-34fa-a2e8-2650392f724e</AtomID>
+            <AtomCreated>1424132682998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">ETHERNET0-1</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">1</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">false</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>3b19f453-9cbf-303b-9d72-4162d50739dc</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.511Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/3b19f453-9cbf-303b-9d72-4162d50739dc"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2116190827</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>3b19f453-9cbf-303b-9d72-4162d50739dc</AtomID>
+            <AtomCreated>1424132682998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">ETHERNET0-2</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">2</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">true</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>4cb636f5-7d15-3cf9-a14d-a10c138c98a1</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.512Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/4cb636f5-7d15-3cf9-a14d-a10c138c98a1"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1658194928</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4cb636f5-7d15-3cf9-a14d-a10c138c98a1</AtomID>
+            <AtomCreated>1424132682998</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">ETHERNET0-1001</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">1001</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">true</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>e6c0be9f-b974-35f4-855e-2b7192034fae</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.513Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1586976810</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>e6c0be9f-b974-35f4-855e-2b7192034fae</AtomID>
+            <AtomCreated>1424132844969</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">ETHERNET0-1000</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">1000</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">true</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>4dc25253-d47c-3774-8e36-42752bf7223b</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.514Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/4dc25253-d47c-3774-8e36-42752bf7223b"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2005776930</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4dc25253-d47c-3774-8e36-42752bf7223b</AtomID>
+            <AtomCreated>1424145231000</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">VLAN4093-ETHERNET0</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">4093</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">false</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+    <entry>
+        <id>9b61c184-6878-36bf-88ea-dc4a61148316</id>
+        <title>VirtualNetwork</title>
+        <published>2015-02-17T22:59:32.515Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/9b61c184-6878-36bf-88ea-dc4a61148316"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1438427048</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNetwork">
+            <VirtualNetwork:VirtualNetwork xmlns:VirtualNetwork="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9b61c184-6878-36bf-88ea-dc4a61148316</AtomID>
+            <AtomCreated>1424153353695</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedSwitch kb="COD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720" rel="related"/>
+    <NetworkName kb="CUR" kxe="false">VLAN4094-ETHERNET0</NetworkName>
+    <NetworkVLANID kb="COD" kxe="false">4094</NetworkVLANID>
+    <VswitchID kb="ROR" kxe="false">0</VswitchID>
+    <TaggedNetwork kxe="false" kb="COD">false</TaggedNetwork>
+</VirtualNetwork:VirtualNetwork>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
