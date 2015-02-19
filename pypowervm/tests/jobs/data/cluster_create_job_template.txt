@@ -1,0 +1,46 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh cluster_create_job_template.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'Cluster/do/Create'}
+END OF SECTION}
+HEADERS{
+{'content-length': '1475', 'content-type': 'application/atom+xml', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000oUYEkL9QvE6kg3vgejRcao8:31d026d8-f0bc-4237-8211-43003f07d3ab; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_2_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Tue, 17 Feb 2015 05:23:58 GMT', 'x-transaction-id': 'XT10091724', 'etag': '-513714866', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Tue, 17 Feb 2015 05:23:58 GMT', 'x-transactionrecord-uuid': 'e80cec6d-4b01-4578-b3b4-65bd5058773a'}
+END OF SECTION}
+BODY{
+
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>c1334068-9834-3131-891d-e06d56a3e4b2</id>
+    <title>JobRequest</title>
+    <published>2015-02-17T05:23:58.266Z</published>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Cluster/do/Create/d7deb9bd-47fe-4cc0-8900-236476e3044c"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=JobRequest">
+        <JobRequest:JobRequest xmlns:JobRequest="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <RequestedOperation kb="CUR" kxe="false" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <OperationName kb="ROR" kxe="false">Create</OperationName>
+        <GroupName kb="ROR" kxe="false">Cluster</GroupName>
+    </RequestedOperation>
+    <JobParameters kb="CUR" kxe="false" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </JobParameters>
+</JobRequest:JobRequest>
+    </content>
+</entry>
+
+END OF SECTION}
