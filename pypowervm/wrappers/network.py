@@ -122,7 +122,7 @@ class VirtualSwitch(ewrap.EntryWrapper):
     @property
     def name(self):
         """The name associated with the Virtual Switch."""
-        name = self.get_parm_value(VSW_NAME)
+        name = self._get_val_str(VSW_NAME)
         if name == _VSW_DEFAULT_VSWITCH_API:
             return VSW_DEFAULT_VSWITCH
         return name
@@ -130,12 +130,12 @@ class VirtualSwitch(ewrap.EntryWrapper):
     @property
     def switch_id(self):
         """The internal ID (not UUID) for the Virtual Switch."""
-        return self.get_parm_value(VSW_ID, converter=int)
+        return self._get_val_int(VSW_ID)
 
     @property
     def mode(self):
         """The mode that the switch is in (ex. VEB)."""
-        return self.get_parm_value(VSW_MODE)
+        return self._get_val_str(VSW_MODE)
 
 
 class NetworkBridge(ewrap.EntryWrapper):
@@ -150,7 +150,7 @@ class NetworkBridge(ewrap.EntryWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
-        return self.get_parm_value(NB_PVID, converter=int)
+        return self._get_val_int(NB_PVID)
 
     @property
     def virtual_network_uri_list(self):
@@ -285,11 +285,11 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
-        return self.get_parm_value(c.PORT_VLAN_ID, converter=int)
+        return self._get_val_int(c.PORT_VLAN_ID)
 
     @property
     def dev_name(self):
-        return self.get_parm_value(SEA_DEV_NAME)
+        return self._get_val_str(SEA_DEV_NAME)
 
     @property
     def vio_uri(self):
@@ -333,7 +333,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
-        return self.get_parm_value(TA_PVID, converter=int)
+        return self._get_val_int(TA_PVID)
 
     @pvid.setter
     def pvid(self, value):
@@ -345,12 +345,12 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
         If RMC is down, will not be available.
         """
-        return self.get_parm_value(TA_DEV_NAME)
+        return self._get_val_str(TA_DEV_NAME)
 
     @property
     def has_tag_support(self):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
-        return self.get_parm_value_bool(TA_TAG_SUPP)
+        return self._get_val_bool(TA_TAG_SUPP)
 
     @has_tag_support.setter
     def has_tag_support(self, new_val):
@@ -363,7 +363,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
         Assumes has_tag_support() returns True.  If not, an empty list will
         be returned.
         """
-        addl_vlans = self.get_parm_value(TA_VLAN_IDS, '')
+        addl_vlans = self._get_val_str(TA_VLAN_IDS, '')
         list_data = []
         if addl_vlans != '':
             list_data = [int(i) for i in addl_vlans.split(' ')]
@@ -382,12 +382,12 @@ class TrunkAdapter(ewrap.ElementWrapper):
     @property
     def vswitch_id(self):
         """Returns the virtual switch identifier."""
-        return int(self.get_parm_value(TA_VS_ID, converter=int))
+        return self._get_val_int(TA_VS_ID)
 
     @property
     def trunk_pri(self):
         """Returns the trunk priority of the adapter."""
-        return int(self.get_parm_value(TA_TRUNK_PRI, converter=int))
+        return self._get_val_int(TA_TRUNK_PRI)
 
 
 class LoadGroup(ewrap.ElementWrapper):
@@ -407,7 +407,7 @@ class LoadGroup(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
-        return self.get_parm_value(LG_PVID, converter=int)
+        return self._get_val_int(LG_PVID)
 
     @property
     def trunk_adapters(self):
@@ -461,7 +461,7 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(VNET_NET_NAME)
+        return self._get_val_str(VNET_NET_NAME)
 
     @name.setter
     def name(self, value):
@@ -469,7 +469,7 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
     @property
     def vlan(self):
-        return self.get_parm_value(VNET_VLAN_ID, converter=int)
+        return self._get_val_int(VNET_VLAN_ID)
 
     @property
     def vswitch_id(self):
@@ -477,9 +477,9 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
         Is not a UUID.
         """
-        return self.get_parm_value(VNET_SW_ID, converter=int)
+        return self._get_val_int(VNET_SW_ID)
 
     @property
     def tagged(self):
         """If true, the VLAN tag is preserved when the packet leaves system."""
-        return self.get_parm_value_bool(VNET_TAG)
+        return self._get_val_bool(VNET_TAG)

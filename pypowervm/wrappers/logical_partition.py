@@ -196,18 +196,18 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         e.g. 'not activated', 'running', 'migrating running', etc.
         """
-        partition_state = self.get_parm_value(c.PARTITION_STATE)
+        partition_state = self._get_val_str(c.PARTITION_STATE)
         return partition_state
 
     @property
     def name(self):
         """Short name (not ID, MTMS, or hostname)."""
-        return self.get_parm_value(c.PARTITION_NAME)
+        return self._get_val_str(c.PARTITION_NAME)
 
     @property
     def id(self):
         """Short ID (not UUID)."""
-        return int(self.get_parm_value(c.PARTITION_ID, c.ZERO))
+        return int(self._get_val_str(c.PARTITION_ID, c.ZERO))
 
     @property
     def env(self):
@@ -216,149 +216,147 @@ class LogicalPartition(ewrap.EntryWrapper):
         Should always be 'AIX/Linux' for LPAREntry.  'Virtual IO Server'
         should only happen for VIOSEntry.
         """
-        return self.get_parm_value(c.PARTITION_TYPE)
+        return self._get_val_str(c.PARTITION_TYPE)
 
     @property
     def current_mem(self):
-        return self.get_parm_value(c.CURR_MEM, c.ZERO)
+        return self._get_val_str(c.CURR_MEM, c.ZERO)
 
     @property
     def current_max_mem(self):
-        return self.get_parm_value(c.CURR_MAX_MEM, c.ZERO)
+        return self._get_val_str(c.CURR_MAX_MEM, c.ZERO)
 
     @property
     def current_min_mem(self):
-        return self.get_parm_value(c.CURR_MIN_MEM, c.ZERO)
+        return self._get_val_str(c.CURR_MIN_MEM, c.ZERO)
 
     @property
     def desired_mem(self):
-        return self.get_parm_value(c.DES_MEM, c.ZERO)
+        return self._get_val_str(c.DES_MEM, c.ZERO)
 
     @property
     def max_mem(self):
-        return self.get_parm_value(c.DES_MAX_MEM, c.ZERO)
+        return self._get_val_str(c.DES_MAX_MEM, c.ZERO)
 
     @property
     def min_mem(self):
-        return self.get_parm_value(c.DES_MIN_MEM, c.ZERO)
+        return self._get_val_str(c.DES_MIN_MEM, c.ZERO)
 
     @property
     def run_mem(self):
-        return self.get_parm_value(c.RUN_MEM, c.ZERO)
+        return self._get_val_str(c.RUN_MEM, c.ZERO)
 
     @property
     def current_mem_share_enabled(self):
         # The default is None instead of False so that the caller
         # can know if the value is not set
-        return self.get_parm_value_bool(c.SHARED_MEM_ENABLED, None)
+        return self._get_val_bool(c.SHARED_MEM_ENABLED, None)
 
     @property
     def current_proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
-        # TODO(efried): change to boolean
-        return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
+        """Returns boolean True if dedicated, False if shared or not found."""
+        return self._get_val_bool(c.CURR_USE_DED_PROCS, False)
 
     @property
     def proc_mode_is_dedicated(self):
-        """Returns 'true' (string) if dedicated or 'false' if shared."""
-        # TODO(efried): change to boolean
-        return self.get_parm_value(c.USE_DED_PROCS, c.FALSE).lower()
+        """Returns boolean True if dedicated, False if shared or not found."""
+        return self._get_val_bool(c.USE_DED_PROCS, False)
 
     @property
     def current_procs(self):
-        return self.get_parm_value(c.CURR_PROCS, c.ZERO)
+        return self._get_val_str(c.CURR_PROCS, c.ZERO)
 
     @property
     def current_max_procs(self):
-        return self.get_parm_value(c.CURR_MAX_PROCS, c.ZERO)
+        return self._get_val_str(c.CURR_MAX_PROCS, c.ZERO)
 
     @property
     def current_min_procs(self):
-        return self.get_parm_value(c.CURR_MIN_PROCS, c.ZERO)
+        return self._get_val_str(c.CURR_MIN_PROCS, c.ZERO)
 
     @property
     def desired_procs(self):
-        return self.get_parm_value(c.DES_PROCS, c.ZERO)
+        return self._get_val_str(c.DES_PROCS, c.ZERO)
 
     @property
     def max_procs(self):
-        return self.get_parm_value(c.DES_MAX_PROCS, c.ZERO)
+        return self._get_val_str(c.DES_MAX_PROCS, c.ZERO)
 
     @property
     def min_procs(self):
-        return self.get_parm_value(c.DES_MIN_PROCS, c.ZERO)
+        return self._get_val_str(c.DES_MIN_PROCS, c.ZERO)
 
     @property
     def current_vcpus(self):
-        return self.get_parm_value(c.CURR_VCPU, c.ZERO)
+        return self._get_val_str(c.CURR_VCPU, c.ZERO)
 
     @property
     def current_max_vcpus(self):
-        return self.get_parm_value(c.CURR_MAX_VCPU, c.ZERO)
+        return self._get_val_str(c.CURR_MAX_VCPU, c.ZERO)
 
     @property
     def current_min_vcpus(self):
-        return self.get_parm_value(c.CURR_MIN_VCPU, c.ZERO)
+        return self._get_val_str(c.CURR_MIN_VCPU, c.ZERO)
 
     @property
     def desired_vcpus(self):
-        return self.get_parm_value(c.DES_VCPU, c.ZERO)
+        return self._get_val_str(c.DES_VCPU, c.ZERO)
 
     @property
     def max_vcpus(self):
-        return self.get_parm_value(c.DES_MAX_VCPU, c.ZERO)
+        return self._get_val_str(c.DES_MAX_VCPU, c.ZERO)
 
     @property
     def min_vcpus(self):
-        return self.get_parm_value(c.DES_MIN_VCPU, c.ZERO)
+        return self._get_val_str(c.DES_MIN_VCPU, c.ZERO)
 
     @property
     def current_proc_units(self):
-        return self.get_parm_value(c.CURR_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.CURR_PROC_UNITS, c.ZERO)
 
     @property
     def current_max_proc_units(self):
-        return self.get_parm_value(c.CURR_MAX_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.CURR_MAX_PROC_UNITS, c.ZERO)
 
     @property
     def current_min_proc_units(self):
-        return self.get_parm_value(c.CURR_MIN_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.CURR_MIN_PROC_UNITS, c.ZERO)
 
     @property
     def desired_proc_units(self):
-        return self.get_parm_value(c.DES_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.DES_PROC_UNITS, c.ZERO)
 
     @property
     def max_proc_units(self):
-        return self.get_parm_value(c.MAX_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.MAX_PROC_UNITS, c.ZERO)
 
     @property
     def min_proc_units(self):
-        return self.get_parm_value(c.MIN_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.MIN_PROC_UNITS, c.ZERO)
 
     @property
     def run_procs(self):
-        return self.get_parm_value(c.RUN_PROCS, c.ZERO)
+        return self._get_val_str(c.RUN_PROCS, c.ZERO)
 
     @property
     def run_vcpus(self):
-        return self.get_parm_value(c.RUN_VCPU, c.ZERO)
+        return self._get_val_str(c.RUN_VCPU, c.ZERO)
 
     @property
     def current_uncapped_weight(self):
-        return self.get_parm_value(c.CURR_UNCAPPED_WEIGHT, c.ZERO)
+        return self._get_val_str(c.CURR_UNCAPPED_WEIGHT, c.ZERO)
 
     @property
     def uncapped_weight(self):
-        return self.get_parm_value(c.UNCAPPED_WEIGHT, c.ZERO)
+        return self._get_val_str(c.UNCAPPED_WEIGHT, c.ZERO)
 
     @property
     def shared_proc_pool_id(self):
-        return int(self.get_parm_value(c.SHARED_PROC_POOL_ID, c.ZERO))
+        return int(self._get_val_str(c.SHARED_PROC_POOL_ID, c.ZERO))
 
     @property
     def avail_priority(self):
-        return self.get_parm_value(c.AVAIL_PRIORITY, c.ZERO)
+        return self._get_val_str(c.AVAIL_PRIORITY, c.ZERO)
 
     @property
     def sharing_mode(self):
@@ -367,7 +365,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         Note that the getter retrieves the CURRENT sharing mode; and the
         setter sets the (PENDING) sharing mode.
         """
-        return self.get_parm_value(c.CURR_SHARING_MODE)
+        return self._get_val_str(c.CURR_SHARING_MODE)
 
     @property
     def migration_state(self):
@@ -376,7 +374,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         e.g. 'Not_Migrating', 'Migration_Starting', 'Migration_Failed', etc.
         Defaults to 'Not_Migrating'
         """
-        return self.get_parm_value(c.MIGRATION_STATE, 'Not_Migrating')
+        return self._get_val_str(c.MIGRATION_STATE, 'Not_Migrating')
 
     @property
     def proc_compat_mode(self):
@@ -385,7 +383,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
-        return self.get_parm_value(c.CURRENT_PROC_MODE)
+        return self._get_val_str(c.CURRENT_PROC_MODE)
 
     @property
     def pending_proc_compat_mode(self):
@@ -394,12 +392,12 @@ class LogicalPartition(ewrap.EntryWrapper):
         See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
-        return self.get_parm_value(c.PENDING_PROC_MODE)
+        return self._get_val_str(c.PENDING_PROC_MODE)
 
     @property
     def operating_system(self):
         """String representing the OS and version, or 'Unknown'."""
-        return self.get_parm_value(c.OPERATING_SYSTEM_VER, 'Unknown')
+        return self._get_val_str(c.OPERATING_SYSTEM_VER, 'Unknown')
 
     @property
     def cna_uris(self):
@@ -415,15 +413,15 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         e.g. 'active', 'inactive', 'busy', etc.
         """
-        return self.get_parm_value(c.RMC_STATE)
+        return self._get_val_str(c.RMC_STATE)
 
     @property
     def ref_code(self):
-        return self.get_parm_value(c.REF_CODE)
+        return self._get_val_str(c.REF_CODE)
 
     @property
     def restrictedio(self):
-        return self.get_parm_value_bool(c.RESTRICTED_IO, False)
+        return self._get_val_bool(c.RESTRICTED_IO, False)
 
     def check_dlpar_connectivity(self):
         """Check the partition for DLPAR capability and rmc state.
@@ -433,8 +431,8 @@ class LogicalPartition(ewrap.EntryWrapper):
         """
 
         # Pull the dlpar and rmc values from PowerVM
-        mem_dlpar = self.get_parm_value_bool(c.DLPAR_MEM_CAPABLE)
-        proc_dlpar = self.get_parm_value_bool(c.DLPAR_PROC_CAPABLE)
+        mem_dlpar = self._get_val_bool(c.DLPAR_MEM_CAPABLE)
+        proc_dlpar = self._get_val_bool(c.DLPAR_PROC_CAPABLE)
 
         dlpar = mem_dlpar and proc_dlpar
 

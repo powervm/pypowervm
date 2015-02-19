@@ -16,6 +16,7 @@
 
 from lxml import etree
 import mock
+import six
 
 import unittest
 
@@ -24,6 +25,73 @@ from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
+
+
+class SubWrapper(ewrap.Wrapper):
+    schema_type = 'SubWrapper'
+    type_and_uuid = 'SubWrapper_TestClass'
+
+    def __init__(self, **kwargs):
+        class Txt(object):
+            def __init__(self, val):
+                self.text = val
+        self.data = dict((k, Txt(v)) for k, v in six.iteritems(kwargs))
+
+    def _find(self, prop_name, use_find_all=False):
+        try:
+            return self.data[prop_name]
+        except KeyError:
+            return None
+
+
+class TestWrapper(unittest.TestCase):
+    def test_get_val_str(self):
+        w = SubWrapper(one='1', foo='foo', empty='')
+        self.assertEqual(w._get_val_str('one'), '1')
+        self.assertEqual(w._get_val_str('foo'), 'foo')
+        self.assertEqual(w._get_val_str('empty'), '')
+        self.assertIsNone(w._get_val_str('nonexistent'))
+        self.assertEqual(w._get_val_str('nonexistent', default='10'), '10')
+
+    def test_get_val_int(self):
+        w = SubWrapper(one='1', nan='foo', empty='')
+        self.assertEqual(w._get_val_int('one'), 1)
+        self.assertIsNone(w._get_val_int('nan'))
+        self.assertIsNone(w._get_val_int('empty'))
+        self.assertIsNone(w._get_val_int('nonexistent'))
+        self.assertEqual(w._get_val_int('nonexistent', default=10), 10)
+
+    def test_get_val_float(self):
+        w = SubWrapper(one='1', two_point_two='2.2', nan='foo', empty='')
+        self.assertAlmostEqual(w._get_val_float('one'), 1)
+        self.assertAlmostEqual(w._get_val_float('two_point_two'), 2.2)
+        self.assertIsNone(w._get_val_float('nan'))
+        self.assertIsNone(w._get_val_float('empty'))
+        self.assertIsNone(w._get_val_float('nonexistent'))
+        self.assertAlmostEqual(w._get_val_float('one', default=2), 1)
+        self.assertAlmostEqual(w._get_val_float('two_point_two', default=3),
+                               2.2)
+        self.assertAlmostEqual(w._get_val_float('nan', default=1), 1)
+        self.assertAlmostEqual(w._get_val_float('empty', default=1), 1)
+        self.assertAlmostEqual(w._get_val_int('nonexistent', default=1.7), 1.7)
+
+    def test_get_val_bool(self):
+        w = SubWrapper(one='1', t='true', T='TRUE', f='false', F='FALSE',
+                       empty='')
+        self.assertTrue(w._get_val_bool('t'))
+        self.assertTrue(w._get_val_bool('T'))
+        self.assertFalse(w._get_val_bool('one'))
+        self.assertFalse(w._get_val_bool('empty'))
+        self.assertFalse(w._get_val_bool('f'))
+        self.assertFalse(w._get_val_bool('F'))
+        self.assertFalse(w._get_val_bool('nonexistent'))
+        self.assertTrue(w._get_val_bool('t', default=False))
+        self.assertTrue(w._get_val_bool('T', default=False))
+        self.assertFalse(w._get_val_bool('one', default=True))
+        self.assertFalse(w._get_val_bool('empty', default=True))
+        self.assertFalse(w._get_val_bool('f', default=True))
+        self.assertFalse(w._get_val_bool('F', default=True))
+        self.assertTrue(w._get_val_bool('nonexistent', default=True))
 
 
 class TestEntryWrapper(unittest.TestCase):

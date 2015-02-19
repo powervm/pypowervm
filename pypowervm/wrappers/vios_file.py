@@ -91,29 +91,29 @@ class File(ewrap.EntryWrapper):
 
     @property
     def file_name(self):
-        return self.get_parm_value(FILE_NAME)
+        return self._get_val_str(FILE_NAME)
 
     @property
     def date_modified(self):
-        return self.get_parm_value(FILE_DATE_MOD)
+        return self._get_val_str(FILE_DATE_MOD)
 
     @property
     def internet_media_type(self):
         """Typically 'application/octet-stream'."""
-        return self.get_parm_value(FILE_INET_MED_TYPE)
+        return self._get_val_str(FILE_INET_MED_TYPE)
 
     @property
     def file_uuid(self):
         """The file's UUID (different from the entries)."""
-        return self.get_parm_value(FILE_UUID)
+        return self._get_val_str(FILE_UUID)
 
     @property
     def expected_file_size(self):
-        return self.get_parm_value(FILE_EXP_SIZE, converter=int)
+        return self._get_val_int(FILE_EXP_SIZE)
 
     @property
     def current_file_size(self):
-        return self.get_parm_value(FILE_CUR_SIZE, converter=int)
+        return self._get_val_int(FILE_CUR_SIZE)
 
     @property
     def enum_type(self):
@@ -122,12 +122,12 @@ class File(ewrap.EntryWrapper):
         BROKERED_MEDIA_ISO - virtual optical media
         BROKERED_DISK_IMAGE - virtual disk
         """
-        return self.get_parm_value(FILE_ENUM_TYPE)
+        return self._get_val_str(FILE_ENUM_TYPE)
 
     @property
     def vios_uuid(self):
-        return self.get_parm_value(FILE_VIOS)
+        return self._get_val_str(FILE_VIOS)
 
     @property
     def tdev_udid(self):
-        return self.get_parm_value(FILE_TDEV_UDID)
+        return self._get_val_str(FILE_TDEV_UDID)

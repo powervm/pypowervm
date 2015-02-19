@@ -43,7 +43,7 @@ class Job(ewrap.EntryWrapper):
 
     def __init__(self, entry):
         super(Job, self).__init__(entry)
-        self.op = self.get_parm_value(c.JOB_OPERATION_NAME)
+        self.op = self._get_val_str(c.JOB_OPERATION_NAME)
 
     @staticmethod
     def create_job_parameter(name, value, cdata=False):
@@ -79,7 +79,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job ID
         """
-        return self.get_parm_value(c.JOB_ID)
+        return self._get_val_str(c.JOB_ID)
 
     @property
     def job_status(self):
@@ -87,7 +87,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job status
         """
-        return self.get_parm_value(c.JOB_STATUS)
+        return self._get_val_str(c.JOB_STATUS)
 
     def get_job_response_exception_message(self, default=''):
         """Gets the job message string from the ResponseException.
@@ -95,10 +95,10 @@ class Job(ewrap.EntryWrapper):
         :returns: String containing the job message or
                   default (defaults to empty string) if not found
         """
-        job_message = self.get_parm_value(c.JOB_MESSAGE, default)
+        job_message = self._get_val_str(c.JOB_MESSAGE, default)
         if job_message:
             # See if there is a stack trace to log
-            stack_trace = self.get_parm_value(c.JOB_STACKTRACE, default)
+            stack_trace = self._get_val_str(c.JOB_STACKTRACE, default)
             if stack_trace:
                 exc = pvmex.JobRequestFailed(
                     operation_name=self.op, error=stack_trace)
@@ -112,8 +112,8 @@ class Job(ewrap.EntryWrapper):
                   default (defaults to empty string) if not found
         """
         message = default
-        parm_names = self.get_parm_values(c.JOB_RESULTS_NAME)
-        parm_values = self.get_parm_values(c.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(c.JOB_RESULTS_NAME)
+        parm_values = self._get_vals(c.JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             if parm_names[i] == 'result':
                 message = parm_values[i]
@@ -127,8 +127,8 @@ class Job(ewrap.EntryWrapper):
                   values as key, value pairs.
         """
         results = default if default else {}
-        parm_names = self.get_parm_values(c.JOB_RESULTS_NAME)
-        parm_values = self.get_parm_values(c.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(c.JOB_RESULTS_NAME)
+        parm_values = self._get_vals(c.JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             results[parm_names[i]] = parm_values[i]
         return results
@@ -165,7 +165,7 @@ class Job(ewrap.EntryWrapper):
         :raise JobRequestTimedOut: if the job timed out.
         """
         job = self._entry.element
-        entry_type = self.get_parm_value(c.JOB_GROUP_NAME)
+        entry_type = self._get_val_str(c.JOB_GROUP_NAME)
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
