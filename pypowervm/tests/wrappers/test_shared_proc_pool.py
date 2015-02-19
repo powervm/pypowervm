@@ -119,19 +119,19 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
             bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
-    def test_get_parm_value(self):
+    def test_get_val_str(self):
         expected_value = POOLID
-        value = TestShrPrcPoolTestCase._proc_pool_wrapper.get_parm_value(
+        value = TestShrPrcPoolTestCase._proc_pool_wrapper._get_val_str(
             c.POOL_ID)
 
-        self.verify_equal("get_parm_value", value, expected_value)
+        self.verify_equal("_get_val_str", value, expected_value)
 
         expected_value = None
-        value = TestShrPrcPoolTestCase._proc_pool_wrapper.get_parm_value(
+        value = TestShrPrcPoolTestCase._proc_pool_wrapper._get_val_str(
             'BogusName')
 
         self.verify_equal(
-            "get_parm_value for BogusName ", value, expected_value)
+            "_get_val_str for BogusName ", value, expected_value)
 
     def test_get_pool_id(self):
         self.call_simple_getter("id", int(POOLID), int(ZERO_STR))

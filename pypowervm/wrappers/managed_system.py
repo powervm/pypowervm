@@ -56,7 +56,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def system_name(self):
-        return self.get_parm_value(c.SYSTEM_NAME)
+        return self._get_val_str(c.SYSTEM_NAME)
 
     @property
     def mtms(self):
@@ -64,28 +64,27 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def system_state(self):
-        return self.get_parm_value(c.STATE, 'unknown')
+        return self._get_val_str(c.STATE, 'unknown')
 
     @property
     def proc_units(self):
-        return self.get_parm_value(c.PROC_UNITS_INSTALLED, 0)
+        return self._get_val_str(c.PROC_UNITS_INSTALLED, 0)
 
     @property
     def proc_units_configurable(self):
-        return self.get_parm_value(c.PROC_UNITS_CONFIGURABLE, 0)
+        return self._get_val_str(c.PROC_UNITS_CONFIGURABLE, 0)
 
     @property
     def proc_units_avail(self):
-        return self.get_parm_value(c.PROC_UNITS_AVAIL, 0)
+        return self._get_val_str(c.PROC_UNITS_AVAIL, 0)
 
     @property
     def max_sys_procs_limit(self):
-        return self.get_parm_value(c.MAX_PROCS_PER_PARTITION, 0, converter=int)
+        return self._get_val_int(c.MAX_PROCS_PER_PARTITION, 0)
 
     @property
     def max_procs_per_aix_linux_lpar(self):
-        val = self.get_parm_value(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0,
-                                  converter=int)
+        val = self._get_val_int(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum procs per lpar based on
         # partition type. In that case, use system max procs per partition.
         if val == 0:
@@ -99,12 +98,11 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def max_sys_vcpus_limit(self):
-        return self.get_parm_value(c.MAX_VCPUS_PER_PARTITION, 0, converter=int)
+        return self._get_val_int(c.MAX_VCPUS_PER_PARTITION, 0)
 
     @property
     def max_vcpus_per_aix_linux_lpar(self):
-        val = self.get_parm_value(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0,
-                                  converter=int)
+        val = self._get_val_int(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum vcpus per lpar based on
         # partition type. In that case, use system max vcpus per partition.
         if val == 0:
@@ -118,28 +116,28 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def memory_total(self):
-        return self.get_parm_value(c.MEMORY_INSTALLED, 0, converter=int)
+        return self._get_val_int(c.MEMORY_INSTALLED, 0)
 
     @property
     def memory_free(self):
-        return self.get_parm_value(c.MEMORY_AVAIL, 0, converter=int)
+        return self._get_val_int(c.MEMORY_AVAIL, 0)
 
     @property
     def memory_configurable(self):
-        return self.get_parm_value(c.MEMORY_CONFIGURABLE, 0, converter=int)
+        return self._get_val_int(c.MEMORY_CONFIGURABLE, 0)
 
     @property
     def memory_region_size(self):
-        return self.get_parm_value(c.MEMORY_REGION_SIZE, 0, converter=int)
+        return self._get_val_int(c.MEMORY_REGION_SIZE, 0)
 
     @property
     def firmware_memory(self):
-        return self.get_parm_value(c.SYS_FIRMWARE_MEM, 0, converter=int)
+        return self._get_val_int(c.SYS_FIRMWARE_MEM, 0)
 
     @property
     def host_ip_address(self):
         prop = c.HOST_IP_ADDRESS
-        val = self.get_parm_value(prop)
+        val = self._get_val_str(prop)
 
         return val
 
@@ -148,15 +146,15 @@ class ManagedSystem(ewrap.EntryWrapper):
         # VirtualEthernetCustomMACAddressCapable (custom_mac_addr_capable) will
         # default to True, which is the correct setting for POWER7 servers.
         cap_data = {'active_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.ACTIVE_LPM_CAP),
+                    self._get_val_bool(c.ACTIVE_LPM_CAP),
                     'inactive_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.INACTIVE_LPM_CAP),
+                    self._get_val_bool(c.INACTIVE_LPM_CAP),
                     'ibmi_lpar_mobility_capable':
-                    self.get_parm_value_bool(c.IBMi_LPM_CAP, False),
+                    self._get_val_bool(c.IBMi_LPM_CAP, False),
                     'custom_mac_addr_capable':
-                    self.get_parm_value_bool(c.VETH_MAC_ADDR_CAP, True),
+                    self._get_val_bool(c.VETH_MAC_ADDR_CAP, True),
                     'ibmi_restrictedio_capable':
-                    self.get_parm_value_bool(c.IBMi_RESTRICTEDIO_CAP, False)
+                    self._get_val_bool(c.IBMi_RESTRICTEDIO_CAP, False)
                     }
         return cap_data
 
@@ -166,7 +164,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         This is a READ-ONLY list.
         """
-        return tuple(self.get_parm_values(c.PROC_COMPAT_MODES))
+        return tuple(self._get_vals(c.PROC_COMPAT_MODES))
 
     @property
     def migration_data(self):
@@ -176,16 +174,13 @@ class ManagedSystem(ewrap.EntryWrapper):
         only.
         """
 
-        max_migr_sup = self.get_parm_value(c.MAX_FIRMWARE_MIGR, converter=int)
-        act_migr_sup = self.get_parm_value(c.MAX_ACTIVE_MIGR, converter=int)
-        inact_migr_sup = self.get_parm_value(c.MAX_INACTIVE_MIGR,
-                                             converter=int)
+        max_migr_sup = self._get_val_int(c.MAX_FIRMWARE_MIGR)
+        act_migr_sup = self._get_val_int(c.MAX_ACTIVE_MIGR)
+        inact_migr_sup = self._get_val_int(c.MAX_INACTIVE_MIGR)
         pref_act_migr_sup = act_migr_sup
         pref_inact_migr_sup = inact_migr_sup
-        act_migr_prog = self.get_parm_value(c.ACTIVE_MIGR_RUNNING,
-                                            converter=int)
-        inact_migr_prog = self.get_parm_value(c.INACTIVE_MIGR_RUNNING,
-                                              converter=int)
+        act_migr_prog = self._get_val_int(c.ACTIVE_MIGR_RUNNING)
+        inact_migr_prog = self._get_val_int(c.INACTIVE_MIGR_RUNNING)
 
         migr_data = {'max_migration_ops_supported': max_migr_sup,
                      'active_migrations_supported': act_migr_sup,
@@ -234,7 +229,7 @@ class MTMS(ewrap.ElementWrapper):
 
     @property
     def machine_type(self):
-        return self.get_parm_value(MTMS_MT)
+        return self._get_val_str(MTMS_MT)
 
     @machine_type.setter
     def machine_type(self, mt):
@@ -242,7 +237,7 @@ class MTMS(ewrap.ElementWrapper):
 
     @property
     def model(self):
-        return self.get_parm_value(MTMS_MODEL)
+        return self._get_val_str(MTMS_MODEL)
 
     @model.setter
     def model(self, md):
@@ -250,7 +245,7 @@ class MTMS(ewrap.ElementWrapper):
 
     @property
     def serial(self):
-        return self.get_parm_value(MTMS_SERIAL)
+        return self._get_val_str(MTMS_SERIAL)
 
     @serial.setter
     def serial(self, sn):

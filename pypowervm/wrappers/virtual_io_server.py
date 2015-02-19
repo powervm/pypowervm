@@ -203,15 +203,15 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(c.PARTITION_NAME)
+        return self._get_val_str(c.PARTITION_NAME)
 
     @property
     def partition_id(self):
-        return int(self.get_parm_value(c.ROOT + VIO_PARTITION_ID, c.ZERO))
+        return int(self._get_val_str(c.ROOT + VIO_PARTITION_ID, c.ZERO))
 
     @property
     def state(self):
-        return self.get_parm_value(c.PARTITION_STATE)
+        return self._get_val_str(c.PARTITION_STATE)
 
     @property
     def is_running(self):
@@ -219,7 +219,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def rmc_state(self):
-        return self.get_parm_value(c.RMC_STATE)
+        return self._get_val_str(c.RMC_STATE)
 
     @property
     def is_rmc_active(self):
@@ -235,12 +235,11 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     def get_wwpns(self):
         """Returns a list of the wwpn pairs for the vios."""
-        return self.get_parm_values(c.WWPNS_PATH)
+        return self._get_vals(c.WWPNS_PATH)
 
     @property
     def is_license_accepted(self):
-        return self.get_parm_value_bool(c.ROOT + VIO_LICENSE,
-                                        default=True)
+        return self._get_val_bool(c.ROOT + VIO_LICENSE, default=True)
 
     def hdisk_reserve_policy(self, disk_uuid):
         """Get the reserve policy for an hdisk.
@@ -285,24 +284,24 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def current_mem(self):
-        return self.get_parm_value(c.CURR_MEM, c.ZERO)
+        return self._get_val_str(c.CURR_MEM, c.ZERO)
 
     @property
     def current_proc_mode(self):
         # Returns true if dedicated or false if shared
-        return self.get_parm_value(c.CURR_USE_DED_PROCS, c.FALSE).lower()
+        return self._get_val_str(c.CURR_USE_DED_PROCS, c.FALSE).lower()
 
     @property
     def current_procs(self):
-        return self.get_parm_value(c.CURR_PROCS, c.ZERO)
+        return self._get_val_str(c.CURR_PROCS, c.ZERO)
 
     @property
     def current_proc_units(self):
-        return self.get_parm_value(c.CURR_PROC_UNITS, c.ZERO)
+        return self._get_val_str(c.CURR_PROC_UNITS, c.ZERO)
 
     @property
     def is_mover_service_partition(self):
-        return self.get_parm_value_bool(c.MOVER_SERVICE_PARTITION, False)
+        return self._get_val_bool(c.MOVER_SERVICE_PARTITION, False)
 
     @property
     def ip_addresses(self):
@@ -520,22 +519,22 @@ class VirtualStorageAdapter(ewrap.ElementWrapper):
 
         A Client indicates that this is an adapter residing on a Client LPAR.
         """
-        return self.get_parm_value(VADPT_TYPE)
+        return self._get_val_str(VADPT_TYPE)
 
     @property
     def is_varied_on(self):
         """True if the adapter is varied on."""
-        return self.get_parm_value(VADPT_VARIED_ON)
+        return self._get_val_str(VADPT_VARIED_ON)
 
     @property
     def slot_number(self):
         """The (int) slot number that the adapter is in."""
-        return self.get_parm_value(VADPT_SLOT_NUM, converter=int)
+        return self._get_val_int(VADPT_SLOT_NUM)
 
     @property
     def loc_code(self):
         """The device's location code."""
-        return self.get_parm_value(LOCATION_CODE)
+        return self._get_val_str(LOCATION_CODE)
 
 
 class VirtualSCSIClientAdapter(VirtualStorageAdapter):
@@ -547,7 +546,7 @@ class VirtualSCSIClientAdapter(VirtualStorageAdapter):
     @property
     def lpar_id(self):
         """The LPAR ID the contains this client adapter."""
-        return self.get_parm_value(VADPT_LPAR_ID)
+        return self._get_val_str(VADPT_LPAR_ID)
 
 
 class VirtualSCSIServerAdapter(VirtualStorageAdapter):
@@ -559,17 +558,17 @@ class VirtualSCSIServerAdapter(VirtualStorageAdapter):
     @property
     def name(self):
         """The adapter's name on the Virtual I/O Server."""
-        return self.get_parm_value(VADPT_NAME)
+        return self._get_val_str(VADPT_NAME)
 
     @property
     def backing_dev_name(self):
         """The backing device name that this virtual adapter is hooked into."""
-        return self.get_parm_value(VADPT_BACK_DEV_NAME)
+        return self._get_val_str(VADPT_BACK_DEV_NAME)
 
     @property
     def udid(self):
         """The device's Unique Device Identifier."""
-        return self.get_parm_value(VADPT_UDID)
+        return self._get_val_str(VADPT_UDID)
 
 
 class VirtualFCClientAdapter(VirtualStorageAdapter):
@@ -581,12 +580,12 @@ class VirtualFCClientAdapter(VirtualStorageAdapter):
     @property
     def wwpns(self):
         """Returns a String (delimited by spaces) that contains the WWPNs."""
-        return self.get_parm_value(VADPT_WWPNS)
+        return self._get_val_str(VADPT_WWPNS)
 
     @property
     def lpar_id(self):
         """The ID of the LPAR that contains this client adapter."""
-        return self.get_parm_value(VADPT_LPAR_ID)
+        return self._get_val_str(VADPT_LPAR_ID)
 
 
 class VirtualFCServerAdapter(VirtualStorageAdapter):
@@ -598,17 +597,17 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
     @property
     def name(self):
         """The adapter's name on the Virtual I/O Server."""
-        return self.get_parm_value(VADPT_NAME)
+        return self._get_val_str(VADPT_NAME)
 
     @property
     def udid(self):
         """The device's Unique Device Identifier."""
-        return self.get_parm_value(VADPT_UDID)
+        return self._get_val_str(VADPT_UDID)
 
     @property
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
-        return self.get_parm_value(VADPT_MAP_PORT)
+        return self._get_val_str(VADPT_MAP_PORT)
 
 
 class PhysicalFCPort(ewrap.ElementWrapper):
@@ -617,29 +616,29 @@ class PhysicalFCPort(ewrap.ElementWrapper):
     @property
     def loc_code(self):
         """Returns the location code."""
-        return self.get_parm_value(LOCATION_CODE)
+        return self._get_val_str(LOCATION_CODE)
 
     @property
     def name(self):
         """The name of the port."""
-        return self.get_parm_value(PFC_NAME)
+        return self._get_val_str(PFC_NAME)
 
     @property
     def udid(self):
         """The Unique Device ID."""
-        return self.get_parm_value(PFC_UDID)
+        return self._get_val_str(PFC_UDID)
 
     @property
     def wwpn(self):
         """The port's world wide port name."""
-        return self.get_parm_value(PFC_WWPN)
+        return self._get_val_str(PFC_WWPN)
 
     @property
     def available_ports(self):
         """The number of available NPIV ports.  Int value."""
-        return self.get_parm_value(PFC_AVAILABLE_PORTS, converter=int)
+        return self._get_val_int(PFC_AVAILABLE_PORTS)
 
     @property
     def total_ports(self):
         """The total number of NPIV ports.  Int value."""
-        return self.get_parm_value(PFC_TOTAL_PORTS, converter=int)
+        return self._get_val_int(PFC_TOTAL_PORTS)

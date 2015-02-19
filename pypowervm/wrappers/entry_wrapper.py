@@ -168,7 +168,20 @@ class Wrapper(object):
 
         element_value.text = value
 
-    def get_parm_value(self, property_name, default=None, converter=None):
+    def __get_val(self, property_name, default=None, converter=None):
+        """Retrieve the value of an element within this wrapper's ElementTree.
+
+        This is the baseline for all the _get_val_{type} methods.
+        :param property_name: The name (XPath) of the property to find.
+        :param default: The default value to return if the property is not
+                        found OR if type conversion fails.
+        :param converter: Optional callable accepting a single string parameter
+                          and returning a value of some other type.  The
+                          converter callable should raise ValueError if
+                          conversion fails.
+        :return: The (possibly converted) value corresponding to the identified
+                 property.
+        """
         element_value = self._find(property_name)
         if element_value is None:
             self.log_missing_value(property_name)
@@ -196,11 +209,13 @@ class Wrapper(object):
                 return default
         return text
 
-    def get_parm_values(self, property_name):
+    def _get_vals(self, property_name):
         """Gets a list of values from PowerVM.
 
         :param property_name: property to return
-        :returns: list of strings containing property values
+        :returns: List of strings containing property values.  No type
+                  conversion is done.  If no elements are found, the empty list
+                  is returned (as opposed to None).
         """
         values = []
         elements = self._find(property_name, use_find_all=True)
@@ -209,8 +224,7 @@ class Wrapper(object):
                 values.append(element.text)
         return values
 
-    # TODO(IBM): Make this return an actual boolean
-    def get_parm_value_bool(self, property_name, default='*unset*'):
+    def _get_val_bool(self, property_name, default=False):
         """Gets the boolean value of a PowerVM property.
 
         :param property_name: property to return
@@ -222,16 +236,45 @@ class Wrapper(object):
             If the property does not exist, then the default value will be
             returned if specified, otherwise False will be returned.
         """
-        value = self.get_parm_value(property_name)
-        if value is None and default != '*unset*':
-            # The caller has set a default value.  Return their default
-            # value if the data does not have their property.
-            return default
+        def str2bool(bool_str):
+            return str(bool_str).lower() == 'true'
+        return self.__get_val(property_name, default=default,
+                              converter=str2bool)
 
-        if value:
-            value = value.lower()
+    def _get_val_int(self, property_name, default=None):
+        """Gets the integer value of a PowerVM property.
 
-        return value == 'true'
+        :param property_name: property to find
+        :param default: Value to return if property is not found.  Defaults to
+                        None (which is not an int - plan accordingly).
+        :return: Integer (int) value of the property if it is found and it is a
+                 valid integer.
+        :raise ValueError: If the value cannot be converted.
+        """
+        return self.__get_val(property_name, default=default, converter=int)
+
+    def _get_val_float(self, property_name, default=None):
+        """Gets the float value of a PowerVM property.
+
+        :param property_name: property to find
+        :param default: Value to return if property is not found.  Defaults to
+                        None (which is not a float - plan accordingly).
+        :return: float value of the property if it is found and it is a
+                 valid float.
+        :raise ValueError: If the value cannot be converted.
+        """
+        return self.__get_val(property_name, default=default, converter=float)
+
+    def _get_val_str(self, property_name, default=None):
+        """Gets the string value of a PowerVM property.
+
+        :param property_name: property to find
+        :param default: Value to return if property is not found.  Defaults to
+                        None (which is not a str - plan accordingly).
+        :return: str value of the property if it is found.  May be the empty
+                 string.
+        """
+        return self.__get_val(property_name, default=default, converter=None)
 
     def log_missing_value(self, param):
         error_message = (

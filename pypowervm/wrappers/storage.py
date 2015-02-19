@@ -180,26 +180,26 @@ class VolumeGroup(ewrap.EntryWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(VG_NAME)
+        return self._get_val_str(VG_NAME)
 
     @property
     def capacity(self):
         """Overall capacity in GB (float)."""
-        return self.get_parm_value(VG_CAPACITY, converter=float)
+        return self._get_val_float(VG_CAPACITY)
 
     @property
     def available_size(self):
         """Available size for new volumes in GB (float)."""
-        return self.get_parm_value(VG_AVAILABLE_SIZE, converter=float)
+        return self._get_val_float(VG_AVAILABLE_SIZE)
 
     @property
     def free_space(self):
         """Current free space in GB (float)."""
-        return self.get_parm_value(VG_FREE_SPACE, converter=float)
+        return self._get_val_float(VG_FREE_SPACE)
 
     @property
     def serial_id(self):
-        return self.get_parm_value(VG_SERIAL_ID)
+        return self._get_val_str(VG_SERIAL_ID)
 
     @property
     def vmedia_repos(self):
@@ -272,12 +272,12 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(VREPO_NAME)
+        return self._get_val_str(VREPO_NAME)
 
     @property
     def size(self):
         """Returns the size in GB (int)."""
-        return self.get_parm_value(VREPO_SIZE, converter=int)
+        return self._get_val_int(VREPO_SIZE)
 
 
 class VirtualOpticalMedia(ewrap.ElementWrapper):
@@ -285,20 +285,20 @@ class VirtualOpticalMedia(ewrap.ElementWrapper):
 
     @property
     def media_name(self):
-        return self.get_parm_value(VOPT_NAME)
+        return self._get_val_str(VOPT_NAME)
 
     @property
     def size(self):
         """Size is a str.  Represented in GB - has decimal precision."""
-        return self.get_parm_value(VOPT_SIZE)
+        return self._get_val_str(VOPT_SIZE)
 
     @property
     def udid(self):
-        return self.get_parm_value(VOPT_UDID)
+        return self._get_val_str(VOPT_UDID)
 
     @property
     def mount_type(self):
-        return self.get_parm_value(VOPT_MOUNT_TYPE)
+        return self._get_val_str(VOPT_MOUNT_TYPE)
 
 
 class PhysicalVolume(ewrap.ElementWrapper):
@@ -320,7 +320,7 @@ class PhysicalVolume(ewrap.ElementWrapper):
     @property
     def udid(self):
         """The unique device id."""
-        return self.get_parm_value(PV_UDID)
+        return self._get_val_str(PV_UDID)
 
     @udid.setter
     def udid(self, new_udid):
@@ -329,11 +329,11 @@ class PhysicalVolume(ewrap.ElementWrapper):
     @property
     def capacity(self):
         """Returns the capacity as an int in MB."""
-        return self.get_parm_value(PV_VOL_SIZE, converter=int)
+        return self._get_val_int(PV_VOL_SIZE)
 
     @property
     def name(self):
-        return self.get_parm_value(PV_VOL_NAME)
+        return self._get_val_str(PV_VOL_NAME)
 
     @name.setter
     def name(self, newname):
@@ -341,19 +341,19 @@ class PhysicalVolume(ewrap.ElementWrapper):
 
     @property
     def state(self):
-        return self.get_parm_value(PV_VOL_STATE)
+        return self._get_val_str(PV_VOL_STATE)
 
     @property
     def is_fc_backed(self):
-        return self.get_parm_value_bool(PV_FC_BACKED)
+        return self._get_val_bool(PV_FC_BACKED)
 
     @property
     def description(self):
-        return self.get_parm_value(PV_VOL_DESC)
+        return self._get_val_str(PV_VOL_DESC)
 
     @property
     def loc_code(self):
-        return self.get_parm_value(PV_LOC_CODE)
+        return self._get_val_str(PV_LOC_CODE)
 
 
 class VirtualDisk(ewrap.ElementWrapper):
@@ -361,7 +361,7 @@ class VirtualDisk(ewrap.ElementWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(DISK_NAME)
+        return self._get_val_str(DISK_NAME)
 
     @name.setter
     def name(self, name):
@@ -369,12 +369,12 @@ class VirtualDisk(ewrap.ElementWrapper):
 
     @property
     def label(self):
-        return self.get_parm_value(DISK_LABEL)
+        return self._get_val_str(DISK_LABEL)
 
     @property
     def capacity(self):
         """Returns the capacity in GB (float)."""
-        return float(self.get_parm_value(DISK_CAPACITY))
+        return float(self._get_val_str(DISK_CAPACITY))
 
     @capacity.setter
     def capacity(self, capacity):
@@ -382,7 +382,7 @@ class VirtualDisk(ewrap.ElementWrapper):
 
     @property
     def udid(self):
-        return self.get_parm_value(DISK_UDID)
+        return self._get_val_str(DISK_UDID)
 
 
 class LogicalUnit(ewrap.ElementWrapper):
@@ -390,25 +390,25 @@ class LogicalUnit(ewrap.ElementWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(LU_NAME)
+        return self._get_val_str(LU_NAME)
 
     @property
     def udid(self):
-        return self.get_parm_value(LU_UDID)
+        return self._get_val_str(LU_UDID)
 
     @property
     def capacity(self):
         """Float capacity in GB."""
-        return float(self.get_parm_value(LU_CAPACITY))
+        return float(self._get_val_str(LU_CAPACITY))
 
     @property
     def lu_type(self):
         """String enum value e.g. "VirtualIO_Disk."""
-        return self.get_parm_value(LU_TYPE)
+        return self._get_val_str(LU_TYPE)
 
     @property
     def is_thin(self):
-        return self.get_parm_value_bool(LU_THIN)
+        return self._get_val_bool(LU_THIN)
 
 
 class SharedStoragePool(ewrap.EntryWrapper):
@@ -436,7 +436,7 @@ class SharedStoragePool(ewrap.EntryWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(SSP_NAME)
+        return self._get_val_str(SSP_NAME)
 
     @name.setter
     def name(self, newname):
@@ -444,22 +444,22 @@ class SharedStoragePool(ewrap.EntryWrapper):
 
     @property
     def udid(self):
-        return self.get_parm_value(SSP_UDID)
+        return self._get_val_str(SSP_UDID)
 
     @property
     def capacity(self):
         """Capacity in GB as a float."""
-        return float(self.get_parm_value(SSP_CAPACITY))
+        return float(self._get_val_str(SSP_CAPACITY))
 
     @property
     def free_space(self):
         """Free space in GB as a float."""
-        return float(self.get_parm_value(SSP_FREE_SPACE))
+        return float(self._get_val_str(SSP_FREE_SPACE))
 
     @property
     def total_lu_size(self):
         """Total LU size in GB as a float."""
-        return float(self.get_parm_value(SSP_TOTAL_LU_SIZE))
+        return float(self._get_val_str(SSP_TOTAL_LU_SIZE))
 
     @property
     def logical_units(self):
