@@ -64,6 +64,15 @@ class TestPower(unittest.TestCase):
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
+        # Try optional parameters
+        power.power_on(mock_adpt, mock_lpar, '1111',
+                       add_parms=dict(bootmode='sms'))
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        self.assertTrue('sms' in str(mock_job_p.call_args))
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
     @mock.patch('pypowervm.adapter.Adapter')
