@@ -73,9 +73,9 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_href)
 
     # Build and create the CNA
-    net_adpt = cna.crt_cna(pvid, vswitch_href,
-                           slot_num=slot_num, mac_addr=mac_addr,
-                           addl_tagged_vlans=addl_tagged_vlans)
+    net_adpt = cna.ClientNetworkAdapter.new_instance(
+        pvid, vswitch_href, slot_num=slot_num, mac_addr=mac_addr,
+        addl_tagged_vlans=addl_tagged_vlans)
     resp = adapter.create(net_adpt, lpar.LPAR_ROOT, root_id=lpar_uuid,
                           child_type=cna.VADPT_ROOT)
     return resp.entry

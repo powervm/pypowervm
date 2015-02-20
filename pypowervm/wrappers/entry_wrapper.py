@@ -163,10 +163,10 @@ class Wrapper(object):
             self.log_missing_value(property_name)
             if create:
                 element_value = adpt.Element(
-                    property_name, attrib=None, text=value)
+                    property_name, attrib=None, text=str(value))
                 self._element.append(element_value)
 
-        element_value.text = value
+        element_value.text = str(value)
 
     def __get_val(self, property_name, default=None, converter=None):
         """Retrieve the value of an element within this wrapper's ElementTree.
@@ -317,8 +317,9 @@ class Wrapper(object):
     def set_href(self, propname, href):
         """Finds or creates the (single) named property and sets its href.
 
-        Limitation: if the indicated property does not exist, its parent must
-        exist and be unique.
+        If the indicated element does not exist, it (and any necessary interim
+        parent elements) will be created.  If any intervening path is non-
+        unique, any new element paths will be created under the first one.
 
         :param propname: XPath to the property.
         :param href: The URI value to assign to the href attribute.
@@ -333,13 +334,17 @@ class Wrapper(object):
             link = links[0]
         else:
             # Not found - create the property
-            l = propname.rsplit(wc.DELIM, 1)
-            if len(l) == 1:
-                root = self._element
-            else:
-                root = self._find(l[0])
+            l = propname.split(wc.DELIM)
+            append_point = self
+            while len(l) > 1:
+                next_prop = l.pop(0)
+                new_el = append_point._find(next_prop)
+                if new_el is None:
+                    new_el = adpt.Element(next_prop)
+                    append_point._element.append(new_el)
+                append_point = ElementWrapper(new_el)
             link = adpt.Element(l[-1])
-            root.append(link)
+            append_point._element.append(link)
         # At this point we have found or created the propname element.  Its
         # handle is in the link var.
         link.attrib['href'] = href
