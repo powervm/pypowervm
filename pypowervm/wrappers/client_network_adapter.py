@@ -16,7 +16,6 @@
 
 import logging
 
-from pypowervm import adapter as adpt
 from pypowervm import util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -25,7 +24,7 @@ LOG = logging.getLogger(__name__)
 
 LOCATION_CODE = 'LocationCode'
 
-VADPT_ROOT = 'ClientNetworkAdapter'
+VADPT_ROOT = c.CNA
 VADPT_SLOT_NUM = 'VirtualSlotNumber'
 VADPT_MAC_ADDR = 'MACAddress'
 VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
@@ -33,67 +32,85 @@ VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 VADPT_VSWITCH = 'AssociatedVirtualSwitch'
 VADPT_VSWITCH_ID = 'VirtualSwitchID'
 VADPT_PVID = 'PortVLANID'
-
-
-def crt_cna(pvid, vswitch_href, slot_num=None, mac_addr=None,
-            addl_tagged_vlans=None):
-    """Creates the Element structure for the creation of a Client Network Adpt.
-
-    This is used when creating a new CNA for a client partition.  The POST
-    of this should be done to the LogicalPartition/<UUID>/ClientNetworkAdapter.
-
-    :param pvid: The Primary VLAN ID to use.
-    :param vswitch_href: The URI that points to the Virtual Switch that will
-                         support this adapter.
-    :param slot_num: The Slot on the Client LPAR that should be used.  This
-                     defaults to 'None', which means that the next available
-                     slot will be used.
-    :param mac_addr: The optional user specified mac address to use.  If left
-                     as None, the system will generate one.
-    :param addl_tagged_vlans: A set of additional tagged VLANs that can be
-                              passed through this adapter (with client VLAN
-                              adapters).
-
-                              Input should be a space delimited string.
-                              Example: '51 52 53'
-                              Note: The limit is ~18 additional VLANs
-    :returns: An Element that can be used for a Client Network Adapter create.
-    """
-    attrs = []
-    if slot_num is not None:
-        attrs.append(adpt.Element(VADPT_SLOT_NUM, text=str(slot_num)))
-    else:
-        attrs.append(adpt.Element('UseNextAvailableSlotID', text='true'))
-
-    if mac_addr is not None:
-        mac_addr = u.sanitize_mac_for_api(mac_addr)
-        attrs.append(adpt.Element(VADPT_MAC_ADDR, text=mac_addr))
-
-    #  The primary VLAN ID
-    attrs.append(adpt.Element(VADPT_PVID, text=str(pvid)))
-
-    # Additional VLANs
-    if addl_tagged_vlans is not None:
-        attrs.append(adpt.Element(VADPT_TAGGED_VLANS, text=addl_tagged_vlans))
-        attrs.append(adpt.Element(VADPT_TAGGED_VLAN_SUPPORT, text='true'))
-    else:
-        attrs.append(adpt.Element(VADPT_TAGGED_VLAN_SUPPORT, text='false'))
-
-    # Put in the vSwitch
-    vswitch_child = adpt.Element('link', attrib={'href': vswitch_href,
-                                                 'rel': 'related'})
-    attrs.append(adpt.Element(VADPT_VSWITCH, children=[vswitch_child]))
-
-    return adpt.Element(VADPT_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
-                        children=attrs)
+VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
 class ClientNetworkAdapter(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
+    schema_type = c.CNA
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls, pvid=None, vswitch_href=None, slot_num=None,
+                     mac_addr=None, addl_tagged_vlans=None):
+        """Creates a fresh ClientNetworkAdapter EntryWrapper.
+
+        This is used when creating a new CNA for a client partition.  This
+        can be PUT to LogicalPartition/<UUID>/ClientNetworkAdapter.
+
+        :param pvid: The Primary VLAN ID to use.
+        :param vswitch_href: The URI that points to the Virtual Switch that
+                             will support this adapter.
+        :param slot_num: The Slot on the Client LPAR that should be used.  This
+                         defaults to 'None', which means the next available
+                         slot will be used.
+        :param mac_addr: Optional user specified mac address to use.  If left
+                         as None, the system will generate one.
+        :param addl_tagged_vlans: A set of additional tagged VLANs that can be
+                                  passed through this adapter (with client VLAN
+                                  adapters).
+
+                                  Input should be a list of int (or int string)
+                                  Example: [51, 52, 53]
+                                  Note: The limit is ~18 additional VLANs
+        :returns: An ClientNetworkAdapter EntryWrapper that can be used for
+                  create.
+        """
+        cna = cls()
+        # Assignment order matters
+        if slot_num is not None:
+            cna.slot = slot_num
+        else:
+            cna.use_next_avail_slot_id = True
+
+        if mac_addr is not None:
+            cna.mac = mac_addr
+
+        #  The primary VLAN ID
+        if pvid is not None:
+            cna.pvid = pvid
+
+        # Additional VLANs
+        if addl_tagged_vlans is not None:
+            cna.tagged_vlans = addl_tagged_vlans
+            cna.is_tagged_vlan_supported = True
+        else:
+            cna.is_tagged_vlan_supported = False
+
+        # vSwitch URI
+        if vswitch_href is not None:
+            cna.vswitch_uri = vswitch_href
+
+        return cna
+
     @property
     def slot(self):
-        return int(self._get_val_str(c.VIR_SLOT_NUM))
+        return self._get_val_int(c.VIR_SLOT_NUM)
+
+    @slot.setter
+    def slot(self, sid):
+        self.set_parm_value(c.VIR_SLOT_NUM, sid)
+
+    @property
+    def use_next_avail_slot_id(self):
+        return self._get_val_bool(VADPT_USE_NEXT_AVAIL_SLOT)
+
+    @use_next_avail_slot_id.setter
+    def use_next_avail_slot_id(self, unasi):
+        """Param unasi is bool (True or False)."""
+        self.set_parm_value(VADPT_USE_NEXT_AVAIL_SLOT,
+                            u.sanitize_bool_for_api(unasi))
 
     @property
     def mac(self):
@@ -102,21 +119,21 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         Typical format would be: AABBCCDDEEFF
         The API returns a format with no colons and is upper cased.
         """
-        return self._get_val_str(c.MAC_ADDRESS)
+        return self._get_val_str(VADPT_MAC_ADDR)
 
     @mac.setter
     def mac(self, new_val):
         new_mac = u.sanitize_mac_for_api(new_val)
-        self.set_parm_value(c.MAC_ADDRESS, new_mac)
+        self.set_parm_value(VADPT_MAC_ADDR, new_mac)
 
     @property
     def pvid(self):
-        """Returns the Port VLAN ID."""
-        return self._get_val_int(c.PORT_VLAN_ID)
+        """Returns the Port VLAN ID (int value)."""
+        return self._get_val_int(VADPT_PVID)
 
     @pvid.setter
     def pvid(self, new_val):
-        self.set_parm_value(c.PORT_VLAN_ID, str(new_val))
+        self.set_parm_value(VADPT_PVID, new_val)
 
     @property
     def loc_code(self):
@@ -147,12 +164,14 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
 
     @property
     def is_tagged_vlan_supported(self):
-        """Returns if addl tagged VLANs are supported."""
+        """Returns if addl tagged VLANs are supported (bool value)."""
         return self._get_val_bool(VADPT_TAGGED_VLAN_SUPPORT)
 
     @is_tagged_vlan_supported.setter
     def is_tagged_vlan_supported(self, new_val):
-        self.set_parm_value(VADPT_TAGGED_VLAN_SUPPORT, str(new_val))
+        """Parameter new_val is a bool (True or False)."""
+        self.set_parm_value(VADPT_TAGGED_VLAN_SUPPORT,
+                            u.sanitize_bool_for_api(new_val))
 
     @property
     def vswitch_uri(self):
@@ -161,6 +180,4 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
 
     @vswitch_uri.setter
     def vswitch_uri(self, new_val):
-        vswitches = self._entry.element.findall(VADPT_VSWITCH + c.DELIM +
-                                                'link')
-        vswitches[0].attrib['href'] = new_val
+        self.set_href(VADPT_VSWITCH + c.DELIM + 'link', new_val)
