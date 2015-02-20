@@ -70,7 +70,7 @@ class Cluster(ewrap.EntryWrapper):
 
     @property
     def name(self):
-        return self.get_parm_value(CL_NAME)
+        return self._get_val_str(CL_NAME)
 
     @name.setter
     def name(self, newname):
@@ -79,7 +79,7 @@ class Cluster(ewrap.EntryWrapper):
     @property
     def id(self):
         """The string ID according to VIOS, not a UUID or UDID."""
-        return self.get_parm_value(CL_ID)
+        return self._get_val_str(CL_ID)
 
     @property
     def ssp_uri(self):
@@ -176,7 +176,7 @@ class Node(ewrap.ElementWrapper):
 
     @property
     def hostname(self):
-        return self.get_parm_value(N_HOSTNAME)
+        return self._get_val_str(N_HOSTNAME)
 
     @hostname.setter
     def hostname(self, hn):
@@ -185,7 +185,7 @@ class Node(ewrap.ElementWrapper):
     @property
     def lpar_id(self):
         """Small integer partition ID, not UUID."""
-        return self.get_parm_value(N_LPARID, converter=int)
+        return self._get_val_int(N_LPARID)
 
     @lpar_id.setter
     def lpar_id(self, new_lpar_id):

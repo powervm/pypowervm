@@ -207,19 +207,19 @@ class TestLogicalPartition(unittest.TestCase):
             bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
-    def test_get_parm_value(self):
+    def test_get_val_str(self):
         expected_value = SHARED_LPAR_NAME
-        value = TestLogicalPartition._shared_wrapper.get_parm_value(
+        value = TestLogicalPartition._shared_wrapper._get_val_str(
             c.PARTITION_NAME)
 
-        self.verify_equal("get_parm_value", value, expected_value)
+        self.verify_equal("_get_val_str", value, expected_value)
 
         expected_value = None
-        value = TestLogicalPartition._shared_wrapper.get_parm_value(
+        value = TestLogicalPartition._shared_wrapper._get_val_str(
             'BogusName')
 
         self.verify_equal(
-            "get_parm_value for BogusName ", value, expected_value)
+            "_get_val_str for BogusName ", value, expected_value)
 
     def test_get_cna_links(self):
         """Test getting the list of ClientNetworkAdapters."""
@@ -255,8 +255,12 @@ class TestLogicalPartition(unittest.TestCase):
 
     def test_get_current_proc_mode(self):
         self.call_simple_getter(
-            "current_proc_mode_is_dedicated", "true", "false",
+            "current_proc_mode_is_dedicated", True, False,
             use_dedicated=True)
+
+    def test_get_proc_mode(self):
+        self.call_simple_getter(
+            "proc_mode_is_dedicated", True, False, use_dedicated=True)
 
     def test_get_current_procs(self):
         self.call_simple_getter(

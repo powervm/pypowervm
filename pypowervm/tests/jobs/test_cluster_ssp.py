@@ -45,7 +45,7 @@ class TestClusterSSP(unittest.TestCase):
         def create_job(job_el, entry_type, *args, **kwargs):
             self.assertEqual(entry_type, wc.CLUSTER)
             job = jwrap.Job(adp.Entry({}, job_el))
-            param_vals = job.get_parm_values(
+            param_vals = job._get_vals(
                 wc.ROOT + wc.DELIM.join(['JobParameters', 'JobParameter',
                                          'ParameterValue']))
             self.assertEqual(

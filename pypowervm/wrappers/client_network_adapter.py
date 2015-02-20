@@ -93,7 +93,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
 
     @property
     def slot(self):
-        return int(self.get_parm_value(c.VIR_SLOT_NUM))
+        return int(self._get_val_str(c.VIR_SLOT_NUM))
 
     @property
     def mac(self):
@@ -102,7 +102,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
         Typical format would be: AABBCCDDEEFF
         The API returns a format with no colons and is upper cased.
         """
-        return self.get_parm_value(c.MAC_ADDRESS)
+        return self._get_val_str(c.MAC_ADDRESS)
 
     @mac.setter
     def mac(self, new_val):
@@ -112,7 +112,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def pvid(self):
         """Returns the Port VLAN ID."""
-        return self.get_parm_value(c.PORT_VLAN_ID, converter=int)
+        return self._get_val_int(c.PORT_VLAN_ID)
 
     @pvid.setter
     def pvid(self, new_val):
@@ -121,7 +121,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def loc_code(self):
         """The device's location code."""
-        return self.get_parm_value(LOCATION_CODE)
+        return self._get_val_str(LOCATION_CODE)
 
     @property
     def tagged_vlans(self):
@@ -129,7 +129,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
 
         Only valid if tagged vlan support is on.
         """
-        addl_vlans = self.get_parm_value(VADPT_TAGGED_VLANS, '')
+        addl_vlans = self._get_val_str(VADPT_TAGGED_VLANS, '')
         list_data = []
         if addl_vlans != '':
             list_data = [int(i) for i in addl_vlans.split(' ')]
@@ -148,7 +148,7 @@ class ClientNetworkAdapter(ewrap.EntryWrapper):
     @property
     def is_tagged_vlan_supported(self):
         """Returns if addl tagged VLANs are supported."""
-        return self.get_parm_value_bool(VADPT_TAGGED_VLAN_SUPPORT)
+        return self._get_val_bool(VADPT_TAGGED_VLAN_SUPPORT)
 
     @is_tagged_vlan_supported.setter
     def is_tagged_vlan_supported(self, new_val):
