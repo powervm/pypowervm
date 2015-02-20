@@ -17,7 +17,6 @@
 import copy
 import unittest
 
-from pypowervm import adapter
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net_br
 
@@ -44,14 +43,13 @@ class TestVNetwork(twrap.TestWrapper):
         self.dwrap.name = 'Test'
         self.assertEqual('Test', self.dwrap.name)
 
-    def test_crt_vnet(self):
-        """Tests the 'crt_vnet' method that returns an element back."""
-        elem = net_br.crt_vnet('name', 10, 'vswitch_uri', True)
-        vn_w = net_br.VirtualNetwork(adapter.Entry([], elem))
-
+    def test_vnet_new(self):
+        """Tests the method that returns a VirtualNetwork ElementWrapper."""
+        vn_w = net_br.VirtualNetwork.new_instance(
+            name='name', vlan_id=10, vswitch_uri='vswitch_uri', tagged=True)
         self.assertEqual('name', vn_w.name)
         self.assertEqual(10, vn_w.vlan)
-        self.assertEqual(True, vn_w.tagged)
+        self.assertTrue(vn_w.tagged)
 
 
 class TestVSwitch(twrap.TestWrapper):

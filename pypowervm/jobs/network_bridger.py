@@ -172,7 +172,8 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     # Could not find one.  Time to create it.
     name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                         'vswitch': vswitch.name}
-    vnet_elem = pvm_net.crt_vnet(name, vlan, vswitch.href, tagged)
+    vnet_elem = pvm_net.VirtualNetwork.new_instance(
+        name=name, vlan_id=vlan, vswitch_uri=vswitch.href, tagged=tagged)
     resp = adapter.create(vnet_elem, pvm_ms.MS_ROOT, host_uuid,
                           pvm_net.VNET_ROOT)
     return pvm_net.VirtualNetwork.load_from_response(resp)

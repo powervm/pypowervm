@@ -74,8 +74,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
 
     # Build and create the CNA
     net_adpt = cna.ClientNetworkAdapter.new_instance(
-        pvid, vswitch_href, slot_num=slot_num, mac_addr=mac_addr,
-        addl_tagged_vlans=addl_tagged_vlans)
+        pvid=pvid, vswitch_href=vswitch_href, slot_num=slot_num,
+        mac_addr=mac_addr, addl_tagged_vlans=addl_tagged_vlans)
     resp = adapter.create(net_adpt, lpar.LPAR_ROOT, root_id=lpar_uuid,
                           child_type=cna.VADPT_ROOT)
     return resp.entry
@@ -95,7 +95,8 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
     # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
-    vnet = network.crt_vnet(name, vlan, vswitch_href, tagged)
+    vnet = network.VirtualNetwork.new_instance(
+        name=name, vlan_id=vlan, vswitch_uri=vswitch_href, tagged=tagged)
     crt_resp = adapter.create(vnet, c.MGT_SYS, root_id=host_uuid,
                               child_type=network.VNET_ROOT)
     return network.VirtualNetwork.load_from_response(crt_resp)

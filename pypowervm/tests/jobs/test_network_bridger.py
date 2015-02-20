@@ -186,10 +186,10 @@ class TestNetworkBridger(unittest.TestCase):
         host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
 
         # Set up the mock create
-        resp_elem = pvm_net.crt_vnet('FakeName', 4094, vsw.href, True)
-        resp = adpt.Entry({'id': 'fake'}, resp_elem)
+        resp = pvm_net.VirtualNetwork.new_instance(
+            name='FakeName', vlan_id=4094, vswitch_uri=vsw.href, tagged=True)
         mock_resp = mock.MagicMock()
-        mock_resp.entry = resp
+        mock_resp.entry = resp._entry
         mock_adpt.create.return_value = mock_resp
 
         # Run the code
@@ -198,7 +198,7 @@ class TestNetworkBridger(unittest.TestCase):
 
         # Equality check
         self.assertEqual(4094, ret_val.vlan)
-        self.assertEqual(True, ret_val.tagged)
+        self.assertTrue(ret_val.tagged)
 
         # Make sure the delete was called
         self.assertEqual(1, mock_adpt.delete_by_href.call_count)
