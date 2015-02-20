@@ -181,13 +181,12 @@ class TestNetworkBridger(unittest.TestCase):
     def test_find_or_create_vnet(self, mock_adpt):
         """Validates that a vnet is created (and deleted) as part of find."""
         # Load the data
-        vnets = pvm_net.VirtualNetwork.load_from_response(self.mgr_vnet_resp)
+        vnets = pvm_net.VNet.load_from_response(self.mgr_vnet_resp)
         vsw = pvm_net.VirtualSwitch.load_from_response(self.mgr_vsw_resp)[0]
         host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
 
         # Set up the mock create
-        resp = pvm_net.VirtualNetwork.new_instance('FakeName', 4094, vsw.href,
-                                                   True)
+        resp = pvm_net.VNet.new('FakeName', 4094, vsw.href, True)
         mock_resp = mock.MagicMock()
         mock_resp.entry = resp._entry
         mock_adpt.create.return_value = mock_resp

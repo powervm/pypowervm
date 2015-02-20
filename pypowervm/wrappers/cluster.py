@@ -40,22 +40,21 @@ N_VIOS_LINK = c.VIOS
 N_MTMS = 'MachineTypeModelAndSerialNumber'
 
 
-class Cluster(ewrap.EntryWrapper):
+class Clust(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
     schema_type = c.CLUSTER
     has_metadata = True
 
     @classmethod
-    def new_instance(cls, name=None, repos_pv=None, node_list=()):
-        """Create a fresh Cluster EntryWrapper.
+    def new(cls, name=None, repos_pv=None, node_list=()):
+        """Create a fresh Clust EntryWrapper.
 
         :param name: String name for the Cluster.
-        :param repos_pv: storage.PhysicalVolume representing the repository
-                         disk.
+        :param repos_pv: storage.PV representing the repository disk.
         :param node_list: Iterable of Node wrappers representing the VIOS(es)
         to host the Cluster.  Each VIOS must be able to see each disk.  Note
-        that this must contain exactly one Node if this Cluster wrapper is to
+        that this must contain exactly one Node if this Clust wrapper is to
         be used to create a new Cluster/SharedStoragePool pair.
         """
         # The order of these assignments IS significant.
@@ -102,19 +101,19 @@ class Cluster(ewrap.EntryWrapper):
         """
         repos_elem = self._find_or_seed(CL_REPOPVS)
         pv_list = repos_elem.findall(CL_PV)
-        # Check only relevant when building up a Cluster wrapper internally
+        # Check only relevant when building up a Clust wrapper internally
         if pv_list and len(pv_list) == 1:
-            return stor.PhysicalVolume(pv_list[0])
+            return stor.PV(pv_list[0])
         return None
 
     @repos_pv.setter
     def repos_pv(self, pv):
-        """Set the (single) PhysicalVolume member of RepositoryDisk.
+        """Set the (single) PV member of RepositoryDisk.
 
         You cannot change the repository disk of a live Cluster.  This setter
         is useful only when constructing new Clusters.
 
-        :param pv: The PhysicalVolume (NOT a list) to set.
+        :param pv: The PV (NOT a list) to set.
         """
         self.replace_list(CL_REPOPVS, [pv])
 
@@ -149,8 +148,7 @@ class Node(ewrap.ElementWrapper):
     has_metadata = True
 
     @classmethod
-    def new_instance(cls,
-                     hostname=None, lpar_id=None, mtms=None, vios_uri=None):
+    def new(cls, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
         """Create a fresh Node ElementWrapper.
 
         :param hostname: String hostname (or IP) of the Node.
@@ -205,7 +203,7 @@ class Node(ewrap.ElementWrapper):
         """
         el = self._find_or_seed(N_MTMS)
         if not isinstance(new_mtms, ms.MTMS):
-            new_mtms = ms.MTMS.new_instance(new_mtms)
+            new_mtms = ms.MTMS.new(new_mtms)
         self._element.replace(el, new_mtms._element)
 
     @property

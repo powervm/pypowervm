@@ -17,21 +17,21 @@
 import unittest
 
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.client_network_adapter as cna
+import pypowervm.wrappers.network as net
 
 
-class TestClientNetworkAdapterWrapper(twrap.TestWrapper):
+class TestCNAWrapper(twrap.TestWrapper):
 
     file = 'fake_cna.txt'
-    wrapper_class_to_test = cna.ClientNetworkAdapter
+    wrapper_class_to_test = net.CNA
 
     def setUp(self):
-        super(TestClientNetworkAdapterWrapper, self).setUp()
+        super(TestCNAWrapper, self).setUp()
         self.assertIsNotNone(self.entries.etag)
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = cna.ClientNetworkAdapter.new_instance(1, "fake_vs")
+        test = net.CNA.new(1, "fake_vs")
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertFalse(test.is_tagged_vlan_supported)
         self.assertEqual([], test.tagged_vlans)
@@ -42,9 +42,8 @@ class TestClientNetworkAdapterWrapper(twrap.TestWrapper):
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = cna.ClientNetworkAdapter.new_instance(
-            5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff", slot_num=5,
-            addl_tagged_vlans=[6, 7, 8, 9])
+        test = net.CNA.new(5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
+                           slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertTrue(test.is_tagged_vlan_supported)
         self.assertEqual([6, 7, 8, 9], test.tagged_vlans)

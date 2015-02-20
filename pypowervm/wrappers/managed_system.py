@@ -37,7 +37,7 @@ def find_entry_by_mtms(resp, mtms):
     :return: The ManagedSystem wrapper from the response that matches that
              value.  None otherwise.
     """
-    mtms_w = MTMS.new_instance(mtms)
+    mtms_w = MTMS.new(mtms)
     entries = resp.feed.findentries(c.MACHINE_SERIAL, mtms_w.serial)
     if entries is None:
         return None
@@ -209,7 +209,7 @@ class MTMS(ewrap.ElementWrapper):
     has_metadata = True
 
     @classmethod
-    def new_instance(cls, mtms):
+    def new(cls, mtms):
         """Parses a MTMS String into an MTMS Wrapper.
 
         :param mtms: String representation of Machine Type, Model, and Serial

@@ -33,8 +33,8 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
     :param adapter: The pypowervm.adapter.Adapter for REST communication.
     :param clust_name: String name for the Cluster.
     :param ssp_name: String name for the SharedStoragePool.
-    :param repos_pv: storage.PhysicalVolume representing the repository hdisk.
-                     The name and udid properties must be specified.
+    :param repos_pv: storage.PV representing the repository hdisk. The name and
+                     udid properties must be specified.
     :param first_node: cluster.Node representing the initial VIOS in the
                        cluster. (Cluster creation must be done with a single
                        node; other nodes may be added later.)  The Node wrapper
@@ -42,19 +42,18 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
                        o mtms, lpar_id, AND hostname; or
                        o vios_uri
                        The indicated node must be able to see each disk.
-    :param data_pv_list: Iterable of storage.PhysicalVolume instances to
-    use as the data volume(s) for the SharedStoragePool.
+    :param data_pv_list: Iterable of storage.PV instances to use as the data
+                         volume(s) for the SharedStoragePool.
     """
     # Pull down the ClusterCreate Job template
     jresp = adapter.read(c.CLUSTER, suffix_type=c.SUFFIX_TYPE_DO,
                          suffix_parm='Create')
     jwrap = job.Job(jresp.entry)
 
-    cluster = clust.Cluster.new_instance(
+    cluster = clust.Clust.new(
         name=clust_name, repos_pv=repos_pv, node_list=[first_node])
 
-    ssp = stor.SharedStoragePool.new_instance(
-        name=ssp_name, data_pv_list=data_pv_list)
+    ssp = stor.SSP.new(name=ssp_name, data_pv_list=data_pv_list)
 
     # Job parameters are CDATA containing XML of above
     jparams = [

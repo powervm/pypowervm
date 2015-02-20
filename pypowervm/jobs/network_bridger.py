@@ -92,7 +92,7 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
     vswitch_w = _find_vswitch(adapter, host_uuid, req_nb.vswitch_id)
     vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                                   child_type=pvm_net.VNET_ROOT)
-    vnets = pvm_net.VirtualNetwork.load_from_response(vnet_resp_feed)
+    vnets = pvm_net.VNet.load_from_response(vnet_resp_feed)
     vid_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, vlan_id,
                                     vswitch_w, tagged=True)
 
@@ -144,7 +144,7 @@ def _find_vswitch(adapter, host_uuid, vswitch_id):
 
 def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
                          tagged=True):
-    """Will find (or create) the VirtualNetwork.
+    """Will find (or create) the VNet.
 
     If the VirtualNetwork already exists but has a different tag attribute,
     this method will delete the old virtual network, and then recreate with
@@ -156,7 +156,7 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     :param vlan: The VLAN to find.
     :param vswitch: The vSwitch wrapper.
     :param tagged: True if tagged traffic will flow through this network.
-    :return: The VirtualNetwork wrapper for this element.
+    :return: The VNet wrapper for this element.
     """
     # Look through the list of vnets passed in
     for vnet in vnets:
@@ -172,11 +172,10 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     # Could not find one.  Time to create it.
     name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                         'vswitch': vswitch.name}
-    vnet_elem = pvm_net.VirtualNetwork.new_instance(name, vlan, vswitch.href,
-                                                    tagged)
+    vnet_elem = pvm_net.VNet.new(name, vlan, vswitch.href, tagged)
     resp = adapter.create(vnet_elem, pvm_ms.MS_ROOT, host_uuid,
                           pvm_net.VNET_ROOT)
-    return pvm_net.VirtualNetwork.load_from_response(resp)
+    return pvm_net.VNet.load_from_response(resp)
 
 
 def _find_available_ld_grp(nb):
@@ -254,7 +253,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     vswitch_w = _find_vswitch(adapter, host_uuid, impacted_nb.vswitch_id)
     vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                                   child_type=pvm_net.VNET_ROOT)
-    vnets = pvm_net.VirtualNetwork.load_from_response(vnet_resp_feed)
+    vnets = pvm_net.VNet.load_from_response(vnet_resp_feed)
 
     # Read the old virtual network
     old_uri = _find_vnet_uri_from_lg(adapter, impacted_lg, old_vid)
@@ -390,7 +389,7 @@ def _find_vnet_uri_from_lg(adapter, lg, vlan):
     """
     for vnet_uri in lg.virtual_network_uri_list:
         vnet_resp = adapter.read_by_href(vnet_uri)
-        vnet_net = pvm_net.VirtualNetwork.load_from_response(vnet_resp)
+        vnet_net = pvm_net.VNet.load_from_response(vnet_resp)
         if vnet_net.vlan == vlan:
             return vnet_net.href
     return None

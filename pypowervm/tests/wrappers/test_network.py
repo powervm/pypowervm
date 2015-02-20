@@ -27,7 +27,7 @@ VSWITCH_FEED_FILE = 'fake_vswitch_feed.txt'
 class TestVNetwork(twrap.TestWrapper):
 
     file = 'fake_virtual_network_feed.txt'
-    wrapper_class_to_test = net_br.VirtualNetwork
+    wrapper_class_to_test = net_br.VNet
 
     def test_vnet(self):
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/'
@@ -44,9 +44,8 @@ class TestVNetwork(twrap.TestWrapper):
         self.assertEqual('Test', self.dwrap.name)
 
     def test_vnet_new(self):
-        """Tests the method that returns a VirtualNetwork ElementWrapper."""
-        vn_w = net_br.VirtualNetwork.new_instance('name', 10, 'vswitch_uri',
-                                                  True)
+        """Tests the method that returns a VNet ElementWrapper."""
+        vn_w = net_br.VNet.new('name', 10, 'vswitch_uri', True)
         self.assertEqual('name', vn_w.name)
         self.assertEqual(10, vn_w.vlan)
         self.assertTrue(vn_w.tagged)

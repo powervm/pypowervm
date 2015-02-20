@@ -89,8 +89,8 @@ class TestClusterSSP(unittest.TestCase):
         node.lpar_id = 5
         node.vios_uri = ('https://a.example.com:12443/rest/api/uom/VirtualIOSe'
                          'rver/12345678-1234-1234-1234-123456789012')
-        repos = stor.PhysicalVolume.new_instance(name='repos_pv_name')
-        data = [stor.PhysicalVolume.new_instance(name=n) for n in (
+        repos = stor.PV.new(name='repos_pv_name')
+        data = [stor.PV.new(name=n) for n in (
             'hdisk1', 'hdisk2', 'hdisk3')]
         cs.crt_cluster_ssp(mock_adp, 'clust_name', 'ssp_name', repos,
                            node, data)
