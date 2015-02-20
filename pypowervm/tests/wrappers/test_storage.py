@@ -116,7 +116,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, len(phys_vols))
 
         phys_v = stor.crt_phys_vol('disk1')
-        phys_vol = stor.PhysicalVolume(phys_v)
+        phys_vol = stor.PV(phys_v)
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
@@ -174,7 +174,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 class TestSharedStoragePool(twrap.TestWrapper):
 
     file = 'ssp.txt'
-    wrapper_class_to_test = stor.SharedStoragePool
+    wrapper_class_to_test = stor.SSP
 
     def test_name(self):
         self.assertEqual(self.dwrap.name, 'neossp1')
@@ -215,9 +215,9 @@ class TestSharedStoragePool(twrap.TestWrapper):
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):
-        ssp = stor.SharedStoragePool.new_instance(
+        ssp = stor.SSP.new(
             name='myssp',
-            data_pv_list=[stor.PhysicalVolume.new_instance(name=n) for n in (
+            data_pv_list=[stor.PV.new(name=n) for n in (
                 'hdisk123', 'hdisk132', 'hdisk213', 'hdisk231', 'hdisk312',
                 'hdisk321')])
         self.assertEqual(ssp.name, 'myssp')
@@ -226,6 +226,6 @@ class TestSharedStoragePool(twrap.TestWrapper):
         pvs = ssp.physical_volumes
         self.assertEqual(len(pvs), 6)
         pv = pvs[3]  # hdisk231
-        self.assertEqual(pv.pvm_type, wc.PV)
+        self.assertEqual(pv.pvm_type, stor.PV.schema_type)
         self.assertEqual(pv.schema_ns, pc.UOM_NS)
         self.assertEqual(pv.name, 'hdisk231')
