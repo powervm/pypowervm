@@ -444,12 +444,23 @@ class LoadGroup(ewrap.ElementWrapper):
             new_elems.append(adpt.Element('link', attrib={'href': item,
                                                           'rel': 'related'}))
         new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
-        self._element.replace(self._element.find(LG_VNETS), new_vnet_elem)
+        old_elems = self._element.find(LG_VNETS)
+        # This is a bug where the API isn't returning vnets if just a PVID
+        # on additional VEA
+        if old_elems is not None:
+            self._element.replace(old_elems, new_vnet_elem)
+        else:
+            self._element.append(new_vnet_elem)
 
         # If the Network Bridge was set, tell it to rebuild its VirtualNetwork
         # list.
         if self._nb_root is not None:
             self._nb_root._rebuild_vnet_list()
+
+    @property
+    def tagged_vlans(self):
+        """The VLANs supported by this Load Group.  Does not include PVID."""
+        return self.trunk_adapters[0].tagged_vlans
 
 
 class VirtualNetwork(ewrap.EntryWrapper):

@@ -105,7 +105,6 @@ BODY{
                 </TrunkAdapter>
             </TrunkAdapters>
             <VirtualNetworks kb="CUD" kxe="false">
-            	<link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/9b61c184-6878-36bf-88ea-dc4a61148316" rel="related"/>
                 <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae" rel="related"/>
             </VirtualNetworks>
         </LoadGroup>
@@ -209,7 +208,6 @@ BODY{
     <UniqueDeviceID kb="ROR" kxe="false">0</UniqueDeviceID>
     <VirtualNetworks kb="ROR" kxe="false">
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/36cf4d94-d682-3962-bc86-acad65af6fbf" rel="related"/>
-        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/9b61c184-6878-36bf-88ea-dc4a61148316" rel="related"/>
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae" rel="related"/>
     </VirtualNetworks>
 </NetworkBridge:NetworkBridge>
