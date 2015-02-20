@@ -57,37 +57,13 @@ LG_PVID = 'PortVLANID'
 LG_TRUNKS = 'TrunkAdapters'
 LG_VNETS = 'VirtualNetworks'
 
-VNET_ROOT = 'VirtualNetwork'
+VNET_ROOT = c.VNET
 VNETS_ROOT = 'VirtualNetworks'
 VNET_ASSOC_SW = 'AssociatedSwitch'
 VNET_NET_NAME = 'NetworkName'
 VNET_VLAN_ID = 'NetworkVLANID'
 VNET_SW_ID = 'VswitchID'
 VNET_TAG = 'TaggedNetwork'
-
-
-def crt_vnet(name, vlan_id, vswitch_uri, tagged):
-    """Creates the VirtualNetwork that can be used for a create operation.
-
-    This is used when creating a new Virtual Network within the system
-
-    :param name: The name for the virtual network.
-    :param vlan_id: The VLAN identifier (1 to 4094) for the network.
-    :param vswitch_uri: The URI that points to the appropriate vSwitch.
-    :param tagged: True if the packet should have the VLAN tag when it leaves
-                   the system.  False if the tag should only be on the packets
-                   while in the system (but tag-less when on the physical
-                   network).
-    :returns: The Element that represents the new VirtualNetwork.
-    """
-    tagged = util.sanitize_bool_for_api(tagged)
-    children = [adpt.Element(VNET_ASSOC_SW, attrib={'href': vswitch_uri,
-                                                    'rel': 'related'}),
-                adpt.Element(VNET_NET_NAME, text=name),
-                adpt.Element(VNET_VLAN_ID, text=str(vlan_id)),
-                adpt.Element(VNET_TAG, text=tagged)]
-    return adpt.Element(VNET_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
-                        children=children)
 
 
 def crt_load_group(pvid, vnet_uris):
@@ -466,9 +442,44 @@ class LoadGroup(ewrap.ElementWrapper):
 class VirtualNetwork(ewrap.EntryWrapper):
     """The overall definition of a VLAN network within the hypervisor."""
 
+    schema_type = c.VNET
+    has_metadata = True
+
+    @classmethod
+    def new_instance(cls, name=None, vlan_id=None, vswitch_uri=None,
+                     tagged=None):
+        """Creates a VirtualNetwork that can be used for a create operation.
+
+        This is used when creating a new Virtual Network within the system
+
+        :param name: The name for the virtual network.
+        :param vlan_id: The VLAN identifier (1 to 4094) for the network.
+        :param vswitch_uri: The URI that points to the appropriate vSwitch.
+        :param tagged: True if packets should have VLAN tags when they leave
+                       the system.  False if tags should only be on the packets
+                       while in the system (but tag-less when on the physical
+                       network).
+        :returns: The ElementWrapper that represents the new VirtualNetwork.
+        """
+        vnet = cls()
+        # Assignment order matters
+        if vswitch_uri is not None:
+            vnet.associated_switch_uri = vswitch_uri
+        if name is not None:
+            vnet.name = name
+        if vlan_id is not None:
+            vnet.vlan = vlan_id
+        if tagged is not None:
+            vnet.tagged = tagged
+        return vnet
+
     @property
     def associated_switch_uri(self):
         return self.get_href(VNET_ASSOC_SW, one_result=True)
+
+    @associated_switch_uri.setter
+    def associated_switch_uri(self, uri):
+        self.set_href(VNET_ASSOC_SW, uri)
 
     @property
     def name(self):
@@ -482,9 +493,13 @@ class VirtualNetwork(ewrap.EntryWrapper):
     def vlan(self):
         return self._get_val_int(VNET_VLAN_ID)
 
+    @vlan.setter
+    def vlan(self, vlan_id):
+        self.set_parm_value(VNET_VLAN_ID, vlan_id)
+
     @property
     def vswitch_id(self):
-        """The vSwitch identifier.  0 through 15 (max number vSwitches).
+        """The vSwitch identifier (int).  0 through 15 (max number vSwitches).
 
         Is not a UUID.
         """
@@ -492,5 +507,9 @@ class VirtualNetwork(ewrap.EntryWrapper):
 
     @property
     def tagged(self):
-        """If true, the VLAN tag is preserved when the packet leaves system."""
+        """If True, the VLAN tag is preserved when the packet leaves system."""
         return self._get_val_bool(VNET_TAG)
+
+    @tagged.setter
+    def tagged(self, is_tagged):
+        self.set_parm_value(VNET_TAG, util.sanitize_bool_for_api(is_tagged))
