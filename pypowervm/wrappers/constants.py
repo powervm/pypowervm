@@ -44,6 +44,7 @@ VSWITCH = 'VirtualSwitch'
 CLUSTER = 'Cluster'
 CLUST_NODE = 'Node'
 SSP = 'SharedStoragePool'
+CNA = 'ClientNetworkAdapter'
 
 NEXT_SLOT = 'UseNextAvailableSlotID'
 
@@ -310,8 +311,6 @@ TRUNK_PRIORITY = ROOT + 'TrunkPriority'
 LOAD_GROUPS = ROOT + 'LoadGroups'
 LOAD_GROUP = LOAD_GROUPS + DELIM + 'LoadGroup'
 
-# TODO(efried): .//MACAddress ?
-MAC_ADDRESS = ROOT + DELIM + 'MACAddress'
 # like vhost0
 ADAPTER_NAME = 'AdapterName'
 # Storage mapping names and path

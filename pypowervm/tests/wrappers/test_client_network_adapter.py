@@ -31,35 +31,28 @@ class TestClientNetworkAdapterWrapper(twrap.TestWrapper):
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = cna.crt_cna(1, "fake_vs")
-        self.assertEqual('fake_vs',
-                         test.find('AssociatedVirtualSwitch/link')
-                         .attrib['href'])
-        self.assertEqual('false',
-                         test.find(cna.VADPT_TAGGED_VLAN_SUPPORT).text)
-        self.assertIsNone(test.find(cna.VADPT_TAGGED_VLANS))
-        self.assertIsNotNone(test.find('UseNextAvailableSlotID'))
-        self.assertEqual('true',
-                         test.find('UseNextAvailableSlotID').text)
-        self.assertIsNone(test.find(cna.VADPT_MAC_ADDR))
-        self.assertEqual('1', test.find(cna.VADPT_PVID).text)
+        test = cna.ClientNetworkAdapter.new_instance(1, "fake_vs")
+        self.assertEqual('fake_vs', test.vswitch_uri)
+        self.assertFalse(test.is_tagged_vlan_supported)
+        self.assertEqual([], test.tagged_vlans)
+        self.assertIsNotNone(test.use_next_avail_slot_id)
+        self.assertTrue(test.use_next_avail_slot_id)
+        self.assertIsNone(test.mac)
+        self.assertEqual(1, test.pvid)
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = cna.crt_cna(5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
-                           slot_num=5, addl_tagged_vlans='6 7 8 9')
-        self.assertEqual('fake_vs',
-                         test.find('AssociatedVirtualSwitch/link')
-                         .attrib['href'])
-        self.assertEqual('true',
-                         test.find(cna.VADPT_TAGGED_VLAN_SUPPORT).text)
-        self.assertEqual('6 7 8 9',
-                         test.find(cna.VADPT_TAGGED_VLANS).text)
-        self.assertEqual('5', test.find(cna.VADPT_SLOT_NUM).text)
-        self.assertIsNone(test.find('UseNextAvailableSlotID'))
-        self.assertIsNotNone(test.find(cna.VADPT_MAC_ADDR))
-        self.assertEqual("AABBCCDDEEFF", test.find(cna.VADPT_MAC_ADDR).text)
-        self.assertEqual('5', test.find(cna.VADPT_PVID).text)
+        test = cna.ClientNetworkAdapter.new_instance(
+            5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff", slot_num=5,
+            addl_tagged_vlans=[6, 7, 8, 9])
+        self.assertEqual('fake_vs', test.vswitch_uri)
+        self.assertTrue(test.is_tagged_vlan_supported)
+        self.assertEqual([6, 7, 8, 9], test.tagged_vlans)
+        self.assertEqual(5, test.slot)
+        self.assertFalse(test.use_next_avail_slot_id)
+        self.assertIsNotNone(test.mac)
+        self.assertEqual("AABBCCDDEEFF", test.mac)
+        self.assertEqual(5, test.pvid)
 
     def test_attrs(self):
         """Test getting the attributes."""
