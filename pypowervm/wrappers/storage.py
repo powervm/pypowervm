@@ -113,7 +113,7 @@ def crt_virtual_disk_obj(name, capacity, label=None):
 def crt_phys_vol(name):
     """Creates the Element structure needed for a PhysicalVolume.
 
-    The response Element can be wrapped into a PhysicalVolume object.
+    The response Element can be wrapped into a PV object.
 
     This should be used when wishing to add physical volumes to a Volume
     Group.  Only the name is required.  The other attributes are generated
@@ -220,15 +220,15 @@ class VolumeGroup(ewrap.EntryWrapper):
     @property
     def phys_vols(self):
         """Returns a list of the Physical Volumes that back this repo."""
-        es = ewrap.WrapperElemList(self._find_or_seed(VG_PHS_VOLS),
-                                   PV_ROOT, PhysicalVolume)
+        es = ewrap.WrapperElemList(self._find_or_seed(VG_PHS_VOLS), PV_ROOT,
+                                   PV)
         return es
 
     @phys_vols.setter
     def phys_vols(self, phys_vols):
         """Replaces the physical volumes with the new value.
 
-        :param phys_vols: A list of PhysicalVolume objects that will replace
+        :param phys_vols: A list of PV objects that will replace
                           the existing Physcial Volumes.
         """
         self.replace_list(VG_PHS_VOLS, phys_vols)
@@ -301,14 +301,14 @@ class VirtualOpticalMedia(ewrap.ElementWrapper):
         return self._get_val_str(VOPT_MOUNT_TYPE)
 
 
-class PhysicalVolume(ewrap.ElementWrapper):
+class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
     schema_type = c.PV
     has_metadata = True
 
     @classmethod
-    def new_instance(cls, udid=None, name=None):
+    def new(cls, udid=None, name=None):
         pv = cls()
         # Assignment order is significant
         if udid:
@@ -411,18 +411,18 @@ class LogicalUnit(ewrap.ElementWrapper):
         return self._get_val_bool(LU_THIN)
 
 
-class SharedStoragePool(ewrap.EntryWrapper):
+class SSP(ewrap.EntryWrapper):
     """A Shared Storage Pool containing PVs and LUs."""
 
     schema_type = c.SSP
     has_metadata = True
 
     @classmethod
-    def new_instance(cls, name=None, data_pv_list=()):
-        """Create a fresh SharedStoragePool EntryWrapper.
+    def new(cls, name=None, data_pv_list=()):
+        """Create a fresh SSP EntryWrapper.
 
         :param name: String name for the SharedStoragePool.
-        :param data_pv_list: Iterable of storage.PhysicalVolume instances
+        :param data_pv_list: Iterable of storage.PV instances
                              representing the data volumes for the
                              SharedStoragePool.
         """
@@ -473,9 +473,8 @@ class SharedStoragePool(ewrap.EntryWrapper):
 
     @property
     def physical_volumes(self):
-        """WrapperElemList of PhysicalVolume wrappers."""
-        return ewrap.WrapperElemList(self._find_or_seed(SSP_PVS),
-                                     SSP_PV, PhysicalVolume)
+        """WrapperElemList of PV wrappers."""
+        return ewrap.WrapperElemList(self._find_or_seed(SSP_PVS), SSP_PV, PV)
 
     @physical_volumes.setter
     def physical_volumes(self, pvs):
