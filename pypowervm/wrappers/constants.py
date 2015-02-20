@@ -45,6 +45,7 @@ CLUSTER = 'Cluster'
 CLUST_NODE = 'Node'
 SSP = 'SharedStoragePool'
 CNA = 'ClientNetworkAdapter'
+VNET = 'VirtualNetwork'
 
 NEXT_SLOT = 'UseNextAvailableSlotID'
 

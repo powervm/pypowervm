@@ -95,7 +95,8 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
     # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
-    vnet = network.crt_vnet(name, vlan, vswitch_href, tagged)
+    vnet = network.VirtualNetwork.new_instance(name, vlan, vswitch_href,
+                                               tagged)
     crt_resp = adapter.create(vnet, c.MGT_SYS, root_id=host_uuid,
                               child_type=network.VNET_ROOT)
     return network.VirtualNetwork.load_from_response(crt_resp)
