@@ -33,7 +33,7 @@ class TestWrapper(unittest.TestCase):
     o Provide the name of the data file to load, e.g.
         file = 'ssp.txt'
     o Indicate the wrapper class to be tested, e.g.
-        wrapper_class_to_test = clust.SharedStoragePool
+        wrapper_class_to_test = clust.SSP
     o No __init__ or setUp is necessary.
     o In your test cases, make use of the following variables:
         - self.resp: The raw Response object from
