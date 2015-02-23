@@ -25,6 +25,115 @@ from pypowervm.wrappers import network as pvm_net
 MAX_VLANS_PER_VEA = 20
 
 
+def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
+    """Will make sure that the VLANs are assigned to the Network Bridge.
+
+    This method will reorder the arbitrary VLAN IDs as needed (those which are
+    the PVID of the VEAs, but not the primary VEA).
+
+    VLANs are always added to VEAs that are 'non-primary' (not the first VEA).
+    However, if the VLAN is on the primary VEA then it is left on the system.
+    The only 'untagged' VLAN that is allowed is the primary VEA's PVID.
+
+    If the VLAN specified is on another Network Bridge's VEA (which happens
+    to be on the same virtual switch):
+     - An error will be thrown if it is on the primary VEA.
+     - It will be removed off the Network Bridge if it is on the non-primary
+       VEA.
+
+    This method will not remove VLAN IDs from the network bridge that aren't
+    part of the vlan_ids list.  Instead, each VLAN is simply added to the
+    Network Bridge's VLAN list.
+
+    :param adapter: The pypowervm Adapter.
+    :param host_uuid: The Server's UUID
+    :param nb_uuid: The Network Bridge UUID.
+    :param vlans_id: The list of VLANs to ensure are on the Network Bridge.
+    """
+    # Get the updated feed of NetworkBridges
+    nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
+                           child_type=pvm_net.NB_ROOT)
+    nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
+
+    # Find the appropriate Network Bridge
+    req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
+
+    # Call down to the ensure_vlan_on_nb method only for the additions.
+    new_vlans = []
+    peer_nbs = _find_peer_nbs(nb_wraps, req_nb)
+    all_nbs_on_vs = [req_nb]
+    all_nbs_on_vs.extend(peer_nbs)
+
+    # Need to evaluate the status of each VLAN.
+    for vlan_id in vlan_ids:
+        # No action required.  The VLAN is already part of the bridge.
+        if req_nb.supports_vlan(vlan_id):
+            continue
+
+        # If its supported by a peer...
+        for peer_nb in peer_nbs:
+            if peer_nb.supports_vlan(vlan_id):
+                # Remove the VLAN.
+                remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
+                                    fail_if_pvid=True, existing_nbs=nb_wraps)
+                break
+
+        # If it is an arbitrary VLAN ID on our network.  This should be very
+        # rare.  But if it does happen, we should re-order the VLANs and then
+        # retry this whole method.
+        if _is_arbitrary_vid(vlan_id, all_nbs_on_vs):
+            # Find a new arbitrary VLAN ID, and re-assign the original value
+            # to this new one.
+            new_a_vid = _find_new_arbitrary_vid(all_nbs_on_vs, others=vlan_ids)
+            _reassign_arbitrary_vid(adapter, host_uuid, vlan_id, new_a_vid,
+                                    req_nb)
+            return ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids)
+
+        # Lastly, if we're here...it must be a completely new VLAN.
+        new_vlans.append(vlan_id)
+
+    # If there are no new VLANs, no need to continue.
+    if len(new_vlans) == 0:
+        return
+
+    # At this point, all of the new VLANs that need to be added are in the
+    # new_vlans list.  Now we need to put them on load groups.
+    vswitch_w = _find_vswitch(adapter, host_uuid, req_nb.vswitch_id)
+    vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
+                                  child_type=pvm_net.VNET_ROOT)
+    vnets = pvm_net.VirtualNetwork.load_from_response(vnet_resp_feed)
+
+    for vlan_id in new_vlans:
+        ld_grp = _find_available_ld_grp(req_nb)
+        vid_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, vlan_id,
+                                        vswitch_w, tagged=True)
+        if ld_grp is None:
+            # No load group means they're all full.  Need to create a new Load
+            # Group.
+            #
+            # First, create a new 'non-tagging' virtual network
+            arb_vid = _find_new_arbitrary_vid(all_nbs_on_vs, others=[vlan_id])
+            arb_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, arb_vid,
+                                            vswitch_w, tagged=False)
+
+            # Now create the new load group...
+            vnet_uris = [arb_vnet.href, vid_vnet.href]
+            ld_grp = pvm_net.LoadGroup(pvm_net.crt_load_group(arb_vid,
+                                                              vnet_uris))
+
+            # Append to network bridge...
+            req_nb.load_grps.append(ld_grp)
+        else:
+            # There was a Load Group.  Just need to append this vnet to it.
+            ld_grp.virtual_network_uri_list.append(vid_vnet.href)
+
+    # At this point, the network bridge should just need to be updated.  The
+    # Load Groups on the Network Bridge should be correct.
+    adapter.update(req_nb._element, req_nb.etag, pvm_ms.MS_ROOT,
+                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
+                   child_id=req_nb.uuid)
+
+
 @pvm_retry.retry()
 def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
     """Will make sure that the VLAN is assigned to the Network Bridge.
@@ -47,84 +156,7 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
     :param nb_uuid: The Network Bridge UUID.
     :param vlan_id: The VLAN identifier to ensure is on the system.
     """
-    # Get the updated feed of NetworkBridges
-    nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                           child_type=pvm_net.NB_ROOT)
-    nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
-
-    # Find the appropriate Network Bridge
-    req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
-
-    # If the VLAN is already on the SEA, no action
-    if req_nb.supports_vlan(vlan_id):
-        return
-
-    # If not, we need to find out if another SEA has the VLAN.  This should
-    # be done within the virtual switch boundary.
-    peer_nbs = _find_peer_nbs(nb_wraps, req_nb)
-    for peer_nb in peer_nbs:
-        if peer_nb.supports_vlan(vlan_id):
-            # We need to remove that VLAN.
-            remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
-                                fail_if_pvid=True, existing_nbs=nb_wraps)
-            break
-
-    # Determine if this VLAN is an arbitrary VID on any peer NB.  If so, we
-    # need to re-order the arbitrary VID out.
-    all_nbs_on_vs = [req_nb]
-    all_nbs_on_vs.extend(peer_nbs)
-    if _is_arbitrary_vid(vlan_id, all_nbs_on_vs):
-        # Find a new arbitrary VLAN ID, and re-assign the original value
-        # to this new one.
-        new_a_vid = _find_new_arbitrary_vid(all_nbs_on_vs)
-        _reassign_arbitrary_vid(adapter, host_uuid, vlan_id, new_a_vid, req_nb)
-
-        # At this point, we should restart this method (which won't hit this
-        # block again) so we regenerate the data and etags.
-        return ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id)
-
-    # At this point, we need to create a new Virtual Network and put it on
-    # the NetworkBridge.
-    #
-    # This is where it starts to get expensive.  Feeds for multiple objects
-    # are needed.
-    #
-    # Start by building (or finding) the virtual network for the vlan being
-    # requested.
-    vswitch_w = _find_vswitch(adapter, host_uuid, req_nb.vswitch_id)
-    vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                                  child_type=pvm_net.VNET_ROOT)
-    vnets = pvm_net.VirtualNetwork.load_from_response(vnet_resp_feed)
-    vid_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, vlan_id,
-                                    vswitch_w, tagged=True)
-
-    # Now find the appropriate Load Group that the virtual network can
-    # be added to.
-    ld_grp = _find_available_ld_grp(req_nb)
-    if ld_grp is None:
-        # No load group means they're all full.  Need to create a new Load
-        # Group.
-        #
-        # First, create a new 'non-tagging' virtual network
-        arb_vid = _find_new_arbitrary_vid(all_nbs_on_vs, others=[vlan_id])
-        arb_vnet = _find_or_create_vnet(adapter, host_uuid, vnets, arb_vid,
-                                        vswitch_w, tagged=False)
-
-        # Now create the new load group...
-        vnet_uris = [arb_vnet.href, vid_vnet.href]
-        ld_grp = pvm_net.LoadGroup(pvm_net.crt_load_group(arb_vid, vnet_uris))
-
-        # Append to network bridge...
-        req_nb.load_grps.append(ld_grp)
-    else:
-        # There was a Load Group.  Just need to append this vnet to it.
-        ld_grp.virtual_network_uri_list.append(vid_vnet.href)
-
-    # At this point, the network bridge should just need to be updated.  The
-    # Load Groups on the Network Bridge should be correct.
-    adapter.update(req_nb._element, req_nb.etag, pvm_ms.MS_ROOT,
-                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
-                   child_id=req_nb.uuid)
+    ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, [vlan_id])
 
 
 def _find_vswitch(adapter, host_uuid, vswitch_id):

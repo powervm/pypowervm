@@ -118,6 +118,47 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(1, mock_adpt.update.call_count)
 
     @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
+    @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_ensure_vlans_on_nb_new_vlan(self, mock_adpt, mock_arb_vid,
+                                         mock_find_vnet):
+        """Validates new VLAN on existing Load Group."""
+        # Build the responses
+        mock_adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+                                      self.mgr_vnet_resp]
+        mock_arb_vid.return_value = False
+        mock_vnet = mock.MagicMock()
+        mock_vnet.href = 'fake_href'
+        mock_find_vnet.return_value = mock_vnet
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            self.assertEqual('ManagedSystem', kargs[2])
+            elem = kargs[0]
+            self.assertIsNotNone(elem)
+            net_br = pvm_net.NetworkBridge(adpt.Entry([], elem))
+            self.assertEqual(1,
+                             len(net_br.load_grps[0].virtual_network_uri_list))
+            self.assertEqual(2,
+                             len(net_br.load_grps[1].virtual_network_uri_list))
+
+            # Validate the named args
+            self.assertEqual('host_uuid', kwargs.get('root_id'))
+            self.assertEqual('NetworkBridge', kwargs.get('child_type'))
+            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
+                             kwargs.get('child_id'))
+
+        mock_adpt.update.side_effect = validate_of_update_nb
+
+        # Invoke.  VLAN 2227 should be on there already.
+        net_br.ensure_vlans_on_nb(mock_adpt, 'host_uuid',
+                                  'b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
+                                  [2227, 2000])
+
+        # Validate the calls
+        self.assertEqual(1, mock_adpt.update.call_count)
+
+    @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
     @mock.patch('pypowervm.jobs.network_bridger._find_available_ld_grp')
     @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
     @mock.patch('pypowervm.adapter.Adapter')
