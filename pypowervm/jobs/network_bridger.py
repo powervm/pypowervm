@@ -18,12 +18,14 @@ import copy
 
 from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
+from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
 
 MAX_VLANS_PER_VEA = 20
 
 
+@pvm_retry.retry()
 def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
     """Will make sure that the VLAN is assigned to the Network Bridge.
 
@@ -315,6 +317,7 @@ def _find_peer_nbs(nb_wraps, nb):
     return ret
 
 
+@pvm_retry.retry()
 def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
                         fail_if_pvid=False, existing_nbs=None):
     """Will remove the VLAN from a given Network Bridge.
