@@ -282,7 +282,7 @@ class Wrapper(object):
               '%(identifier)s') % {
                 "param": param,
                 "identifier": self.type_and_uuid})
-        LOG.warn(error_message)
+        LOG.debug(error_message)
 
     def get_href(self, propname, one_result=False):
         """Returns the hrefs from AtomLink elements.
