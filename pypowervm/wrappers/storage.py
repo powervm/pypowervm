@@ -177,6 +177,7 @@ def crt_voptical_media(name, size, mount_type='rw'):
 
 class VolumeGroup(ewrap.EntryWrapper):
     """Represents a Volume Group that resides on the Virtual I/O Server."""
+    schema_type = c.VG
 
     @property
     def name(self):
@@ -255,6 +256,8 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
 
     Typically used to store an ISO file for image building.
     """
+    schema_type = c.VIRTUAL_MEDIA_REPOS_ELEM
+    has_metadata = True
 
     @property
     def optical_media(self):
@@ -282,6 +285,8 @@ class VirtualMediaRepository(ewrap.ElementWrapper):
 
 class VirtualOpticalMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
+    schema_type = c.VOPT
+    has_metadata = True
 
     @property
     def media_name(self):
@@ -307,15 +312,13 @@ class PV(ewrap.ElementWrapper):
     schema_type = c.PV
     has_metadata = True
 
-    @classmethod
-    def new(cls, udid=None, name=None):
-        pv = cls()
+    def __init__(self, udid=None, name=None):
+        super(PV, self).__init__()
         # Assignment order is significant
         if udid:
-            pv.udid = udid
+            self.udid = udid
         if name:
-            pv.name = name
-        return pv
+            self.name = name
 
     @property
     def udid(self):
@@ -358,6 +361,8 @@ class PV(ewrap.ElementWrapper):
 
 class VirtualDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
+    schema_type = c.VDISK
+    has_metadata = True
 
     @property
     def name(self):
@@ -387,6 +392,8 @@ class VirtualDisk(ewrap.ElementWrapper):
 
 class LogicalUnit(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool."""
+    schema_type = c.LU
+    has_metadata = True
 
     @property
     def name(self):
@@ -415,10 +422,8 @@ class SSP(ewrap.EntryWrapper):
     """A Shared Storage Pool containing PVs and LUs."""
 
     schema_type = c.SSP
-    has_metadata = True
 
-    @classmethod
-    def new(cls, name=None, data_pv_list=()):
+    def __init__(self, name=None, data_pv_list=()):
         """Create a fresh SSP EntryWrapper.
 
         :param name: String name for the SharedStoragePool.
@@ -426,13 +431,12 @@ class SSP(ewrap.EntryWrapper):
                              representing the data volumes for the
                              SharedStoragePool.
         """
+        super(SSP, self).__init__()
         # Assignment order matters.
-        ssp = cls()
         if data_pv_list:
-            ssp.physical_volumes = data_pv_list
+            self.physical_volumes = data_pv_list
         if name:
-            ssp.name = name
-        return ssp
+            self.name = name
 
     @property
     def name(self):

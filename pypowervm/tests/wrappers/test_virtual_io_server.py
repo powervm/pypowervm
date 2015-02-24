@@ -35,13 +35,13 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.assertEqual(expected_ips, self.dwrap.ip_addresses)
 
     def test_license_accept(self):
-        self.assertEqual(True, self.dwrap.is_license_accepted)
+        self.assertTrue(self.dwrap.is_license_accepted)
 
     def test_is_running(self):
-        self.assertEqual(True, self.dwrap.is_running)
+        self.assertTrue(self.dwrap.is_running)
 
     def test_is_rmc_active(self):
-        self.assertEqual(True, self.dwrap.is_rmc_active)
+        self.assertTrue(self.dwrap.is_rmc_active)
 
     def test_hdisk_reserve_policy_found(self):
         # Most are NoReserve; look for the only one that's SinglePath to make
