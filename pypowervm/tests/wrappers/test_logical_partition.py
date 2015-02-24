@@ -94,10 +94,10 @@ class TestLogicalPartition(unittest.TestCase):
         self.set_shared_test_property_values()
         self.set_dedicated_test_property_values()
 
-        TestLogicalPartition._shared_wrapper = lpar.LogicalPartition(
+        TestLogicalPartition._shared_wrapper = lpar.LogicalPartition.wrap(
             self.TC._shared_entry)
 
-        TestLogicalPartition._dedicated_wrapper = lpar.LogicalPartition(
+        TestLogicalPartition._dedicated_wrapper = lpar.LogicalPartition.wrap(
             self.TC._dedicated_entry)
 
         mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
@@ -107,7 +107,7 @@ class TestLogicalPartition(unittest.TestCase):
 
         # Create a bad wrapper to use when retrieving properties which don't
         # exist
-        TestLogicalPartition._bad_wrapper = lpar.LogicalPartition(
+        TestLogicalPartition._bad_wrapper = lpar.LogicalPartition.wrap(
             mc_http.response.feed.entries[0])
 
         TestLogicalPartition._skip_setup = True
@@ -225,7 +225,7 @@ class TestLogicalPartition(unittest.TestCase):
     def test_get_cna_links(self):
         """Test getting the list of ClientNetworkAdapters."""
         lpar_resp = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE).get_response()
-        lpar_wrapper = lpar.LogicalPartition(lpar_resp.feed.entries[2])
+        lpar_wrapper = lpar.LogicalPartition.wrap(lpar_resp.feed.entries[2])
 
         self.assertEqual(1, len(lpar_wrapper.cna_uris))
 

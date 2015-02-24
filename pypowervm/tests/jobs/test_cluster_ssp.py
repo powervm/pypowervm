@@ -44,7 +44,7 @@ class TestClusterSSP(unittest.TestCase):
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):
             self.assertEqual(entry_type, wc.CLUSTER)
-            job = jwrap.Job(adp.Entry({}, job_el))
+            job = jwrap.Job.wrap(adp.Entry({}, job_el))
             param_vals = job._get_vals(
                 wc.ROOT + wc.DELIM.join(['JobParameters', 'JobParameter',
                                          'ParameterValue']))
@@ -89,8 +89,8 @@ class TestClusterSSP(unittest.TestCase):
         node.lpar_id = 5
         node.vios_uri = ('https://a.example.com:12443/rest/api/uom/VirtualIOSe'
                          'rver/12345678-1234-1234-1234-123456789012')
-        repos = stor.PV.new(name='repos_pv_name')
-        data = [stor.PV.new(name=n) for n in (
+        repos = stor.PV(name='repos_pv_name')
+        data = [stor.PV(name=n) for n in (
             'hdisk1', 'hdisk2', 'hdisk3')]
         cs.crt_cluster_ssp(mock_adp, 'clust_name', 'ssp_name', repos,
                            node, data)

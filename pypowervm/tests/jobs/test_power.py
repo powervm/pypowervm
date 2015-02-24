@@ -16,6 +16,7 @@
 
 import mock
 
+import pypowervm.adapter as adpt
 from pypowervm import exceptions as pexc
 from pypowervm.jobs import power
 
@@ -25,23 +26,28 @@ import unittest
 class TestPower(unittest.TestCase):
     """Unit Tests for Instance Power On/Off."""
 
+    def setUp(self):
+        super(TestPower, self).setUp()
+        mock_resp = mock.MagicMock()
+        mock_resp.entry = adpt.Entry({}, adpt.Element('Dummy'))
+        self.mock_adpt = mock.MagicMock()
+        self.mock_adpt.read.return_value = mock_resp
+
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
-    def test_power_on_off(self, mock_lpar, mock_adpt, mock_job_p,
-                          mock_run_job):
+    def test_power_on_off(self, mock_lpar, mock_job_p, mock_run_job):
         """Performs a simple set of Power On/Off Tests."""
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOn', '1111')
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOn', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(0, mock_job_p.call_count)
-        self.assertEqual(1, mock_adpt.invalidate_cache_elem.call_count)
+        self.assertEqual(1, self.mock_adpt.invalidate_cache_elem.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
-        mock_adpt.reset_mock()
+        self.mock_adpt.reset_mock()
 
         # Try a power off
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOff', '1111')
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(2, mock_job_p.call_count)
         mock_run_job.reset_mock()
@@ -49,7 +55,7 @@ class TestPower(unittest.TestCase):
 
         # Try a power off when the RMC state is active
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOff', '1111')
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
         mock_lpar.reset_mock()
@@ -57,7 +63,7 @@ class TestPower(unittest.TestCase):
         mock_job_p.reset_mock()
 
         # Try a more complex power off
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOff', '1111',
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOff', '1111',
                             force_immediate=True, restart=True, timeout=100)
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(3, mock_job_p.call_count)
@@ -65,7 +71,7 @@ class TestPower(unittest.TestCase):
         mock_job_p.reset_mock()
 
         # Try optional parameters
-        power.power_on(mock_adpt, mock_lpar, '1111',
+        power.power_on(self.mock_adpt, mock_lpar, '1111',
                        add_parms=dict(bootmode=power.BOOTMODE_SMS))
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
@@ -73,9 +79,8 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
-    def test_power_off_timeout_retry(self, mock_lpar, mock_adpt, mock_job_p,
+    def test_power_off_timeout_retry(self, mock_lpar, mock_job_p,
                                      mock_run_job):
         """Validate that when first power off times out, re-run."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
@@ -86,7 +91,7 @@ class TestPower(unittest.TestCase):
         # and fail again.
         self.assertRaises(pexc.VMPowerOffFailure,
                           power._power_on_off,
-                          mock_adpt, mock_lpar, 'PowerOff', '1111')
+                          self.mock_adpt, mock_lpar, 'PowerOff', '1111')
 
         # It should have been called twice, once for the elegant power
         # off, and another for the immediate power off
@@ -94,10 +99,8 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
-    def test_power_off_job_failure(self, mock_lpar, mock_adpt, mock_job_p,
-                                   mock_run_job):
+    def test_power_off_job_failure(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job request failure."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
         mock_run_job.side_effect = pexc.JobRequestFailed(
@@ -107,41 +110,37 @@ class TestPower(unittest.TestCase):
         # and fail again.
         self.assertRaises(pexc.VMPowerOffFailure,
                           power._power_on_off,
-                          mock_adpt, mock_lpar, 'PowerOff', '1111')
+                          self.mock_adpt, mock_lpar, 'PowerOff', '1111')
 
         # This specific error should cause a retry.
         self.assertEqual(2, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
-    def test_power_off_sysoff(self, mock_lpar, mock_adpt, mock_job_p,
-                              mock_run_job):
+    def test_power_off_sysoff(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job when system is already off."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOff', operation_name='HSCL1558')
 
         # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOff', '1111')
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOff', '1111')
 
         # This specific error should cause a retry.
         self.assertEqual(1, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
-    def test_power_on_syson(self, mock_lpar, mock_adpt, mock_job_p,
-                            mock_run_job):
+    def test_power_on_syson(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power on job when system is already on."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOn', operation_name='HSCL3681')
 
         # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_adpt, mock_lpar, 'PowerOn', '1111')
+        power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOn', '1111')
 
         # This specific error should cause a retry.
         self.assertEqual(1, mock_run_job.call_count)

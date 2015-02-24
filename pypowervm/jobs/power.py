@@ -100,7 +100,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
         while not complete:
             resp = adapter.read(c.LPAR, uuid, suffix_type=c.SUFFIX_TYPE_DO,
                                 suffix_parm=suffix)
-            job_wrapper = job.Job(resp.entry)
+            job_wrapper = job.Job.wrap(resp.entry)
             job_parms = []
             if suffix == c.SUFFIX_PARM_POWER_OFF:
                 operation = 'shutdown'
@@ -180,7 +180,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
     # the cache.
     finally:
         try:
-            adapter.invalidate_cache_elem(c.MGT_SYS, root_id=host_uuid,
+            adapter.invalidate_cache_elem(c.SYS, root_id=host_uuid,
                                           child_type=c.LPAR, child_id=uuid,
                                           invalidate_feeds=True)
         except Exception as e:

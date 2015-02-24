@@ -14,9 +14,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import copy
 import logging
 import re
+
+import six
 
 from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
@@ -181,7 +184,7 @@ def crt_scsi_map_to_vopt(adapter, host_uuid, client_lpar_uuid, media_name):
 
 def _crt_related_href(adapter, host_uuid, client_lpar_uuid):
     """Creates the Element for the 'AssociatedLogicalPartition'."""
-    client_href = adapter.build_href(c.MGT_SYS, host_uuid, c.LPAR,
+    client_href = adapter.build_href(c.SYS, host_uuid, c.LPAR,
                                      client_lpar_uuid)
     return adpt.Element(MAP_CLIENT_LPAR, attrib={'href': client_href,
                                                  'rel': 'related'})
@@ -194,6 +197,7 @@ def _crt_attrs(group):
 
 
 class VirtualIOServer(ewrap.EntryWrapper):
+    schema_type = c.VIOS
 
     @property
     def name(self):
@@ -384,7 +388,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
     def io_config(self):
         """The Partition I/O Configuration for the VIOS."""
         elem = self._element.find(lpar.IO_CFG_ROOT)
-        return lpar.PartitionIOConfiguration(elem)
+        return lpar.PartitionIOConfiguration.wrap(elem)
 
     def derive_orphan_trunk_adapters(self):
         """Builds a list of trunk adapters not attached to a SEA."""
@@ -421,6 +425,8 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
     properly.  There is no need to pre-create the adapters before creating a
     new mapping.
     """
+    schema_type = c.VSCSI_MAP
+    has_metadata = True
 
     @property
     def client_lpar_href(self):
@@ -438,13 +444,14 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
         """
         elem = self._element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
-            return VirtualSCSIClientAdapter(elem)
+            return VirtualSCSIClientAdapter.wrap(elem)
         return None
 
     @property
     def server_adapter(self):
         """Returns the Virtual I/O Server side VirtualSCSIServerAdapter."""
-        return VirtualSCSIServerAdapter(self._element.find(MAP_SERVER_ADAPTER))
+        return VirtualSCSIServerAdapter.wrap(
+            self._element.find(MAP_SERVER_ADAPTER))
 
     @property
     def backing_storage(self):
@@ -458,12 +465,12 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
             # Check if virtual disk
             e = elem.find(storage.DISK_ROOT)
             if e is not None:
-                return storage.VirtualDisk(e)
+                return storage.VirtualDisk.wrap(e)
 
             # Check if virtual optical media
             e = elem.find(storage.VOPT_ROOT)
             if e is not None:
-                return storage.VirtualOpticalMedia(e)
+                return storage.VirtualOpticalMedia.wrap(e)
 
             # Some unknown type, throw error
             raise Exception('Found unknown type %s' % e.toxmlstring())
@@ -484,6 +491,8 @@ class VirtualFCMapping(ewrap.ElementWrapper):
     properly.  There is no need to pre-create the adapters before creating a
     new mapping.
     """
+    schema_type = c.VFC_MAP
+    has_metadata = True
 
     @property
     def client_lpar_href(self):
@@ -501,7 +510,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         """
         elem = self._element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
-            return VirtualFCClientAdapter(elem)
+            return VirtualFCClientAdapter.wrap(elem)
         return None
 
     @property
@@ -513,17 +522,20 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         """
         elem = self._element.find(MAP_PORT)
         if elem is not None:
-            return lpar.PhysFCPort(elem)
+            return lpar.PhysFCPort.wrap(elem)
         return None
 
     @property
     def server_adapter(self):
         """Returns the Virtual I/O Server Virtual FC Adapter."""
-        return VirtualFCServerAdapter(self._element.find(MAP_SERVER_ADAPTER))
+        return VirtualFCServerAdapter.wrap(
+            self._element.find(MAP_SERVER_ADAPTER))
 
 
+@six.add_metaclass(abc.ABCMeta)
 class VirtualStorageAdapter(ewrap.ElementWrapper):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
+    has_metadata = True
 
     @property
     def side(self):
@@ -557,6 +569,7 @@ class VirtualSCSIClientAdapter(VirtualStorageAdapter):
 
     Paired with a VirtualSCSIServerAdapter.
     """
+    schema_type = c.CLIENT_ADAPTER
 
     @property
     def lpar_id(self):
@@ -569,6 +582,7 @@ class VirtualSCSIServerAdapter(VirtualStorageAdapter):
 
     Paired with a VirtualSCSIClientAdapter.
     """
+    schema_type = c.SERVER_ADAPTER
 
     @property
     def name(self):
@@ -591,6 +605,7 @@ class VirtualFCClientAdapter(VirtualStorageAdapter):
 
     Paired with a VirtualFCServerAdapter.
     """
+    schema_type = c.CLIENT_ADAPTER
 
     @property
     def wwpns(self):
@@ -608,6 +623,7 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
 
     Paired with a VirtualFCClientAdapter.
     """
+    schema_type = c.SERVER_ADAPTER
 
     @property
     def name(self):

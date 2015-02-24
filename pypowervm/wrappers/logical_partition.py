@@ -230,6 +230,7 @@ def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
 
 
 class LogicalPartition(ewrap.EntryWrapper):
+    schema_type = c.LPAR
 
     @property
     def state(self):
@@ -551,7 +552,7 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @uncapped_weight.setter
     def uncapped_weight(self, value):
-        return self.set_parm_value(c.UNCAPPED_WEIGHT, value)
+        self.set_parm_value(c.UNCAPPED_WEIGHT, value)
 
     @proc_mode_is_dedicated.setter
     def proc_mode_is_dedicated(self, value):
