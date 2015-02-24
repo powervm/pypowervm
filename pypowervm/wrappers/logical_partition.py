@@ -230,6 +230,7 @@ def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
 
 
 class LogicalPartition(ewrap.EntryWrapper):
+    schema_type = c.LPAR
 
     @property
     def state(self):
@@ -551,7 +552,7 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @uncapped_weight.setter
     def uncapped_weight(self, value):
-        return self.set_parm_value(c.UNCAPPED_WEIGHT, value)
+        self.set_parm_value(c.UNCAPPED_WEIGHT, value)
 
     @proc_mode_is_dedicated.setter
     def proc_mode_is_dedicated(self, value):
@@ -562,7 +563,7 @@ class LogicalPartition(ewrap.EntryWrapper):
     def io_config(self):
         """The Partition I/O Configuration for the LPAR."""
         elem = self._element.find(IO_CFG_ROOT)
-        return PartitionIOConfiguration(elem)
+        return PartitionIOConfiguration.wrap(elem)
 
 
 class PartitionIOConfiguration(ewrap.ElementWrapper):
@@ -572,6 +573,7 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
     to physical hardware (io_slots) and those that get used by virtual
     hardware.
     """
+    schema_type = 'PartitionIOConfiguration'
 
     @property
     def max_virtual_slots(self):
@@ -601,6 +603,7 @@ class IOSlot(ewrap.ElementWrapper):
 
     It may contain a piece of hardware within it.
     """
+    schema_type = 'ProfileIOSlot'
 
     class AssociatedIOSlot(ewrap.ElementWrapper):
         """Internal class.  Hides the nested AssociatedIOSlot from parent.
@@ -617,6 +620,7 @@ class IOSlot(ewrap.ElementWrapper):
         We still keep the structure internally, but makes the API easier to
         consume.
         """
+        schema_type = 'AssociatedIOSlot'
 
         @property
         def description(self):
@@ -674,13 +678,13 @@ class IOSlot(ewrap.ElementWrapper):
             io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
                                       IO_ADPT_ROOT)
             if io_adpt_root is not None:
-                return IOAdapter(io_adpt_root)
+                return IOAdapter.wrap(io_adpt_root)
 
             # Didn't have the generic...check for non-generic.
             io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
                                       IO_PFC_ADPT_ROOT)
             if io_adpt_root is not None:
-                return PhysFCAdapter(io_adpt_root)
+                return PhysFCAdapter.wrap(io_adpt_root)
 
             return None
 
@@ -691,7 +695,7 @@ class IOSlot(ewrap.ElementWrapper):
             return None
 
         # Build the Associated IO Slot, find the function and execute it.
-        assoc_io_slot = self.AssociatedIOSlot(elem)
+        assoc_io_slot = self.AssociatedIOSlot.wrap(elem)
         return getattr(assoc_io_slot, func)
 
     @property
@@ -750,6 +754,7 @@ class IOAdapter(ewrap.ElementWrapper):
     This is a device plugged in to the system.  The location code indicates
     where it is plugged into the system.
     """
+    schema_type = 'IOAdapter'
 
     @property
     def id(self):
@@ -780,6 +785,7 @@ class PhysFCAdapter(IOAdapter):
 
     The adapter has a set of Physical Fibre Channel Ports (PhysFCPort).
     """
+    schema_type = 'PhysicalFibreChannelAdapter'
 
     @property
     def fc_ports(self):
@@ -794,6 +800,7 @@ class PhysFCAdapter(IOAdapter):
 
 class PhysFCPort(ewrap.ElementWrapper):
     """A Physical Fibre Channel Port."""
+    schema_type = 'PhysicalFibreChannelPort'
 
     @property
     def loc_code(self):

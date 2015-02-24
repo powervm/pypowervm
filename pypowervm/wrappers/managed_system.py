@@ -32,18 +32,18 @@ MTMS_SERIAL = 'SerialNumber'
 def find_entry_by_mtms(resp, mtms):
     """Queries through a query of ManagedSystem's to find a match.
 
-    :param mtms: The Machine Type Model Number & Serial.
-                 Example format: 8247-22L*1234567
+    :param mtms: The Machine Type Model & Serial Number string.
+                 Example format: "8247-22L*1234567"
     :return: The ManagedSystem wrapper from the response that matches that
              value.  None otherwise.
     """
-    mtms_w = MTMS.new(mtms)
+    mtms_w = MTMS(mtms_str=mtms)
     entries = resp.feed.findentries(c.MACHINE_SERIAL, mtms_w.serial)
     if entries is None:
         return None
 
     # Confirm same model and type
-    wrappers = [ManagedSystem(x) for x in entries]
+    wrappers = [ManagedSystem.wrap(x) for x in entries]
     for wrapper in wrappers:
         if wrapper.mtms == mtms_w:
             return wrapper
@@ -53,6 +53,7 @@ def find_entry_by_mtms(resp, mtms):
 
 
 class ManagedSystem(ewrap.EntryWrapper):
+    schema_type = c.SYS
 
     @property
     def system_name(self):
@@ -60,7 +61,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def mtms(self):
-        return MTMS(self._element.find(MTMS_ROOT))
+        return MTMS.wrap(self._element.find(MTMS_ROOT))
 
     @property
     def system_state(self):
@@ -208,24 +209,42 @@ class MTMS(ewrap.ElementWrapper):
     schema_type = 'MachineTypeModelAndSerialNumber'
     has_metadata = True
 
-    @classmethod
-    def new(cls, mtms):
-        """Parses a MTMS String into an MTMS Wrapper.
+    def __init__(self, mtms_str=None, machine_type=None, model=None,
+                 serial=None):
+        """Creates a new MTMS ElementWrapper.
 
-        :param mtms: String representation of Machine Type, Model, and Serial
+        If mtms_str is specified, it is parsed first.
+
+        If machine_type, model, and/or serial is specified, their values are
+        used, overriding any parsed values from mtms_str.
+
+        :param mtms_str: String representation of Machine Type, Model,
+        and Serial
                      Number.  The format is
                      Machine Type - Model Number * Serial
                      Example: 8247-22L*1234567
+        :param machine_type: String representing Machine Type.  Four
+                             alphanumeric characters.
+        :param model: String representing Model Number.  Three alphanumeric
+                      characters.
+        :param serial: String representing Serial Number.  Seven alphanumeric
+                       characters.
         """
-        mtm, sn = mtms.split('*', 1)
-        mt, md = mtm.split('-', 1)
+        super(MTMS, self).__init__()
+        if mtms_str is not None:
+            mtm, sn = mtms_str.split('*', 1)
+            mt, md = mtm.split('-', 1)
 
-        ret = cls()
-        # Assignment order is significant
-        ret.machine_type = mt
-        ret.model = md
-        ret.serial = sn
-        return ret
+            # Assignment order is significant
+            self.machine_type = mt
+            self.model = md
+            self.serial = sn
+        if machine_type:
+            self.machine_type = machine_type
+        if model:
+            self.model = model
+        if serial:
+            self.serial = serial
 
     @property
     def machine_type(self):
