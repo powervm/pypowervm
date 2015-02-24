@@ -50,8 +50,8 @@ class TestCluster(twrap.TestWrapper):
         # PV is tested elsewhere.  Minimal verification here.
         self.assertEqual(repos.name, 'hdisk2')
         # Test setter
-        newrepos = stor.PV(
-            adp.Element(
+        newrepos = stor.PV.load(
+            element=adp.Element(
                 "PhysicalVolume",
                 attrib={'schemaVersion': 'V1_2_0'},
                 children=[
@@ -105,7 +105,7 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')
         # Now try with a MTMS ElementWrapper
-        node.mtms = ms.MTMS.new('4321-765*0FEDCBA')
+        node.mtms = ms.MTMS(mtms_str='4321-765*0FEDCBA')
         mtms = node.mtms
         self.assertEqual(mtms.machine_type, '4321')
         self.assertEqual(mtms.model, '765')
@@ -116,8 +116,8 @@ class TestCluster(twrap.TestWrapper):
         n1.hostname = 'a.example.com'
         n2 = clust.Node()
         n2.hostname = 'b.example.com'
-        repos = stor.PV.new(name='hdisk123')
-        cl = clust.Cluster.new(name='foo', repos_pv=repos, node_list=[n1, n2])
+        repos = stor.PV(name='hdisk123')
+        cl = clust.Cluster(name='foo', repos_pv=repos, node_list=[n1, n2])
         self.assertEqual(cl.name, 'foo')
         self.assertEqual(cl.repos_pv.name, 'hdisk123')
         self.assertEqual(cl.pvm_type, wc.CLUSTER)

@@ -225,8 +225,7 @@ def find_wrapper(haystack, needle_uuid):
     """Finds the corresponding wrapper from a list given the UUID.
 
     :param haystack:  A list of wrappers.  Usually generated from a 'feed' that
-                      has been loaded via the wrapper
-                      load_from_response method.
+                      has been loaded via the wrapper's load(response) method.
     :param needle_uuid: The UUID of the object to find in the list.
     :return: The corresponding wrapper for that UUID.  If not found, None.
     """

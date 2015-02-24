@@ -48,16 +48,15 @@ sess = adp.Session(HOST, USER, PASS, certpath=None)
 adap = adp.Adapter(sess)
 
 # Option 1: MTMS, LPAR_ID, Hostname
-node1 = clust.Node.new(
-    mtms=NODE_MTMS, lpar_id=NODE_LPARID, hostname=NODE_HOSTNAME)
+node1 = clust.Node(mtms=NODE_MTMS, lpar_id=NODE_LPARID, hostname=NODE_HOSTNAME)
 
 # Option 2: URI
-node2 = clust.Node.new(vios_uri=NODE_URI)
+node2 = clust.Node(vios_uri=NODE_URI)
 
-repos = stor.PV.new(udid=REPOS_UDID, name=REPOS_NAME)
+repos = stor.PV(udid=REPOS_UDID, name=REPOS_NAME)
 
 data_pvs = [
-    stor.PV.new(udid=udid, name=name) for udid, name in (
+    stor.PV(udid=udid, name=name) for udid, name in (
         (DATA1_UDID, DATA1_NAME),
         (DATA2_UDID, DATA2_NAME),
         (DATA3_UDID, DATA3_NAME))]

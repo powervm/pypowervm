@@ -21,9 +21,10 @@ from oslo.config import cfg
 import six
 
 import pypowervm.adapter as adp
+import pypowervm.const as pc
 import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
-import pypowervm.wrappers.constants as c
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
@@ -40,10 +41,14 @@ CONF.register_opts(job_opts)
 
 class Job(ewrap.EntryWrapper):
     """Wrapper object for job response schema."""
+    schema_type = wc.JOB
+    schema_ns = pc.WEB_NS
 
-    def __init__(self, entry):
-        super(Job, self).__init__(entry)
-        self.op = self._get_val_str(c.JOB_OPERATION_NAME)
+    @classmethod
+    def load(cls, response=None, entry=None, etag=None):
+        wrap = super(Job, cls).load(response=response, entry=entry, etag=etag)
+        wrap.op = wrap._get_val_str(wc.JOB_OPERATION_NAME)
+        return wrap
 
     @staticmethod
     def create_job_parameter(name, value, cdata=False):
@@ -56,11 +61,11 @@ class Job(ewrap.EntryWrapper):
         """
         job_parm = adp.Element('JobParameter',
                                attrib={'schemaVersion': 'V1_0'},
-                               ns=c.WEB_NS)
+                               ns=wc.WEB_NS)
         job_parm.append(adp.Element('ParameterName',
-                                    text=name, ns=c.WEB_NS))
+                                    text=name, ns=wc.WEB_NS))
         job_parm.append(adp.Element('ParameterValue',
-                                    text=value, ns=c.WEB_NS, cdata=cdata))
+                                    text=value, ns=wc.WEB_NS, cdata=cdata))
         return job_parm
 
     def add_job_parameters_to_existing(self, *add_parms):
@@ -79,7 +84,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job ID
         """
-        return self._get_val_str(c.JOB_ID)
+        return self._get_val_str(wc.JOB_ID)
 
     @property
     def job_status(self):
@@ -87,7 +92,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job status
         """
-        return self._get_val_str(c.JOB_STATUS)
+        return self._get_val_str(wc.JOB_STATUS)
 
     def get_job_response_exception_message(self, default=''):
         """Gets the job message string from the ResponseException.
@@ -95,10 +100,10 @@ class Job(ewrap.EntryWrapper):
         :returns: String containing the job message or
                   default (defaults to empty string) if not found
         """
-        job_message = self._get_val_str(c.JOB_MESSAGE, default)
+        job_message = self._get_val_str(wc.JOB_MESSAGE, default)
         if job_message:
             # See if there is a stack trace to log
-            stack_trace = self._get_val_str(c.JOB_STACKTRACE, default)
+            stack_trace = self._get_val_str(wc.JOB_STACKTRACE, default)
             if stack_trace:
                 exc = pvmex.JobRequestFailed(
                     operation_name=self.op, error=stack_trace)
@@ -112,8 +117,8 @@ class Job(ewrap.EntryWrapper):
                   default (defaults to empty string) if not found
         """
         message = default
-        parm_names = self._get_vals(c.JOB_RESULTS_NAME)
-        parm_values = self._get_vals(c.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(wc.JOB_RESULTS_NAME)
+        parm_values = self._get_vals(wc.JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             if parm_names[i] == 'result':
                 message = parm_values[i]
@@ -127,8 +132,8 @@ class Job(ewrap.EntryWrapper):
                   values as key, value pairs.
         """
         results = default if default else {}
-        parm_names = self._get_vals(c.JOB_RESULTS_NAME)
-        parm_values = self._get_vals(c.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(wc.JOB_RESULTS_NAME)
+        parm_values = self._get_vals(wc.JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             results[parm_names[i]] = parm_values[i]
         return results
@@ -165,7 +170,7 @@ class Job(ewrap.EntryWrapper):
         :raise JobRequestTimedOut: if the job timed out.
         """
         job = self._entry.element
-        entry_type = self._get_val_str(c.JOB_GROUP_NAME)
+        entry_type = self._get_val_str(wc.JOB_GROUP_NAME)
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
@@ -187,7 +192,7 @@ class Job(ewrap.EntryWrapper):
                 operation_name=self.op, seconds=str(timeout))
             LOG.exception(exc)
             raise exc
-        if status != c.PVM_JOB_STATUS_COMPLETED_OK:
+        if status != wc.PVM_JOB_STATUS_COMPLETED_OK:
             self.delete_job(adapter)
             exc = pvmex.JobRequestFailed(
                 operation_name=self.op, error=message)
@@ -216,8 +221,8 @@ class Job(ewrap.EntryWrapper):
         status = self.job_status
         start_time = time.time()
         timed_out = False
-        while (status == c.PVM_JOB_STATUS_RUNNING or
-               status == c.PVM_JOB_STATUS_NOT_ACTIVE):
+        while (status == wc.PVM_JOB_STATUS_RUNNING or
+               status == wc.PVM_JOB_STATUS_NOT_ACTIVE):
             if timeout:
                 # wait up to timeout seconds
                 if (time.time() - start_time) > timeout:
@@ -229,7 +234,7 @@ class Job(ewrap.EntryWrapper):
             status = self.job_status
 
         message = ''
-        if not timed_out and status != c.PVM_JOB_STATUS_COMPLETED_OK:
+        if not timed_out and status != wc.PVM_JOB_STATUS_COMPLETED_OK:
             message = self.get_job_message()
         return status, message, timed_out
 
@@ -247,7 +252,7 @@ class Job(ewrap.EntryWrapper):
 
         job_id = self.job_id
         try:
-            adapter.update(None, None, root_type=c.JOBS, root_id=job_id,
+            adapter.update(None, None, root_type=wc.JOBS, root_id=job_id,
                            suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
@@ -275,13 +280,13 @@ class Job(ewrap.EntryWrapper):
             job_id = self.job_id
         if not status:
             status = self.job_status
-        if status == c.PVM_JOB_STATUS_RUNNING:
+        if status == wc.PVM_JOB_STATUS_RUNNING:
             error = (_("Job %s not deleted. Job is in running state.")
                      % job_id)
             exc = pvmex.JobRequestFailed(error)
             LOG.exception(exc)
             raise exc
         try:
-            adapter.delete(c.JOBS, job_id)
+            adapter.delete(wc.JOBS, job_id)
         except pvmex.Error as exc:
             LOG.exception(exc)

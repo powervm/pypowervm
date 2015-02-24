@@ -46,7 +46,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                             (MS_NAME, MS_HTTPRESP_FILE))
 
         self.myentry = entries[0]
-        self.wrapper = mswrap.ManagedSystem(self.myentry)
+        self.wrapper = mswrap.ManagedSystem.load(entry=self.myentry)
 
         # Set a hardcoded value for MemoryUsedByHypervisor
         fw_mem = self.myentry.element.find(
@@ -60,8 +60,8 @@ class TestMSEntryWrapper(unittest.TestCase):
 
         """ Create a bad wrapper to use when
             retrieving properties which don't exist """
-        self.bad_wrapper = mswrap.ManagedSystem(
-            mc_http.response.feed.entries[0])
+        self.bad_wrapper = mswrap.ManagedSystem.load(
+            entry=mc_http.response.feed.entries[0])
 
     def verify_equal(self, method_name, returned_value, expected_value):
         self.assertEqual(returned_value, expected_value,
@@ -176,7 +176,7 @@ class TestMSEntryWrapper(unittest.TestCase):
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
-        mtms = mswrap.MTMS.new('1234-567*ABCDEF0')
+        mtms = mswrap.MTMS(mtms_str='1234-567*ABCDEF0')
         self.assertEqual(mtms.machine_type, '1234')
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')

@@ -40,10 +40,10 @@ class TestWrapper(unittest.TestCase):
           load_pvm_resp().get_response().  May represent an entry or a feed.
         - self.dwrap: A single instance of the wrapper_class_to_test extracted
           from self.resp.  If self.resp was a feed, this is the first entry.
-        - self.entries: The result of load_from_response of the wrapper class.
+        - self.entries: The result of load(response) of the wrapper class.
           May be a single wrapper instance, in which case it's (nearly*)
           equivalent to self.dwrap, or a list of such wrappers.
-          * Note that load_from_response injects each entry's etag into the
+          * Note that load(response) injects each entry's etag into the
             wrapper instance.
     """
 
@@ -69,12 +69,11 @@ class TestWrapper(unittest.TestCase):
         # Some wrappers don't support etag.  Subclasses testing those wrappers
         # should not be using self.entries, so ignore.
         try:
-            self.entries = self.wrapper_class_to_test.load_from_response(
-                self.resp)
+            self.entries = self.wrapper_class_to_test.load(response=self.resp)
         except TypeError:
             pass
         if self.resp.feed:
-            self.dwrap = self.wrapper_class_to_test(
-                self.resp.feed.entries[0])
+            self.dwrap = self.wrapper_class_to_test.load(
+                entry=self.resp.feed.entries[0])
         else:
-            self.dwrap = self.wrapper_class_to_test(self.resp.entry)
+            self.dwrap = self.wrapper_class_to_test.load(entry=self.resp.entry)

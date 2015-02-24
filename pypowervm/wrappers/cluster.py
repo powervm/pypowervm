@@ -44,10 +44,8 @@ class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
     schema_type = c.CLUSTER
-    has_metadata = True
 
-    @classmethod
-    def new(cls, name=None, repos_pv=None, node_list=()):
+    def __init__(self, name=None, repos_pv=None, node_list=()):
         """Create a fresh Cluster EntryWrapper.
 
         :param name: String name for the Cluster.
@@ -57,15 +55,14 @@ class Cluster(ewrap.EntryWrapper):
         that this must contain exactly one Node if this Cluster wrapper is to
         be used to create a new Cluster/SharedStoragePool pair.
         """
+        super(Cluster, self).__init__()
         # The order of these assignments IS significant.
-        cluster = cls()
         if name:
-            cluster.name = name
+            self.name = name
         if repos_pv:
-            cluster.repos_pv = repos_pv
+            self.repos_pv = repos_pv
         if node_list:
-            cluster.nodes = node_list
-        return cluster
+            self.nodes = node_list
 
     @property
     def name(self):
@@ -103,7 +100,7 @@ class Cluster(ewrap.EntryWrapper):
         pv_list = repos_elem.findall(CL_PV)
         # Check only relevant when building up a Cluster wrapper internally
         if pv_list and len(pv_list) == 1:
-            return stor.PV(pv_list[0])
+            return stor.PV.load(element=pv_list[0])
         return None
 
     @repos_pv.setter
@@ -147,8 +144,7 @@ class Node(ewrap.ElementWrapper):
     schema_type = c.CLUST_NODE
     has_metadata = True
 
-    @classmethod
-    def new(cls, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
+    def __init__(self, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
         """Create a fresh Node ElementWrapper.
 
         :param hostname: String hostname (or IP) of the Node.
@@ -159,18 +155,16 @@ class Node(ewrap.ElementWrapper):
                      e.g. '8247-22L*1234A0B'.
         :param vios_uri: String URI representing this Node.
         """
+        super(Node, self).__init__()
         # The order of these assignments IS significant
-        node = cls()
         if hostname:
-            node.hostname = hostname
+            self.hostname = hostname
         if lpar_id:
-            node.lpar_id = lpar_id
+            self.lpar_id = lpar_id
         if mtms:
-            node.mtms = mtms
+            self.mtms = mtms
         if vios_uri:
-            node.vios_uri = vios_uri
-
-        return node
+            self.vios_uri = vios_uri
 
     @property
     def hostname(self):
@@ -192,7 +186,7 @@ class Node(ewrap.ElementWrapper):
     @property
     def mtms(self):
         """MTMS Element wrapper of the system hosting the Node (VIOS)."""
-        return ms.MTMS(self._find(N_MTMS))
+        return ms.MTMS.load(element=self._find(N_MTMS))
 
     @mtms.setter
     def mtms(self, new_mtms):
@@ -203,7 +197,7 @@ class Node(ewrap.ElementWrapper):
         """
         el = self._find_or_seed(N_MTMS)
         if not isinstance(new_mtms, ms.MTMS):
-            new_mtms = ms.MTMS.new(new_mtms)
+            new_mtms = ms.MTMS(mtms_str=new_mtms)
         self._element.replace(el, new_mtms._element)
 
     @property

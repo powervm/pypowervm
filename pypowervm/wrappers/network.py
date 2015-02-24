@@ -106,6 +106,7 @@ class VirtualSwitch(ewrap.EntryWrapper):
     logical adapters are bridged together).  They are important for data
     plane segregation.
     """
+    schema_type = c.VSWITCH
 
     @property
     def name(self):
@@ -134,6 +135,7 @@ class NetworkBridge(ewrap.EntryWrapper):
     Network Bridge will have two identically structured Shared Ethernet
     Adapters belonging to different Virtual I/O Servers.
     """
+    schema_type = c.NB
 
     @property
     def pvid(self):
@@ -269,6 +271,8 @@ class NetworkBridge(ewrap.EntryWrapper):
 
 class SharedEthernetAdapter(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
+    schema_type = c.SEA
+    has_metadata = True
 
     @property
     def pvid(self):
@@ -311,12 +315,13 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         trunk_elem_list = self._element.findall(SEA_TRUNKS + c.DELIM + TA_ROOT)
         trunks = []
         for trunk_elem in trunk_elem_list:
-            trunks.append(TrunkAdapter(trunk_elem))
+            trunks.append(TrunkAdapter.load(element=trunk_elem))
         return trunks
 
 
 class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
+    schema_type = c.TRUNK_ADP
 
     @property
     def pvid(self):
@@ -357,7 +362,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
             list_data = [int(i) for i in addl_vlans.split(' ')]
 
         def update_list(new_list):
-            data = ' '.join([str(i) for i in new_list])
+            data = ' '.join([str(j) for j in new_list])
             self.set_parm_value(TA_VLAN_IDS, data)
 
         return ewrap.ActionableList(list_data, update_list)
@@ -384,13 +389,17 @@ class LoadGroup(ewrap.ElementWrapper):
     If using failover or load balancing, then the Load Group will have pairs of
     Trunk Adapters, each with their own unique Trunk Priority.
     """
+    schema_type = c.LG
+    has_metadata = True
 
-    def __init__(self, element, **kwargs):
-        super(LoadGroup, self).__init__(element)
+    @classmethod
+    def load(cls, element=None, **kwargs):
+        wrap = super(LoadGroup, cls).load(element=element)
 
         # If created from a Network Bridge this will be set.  Else it will
         # be None (ex. crt_load_group method)
-        self._nb_root = kwargs.get('nb_root')
+        wrap._nb_root = kwargs.get('nb_root')
+        return wrap
 
     @property
     def pvid(self):
@@ -455,10 +464,8 @@ class VNet(ewrap.EntryWrapper):
     """The overall definition of a VLAN network within the hypervisor."""
 
     schema_type = c.VNET
-    has_metadata = True
 
-    @classmethod
-    def new(cls, name=None, vlan_id=None, vswitch_uri=None, tagged=None):
+    def __init__(self, name=None, vlan_id=None, vswitch_uri=None, tagged=None):
         """Creates a VirtualNetwork that can be used for a create operation.
 
         This is used when creating a new Virtual Network within the system
@@ -472,17 +479,16 @@ class VNet(ewrap.EntryWrapper):
                        network).
         :returns: The ElementWrapper that represents the new VirtualNetwork.
         """
-        vnet = cls()
+        super(VNet, self).__init__()
         # Assignment order matters
         if vswitch_uri is not None:
-            vnet.associated_switch_uri = vswitch_uri
+            self.associated_switch_uri = vswitch_uri
         if name is not None:
-            vnet.name = name
+            self.name = name
         if vlan_id is not None:
-            vnet.vlan = vlan_id
+            self.vlan = vlan_id
         if tagged is not None:
-            vnet.tagged = tagged
-        return vnet
+            self.tagged = tagged
 
     @property
     def associated_switch_uri(self):
@@ -530,11 +536,9 @@ class CNA(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
     schema_type = c.CNA
-    has_metadata = True
 
-    @classmethod
-    def new(cls, pvid=None, vswitch_href=None, slot_num=None, mac_addr=None,
-            addl_tagged_vlans=None):
+    def __init__(self, pvid=None, vswitch_href=None, slot_num=None,
+                 mac_addr=None, addl_tagged_vlans=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a client partition.  This
@@ -557,32 +561,30 @@ class CNA(ewrap.EntryWrapper):
                                   Note: The limit is ~18 additional VLANs
         :returns: A CNA EntryWrapper that can be used for create.
         """
-        cna = cls()
+        super(CNA, self).__init__()
         # Assignment order matters
         if slot_num is not None:
-            cna.slot = slot_num
+            self.slot = slot_num
         else:
-            cna.use_next_avail_slot_id = True
+            self.use_next_avail_slot_id = True
 
         if mac_addr is not None:
-            cna.mac = mac_addr
+            self.mac = mac_addr
 
         #  The primary VLAN ID
         if pvid is not None:
-            cna.pvid = pvid
+            self.pvid = pvid
 
         # Additional VLANs
         if addl_tagged_vlans is not None:
-            cna.tagged_vlans = addl_tagged_vlans
-            cna.is_tagged_vlan_supported = True
+            self.tagged_vlans = addl_tagged_vlans
+            self.is_tagged_vlan_supported = True
         else:
-            cna.is_tagged_vlan_supported = False
+            self.is_tagged_vlan_supported = False
 
         # vSwitch URI
         if vswitch_href is not None:
-            cna.vswitch_uri = vswitch_href
-
-        return cna
+            self.vswitch_uri = vswitch_href
 
     @property
     def slot(self):

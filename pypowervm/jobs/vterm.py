@@ -37,7 +37,7 @@ def close_vterm(adapter, lpar_uuid):
                         suffixType=pvm_consts.SUFFIX_TYPE_DO,
                         suffixParm=pvm_consts.
                         SUFFIX_PARM_CLOSE_VTERM)
-    job_wrapper = job.Job(resp.entry)
+    job_wrapper = job.Job.load(entry=resp.entry)
 
     try:
         job_wrapper.run_job(adapter, lpar_uuid)

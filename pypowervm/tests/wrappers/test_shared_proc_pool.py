@@ -55,7 +55,7 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
         self.set_test_property_values()
 
         TestShrPrcPoolTestCase._proc_pool_wrapper = (
-            spp.SharedProcPool(self.pool_entry))
+            spp.SharedProcPool.load(entry=self.pool_entry))
 
         mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
         self.assertNotEqual(mc_http, None,
@@ -64,8 +64,8 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
 
         # Create a bad wrapper to use when retrieving properties which don't
         # exist
-        TestShrPrcPoolTestCase._bad_wrapper = spp.SharedProcPool(
-            mc_http.response.feed.entries[0])
+        TestShrPrcPoolTestCase._bad_wrapper = spp.SharedProcPool.load(
+            entry=mc_http.response.feed.entries[0])
 
     def set_single_value(self, entry, property_name, value):
         prop = entry.element.find(property_name)
