@@ -35,6 +35,8 @@ class SubWrapper(ewrap.Wrapper):
         class Txt(object):
             def __init__(self, val):
                 self.text = val
+
+        super(SubWrapper, self).__init__()
         self.data = dict((k, Txt(v)) for k, v in six.iteritems(kwargs))
 
     def _find(self, prop_name, use_find_all=False):
@@ -97,11 +99,12 @@ class TestWrapper(unittest.TestCase):
 class TestEntryWrapper(unittest.TestCase):
 
     def test_etag(self):
+        fake_entry = apt.Entry({}, apt.Element('fake_entry'))
         etag = '1234'
-        ew = ewrap.EntryWrapper('fake_entry', etag=etag)
+        ew = ewrap.EntryWrapper.wrap(fake_entry, etag=etag)
         self.assertEqual(etag, ew.etag)
 
-        ew = ewrap.EntryWrapper('fake_entry')
+        ew = ewrap.EntryWrapper.wrap(fake_entry)
         self.assertEqual(None, ew.etag)
 
     def test_load(self):
@@ -110,24 +113,24 @@ class TestEntryWrapper(unittest.TestCase):
                             'reason', dict(etag=etag))
 
         # Entry or Feed is not set, so expect an exception
-        self.assertRaises(KeyError,
-                          ewrap.EntryWrapper.load_from_response, resp)
+        self.assertRaises(KeyError, ewrap.EntryWrapper.wrap, resp)
 
         # Set an entry...
-        resp.entry = 'entry'
+        entry = apt.Entry({}, apt.Element('entry'))
+        resp.entry = entry
 
         # Run
-        ew = ewrap.EntryWrapper.load_from_response(resp)
+        ew = ewrap.EntryWrapper.wrap(resp)
 
         # Validate
-        self.assertEqual('entry', ew._entry)
+        self.assertEqual(entry, ew._entry)
         self.assertEqual(etag, ew.etag)
 
         # Create a response with no headers
         resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp2.entry = 'entry'
+        resp2.entry = entry
         # Run
-        ew = ewrap.EntryWrapper.load_from_response(resp2)
+        ew = ewrap.EntryWrapper.wrap(resp2)
         # Validate the etag is None since there were no headers
         self.assertEqual(None, ew.etag)
 
@@ -135,10 +138,10 @@ class TestEntryWrapper(unittest.TestCase):
         resp.entry = None
         e1 = apt.Entry({'etag': '1'}, None)
         e2 = apt.Entry({'etag': '2'}, None)
-        resp.feed = apt.Feed([], [e1, e2])
+        resp.feed = apt.Feed({}, [e1, e2])
 
         # Run
-        ew = ewrap.EntryWrapper.load_from_response(resp)
+        ew = ewrap.EntryWrapper.wrap(resp)
 
         # Validate
         self.assertEqual(e1, ew[0]._entry)
@@ -153,9 +156,9 @@ class TestElementWrapper(unittest.TestCase):
     def setUp(self):
         super(TestElementWrapper, self).setUp()
         self.resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
-        self.nb1 = ewrap.EntryWrapper(self.resp.feed.entries[0])
+        self.nb1 = ewrap.EntryWrapper.wrap(self.resp.feed.entries[0])
         self.resp2 = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
-        self.nb2 = ewrap.EntryWrapper(self.resp2.feed.entries[0])
+        self.nb2 = ewrap.EntryWrapper.wrap(self.resp2.feed.entries[0])
 
     def test_equality(self):
         """Validates that two elements loaded from the same data is equal."""
@@ -170,7 +173,7 @@ class TestElementWrapper(unittest.TestCase):
     def test_inequality_by_subelem_change(self):
         sea1 = self._find_seas(self.nb1._entry)[0]
         sea2 = self._find_seas(self.nb2._entry)[0]
-        sea_trunk = sea2._element.findall('./TrunkAdapters/TrunkAdapter')[1]
+        sea_trunk = sea2._element.findall('TrunkAdapters/TrunkAdapter')[1]
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
@@ -185,7 +188,7 @@ class TestElementWrapper(unittest.TestCase):
         # Default: UOM namespace, no <Metadata/>
         class MyElement(ewrap.ElementWrapper):
             schema_type = 'SomePowerObject'
-        myel = MyElement(None)
+        myel = MyElement()
         self.assertEqual(myel.pvm_type, 'SomePowerObject')
         self.assertEqual(
             myel._element.toxmlstring(),
@@ -196,7 +199,7 @@ class TestElementWrapper(unittest.TestCase):
         # Can't use no-arg constructor if schema_type isn't overridden
         class MyElement2(ewrap.ElementWrapper):
             pass
-        self.assertRaises(NotImplementedError, MyElement2)
+        self.assertRaises(TypeError, MyElement2)
 
         # Can override namespace and attrs and trigger inclusion of <Metadata/>
         class MyElement3(ewrap.ElementWrapper):
@@ -211,7 +214,7 @@ class TestElementWrapper(unittest.TestCase):
             '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
 
     def test_href(self):
-        path = './LoadGroups/LoadGroup/VirtualNetworks/link'
+        path = 'LoadGroups/LoadGroup/VirtualNetworks/link'
         # Get all
         hrefs = self.nb1.get_href(path)
         self.assertEqual(len(hrefs), 13)
@@ -227,8 +230,8 @@ class TestElementWrapper(unittest.TestCase):
         self.assertRaises(ValueError, self.nb1.set_href, path, 'foo')
 
         # Drill down to the (only) SEA
-        sea = ewrap.ElementWrapper(
-            self.nb1._find('./SharedEthernetAdapters/SharedEthernetAdapter'))
+        sea = ewrap.ElementWrapper.wrap(
+            self.nb1._find('SharedEthernetAdapters/SharedEthernetAdapter'))
         path = 'AssignedVirtualIOServer'
         hrefs = sea.get_href(path)
         self.assertEqual(len(hrefs), 1)
@@ -252,7 +255,7 @@ class TestElementWrapper(unittest.TestCase):
         sea.set_href(path, 'bar')
         self.assertEqual(sea.get_href(path, one_result=True), 'bar')
         # ...and now on a nested path.
-        path = './BackingDeviceChoice/EthernetBackingDevice/NewLink'
+        path = 'BackingDeviceChoice/EthernetBackingDevice/NewLink'
         sea.set_href(path, 'baz')
         self.assertEqual(sea.get_href(path, one_result=True), 'baz')
 
@@ -264,7 +267,7 @@ class TestWrapperElemList(unittest.TestCase):
         super(TestWrapperElemList, self).setUp()
         resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         nb = resp.feed.entries[0]
-        self.wrapper = ewrap.EntryWrapper(nb)
+        self.wrapper = ewrap.EntryWrapper.wrap(nb)
         sea_elem = self.wrapper._element.find('SharedEthernetAdapters')
 
         self.elem_set = ewrap.WrapperElemList(sea_elem,
@@ -279,7 +282,8 @@ class TestWrapperElemList(unittest.TestCase):
         self.assertEqual(1, len(self.elem_set))
 
     def test_append(self):
-        sea_add = ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
+        sea_add = ewrap.ElementWrapper.wrap(
+            apt.Element('SharedEthernetAdapter'))
         self.assertEqual(1, len(self.elem_set))
 
         # Test Append
@@ -292,8 +296,8 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_extend(self):
         seas = [
-            ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter')),
-            ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
+            ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter')),
+            ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter'))
         ]
         self.assertEqual(1, len(self.elem_set))
         self.elem_set.extend(seas)
@@ -301,7 +305,7 @@ class TestWrapperElemList(unittest.TestCase):
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
-        e = ewrap.ElementWrapper(apt.Element('SharedEthernetAdapter'))
+        e = ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter'))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))

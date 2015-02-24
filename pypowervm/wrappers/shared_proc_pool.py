@@ -24,6 +24,7 @@ import pypowervm.wrappers.constants as c
 
 
 class SharedProcPool(ewrap.EntryWrapper):
+    schema_type = c.SHR_PRC_PL
 
     @property
     def id(self):

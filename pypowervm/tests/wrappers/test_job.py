@@ -53,30 +53,30 @@ class TestJobEntryWrapper(unittest.TestCase):
         self.assertNotEqual(request, None,
                             "Could not load %s " %
                             JOB_REQUEST_FILE)
-        TestJobEntryWrapper._request_wrapper = jwrap.Job(request.entry)
+        TestJobEntryWrapper._request_wrapper = jwrap.Job.wrap(request.entry)
         # ok wrapper
         response = pvmhttp.load_pvm_resp(JOB_RESPONSE_OK).response
         self.assertNotEqual(response, None,
                             "Could not load %s " %
                             JOB_RESPONSE_OK)
-        TestJobEntryWrapper._ok_wrapper = jwrap.Job(response.entry)
+        TestJobEntryWrapper._ok_wrapper = jwrap.Job.wrap(response.entry)
         # failed wrapper
         response = pvmhttp.load_pvm_resp(JOB_RESPONSE_FAILED).response
         self.assertNotEqual(response, None,
                             "Could not load %s " %
                             JOB_RESPONSE_FAILED)
-        TestJobEntryWrapper._failed_wrapper = jwrap.Job(response.entry)
+        TestJobEntryWrapper._failed_wrapper = jwrap.Job.wrap(response.entry)
         # exception wrapper
         response = pvmhttp.load_pvm_resp(JOB_RESPONSE_EXCEPTION).response
         self.assertNotEqual(response, None,
                             "Could not load %s " %
                             JOB_RESPONSE_EXCEPTION)
-        TestJobEntryWrapper._exception_wrapper = jwrap.Job(response.entry)
+        TestJobEntryWrapper._exception_wrapper = jwrap.Job.wrap(response.entry)
         TestJobEntryWrapper._exception_wrapper.op = 'CLIRunner'
 
         # Create a bad wrapper to use when retrieving properties which don't
         # exist
-        TestJobEntryWrapper._bad_wrapper = jwrap.Job(request.entry)
+        TestJobEntryWrapper._bad_wrapper = jwrap.Job.wrap(request.entry)
 
         self.set_test_property_values()
 
