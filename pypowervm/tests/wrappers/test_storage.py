@@ -90,7 +90,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, len(vdisks))
 
         disk_elem = stor.crt_virtual_disk_obj('disk_name', 10, 'label')
-        disk = stor.VirtualDisk(disk_elem)
+        disk = stor.VirtualDisk.wrap(disk_elem)
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -116,7 +116,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, len(phys_vols))
 
         phys_v = stor.crt_phys_vol('disk1')
-        phys_vol = stor.PV(phys_v)
+        phys_vol = stor.PV.wrap(phys_v)
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
@@ -135,7 +135,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, len(media_repos))
 
         vmedia_r = stor.crt_vmedia_repo('repo', 10)
-        vmedia_repo = stor.VirtualOpticalMedia(vmedia_r)
+        vmedia_repo = stor.VirtualOpticalMedia.wrap(vmedia_r)
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
@@ -157,7 +157,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(2, len(vopt_medias))
 
         new_m = stor.crt_voptical_media('name', '0.123', 'r')
-        new_media = stor.VirtualOpticalMedia(new_m)
+        new_media = stor.VirtualOpticalMedia.wrap(new_m)
         self.assertIsNotNone(new_media)
 
         vopt_medias.append(new_media)
@@ -215,9 +215,9 @@ class TestSharedStoragePool(twrap.TestWrapper):
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):
-        ssp = stor.SSP.new(
+        ssp = stor.SSP(
             name='myssp',
-            data_pv_list=[stor.PV.new(name=n) for n in (
+            data_pv_list=[stor.PV(name=n) for n in (
                 'hdisk123', 'hdisk132', 'hdisk213', 'hdisk231', 'hdisk312',
                 'hdisk321')])
         self.assertEqual(ssp.name, 'myssp')

@@ -154,7 +154,7 @@ class TestUploadLV(unittest.TestCase):
     def _fake_meta(self):
         """Returns a fake meta class for the _create_file mock."""
         resp = tju.load_file(UPLOADED_FILE)
-        return vf.File.load_from_response(resp)
+        return vf.File.wrap(resp)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_upload_cleanup(self, mock_adpt):

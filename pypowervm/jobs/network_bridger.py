@@ -25,6 +25,7 @@ from pypowervm.wrappers import network as pvm_net
 MAX_VLANS_PER_VEA = 20
 
 
+@pvm_retry.retry()
 def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
     """Will make sure that the VLANs are assigned to the Network Bridge.
 
@@ -53,7 +54,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
     # Get the updated feed of NetworkBridges
     nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                            child_type=pvm_net.NB_ROOT)
-    nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
+    nb_wraps = pvm_net.NetworkBridge.wrap(nb_feed)
 
     # Find the appropriate Network Bridge
     req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -101,7 +102,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
     vswitch_w = _find_vswitch(adapter, host_uuid, req_nb.vswitch_id)
     vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                                   child_type=pvm_net.VNET_ROOT)
-    vnets = pvm_net.VNet.load(response=vnet_resp_feed)
+    vnets = pvm_net.VNet.wrap(vnet_resp_feed)
 
     for vlan_id in new_vlans:
         ld_grp = _find_available_ld_grp(req_nb)
@@ -118,8 +119,8 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
 
             # Now create the new load group...
             vnet_uris = [arb_vnet.href, vid_vnet.href]
-            ld_grp = pvm_net.LoadGroup(pvm_net.crt_load_group(arb_vid,
-                                                              vnet_uris))
+            ld_grp = pvm_net.LoadGroup.wrap(
+                pvm_net.crt_load_group(arb_vid, vnet_uris))
 
             # Append to network bridge...
             req_nb.load_grps.append(ld_grp)
@@ -169,7 +170,7 @@ def _find_vswitch(adapter, host_uuid, vswitch_id):
     """
     resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                              child_type=pvm_net.VSW_ROOT)
-    vswitches = pvm_net.VirtualSwitch.load_from_response(resp_feed)
+    vswitches = pvm_net.VirtualSwitch.wrap(resp_feed)
     for vswitch in vswitches:
         if vswitch.switch_id == int(vswitch_id):
             return vswitch
@@ -206,10 +207,11 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     # Could not find one.  Time to create it.
     name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                         'vswitch': vswitch.name}
-    vnet_elem = pvm_net.VNet.new(name, vlan, vswitch.href, tagged)
+    vnet_elem = pvm_net.VNet(name=name, vlan_id=vlan, vswitch_uri=vswitch.href,
+                             tagged=tagged)
     resp = adapter.create(vnet_elem, pvm_ms.MS_ROOT, host_uuid,
                           pvm_net.VNET_ROOT)
-    return pvm_net.VNet.load_from_response(resp)
+    return pvm_net.VNet.wrap(resp.entry)
 
 
 def _find_available_ld_grp(nb):
@@ -287,7 +289,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     vswitch_w = _find_vswitch(adapter, host_uuid, impacted_nb.vswitch_id)
     vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                                   child_type=pvm_net.VNET_ROOT)
-    vnets = pvm_net.VNet.load_from_response(vnet_resp_feed)
+    vnets = pvm_net.VNet.wrap(vnet_resp_feed)
 
     # Read the old virtual network
     old_uri = _find_vnet_uri_from_lg(adapter, impacted_lg, old_vid)
@@ -302,7 +304,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
         uris.remove(old_uri)
     uris.insert(0, new_vnet.href)
     new_lg = pvm_net.crt_load_group(new_vid, uris)
-    new_lg_w = pvm_net.LoadGroup(new_lg)
+    new_lg_w = pvm_net.LoadGroup.wrap(new_lg)
 
     impacted_nb.load_grps.remove(impacted_lg)
 
@@ -313,7 +315,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
                              child_id=impacted_nb.uuid)
 
     # A second to add the new load group in
-    impacted_nb = pvm_net.NetworkBridge.load_from_response(nb_resp)
+    impacted_nb = pvm_net.NetworkBridge.wrap(nb_resp)
     impacted_nb.load_grps.append(new_lg_w)
     adapter.update(impacted_nb._element, impacted_nb.etag, pvm_ms.MS_ROOT,
                    root_id=host_uuid, child_type=pvm_net.NB_ROOT,
@@ -370,7 +372,7 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
         # Get the updated feed of NetworkBridges
         nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
                                child_type=pvm_net.NB_ROOT)
-        nb_wraps = pvm_net.NetworkBridge.load_from_response(nb_feed)
+        nb_wraps = pvm_net.NetworkBridge.wrap(nb_feed)
 
     # Find our Network Bridge
     req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -424,7 +426,7 @@ def _find_vnet_uri_from_lg(adapter, lg, vlan):
     """
     for vnet_uri in lg.virtual_network_uri_list:
         vnet_resp = adapter.read_by_href(vnet_uri)
-        vnet_net = pvm_net.VNet.load_from_response(vnet_resp)
+        vnet_net = pvm_net.VNet.wrap(vnet_resp)
         if vnet_net.vlan == vlan:
             return vnet_net.href
     return None

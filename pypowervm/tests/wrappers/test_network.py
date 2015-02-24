@@ -45,7 +45,8 @@ class TestVNetwork(twrap.TestWrapper):
 
     def test_vnet_new(self):
         """Tests the method that returns a VNet ElementWrapper."""
-        vn_w = net.VNet.new('name', 10, 'vswitch_uri', True)
+        vn_w = net.VNet(name='name', vlan_id=10, vswitch_uri='vswitch_uri',
+                        tagged=True)
         self.assertEqual('name', vn_w.name)
         self.assertEqual(10, vn_w.vlan)
         self.assertTrue(vn_w.tagged)
@@ -58,7 +59,7 @@ class TestVSwitch(twrap.TestWrapper):
 
     def test_feed(self):
         """Tests the feed of virtual switches."""
-        vswitches = net.VirtualSwitch.load_from_response(self.resp)
+        vswitches = net.VirtualSwitch.wrap(self.resp)
         self.assertTrue(len(vswitches) >= 1)
         for vswitch in vswitches:
             self.assertIsNotNone(vswitch.etag)
@@ -94,7 +95,7 @@ class TestNetwork(twrap.TestWrapper):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
         pvid = 1
-        lg = net.LoadGroup(net.crt_load_group(pvid, uri_list))
+        lg = net.LoadGroup.wrap(net.crt_load_group(pvid, uri_list))
 
         # Validate the data back
         self.assertIsNotNone(lg)
@@ -261,7 +262,7 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = net.CNA.new(1, "fake_vs")
+        test = net.CNA(pvid=1, vswitch_href="fake_vs")
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertFalse(test.is_tagged_vlan_supported)
         self.assertEqual([], test.tagged_vlans)
@@ -272,8 +273,9 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = net.CNA.new(5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
-                           slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
+        test = net.CNA(
+            pvid=5, vswitch_href="fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
+            slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertTrue(test.is_tagged_vlan_supported)
         self.assertEqual([6, 7, 8, 9], test.tagged_vlans)

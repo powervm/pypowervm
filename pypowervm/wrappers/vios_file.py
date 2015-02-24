@@ -14,8 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pypowervm import adapter as a
-from pypowervm.wrappers import constants as c
+import pypowervm.adapter as a
+import pypowervm.const as pc
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 FILE_ROOT = 'File'
@@ -55,30 +56,30 @@ def crt_file(f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     """
     # Metadata needs to be in a specific order.  These are required
     metadata = [
-        a.Element(FILE_NAME, ns=c.WEB_NS, text=f_name),
-        a.Element(FILE_INET_MED_TYPE, ns=c.WEB_NS, text=DEFAULT_MEDIA_TYPE)
+        a.Element(FILE_NAME, ns=wc.WEB_NS, text=f_name),
+        a.Element(FILE_INET_MED_TYPE, ns=wc.WEB_NS, text=DEFAULT_MEDIA_TYPE)
     ]
 
     # Optional - should not be included in the Element if None.
     if sha_chksum:
-        metadata.append(a.Element('SHA256', ns=c.WEB_NS, text=sha_chksum))
+        metadata.append(a.Element('SHA256', ns=wc.WEB_NS, text=sha_chksum))
 
     if f_size:
-        metadata.append(a.Element(FILE_EXP_SIZE, ns=c.WEB_NS,
+        metadata.append(a.Element(FILE_EXP_SIZE, ns=wc.WEB_NS,
                                   text=str(f_size)))
 
     # These are required
-    metadata.append(a.Element(FILE_ENUM_TYPE, ns=c.WEB_NS,
+    metadata.append(a.Element(FILE_ENUM_TYPE, ns=wc.WEB_NS,
                               text=f_type))
-    metadata.append(a.Element(FILE_VIOS, ns=c.WEB_NS, text=v_uuid))
+    metadata.append(a.Element(FILE_VIOS, ns=wc.WEB_NS, text=v_uuid))
 
     # Optical media doesn't need to cite a target dev for file upload
     if tdev_udid:
-        metadata.append(a.Element('TargetDeviceUniqueDeviceID', ns=c.WEB_NS,
+        metadata.append(a.Element('TargetDeviceUniqueDeviceID', ns=wc.WEB_NS,
                                   text=tdev_udid))
 
     # Metadata about the file done.  Add that to a root element.
-    return a.Element('File', ns=c.WEB_NS, attrib=c.DEFAULT_SCHEMA_ATTR,
+    return a.Element('File', ns=wc.WEB_NS, attrib=wc.DEFAULT_SCHEMA_ATTR,
                      children=metadata)
 
 
@@ -88,6 +89,8 @@ class File(ewrap.EntryWrapper):
     The API supports passing a File up to devices on the Virtual I/O Server.
     This object wraps the metadata for the Files.
     """
+    schema_type = wc.VIOS_FILE
+    schema_ns = pc.WEB_NS
 
     @property
     def file_name(self):
