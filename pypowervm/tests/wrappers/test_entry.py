@@ -167,13 +167,13 @@ class TestElementWrapper(unittest.TestCase):
         self.assertTrue(sea1 == sea2)
 
         # Change the other SEA
-        sea2._element._element.append(etree.Element('Bob'))
+        sea2.element.element.append(etree.Element('Bob'))
         self.assertFalse(sea1 == sea2)
 
     def test_inequality_by_subelem_change(self):
         sea1 = self._find_seas(self.nb1._entry)[0]
         sea2 = self._find_seas(self.nb2._entry)[0]
-        sea_trunk = sea2._element.findall('TrunkAdapters/TrunkAdapter')[1]
+        sea_trunk = sea2.element.findall('TrunkAdapters/TrunkAdapter')[1]
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
@@ -191,7 +191,7 @@ class TestElementWrapper(unittest.TestCase):
         myel = MyElement()
         self.assertEqual(myel.pvm_type, 'SomePowerObject')
         self.assertEqual(
-            myel._element.toxmlstring(),
+            myel.element.toxmlstring(),
             '<uom:SomePowerObject xmlns:uom="http://www.ibm.com/xmlns/systems'
             '/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"/>'
             .encode("utf-8"))
@@ -209,7 +209,7 @@ class TestElementWrapper(unittest.TestCase):
             has_metadata = True
         myel = MyElement3()
         self.assertEqual(
-            myel._element.toxmlstring(),
+            myel.element.toxmlstring(),
             '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
             '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
 
@@ -268,7 +268,7 @@ class TestWrapperElemList(unittest.TestCase):
         resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         nb = resp.feed.entries[0]
         self.wrapper = ewrap.EntryWrapper.wrap(nb)
-        sea_elem = self.wrapper._element.find('SharedEthernetAdapters')
+        sea_elem = self.wrapper.element.find('SharedEthernetAdapters')
 
         self.elem_set = ewrap.WrapperElemList(sea_elem,
                                               'SharedEthernetAdapter',

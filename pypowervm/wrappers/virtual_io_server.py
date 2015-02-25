@@ -427,7 +427,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_ADAPTER)
+        elem = self.element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
             return VirtualSCSIClientAdapter.wrap(elem)
         return None
@@ -436,7 +436,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
     def server_adapter(self):
         """Returns the Virtual I/O Server side VirtualSCSIServerAdapter."""
         return VirtualSCSIServerAdapter.wrap(
-            self._element.find(MAP_SERVER_ADAPTER))
+            self.element.find(MAP_SERVER_ADAPTER))
 
     @property
     def backing_storage(self):
@@ -445,7 +445,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
         Refer to the 'volume_group' wrapper.  This element may be a
         VirtualDisk or VirtualOpticalMedia.  May return None.
         """
-        elem = self._element.find(MAP_STORAGE)
+        elem = self.element.find(MAP_STORAGE)
         if elem is not None:
             # Check if virtual disk
             e = elem.find(storage.DISK_ROOT)
@@ -493,7 +493,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_ADAPTER)
+        elem = self.element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
             return VirtualFCClientAdapter.wrap(elem)
         return None
@@ -505,7 +505,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         If None - then the vfcmap isn't done and no physical port is backing
         it.
         """
-        elem = self._element.find(MAP_PORT)
+        elem = self.element.find(MAP_PORT)
         if elem is not None:
             return PhysicalFCPort.wrap(elem)
         return None
@@ -514,7 +514,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
     def server_adapter(self):
         """Returns the Virtual I/O Server Virtual FC Adapter."""
         return VirtualFCServerAdapter.wrap(
-            self._element.find(MAP_SERVER_ADAPTER))
+            self.element.find(MAP_SERVER_ADAPTER))
 
 
 @six.add_metaclass(abc.ABCMeta)

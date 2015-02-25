@@ -98,7 +98,7 @@ class TestViosMappings(twrap.TestWrapper):
         vmap = vios.crt_scsi_map_to_vopt(mock_adpt, 'host_uuid',
                                          'client_lpar_uuid', 'media_name')
         self.assertIsNotNone(vmap)
-        self.assertIsNotNone(vmap._element)
+        self.assertIsNotNone(vmap.element)
         self.assertEqual(vios._NEW_CLIENT_ADAPTER.tag,
                          vmap.find('ClientAdapter').tag)
         self.assertEqual(vios._NEW_SERVER_ADAPTER.tag,
@@ -117,7 +117,7 @@ class TestViosMappings(twrap.TestWrapper):
         vmap = vios.crt_scsi_map_to_vdisk(mock_adpt, 'host_uuid',
                                           'client_lpar_uuid', 'disk_name')
         self.assertIsNotNone(vmap)
-        self.assertIsNotNone(vmap._element)
+        self.assertIsNotNone(vmap.element)
         self.assertEqual(vios._NEW_CLIENT_ADAPTER.tag,
                          vmap.find('ClientAdapter').tag)
         self.assertEqual(vios._NEW_SERVER_ADAPTER.tag,

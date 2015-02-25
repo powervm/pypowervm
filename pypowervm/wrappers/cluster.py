@@ -198,7 +198,7 @@ class Node(ewrap.ElementWrapper):
         el = self._find_or_seed(N_MTMS)
         if not isinstance(new_mtms, ms.MTMS):
             new_mtms = ms.MTMS(mtms_str=new_mtms)
-        self._element.replace(el, new_mtms._element)
+        self.element.replace(el, new_mtms.element)
 
     @property
     def vios_uri(self):
