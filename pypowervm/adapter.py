@@ -1273,28 +1273,28 @@ class Element(object):
         # Defaults shouldn't be mutable
         attrib = attrib if attrib else {}
         if ns:
-            self._element = etree.Element(str(QName(ns, tag)),
-                                          attrib=attrib)
+            self.element = etree.Element(str(QName(ns, tag)),
+                                         attrib=attrib)
         else:
-            self._element = etree.Element(tag, attrib=attrib)
+            self.element = etree.Element(tag, attrib=attrib)
         if text:
-            self._element.text = etree.CDATA(text) if cdata else text
+            self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
-            self._element.append(c._element)
+            self.element.append(c.element)
 
     def __len__(self):
-        return len(self._element)
+        return len(self.element)
 
     def __getitem__(self, index):
-        return Element.wrapelement(self._element[index])
+        return Element.wrapelement(self.element[index])
 
     def __setitem__(self, index, value):
         if not isinstance(value, Element):
             raise ValueError('Value must be of type Element')
-        self._element[index] = value._element
+        self.element[index] = value.element
 
     def __delitem__(self, index):
-        del self._element[index]
+        del self.element[index]
 
     def __eq__(self, other):
         if other is None:
@@ -1341,22 +1341,22 @@ class Element(object):
 
     def getchildren(self):
         """Returns the children as a list of Elements."""
-        return [Element.wrapelement(i) for i in self._element.getchildren()]
+        return [Element.wrapelement(i) for i in self.element.getchildren()]
 
     @classmethod
     def wrapelement(cls, element):
         if element is None:
             return None
         e = cls('element')  # create with minimum inputs
-        e._element = element  # assign element over the one __init__ creates
+        e.element = element  # assign element over the one __init__ creates
         return e
 
     def toxmlstring(self):
-        return etree.tostring(self._element)
+        return etree.tostring(self.element)
 
     @property
     def tag(self):
-        tag = self._element.tag
+        tag = self.element.tag
         m = re.search('\{.*\}(.*)', tag)
         return tag if not m else m.group(1)
 
@@ -1364,65 +1364,65 @@ class Element(object):
     def tag(self, tag):
         ns = self.namespace
         if ns:
-            self._element.tag = '{%s}%s' % (ns, tag)
+            self.element.tag = '{%s}%s' % (ns, tag)
         else:
-            self._element.tag = tag
+            self.element.tag = tag
 
     @property
     def namespace(self):
-        qtag = self._element.tag
+        qtag = self.element.tag
         m = re.search('\{(.*)\}', qtag)
         return m.group(1) if m else ''
 
     @namespace.setter
     def namespace(self, ns):
         tag = self.tag
-        self._element.tag = '{%s}%s' % (ns, tag)
+        self.element.tag = '{%s}%s' % (ns, tag)
 
     @property
     def text(self):
-        return self._element.text
+        return self.element.text
 
     @text.setter
     def text(self, text):
-        self._element.text = text
+        self.element.text = text
 
     @property
     def attrib(self):
-        return self._element.attrib
+        return self.element.attrib
 
     @attrib.setter
     def attrib(self, attrib):
-        self._element.attrib = attrib
+        self.element.attrib = attrib
 
     def get(self, key, default=None):
         """Gets the element attribute named key.
 
         Returns the attribute value, or default if the attribute was not found.
         """
-        return self._element.get(key, default)
+        return self.element.get(key, default)
 
     def items(self):
         """Returns the element attributes as a sequence of (name, value) pairs.
 
         The attributes are returned in an arbitrary order.
         """
-        return self._element.items()
+        return self.element.items()
 
     def keys(self):
         """Returns the element attribute names as a list.
 
         The names are returned in an arbitrary order.
         """
-        return self._element.keys()
+        return self.element.keys()
 
     def set(self, key, value):
         """Set the attribute key on the element to value."""
-        self._element.set(key, value)
+        self.element.set(key, value)
 
     def append(self, subelement):
         """Adds subelement to the end of this element's list of subelements."""
-        self._element.append(subelement._element)
+        self.element.append(subelement.element)
 
     def find(self, match):
         """Finds the first subelement matching match.
@@ -1431,7 +1431,7 @@ class Element(object):
         :return: an element instance or None.
         """
         qpath = Element._qualifypath(match, self.namespace)
-        e = self._element.find(qpath)
+        e = self.element.find(qpath)
         if e is not None:  # must specify "is not None" here to work
             return Element.wrapelement(e)
         else:
@@ -1444,7 +1444,7 @@ class Element(object):
         :return: a list containing all matching elements in document order.
         """
         qpath = Element._qualifypath(match, self.namespace)
-        e_iter = self._element.findall(qpath)
+        e_iter = self.element.findall(qpath)
         elems = []
         for e in e_iter:
             elems.append(Element.wrapelement(e))
@@ -1459,7 +1459,7 @@ class Element(object):
                  has no text content an empty string is returned.
         """
         qpath = Element._qualifypath(match, self.namespace)
-        text = self._element.findtext(qpath, default)
+        text = self.element.findtext(qpath, default)
         return text if text else default
 
     def insert(self, index, subelement):
@@ -1467,7 +1467,7 @@ class Element(object):
 
         :raises TypeError: if subelement is not an etree.Element.
         """
-        self._element.insert(index, subelement._element)
+        self.element.insert(index, subelement.element)
 
     def iter(self, tag=None):
         """Creates a tree iterator with the current element as the root.
@@ -1480,10 +1480,10 @@ class Element(object):
         # Determine which iterator to use
         # etree.Element.getiterator has been deprecated in favor of
         # etree.Element.iter, but the latter was not added until python 2.7
-        if hasattr(self._element, 'iter'):
-            lib_iter = self._element.iter
+        if hasattr(self.element, 'iter'):
+            lib_iter = self.element.iter
         else:
-            lib_iter = self._element.getiterator
+            lib_iter = self.element.getiterator
 
         # Fix up the tag value
         if not tag or tag == '*':
@@ -1498,8 +1498,8 @@ class Element(object):
 
     def replace(self, existing, new_element):
         """Replaces the existing child Element with the new one."""
-        self._element.replace(existing._element,
-                              new_element._element)
+        self.element.replace(existing.element,
+                             new_element.element)
 
     def remove(self, subelement):
         """Removes subelement from the element.
@@ -1507,7 +1507,7 @@ class Element(object):
         Unlike the find* methods this method compares elements based on the
         instance identity, not on tag value or contents.
         """
-        self._element.remove(subelement._element)
+        self.element.remove(subelement.element)
 
     @staticmethod
     def _qualifypath(path, ns):

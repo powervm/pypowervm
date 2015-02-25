@@ -102,7 +102,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
                             sha_chksum=sha_chksum)
     try:
         # Upload the file
-        adapter.upload_file(vio_file._element, d_stream)
+        adapter.upload_file(vio_file.element, d_stream)
     finally:
         try:
             # Cleanup after the upload
@@ -139,7 +139,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
                             sha_chksum, f_size)
     try:
         # Next, upload the file
-        adapter.upload_file(vio_file._element, d_stream)
+        adapter.upload_file(vio_file.element, d_stream)
     finally:
         try:
             # Cleanup after the upload
