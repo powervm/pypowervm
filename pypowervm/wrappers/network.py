@@ -161,11 +161,11 @@ class NetworkBridge(ewrap.EntryWrapper):
         """
         # Find all the children Virtual Networks.
         search = c.DELIM.join(['.', NB_LGS, LG_ROOT, LG_VNETS, c.LINK])
-        new_vnets = copy.deepcopy(self._element.findall(search))
+        new_vnets = copy.deepcopy(self.element.findall(search))
         # Find and replace the current element.
-        cur_vnets = self._element.find(c.ROOT + NB_VNETS)
-        self._element.replace(cur_vnets,
-                              adpt.Element(NB_VNETS, children=new_vnets))
+        cur_vnets = self.element.find(c.ROOT + NB_VNETS)
+        self.element.replace(cur_vnets,
+                             adpt.Element(NB_VNETS, children=new_vnets))
 
     @property
     def seas(self):
@@ -312,7 +312,7 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         The first is the primary adapter.  All others are the additional
         adapters.
         """
-        trunk_elem_list = self._element.findall(SEA_TRUNKS + c.DELIM + TA_ROOT)
+        trunk_elem_list = self.element.findall(SEA_TRUNKS + c.DELIM + TA_ROOT)
         trunks = []
         for trunk_elem in trunk_elem_list:
             trunks.append(TrunkAdapter.wrap(trunk_elem))
@@ -415,7 +415,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
         :return: list of TrunkAdapter objects.
         """
-        return ewrap.WrapperElemList(self._element.find(LG_TRUNKS),
+        return ewrap.WrapperElemList(self.element.find(LG_TRUNKS),
                                      TA_ROOT, TrunkAdapter)
 
     @trunk_adapters.setter
@@ -441,13 +441,13 @@ class LoadGroup(ewrap.ElementWrapper):
             new_elems.append(adpt.Element('link', attrib={'href': item,
                                                           'rel': 'related'}))
         new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
-        old_elems = self._element.find(LG_VNETS)
+        old_elems = self.element.find(LG_VNETS)
         # This is a bug where the API isn't returning vnets if just a PVID
         # on additional VEA
         if old_elems is not None:
-            self._element.replace(old_elems, new_vnet_elem)
+            self.element.replace(old_elems, new_vnet_elem)
         else:
-            self._element.append(new_vnet_elem)
+            self.element.append(new_vnet_elem)
 
         # If the Network Bridge was set, tell it to rebuild its VirtualNetwork
         # list.

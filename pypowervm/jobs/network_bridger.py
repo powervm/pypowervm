@@ -130,7 +130,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
 
     # At this point, the network bridge should just need to be updated.  The
     # Load Groups on the Network Bridge should be correct.
-    adapter.update(req_nb._element, req_nb.etag, pvm_ms.MS_ROOT,
+    adapter.update(req_nb.element, req_nb.etag, pvm_ms.MS_ROOT,
                    root_id=host_uuid, child_type=pvm_net.NB_ROOT,
                    child_id=req_nb.uuid)
 
@@ -309,7 +309,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     impacted_nb.load_grps.remove(impacted_lg)
 
     # Need two updates.  One to remove the load group.
-    nb_resp = adapter.update(impacted_nb._element, impacted_nb.etag,
+    nb_resp = adapter.update(impacted_nb.element, impacted_nb.etag,
                              pvm_ms.MS_ROOT, root_id=host_uuid,
                              child_type=pvm_net.NB_ROOT,
                              child_id=impacted_nb.uuid)
@@ -317,7 +317,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     # A second to add the new load group in
     impacted_nb = pvm_net.NetworkBridge.wrap(nb_resp)
     impacted_nb.load_grps.append(new_lg_w)
-    adapter.update(impacted_nb._element, impacted_nb.etag, pvm_ms.MS_ROOT,
+    adapter.update(impacted_nb.element, impacted_nb.etag, pvm_ms.MS_ROOT,
                    root_id=host_uuid, child_type=pvm_net.NB_ROOT,
                    child_id=impacted_nb.uuid)
 
@@ -410,7 +410,7 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
         matching_lg.virtual_network_uri_list.remove(vnet_uri)
 
     # Now update the network bridge.
-    adapter.update(req_nb._element, req_nb._etag, pvm_ms.MS_ROOT,
+    adapter.update(req_nb.element, req_nb._etag, pvm_ms.MS_ROOT,
                    root_id=host_uuid, child_type=pvm_net.NB_ROOT,
                    child_id=req_nb.uuid)
 
