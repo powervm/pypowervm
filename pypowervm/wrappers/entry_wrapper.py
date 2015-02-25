@@ -62,7 +62,7 @@ class Wrapper(object):
         :param use_find_all: If set to true, will use the find_all method for
                              queries.
         """
-        element = self._element
+        element = self.element
         if use_find_all:
             found_value = element.findall(property_name)
         else:
@@ -80,7 +80,7 @@ class Wrapper(object):
                        the DEFAULT_SCHEM_ATTR.
         :returns: The existing element, or a newly created one if not found.
         """
-        root_elem = self._element
+        root_elem = self.element
 
         # Find existing
         existing = root_elem.find(prop_name)
@@ -107,19 +107,19 @@ class Wrapper(object):
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
         """
-        root_elem = self._element
+        root_elem = self.element
         new_elem = adpt.Element(prop_name,
                                 attrib=attrib,
-                                children=[x._element for
+                                children=[x.element for
                                           x in prop_children])
         # Find existing
         existing = root_elem.find(prop_name)
 
         if existing:
-            root_elem._element.replace(existing._element, new_elem._element)
+            root_elem.element.replace(existing.element, new_elem.element)
         else:
-            root_elem.append(new_elem)
             # If it existed, we need to maintain the order in the tree.
+            root_elem.append(new_elem)
 
     @property
     def pvm_type(self):
@@ -127,7 +127,7 @@ class Wrapper(object):
 
         (ManagedSystem, LogicalPartition, etc)
         """
-        return self._element.tag  # May be None
+        return self.element.tag  # May be None
 
     @property
     @abc.abstractmethod
@@ -152,7 +152,7 @@ class Wrapper(object):
             if create:
                 element_value = adpt.Element(
                     property_name, attrib=None, text=str(value))
-                self._element.append(element_value)
+                self.element.append(element_value)
 
         element_value.text = str(value)
 
@@ -329,18 +329,18 @@ class Wrapper(object):
                 new_el = append_point._find(next_prop)
                 if new_el is None:
                     new_el = adpt.Element(next_prop)
-                    append_point._element.append(new_el)
+                    append_point.element.append(new_el)
                 append_point = ElementWrapper.for_propname(next_prop).wrap(
                     new_el)
             link = adpt.Element(l[-1])
-            append_point._element.append(link)
+            append_point.element.append(link)
         # At this point we have found or created the propname element.  Its
         # handle is in the link var.
         link.attrib['href'] = href
         link.attrib['rel'] = 'related'
 
     def toxmlstring(self):
-        return self._element.toxmlstring()
+        return self.element.toxmlstring()
 
 
 class EntryWrapper(Wrapper):
@@ -361,7 +361,7 @@ class EntryWrapper(Wrapper):
         # Properties are not needed under current implementation, as
         # fresh-constructed Entry is only used for its element.
         # (Properties belong to the Atom portion of the Entry.)
-        self._entry = adpt.Entry({}, element._element)
+        self._entry = adpt.Entry({}, element.element)
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -417,7 +417,7 @@ class EntryWrapper(Wrapper):
         return wrap
 
     @property
-    def _element(self):
+    def element(self):
         return self._entry.element
 
     @property
@@ -479,12 +479,20 @@ class ElementWrapper(Wrapper):
                 adpt.Element('Metadata', ns=self.schema_ns,
                              children=[adpt.Element(
                                  'Atom', ns=self.schema_ns)]))
-        self._element = adpt.Element(
+        self.element = adpt.Element(
             self.schema_type, ns=self.schema_ns,
             attrib=self.default_attrib, children=children)
 
     @staticmethod
     def for_propname(propname):
+        """Allows creation of a legal ElementWrapper knowing only its name.
+
+        This is useful for producing instances to test with, or wrapping
+        elements which do not have their own wrapper implementation.
+
+        :param propname: The name (tag) of the underlying Element.
+        :return: A new ElementWrapper instance.
+        """
         class DynamicElementWrapper(ElementWrapper):
             schema_type = propname
         return DynamicElementWrapper
@@ -501,9 +509,9 @@ class ElementWrapper(Wrapper):
             wrap = cls()
         except TypeError:
             # Handle unimplemented wrapper types
-            propname = etree.QName(element._element.tag).localname
+            propname = etree.QName(element.element.tag).localname
             wrap = cls.for_propname(propname)()
-        wrap._element = element
+        wrap.element = element
         return wrap
 
     @property
@@ -521,7 +529,7 @@ class ElementWrapper(Wrapper):
 
     def __eq__(self, other):
         """Tests equality."""
-        return self._element == other._element
+        return self.element == other.element
 
 
 class WrapperElemList(list):
@@ -597,21 +605,21 @@ class WrapperElemList(list):
             self.append(elem)
 
     def append(self, elem):
-        self.root_elem._element.append(elem._element._element)
+        self.root_elem.element.append(elem.element.element)
 
     def remove(self, elem):
         # Try this way first...if there is a value error, that means
         # that the identical element isn't here...need to try 'functionally
         # equivalent' -> slower...
         try:
-            self.root_elem.remove(elem._element)
+            self.root_elem.remove(elem.element)
             return
         except ValueError:
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
         children = self.root_elem.getchildren()
-        equiv = util.find_equivalent(elem._element, children)
+        equiv = util.find_equivalent(elem.element, children)
         if equiv is None:
             raise ValueError(_('No such child element.'))
         self.root_elem.remove(equiv)

@@ -562,7 +562,7 @@ class LogicalPartition(ewrap.EntryWrapper):
     @property
     def io_config(self):
         """The Partition I/O Configuration for the LPAR."""
-        elem = self._element.find(IO_CFG_ROOT)
+        elem = self.element.find(IO_CFG_ROOT)
         return PartitionIOConfiguration.wrap(elem)
 
 

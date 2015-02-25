@@ -408,7 +408,7 @@ class TestElementWrapper(unittest.TestCase):
         self.assertTrue(sea1 == sea2)
 
         # Change the other SEA
-        sea2._element.append(etree.Element('Bob'))
+        sea2.element.append(etree.Element('Bob'))
         self.assertFalse(sea1 == sea2)
 
     def test_inequality_by_subelem_change(self):

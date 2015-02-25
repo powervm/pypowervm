@@ -225,11 +225,11 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
     @property
     def virtual_scsi_mappings(self):
-        return self._entry.element.find(c.VIRT_SCSI_MAPPINGS)
+        return self.element.find(c.VIRT_SCSI_MAPPINGS)
 
     @property
     def media_repository(self):
-        return self._entry.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
+        return self.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
 
     def get_vfc_wwpns(self):
         """Returns a list of the virtual FC WWPN pairs for the vios.
@@ -263,7 +263,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
         policy = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self._entry.element.findall(c.PVS_PATH)
+        volumes = self.element.findall(c.PVS_PATH)
         for volume in volumes:
             vol_uuid = volume.findtext(c.VOL_UID)
             match = re.search(r'^[0-9]{5}([0-9A-F]{32}).+$', vol_uuid)
@@ -283,7 +283,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
         name = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self._entry.element.findall(c.PVS_PATH)
+        volumes = self.element.findall(c.PVS_PATH)
         for volume in volumes:
             vol_uuid = volume.findtext(c.UDID)
             if vol_uuid:
@@ -330,8 +330,8 @@ class VirtualIOServer(ewrap.EntryWrapper):
 
         # Get all the shared ethernet adapters and free
         # ethernet devices and pull the IPs
-        seas = self._entry.element.findall(c.SHARED_ETHERNET_ADAPTER)
-        free_eths = self._entry.element.findall(c.ETHERNET_BACKING_DEVICE)
+        seas = self.element.findall(c.SHARED_ETHERNET_ADAPTER)
+        free_eths = self.element.findall(c.ETHERNET_BACKING_DEVICE)
         for eth in seas + free_eths:
             ip = eth.findtext(c.IF_ADDR)
             if ip and ip not in ip_list:
@@ -387,7 +387,7 @@ class VirtualIOServer(ewrap.EntryWrapper):
     @property
     def io_config(self):
         """The Partition I/O Configuration for the VIOS."""
-        elem = self._element.find(lpar.IO_CFG_ROOT)
+        elem = self.element.find(lpar.IO_CFG_ROOT)
         return lpar.PartitionIOConfiguration.wrap(elem)
 
     def derive_orphan_trunk_adapters(self):
@@ -442,7 +442,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_ADAPTER)
+        elem = self.element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
             return VirtualSCSIClientAdapter.wrap(elem)
         return None
@@ -451,7 +451,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
     def server_adapter(self):
         """Returns the Virtual I/O Server side VirtualSCSIServerAdapter."""
         return VirtualSCSIServerAdapter.wrap(
-            self._element.find(MAP_SERVER_ADAPTER))
+            self.element.find(MAP_SERVER_ADAPTER))
 
     @property
     def backing_storage(self):
@@ -460,7 +460,7 @@ class VirtualSCSIMapping(ewrap.ElementWrapper):
         Refer to the 'volume_group' wrapper.  This element may be a
         VirtualDisk or VirtualOpticalMedia.  May return None.
         """
-        elem = self._element.find(MAP_STORAGE)
+        elem = self.element.find(MAP_STORAGE)
         if elem is not None:
             # Check if virtual disk
             e = elem.find(storage.DISK_ROOT)
@@ -508,7 +508,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self._element.find(MAP_CLIENT_ADAPTER)
+        elem = self.element.find(MAP_CLIENT_ADAPTER)
         if elem is not None:
             return VirtualFCClientAdapter.wrap(elem)
         return None
@@ -520,7 +520,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         If None - then the vfcmap isn't done and no physical port is backing
         it.
         """
-        elem = self._element.find(MAP_PORT)
+        elem = self.element.find(MAP_PORT)
         if elem is not None:
             return lpar.PhysFCPort.wrap(elem)
         return None
@@ -529,7 +529,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
     def server_adapter(self):
         """Returns the Virtual I/O Server Virtual FC Adapter."""
         return VirtualFCServerAdapter.wrap(
-            self._element.find(MAP_SERVER_ADAPTER))
+            self.element.find(MAP_SERVER_ADAPTER))
 
 
 @six.add_metaclass(abc.ABCMeta)

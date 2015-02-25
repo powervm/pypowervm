@@ -61,7 +61,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @property
     def mtms(self):
-        return MTMS.wrap(self._element.find(MTMS_ROOT))
+        return MTMS.wrap(self.element.find(MTMS_ROOT))
 
     @property
     def system_state(self):
