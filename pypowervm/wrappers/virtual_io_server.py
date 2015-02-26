@@ -21,6 +21,7 @@ import re
 from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import network
 from pypowervm.wrappers import storage
 
@@ -61,13 +62,6 @@ VADPT_SLOT_NUM = 'VirtualSlotNumber'
 VADPT_VARIED_ON = 'VariedOn'
 VADPT_NAME = 'AdapterName'
 VADPT_TYPE = 'AdapterType'
-
-# Physical FC Port Constants
-PFC_NAME = 'PortName'
-PFC_UDID = 'UniqueDeviceID'
-PFC_WWPN = 'WWPN'
-PFC_AVAILABLE_PORTS = 'AvailablePorts'
-PFC_TOTAL_PORTS = 'TotalPorts'
 
 # Adapter Creation Private Constants
 _NEW_SERVER_ADAPTER = (
@@ -371,6 +365,12 @@ class VirtualIOServer(ewrap.EntryWrapper):
                                    network.TA_ROOT, network.TrunkAdapter)
         return es
 
+    @property
+    def io_config(self):
+        """The Partition I/O Configuration for the VIOS."""
+        elem = self._element.find(lpar.IO_CFG_ROOT)
+        return lpar.PartitionIOConfiguration(elem)
+
     def derive_orphan_trunk_adapters(self):
         """Builds a list of trunk adapters not attached to a SEA."""
         sea_trunks = []
@@ -498,7 +498,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         """
         elem = self._element.find(MAP_PORT)
         if elem is not None:
-            return PhysicalFCPort(elem)
+            return lpar.PhysFCPort(elem)
         return None
 
     @property
@@ -608,37 +608,3 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
         return self._get_val_str(VADPT_MAP_PORT)
-
-
-class PhysicalFCPort(ewrap.ElementWrapper):
-    """A physical FibreChannel port on the Virtual I/O Server."""
-
-    @property
-    def loc_code(self):
-        """Returns the location code."""
-        return self._get_val_str(LOCATION_CODE)
-
-    @property
-    def name(self):
-        """The name of the port."""
-        return self._get_val_str(PFC_NAME)
-
-    @property
-    def udid(self):
-        """The Unique Device ID."""
-        return self._get_val_str(PFC_UDID)
-
-    @property
-    def wwpn(self):
-        """The port's world wide port name."""
-        return self._get_val_str(PFC_WWPN)
-
-    @property
-    def available_ports(self):
-        """The number of available NPIV ports.  Int value."""
-        return self._get_val_int(PFC_AVAILABLE_PORTS)
-
-    @property
-    def total_ports(self):
-        """The total number of NPIV ports.  Int value."""
-        return self._get_val_int(PFC_TOTAL_PORTS)

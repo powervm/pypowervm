@@ -332,6 +332,26 @@ class TestLogicalPartition(unittest.TestCase):
             "operating_system",
             EXPECTED_OPERATING_SYSTEM_VER, 'Unknown')
 
+    def test_io_config(self):
+        self.assertIsNotNone(TestLogicalPartition._dedicated_wrapper.io_config)
+
+
+class TestPartitionIOConfiguration(unittest.TestCase):
+
+    def setUp(self):
+        lpar_resp = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE).get_response()
+        lpar_w = lpar.LogicalPartition.load_from_response(lpar_resp)[0]
+        self.io_config = lpar_w.io_config
+
+    def test_max_slots(self):
+        self.assertEqual(64, self.io_config.max_virtual_slots)
+
+    def test_io_slots(self):
+        # IO Slots are typically associated with the VIOS.  Further testing
+        # driven there.
+        self.assertIsNotNone(self.io_config.io_slots)
+        self.assertEqual(0, len(self.io_config.io_slots))
+
 
 class TestCreateLogicalPartition(unittest.TestCase):
     """Test cases to test the lpar operations."""
