@@ -449,17 +449,17 @@ class SSP(ewrap.EntryWrapper):
     @property
     def capacity(self):
         """Capacity in GB as a float."""
-        return float(self._get_val_str(SSP_CAPACITY))
+        return self._get_val_float(SSP_CAPACITY)
 
     @property
     def free_space(self):
         """Free space in GB as a float."""
-        return float(self._get_val_str(SSP_FREE_SPACE))
+        return self._get_val_float(SSP_FREE_SPACE)
 
     @property
     def total_lu_size(self):
         """Total LU size in GB as a float."""
-        return float(self._get_val_str(SSP_TOTAL_LU_SIZE))
+        return self._get_val_float(SSP_TOTAL_LU_SIZE)
 
     @property
     def logical_units(self):
