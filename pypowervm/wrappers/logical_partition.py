@@ -64,6 +64,47 @@ DED_SHARING_MODES = ('sre idle proces', 'keep idle procs',
 SHARING_MODES = ('capped', 'uncapped')
 UNCAPPED_WEIGHT = 'UncappedWeight'
 
+# Constants for the Partition I/O Configuration
+IO_CFG_ROOT = LPAR_IO_CFG
+IO_CFG_MAX_SLOTS = 'MaximumVirtualIOSlots'
+
+# Constants for the I/O Slot Configuration
+IO_SLOTS_ROOT = 'ProfileIOSlots'
+IO_SLOT_ROOT = 'ProfileIOSlot'
+
+# Constants for the Associated I/O Slot
+ASSOC_IO_SLOT_ROOT = 'AssociatedIOSlot'
+ASSOC_IO_SLOT_DESC = 'Description'
+ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
+ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
+ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
+ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
+ASSOC_IO_SLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
+ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
+ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
+ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
+ASSOC_IO_SLOT_SUBSYS_VENDOR_ID = 'PCISubsystemVendorID'
+
+# Constants for generic I/O Adapter
+RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
+IO_ADPT_ROOT = 'IOAdapter'
+IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
+IO_ADPT_ID = 'AdapterID'
+IO_ADPT_DESC = 'Description'
+IO_ADPT_NAME = 'DeviceName'
+IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
+IO_ADPT_PHYS_LOC = 'PhysicalLocation'
+
+# Physical Fibre Channel Port Constants
+PFC_PORT_LOC_CODE = 'LocationCode'
+PFC_PORT_NAME = 'PortName'
+PFC_PORT_UDID = 'UniqueDeviceID'
+PFC_PORT_WWPN = 'WWPN'
+PFC_PORT_AVAILABLE_PORTS = 'AvailablePorts'
+PFC_PORT_TOTAL_PORTS = 'TotalPorts'
+PFC_PORTS_ROOT = 'PhysicalFibreChannelPorts'
+PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
+
 
 def crt_ded_procs(proc, sharing_mode=DED_SHARING_MODES[0],
                   min_proc=None, max_proc=None):
@@ -516,3 +557,264 @@ class LogicalPartition(ewrap.EntryWrapper):
     def proc_mode_is_dedicated(self, value):
         """Expects 'true' (string) for dedicated or 'false' for shared."""
         self.set_parm_value(c.USE_DED_PROCS, value)
+
+    @property
+    def io_config(self):
+        """The Partition I/O Configuration for the LPAR."""
+        elem = self._element.find(IO_CFG_ROOT)
+        return PartitionIOConfiguration(elem)
+
+
+class PartitionIOConfiguration(ewrap.ElementWrapper):
+    """Represents the partitions Dedicated IO Configuration.
+
+    Comprised of I/O Slots.  There are two types of IO slots.  Those dedicated
+    to physical hardware (io_slots) and those that get used by virtual
+    hardware.
+    """
+
+    @property
+    def max_virtual_slots(self):
+        """The maximum number of virtual slots.
+
+        A slot is used for every VirtuScsiServerAdapter, TrunkAdapter, etc...
+        """
+        return self._get_val_int(IO_CFG_MAX_SLOTS)
+
+    @max_virtual_slots.setter
+    def max_virtual_slots(self, value):
+        self.set_parm_value(IO_CFG_MAX_SLOTS, str(value))
+
+    @property
+    def io_slots(self):
+        """The physical I/O Slots.
+
+        Each slot will have hardware associated with it.
+        """
+        es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT),
+                                   IO_SLOT_ROOT, IOSlot)
+        return es
+
+
+class IOSlot(ewrap.ElementWrapper):
+    """An I/O Slot represents a device bus on the system.
+
+    It may contain a piece of hardware within it.
+    """
+
+    class AssociatedIOSlot(ewrap.ElementWrapper):
+        """Internal class.  Hides the nested AssociatedIOSlot from parent.
+
+        Every ProfileIOSlot contains one AssociatedIOSlot.  If both are
+        exposed at the API level, the user would have to go from:
+         - lpar -> partition i/o config -> i/o slot -> associated i/o slot ->
+           i/o data
+
+        Since every i/o slot has a single Associated I/O Slot (unless said
+        I/O slot has no associated I/O), then we can just hide this from
+        the user.
+
+        We still keep the structure internally, but makes the API easier to
+        consume.
+        """
+
+        @property
+        def description(self):
+            return self._get_val_str(ASSOC_IO_SLOT_DESC)
+
+        @property
+        def phys_loc(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PHYS_LOC)
+
+        @property
+        def pc_adpt_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_ADPT_ID)
+
+        @property
+        def pci_class(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_CLASS)
+
+        @property
+        def pci_dev_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_DEV_ID)
+
+        @property
+        def pci_subsys_dev_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_DEV_ID)
+
+        @property
+        def pci_mfg_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_MFG_ID)
+
+        @property
+        def pci_rev_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_REV_ID)
+
+        @property
+        def pci_vendor_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_PCI_VENDOR_ID)
+
+        @property
+        def pci_subsys_vendor_id(self):
+            return self._get_val_str(ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
+
+        @property
+        def io_adapter(self):
+            """Jumps over the 'Related IO Adapter' element direct to the I/O.
+
+            This is another area where the schema has a two step jump that the
+            API can avoid.  This method skips over the RelatedIOAdapter
+            and jumps right to the IO Adapter.
+
+            Return values are either the generic IOAdapter or the
+            PhysFCAdapter.
+            """
+            # The child can be either an IO Adapter or a PhysFCAdapter.
+            # Need to check for both...
+            io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
+                                      IO_ADPT_ROOT)
+            if io_adpt_root is not None:
+                return IOAdapter(io_adpt_root)
+
+            # Didn't have the generic...check for non-generic.
+            io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
+                                      IO_PFC_ADPT_ROOT)
+            if io_adpt_root is not None:
+                return PhysFCAdapter(io_adpt_root)
+
+            return None
+
+    def __get_prop(self, func):
+        """Thin wrapper to get the Associated I/O Slot and get a property."""
+        elem = self._find(ASSOC_IO_SLOT_ROOT)
+        if elem is None:
+            return None
+
+        # Build the Associated IO Slot, find the function and execute it.
+        assoc_io_slot = self.AssociatedIOSlot(elem)
+        return getattr(assoc_io_slot, func)
+
+    @property
+    def description(self):
+        return self.__get_prop('description')
+
+    @property
+    def phys_loc(self):
+        return self.__get_prop('phys_loc')
+
+    @property
+    def pc_adpt_id(self):
+        return self.__get_prop('pc_adpt_id')
+
+    @property
+    def pci_class(self):
+        return self.__get_prop('pci_class')
+
+    @property
+    def pci_dev_id(self):
+        return self.__get_prop('pci_dev_id')
+
+    @property
+    def pci_subsys_dev_id(self):
+        return self.__get_prop('pci_subsys_dev_id')
+
+    @property
+    def pci_mfg_id(self):
+        return self.__get_prop('pci_mfg_id')
+
+    @property
+    def pci_rev_id(self):
+        return self.__get_prop('pci_rev_id')
+
+    @property
+    def pci_vendor_id(self):
+        return self.__get_prop('pci_vendor_id')
+
+    @property
+    def pci_subsys_vendor_id(self):
+        return self.__get_prop('pci_subsys_vendor_id')
+
+    @property
+    def adapter(self):
+        """Returns the physical I/O Adapter for this slot.
+
+        This will be one of two types.  Either a generic I/O Adapter or
+        a Physical Fibre Channel Adapter (PhysFCAdapter).
+        """
+        return self.__get_prop('io_adapter')
+
+
+class IOAdapter(ewrap.ElementWrapper):
+    """A generic IO Adapter,
+
+    This is a device plugged in to the system.  The location code indicates
+    where it is plugged into the system.
+    """
+
+    @property
+    def id(self):
+        """The adapter system id."""
+        return self._get_val_str(IO_ADPT_ID)
+
+    @property
+    def description(self):
+        return self._get_val_str(IO_ADPT_DESC)
+
+    @property
+    def dev_name(self):
+        return self._get_val_str(IO_ADPT_DESC)
+
+    @property
+    def dyn_reconfig_conn_name(self):
+        return self._get_val_str(IO_ADPT_DYN_NAME)
+
+    @property
+    def phys_loc_code(self):
+        return self._get_val_str(IO_ADPT_PHYS_LOC)
+
+
+class PhysFCAdapter(IOAdapter):
+    """A Physical Fibre Channel I/O Adapter.
+
+    Extends the generic I/O Adapter, but provides port detail as well.
+
+    The adapter has a set of Physical Fibre Channel Ports (PhysFCPort).
+    """
+
+    @property
+    def fc_ports(self):
+        """The set of PhysFCPort's that are attached to this adapter.
+
+        The data on this should be considered read only.
+        """
+        es = ewrap.WrapperElemList(self._find_or_seed(PFC_PORTS_ROOT),
+                                   PFC_PORT_ROOT, PhysFCPort)
+        return es
+
+
+class PhysFCPort(ewrap.ElementWrapper):
+    """A Physical Fibre Channel Port."""
+
+    @property
+    def loc_code(self):
+        return self._get_val_str(PFC_PORT_LOC_CODE)
+
+    @property
+    def name(self):
+        return self._get_val_str(PFC_PORT_NAME)
+
+    @property
+    def udid(self):
+        return self._get_val_str(PFC_PORT_UDID)
+
+    @property
+    def wwpn(self):
+        return self._get_val_str(PFC_PORT_WWPN)
+
+    @property
+    def npiv_available_ports(self):
+        return self._get_val_int(PFC_PORT_AVAILABLE_PORTS, 0)
+
+    @property
+    def npiv_total_ports(self):
+        return self._get_val_int(PFC_PORT_TOTAL_PORTS, 0)

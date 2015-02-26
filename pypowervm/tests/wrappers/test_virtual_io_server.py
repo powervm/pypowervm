@@ -22,6 +22,7 @@ import unittest
 
 from pypowervm import adapter as adpt
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
 
 
@@ -81,6 +82,18 @@ class TestVIOSWrapper(twrap.TestWrapper):
         orphans = self.dwrap.derive_orphan_trunk_adapters()
         self.assertEqual(1, len(orphans))
         self.assertEqual(4093, orphans[0].pvid)
+
+    def test_wwpns(self):
+        """Tests the helper methods to get WWPNs more easily."""
+        phys_paths = self.dwrap.get_pfc_wwpns()
+        self.assertIsNotNone(phys_paths)
+        self.assertEqual(2, len(phys_paths))
+
+        virt_paths = self.dwrap.get_vfc_wwpns()
+        self.assertIsNotNone(virt_paths)
+        self.assertEqual(2, len(virt_paths))
+        for virt_path in virt_paths:
+            self.assertEqual(2, len(virt_path))
 
 
 class TestViosMappings(twrap.TestWrapper):
@@ -202,8 +215,8 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(bp.name)
         self.assertIsNotNone(bp.udid)
         self.assertIsNotNone(bp.wwpn)
-        self.assertIsNotNone(bp.available_ports)
-        self.assertIsNotNone(bp.total_ports)
+        self.assertIsNotNone(bp.npiv_available_ports)
+        self.assertIsNotNone(bp.npiv_total_ports)
 
         sa = static_map.server_adapter
         self.assertIsNotNone(sa.name)
@@ -224,6 +237,119 @@ class TestViosMappings(twrap.TestWrapper):
         mappings.remove(new_map)
         self.dwrap.vfc_mappings = mappings
         self.assertEqual(len(self.dwrap.vfc_mappings), orig_size)
+
+
+class TestPartitionIOConfiguration(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
+
+    def setUp(self):
+        super(TestPartitionIOConfiguration, self).setUp()
+        self.io_config = self.dwrap.io_config
+
+    def test_max_slots(self):
+        self.assertEqual(80, self.io_config.max_virtual_slots)
+
+    def test_io_slots(self):
+        # IO Slots are typically associated with the VIOS.  Further testing
+        # driven there.
+        self.assertIsNotNone(self.io_config.io_slots)
+        self.assertEqual(3, len(self.io_config.io_slots))
+
+
+class TestIOSlots(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
+
+    def setUp(self):
+        super(TestIOSlots, self).setUp()
+        self.io_slot = self.dwrap.io_config.io_slots[0]
+
+    def test_attrs(self):
+        self.assertEqual('PCI-E SAS Controller', self.io_slot.description)
+        self.assertEqual('U78AB.001.WZSJBM3', self.io_slot.phys_loc)
+        self.assertEqual('825', self.io_slot.pc_adpt_id)
+        self.assertEqual('260', self.io_slot.pci_class)
+        self.assertEqual('825', self.io_slot.pci_dev_id)
+        self.assertEqual('825', self.io_slot.pci_subsys_dev_id)
+        self.assertEqual('4116', self.io_slot.pci_mfg_id)
+        self.assertEqual('1', self.io_slot.pci_rev_id)
+        self.assertEqual('4116', self.io_slot.pci_vendor_id)
+        self.assertEqual('4116', self.io_slot.pci_subsys_vendor_id)
+
+    def test_io_adpt(self):
+        self.assertIsNotNone(self.io_slot.adapter)
+
+
+class TestGenericIOAdapter(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
+
+    def setUp(self):
+        super(TestGenericIOAdapter, self).setUp()
+        self.io_adpt = self.dwrap.io_config.io_slots[0].adapter
+
+    def test_attrs(self):
+        self.assertEqual('553713674', self.io_adpt.id)
+        self.assertEqual('PCI-E SAS Controller', self.io_adpt.description)
+        self.assertEqual('PCI-E SAS Controller', self.io_adpt.dev_name)
+        self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
+                         self.io_adpt.dyn_reconfig_conn_name)
+        self.assertEqual('T9', self.io_adpt.phys_loc_code)
+        self.assertFalse(isinstance(self.io_adpt, lpar.PhysFCAdapter))
+
+
+class TestPhysFCAdapter(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
+
+    def setUp(self):
+        super(TestPhysFCAdapter, self).setUp()
+        self.io_adpt = self.dwrap.io_config.io_slots[2].adapter
+
+    def test_attrs(self):
+        desc = '8 Gigabit PCI Express Dual Port Fibre Channel Adapter'
+
+        self.assertEqual('553714177', self.io_adpt.id)
+        self.assertEqual(desc, self.io_adpt.description)
+        self.assertEqual(desc, self.io_adpt.dev_name)
+        self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
+                         self.io_adpt.dyn_reconfig_conn_name)
+        self.assertEqual('C2', self.io_adpt.phys_loc_code)
+        self.assertTrue(isinstance(self.io_adpt, lpar.PhysFCAdapter))
+
+    def test_fc_ports(self):
+        self.assertEqual(2, len(self.io_adpt.fc_ports))
+
+
+class TestPhysFCPort(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VirtualIOServer
+
+    def setUp(self):
+        super(TestPhysFCPort, self).setUp()
+        self.io_port1 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[0]
+        self.io_port2 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[1]
+
+    def test_attrs(self):
+        self.assertEqual('U78AB.001.WZSJBM3-P1-C2-T2', self.io_port1.loc_code)
+        self.assertEqual('fcs1', self.io_port1.name)
+        self.assertEqual('1aU78AB.001.WZSJBM3-P1-C2-T2', self.io_port1.udid)
+        self.assertEqual('10000090FA1B6303', self.io_port1.wwpn)
+        self.assertEqual(0, self.io_port1.npiv_available_ports)
+        self.assertEqual(0, self.io_port1.npiv_total_ports)
+
+        self.assertEqual('U78AB.001.WZSJBM3-P1-C2-T1', self.io_port2.loc_code)
+        self.assertEqual('fcs0', self.io_port2.name)
+        self.assertEqual('1aU78AB.001.WZSJBM3-P1-C2-T1', self.io_port2.udid)
+        self.assertEqual('10000090FA1B6302', self.io_port2.wwpn)
+        self.assertEqual(64, self.io_port2.npiv_available_ports)
+        self.assertEqual(64, self.io_port2.npiv_total_ports)
 
 if __name__ == "__main__":
     unittest.main()

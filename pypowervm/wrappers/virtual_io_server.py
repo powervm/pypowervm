@@ -21,6 +21,7 @@ import re
 from pypowervm import adapter as adpt
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import network
 from pypowervm.wrappers import storage
 
@@ -61,13 +62,6 @@ VADPT_SLOT_NUM = 'VirtualSlotNumber'
 VADPT_VARIED_ON = 'VariedOn'
 VADPT_NAME = 'AdapterName'
 VADPT_TYPE = 'AdapterType'
-
-# Physical FC Port Constants
-PFC_NAME = 'PortName'
-PFC_UDID = 'UniqueDeviceID'
-PFC_WWPN = 'WWPN'
-PFC_AVAILABLE_PORTS = 'AvailablePorts'
-PFC_TOTAL_PORTS = 'TotalPorts'
 
 # Adapter Creation Private Constants
 _NEW_SERVER_ADAPTER = (
@@ -233,9 +227,24 @@ class VirtualIOServer(ewrap.EntryWrapper):
     def media_repository(self):
         return self._entry.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
 
-    def get_wwpns(self):
-        """Returns a list of the wwpn pairs for the vios."""
-        return self._get_vals(c.WWPNS_PATH)
+    def get_vfc_wwpns(self):
+        """Returns a list of the virtual FC WWPN pairs for the vios.
+
+        The response is a List of Lists.
+        Ex. (('c05076065a8b005a', 'c05076065a8b005b'),
+             ('c05076065a8b0060', 'c05076065a8b0061'))
+        """
+        return set([frozenset(x.split()) for x in
+                    self._get_vals(c.WWPNS_PATH)])
+
+    def get_pfc_wwpns(self):
+        """Returns a set of the Physical FC Adapter WWPNs on this VIOS."""
+        path = c.DELIM.join(['.', lpar.IO_CFG_ROOT, lpar.IO_SLOTS_ROOT,
+                             lpar.IO_SLOT_ROOT, lpar.ASSOC_IO_SLOT_ROOT,
+                             lpar.RELATED_IO_ADPT_ROOT, lpar.IO_PFC_ADPT_ROOT,
+                             lpar.PFC_PORTS_ROOT, lpar.PFC_PORT_ROOT,
+                             lpar.PFC_PORT_WWPN])
+        return set(self._get_vals(path))
 
     @property
     def is_license_accepted(self):
@@ -371,6 +380,12 @@ class VirtualIOServer(ewrap.EntryWrapper):
                                    network.TA_ROOT, network.TrunkAdapter)
         return es
 
+    @property
+    def io_config(self):
+        """The Partition I/O Configuration for the VIOS."""
+        elem = self._element.find(lpar.IO_CFG_ROOT)
+        return lpar.PartitionIOConfiguration(elem)
+
     def derive_orphan_trunk_adapters(self):
         """Builds a list of trunk adapters not attached to a SEA."""
         sea_trunks = []
@@ -498,7 +513,7 @@ class VirtualFCMapping(ewrap.ElementWrapper):
         """
         elem = self._element.find(MAP_PORT)
         if elem is not None:
-            return PhysicalFCPort(elem)
+            return lpar.PhysFCPort(elem)
         return None
 
     @property
@@ -608,37 +623,3 @@ class VirtualFCServerAdapter(VirtualStorageAdapter):
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
         return self._get_val_str(VADPT_MAP_PORT)
-
-
-class PhysicalFCPort(ewrap.ElementWrapper):
-    """A physical FibreChannel port on the Virtual I/O Server."""
-
-    @property
-    def loc_code(self):
-        """Returns the location code."""
-        return self._get_val_str(LOCATION_CODE)
-
-    @property
-    def name(self):
-        """The name of the port."""
-        return self._get_val_str(PFC_NAME)
-
-    @property
-    def udid(self):
-        """The Unique Device ID."""
-        return self._get_val_str(PFC_UDID)
-
-    @property
-    def wwpn(self):
-        """The port's world wide port name."""
-        return self._get_val_str(PFC_WWPN)
-
-    @property
-    def available_ports(self):
-        """The number of available NPIV ports.  Int value."""
-        return self._get_val_int(PFC_AVAILABLE_PORTS)
-
-    @property
-    def total_ports(self):
-        """The total number of NPIV ports.  Int value."""
-        return self._get_val_int(PFC_TOTAL_PORTS)

@@ -17,6 +17,7 @@
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 from pypowervm.tests.wrappers.util import xml_sections
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.logical_partition as lpar
@@ -331,6 +332,28 @@ class TestLogicalPartition(unittest.TestCase):
         self.call_simple_getter(
             "operating_system",
             EXPECTED_OPERATING_SYSTEM_VER, 'Unknown')
+
+    def test_io_config(self):
+        self.assertIsNotNone(TestLogicalPartition._dedicated_wrapper.io_config)
+
+
+class TestPartitionIOConfiguration(twrap.TestWrapper):
+
+    file = LPAR_HTTPRESP_FILE
+    wrapper_class_to_test = lpar.LogicalPartition
+
+    def setUp(self):
+        super(TestPartitionIOConfiguration, self).setUp()
+        self.io_config = self.entries[0].io_config
+
+    def test_max_slots(self):
+        self.assertEqual(64, self.io_config.max_virtual_slots)
+
+    def test_io_slots(self):
+        # IO Slots are typically associated with the VIOS.  Further testing
+        # driven there.
+        self.assertIsNotNone(self.io_config.io_slots)
+        self.assertEqual(0, len(self.io_config.io_slots))
 
 
 class TestCreateLogicalPartition(unittest.TestCase):
