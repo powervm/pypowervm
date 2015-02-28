@@ -20,7 +20,6 @@ import mock
 
 import unittest
 
-from pypowervm import adapter as adpt
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
@@ -29,7 +28,7 @@ import pypowervm.wrappers.virtual_io_server as vios
 class TestVIOSWrapper(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def test_get_ip_addresses(self):
         expected_ips = ('9.1.2.4', '10.10.10.5')
@@ -99,44 +98,33 @@ class TestVIOSWrapper(twrap.TestWrapper):
 class TestViosMappings(twrap.TestWrapper):
 
     file = 'fake_vios_mappings.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server._crt_related_href')
-    def test_crt_scsi_mapping_vopt(self, mock_href, mock_adpt):
+    def test_crt_scsi_mapping_vopt(self, mock_adpt):
         """Validation that the element is correct."""
-        mock_href.return_value = adpt.Element(vios.MAP_CLIENT_LPAR,
-                                              attrib={'href': 'href',
-                                                      'rel': 'related'})
-        vmap = vios.crt_scsi_map_to_vopt(mock_adpt, 'host_uuid',
-                                         'client_lpar_uuid', 'media_name')
+        mock_adpt.build_href.return_value = "a_link"
+        vmap = vios.VSCSIMapping.bld_to_vopt(mock_adpt, 'host_uuid',
+                                             'client_lpar_uuid', 'media_name')
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
-        self.assertEqual(vios._NEW_CLIENT_ADAPTER.tag,
-                         vmap.find('ClientAdapter').tag)
-        self.assertEqual(vios._NEW_SERVER_ADAPTER.tag,
-                         vmap.find('ServerAdapter').tag)
-        self.assertEqual('media_name',
-                         vmap.findtext('./Storage/VirtualOpticalMedia'
-                                       '/MediaName'))
+        self.assertEqual(vmap.client_adapter.side, 'Client')
+        self.assertEqual(vmap.server_adapter.side, 'Server')
+        self.assertEqual('media_name', vmap.backing_storage.media_name)
+        self.assertEqual('a_link', vmap.client_lpar_href)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server._crt_related_href')
-    def test_crt_scsi_mapping_vdisk(self, mock_href, mock_adpt):
+    def test_crt_scsi_mapping_vdisk(self, mock_adpt):
         """Validation that the element is correct."""
-        mock_href.return_value = adpt.Element(vios.MAP_CLIENT_LPAR,
-                                              attrib={'href': 'href',
-                                                      'rel': 'related'})
-        vmap = vios.crt_scsi_map_to_vdisk(mock_adpt, 'host_uuid',
-                                          'client_lpar_uuid', 'disk_name')
+        mock_adpt.build_href.return_value = "a_link"
+        vmap = vios.VSCSIMapping.bld_to_vdisk(mock_adpt, 'host_uuid',
+                                              'client_lpar_uuid', 'disk_name')
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
-        self.assertEqual(vios._NEW_CLIENT_ADAPTER.tag,
-                         vmap.find('ClientAdapter').tag)
-        self.assertEqual(vios._NEW_SERVER_ADAPTER.tag,
-                         vmap.find('ServerAdapter').tag)
-        self.assertEqual('disk_name',
-                         vmap.findtext('./Storage/VirtualDisk/DiskName'))
+        self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual('Server', vmap.server_adapter.side)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
+        self.assertEqual('a_link', vmap.client_lpar_href)
 
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
@@ -242,7 +230,7 @@ class TestViosMappings(twrap.TestWrapper):
 class TestPartitionIOConfiguration(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def setUp(self):
         super(TestPartitionIOConfiguration, self).setUp()
@@ -261,7 +249,7 @@ class TestPartitionIOConfiguration(twrap.TestWrapper):
 class TestIOSlots(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def setUp(self):
         super(TestIOSlots, self).setUp()
@@ -286,7 +274,7 @@ class TestIOSlots(twrap.TestWrapper):
 class TestGenericIOAdapter(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def setUp(self):
         super(TestGenericIOAdapter, self).setUp()
@@ -305,7 +293,7 @@ class TestGenericIOAdapter(twrap.TestWrapper):
 class TestPhysFCAdapter(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def setUp(self):
         super(TestPhysFCAdapter, self).setUp()
@@ -329,7 +317,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
 class TestPhysFCPort(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
-    wrapper_class_to_test = vios.VirtualIOServer
+    wrapper_class_to_test = vios.VIOS
 
     def setUp(self):
         super(TestPhysFCPort, self).setUp()

@@ -46,14 +46,13 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
                          volume(s) for the SharedStoragePool.
     """
     # Pull down the ClusterCreate Job template
-    jresp = adapter.read(c.CLUSTER, suffix_type=c.SUFFIX_TYPE_DO,
-                         suffix_parm='Create')
+    jresp = adapter.read(clust.Cluster.schema_type,
+                         suffix_type=c.SUFFIX_TYPE_DO, suffix_parm='Create')
     jwrap = job.Job.wrap(jresp.entry)
 
-    cluster = clust.Cluster(
-        name=clust_name, repos_pv=repos_pv, node_list=[first_node])
+    cluster = clust.Cluster.bld(clust_name, repos_pv, first_node)
 
-    ssp = stor.SSP(name=ssp_name, data_pv_list=data_pv_list)
+    ssp = stor.SSP.bld(ssp_name, data_pv_list)
 
     # Job parameters are CDATA containing XML of above
     jparams = [

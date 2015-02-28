@@ -17,9 +17,11 @@
 
 import mock
 
+import pypowervm.adapter as adp
 from pypowervm.jobs import cna
 import pypowervm.tests.jobs.util as tju
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.wrappers.entry_wrapper as ewrap
 
 import unittest
 
@@ -73,7 +75,9 @@ class TestCNA(unittest.TestCase):
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
-        mock_adpt.create.return_value = mock.MagicMock()
+        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp.entry = ewrap.EntryWrapper._bld(tag='VirtualNetwork').entry
+        mock_adpt.create.return_value = resp
         vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2228',
                                              fake_vs, uri)
         self.assertIsNotNone(vnet_resp)

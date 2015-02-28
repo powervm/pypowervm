@@ -22,7 +22,7 @@ from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
 
-MAX_VLANS_PER_VEA = 20
+_MAX_VLANS_PER_VEA = 20
 
 
 @pvm_retry.retry()
@@ -52,9 +52,9 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
     :param vlan_ids: The list of VLANs to ensure are on the Network Bridge.
     """
     # Get the updated feed of NetworkBridges
-    nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                           child_type=pvm_net.NB_ROOT)
-    nb_wraps = pvm_net.NetworkBridge.wrap(nb_feed)
+    nb_feed = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                           child_type=pvm_net.NetBridge.schema_type)
+    nb_wraps = pvm_net.NetBridge.wrap(nb_feed)
 
     # Find the appropriate Network Bridge
     req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -100,8 +100,8 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
     # At this point, all of the new VLANs that need to be added are in the
     # new_vlans list.  Now we need to put them on load groups.
     vswitch_w = _find_vswitch(adapter, host_uuid, req_nb.vswitch_id)
-    vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                                  child_type=pvm_net.VNET_ROOT)
+    vnet_resp_feed = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                                  child_type=pvm_net.VNet.schema_type)
     vnets = pvm_net.VNet.wrap(vnet_resp_feed)
 
     for vlan_id in new_vlans:
@@ -119,8 +119,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
 
             # Now create the new load group...
             vnet_uris = [arb_vnet.href, vid_vnet.href]
-            ld_grp = pvm_net.LoadGroup.wrap(
-                pvm_net.crt_load_group(arb_vid, vnet_uris))
+            ld_grp = pvm_net.LoadGroup.bld(arb_vid, vnet_uris)
 
             # Append to network bridge...
             req_nb.load_grps.append(ld_grp)
@@ -130,8 +129,8 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
 
     # At this point, the network bridge should just need to be updated.  The
     # Load Groups on the Network Bridge should be correct.
-    adapter.update(req_nb.element, req_nb.etag, pvm_ms.MS_ROOT,
-                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
+    adapter.update(req_nb.element, req_nb.etag, pvm_ms.System.schema_type,
+                   root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
                    child_id=req_nb.uuid)
 
 
@@ -161,16 +160,16 @@ def ensure_vlan_on_nb(adapter, host_uuid, nb_uuid, vlan_id):
 
 
 def _find_vswitch(adapter, host_uuid, vswitch_id):
-    """Gathers the VirtualSwitch wrapper from the system.
+    """Gathers the VSwitch wrapper from the system.
 
     :param adapter: The pypowervm adapter.
     :param host_uuid: The host UUID for the system.
     :param vswitch_id: The identifier (not uuid) for the vswitch.
     :return: Wrapper for the corresponding VirtualSwitch.
     """
-    resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                             child_type=pvm_net.VSW_ROOT)
-    vswitches = pvm_net.VirtualSwitch.wrap(resp_feed)
+    resp_feed = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                             child_type=pvm_net.VSwitch.schema_type)
+    vswitches = pvm_net.VSwitch.wrap(resp_feed)
     for vswitch in vswitches:
         if vswitch.switch_id == int(vswitch_id):
             return vswitch
@@ -207,18 +206,18 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     # Could not find one.  Time to create it.
     name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                         'vswitch': vswitch.name}
-    vnet_elem = pvm_net.VNet(name=name, vlan_id=vlan, vswitch_uri=vswitch.href,
-                             tagged=tagged)
-    resp = adapter.create(vnet_elem, pvm_ms.MS_ROOT, host_uuid,
-                          pvm_net.VNET_ROOT)
+    vnet_elem = pvm_net.VNet.bld(name, vlan, vswitch.href, tagged)
+    resp = adapter.create(
+        vnet_elem, pvm_ms.System.schema_type, root_id=host_uuid,
+        child_type=pvm_net.VNet.schema_type)
     return pvm_net.VNet.wrap(resp.entry)
 
 
 def _find_available_ld_grp(nb):
     """Will return the Load Group that can support a new VLAN.
 
-    :param nb: The NetworkBridge to search through.
-    :returns: The LoadGroup within the NetworkBridge that can support a new
+    :param nb: The NetBridge to search through.
+    :returns: The LoadGroup within the NetBridge that can support a new
               VLAN.  If all are full, will return None.
     """
     # Never provision to the first load group.  We do this to keep consistency
@@ -228,7 +227,7 @@ def _find_available_ld_grp(nb):
 
     ld_grps = nb.load_grps[1:]
     for ld_grp in ld_grps:
-        if len(ld_grp.virtual_network_uri_list) < MAX_VLANS_PER_VEA:
+        if len(ld_grp.virtual_network_uri_list) < _MAX_VLANS_PER_VEA:
             return ld_grp
     return None
 
@@ -287,8 +286,8 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
 
     # For the _find_or_create_vnet, we need to query all the virtual networks
     vswitch_w = _find_vswitch(adapter, host_uuid, impacted_nb.vswitch_id)
-    vnet_resp_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                                  child_type=pvm_net.VNET_ROOT)
+    vnet_resp_feed = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                                  child_type=pvm_net.VNet.schema_type)
     vnets = pvm_net.VNet.wrap(vnet_resp_feed)
 
     # Read the old virtual network
@@ -303,23 +302,23 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     if old_uri is not None:
         uris.remove(old_uri)
     uris.insert(0, new_vnet.href)
-    new_lg = pvm_net.crt_load_group(new_vid, uris)
-    new_lg_w = pvm_net.LoadGroup.wrap(new_lg)
+    new_lg_w = pvm_net.LoadGroup.bld(new_vid, uris)
 
     impacted_nb.load_grps.remove(impacted_lg)
 
     # Need two updates.  One to remove the load group.
     nb_resp = adapter.update(impacted_nb.element, impacted_nb.etag,
-                             pvm_ms.MS_ROOT, root_id=host_uuid,
-                             child_type=pvm_net.NB_ROOT,
+                             pvm_ms.System.schema_type, root_id=host_uuid,
+                             child_type=pvm_net.NetBridge.schema_type,
                              child_id=impacted_nb.uuid)
 
     # A second to add the new load group in
-    impacted_nb = pvm_net.NetworkBridge.wrap(nb_resp)
+    impacted_nb = pvm_net.NetBridge.wrap(nb_resp)
     impacted_nb.load_grps.append(new_lg_w)
-    adapter.update(impacted_nb.element, impacted_nb.etag, pvm_ms.MS_ROOT,
-                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
-                   child_id=impacted_nb.uuid)
+    adapter.update(
+        impacted_nb.element, impacted_nb.etag, pvm_ms.System.schema_type,
+        root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
+        child_id=impacted_nb.uuid)
 
     # Now that the old vid is detached from the load group, need to delete
     # the Virtual Network (because it was 'tagged' = False).
@@ -330,8 +329,8 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
 def _find_peer_nbs(nb_wraps, nb):
     """Finds all of the peer (same vSwitch) Network Bridges.
 
-    :param nb_wraps: List of pypowervm NetworkBridge wrappers.
-    :param nb: The NetworkBridge to find.
+    :param nb_wraps: List of pypowervm NetBridge wrappers.
+    :param nb: The NetBridge to find.
     :return: List of Network Bridges on the same vSwitch as the seed.  Does
              not include the nb element.
     """
@@ -370,9 +369,9 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
         nb_wraps = existing_nbs
     else:
         # Get the updated feed of NetworkBridges
-        nb_feed = adapter.read(pvm_ms.MS_ROOT, root_id=host_uuid,
-                               child_type=pvm_net.NB_ROOT)
-        nb_wraps = pvm_net.NetworkBridge.wrap(nb_feed)
+        nb_feed = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                               child_type=pvm_net.NetBridge.schema_type)
+        nb_wraps = pvm_net.NetBridge.wrap(nb_feed)
 
     # Find our Network Bridge
     req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -410,8 +409,8 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
         matching_lg.virtual_network_uri_list.remove(vnet_uri)
 
     # Now update the network bridge.
-    adapter.update(req_nb.element, req_nb._etag, pvm_ms.MS_ROOT,
-                   root_id=host_uuid, child_type=pvm_net.NB_ROOT,
+    adapter.update(req_nb.element, req_nb.etag, pvm_ms.System.schema_type,
+                   root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
                    child_id=req_nb.uuid)
 
 

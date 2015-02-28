@@ -59,7 +59,7 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(1, mock_adpt.read.call_count)
 
     @mock.patch('pypowervm.jobs.network_bridger._reassign_arbitrary_vid')
-    @mock.patch('pypowervm.wrappers.network.NetworkBridge.supports_vlan')
+    @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_ensure_vlan_on_nb_reassign(self, mock_adpt, mock_support_vlan,
                                         mock_reassign):
@@ -96,7 +96,7 @@ class TestNetworkBridger(unittest.TestCase):
             self.assertEqual('ManagedSystem', kargs[2])
             elem = kargs[0]
             self.assertIsNotNone(elem)
-            netbr = pvm_net.NetworkBridge.wrap(adpt.Entry([], elem))
+            netbr = pvm_net.NetBridge.wrap(adpt.Entry([], elem))
             self.assertEqual(1,
                              len(netbr.load_grps[0].virtual_network_uri_list))
             self.assertEqual(2,
@@ -136,11 +136,9 @@ class TestNetworkBridger(unittest.TestCase):
             self.assertEqual('ManagedSystem', kargs[2])
             elem = kargs[0]
             self.assertIsNotNone(elem)
-            net_br = pvm_net.NetworkBridge.wrap(adpt.Entry({}, elem))
-            self.assertEqual(1,
-                             len(net_br.load_grps[0].virtual_network_uri_list))
-            self.assertEqual(2,
-                             len(net_br.load_grps[1].virtual_network_uri_list))
+            nb = pvm_net.NetBridge.wrap(adpt.Entry({}, elem))
+            self.assertEqual(1, len(nb.load_grps[0].virtual_network_uri_list))
+            self.assertEqual(2, len(nb.load_grps[1].virtual_network_uri_list))
 
             # Validate the named args
             self.assertEqual('host_uuid', kwargs.get('root_id'))
@@ -183,7 +181,7 @@ class TestNetworkBridger(unittest.TestCase):
             self.assertEqual('ManagedSystem', kargs[2])
             elem = kargs[0]
             self.assertIsNotNone(elem)
-            netbr = pvm_net.NetworkBridge.wrap(adpt.Entry([], elem))
+            netbr = pvm_net.NetBridge.wrap(adpt.Entry([], elem))
             self.assertEqual(1,
                              len(netbr.load_grps[0].virtual_network_uri_list))
             self.assertEqual(2,
@@ -214,7 +212,7 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(0, v.switch_id)
 
     def test_find_available_lb(self):
-        nb = pvm_net.NetworkBridge.wrap(self.mgr_nbr_resp)
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
         lg = net_br._find_available_ld_grp(nb[0])
         self.assertIsNotNone(lg)
 
@@ -223,14 +221,13 @@ class TestNetworkBridger(unittest.TestCase):
         """Validates that a vnet is created (and deleted) as part of find."""
         # Load the data
         vnets = pvm_net.VNet.wrap(self.mgr_vnet_resp)
-        vsw = pvm_net.VirtualSwitch.wrap(self.mgr_vsw_resp)[0]
+        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
         host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
 
         # Set up the mock create
-        resp = pvm_net.VNet(
-            name='FakeName', vlan_id=4094, vswitch_uri=vsw.href, tagged=True)
+        resp = pvm_net.VNet.bld('FakeName', 4094, vsw.href, True)
         mock_resp = mock.MagicMock()
-        mock_resp.entry = resp._entry
+        mock_resp.entry = resp.entry
         mock_adpt.create.return_value = mock_resp
 
         # Run the code
@@ -245,12 +242,12 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(1, mock_adpt.delete_by_href.call_count)
 
     def test_is_arbitrary_vid(self):
-        nbs = pvm_net.NetworkBridge.wrap(self.mgr_nbr_resp)
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
         self.assertTrue(net_br._is_arbitrary_vid(4094, nbs))
         self.assertFalse(net_br._is_arbitrary_vid(2227, nbs))
 
     def test_find_new_arbitrary_vid(self):
-        nbs = pvm_net.NetworkBridge.wrap(self.mgr_nbr_resp)
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
         self.assertEqual(4093, net_br._find_new_arbitrary_vid(nbs))
         self.assertEqual(4092, net_br._find_new_arbitrary_vid(nbs,
                                                               others=[4093]))
@@ -260,18 +257,18 @@ class TestNetworkBridger(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter')
     def test_reassign_arbitrary_vid(self, mock_adpt, mock_vsw,
                                     mock_find_vnet):
-        vnet = pvm_net.VNet()._entry
+        vnet = pvm_net.VNet._bld().entry
         resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp1.feed = adpt.Feed({}, [vnet])
         mock_adpt.read.return_value = resp1
         mock_adpt.read_by_href.return_value = vnet
-        nb = pvm_net.NetworkBridge.wrap(self.mgr_nbr_resp)[0]
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
         resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp2.entry = nb._entry
+        resp2.entry = nb.entry
         mock_adpt.update.return_value = resp2
         host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
 
-        vsw = pvm_net.VirtualSwitch.wrap(self.mgr_vsw_resp)[0]
+        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
         mock_vsw.return_value = vsw
 
         mock_find_vnet.return_value = mock.MagicMock()
@@ -293,7 +290,7 @@ class TestNetworkBridger(unittest.TestCase):
 
         def validate_update(*kargs, **kwargs):
             # Make sure the load groups are down to just 1 now.
-            nb = pvm_net.NetworkBridge.wrap(adpt.Entry({}, kargs[0]))
+            nb = pvm_net.NetBridge.wrap(adpt.Entry({}, kargs[0]))
             self.assertEqual(1, len(nb.load_grps))
 
         mock_adpt.update.side_effect = validate_update
