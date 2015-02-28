@@ -25,62 +25,59 @@ import pypowervm.wrappers.storage as stor
 LOG = logging.getLogger(__name__)
 
 # Cluster Constants
-CL_NAME = 'ClusterName'
-CL_ID = 'ClusterID'
-CL_REPOPVS = 'RepositoryDisk'  # Yes, really
-CL_PV = c.PV
-CL_SSP_LINK = 'ClusterSharedStoragePool'
-CL_NODES = 'Node'  # Yes, really
-CL_NODE = 'Node'
+_CL_NAME = 'ClusterName'
+_CL_ID = 'ClusterID'
+_CL_REPOPVS = 'RepositoryDisk'  # Yes, really
+_CL_PV = c.PV
+_CL_SSP_LINK = 'ClusterSharedStoragePool'
+_CL_NODES = 'Node'  # Yes, really
+_CL_NODE = 'Node'
 
 # Node Constants
-N_HOSTNAME = 'HostName'
-N_LPARID = 'PartitionID'
-N_VIOS_LINK = c.VIOS
-N_MTMS = 'MachineTypeModelAndSerialNumber'
+_N_HOSTNAME = 'HostName'
+_N_LPARID = 'PartitionID'
+_N_VIOS_LINK = 'VirtualIOServer'
+_N_MTMS = ms.MTMS.schema_type
 
 
+@ewrap.Wrapper.pvm_type('Cluster')
 class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
-    schema_type = c.CLUSTER
-
-    def __init__(self, name=None, repos_pv=None, node_list=()):
+    @classmethod
+    def bld(cls, name, repos_pv, first_node):
         """Create a fresh Cluster EntryWrapper.
 
         :param name: String name for the Cluster.
         :param repos_pv: storage.PV representing the repository disk.
-        :param node_list: Iterable of Node wrappers representing the VIOS(es)
-        to host the Cluster.  Each VIOS must be able to see each disk.  Note
-        that this must contain exactly one Node if this Cluster wrapper is to
-        be used to create a new Cluster/SharedStoragePool pair.
+        :param first_node: Node wrapper representing the first VIOS
+        to host the Cluster.  (The Cluster Create API only accepts a single
+        node; others must be added later.)  The VIOS must be able to see each
+        disk.
         """
-        super(Cluster, self).__init__()
+        clust = cls._bld()
         # The order of these assignments IS significant.
-        if name:
-            self.name = name
-        if repos_pv:
-            self.repos_pv = repos_pv
-        if node_list:
-            self.nodes = node_list
+        clust._name(name)
+        clust.repos_pv = repos_pv
+        clust.nodes = [first_node]
+        return clust
 
     @property
     def name(self):
-        return self._get_val_str(CL_NAME)
+        return self._get_val_str(_CL_NAME)
 
-    @name.setter
-    def name(self, newname):
-        self.set_parm_value(CL_NAME, newname)
+    def _name(self, newname):
+        self.set_parm_value(_CL_NAME, newname)
 
     @property
     def id(self):
         """The string ID according to VIOS, not a UUID or UDID."""
-        return self._get_val_str(CL_ID)
+        return self._get_val_str(_CL_ID)
 
     @property
     def ssp_uri(self):
         """The URI of the SharedStoragePool associated with this Cluster."""
-        return self.get_href(CL_SSP_LINK, one_result=True)
+        return self.get_href(_CL_SSP_LINK, one_result=True)
 
     @property
     def ssp_uuid(self):
@@ -96,8 +93,8 @@ class Cluster(ewrap.EntryWrapper):
         Although the schema technically allows a collection of PVs under the
         RepositoryDisk element, a Cluster always has exactly one repository PV.
         """
-        repos_elem = self._find_or_seed(CL_REPOPVS)
-        pv_list = repos_elem.findall(CL_PV)
+        repos_elem = self._find_or_seed(_CL_REPOPVS)
+        pv_list = repos_elem.findall(_CL_PV)
         # Check only relevant when building up a Cluster wrapper internally
         if pv_list and len(pv_list) == 1:
             return stor.PV.wrap(pv_list[0])
@@ -112,19 +109,19 @@ class Cluster(ewrap.EntryWrapper):
 
         :param pv: The PV (NOT a list) to set.
         """
-        self.replace_list(CL_REPOPVS, [pv])
+        self.replace_list(_CL_REPOPVS, [pv])
 
     @property
     def nodes(self):
         """WrapperElemList of Node wrappers."""
-        return ewrap.WrapperElemList(self._find_or_seed(CL_NODES),
-                                     CL_NODE, Node)
+        return ewrap.WrapperElemList(self._find_or_seed(_CL_NODES), Node)
 
     @nodes.setter
     def nodes(self, ns):
-        self.replace_list(CL_NODES, ns)
+        self.replace_list(_CL_NODES, ns)
 
 
+@ewrap.Wrapper.pvm_type('Node', has_metadata=True)
 class Node(ewrap.ElementWrapper):
     """A Node represents a VIOS member of a Cluster.
 
@@ -141,10 +138,8 @@ class Node(ewrap.ElementWrapper):
     adapter.update(...)
     """
 
-    schema_type = c.CLUST_NODE
-    has_metadata = True
-
-    def __init__(self, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
+    @classmethod
+    def bld(cls, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
         """Create a fresh Node ElementWrapper.
 
         :param hostname: String hostname (or IP) of the Node.
@@ -155,49 +150,47 @@ class Node(ewrap.ElementWrapper):
                      e.g. '8247-22L*1234A0B'.
         :param vios_uri: String URI representing this Node.
         """
-        super(Node, self).__init__()
+        node = cls._bld()
         # The order of these assignments IS significant
         if hostname:
-            self.hostname = hostname
+            node._hostname(hostname)
         if lpar_id:
-            self.lpar_id = lpar_id
+            node._lpar_id(lpar_id)
         if mtms:
-            self.mtms = mtms
+            node._mtms(mtms)
         if vios_uri:
-            self.vios_uri = vios_uri
+            node._vios_uri(vios_uri)
+        return node
 
     @property
     def hostname(self):
-        return self._get_val_str(N_HOSTNAME)
+        return self._get_val_str(_N_HOSTNAME)
 
-    @hostname.setter
-    def hostname(self, hn):
-        self.set_parm_value(N_HOSTNAME, hn)
+    def _hostname(self, hn):
+        self.set_parm_value(_N_HOSTNAME, hn)
 
     @property
     def lpar_id(self):
         """Small integer partition ID, not UUID."""
-        return self._get_val_int(N_LPARID)
+        return self._get_val_int(_N_LPARID)
 
-    @lpar_id.setter
-    def lpar_id(self, new_lpar_id):
-        self.set_parm_value(N_LPARID, str(new_lpar_id))
+    def _lpar_id(self, new_lpar_id):
+        self.set_parm_value(_N_LPARID, str(new_lpar_id))
 
     @property
     def mtms(self):
         """MTMS Element wrapper of the system hosting the Node (VIOS)."""
-        return ms.MTMS.wrap(self._find(N_MTMS))
+        return ms.MTMS.wrap(self._find(_N_MTMS))
 
-    @mtms.setter
-    def mtms(self, new_mtms):
+    def _mtms(self, new_mtms):
         """Sets the MTMS of the Node.
 
         :param new_mtms: May be either a string of the form 'MT-M*S' or a
                          managed_system.MTMS ElementWrapper.
         """
-        el = self._find_or_seed(N_MTMS)
+        el = self._find_or_seed(_N_MTMS)
         if not isinstance(new_mtms, ms.MTMS):
-            new_mtms = ms.MTMS(mtms_str=new_mtms)
+            new_mtms = ms.MTMS.bld(new_mtms)
         self.element.replace(el, new_mtms.element)
 
     @property
@@ -206,11 +199,10 @@ class Node(ewrap.ElementWrapper):
 
         This is only set if the VIOS is on this system!
         """
-        return self.get_href(N_VIOS_LINK, one_result=True)
+        return self.get_href(_N_VIOS_LINK, one_result=True)
 
-    @vios_uri.setter
-    def vios_uri(self, new_uri):
-        self.set_href(N_VIOS_LINK, new_uri)
+    def _vios_uri(self, new_uri):
+        self.set_href(_N_VIOS_LINK, new_uri)
 
     @property
     def vios_uuid(self):

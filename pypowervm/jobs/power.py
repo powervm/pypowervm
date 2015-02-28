@@ -18,11 +18,13 @@ import logging
 
 from oslo.config import cfg
 
-from pypowervm import exceptions as pexc
+import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
-from pypowervm import log as lgc
-from pypowervm.wrappers import constants as c
+import pypowervm.log as lgc
+import pypowervm.wrappers.constants as c
 from pypowervm.wrappers import job
+import pypowervm.wrappers.logical_partition as wlpar
+import pypowervm.wrappers.managed_system as ms
 
 import six
 
@@ -40,19 +42,22 @@ BOOTMODE_DD = 'dd'
 BOOTMODE_DS = 'ds'
 BOOTMODE_OF = 'of'
 
+_SUFFIX_PARM_POWER_ON = 'PowerOn'
+_SUFFIX_PARM_POWER_OFF = 'PowerOff'
+
 
 @lgc.logcall
 def power_on(adapter, lpar, host_uuid, add_parms=None):
     """Will Power On a Logical Partition.
 
     :param adapter: The pypowervm adapter object.
-    :param lpar: The LogicalPartition wrapper of the instance to power on.
+    :param lpar: The LPAR wrapper of the instance to power on.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param add_parms: dict of parameters to pass directly to the job template
     """
     return _power_on_off(
-        adapter, lpar, c.SUFFIX_PARM_POWER_ON, host_uuid, add_parms=add_parms)
+        adapter, lpar, _SUFFIX_PARM_POWER_ON, host_uuid, add_parms=add_parms)
 
 
 @lgc.logcall
@@ -62,7 +67,7 @@ def power_off(adapter, lpar, host_uuid, force_immediate=False,
     """Will Power Off a LPAR.
 
     :param adapter: The pypowervm adapter object.
-    :param lpar: The LogicalPartition wrapper of the instance to power off.
+    :param lpar: The LPAR wrapper of the instance to power off.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param force_immediate: Boolean.  Perform an immediate power off.
@@ -71,7 +76,7 @@ def power_off(adapter, lpar, host_uuid, force_immediate=False,
                     instance to stop.
     :param add_parms: dict of parameters to pass directly to the job template
     """
-    return _power_on_off(adapter, lpar, c.SUFFIX_PARM_POWER_OFF, host_uuid,
+    return _power_on_off(adapter, lpar, _SUFFIX_PARM_POWER_OFF, host_uuid,
                          force_immediate, restart, timeout,
                          add_parms=add_parms)
 
@@ -82,7 +87,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
     """Internal function to power on or off an instance.
 
     :param adapter: The pypowervm adapter.
-    :param lpar: The LogicalPartition wrapper of the instance to act on.
+    :param lpar: The LPAR wrapper of the instance to act on.
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
     :param host_uuid: TEMPORARY - The host system UUID that the LPAR resides on
     :param force_immediate: Boolean.  Do immediate shutdown
@@ -98,11 +103,12 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
     uuid = lpar.uuid
     try:
         while not complete:
-            resp = adapter.read(c.LPAR, uuid, suffix_type=c.SUFFIX_TYPE_DO,
+            resp = adapter.read(wlpar.LPAR.schema_type, uuid,
+                                suffix_type=c.SUFFIX_TYPE_DO,
                                 suffix_parm=suffix)
             job_wrapper = job.Job.wrap(resp.entry)
             job_parms = []
-            if suffix == c.SUFFIX_PARM_POWER_OFF:
+            if suffix == _SUFFIX_PARM_POWER_OFF:
                 operation = 'shutdown'
                 add_immediate = False
                 if force_immediate:
@@ -135,7 +141,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                                     timeout=timeout)
                 complete = True
             except pexc.JobRequestTimedOut as error:
-                if (suffix == c.SUFFIX_PARM_POWER_OFF and
+                if (suffix == _SUFFIX_PARM_POWER_OFF and
                         operation == 'osshutdown'):
                     # This has timed out, we loop again and attempt to
                     # force immediate now.  Should not re-hit this exception
@@ -145,7 +151,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                 else:
                     emsg = six.text_type(error)
                     LOG.exception(_('Error: %s') % emsg)
-                    if suffix == c.SUFFIX_PARM_POWER_OFF:
+                    if suffix == _SUFFIX_PARM_POWER_OFF:
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=lpar.name)
                     else:
@@ -154,7 +160,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
             except pexc.JobRequestFailed as error:
                 emsg = six.text_type(error)
                 LOG.exception(_('Error: %s') % emsg)
-                if suffix == c.SUFFIX_PARM_POWER_OFF:
+                if suffix == _SUFFIX_PARM_POWER_OFF:
                     # If already powered off and not a reboot,
                     # don't send exception
                     if 'HSCL1558' in emsg and not restart:
@@ -180,9 +186,10 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
     # the cache.
     finally:
         try:
-            adapter.invalidate_cache_elem(c.SYS, root_id=host_uuid,
-                                          child_type=c.LPAR, child_id=uuid,
-                                          invalidate_feeds=True)
+            adapter.invalidate_cache_elem(
+                ms.System.schema_type, root_id=host_uuid,
+                child_type=wlpar.LPAR.schema_type, child_id=uuid,
+                invalidate_feeds=True)
         except Exception as e:
             LOG.exception(_('Error invalidating adapter cache for LPAR '
                             ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %

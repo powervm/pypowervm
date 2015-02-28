@@ -35,7 +35,7 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_on_off(self, mock_lpar, mock_job_p, mock_run_job):
         """Performs a simple set of Power On/Off Tests."""
         power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOn', '1111')
@@ -79,7 +79,7 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_off_timeout_retry(self, mock_lpar, mock_job_p,
                                      mock_run_job):
         """Validate that when first power off times out, re-run."""
@@ -99,7 +99,7 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_off_job_failure(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job request failure."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
@@ -117,7 +117,7 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_off_sysoff(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job when system is already off."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
@@ -132,7 +132,7 @@ class TestPower(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LogicalPartition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_on_syson(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power on job when system is already on."""
         mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']

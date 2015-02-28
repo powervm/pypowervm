@@ -74,7 +74,7 @@ class TestLogicalPartition(unittest.TestCase):
                             LPAR_HTTPRESP_FILE)
 
         entries = ms_http.response.feed.findentries(
-            c.PARTITION_NAME, SHARED_LPAR_NAME)
+            lpar._LPAR_NAME, SHARED_LPAR_NAME)
 
         self.assertNotEqual(entries, None,
                             "Could not find %s in %s" %
@@ -83,7 +83,7 @@ class TestLogicalPartition(unittest.TestCase):
         self.TC._shared_entry = entries[0]
 
         entries = ms_http.response.feed.findentries(
-            c.PARTITION_NAME, DEDICATED_LPAR_NAME)
+            lpar._LPAR_NAME, DEDICATED_LPAR_NAME)
 
         self.assertNotEqual(entries, None,
                             "Could not find %s in %s" %
@@ -94,10 +94,10 @@ class TestLogicalPartition(unittest.TestCase):
         self.set_shared_test_property_values()
         self.set_dedicated_test_property_values()
 
-        TestLogicalPartition._shared_wrapper = lpar.LogicalPartition.wrap(
+        TestLogicalPartition._shared_wrapper = lpar.LPAR.wrap(
             self.TC._shared_entry)
 
-        TestLogicalPartition._dedicated_wrapper = lpar.LogicalPartition.wrap(
+        TestLogicalPartition._dedicated_wrapper = lpar.LPAR.wrap(
             self.TC._dedicated_entry)
 
         mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
@@ -107,7 +107,7 @@ class TestLogicalPartition(unittest.TestCase):
 
         # Create a bad wrapper to use when retrieving properties which don't
         # exist
-        TestLogicalPartition._bad_wrapper = lpar.LogicalPartition.wrap(
+        TestLogicalPartition._bad_wrapper = lpar.LPAR.wrap(
             mc_http.response.feed.entries[0])
 
         TestLogicalPartition._skip_setup = True
@@ -211,7 +211,7 @@ class TestLogicalPartition(unittest.TestCase):
     def test_get_val_str(self):
         expected_value = SHARED_LPAR_NAME
         value = TestLogicalPartition._shared_wrapper._get_val_str(
-            c.PARTITION_NAME)
+            lpar._LPAR_NAME)
 
         self.verify_equal("_get_val_str", value, expected_value)
 
@@ -225,7 +225,7 @@ class TestLogicalPartition(unittest.TestCase):
     def test_get_cna_links(self):
         """Test getting the list of ClientNetworkAdapters."""
         lpar_resp = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE).get_response()
-        lpar_wrapper = lpar.LogicalPartition.wrap(lpar_resp.feed.entries[2])
+        lpar_wrapper = lpar.LPAR.wrap(lpar_resp.feed.entries[2])
 
         self.assertEqual(1, len(lpar_wrapper.cna_uris))
 
@@ -340,7 +340,7 @@ class TestLogicalPartition(unittest.TestCase):
 class TestPartitionIOConfiguration(twrap.TestWrapper):
 
     file = LPAR_HTTPRESP_FILE
-    wrapper_class_to_test = lpar.LogicalPartition
+    wrapper_class_to_test = lpar.LPAR
 
     def setUp(self):
         super(TestPartitionIOConfiguration, self).setUp()
@@ -379,7 +379,7 @@ class TestCreateLogicalPartition(unittest.TestCase):
                          self.section_tostring(dprocs))
         # All parms
         dprocs = lpar.crt_ded_procs('2',
-                                    sharing_mode=lpar.DED_SHARING_MODES[0],
+                                    sharing_mode=lpar._DED_SHARING_MODES[0],
                                     min_proc='2', max_proc='2')
         self.assertEqual(self.sections['ded_procs'],
                          self.section_tostring(dprocs))
@@ -392,7 +392,7 @@ class TestCreateLogicalPartition(unittest.TestCase):
                          self.section_tostring(sprocs))
         # All parms
         sprocs = lpar.crt_shared_procs('1.2', '2',
-                                       sharing_mode=lpar.SHARING_MODES[1],
+                                       sharing_mode=lpar._SHARING_MODES[1],
                                        uncapped_weight='128',
                                        min_proc_unit='1.2',
                                        max_proc_unit='1.2',
