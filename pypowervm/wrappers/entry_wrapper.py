@@ -17,8 +17,6 @@
 import abc
 import logging
 
-from lxml import etree
-
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
 from pypowervm.i18n import _
@@ -29,6 +27,8 @@ import six
 
 LOG = logging.getLogger(__name__)
 
+_UUID = 'id'
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Wrapper(object):
@@ -38,22 +38,48 @@ class Wrapper(object):
     to be overridden by subclasses.
     """
 
-    @abc.abstractproperty
-    def schema_type(self):
-        """PowerVM REST API Schema type of the subclass, as a string.
+    # See pvm_type decorator
+    schema_type = None
+    default_attrib = None
+    schema_ns = None
+    has_metadata = False
 
-        This must be overridden by the subclass if the no-element/no-arg
-        constructor call is to work.
+    # Registers PowerVM object wrappers by their schema type.
+    # { schema_type_string: wrapper_class, ... }
+    # E.g. { 'SharedEthernetAdapter': pypowervm.wrappers.network.SEA, ... }
+    _pvm_object_registry = {}
+
+    @classmethod
+    def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
+                 attrib=wc.DEFAULT_SCHEMA_ATTR):
+        """Decorator for {Entry|Element}Wrappers of PowerVM objects.
+
+        Sets foundational fields used for construction of new wrapper instances
+        and pieces thereof.
+
+        Registers the decorated class, keyed by its schema_type,  This enables
+        the wrap method to return the correct subclass even if invoked directly
+        from ElementWrapper or EntryWrapper.
+
+        :param schema_type: PowerVM REST API Schema type of the subclass (str).
+        :param has_metadata: Indicates whether, when creating and wrapping a
+                             fresh adapter.Element, it should have a
+                             <Metadata/> child element.
+        :param ns: PowerVM REST API Schema namespace of the subclass.
+        :param attrib: Default attributes for fresh Element when factory
+                       constructor is used.
         """
-        raise NotImplementedError()
-
-    # Default attributes for fresh Element when no-arg constructor used.
-    # Subclasses may override as appropriate.
-    default_attrib = wc.DEFAULT_SCHEMA_ATTR
-
-    # PowerVM REST API Schema namespace of the subclass.  Subclasses may
-    # override as appropriate
-    schema_ns = pc.UOM_NS
+        def inner(class_):
+            class_.schema_type = schema_type
+            if has_metadata is not None:
+                class_.has_metadata = has_metadata
+            if ns is not None:
+                class_.schema_ns = ns
+            if attrib is not None:
+                class_.default_attrib = attrib
+            Wrapper._pvm_object_registry[schema_type] = class_
+            return class_
+        return inner
 
     def _find(self, property_name, use_find_all=False):
         """Will find a given element within the object.
@@ -122,14 +148,6 @@ class Wrapper(object):
             root_elem.append(new_elem)
 
     @property
-    def pvm_type(self):
-        """Object type of the element from the tag value of the attribute.
-
-        (ManagedSystem, LogicalPartition, etc)
-        """
-        return self.element.tag  # May be None
-
-    @property
     @abc.abstractmethod
     def type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
@@ -150,8 +168,8 @@ class Wrapper(object):
         if element_value is None:
             self.log_missing_value(property_name)
             if create:
-                element_value = adpt.Element(
-                    property_name, attrib=None, text=str(value))
+                element_value = adpt.Element(property_name, ns=self.schema_ns,
+                                             attrib=None, text=str(value))
                 self.element.append(element_value)
 
         element_value.text = str(value)
@@ -330,8 +348,7 @@ class Wrapper(object):
                 if new_el is None:
                     new_el = adpt.Element(next_prop)
                     append_point.element.append(new_el)
-                append_point = ElementWrapper.for_propname(next_prop).wrap(
-                    new_el)
+                append_point = ElementWrapper.wrap(new_el)
             link = adpt.Element(l[-1])
             append_point.element.append(link)
         # At this point we have found or created the propname element.  Its
@@ -342,26 +359,66 @@ class Wrapper(object):
     def toxmlstring(self):
         return self.element.toxmlstring()
 
+    @classmethod
+    def _bld_element(cls, tag=None, has_metadata=has_metadata, ns=schema_ns,
+                     attrib=default_attrib):
+        """Create a fresh adapter.Element, usually for immediate wrapping.
+
+        :param tag: Property name of the new Element.
+        :param has_metadata: If True, a <Metadata/> child will be created.
+        :param ns: Namespace to use.
+        :param attrib: XML attributes to use in the outer Element.
+        :return: A fresh adapter.Element.
+        """
+        tag = cls.schema_type if tag is None else tag
+        # Make sure the call was either through a legal wrapper or explicitly
+        # specified a tag name
+        if tag is None:
+            raise TypeError(_("Refusing to construct and wrap an Element"
+                              "without a tag."))
+        has_metadata = (cls.has_metadata
+                        if has_metadata is None
+                        else has_metadata)
+        ns = cls.schema_ns if ns is None else ns
+        attrib = cls.default_attrib if attrib is None else attrib
+        children = []
+        if has_metadata:
+            children.append(
+                adpt.Element('Metadata', ns=ns, children=[
+                    adpt.Element('Atom', ns=ns)]))
+        return adpt.Element(tag, ns=ns, attrib=attrib, children=children)
+
+    @classmethod
+    def _class_for_element(cls, element):
+        """Discover and return an appropriate *Wrapper subclass for element.
+
+        :param element: An adapter.Element to introspect
+        :return: A Wrapper subclass (the class, not an instance).  If element
+                 represents a known subclass, it is returned; else the invoking
+                 class is returned.
+        """
+        # Extract tag.  Let this raise AttributeError - means the Element is
+        # invalid.
+        schema_type = element.tag
+        # Is it a registered wrapper class?
+        try:
+            return Wrapper._pvm_object_registry[schema_type]
+        except KeyError:
+            return cls
+
 
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""
     # If it's an Entry, it must be a ROOT or CHILD
     has_metadata = True
 
-    def __init__(self):
-        children = []
-        if self.has_metadata:
-            children.append(
-                adpt.Element('Metadata', ns=self.schema_ns,
-                             children=[adpt.Element(
-                                 'Atom', ns=self.schema_ns)]))
-        element = adpt.Element(
-            self.schema_type, ns=self.schema_ns,
-            attrib=self.default_attrib, children=children)
-        # Properties are not needed under current implementation, as
-        # fresh-constructed Entry is only used for its element.
-        # (Properties belong to the Atom portion of the Entry.)
-        self._entry = adpt.Entry({}, element.element)
+    @classmethod
+    def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None):
+        ret = cls()
+        element = cls._bld_element(
+            tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
+        ret.entry = adpt.Entry({'title': element.tag}, element.element)
+        return ret
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -373,52 +430,55 @@ class EntryWrapper(Wrapper):
 
         Otherwise, a single EntryWrapper will be returned.  This is NOT a list.
 
-        If neither response nor entry is specified, a fresh, empty EntryWrapper
-        will be returned.  To derive the EntryWrapper's Entry's Element's tag,
-        we first try the subclass's schema_type.  If the subclass does not have
-        a schema_type (typically because EntryWrapper is being instantiated
-        directly - either for test purposes or because no wrapper has been
-        implemented for the schema object), we use the Entry's 'title'
-        property.
+        This method should usually be invoked from an EntryWrapper subclass
+        decorated by Wrapper.pvm_type, and an instance of that subclass will be
+        returned.
+
+        If invoked directly from EntryWrapper, we attempt to detect whether an
+        appropriate subclass exists based on the Entry's Element's tag.  If so,
+        that subclass is used; otherwise a generic EntryWrapper is used.
 
         :param response_or_entry: The Response from an adapter.Adapter.read
                                   request, or an existing adapter.Entry to
                                   wrap.
-        :returns: A list of wrappers if a Feed.  A single wrapper if single
-                  entry.
+        :returns: A list of wrappers if response_or_entry is a Response with a
+                  Feed.  A single wrapper if response_or_entry is an Entry or a
+                  Response with an Entry.
         """
-        entry = (response_or_entry
-                 if isinstance(response_or_entry, adpt.Entry)
-                 else None)
-        response = (response_or_entry
-                    if isinstance(response_or_entry, adpt.Response)
-                    else None)
-        # Process Response if specified
-        if response is not None:
-            if response.entry is not None:
-                return cls.wrap(response.entry,
-                                etag=response.headers.get('etag', None))
-            elif response.feed is not None:
+        # Process Response if specified.  This recursively calls this method
+        # with the entry(s) within the Response.
+        if isinstance(response_or_entry, adpt.Response):
+            if response_or_entry.entry is not None:
+                return cls.wrap(
+                    response_or_entry.entry,
+                    etag=response_or_entry.headers.get('etag', None))
+            elif response_or_entry.feed is not None:
                 return [cls.wrap(ent, etag=ent.properties.get('etag', None))
-                        for ent in response.feed.entries]
+                        for ent in response_or_entry.feed.entries]
             else:
                 raise KeyError(_("Response is missing 'entry' property."))
 
-        # Else process Entry
-        try:
-            wrap = cls()
-        except TypeError:
-            # Handle unimplemented wrapper types
-            class DynamicEntryWrapper(EntryWrapper):
-                schema_type = entry.properties.get('title', 'dummy_element')
-            wrap = DynamicEntryWrapper()
-        wrap._entry = entry
-        wrap._etag = etag
-        return wrap
+        # Else process Entry if specified
+        if isinstance(response_or_entry, adpt.Entry):
+            # If schema_type is set, cls represents a legal subclass - use it.
+            # Otherwise, try to discover an appropriate subclass based on the
+            # element.  If that fails, it will default to the invoking class,
+            # which will usually just be EntryWrapper.
+            wcls = (cls._class_for_element(response_or_entry.element)
+                    if cls.schema_type is None
+                    else cls)
+            wrap = wcls()
+            wrap.entry = response_or_entry
+            wrap._etag = etag
+            return wrap
+
+        # response_or_entry is neither a Response nor an Entry
+        fmt = _("Must supply a Response or Entry to wrap.  Got %s")
+        raise TypeError(fmt % str(type(response_or_entry)))
 
     @property
     def element(self):
-        return self._entry.element
+        return self.entry.element
 
     @property
     def etag(self):
@@ -431,7 +491,7 @@ class EntryWrapper(Wrapper):
         Assumes that the entity has a link element that references self.  If
         it does not, returns None.
         """
-        val = self._entry.properties.get('links', {}).get('SELF', None)
+        val = self.entry.properties.get('links', {}).get('SELF', None)
         if val is not None and len(val) > 0:
             return val[0]
         else:
@@ -440,11 +500,11 @@ class EntryWrapper(Wrapper):
     @property
     def uuid(self):
         """Returns the uuid of the entry."""
-        if self._entry is None:
+        if self.entry is None:
             return None
 
         try:
-            uuid = self._entry.properties[wc.UUID]
+            uuid = self.entry.properties[_UUID]
             return uuid
         except KeyError:
             return None
@@ -455,7 +515,7 @@ class EntryWrapper(Wrapper):
 
         This is useful for error messages, logging, etc.
         """
-        entry_type = self.pvm_type
+        entry_type = self.schema_type
         uuid = self.uuid
 
         if entry_type is None:
@@ -469,48 +529,36 @@ class EntryWrapper(Wrapper):
 
 class ElementWrapper(Wrapper):
     """Base wrapper for Elements."""
-    # If it's an Element, it's *probably* a DETAIL.
+    # If it's an Element, it's *probably* a DETAIL.  (Redundant assignment,
+    # but prefer to be explicit.)
     has_metadata = False
 
-    def __init__(self):
-        children = []
-        if self.has_metadata:
-            children.append(
-                adpt.Element('Metadata', ns=self.schema_ns,
-                             children=[adpt.Element(
-                                 'Atom', ns=self.schema_ns)]))
-        self.element = adpt.Element(
-            self.schema_type, ns=self.schema_ns,
-            attrib=self.default_attrib, children=children)
-
-    @staticmethod
-    def for_propname(propname):
-        """Allows creation of a legal ElementWrapper knowing only its name.
-
-        This is useful for producing instances to test with, or wrapping
-        elements which do not have their own wrapper implementation.
-
-        :param propname: The name (tag) of the underlying Element.
-        :return: A new ElementWrapper instance.
-        """
-        class DynamicElementWrapper(ElementWrapper):
-            schema_type = propname
-        return DynamicElementWrapper
+    @classmethod
+    def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None):
+        ret = cls()
+        ret.element = cls._bld_element(
+            tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
+        return ret
 
     @classmethod
     def wrap(cls, element, **kwargs):
         """Wrap an existing adapter.Element OR construct a fresh one.
 
-        :param element: An existing adapter.Element to wrap.  If None, a
-        new adapter.Element will be created.  This relies on the child class
-        having its schema_type property defined.
+        This method should usually be invoked from an ElementWrapper subclass
+        decorated by Wrapper.pvm_type, and an instance of that subclass will be
+        returned.
+
+        If invoked directly from ElementWrapper, we attempt to detect whether
+        an appropriate subclass exists based on the Element's tag.  If so, that
+        subclass is used; otherwise a generic ElementWrapper is used.
+
+        :param element: An existing adapter.Element to wrap.
+        :returns: An ElementWrapper (subclass) instance containing the element.
         """
-        try:
-            wrap = cls()
-        except TypeError:
-            # Handle unimplemented wrapper types
-            propname = etree.QName(element.element.tag).localname
-            wrap = cls.for_propname(propname)()
+        wcls = (cls._class_for_element(element)
+                if cls.schema_type is None
+                else cls)
+        wrap = wcls()
         wrap.element = element
         return wrap
 
@@ -520,7 +568,7 @@ class ElementWrapper(Wrapper):
 
         This is useful for error messages, logging, etc.
         """
-        entry_type = self.pvm_type
+        entry_type = self.schema_type
 
         if entry_type is None:
             entry_type = "UnknownType"
@@ -550,21 +598,19 @@ class WrapperElemList(list):
      - Removing from the list (ex. list.remove(other_elem))
     """
 
-    def __init__(self, root_elem, child_type, child_class, **kwargs):
+    def __init__(self, root_elem, child_class, **kwargs):
         """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
                           element, not a wrapper.
                           Ex. The element for 'SharedEthernetAdapters'.
-        :param child_type: The type of child element.  Should be a string.
-                           Ex. 'SharedEthernetAdapter.
         :param child_class: The child class (subclass of ElementWrapper).
         :param kwargs: Optional additional named arguments that may be passed
                        into the wrapper on creation.
         """
         self.root_elem = root_elem
-        self.child_type = child_type
         self.child_class = child_class
+        self.child_type = child_class.schema_type
         self.injects = kwargs
 
     def __getitem__(self, idx):

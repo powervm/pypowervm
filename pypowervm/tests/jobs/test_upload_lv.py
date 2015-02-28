@@ -16,11 +16,12 @@
 
 import mock
 
-from pypowervm import exceptions as exc
+import pypowervm.adapter as adp
+import pypowervm.exceptions as exc
 from pypowervm.jobs import upload_lv
 import pypowervm.tests.jobs.util as tju
-import pypowervm.wrappers.constants as wc
-from pypowervm.wrappers import vios_file as vf
+import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.vios_file as vf
 
 import unittest
 
@@ -87,8 +88,8 @@ class TestUploadLV(unittest.TestCase):
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            mock_adpt, 'test2', wc.BROKERED_DISK_IMAGE, self.v_uuid, f_size=50,
-            tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
+            mock_adpt, 'test2', vf.FTypeEnum.BROKERED_DISK_IMAGE, self.v_uuid,
+            f_size=50, tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
             sha_chksum='abc123')
 
         # Ensure cleanup was called after the upload
@@ -144,7 +145,9 @@ class TestUploadLV(unittest.TestCase):
                              element.findtext('TargetVirtualIOServerUUID'))
             self.assertEqual('tdev_uuid',
                              element.findtext('TargetDeviceUniqueDeviceID'))
-            return mock.MagicMock()
+            ret = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+            ret.entry = ewrap.EntryWrapper._bld(tag='File').entry
+            return ret
         mock_adpt.create.side_effect = validate_in
 
         upload_lv._create_file(mock_adpt, 'f_name', 'f_type', 'v_uuid',
@@ -162,6 +165,5 @@ class TestUploadLV(unittest.TestCase):
 
         upload_lv.upload_cleanup(mock_adpt, '123')
 
-        mock_adpt.delete.assert_called_once_with(vf.FILE_ROOT,
-                                                 service='web',
-                                                 root_id='123')
+        mock_adpt.delete.assert_called_once_with(
+            vf.File.schema_type, service='web', root_id='123')

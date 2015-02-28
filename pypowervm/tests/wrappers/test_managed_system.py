@@ -18,12 +18,11 @@ import logging
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.wrappers.constants as c
-import pypowervm.wrappers.managed_system as mswrap
+import pypowervm.wrappers.managed_system as ms
 
-MS_HTTPRESP_FILE = "managedsystem.txt"
-MC_HTTPRESP_FILE = "managementconsole.txt"
-MS_NAME = 'HV4'
+_MS_HTTPRESP_FILE = "managedsystem.txt"
+_MC_HTTPRESP_FILE = "managementconsole.txt"
+_MS_NAME = 'HV4'
 
 logging.basicConfig()
 
@@ -33,35 +32,34 @@ class TestMSEntryWrapper(unittest.TestCase):
     def setUp(self):
         super(TestMSEntryWrapper, self).setUp()
 
-        self.ms_http = pvmhttp.load_pvm_resp(MS_HTTPRESP_FILE)
+        self.ms_http = pvmhttp.load_pvm_resp(_MS_HTTPRESP_FILE)
         self.assertNotEqual(self.ms_http, None,
                             "Could not load %s " %
-                            MS_HTTPRESP_FILE)
+                            _MS_HTTPRESP_FILE)
 
         entries = self.ms_http.response.feed.findentries(
-            c.SYSTEM_NAME, MS_NAME)
+            ms._SYSTEM_NAME, _MS_NAME)
 
         self.assertNotEqual(entries, None,
                             "Could not find %s in %s" %
-                            (MS_NAME, MS_HTTPRESP_FILE))
+                            (_MS_NAME, _MS_HTTPRESP_FILE))
 
         self.myentry = entries[0]
-        self.wrapper = mswrap.ManagedSystem.wrap(self.myentry)
+        self.wrapper = ms.System.wrap(self.myentry)
 
         # Set a hardcoded value for MemoryUsedByHypervisor
         fw_mem = self.myentry.element.find(
-            './AssociatedSystemMemoryConfiguration/MemoryUsedByHypervisor')
+            'AssociatedSystemMemoryConfiguration/MemoryUsedByHypervisor')
         fw_mem.text = '1536'
 
-        mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
+        mc_http = pvmhttp.load_pvm_resp(_MC_HTTPRESP_FILE)
         self.assertNotEqual(mc_http, None,
                             "Could not load %s" %
-                            MC_HTTPRESP_FILE)
+                            _MC_HTTPRESP_FILE)
 
         """ Create a bad wrapper to use when
             retrieving properties which don't exist """
-        self.bad_wrapper = mswrap.ManagedSystem.wrap(
-            mc_http.response.feed.entries[0])
+        self.bad_wrapper = ms.System.wrap(mc_http.response.feed.entries[0])
 
     def verify_equal(self, method_name, returned_value, expected_value):
         self.assertEqual(returned_value, expected_value,
@@ -85,8 +83,8 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
     def test_get_val_str(self):
-        expected_value = MS_NAME
-        value = self.wrapper._get_val_str(c.SYSTEM_NAME)
+        expected_value = _MS_NAME
+        value = self.wrapper._get_val_str(ms._SYSTEM_NAME)
 
         self.verify_equal("_get_val_str", value, expected_value)
 
@@ -130,10 +128,10 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.call_simple_getter("firmware_memory", 1536, 0)
 
     def test_get_system_name(self):
-        self.wrapper.set_parm_value(c.SYSTEM_NAME, 'XYZ')
+        self.wrapper.set_parm_value(ms._SYSTEM_NAME, 'XYZ')
         name = self.wrapper.system_name
         self.verify_equal("system_name", name, 'XYZ')
-        self.wrapper.set_parm_value(c.SYSTEM_NAME, 'ABC')
+        self.wrapper.set_parm_value(ms._SYSTEM_NAME, 'ABC')
         name = self.wrapper.system_name
         self.verify_equal("system_name", name, 'ABC')
 
@@ -165,18 +163,18 @@ class TestMSEntryWrapper(unittest.TestCase):
              '4B792C21AF70',), ())
 
     def test_find_entry_by_mtm_serial(self):
-        value = mswrap.find_entry_by_mtms(self.ms_http.get_response(),
-                                          "8203-E4A*ACE0001")
+        value = ms.find_entry_by_mtms(self.ms_http.get_response(),
+                                      "8203-E4A*ACE0001")
         self.assertIsNotNone(value)
 
-        value = mswrap.find_entry_by_mtms(self.ms_http.get_response(),
-                                          "8203-E4A*ACE0011")
+        value = ms.find_entry_by_mtms(self.ms_http.get_response(),
+                                      "8203-E4A*ACE0011")
         self.assertIsNone(value)
 
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
-        mtms = mswrap.MTMS(mtms_str='1234-567*ABCDEF0')
+        mtms = ms.MTMS.bld('1234-567*ABCDEF0')
         self.assertEqual(mtms.machine_type, '1234')
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')

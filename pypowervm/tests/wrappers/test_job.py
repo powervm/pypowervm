@@ -92,22 +92,22 @@ class TestJobEntryWrapper(unittest.TestCase):
     def set_test_property_values(self):
         """Set expected values in entry so test code can work consistently."""
         tc = TestJobEntryWrapper
-        self.set_single_value(tc._ok_wrapper._entry,
+        self.set_single_value(tc._ok_wrapper.entry,
                               c.JOB_ID, EXPECTED_ID)
-        self.set_single_value(tc._request_wrapper._entry,
+        self.set_single_value(tc._request_wrapper.entry,
                               c.JOB_GROUP_NAME,
                               EXPECTED_GROUP_NAME)
-        self.set_single_value(tc._request_wrapper._entry,
+        self.set_single_value(tc._request_wrapper.entry,
                               c.JOB_OPERATION_NAME,
                               EXPECTED_OPERATION_NAME)
-        self.set_single_value(tc._failed_wrapper._entry,
+        self.set_single_value(tc._failed_wrapper.entry,
                               c.JOB_STATUS,
                               EXPECTED_STATUS)
-        self.set_single_value(tc._exception_wrapper._entry,
+        self.set_single_value(tc._exception_wrapper.entry,
                               c.JOB_MESSAGE,
                               EXPECTED_EXCEPTION_MESSAGE)
         # results value containing the message is the second one in a list
-        props = tc._failed_wrapper._entry.element.findall(
+        props = tc._failed_wrapper.entry.element.findall(
             c.JOB_RESULTS_VALUE)
         props[1].text = str(EXPECTED_RESULTS_VALUE)
 
@@ -178,8 +178,8 @@ class TestJobEntryWrapper(unittest.TestCase):
             wrapper.create_job_parameter(input_name1, input_value1),
             wrapper.create_job_parameter(input_name2, input_value2)]
         wrapper.add_job_parameters_to_existing(*job_parms)
-        elements = wrapper._entry.element.findall(
-            './JobParameters/JobParameter/ParameterName')
+        elements = wrapper.entry.element.findall(
+            'JobParameters/JobParameter/ParameterName')
         names = []
         for element in elements:
             names.append(element.text)
@@ -187,8 +187,8 @@ class TestJobEntryWrapper(unittest.TestCase):
                          "Job names don't match")
         self.assertEqual(input_name2, names[1],
                          "Job names don't match")
-        elements = wrapper._entry.element.findall(
-            './JobParameters/JobParameter/ParameterValue')
+        elements = wrapper.entry.element.findall(
+            'JobParameters/JobParameter/ParameterValue')
         values = []
         for element in elements:
             values.append(element.text)

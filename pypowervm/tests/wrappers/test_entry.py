@@ -23,6 +23,7 @@ import unittest
 import pypowervm.adapter as apt
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.network as net
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
@@ -123,7 +124,7 @@ class TestEntryWrapper(unittest.TestCase):
         ew = ewrap.EntryWrapper.wrap(resp)
 
         # Validate
-        self.assertEqual(entry, ew._entry)
+        self.assertEqual(entry, ew.entry)
         self.assertEqual(etag, ew.etag)
 
         # Create a response with no headers
@@ -136,17 +137,17 @@ class TestEntryWrapper(unittest.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        e1 = apt.Entry({'etag': '1'}, None)
-        e2 = apt.Entry({'etag': '2'}, None)
+        e1 = apt.Entry({'etag': '1'}, apt.Element('e1'))
+        e2 = apt.Entry({'etag': '2'}, apt.Element('e2'))
         resp.feed = apt.Feed({}, [e1, e2])
 
         # Run
         ew = ewrap.EntryWrapper.wrap(resp)
 
         # Validate
-        self.assertEqual(e1, ew[0]._entry)
+        self.assertEqual(e1, ew[0].entry)
         self.assertEqual('1', ew[0].etag)
-        self.assertEqual(e2, ew[1]._entry)
+        self.assertEqual(e2, ew[1].entry)
         self.assertEqual('2', ew[1].etag)
 
 
@@ -162,8 +163,8 @@ class TestElementWrapper(unittest.TestCase):
 
     def test_equality(self):
         """Validates that two elements loaded from the same data is equal."""
-        sea1 = self._find_seas(self.nb1._entry)[0]
-        sea2 = self._find_seas(self.nb2._entry)[0]
+        sea1 = self._find_seas(self.nb1.entry)[0]
+        sea2 = self._find_seas(self.nb2.entry)[0]
         self.assertTrue(sea1 == sea2)
 
         # Change the other SEA
@@ -171,8 +172,8 @@ class TestElementWrapper(unittest.TestCase):
         self.assertFalse(sea1 == sea2)
 
     def test_inequality_by_subelem_change(self):
-        sea1 = self._find_seas(self.nb1._entry)[0]
-        sea2 = self._find_seas(self.nb2._entry)[0]
+        sea1 = self._find_seas(self.nb1.entry)[0]
+        sea2 = self._find_seas(self.nb2.entry)[0]
         sea_trunk = sea2.element.findall('TrunkAdapters/TrunkAdapter')[1]
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
@@ -181,25 +182,16 @@ class TestElementWrapper(unittest.TestCase):
     def _find_seas(self, entry):
         """Wrapper for the SEAs."""
         found = entry.element.find('SharedEthernetAdapters')
-        return ewrap.WrapperElemList(found, 'SharedEthernetAdapter',
-                                     ewrap.ElementWrapper)
+        return ewrap.WrapperElemList(found, net.SEA)
 
     def test_fresh_element(self):
         # Default: UOM namespace, no <Metadata/>
         class MyElement(ewrap.ElementWrapper):
             schema_type = 'SomePowerObject'
-        myel = MyElement()
-        self.assertEqual(myel.pvm_type, 'SomePowerObject')
-        self.assertEqual(
-            myel.element.toxmlstring(),
-            '<uom:SomePowerObject xmlns:uom="http://www.ibm.com/xmlns/systems'
-            '/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"/>'
-            .encode("utf-8"))
-
-        # Can't use no-arg constructor if schema_type isn't overridden
-        class MyElement2(ewrap.ElementWrapper):
-            pass
-        self.assertRaises(TypeError, MyElement2)
+        myel = MyElement._bld()
+        self.assertEqual(myel.schema_type, 'SomePowerObject')
+        self.assertEqual(myel.element.toxmlstring(),
+                         '<SomePowerObject/>'.encode("utf-8"))
 
         # Can override namespace and attrs and trigger inclusion of <Metadata/>
         class MyElement3(ewrap.ElementWrapper):
@@ -207,11 +199,28 @@ class TestElementWrapper(unittest.TestCase):
             default_attrib = {'foo': 'bar'}
             schema_ns = 'baz'
             has_metadata = True
-        myel = MyElement3()
+        myel = MyElement3._bld()
         self.assertEqual(
             myel.element.toxmlstring(),
             '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
             '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
+
+        # Same thing, but via the decorator
+        @ewrap.ElementWrapper.pvm_type('SomePowerObject', has_metadata=True,
+                                       ns='baz', attrib={'foo': 'bar'})
+        class MyElement4(ewrap.ElementWrapper):
+            pass
+        myel = MyElement4._bld()
+        self.assertEqual(
+            myel.element.toxmlstring(),
+            '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
+            '<ns0:Atom/></ns0:Metadata></ns0:SomePowerObject>'.encode("utf-8"))
+
+        # Now 'SomePowerObject' is registered.  Prove that we can use wrap() to
+        # instantiate MyElement4 straight from ElementWrapper.
+        el = apt.Element('SomePowerObject', ns='baz', attrib={'foo': 'bar'})
+        w = ewrap.ElementWrapper.wrap(el)
+        self.assertIsInstance(w, MyElement4)
 
     def test_href(self):
         path = 'LoadGroups/LoadGroup/VirtualNetworks/link'
@@ -270,9 +279,7 @@ class TestWrapperElemList(unittest.TestCase):
         self.wrapper = ewrap.EntryWrapper.wrap(nb)
         sea_elem = self.wrapper.element.find('SharedEthernetAdapters')
 
-        self.elem_set = ewrap.WrapperElemList(sea_elem,
-                                              'SharedEthernetAdapter',
-                                              ewrap.ElementWrapper)
+        self.elem_set = ewrap.WrapperElemList(sea_elem, net.SEA)
 
     def test_get(self):
         self.assertIsNotNone(self.elem_set[0])

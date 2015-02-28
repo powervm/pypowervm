@@ -22,16 +22,19 @@ LOG = logging.getLogger(__name__)
 
 import pypowervm.wrappers.constants as c
 
+_POOL_ID = 'PoolID'
+_CURR_RSRV_PROC_UNITS = 'CurrentReservedProcessingUnits'
 
+
+@ewrap.EntryWrapper.pvm_type('SharedProcessorPool')
 class SharedProcPool(ewrap.EntryWrapper):
-    schema_type = c.SHR_PRC_PL
 
     @property
     def id(self):
         """Integer shared processor pool ID."""
-        return self._get_val_int(c.POOL_ID, default=0)
+        return self._get_val_int(_POOL_ID, default=0)
 
     @property
     def curr_rsrv_proc_units(self):
         """Floating point string: number of reserved processing units."""
-        return self._get_val_str(c.CURR_RSRV_PROC_UNITS, c.ZERO)
+        return self._get_val_str(_CURR_RSRV_PROC_UNITS, c.ZERO)

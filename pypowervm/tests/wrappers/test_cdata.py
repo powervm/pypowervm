@@ -47,8 +47,8 @@ class TestCDATA(twrap.TestWrapper):
 
     """Verify CDATA segments survive going into and out of the Adapter."""
     def test_cdata_request(self):
-        pval = self.dwrap._entry.element.find(
-            './JobRequestInstance/JobParameters/JobParameter/ParameterValue')
+        pval = self.dwrap.entry.element.find(
+            'JobRequestInstance/JobParameters/JobParameter/ParameterValue')
         out = pval.toxmlstring()
         self.assertEqual(out, CORRECT_CDATA_PARAMVAL,
                          "CDATA was not preserved in JobRequest!\n%s" % out)
