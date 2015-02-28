@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -21,29 +22,90 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
-MS_ROOT = 'ManagedSystem'
+# ManagedSystem XPath constants
+_PRIMARY_IP_ADDRESS = 'PrimaryIPAddress'
+_HOST_IP_ADDRESS = _PRIMARY_IP_ADDRESS
+_STATE = 'State'
+_SYSTEM_NAME = 'SystemName'
 
-MTMS_ROOT = 'MachineTypeModelAndSerialNumber'
-MTMS_MT = 'MachineType'
-MTMS_MODEL = 'Model'
-MTMS_SERIAL = 'SerialNumber'
+_SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
+_ACTIVE_LPM_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'ActiveLogicalPartitionMobilityCapable')
+_INACTIVE_LPM_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'InactiveLogicalPartitionMobilityCapable')
+_VETH_MAC_ADDR_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'VirtualEthernetCustomMACAddressCapable')
+_IBMi_LPM_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'IBMiLogicalPartitionMobilityCapable')
+_IBMi_RESTRICTEDIO_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'IBMiRestrictedIOModeCapable')
+
+_SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
+_MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
+_MEMORY_AVAIL = u.xpath(_SYS_MEM_CONFIG, 'CurrentAvailableSystemMemory')
+_MEMORY_CONFIGURABLE = u.xpath(_SYS_MEM_CONFIG, 'ConfigurableSystemMemory')
+_MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
+_SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
+
+# Migration Constants
+_SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
+_PROC_COMPAT_MODES = u.xpath(
+    _SYS_PROC_CONFIG, 'SupportedPartitionProcessorCompatibilityModes')
+_MIGR_INFO = 'SystemMigrationInformation'
+_MAX_ACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumActiveMigrations')
+_MAX_INACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumInactiveMigrations')
+_ACTIVE_MIGR_RUNNING = u.xpath(
+    _MIGR_INFO, 'NumberOfActiveMigrationsInProgress')
+_INACTIVE_MIGR_RUNNING = u.xpath(
+    _MIGR_INFO, 'NumberOfInactiveMigrationsInProgress')
+_MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
+
+_PROC_UNITS_INSTALLED = u.xpath(
+    _SYS_PROC_CONFIG, 'InstalledSystemProcessorUnits')
+
+_PROC_UNITS_AVAIL = u.xpath(
+    _SYS_PROC_CONFIG, 'CurrentAvailableSystemProcessorUnits')
+
+_PROC_UNITS_CONFIGURABLE = u.xpath(
+    _SYS_PROC_CONFIG, 'ConfigurableSystemProcessorUnits')
+
+_MAX_PROCS_PER_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG, 'CurrentMaximumAllowedProcessorsPerPartition')
+
+_MAX_PROCS_PER_AIX_LINUX_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG, 'CurrentMaximumProcessorsPerAIXOrLinuxPartition')
+
+_MAX_VCPUS_PER_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG, 'MaximumAllowedVirtualProcessorsPerPartition')
+
+_MAX_VCPUS_PER_AIX_LINUX_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG,  'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
+
+_VIOS_LINK = u.xpath("AssociatedVirtualIOServers", c.LINK)
+
+# MTMS XPath constants
+_MTMS_ROOT = 'MachineTypeModelAndSerialNumber'
+_MTMS_MT = 'MachineType'
+_MTMS_MODEL = 'Model'
+_MTMS_SERIAL = 'SerialNumber'
 
 
 def find_entry_by_mtms(resp, mtms):
-    """Queries through a query of ManagedSystem's to find a match.
+    """Loops through a Response feed of ManagedSystems to find a match.
 
     :param mtms: The Machine Type Model & Serial Number string.
                  Example format: "8247-22L*1234567"
-    :return: The ManagedSystem wrapper from the response that matches that
+    :return: The System wrapper from the response that matches that
              value.  None otherwise.
     """
-    mtms_w = MTMS(mtms_str=mtms)
-    entries = resp.feed.findentries(c.MACHINE_SERIAL, mtms_w.serial)
+    mtms_w = MTMS.bld(mtms)
+    entries = resp.feed.findentries(u.xpath(_MTMS_ROOT, _MTMS_SERIAL),
+                                    mtms_w.serial)
     if entries is None:
         return None
 
     # Confirm same model and type
-    wrappers = [ManagedSystem.wrap(x) for x in entries]
+    wrappers = [System.wrap(x) for x in entries]
     for wrapper in wrappers:
         if wrapper.mtms == mtms_w:
             return wrapper
@@ -52,40 +114,40 @@ def find_entry_by_mtms(resp, mtms):
     return None
 
 
-class ManagedSystem(ewrap.EntryWrapper):
-    schema_type = c.SYS
+@ewrap.EntryWrapper.pvm_type('ManagedSystem')
+class System(ewrap.EntryWrapper):
 
     @property
     def system_name(self):
-        return self._get_val_str(c.SYSTEM_NAME)
+        return self._get_val_str(_SYSTEM_NAME)
 
     @property
     def mtms(self):
-        return MTMS.wrap(self.element.find(MTMS_ROOT))
+        return MTMS.wrap(self.element.find(_MTMS_ROOT))
 
     @property
     def system_state(self):
-        return self._get_val_str(c.STATE, 'unknown')
+        return self._get_val_str(_STATE, 'unknown')
 
     @property
     def proc_units(self):
-        return self._get_val_str(c.PROC_UNITS_INSTALLED, 0)
+        return self._get_val_str(_PROC_UNITS_INSTALLED, 0)
 
     @property
     def proc_units_configurable(self):
-        return self._get_val_str(c.PROC_UNITS_CONFIGURABLE, 0)
+        return self._get_val_str(_PROC_UNITS_CONFIGURABLE, 0)
 
     @property
     def proc_units_avail(self):
-        return self._get_val_str(c.PROC_UNITS_AVAIL, 0)
+        return self._get_val_str(_PROC_UNITS_AVAIL, 0)
 
     @property
     def max_sys_procs_limit(self):
-        return self._get_val_int(c.MAX_PROCS_PER_PARTITION, 0)
+        return self._get_val_int(_MAX_PROCS_PER_PARTITION, 0)
 
     @property
     def max_procs_per_aix_linux_lpar(self):
-        val = self._get_val_int(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, 0)
+        val = self._get_val_int(_MAX_PROCS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum procs per lpar based on
         # partition type. In that case, use system max procs per partition.
         if val == 0:
@@ -95,15 +157,15 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @max_procs_per_aix_linux_lpar.setter
     def max_procs_per_aix_linux_lpar(self, value):
-        self.set_parm_value(c.MAX_PROCS_PER_AIX_LINUX_PARTITION, str(value))
+        self.set_parm_value(_MAX_PROCS_PER_AIX_LINUX_PARTITION, str(value))
 
     @property
     def max_sys_vcpus_limit(self):
-        return self._get_val_int(c.MAX_VCPUS_PER_PARTITION, 0)
+        return self._get_val_int(_MAX_VCPUS_PER_PARTITION, 0)
 
     @property
     def max_vcpus_per_aix_linux_lpar(self):
-        val = self._get_val_int(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0)
+        val = self._get_val_int(_MAX_VCPUS_PER_AIX_LINUX_PARTITION, 0)
         # Some systems will not have maximum vcpus per lpar based on
         # partition type. In that case, use system max vcpus per partition.
         if val == 0:
@@ -113,31 +175,31 @@ class ManagedSystem(ewrap.EntryWrapper):
 
     @max_vcpus_per_aix_linux_lpar.setter
     def max_vcpus_per_aix_linux_lpar(self, value):
-        self.set_parm_value(c.MAX_VCPUS_PER_AIX_LINUX_PARTITION, str(value))
+        self.set_parm_value(_MAX_VCPUS_PER_AIX_LINUX_PARTITION, str(value))
 
     @property
     def memory_total(self):
-        return self._get_val_int(c.MEMORY_INSTALLED, 0)
+        return self._get_val_int(_MEMORY_INSTALLED, 0)
 
     @property
     def memory_free(self):
-        return self._get_val_int(c.MEMORY_AVAIL, 0)
+        return self._get_val_int(_MEMORY_AVAIL, 0)
 
     @property
     def memory_configurable(self):
-        return self._get_val_int(c.MEMORY_CONFIGURABLE, 0)
+        return self._get_val_int(_MEMORY_CONFIGURABLE, 0)
 
     @property
     def memory_region_size(self):
-        return self._get_val_int(c.MEMORY_REGION_SIZE, 0)
+        return self._get_val_int(_MEMORY_REGION_SIZE, 0)
 
     @property
     def firmware_memory(self):
-        return self._get_val_int(c.SYS_FIRMWARE_MEM, 0)
+        return self._get_val_int(_SYS_FIRMWARE_MEM, 0)
 
     @property
     def host_ip_address(self):
-        prop = c.HOST_IP_ADDRESS
+        prop = _HOST_IP_ADDRESS
         val = self._get_val_str(prop)
 
         return val
@@ -147,15 +209,15 @@ class ManagedSystem(ewrap.EntryWrapper):
         # VirtualEthernetCustomMACAddressCapable (custom_mac_addr_capable) will
         # default to True, which is the correct setting for POWER7 servers.
         cap_data = {'active_lpar_mobility_capable':
-                    self._get_val_bool(c.ACTIVE_LPM_CAP),
+                    self._get_val_bool(_ACTIVE_LPM_CAP),
                     'inactive_lpar_mobility_capable':
-                    self._get_val_bool(c.INACTIVE_LPM_CAP),
+                    self._get_val_bool(_INACTIVE_LPM_CAP),
                     'ibmi_lpar_mobility_capable':
-                    self._get_val_bool(c.IBMi_LPM_CAP, False),
+                    self._get_val_bool(_IBMi_LPM_CAP, False),
                     'custom_mac_addr_capable':
-                    self._get_val_bool(c.VETH_MAC_ADDR_CAP, True),
+                    self._get_val_bool(_VETH_MAC_ADDR_CAP, True),
                     'ibmi_restrictedio_capable':
-                    self._get_val_bool(c.IBMi_RESTRICTEDIO_CAP, False)
+                    self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False)
                     }
         return cap_data
 
@@ -165,7 +227,7 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         This is a READ-ONLY list.
         """
-        return tuple(self._get_vals(c.PROC_COMPAT_MODES))
+        return tuple(self._get_vals(_PROC_COMPAT_MODES))
 
     @property
     def migration_data(self):
@@ -175,13 +237,13 @@ class ManagedSystem(ewrap.EntryWrapper):
         only.
         """
 
-        max_migr_sup = self._get_val_int(c.MAX_FIRMWARE_MIGR)
-        act_migr_sup = self._get_val_int(c.MAX_ACTIVE_MIGR)
-        inact_migr_sup = self._get_val_int(c.MAX_INACTIVE_MIGR)
+        max_migr_sup = self._get_val_int(_MAX_FIRMWARE_MIGR)
+        act_migr_sup = self._get_val_int(_MAX_ACTIVE_MIGR)
+        inact_migr_sup = self._get_val_int(_MAX_INACTIVE_MIGR)
         pref_act_migr_sup = act_migr_sup
         pref_inact_migr_sup = inact_migr_sup
-        act_migr_prog = self._get_val_int(c.ACTIVE_MIGR_RUNNING)
-        inact_migr_prog = self._get_val_int(c.INACTIVE_MIGR_RUNNING)
+        act_migr_prog = self._get_val_int(_ACTIVE_MIGR_RUNNING)
+        inact_migr_prog = self._get_val_int(_INACTIVE_MIGR_RUNNING)
 
         migr_data = {'max_migration_ops_supported': max_migr_sup,
                      'active_migrations_supported': act_migr_sup,
@@ -201,16 +263,16 @@ class ManagedSystem(ewrap.EntryWrapper):
 
         This is a READ-ONLY list.
         """
-        return self.get_href(c.VIOS_LINK)
+        return self.get_href(_VIOS_LINK)
 
 
+@ewrap.ElementWrapper.pvm_type('MachineTypeModelAndSerialNumber',
+                               has_metadata=True)
 class MTMS(ewrap.ElementWrapper):
     """The Machine Type, Model and Serial Number wrapper."""
-    schema_type = 'MachineTypeModelAndSerialNumber'
-    has_metadata = True
 
-    def __init__(self, mtms_str=None, machine_type=None, model=None,
-                 serial=None):
+    @classmethod
+    def bld(cls, mtms_str):
         """Creates a new MTMS ElementWrapper.
 
         If mtms_str is specified, it is parsed first.
@@ -223,52 +285,40 @@ class MTMS(ewrap.ElementWrapper):
                      Number.  The format is
                      Machine Type - Model Number * Serial
                      Example: 8247-22L*1234567
-        :param machine_type: String representing Machine Type.  Four
-                             alphanumeric characters.
-        :param model: String representing Model Number.  Three alphanumeric
-                      characters.
-        :param serial: String representing Serial Number.  Seven alphanumeric
-                       characters.
         """
-        super(MTMS, self).__init__()
-        if mtms_str is not None:
-            mtm, sn = mtms_str.split('*', 1)
-            mt, md = mtm.split('-', 1)
+        mtms = super(MTMS, cls)._bld()
+        mtm, sn = mtms_str.split('*', 1)
+        mt, md = mtm.split('-', 1)
 
-            # Assignment order is significant
-            self.machine_type = mt
-            self.model = md
-            self.serial = sn
-        if machine_type:
-            self.machine_type = machine_type
-        if model:
-            self.model = model
-        if serial:
-            self.serial = serial
+        # Assignment order is significant
+        mtms.machine_type = mt
+        mtms.model = md
+        mtms.serial = sn
+        return mtms
 
     @property
     def machine_type(self):
-        return self._get_val_str(MTMS_MT)
+        return self._get_val_str(_MTMS_MT)
 
     @machine_type.setter
     def machine_type(self, mt):
-        self.set_parm_value(MTMS_MT, mt)
+        self.set_parm_value(_MTMS_MT, mt)
 
     @property
     def model(self):
-        return self._get_val_str(MTMS_MODEL)
+        return self._get_val_str(_MTMS_MODEL)
 
     @model.setter
     def model(self, md):
-        self.set_parm_value(MTMS_MODEL, md)
+        self.set_parm_value(_MTMS_MODEL, md)
 
     @property
     def serial(self):
-        return self._get_val_str(MTMS_SERIAL)
+        return self._get_val_str(_MTMS_SERIAL)
 
     @serial.setter
     def serial(self, sn):
-        self.set_parm_value(MTMS_SERIAL, sn)
+        self.set_parm_value(_MTMS_SERIAL, sn)
 
     @property
     def mtms_str(self):

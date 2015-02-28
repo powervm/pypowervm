@@ -17,12 +17,15 @@
 import logging
 
 from pypowervm.i18n import _
-from pypowervm.wrappers import constants as pvm_consts
+import pypowervm.wrappers.constants as pvm_consts
 from pypowervm.wrappers import job
+import pypowervm.wrappers.logical_partition as lpar
 
 import six
 
 LOG = logging.getLogger(__name__)
+
+_SUFFIX_PARM_CLOSE_VTERM = 'CloseVterm'
 
 
 def close_vterm(adapter, lpar_uuid):
@@ -33,10 +36,9 @@ def close_vterm(adapter, lpar_uuid):
 
     """
     # Close vterm on the lpar
-    resp = adapter.read(pvm_consts.LPAR, lpar_uuid,
+    resp = adapter.read(lpar.LPAR.schema_type, lpar_uuid,
                         suffixType=pvm_consts.SUFFIX_TYPE_DO,
-                        suffixParm=pvm_consts.
-                        SUFFIX_PARM_CLOSE_VTERM)
+                        suffixParm=_SUFFIX_PARM_CLOSE_VTERM)
     job_wrapper = job.Job.wrap(resp.entry)
 
     try:

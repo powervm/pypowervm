@@ -17,7 +17,6 @@
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.shared_proc_pool as spp
 
 SHRPROC_HTTPRESP_FILE = "shrprocpool.txt"
@@ -45,9 +44,9 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
                             SHRPROC_HTTPRESP_FILE)
 
         entries = shrproc_http.response.feed.findentries(
-            c.POOL_ID, '1')
+            spp._POOL_ID, '1')
         self.assertNotEqual(entries, None, "Could not find %s in %s" %
-                            (c.POOL_ID,
+                            (spp._POOL_ID,
                              SHRPROC_HTTPRESP_FILE))
 
         self.pool_entry = entries[0]
@@ -84,7 +83,7 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
         """Set expected values in entry so test code can work consistently."""
         entry = self.pool_entry
         self.set_single_value(
-            entry, c.CURR_RSRV_PROC_UNITS,
+            entry, spp._CURR_RSRV_PROC_UNITS,
             EXPECTED_CURR_RSRV_PROC_UNITS)
 
     def verify_equal(self, method_name, returned_value, expected_value):
@@ -122,7 +121,7 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
     def test_get_val_str(self):
         expected_value = POOLID
         value = TestShrPrcPoolTestCase._proc_pool_wrapper._get_val_str(
-            c.POOL_ID)
+            spp._POOL_ID)
 
         self.verify_equal("_get_val_str", value, expected_value)
 

@@ -14,10 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pypowervm import exceptions as exc
+import pypowervm.exceptions as exc
 from pypowervm.i18n import _
-from pypowervm.wrappers import constants as c
-from pypowervm.wrappers import logical_partition as lpar
+import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.managed_system as ms
 from pypowervm.wrappers import network
 
 
@@ -55,9 +55,9 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     # Find the appropriate virtual switch.
     vswitch_href = None
     vswitch_w = None
-    vswitch_resp = adapter.read(c.SYS, root_id=host_uuid,
-                                child_type=network.VSW_ROOT)
-    vswitch_wraps = network.VirtualSwitch.wrap(vswitch_resp)
+    vswitch_resp = adapter.read(ms.System.schema_type, root_id=host_uuid,
+                                child_type=network.VSwitch.schema_type)
+    vswitch_wraps = network.VSwitch.wrap(vswitch_resp)
     for vs_w in vswitch_wraps:
         if vs_w.name == vswitch:
             vswitch_href = vs_w.href
@@ -72,17 +72,18 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_href)
 
     # Build and create the CNA
-    net_adpt = network.CNA(
-        pvid=pvid, vswitch_href=vswitch_href, slot_num=slot_num,
-        mac_addr=mac_addr, addl_tagged_vlans=addl_tagged_vlans)
-    resp = adapter.create(net_adpt, lpar.LPAR_ROOT, root_id=lpar_uuid,
-                          child_type=network.VADPT_ROOT)
+    net_adpt = network.CNA.bld(
+        pvid, vswitch_href, slot_num=slot_num, mac_addr=mac_addr,
+        addl_tagged_vlans=addl_tagged_vlans)
+    resp = adapter.create(net_adpt, lpar.LPAR.schema_type, root_id=lpar_uuid,
+                          child_type=network.CNA.schema_type)
     return resp.entry
 
 
 def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
     # Read the existing virtual networks.  Try to locate...
-    vnet_feed_resp = adapter.read(c.SYS, host_uuid, network.VNET_ROOT)
+    vnet_feed_resp = adapter.read(ms.System.schema_type, host_uuid,
+                                  network.VNet.schema_type)
     vnets = network.VNet.wrap(vnet_feed_resp)
     for vnet in vnets:
         if vlan == str(vnet.vlan) and vnet.vswitch_id == vswitch.switch_id:
@@ -94,8 +95,7 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
     # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
-    vnet = network.VNet(name=name, vlan_id=vlan, vswitch_uri=vswitch_href,
-                        tagged=tagged)
-    crt_resp = adapter.create(vnet, c.SYS, root_id=host_uuid,
-                              child_type=network.VNET_ROOT)
+    vnet = network.VNet.bld(name, vlan, vswitch_href, tagged)
+    crt_resp = adapter.create(vnet, ms.System.schema_type, root_id=host_uuid,
+                              child_type=network.VNet.schema_type)
     return network.VNet.wrap(crt_resp)
