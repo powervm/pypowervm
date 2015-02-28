@@ -18,86 +18,58 @@ import copy
 import logging
 
 from pypowervm import adapter as adpt
-from pypowervm import util
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
 
-VSW_ROOT = 'VirtualSwitch'
-VSW_NAME = 'SwitchName'
-VSW_ID = 'SwitchID'
-VSW_MODE = 'SwitchMode'
+_VSW_NAME = 'SwitchName'
+_VSW_ID = 'SwitchID'
+_VSW_MODE = 'SwitchMode'
 VSW_DEFAULT_VSWITCH = 'ETHERNET0'
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
 
-NB_ROOT = 'NetworkBridge'
-NB_PVID = 'PortVLANID'
-NB_VNETS = 'VirtualNetworks'
+_NB_PVID = 'PortVLANID'
+_NB_VNETS = 'VirtualNetworks'
 NB_SEAS = 'SharedEthernetAdapters'
 NB_SEA = 'SharedEthernetAdapter'
-NB_LG = 'LoadGroup'
-NB_LGS = 'LoadGroups'
+_NB_LG = 'LoadGroup'
+_NB_LGS = 'LoadGroups'
 
-SEA_ROOT = 'SharedEthernetAdapter'
-SEA_DEV_NAME = 'DeviceName'
-SEA_VIO_HREF = 'AssignedVirtualIOServer'
+_SEA_DEV_NAME = 'DeviceName'
+_SEA_VIO_HREF = 'AssignedVirtualIOServer'
 SEA_TRUNKS = 'TrunkAdapters'
 
 TA_ROOT = 'TrunkAdapter'
-TA_PVID = 'PortVLANID'
-TA_DEV_NAME = 'DeviceName'
-TA_TAG_SUPP = 'TaggedVLANSupported'
-TA_VLAN_IDS = 'TaggedVLANIDs'
-TA_VS_ID = 'VirtualSwitchID'
-TA_TRUNK_PRI = 'TrunkPriority'
+_TA_PVID = 'PortVLANID'
+_TA_DEV_NAME = 'DeviceName'
+_TA_TAG_SUPP = 'TaggedVLANSupported'
+_TA_VLAN_IDS = 'TaggedVLANIDs'
+_TA_VS_ID = 'VirtualSwitchID'
+_TA_TRUNK_PRI = 'TrunkPriority'
 
-LG_ROOT = 'LoadGroup'
-LG_PVID = 'PortVLANID'
-LG_TRUNKS = 'TrunkAdapters'
-LG_VNETS = 'VirtualNetworks'
+_LG_PVID = 'PortVLANID'
+_LG_TRUNKS = 'TrunkAdapters'
+_LG_VNETS = 'VirtualNetworks'
 
-VNET_ROOT = c.VNET
-VNETS_ROOT = 'VirtualNetworks'
-VNET_ASSOC_SW = 'AssociatedSwitch'
-VNET_NET_NAME = 'NetworkName'
-VNET_VLAN_ID = 'NetworkVLANID'
-VNET_SW_ID = 'VswitchID'
-VNET_TAG = 'TaggedNetwork'
+_VNET_ASSOC_SW = 'AssociatedSwitch'
+_VNET_NET_NAME = 'NetworkName'
+_VNET_VLAN_ID = 'NetworkVLANID'
+_VNET_SW_ID = 'VswitchID'
+_VNET_TAG = 'TaggedNetwork'
 
-LOCATION_CODE = 'LocationCode'
-
-VADPT_ROOT = c.CNA
-VADPT_SLOT_NUM = 'VirtualSlotNumber'
-VADPT_MAC_ADDR = 'MACAddress'
-VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
-VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
-VADPT_VSWITCH = 'AssociatedVirtualSwitch'
-VADPT_VSWITCH_ID = 'VirtualSwitchID'
-VADPT_PVID = 'PortVLANID'
-VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
+_VADPT_LOCATION_CODE = 'LocationCode'
+_VADPT_MAC_ADDR = 'MACAddress'
+_VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
+_VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
+_VADPT_VSWITCH = 'AssociatedVirtualSwitch'
+_VADPT_PVID = 'PortVLANID'
+_VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
-def crt_load_group(pvid, vnet_uris):
-    """Create the LoadGroup element that can be used for a create operation.
-
-    This is used when adding a Load Group to a NetworkBridge.
-
-    :param pvid: The primary VLAN ID (ex. 1) for the Load Group.
-    :param vnet_uris: The virtual network URI list (mapping to each additional
-                      VLAN/vswitch combo).
-    :returns: The Element that represents the new LoadGroup.
-    """
-    vnet_elem_list = [adpt.Element('link',
-                                   attrib={'href': uri, 'rel': 'related'})
-                      for uri in vnet_uris]
-    children = [adpt.Element(LG_PVID, text=str(pvid)),
-                adpt.Element(LG_VNETS, children=vnet_elem_list)]
-    return adpt.Element(LG_ROOT, attrib=c.DEFAULT_SCHEMA_ATTR,
-                        children=children)
-
-
-class VirtualSwitch(ewrap.EntryWrapper):
+@ewrap.Wrapper.pvm_type('VirtualSwitch')
+class VSwitch(ewrap.EntryWrapper):
     """Wraps the Virtual Switch entries.
 
     The virtual switch in PowerVM is an independent plane of traffic.  If
@@ -106,12 +78,11 @@ class VirtualSwitch(ewrap.EntryWrapper):
     logical adapters are bridged together).  They are important for data
     plane segregation.
     """
-    schema_type = c.VSWITCH
 
     @property
     def name(self):
         """The name associated with the Virtual Switch."""
-        name = self._get_val_str(VSW_NAME)
+        name = self._get_val_str(_VSW_NAME)
         if name == _VSW_DEFAULT_VSWITCH_API:
             return VSW_DEFAULT_VSWITCH
         return name
@@ -119,28 +90,28 @@ class VirtualSwitch(ewrap.EntryWrapper):
     @property
     def switch_id(self):
         """The internal ID (not UUID) for the Virtual Switch."""
-        return self._get_val_int(VSW_ID)
+        return self._get_val_int(_VSW_ID)
 
     @property
     def mode(self):
         """The mode that the switch is in (ex. VEB)."""
-        return self._get_val_str(VSW_MODE)
+        return self._get_val_str(_VSW_MODE)
 
 
-class NetworkBridge(ewrap.EntryWrapper):
-    """Wrapper object for the NetworkBridge entry.
+@ewrap.Wrapper.pvm_type('NetworkBridge')
+class NetBridge(ewrap.EntryWrapper):
+    """Wrapper object for the NetBridge entry.
 
     A NetworkBridge represents an aggregate entity comprising Shared
     Ethernet Adapters.  If Failover or Load-Balancing is in use, the
     Network Bridge will have two identically structured Shared Ethernet
     Adapters belonging to different Virtual I/O Servers.
     """
-    schema_type = c.NB
 
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
-        return self._get_val_int(NB_PVID)
+        return self._get_val_int(_NB_PVID)
 
     @property
     def virtual_network_uri_list(self):
@@ -150,7 +121,7 @@ class NetworkBridge(ewrap.EntryWrapper):
         LoadGroup virtual_network_uri_list.  As the LoadGroups are modified,
         this list will be dynamically updated.
         """
-        return self.get_href(NB_VNETS + c.DELIM + c.LINK)
+        return self.get_href(u.xpath(_NB_VNETS, c.LINK))
 
     def _rebuild_vnet_list(self):
         """A callback from the Load Group to rebuild the virtual network list.
@@ -160,18 +131,17 @@ class NetworkBridge(ewrap.EntryWrapper):
         Groups.
         """
         # Find all the children Virtual Networks.
-        search = c.DELIM.join(['.', NB_LGS, LG_ROOT, LG_VNETS, c.LINK])
+        search = u.xpath(_NB_LGS, _NB_LG, _NB_VNETS, c.LINK)
         new_vnets = copy.deepcopy(self.element.findall(search))
         # Find and replace the current element.
-        cur_vnets = self.element.find(c.ROOT + NB_VNETS)
+        cur_vnets = self.element.find(_NB_VNETS)
         self.element.replace(cur_vnets,
-                             adpt.Element(NB_VNETS, children=new_vnets))
+                             adpt.Element(_NB_VNETS, children=new_vnets))
 
     @property
     def seas(self):
-        """Returns a list of SharedEthernetAdapter wrappers."""
-        return ewrap.WrapperElemList(self._entry.element.find(NB_SEAS),
-                                     NB_SEA, SharedEthernetAdapter)
+        """Returns a list of SEA wrappers."""
+        return ewrap.WrapperElemList(self.entry.element.find(NB_SEAS), SEA)
 
     @seas.setter
     def seas(self, new_list):
@@ -180,12 +150,12 @@ class NetworkBridge(ewrap.EntryWrapper):
     @property
     def load_grps(self):
         """Returns the load groups.  The first in the list is the primary."""
-        return ewrap.WrapperElemList(self._entry.element.find(NB_LGS),
-                                     NB_LG, LoadGroup, nb_root=self)
+        return ewrap.WrapperElemList(self.entry.element.find(_NB_LGS),
+                                     LoadGroup, nb_root=self)
 
     @load_grps.setter
     def load_grps(self, new_list):
-        self.replace_list(NB_LGS, new_list)
+        self.replace_list(_NB_LGS, new_list)
 
     @property
     def vswitch_id(self):
@@ -269,10 +239,9 @@ class NetworkBridge(ewrap.EntryWrapper):
         return False
 
 
-class SharedEthernetAdapter(ewrap.ElementWrapper):
+@ewrap.ElementWrapper.pvm_type('SharedEthernetAdapter', has_metadata=True)
+class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
-    schema_type = c.SEA
-    has_metadata = True
 
     @property
     def pvid(self):
@@ -281,12 +250,12 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
 
     @property
     def dev_name(self):
-        return self._get_val_str(SEA_DEV_NAME)
+        return self._get_val_str(_SEA_DEV_NAME)
 
     @property
     def vio_uri(self):
         """The URI to the corresponding VIOS."""
-        return self.get_href(SEA_VIO_HREF, one_result=True)
+        return self.get_href(_SEA_VIO_HREF, one_result=True)
 
     @property
     def addl_adpts(self):
@@ -312,25 +281,25 @@ class SharedEthernetAdapter(ewrap.ElementWrapper):
         The first is the primary adapter.  All others are the additional
         adapters.
         """
-        trunk_elem_list = self.element.findall(SEA_TRUNKS + c.DELIM + TA_ROOT)
+        trunk_elem_list = self.element.findall(u.xpath(SEA_TRUNKS, TA_ROOT))
         trunks = []
         for trunk_elem in trunk_elem_list:
             trunks.append(TrunkAdapter.wrap(trunk_elem))
         return trunks
 
 
+@ewrap.ElementWrapper.pvm_type('TrunkAdapter')
 class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
-    schema_type = c.TRUNK_ADP
 
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Trunk Adapter."""
-        return self._get_val_int(TA_PVID)
+        return self._get_val_int(_TA_PVID)
 
     @pvid.setter
     def pvid(self, value):
-        self.set_parm_value_int(TA_PVID, value)
+        self.set_parm_value_int(_TA_PVID, value)
 
     @property
     def dev_name(self):
@@ -338,16 +307,16 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
         If RMC is down, will not be available.
         """
-        return self._get_val_str(TA_DEV_NAME)
+        return self._get_val_str(_TA_DEV_NAME)
 
     @property
     def has_tag_support(self):
         """Does this Trunk Adapter support Tagged VLANs passing through it?"""
-        return self._get_val_bool(TA_TAG_SUPP)
+        return self._get_val_bool(_TA_TAG_SUPP)
 
     @has_tag_support.setter
     def has_tag_support(self, new_val):
-        self.set_parm_value(TA_TAG_SUPP, str(new_val))
+        self.set_parm_value(_TA_TAG_SUPP, str(new_val))
 
     @property
     def tagged_vlans(self):
@@ -356,41 +325,57 @@ class TrunkAdapter(ewrap.ElementWrapper):
         Assumes has_tag_support() returns True.  If not, an empty list will
         be returned.
         """
-        addl_vlans = self._get_val_str(TA_VLAN_IDS, '')
+        addl_vlans = self._get_val_str(_TA_VLAN_IDS, '')
         list_data = []
         if addl_vlans != '':
             list_data = [int(i) for i in addl_vlans.split(' ')]
 
         def update_list(new_list):
             data = ' '.join([str(j) for j in new_list])
-            self.set_parm_value(TA_VLAN_IDS, data)
+            self.set_parm_value(_TA_VLAN_IDS, data)
 
         return ewrap.ActionableList(list_data, update_list)
 
     @tagged_vlans.setter
     def tagged_vlans(self, new_list):
         data = ' '.join([str(i) for i in new_list])
-        self.set_parm_value(TA_VLAN_IDS, data)
+        self.set_parm_value(_TA_VLAN_IDS, data)
 
     @property
     def vswitch_id(self):
         """Returns the virtual switch identifier."""
-        return self._get_val_int(TA_VS_ID)
+        return self._get_val_int(_TA_VS_ID)
 
     @property
     def trunk_pri(self):
         """Returns the trunk priority of the adapter."""
-        return self._get_val_int(TA_TRUNK_PRI)
+        return self._get_val_int(_TA_TRUNK_PRI)
 
 
+@ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
 class LoadGroup(ewrap.ElementWrapper):
     """Load Group (how the I/O load should be distributed) for a Network Bridge.
 
     If using failover or load balancing, then the Load Group will have pairs of
     Trunk Adapters, each with their own unique Trunk Priority.
     """
-    schema_type = c.LG
-    has_metadata = True
+
+    @classmethod
+    def bld(cls, pvid, vnet_uris):
+        """Create the LoadGroup element that can be used for a create operation.
+
+        This is used when adding a Load Group to a NetBridge.
+
+        :param pvid: The primary VLAN ID (ex. 1) for the Load Group.
+        :param vnet_uris: The virtual network URI list (mapping to each
+                          additional VLAN/vswitch combo).
+        :returns: A new LoadGroup ElementWrapper that represents the new
+                  LoadGroup.
+        """
+        lg = super(LoadGroup, cls)._bld()
+        lg._pvid(pvid)
+        lg.virtual_network_uri_list.extend(vnet_uris)
+        return lg
 
     @classmethod
     def wrap(cls, element, **kwargs):
@@ -404,7 +389,10 @@ class LoadGroup(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Load Group."""
-        return self._get_val_int(LG_PVID)
+        return self._get_val_int(_LG_PVID)
+
+    def _pvid(self, new_pvid):
+        self.set_parm_value(_LG_PVID, new_pvid)
 
     @property
     def trunk_adapters(self):
@@ -415,12 +403,12 @@ class LoadGroup(ewrap.ElementWrapper):
 
         :return: list of TrunkAdapter objects.
         """
-        return ewrap.WrapperElemList(self.element.find(LG_TRUNKS),
-                                     TA_ROOT, TrunkAdapter)
+        return ewrap.WrapperElemList(self.element.find(_LG_TRUNKS),
+                                     TrunkAdapter)
 
     @trunk_adapters.setter
     def trunk_adapters(self, new_list):
-        self.replace_list(LG_TRUNKS, new_list)
+        self.replace_list(_LG_TRUNKS, new_list)
 
     @property
     def virtual_network_uri_list(self):
@@ -428,7 +416,7 @@ class LoadGroup(ewrap.ElementWrapper):
 
         If a VLAN/Virtual Network should be added, it should be done here.
         """
-        uri_resp_list = list(self.get_href(LG_VNETS + c.DELIM + c.LINK))
+        uri_resp_list = list(self.get_href(u.xpath(_LG_VNETS, c.LINK)))
         return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
 
     @virtual_network_uri_list.setter
@@ -441,7 +429,7 @@ class LoadGroup(ewrap.ElementWrapper):
             new_elems.append(adpt.Element('link', attrib={'href': item,
                                                           'rel': 'related'}))
         new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
-        old_elems = self.element.find(LG_VNETS)
+        old_elems = self.element.find(_LG_VNETS)
         # This is a bug where the API isn't returning vnets if just a PVID
         # on additional VEA
         if old_elems is not None:
@@ -451,8 +439,11 @@ class LoadGroup(ewrap.ElementWrapper):
 
         # If the Network Bridge was set, tell it to rebuild its VirtualNetwork
         # list.
-        if self._nb_root is not None:
+        try:
             self._nb_root._rebuild_vnet_list()
+        except AttributeError:
+            # Network Bridge was not set - ignore
+            pass
 
     @property
     def tagged_vlans(self):
@@ -460,12 +451,12 @@ class LoadGroup(ewrap.ElementWrapper):
         return self.trunk_adapters[0].tagged_vlans
 
 
+@ewrap.EntryWrapper.pvm_type('VirtualNetwork')
 class VNet(ewrap.EntryWrapper):
     """The overall definition of a VLAN network within the hypervisor."""
 
-    schema_type = c.VNET
-
-    def __init__(self, name=None, vlan_id=None, vswitch_uri=None, tagged=None):
+    @classmethod
+    def bld(cls, name, vlan_id, vswitch_uri, tagged):
         """Creates a VirtualNetwork that can be used for a create operation.
 
         This is used when creating a new Virtual Network within the system
@@ -479,40 +470,37 @@ class VNet(ewrap.EntryWrapper):
                        network).
         :returns: The ElementWrapper that represents the new VirtualNetwork.
         """
-        super(VNet, self).__init__()
+        vnet = super(VNet, cls)._bld()
         # Assignment order matters
-        if vswitch_uri is not None:
-            self.associated_switch_uri = vswitch_uri
-        if name is not None:
-            self.name = name
-        if vlan_id is not None:
-            self.vlan = vlan_id
-        if tagged is not None:
-            self.tagged = tagged
+        vnet.associated_switch_uri = vswitch_uri
+        vnet.name = name
+        vnet.vlan = vlan_id
+        vnet.tagged = tagged
+        return vnet
 
     @property
     def associated_switch_uri(self):
-        return self.get_href(VNET_ASSOC_SW, one_result=True)
+        return self.get_href(_VNET_ASSOC_SW, one_result=True)
 
     @associated_switch_uri.setter
     def associated_switch_uri(self, uri):
-        self.set_href(VNET_ASSOC_SW, uri)
+        self.set_href(_VNET_ASSOC_SW, uri)
 
     @property
     def name(self):
-        return self._get_val_str(VNET_NET_NAME)
+        return self._get_val_str(_VNET_NET_NAME)
 
     @name.setter
     def name(self, value):
-        self.set_parm_value(VNET_NET_NAME, value)
+        self.set_parm_value(_VNET_NET_NAME, value)
 
     @property
     def vlan(self):
-        return self._get_val_int(VNET_VLAN_ID)
+        return self._get_val_int(_VNET_VLAN_ID)
 
     @vlan.setter
     def vlan(self, vlan_id):
-        self.set_parm_value(VNET_VLAN_ID, vlan_id)
+        self.set_parm_value(_VNET_VLAN_ID, vlan_id)
 
     @property
     def vswitch_id(self):
@@ -520,25 +508,25 @@ class VNet(ewrap.EntryWrapper):
 
         Is not a UUID.
         """
-        return self._get_val_int(VNET_SW_ID)
+        return self._get_val_int(_VNET_SW_ID)
 
     @property
     def tagged(self):
         """If True, the VLAN tag is preserved when the packet leaves system."""
-        return self._get_val_bool(VNET_TAG)
+        return self._get_val_bool(_VNET_TAG)
 
     @tagged.setter
     def tagged(self, is_tagged):
-        self.set_parm_value(VNET_TAG, util.sanitize_bool_for_api(is_tagged))
+        self.set_parm_value(_VNET_TAG, u.sanitize_bool_for_api(is_tagged))
 
 
+@ewrap.EntryWrapper.pvm_type('ClientNetworkAdapter')
 class CNA(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
-    schema_type = c.CNA
-
-    def __init__(self, pvid=None, vswitch_href=None, slot_num=None,
-                 mac_addr=None, addl_tagged_vlans=None):
+    @classmethod
+    def bld(cls, pvid, vswitch_href, slot_num=None, mac_addr=None,
+            addl_tagged_vlans=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a client partition.  This
@@ -561,48 +549,47 @@ class CNA(ewrap.EntryWrapper):
                                   Note: The limit is ~18 additional VLANs
         :returns: A CNA EntryWrapper that can be used for create.
         """
-        super(CNA, self).__init__()
+        cna = super(CNA, cls)._bld()
         # Assignment order matters
         if slot_num is not None:
-            self.slot = slot_num
+            cna._slot(slot_num)
         else:
-            self.use_next_avail_slot_id = True
+            cna._use_next_avail_slot_id = True
 
         if mac_addr is not None:
-            self.mac = mac_addr
+            cna.mac = mac_addr
 
         #  The primary VLAN ID
-        if pvid is not None:
-            self.pvid = pvid
+        cna.pvid = pvid
 
         # Additional VLANs
         if addl_tagged_vlans is not None:
-            self.tagged_vlans = addl_tagged_vlans
-            self.is_tagged_vlan_supported = True
+            cna.tagged_vlans = addl_tagged_vlans
+            cna.is_tagged_vlan_supported = True
         else:
-            self.is_tagged_vlan_supported = False
+            cna.is_tagged_vlan_supported = False
 
         # vSwitch URI
-        if vswitch_href is not None:
-            self.vswitch_uri = vswitch_href
+        cna.vswitch_uri = vswitch_href
+
+        return cna
 
     @property
     def slot(self):
         return self._get_val_int(c.VIR_SLOT_NUM)
 
-    @slot.setter
-    def slot(self, sid):
+    def _slot(self, sid):
         self.set_parm_value(c.VIR_SLOT_NUM, sid)
 
     @property
-    def use_next_avail_slot_id(self):
-        return self._get_val_bool(VADPT_USE_NEXT_AVAIL_SLOT)
+    def _use_next_avail_slot_id(self):
+        return self._get_val_bool(_VADPT_USE_NEXT_AVAIL_SLOT)
 
-    @use_next_avail_slot_id.setter
-    def use_next_avail_slot_id(self, unasi):
+    @_use_next_avail_slot_id.setter
+    def _use_next_avail_slot_id(self, unasi):
         """Param unasi is bool (True or False)."""
-        self.set_parm_value(VADPT_USE_NEXT_AVAIL_SLOT,
-                            util.sanitize_bool_for_api(unasi))
+        self.set_parm_value(_VADPT_USE_NEXT_AVAIL_SLOT,
+                            u.sanitize_bool_for_api(unasi))
 
     @property
     def mac(self):
@@ -611,26 +598,26 @@ class CNA(ewrap.EntryWrapper):
         Typical format would be: AABBCCDDEEFF
         The API returns a format with no colons and is upper cased.
         """
-        return self._get_val_str(VADPT_MAC_ADDR)
+        return self._get_val_str(_VADPT_MAC_ADDR)
 
     @mac.setter
     def mac(self, new_val):
-        new_mac = util.sanitize_mac_for_api(new_val)
-        self.set_parm_value(VADPT_MAC_ADDR, new_mac)
+        new_mac = u.sanitize_mac_for_api(new_val)
+        self.set_parm_value(_VADPT_MAC_ADDR, new_mac)
 
     @property
     def pvid(self):
         """Returns the Port VLAN ID (int value)."""
-        return self._get_val_int(VADPT_PVID)
+        return self._get_val_int(_VADPT_PVID)
 
     @pvid.setter
     def pvid(self, new_val):
-        self.set_parm_value(VADPT_PVID, new_val)
+        self.set_parm_value(_VADPT_PVID, new_val)
 
     @property
     def loc_code(self):
         """The device's location code."""
-        return self._get_val_str(LOCATION_CODE)
+        return self._get_val_str(_VADPT_LOCATION_CODE)
 
     @property
     def tagged_vlans(self):
@@ -638,38 +625,38 @@ class CNA(ewrap.EntryWrapper):
 
         Only valid if tagged vlan support is on.
         """
-        addl_vlans = self._get_val_str(VADPT_TAGGED_VLANS, '')
+        addl_vlans = self._get_val_str(_VADPT_TAGGED_VLANS, '')
         list_data = []
         if addl_vlans != '':
             list_data = [int(i) for i in addl_vlans.split(' ')]
 
         def update_list(new_list):
             data = ' '.join([str(j) for j in new_list])
-            self.set_parm_value(VADPT_TAGGED_VLANS, data)
+            self.set_parm_value(_VADPT_TAGGED_VLANS, data)
 
         return ewrap.ActionableList(list_data, update_list)
 
     @tagged_vlans.setter
     def tagged_vlans(self, new_list):
         data = ' '.join([str(i) for i in new_list])
-        self.set_parm_value(VADPT_TAGGED_VLANS, data)
+        self.set_parm_value(_VADPT_TAGGED_VLANS, data)
 
     @property
     def is_tagged_vlan_supported(self):
         """Returns if addl tagged VLANs are supported (bool value)."""
-        return self._get_val_bool(VADPT_TAGGED_VLAN_SUPPORT)
+        return self._get_val_bool(_VADPT_TAGGED_VLAN_SUPPORT)
 
     @is_tagged_vlan_supported.setter
     def is_tagged_vlan_supported(self, new_val):
         """Parameter new_val is a bool (True or False)."""
-        self.set_parm_value(VADPT_TAGGED_VLAN_SUPPORT,
-                            util.sanitize_bool_for_api(new_val))
+        self.set_parm_value(_VADPT_TAGGED_VLAN_SUPPORT,
+                            u.sanitize_bool_for_api(new_val))
 
     @property
     def vswitch_uri(self):
         """Returns the URI for the associated vSwitch."""
-        return self.get_href(VADPT_VSWITCH + c.DELIM + 'link', one_result=True)
+        return self.get_href(u.xpath(_VADPT_VSWITCH, c.LINK), one_result=True)
 
     @vswitch_uri.setter
     def vswitch_uri(self, new_val):
-        self.set_href(VADPT_VSWITCH + c.DELIM + 'link', new_val)
+        self.set_href(u.xpath(_VADPT_VSWITCH, c.LINK), new_val)

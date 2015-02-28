@@ -17,7 +17,9 @@
 import copy
 import unittest
 
+import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.network as net
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
@@ -45,21 +47,26 @@ class TestVNetwork(twrap.TestWrapper):
 
     def test_vnet_new(self):
         """Tests the method that returns a VNet ElementWrapper."""
-        vn_w = net.VNet(name='name', vlan_id=10, vswitch_uri='vswitch_uri',
-                        tagged=True)
+        vn_w = net.VNet.bld('name', 10, 'vswitch_uri', True)
         self.assertEqual('name', vn_w.name)
         self.assertEqual(10, vn_w.vlan)
         self.assertTrue(vn_w.tagged)
+
+    def test_wrapper_class(self):
+        self.assertEqual(net.VNet.schema_type, 'VirtualNetwork')
+        self.assertEqual(net.VNet.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.VNet.has_metadata)
+        self.assertEqual(net.VNet.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestVSwitch(twrap.TestWrapper):
 
     file = 'fake_vswitch_feed.txt'
-    wrapper_class_to_test = net.VirtualSwitch
+    wrapper_class_to_test = net.VSwitch
 
     def test_feed(self):
         """Tests the feed of virtual switches."""
-        vswitches = net.VirtualSwitch.wrap(self.resp)
+        vswitches = net.VSwitch.wrap(self.resp)
         self.assertTrue(len(vswitches) >= 1)
         for vswitch in vswitches:
             self.assertIsNotNone(vswitch.etag)
@@ -73,11 +80,50 @@ class TestVSwitch(twrap.TestWrapper):
                          '4d9735ae-feaf-32c2-a1bc-102026df9168',
                          self.dwrap.href)
 
+    def test_wrapper_class(self):
+        self.assertEqual(net.VSwitch.schema_type, 'VirtualSwitch')
+        self.assertEqual(net.VSwitch.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.VSwitch.has_metadata)
+        self.assertEqual(net.VSwitch.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+
+
+class TestLoadGroup(unittest.TestCase):
+    def test_wrapper_class(self):
+        self.assertEqual(net.LoadGroup.schema_type, 'LoadGroup')
+        self.assertEqual(net.LoadGroup.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.LoadGroup.has_metadata)
+        self.assertEqual(net.LoadGroup.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+
+
+class TestTrunkAdapter(unittest.TestCase):
+    def test_wrapper_class(self):
+        self.assertEqual(net.TrunkAdapter.schema_type, 'TrunkAdapter')
+        self.assertEqual(net.TrunkAdapter.schema_ns, pc.UOM_NS)
+        self.assertFalse(net.TrunkAdapter.has_metadata)
+        self.assertEqual(net.TrunkAdapter.default_attrib,
+                         wc.DEFAULT_SCHEMA_ATTR)
+
+
+class TestSEA(unittest.TestCase):
+    def test_wrapper_class(self):
+        self.assertEqual(net.SEA.schema_type, 'SharedEthernetAdapter')
+        self.assertEqual(net.SEA.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.SEA.has_metadata)
+        self.assertEqual(net.SEA.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+
+
+class TestNetBridge(unittest.TestCase):
+    def test_wrapper_class(self):
+        self.assertEqual(net.NetBridge.schema_type, 'NetworkBridge')
+        self.assertEqual(net.NetBridge.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.NetBridge.has_metadata)
+        self.assertEqual(net.NetBridge.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+
 
 class TestNetwork(twrap.TestWrapper):
 
     file = 'fake_network_bridge.txt'
-    wrapper_class_to_test = net.NetworkBridge
+    wrapper_class_to_test = net.NetBridge
 
     def test_pvid(self):
         self.assertEqual(1, self.dwrap.pvid)
@@ -95,7 +141,7 @@ class TestNetwork(twrap.TestWrapper):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
         pvid = 1
-        lg = net.LoadGroup.wrap(net.crt_load_group(pvid, uri_list))
+        lg = net.LoadGroup.bld(pvid, uri_list)
 
         # Validate the data back
         self.assertIsNotNone(lg)
@@ -262,25 +308,24 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = net.CNA(pvid=1, vswitch_href="fake_vs")
+        test = net.CNA.bld(1, "fake_vs")
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertFalse(test.is_tagged_vlan_supported)
         self.assertEqual([], test.tagged_vlans)
-        self.assertIsNotNone(test.use_next_avail_slot_id)
-        self.assertTrue(test.use_next_avail_slot_id)
+        self.assertIsNotNone(test._use_next_avail_slot_id)
+        self.assertTrue(test._use_next_avail_slot_id)
         self.assertIsNone(test.mac)
         self.assertEqual(1, test.pvid)
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = net.CNA(
-            pvid=5, vswitch_href="fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
-            slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
+        test = net.CNA.bld(5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
+                           slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertTrue(test.is_tagged_vlan_supported)
         self.assertEqual([6, 7, 8, 9], test.tagged_vlans)
         self.assertEqual(5, test.slot)
-        self.assertFalse(test.use_next_avail_slot_id)
+        self.assertFalse(test._use_next_avail_slot_id)
         self.assertIsNotNone(test.mac)
         self.assertEqual("AABBCCDDEEFF", test.mac)
         self.assertEqual(5, test.pvid)
@@ -352,6 +397,12 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.entries.vswitch_uri = 'test'
         self.assertEqual('test', self.entries.vswitch_uri)
         self.entries.vswitch_uri = orig_uri
+
+    def test_wrapper_class(self):
+        self.assertEqual(net.CNA.schema_type, 'ClientNetworkAdapter')
+        self.assertEqual(net.CNA.schema_ns, pc.UOM_NS)
+        self.assertTrue(net.CNA.has_metadata)
+        self.assertEqual(net.CNA.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
 
 if __name__ == "__main__":
     unittest.main()

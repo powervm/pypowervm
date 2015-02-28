@@ -59,9 +59,8 @@ class TestCluster(twrap.TestWrapper):
                     adp.Element('VolumeName', text='hdisk99')]))
         self.dwrap.repos_pv = newrepos
         self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
-        # Now try the same thing, but using no-arg constructor to build PV
-        newrepos = stor.PV()
-        newrepos.name = 'hdisk123'
+        # Now try the same thing, but using factory constructor to build PV
+        newrepos = stor.PV.bld(name='hdisk123')
         self.dwrap.repos_pv = newrepos
         self.assertAlmostEqual(self.dwrap.repos_pv.name, 'hdisk123')
 
@@ -105,28 +104,50 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')
         # Now try with a MTMS ElementWrapper
-        node.mtms = ms.MTMS(mtms_str='4321-765*0FEDCBA')
+        node.mtms = ms.MTMS.bld('4321-765*0FEDCBA')
         mtms = node.mtms
         self.assertEqual(mtms.machine_type, '4321')
         self.assertEqual(mtms.model, '765')
         self.assertEqual(mtms.serial, '0FEDCBA')
 
-    def test_fresh_cluster(self):
-        n1 = clust.Node()
+    def test_wrapper_classes(self):
+        # Cluster
+        self.assertEqual(clust.Cluster.schema_type, 'Cluster')
+        self.assertEqual(clust.Cluster.schema_ns, pc.UOM_NS)
+        self.assertTrue(clust.Cluster.has_metadata)
+        self.assertEqual(clust.Cluster.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        # Node
+        self.assertEqual(clust.Node.schema_type, 'Node')
+        self.assertEqual(clust.Node.schema_ns, pc.UOM_NS)
+        self.assertTrue(clust.Node.has_metadata)
+        self.assertEqual(clust.Node.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+
+    def test_bld_cluster(self):
+        n1 = clust.Node._bld()
         n1.hostname = 'a.example.com'
-        n2 = clust.Node()
-        n2.hostname = 'b.example.com'
-        repos = stor.PV(name='hdisk123')
-        cl = clust.Cluster(name='foo', repos_pv=repos, node_list=[n1, n2])
+        repos = stor.PV.bld(name='hdisk123')
+        cl = clust.Cluster.bld('foo', repos, n1)
         self.assertEqual(cl.name, 'foo')
         self.assertEqual(cl.repos_pv.name, 'hdisk123')
-        self.assertEqual(cl.pvm_type, wc.CLUSTER)
+        self.assertEqual(cl.schema_type, 'Cluster')
         self.assertEqual(cl.schema_ns, pc.UOM_NS)
         nodes = cl.nodes
-        self.assertEqual(len(nodes), 2)
+        self.assertEqual(len(nodes), 1)
         node = nodes[0]
         self.assertEqual(node.hostname, 'a.example.com')
-        self.assertEqual(node.pvm_type, wc.CLUST_NODE)
+        self.assertEqual(node.schema_type, clust.Node.schema_type)
+        self.assertEqual(node.schema_ns, pc.UOM_NS)
+        # Node.bld()
+        n2 = clust.Node.bld(hostname='b.example.com', lpar_id=2,
+                            mtms='ABCD-XYZ*1234567', vios_uri='https://foo')
+        nodes.append(n2)
+        self.assertEqual(len(nodes), 2)
+        node = nodes[1]
+        self.assertEqual(node.hostname, 'b.example.com')
+        self.assertEqual(node.lpar_id, 2)
+        self.assertEqual(node.mtms.mtms_str, 'ABCD-XYZ*1234567')
+        self.assertEqual(node.vios_uri, 'https://foo')
+        self.assertEqual(node.schema_type, clust.Node.schema_type)
         self.assertEqual(node.schema_ns, pc.UOM_NS)
 
 if __name__ == "__main__":

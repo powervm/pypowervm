@@ -19,6 +19,7 @@ import mock
 import pypowervm.adapter as adp
 import pypowervm.jobs.cluster_ssp as cs
 import pypowervm.tests.jobs.util as tju
+import pypowervm.util as u
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.job as jwrap
@@ -43,11 +44,10 @@ class TestClusterSSP(unittest.TestCase):
 
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):
-            self.assertEqual(entry_type, wc.CLUSTER)
+            self.assertEqual(entry_type, clust.Cluster.schema_type)
             job = jwrap.Job.wrap(adp.Entry({}, job_el))
-            param_vals = job._get_vals(
-                wc.ROOT + wc.DELIM.join(['JobParameters', 'JobParameter',
-                                         'ParameterValue']))
+            param_vals = job._get_vals(u.xpath(
+                'JobParameters', 'JobParameter', 'ParameterValue'))
             self.assertEqual(
                 param_vals[0],
                 '<uom:Cluster xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
@@ -58,12 +58,12 @@ class TestClusterSSP(unittest.TestCase):
                 'om:Metadata><uom:VolumeName>repos_pv_name</uom:VolumeName></u'
                 'om:PhysicalVolume></uom:RepositoryDisk><uom:Node schemaVersio'
                 'n="V1_0"><uom:Node schemaVersion="V1_0"><uom:Metadata><uom:At'
-                'om/></uom:Metadata><uom:HostName>vios1</uom:HostName><uom:Mac'
-                'hineTypeModelAndSerialNumber schemaVersion="V1_0"><uom:Metada'
-                'ta><uom:Atom/></uom:Metadata><uom:MachineType>XXXX</uom:Machi'
-                'neType><uom:Model>YYY</uom:Model><uom:SerialNumber>ZZZZZZZ</u'
-                'om:SerialNumber></uom:MachineTypeModelAndSerialNumber><uom:Pa'
-                'rtitionID>5</uom:PartitionID><uom:VirtualIOServer href="https'
+                'om/></uom:Metadata><uom:HostName>vios1</uom:HostName><uom:Par'
+                'titionID>5</uom:PartitionID><uom:MachineTypeModelAndSerialNum'
+                'ber schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metad'
+                'ata><uom:MachineType>XXXX</uom:MachineType><uom:Model>YYY</uo'
+                'm:Model><uom:SerialNumber>ZZZZZZZ</uom:SerialNumber></uom:Mac'
+                'hineTypeModelAndSerialNumber><uom:VirtualIOServer href="https'
                 '://a.example.com:12443/rest/api/uom/VirtualIOServer/12345678-'
                 '1234-1234-1234-123456789012" rel="related"/></uom:Node></uom:'
                 'Node></uom:Cluster>')
@@ -83,14 +83,12 @@ class TestClusterSSP(unittest.TestCase):
                 '_name</uom:StoragePoolName></uom:SharedStoragePool>')
             return mock.MagicMock()
         mock_adp.create_job.side_effect = create_job
-        node = clust.Node()
-        node.hostname = 'vios1'
-        node.mtms = 'XXXX-YYY*ZZZZZZZ'
-        node.lpar_id = 5
-        node.vios_uri = ('https://a.example.com:12443/rest/api/uom/VirtualIOSe'
-                         'rver/12345678-1234-1234-1234-123456789012')
-        repos = stor.PV(name='repos_pv_name')
-        data = [stor.PV(name=n) for n in (
+        node = clust.Node.bld(
+            hostname='vios1', lpar_id=5, mtms='XXXX-YYY*ZZZZZZZ',
+            vios_uri='https://a.example.com:12443/rest/api/uom/VirtualIOServe'
+            'r/12345678-1234-1234-1234-123456789012')
+        repos = stor.PV.bld(name='repos_pv_name')
+        data = [stor.PV.bld(name=n) for n in (
             'hdisk1', 'hdisk2', 'hdisk3')]
         cs.crt_cluster_ssp(mock_adp, 'clust_name', 'ssp_name', repos,
                            node, data)

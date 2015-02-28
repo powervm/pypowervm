@@ -17,11 +17,11 @@
 import logging
 import math
 
-from pypowervm import exceptions as exc
+import pypowervm.exceptions as exc
 from pypowervm import util
-from pypowervm.wrappers import constants as wc
-from pypowervm.wrappers import storage as stor
-from pypowervm.wrappers import vios_file as vf
+import pypowervm.wrappers.storage as stor
+import pypowervm.wrappers.vios_file as vf
+import pypowervm.wrappers.virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
 
@@ -54,8 +54,9 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
              used as input to the 'upload_cleanup' method.
     """
     # Get the existing volume group
-    vol_grp_data = adapter.read(wc.VIOS, v_uuid, wc.VG, vol_grp_uuid)
-    vol_grp = stor.VolumeGroup.wrap(vol_grp_data.entry)
+    vol_grp_data = adapter.read(vios.VIOS.schema_type, v_uuid,
+                                stor.VG.schema_type, vol_grp_uuid)
+    vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
@@ -71,17 +72,16 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # TODO(IBM) Temporary - need to round up to the highest GB.  This should
     # be done by the platform in the future.
     gb_size = math.ceil(gb_size)
-    new_vdisk = stor.VirtualDisk.wrap(
-        stor.crt_virtual_disk_obj(d_name, gb_size))
+    new_vdisk = stor.VDisk.bld_new(d_name, gb_size)
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)
 
     # Now perform an update on the adapter.
-    resp = adapter.update(vol_grp._entry.element, vol_grp_data.headers['etag'],
-                          wc.VIOS, v_uuid, wc.VG, vol_grp_uuid,
-                          xag=None)
-    vol_grp = stor.VolumeGroup.wrap(resp.entry)
+    resp = adapter.update(vol_grp.entry.element, vol_grp_data.headers['etag'],
+                          vios.VIOS.schema_type, v_uuid, stor.VG.schema_type,
+                          vol_grp_uuid, xag=None)
+    vol_grp = stor.VG.wrap(resp.entry)
 
     # The new Virtual Disk should be created.  Find the one we created.
     n_vdisk = None
@@ -97,9 +97,9 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
 
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
-    vio_file = _create_file(adapter, d_name, wc.BROKERED_DISK_IMAGE, v_uuid,
-                            f_size=f_size, tdev_udid=n_vdisk.udid,
-                            sha_chksum=sha_chksum)
+    vio_file = _create_file(
+        adapter, d_name, vf.File.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
+        f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
     try:
         # Upload the file
         adapter.upload_file(vio_file.element, d_stream)
@@ -135,8 +135,9 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
              used as input to the 'upload_cleanup' method.
     """
     # First step is to create the 'file' on the system.
-    vio_file = _create_file(adapter, f_name, wc.BROKERED_MEDIA_ISO, v_uuid,
-                            sha_chksum, f_size)
+    vio_file = _create_file(
+        adapter, f_name, vf.File.FTypeEnum.BROKERED_MEDIA_ISO, v_uuid,
+        sha_chksum, f_size)
     try:
         # Next, upload the file
         adapter.upload_file(vio_file.element, d_stream)
@@ -172,7 +173,7 @@ def upload_cleanup(adapter, f_uuid):
     :param f_uuid: The file UUID to clean up.
     :returns: The response from the delete operation.
     """
-    return adapter.delete(vf.FILE_ROOT, root_id=f_uuid, service='web')
+    return adapter.delete(vf.File.schema_type, root_id=f_uuid, service='web')
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
@@ -181,9 +182,7 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
 
     :param adapter: The adapter to talk over the API.
     :param f_name: The name for the file.
-    :param f_type: The type of the file.  Typically one of the following:
-                   'BROKERED_MEDIA_ISO' - virtual optical media
-                   'BROKERED_DISK_IMAGE' - virtual disk
+    :param f_type: The type of the file, from vios_file.File.FTypeEnum.
     :param v_uuid: The UUID for the Virtual I/O Server that the file will
                    reside on.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful
@@ -193,9 +192,9 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     :param tdev_udid: The device UDID that the file will back into.
     :returns: The File Wrapper
     """
-    fd = vf.crt_file(f_name, f_type, v_uuid, sha_chksum=sha_chksum,
+    fd = vf.File.bld(f_name, f_type, v_uuid, sha_chksum=sha_chksum,
                      f_size=f_size, tdev_udid=tdev_udid)
 
     # Create the file.
-    resp = adapter.create(fd, vf.FILE_ROOT, service='web')
+    resp = adapter.create(fd.element, vf.File.schema_type, service='web')
     return vf.File.wrap(resp)

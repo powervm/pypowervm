@@ -14,123 +14,131 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import pypowervm.adapter as a
 import pypowervm.const as pc
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
-FILE_ROOT = 'File'
-FILE_NAME = 'Filename'
-FILE_DATE_MOD = 'DateModified'
-FILE_INET_MED_TYPE = 'InternetMediaType'
-FILE_UUID = 'FileUUID'
-FILE_EXP_SIZE = 'ExpectedFileSizeInBytes'
-FILE_CUR_SIZE = 'CurrentFileSizeInBytes'
-FILE_ENUM_TYPE = 'FileEnumType'
-FILE_VIOS = 'TargetVirtualIOServerUUID'
-FILE_TDEV_UDID = 'TargetDeviceUniqueDeviceID'
-
-BROKERED_MEDIA_ISO = 'BROKERED_MEDIA_ISO'
-BROKERED_DISK_IMAGE = 'BROKERED_DISK_IMAGE'
-
-DEFAULT_MEDIA_TYPE = 'application/octet-stream'
+_FILE_NAME = 'Filename'
+_FILE_DATE_MOD = 'DateModified'
+_FILE_INET_MED_TYPE = 'InternetMediaType'
+_FILE_UUID = 'FileUUID'
+_FILE_EXP_SIZE = 'ExpectedFileSizeInBytes'
+_FILE_CUR_SIZE = 'CurrentFileSizeInBytes'
+_FILE_ENUM_TYPE = 'FileEnumType'
+_FILE_VIOS = 'TargetVirtualIOServerUUID'
+_FILE_TDEV_UDID = 'TargetDeviceUniqueDeviceID'
+_FILE_CHKSUM = 'SHA256'
 
 
-def crt_file(f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
-             tdev_udid=None):
-    """Creates an element that can be used for a File create action.
-
-    :param f_name: The name for the file.
-    :param f_type: The type of the file.  Typically one of the following:
-                   'BROKERED_MEDIA_ISO' - virtual optical media
-                   'BROKERED_DISK_IMAGE' - virtual disk
-    :param v_uuid: The UUID for the Virtual I/O Server that the file will
-                   reside on.
-    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful
-                       for integrity checks.
-    :param f_size: (OPTIONAL) The size in bytes of the file to upload.  Can be
-                   an int or a String (that represents an integer number).
-                   Useful for integrity checks.
-    :param tdev_udid: The device UDID that the file will back into.
-    :returns: The Element that represents the newly created File.
-    """
-    # Metadata needs to be in a specific order.  These are required
-    metadata = [
-        a.Element(FILE_NAME, ns=wc.WEB_NS, text=f_name),
-        a.Element(FILE_INET_MED_TYPE, ns=wc.WEB_NS, text=DEFAULT_MEDIA_TYPE)
-    ]
-
-    # Optional - should not be included in the Element if None.
-    if sha_chksum:
-        metadata.append(a.Element('SHA256', ns=wc.WEB_NS, text=sha_chksum))
-
-    if f_size:
-        metadata.append(a.Element(FILE_EXP_SIZE, ns=wc.WEB_NS,
-                                  text=str(f_size)))
-
-    # These are required
-    metadata.append(a.Element(FILE_ENUM_TYPE, ns=wc.WEB_NS,
-                              text=f_type))
-    metadata.append(a.Element(FILE_VIOS, ns=wc.WEB_NS, text=v_uuid))
-
-    # Optical media doesn't need to cite a target dev for file upload
-    if tdev_udid:
-        metadata.append(a.Element('TargetDeviceUniqueDeviceID', ns=wc.WEB_NS,
-                                  text=tdev_udid))
-
-    # Metadata about the file done.  Add that to a root element.
-    return a.Element('File', ns=wc.WEB_NS, attrib=wc.DEFAULT_SCHEMA_ATTR,
-                     children=metadata)
+_DEFAULT_MEDIA_TYPE = 'application/octet-stream'
 
 
+@ewrap.Wrapper.pvm_type('File', ns=pc.WEB_NS)
 class File(ewrap.EntryWrapper):
     """Wraps the File Metadata for files on the VIOS.
 
     The API supports passing a File up to devices on the Virtual I/O Server.
     This object wraps the metadata for the Files.
     """
-    schema_type = wc.VIOS_FILE
-    schema_ns = pc.WEB_NS
+
+    class FTypeEnum(object):
+        BROKERED_MEDIA_ISO = 'BROKERED_MEDIA_ISO'
+        BROKERED_DISK_IMAGE = 'BROKERED_DISK_IMAGE'
+
+    @classmethod
+    def bld(cls, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
+            tdev_udid=None):
+        """Creates a fresh File wrapper that can be used for a create action.
+
+        :param f_name: The name for the file.
+        :param f_type: The type of the file.  One of the FTypeEnum values.
+        :param v_uuid: The UUID for the Virtual I/O Server that the file will
+                       reside on.
+        :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful
+                           for integrity checks.
+        :param f_size: (OPTIONAL) The size in bytes of the file to upload.  Can
+                       be an int or a String (that represents an integer
+                       number).  Useful for integrity checks.
+        :param tdev_udid: The device UDID that the file will back into.
+        :returns: The newly created File wrapper.
+        """
+        # Metadata needs to be in a specific order.  These are required
+        f = super(File, cls)._bld()
+        f._file_name(f_name)
+        f._internet_media_type(_DEFAULT_MEDIA_TYPE)
+
+        # Optional - should not be included in the Element if None.
+        if sha_chksum:
+            f._chksum(sha_chksum)
+
+        if f_size:
+            f._expected_file_size(f_size)
+
+        # These are required
+        f._enum_type(f_type)
+        f._vios_uuid(v_uuid)
+
+        # Optical media doesn't need to cite a target dev for file upload
+        if tdev_udid:
+            f._tdev_udid(tdev_udid)
+
+        return f
 
     @property
     def file_name(self):
-        return self._get_val_str(FILE_NAME)
+        return self._get_val_str(_FILE_NAME)
+
+    def _file_name(self, name):
+        self.set_parm_value(_FILE_NAME, name)
 
     @property
     def date_modified(self):
-        return self._get_val_str(FILE_DATE_MOD)
+        return self._get_val_str(_FILE_DATE_MOD)
 
     @property
     def internet_media_type(self):
         """Typically 'application/octet-stream'."""
-        return self._get_val_str(FILE_INET_MED_TYPE)
+        return self._get_val_str(_FILE_INET_MED_TYPE)
+
+    def _internet_media_type(self, imt):
+        self.set_parm_value(_FILE_INET_MED_TYPE, imt)
 
     @property
     def file_uuid(self):
         """The file's UUID (different from the entries)."""
-        return self._get_val_str(FILE_UUID)
+        return self._get_val_str(_FILE_UUID)
 
     @property
     def expected_file_size(self):
-        return self._get_val_int(FILE_EXP_SIZE)
+        return self._get_val_int(_FILE_EXP_SIZE)
+
+    def _expected_file_size(self, sz):
+        self.set_parm_value(_FILE_EXP_SIZE, sz)
 
     @property
     def current_file_size(self):
-        return self._get_val_int(FILE_CUR_SIZE)
+        return self._get_val_int(_FILE_CUR_SIZE)
 
     @property
     def enum_type(self):
-        """The type of the file.
+        """The type of the file.  One of the FTypeEnum values."""
+        return self._get_val_str(_FILE_ENUM_TYPE)
 
-        BROKERED_MEDIA_ISO - virtual optical media
-        BROKERED_DISK_IMAGE - virtual disk
-        """
-        return self._get_val_str(FILE_ENUM_TYPE)
+    def _enum_type(self, et):
+        self.set_parm_value(_FILE_ENUM_TYPE, et)
+
+    def _chksum(self, sha):
+        self.set_parm_value(_FILE_CHKSUM, sha)
 
     @property
     def vios_uuid(self):
-        return self._get_val_str(FILE_VIOS)
+        return self._get_val_str(_FILE_VIOS)
+
+    def _vios_uuid(self, uuid):
+        self.set_parm_value(_FILE_VIOS, uuid)
 
     @property
     def tdev_udid(self):
-        return self._get_val_str(FILE_TDEV_UDID)
+        return self._get_val_str(_FILE_TDEV_UDID)
+
+    def _tdev_udid(self, udid):
+        self.set_parm_value(_FILE_TDEV_UDID, udid)

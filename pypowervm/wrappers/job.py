@@ -38,11 +38,12 @@ job_opts = [
 CONF = cfg.CONF
 CONF.register_opts(job_opts)
 
+_JOBS = 'jobs'
 
+
+@ewrap.EntryWrapper.pvm_type('Job', ns=pc.WEB_NS)
 class Job(ewrap.EntryWrapper):
     """Wrapper object for job response schema."""
-    schema_type = wc.JOB
-    schema_ns = pc.WEB_NS
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -61,11 +62,11 @@ class Job(ewrap.EntryWrapper):
         """
         job_parm = adp.Element('JobParameter',
                                attrib={'schemaVersion': 'V1_0'},
-                               ns=wc.WEB_NS)
+                               ns=pc.WEB_NS)
         job_parm.append(adp.Element('ParameterName',
-                                    text=name, ns=wc.WEB_NS))
+                                    text=name, ns=pc.WEB_NS))
         job_parm.append(adp.Element('ParameterValue',
-                                    text=value, ns=wc.WEB_NS, cdata=cdata))
+                                    text=value, ns=pc.WEB_NS, cdata=cdata))
         return job_parm
 
     def add_job_parameters_to_existing(self, *add_parms):
@@ -74,7 +75,7 @@ class Job(ewrap.EntryWrapper):
            Must be a job response entry.
            :param add_parms: list of JobParamters to add
         """
-        job_parms = self._entry.element.find('JobParameters')
+        job_parms = self.entry.element.find('JobParameters')
         for parm in add_parms:
             job_parms.append(parm)
 
@@ -169,14 +170,14 @@ class Job(ewrap.EntryWrapper):
         :raise JobRequestFailed: if the job did not complete successfully.
         :raise JobRequestTimedOut: if the job timed out.
         """
-        job = self._entry.element
+        job = self.entry.element
         entry_type = self._get_val_str(wc.JOB_GROUP_NAME)
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
             pvmresp = adapter.create_job(job, entry_type, uuid,
                                          sensitive=sensitive)
-            self._entry = pvmresp.entry
+            self.entry = pvmresp.entry
         except pvmex.Error as exc:
             LOG.exception(exc)
             raise pvmex.JobRequestFailed(
@@ -230,7 +231,7 @@ class Job(ewrap.EntryWrapper):
                     break
             time.sleep(1)
             pvmresp = adapter.read_job(job_id, sensitive=sensitive)
-            self._entry = pvmresp.entry
+            self.entry = pvmresp.entry
             status = self.job_status
 
         message = ''
@@ -252,7 +253,7 @@ class Job(ewrap.EntryWrapper):
 
         job_id = self.job_id
         try:
-            adapter.update(None, None, root_type=wc.JOBS, root_id=job_id,
+            adapter.update(None, None, root_type=_JOBS, root_id=job_id,
                            suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
@@ -287,6 +288,6 @@ class Job(ewrap.EntryWrapper):
             LOG.exception(exc)
             raise exc
         try:
-            adapter.delete(wc.JOBS, job_id)
+            adapter.delete(_JOBS, job_id)
         except pvmex.Error as exc:
             LOG.exception(exc)

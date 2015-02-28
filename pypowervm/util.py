@@ -34,6 +34,8 @@ from pypowervm import const
 # Set up logging
 LOG = logging.getLogger(__name__)
 
+_DELIM = '/'
+
 
 def sanitize_path(path):
     # trim trailing '/' from path, if present
@@ -233,3 +235,8 @@ def find_wrapper(haystack, needle_uuid):
         if wrapper.uuid == needle_uuid:
             return wrapper
     return None
+
+
+def xpath(*toks):
+    """Constructs an XPath out of the passed-in string components."""
+    return _DELIM.join(toks)

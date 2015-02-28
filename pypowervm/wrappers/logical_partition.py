@@ -15,6 +15,7 @@
 #    under the License.
 
 import pypowervm.adapter as adr
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -25,48 +26,50 @@ LOG = logging.getLogger(__name__)
 T = 'true'
 F = 'false'
 
-DED_PROCS = 'DesiredProcessors'
-DED_MAX_PROCS = 'MaximumProcessors'
-DED_MIN_PROCS = 'MinimumProcessors'
+_DED_PROCS = 'DesiredProcessors'
+_DED_MAX_PROCS = 'MaximumProcessors'
+_DED_MIN_PROCS = 'MinimumProcessors'
 
-DED_PROC_CFG = 'DedicatedProcessorConfiguration'
-HAS_DED_PROCS = 'HasDedicatedProcessors'
-SHARING_MODE = 'SharingMode'
+_DED_PROC_CFG = 'DedicatedProcessorConfiguration'
+_HAS_DED_PROCS = 'HasDedicatedProcessors'
+_SHARING_MODE = 'SharingMode'
 
-SHR_PROC_CFG = 'SharedProcessorConfiguration'
-PROC_UNIT = 'DesiredProcessingUnits'
-MIN_PU = 'MinimumProcessingUnits'
-MAX_PU = 'MaximumProcessingUnits'
-DES_VIRT_PROC = 'DesiredVirtualProcessors'
-MIN_VIRT_PROC = 'MinimumVirtualProcessors'
-MAX_VIRT_PROC = 'MaximumVirtualProcessors'
+_SHR_PROC_CFG = 'SharedProcessorConfiguration'
+_PROC_UNIT = 'DesiredProcessingUnits'
+_MIN_PU = 'MinimumProcessingUnits'
+_MAX_PU = 'MaximumProcessingUnits'
+_DES_VIRT_PROC = 'DesiredVirtualProcessors'
+_MIN_VIRT_PROC = 'MinimumVirtualProcessors'
+_MAX_VIRT_PROC = 'MaximumVirtualProcessors'
 
-MEM = 'DesiredMemory'
-MAX_MEM = 'MaximumMemory'
-MIN_MEM = 'MinimumMemory'
+_MEM = 'DesiredMemory'
+_MAX_MEM = 'MaximumMemory'
+_MIN_MEM = 'MinimumMemory'
 
-NAME = 'PartitionName'
-TYPE = 'PartitionType'
-LPAR_TYPE_OS400 = 'OS400'
-LPAR_TYPE_AIXLINUX = 'AIX/Linux'
+_LPAR_NAME = 'PartitionName'
+_LPAR_ID = 'PartitionID'
+_LPAR_TYPE = 'PartitionType'
+_LPAR_STATE = 'PartitionState'
 
-MAX_IO_SLOT = 'MaximumVirtualIOSlots'
+_MAX_IO_SLOT = 'MaximumVirtualIOSlots'
 
-LPAR_ROOT = 'LogicalPartition'
-LPAR = LPAR_ROOT
-LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
-LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
-LPAR_IO_CFG = 'PartitionIOConfiguration'
+_LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
+_LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
+_LPAR_IO_CFG = 'PartitionIOConfiguration'
 
 # Dedicated sharing modes
-DED_SHARING_MODES = ('sre idle proces', 'keep idle procs',
-                     'sre idle procs active', 'sre idle procs always')
-SHARING_MODES = ('capped', 'uncapped')
-UNCAPPED_WEIGHT = 'UncappedWeight'
+_DED_SHARING_MODES = ('sre idle proces', 'keep idle procs',
+                      'sre idle procs active', 'sre idle procs always')
+_SHARING_MODES = ('capped', 'uncapped')
+_UNCAPPED_WEIGHT = 'UncappedWeight'
+
+_AVAIL_PRIORITY = 'AvailabilityPriority'
+_RESTRICTED_IO = 'IsRestrictedIOPartition'
+_CNA_LINKS = u.xpath('ClientNetworkAdapters', c.LINK)
 
 # Constants for the Partition I/O Configuration
-IO_CFG_ROOT = LPAR_IO_CFG
-IO_CFG_MAX_SLOTS = 'MaximumVirtualIOSlots'
+IO_CFG_ROOT = _LPAR_IO_CFG
+_IO_CFG_MAX_SLOTS = 'MaximumVirtualIOSlots'
 
 # Constants for the I/O Slot Configuration
 IO_SLOTS_ROOT = 'ProfileIOSlots'
@@ -74,39 +77,50 @@ IO_SLOT_ROOT = 'ProfileIOSlot'
 
 # Constants for the Associated I/O Slot
 ASSOC_IO_SLOT_ROOT = 'AssociatedIOSlot'
-ASSOC_IO_SLOT_DESC = 'Description'
-ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
-ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
-ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
-ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
-ASSOC_IO_SLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
-ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
-ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
-ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
-ASSOC_IO_SLOT_SUBSYS_VENDOR_ID = 'PCISubsystemVendorID'
+_ASSOC_IO_SLOT_DESC = 'Description'
+_ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
+_ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
+_ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
+_ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
+_ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
+_ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
+_ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
+_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID = 'PCISubsystemVendorID'
 
 # Constants for generic I/O Adapter
 RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
-IO_ADPT_ROOT = 'IOAdapter'
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
-IO_ADPT_ID = 'AdapterID'
-IO_ADPT_DESC = 'Description'
-IO_ADPT_NAME = 'DeviceName'
-IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
-IO_ADPT_PHYS_LOC = 'PhysicalLocation'
+_IO_ADPT_ID = 'AdapterID'
+_IO_ADPT_DESC = 'Description'
+_IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
+_IO_ADPT_PHYS_LOC = 'PhysicalLocation'
 
 # Physical Fibre Channel Port Constants
-PFC_PORT_LOC_CODE = 'LocationCode'
-PFC_PORT_NAME = 'PortName'
-PFC_PORT_UDID = 'UniqueDeviceID'
+_PFC_PORT_LOC_CODE = 'LocationCode'
+_PFC_PORT_NAME = 'PortName'
+_PFC_PORT_UDID = 'UniqueDeviceID'
 PFC_PORT_WWPN = 'WWPN'
-PFC_PORT_AVAILABLE_PORTS = 'AvailablePorts'
-PFC_PORT_TOTAL_PORTS = 'TotalPorts'
+_PFC_PORT_AVAILABLE_PORTS = 'AvailablePorts'
+_PFC_PORT_TOTAL_PORTS = 'TotalPorts'
 PFC_PORTS_ROOT = 'PhysicalFibreChannelPorts'
 PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
 
+_CURRENT_PROC_MODE = 'CurrentProcessorCompatibilityMode'
+_PENDING_PROC_MODE = 'PendingProcessorCompatibilityMode'
 
-def crt_ded_procs(proc, sharing_mode=DED_SHARING_MODES[0],
+_LPAR_CAPABILITIES = 'PartitionCapabilities'
+_DLPAR_MEM_CAPABLE = u.xpath(
+    _LPAR_CAPABILITIES, 'DynamicLogicalPartitionMemoryCapable')
+_DLPAR_PROC_CAPABLE = u.xpath(
+    _LPAR_CAPABILITIES, 'DynamicLogicalPartitionProcessorCapable')
+
+_OPERATING_SYSTEM_VER = 'OperatingSystemVersion'
+
+_REF_CODE = 'ReferenceCode'
+_MIGRATION_STATE = 'MigrationState'
+
+
+def crt_ded_procs(proc, sharing_mode=_DED_SHARING_MODES[0],
                   min_proc=None, max_proc=None):
     """Create the dedicated processor structure
 
@@ -123,24 +137,24 @@ def crt_ded_procs(proc, sharing_mode=DED_SHARING_MODES[0],
     if max_proc is None:
         max_proc = proc
 
-    proc_details = [adr.Element(DED_PROCS, text=proc),
-                    adr.Element(DED_MAX_PROCS, text=max_proc),
-                    adr.Element(DED_MIN_PROCS, text=min_proc)]
+    proc_details = [adr.Element(_DED_PROCS, text=proc),
+                    adr.Element(_DED_MAX_PROCS, text=max_proc),
+                    adr.Element(_DED_MIN_PROCS, text=min_proc)]
 
-    proc_cfg = [adr.Element(DED_PROC_CFG,
+    proc_cfg = [adr.Element(_DED_PROC_CFG,
                             attrib=c.DEFAULT_SCHEMA_ATTR,
                             children=proc_details),
-                adr.Element(HAS_DED_PROCS, text=T),
-                adr.Element(SHARING_MODE, text=sharing_mode)]
+                adr.Element(_HAS_DED_PROCS, text=T),
+                adr.Element(_SHARING_MODE, text=sharing_mode)]
 
-    proc_ele = adr.Element(LPAR_PROC_CFG,
+    proc_ele = adr.Element(_LPAR_PROC_CFG,
                            attrib=c.DEFAULT_SCHEMA_ATTR,
                            children=proc_cfg)
 
     return proc_ele
 
 
-def crt_shared_procs(proc_unit, proc, sharing_mode=SHARING_MODES[1],
+def crt_shared_procs(proc_unit, proc, sharing_mode=_SHARING_MODES[1],
                      uncapped_weight='128',
                      min_proc_unit=None, max_proc_unit=None,
                      min_proc=None, max_proc=None):
@@ -167,23 +181,23 @@ def crt_shared_procs(proc_unit, proc, sharing_mode=SHARING_MODES[1],
     if max_proc is None:
         max_proc = proc
 
-    proc_details = [adr.Element(PROC_UNIT, text=proc_unit),
-                    adr.Element(DES_VIRT_PROC, text=proc),
-                    adr.Element(MAX_PU, text=max_proc_unit),
-                    adr.Element(MAX_VIRT_PROC, text=max_proc),
-                    adr.Element(MIN_PU, text=min_proc_unit),
-                    adr.Element(MIN_VIRT_PROC, text=min_proc)]
+    proc_details = [adr.Element(_PROC_UNIT, text=proc_unit),
+                    adr.Element(_DES_VIRT_PROC, text=proc),
+                    adr.Element(_MAX_PU, text=max_proc_unit),
+                    adr.Element(_MAX_VIRT_PROC, text=max_proc),
+                    adr.Element(_MIN_PU, text=min_proc_unit),
+                    adr.Element(_MIN_VIRT_PROC, text=min_proc)]
 
     if sharing_mode == 'uncapped':
-        proc_details.append(adr.Element(UNCAPPED_WEIGHT,
+        proc_details.append(adr.Element(_UNCAPPED_WEIGHT,
                             text=str(uncapped_weight)))
-    proc_cfg = [adr.Element(HAS_DED_PROCS, text=F),
-                adr.Element(SHR_PROC_CFG,
+    proc_cfg = [adr.Element(_HAS_DED_PROCS, text=F),
+                adr.Element(_SHR_PROC_CFG,
                             attrib=c.DEFAULT_SCHEMA_ATTR,
                             children=proc_details),
-                adr.Element(SHARING_MODE, text=sharing_mode)]
+                adr.Element(_SHARING_MODE, text=sharing_mode)]
 
-    proc_ele = adr.Element(LPAR_PROC_CFG,
+    proc_ele = adr.Element(_LPAR_PROC_CFG,
                            attrib=c.DEFAULT_SCHEMA_ATTR,
                            children=proc_cfg)
 
@@ -211,26 +225,31 @@ def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
     if max_mem is None:
         max_mem = mem
 
-    io_cfg = [adr.Element(MAX_IO_SLOT, text=max_io_slots)]
-    memory = [adr.Element(MEM, text=mem),
-              adr.Element(MAX_MEM, text=max_mem),
-              adr.Element(MIN_MEM, text=min_mem)]
+    io_cfg = [adr.Element(_MAX_IO_SLOT, text=max_io_slots)]
+    memory = [adr.Element(_MEM, text=mem),
+              adr.Element(_MAX_MEM, text=max_mem),
+              adr.Element(_MIN_MEM, text=min_mem)]
 
-    attrs = [adr.Element(LPAR_IO_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
+    attrs = [adr.Element(_LPAR_IO_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
                          children=io_cfg),
-             adr.Element(LPAR_MEM_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
+             adr.Element(_LPAR_MEM_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
                          children=memory),
-             adr.Element(NAME, text=name),
+             adr.Element(_LPAR_NAME, text=name),
              proc_cfg,
-             adr.Element(TYPE, text=type_)
+             adr.Element(_LPAR_TYPE, text=type_)
              ]
-    lpar = adr.Element(LPAR, attrib=c.DEFAULT_SCHEMA_ATTR, children=attrs)
+    lpar = adr.Element(LPAR.schema_type, attrib=c.DEFAULT_SCHEMA_ATTR,
+                       children=attrs)
 
     return lpar
 
 
-class LogicalPartition(ewrap.EntryWrapper):
-    schema_type = c.LPAR
+@ewrap.EntryWrapper.pvm_type('LogicalPartition')
+class LPAR(ewrap.EntryWrapper):
+
+    class LPARTypeEnum(object):
+        OS400 = 'OS400'
+        AIXLINUX = 'AIX/Linux'
 
     @property
     def state(self):
@@ -238,18 +257,18 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         e.g. 'not activated', 'running', 'migrating running', etc.
         """
-        partition_state = self._get_val_str(c.PARTITION_STATE)
+        partition_state = self._get_val_str(_LPAR_STATE)
         return partition_state
 
     @property
     def name(self):
         """Short name (not ID, MTMS, or hostname)."""
-        return self._get_val_str(c.PARTITION_NAME)
+        return self._get_val_str(_LPAR_NAME)
 
     @property
     def id(self):
         """Short ID (not UUID)."""
-        return int(self._get_val_str(c.PARTITION_ID, c.ZERO))
+        return int(self._get_val_str(_LPAR_ID, c.ZERO))
 
     @property
     def env(self):
@@ -258,7 +277,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         Should always be 'AIX/Linux' for LPAREntry.  'Virtual IO Server'
         should only happen for VIOSEntry.
         """
-        return self._get_val_str(c.PARTITION_TYPE)
+        return self._get_val_str(_LPAR_TYPE)
 
     @property
     def current_mem(self):
@@ -398,7 +417,7 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @property
     def avail_priority(self):
-        return self._get_val_str(c.AVAIL_PRIORITY, c.ZERO)
+        return self._get_val_str(_AVAIL_PRIORITY, c.ZERO)
 
     @property
     def sharing_mode(self):
@@ -416,7 +435,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         e.g. 'Not_Migrating', 'Migration_Starting', 'Migration_Failed', etc.
         Defaults to 'Not_Migrating'
         """
-        return self._get_val_str(c.MIGRATION_STATE, 'Not_Migrating')
+        return self._get_val_str(_MIGRATION_STATE, 'Not_Migrating')
 
     @property
     def proc_compat_mode(self):
@@ -425,7 +444,7 @@ class LogicalPartition(ewrap.EntryWrapper):
         See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
-        return self._get_val_str(c.CURRENT_PROC_MODE)
+        return self._get_val_str(_CURRENT_PROC_MODE)
 
     @property
     def pending_proc_compat_mode(self):
@@ -434,12 +453,12 @@ class LogicalPartition(ewrap.EntryWrapper):
         See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
-        return self._get_val_str(c.PENDING_PROC_MODE)
+        return self._get_val_str(_PENDING_PROC_MODE)
 
     @property
     def operating_system(self):
         """String representing the OS and version, or 'Unknown'."""
-        return self._get_val_str(c.OPERATING_SYSTEM_VER, 'Unknown')
+        return self._get_val_str(_OPERATING_SYSTEM_VER, 'Unknown')
 
     @property
     def cna_uris(self):
@@ -447,7 +466,7 @@ class LogicalPartition(ewrap.EntryWrapper):
 
         This is a READ ONLY list.
         """
-        return self.get_href(c.CNA_LINKS)
+        return self.get_href(_CNA_LINKS)
 
     @property
     def rmc_state(self):
@@ -459,11 +478,11 @@ class LogicalPartition(ewrap.EntryWrapper):
 
     @property
     def ref_code(self):
-        return self._get_val_str(c.REF_CODE)
+        return self._get_val_str(_REF_CODE)
 
     @property
     def restrictedio(self):
-        return self._get_val_bool(c.RESTRICTED_IO, False)
+        return self._get_val_bool(_RESTRICTED_IO, False)
 
     def check_dlpar_connectivity(self):
         """Check the partition for DLPAR capability and rmc state.
@@ -473,8 +492,8 @@ class LogicalPartition(ewrap.EntryWrapper):
         """
 
         # Pull the dlpar and rmc values from PowerVM
-        mem_dlpar = self._get_val_bool(c.DLPAR_MEM_CAPABLE)
-        proc_dlpar = self._get_val_bool(c.DLPAR_PROC_CAPABLE)
+        mem_dlpar = self._get_val_bool(_DLPAR_MEM_CAPABLE)
+        proc_dlpar = self._get_val_bool(_DLPAR_PROC_CAPABLE)
 
         dlpar = mem_dlpar and proc_dlpar
 
@@ -499,11 +518,11 @@ class LogicalPartition(ewrap.EntryWrapper):
         Note that corresponding getter retrieves the *CURRENT* proc compat
         mode.
         """
-        self.set_parm_value(c.PENDING_PROC_MODE, value)
+        self.set_parm_value(_PENDING_PROC_MODE, value)
 
     @avail_priority.setter
     def avail_priority(self, value):
-        self.set_parm_value(c.AVAIL_PRIORITY, value)
+        self.set_parm_value(_AVAIL_PRIORITY, value)
 
     @sharing_mode.setter
     def sharing_mode(self, value):
@@ -562,10 +581,11 @@ class LogicalPartition(ewrap.EntryWrapper):
     @property
     def io_config(self):
         """The Partition I/O Configuration for the LPAR."""
-        elem = self._element.find(IO_CFG_ROOT)
-        return PartitionIOConfiguration(elem)
+        elem = self.element.find(IO_CFG_ROOT)
+        return PartitionIOConfiguration.wrap(elem)
 
 
+@ewrap.ElementWrapper.pvm_type('PartitionIOConfiguration', has_metadata=True)
 class PartitionIOConfiguration(ewrap.ElementWrapper):
     """Represents the partitions Dedicated IO Configuration.
 
@@ -580,11 +600,11 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 
         A slot is used for every VirtuScsiServerAdapter, TrunkAdapter, etc...
         """
-        return self._get_val_int(IO_CFG_MAX_SLOTS)
+        return self._get_val_int(_IO_CFG_MAX_SLOTS)
 
     @max_virtual_slots.setter
     def max_virtual_slots(self, value):
-        self.set_parm_value(IO_CFG_MAX_SLOTS, str(value))
+        self.set_parm_value(_IO_CFG_MAX_SLOTS, str(value))
 
     @property
     def io_slots(self):
@@ -592,17 +612,18 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 
         Each slot will have hardware associated with it.
         """
-        es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT),
-                                   IO_SLOT_ROOT, IOSlot)
+        es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT), IOSlot)
         return es
 
 
+@ewrap.ElementWrapper.pvm_type('ProfileIOSlot', has_metadata=True)
 class IOSlot(ewrap.ElementWrapper):
     """An I/O Slot represents a device bus on the system.
 
     It may contain a piece of hardware within it.
     """
 
+    @ewrap.ElementWrapper.pvm_type('AssociatedIOSlot', has_metadata=True)
     class AssociatedIOSlot(ewrap.ElementWrapper):
         """Internal class.  Hides the nested AssociatedIOSlot from parent.
 
@@ -621,43 +642,43 @@ class IOSlot(ewrap.ElementWrapper):
 
         @property
         def description(self):
-            return self._get_val_str(ASSOC_IO_SLOT_DESC)
+            return self._get_val_str(_ASSOC_IO_SLOT_DESC)
 
         @property
         def phys_loc(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PHYS_LOC)
+            return self._get_val_str(_ASSOC_IO_SLOT_PHYS_LOC)
 
         @property
         def pc_adpt_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_ADPT_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_ADPT_ID)
 
         @property
         def pci_class(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_CLASS)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_CLASS)
 
         @property
         def pci_dev_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
 
         @property
         def pci_subsys_dev_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
 
         @property
         def pci_mfg_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_MFG_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_MFG_ID)
 
         @property
         def pci_rev_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_REV_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_REV_ID)
 
         @property
         def pci_vendor_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_PCI_VENDOR_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_PCI_VENDOR_ID)
 
         @property
         def pci_subsys_vendor_id(self):
-            return self._get_val_str(ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
+            return self._get_val_str(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
 
         @property
         def io_adapter(self):
@@ -672,16 +693,16 @@ class IOSlot(ewrap.ElementWrapper):
             """
             # The child can be either an IO Adapter or a PhysFCAdapter.
             # Need to check for both...
-            io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
-                                      IO_ADPT_ROOT)
+            io_adpt_root = self._find(
+                u.xpath(RELATED_IO_ADPT_ROOT, IOAdapter.schema_type))
             if io_adpt_root is not None:
-                return IOAdapter(io_adpt_root)
+                return IOAdapter.wrap(io_adpt_root)
 
             # Didn't have the generic...check for non-generic.
-            io_adpt_root = self._find(RELATED_IO_ADPT_ROOT + c.DELIM +
-                                      IO_PFC_ADPT_ROOT)
+            io_adpt_root = self._find(
+                u.xpath(RELATED_IO_ADPT_ROOT, PhysFCAdapter.schema_type))
             if io_adpt_root is not None:
-                return PhysFCAdapter(io_adpt_root)
+                return PhysFCAdapter.wrap(io_adpt_root)
 
             return None
 
@@ -692,7 +713,7 @@ class IOSlot(ewrap.ElementWrapper):
             return None
 
         # Build the Associated IO Slot, find the function and execute it.
-        assoc_io_slot = self.AssociatedIOSlot(elem)
+        assoc_io_slot = self.AssociatedIOSlot.wrap(elem)
         return getattr(assoc_io_slot, func)
 
     @property
@@ -745,6 +766,7 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('io_adapter')
 
 
+@ewrap.ElementWrapper.pvm_type('IOAdapter', has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter,
 
@@ -755,25 +777,27 @@ class IOAdapter(ewrap.ElementWrapper):
     @property
     def id(self):
         """The adapter system id."""
-        return self._get_val_str(IO_ADPT_ID)
+        return self._get_val_str(_IO_ADPT_ID)
 
     @property
     def description(self):
-        return self._get_val_str(IO_ADPT_DESC)
+        return self._get_val_str(_IO_ADPT_DESC)
 
     @property
     def dev_name(self):
-        return self._get_val_str(IO_ADPT_DESC)
+        return self._get_val_str(_IO_ADPT_DESC)
 
     @property
     def dyn_reconfig_conn_name(self):
-        return self._get_val_str(IO_ADPT_DYN_NAME)
+        return self._get_val_str(_IO_ADPT_DYN_NAME)
 
     @property
     def phys_loc_code(self):
-        return self._get_val_str(IO_ADPT_PHYS_LOC)
+        return self._get_val_str(_IO_ADPT_PHYS_LOC)
 
 
+@ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelAdapter',
+                               has_metadata=True)
 class PhysFCAdapter(IOAdapter):
     """A Physical Fibre Channel I/O Adapter.
 
@@ -789,24 +813,25 @@ class PhysFCAdapter(IOAdapter):
         The data on this should be considered read only.
         """
         es = ewrap.WrapperElemList(self._find_or_seed(PFC_PORTS_ROOT),
-                                   PFC_PORT_ROOT, PhysFCPort)
+                                   PhysFCPort)
         return es
 
 
+@ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelPort', has_metadata=True)
 class PhysFCPort(ewrap.ElementWrapper):
     """A Physical Fibre Channel Port."""
 
     @property
     def loc_code(self):
-        return self._get_val_str(PFC_PORT_LOC_CODE)
+        return self._get_val_str(_PFC_PORT_LOC_CODE)
 
     @property
     def name(self):
-        return self._get_val_str(PFC_PORT_NAME)
+        return self._get_val_str(_PFC_PORT_NAME)
 
     @property
     def udid(self):
-        return self._get_val_str(PFC_PORT_UDID)
+        return self._get_val_str(_PFC_PORT_UDID)
 
     @property
     def wwpn(self):
@@ -814,8 +839,8 @@ class PhysFCPort(ewrap.ElementWrapper):
 
     @property
     def npiv_available_ports(self):
-        return self._get_val_int(PFC_PORT_AVAILABLE_PORTS, 0)
+        return self._get_val_int(_PFC_PORT_AVAILABLE_PORTS, 0)
 
     @property
     def npiv_total_ports(self):
-        return self._get_val_int(PFC_PORT_TOTAL_PORTS, 0)
+        return self._get_val_int(_PFC_PORT_TOTAL_PORTS, 0)

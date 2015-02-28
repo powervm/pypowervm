@@ -384,7 +384,7 @@ class Session(object):
         root = etree.fromstring(resp.body.encode('utf-8'))
 
         with self._lock:
-            tok = root.findtext('./{%s}X-API-Session' % const.WEB_NS)
+            tok = root.findtext('{%s}X-API-Session' % const.WEB_NS)
             if not tok:
                 resp.reqbody = "<sensitive>"
                 msg = "failed to parse session token from PowerVM response"
@@ -493,7 +493,7 @@ class Adapter(object):
         if not job.tag == 'JobRequest':
             raise ValueError('job must be a JobRequest element')
 
-        op = job.findtext('./RequestedOperation/OperationName')
+        op = job.findtext('RequestedOperation/OperationName')
         if not op:
             raise ValueError('JobRequest is missing OperationName')
 

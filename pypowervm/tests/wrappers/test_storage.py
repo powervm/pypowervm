@@ -16,14 +16,13 @@
 
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.storage as stor
 
 
 class TestVolumeGroup(twrap.TestWrapper):
 
     file = 'fake_volume_group.txt'
-    wrapper_class_to_test = stor.VolumeGroup
+    wrapper_class_to_test = stor.VG
 
     def test_base(self):
         """Tests baseline function within the Volume Group."""
@@ -89,8 +88,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(vdisks))
 
-        disk_elem = stor.crt_virtual_disk_obj('disk_name', 10, 'label')
-        disk = stor.VirtualDisk.wrap(disk_elem)
+        disk = stor.VDisk.bld_new('disk_name', 10, 'label')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -115,8 +113,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(phys_vols))
 
-        phys_v = stor.crt_phys_vol('disk1')
-        phys_vol = stor.PV.wrap(phys_v)
+        phys_vol = stor.PV.bld('disk1')
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
@@ -134,8 +131,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(media_repos))
 
-        vmedia_r = stor.crt_vmedia_repo('repo', 10)
-        vmedia_repo = stor.VirtualOpticalMedia.wrap(vmedia_r)
+        vmedia_repo = stor.VMediaRepos.bld('repo', 10)
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
@@ -156,8 +152,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         vopt_medias = media_repos[0].optical_media
         self.assertEqual(2, len(vopt_medias))
 
-        new_m = stor.crt_voptical_media('name', '0.123', 'r')
-        new_media = stor.VirtualOpticalMedia.wrap(new_m)
+        new_media = stor.VOptMedia.bld_new('name', '0.123', 'r')
         self.assertIsNotNone(new_media)
 
         vopt_medias.append(new_media)
@@ -215,17 +210,16 @@ class TestSharedStoragePool(twrap.TestWrapper):
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):
-        ssp = stor.SSP(
-            name='myssp',
-            data_pv_list=[stor.PV(name=n) for n in (
+        ssp = stor.SSP.bld('myssp', [
+            stor.PV.bld(name=n) for n in (
                 'hdisk123', 'hdisk132', 'hdisk213', 'hdisk231', 'hdisk312',
                 'hdisk321')])
         self.assertEqual(ssp.name, 'myssp')
-        self.assertEqual(ssp.pvm_type, wc.SSP)
+        self.assertEqual(ssp.schema_type, stor.SSP.schema_type)
         self.assertEqual(ssp.schema_ns, pc.UOM_NS)
         pvs = ssp.physical_volumes
         self.assertEqual(len(pvs), 6)
         pv = pvs[3]  # hdisk231
-        self.assertEqual(pv.pvm_type, stor.PV.schema_type)
+        self.assertEqual(pv.schema_type, stor.PV.schema_type)
         self.assertEqual(pv.schema_ns, pc.UOM_NS)
         self.assertEqual(pv.name, 'hdisk231')

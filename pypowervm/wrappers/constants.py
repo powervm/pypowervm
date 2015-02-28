@@ -14,138 +14,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
-
-CONF = cfg.CONF
-
 DEFAULT_SCHEMA_VERSION = 'V1_0'
 SCHEMA_VER = 'schemaVersion'
 DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
 
 DELIM = '/'
-ROOT = './'
 LINK = 'link'
 
-PRIMARY_IP_ADDRESS = 'PrimaryIPAddress'
-STATE = 'State'
-UUID = 'id'
 
-PVMA_TEXT = 'text'
-
-# PowerVM ROOT or CHILD schema object type names
-MGT_CONSOLE = 'ManagementConsole'
-SYS = 'ManagedSystem'
-LPAR = 'LogicalPartition'
-VIOS = 'VirtualIOServer'
-SHR_PRC_PL = 'SharedProcessorPool'
-VG = 'VolumeGroup'
-JOBS = 'jobs'
-VSWITCH = 'VirtualSwitch'
-CLUSTER = 'Cluster'
-CLUST_NODE = 'Node'
-SSP = 'SharedStoragePool'
-CNA = 'ClientNetworkAdapter'
-VNET = 'VirtualNetwork'
-NB = 'NetworkBridge'
-SEA = 'SharedEthernetAdapter'
-LG = 'LoadGroup'
-TRUNK_ADP = 'TrunkAdapter'
-PHYS_FC_PORT = 'PhysicalFibreChannelPort'
-VFC_MAP = 'VirtualFibreChannelMapping'
-VSCSI_MAP = 'VirtualSCSIMapping'
-VIOS_FILE = 'File'
-JOB = 'Job'
-
-NEXT_SLOT = 'UseNextAvailableSlotID'
-
-# PVM adapter xpaths
-PARTITION_NAME = ROOT + 'PartitionName'
-PARTITION_ID = ROOT + 'PartitionID'
-PARTITION_UUID = ROOT + 'PartitionUUID'
-PARTITION_STATE = ROOT + 'PartitionState'
-PARTITION_TYPE = ROOT + 'PartitionType'
-AVAIL_PRIORITY = ROOT + 'AvailabilityPriority'
-LPAR_MEM_CONFIG = ROOT + 'PartitionMemoryConfiguration'
-LPAR_PROC_CONFIG = ROOT + 'PartitionProcessorConfiguration'
-LPAR_CAPABILITIES = ROOT + 'PartitionCapabilities'
-PARTITION_IO = ROOT + 'PartitionIOConfiguration'
-IPL_SOURCE = ROOT + 'DesignatedIPLSource'
-KEY_LOCK = ROOT + 'KeylockPosition'
-RESTRICTED_IO = ROOT + 'IsRestrictedIOPartition'
-CNA_LINKS = ROOT + 'ClientNetworkAdapters' + DELIM + LINK
-
-# Managed System properties
-SYS_CAPABILITIES = ROOT + 'AssociatedSystemCapabilities'
-SYS_MEM_CONFIG = ROOT + 'AssociatedSystemMemoryConfiguration'
-SYS_PROC_CONFIG = ROOT + 'AssociatedSystemProcessorConfiguration'
-
-MODEL_SERIAL = ROOT + 'MachineTypeModelAndSerialNumber'
-MACHINE_MODEL = MODEL_SERIAL + DELIM + 'Model'
-MACHINE_TYPE = MODEL_SERIAL + DELIM + 'MachineType'
-MACHINE_SERIAL = MODEL_SERIAL + DELIM + 'SerialNumber'
-
-MOVER_SERVICE_PARTITION = ROOT + 'MoverServicePartition'
-ACTIVE_LPM_CAP = (
-    SYS_CAPABILITIES + DELIM + 'ActiveLogicalPartitionMobilityCapable')
-CURR_LMB_SIZE = SYS_MEM_CONFIG + DELIM + 'CurrentLogicalMemoryBlockSize'
-INACTIVE_LPM_CAP = (
-    SYS_CAPABILITIES + DELIM + 'InactiveLogicalPartitionMobilityCapable')
-VETH_MAC_ADDR_CAP = (
-    SYS_CAPABILITIES + DELIM + 'VirtualEthernetCustomMACAddressCapable')
-IBMi_LPM_CAP = SYS_CAPABILITIES + DELIM + 'IBMiLogicalPartitionMobilityCapable'
-IBMi_RESTRICTEDIO_CAP = (
-    SYS_CAPABILITIES + DELIM + 'IBMiRestrictedIOModeCapable')
-
-# Migration Constants
-PROC_COMPAT_MODES = (
-    SYS_PROC_CONFIG + DELIM + 'SupportedPartitionProcessorCompatibilityModes')
-MIGR_INFO = ROOT + 'SystemMigrationInformation'
-MAX_ACTIVE_MIGR = MIGR_INFO + DELIM + 'MaximumActiveMigrations'
-MAX_INACTIVE_MIGR = MIGR_INFO + DELIM + 'MaximumInactiveMigrations'
-ACTIVE_MIGR_RUNNING = MIGR_INFO + DELIM + 'NumberOfActiveMigrationsInProgress'
-INACTIVE_MIGR_RUNNING = (
-    MIGR_INFO + DELIM + 'NumberOfInactiveMigrationsInProgress')
-MAX_FIRMWARE_MIGR = MIGR_INFO + DELIM + 'MaximumFirmwareActiveMigrations'
-
-SYSTEM_NAME = ROOT + 'SystemName'
-
-PROC_UNITS_INSTALLED = (
-    SYS_PROC_CONFIG + DELIM + 'InstalledSystemProcessorUnits')
-
-PROC_UNITS_AVAIL = (
-    SYS_PROC_CONFIG + DELIM + 'CurrentAvailableSystemProcessorUnits')
-
-PROC_UNITS_CONFIGURABLE = (
-    SYS_PROC_CONFIG + DELIM + 'ConfigurableSystemProcessorUnits')
-
-MAX_PROCS_PER_PARTITION = (
-    SYS_PROC_CONFIG + DELIM + 'CurrentMaximumAllowedProcessorsPerPartition')
-
-MAX_PROCS_PER_AIX_LINUX_PARTITION = (
-    SYS_PROC_CONFIG + DELIM + 'CurrentMaximumProcessorsPerAIXOrLinuxPartition')
-
-MAX_VCPUS_PER_PARTITION = (
-    SYS_PROC_CONFIG + DELIM + 'MaximumAllowedVirtualProcessorsPerPartition')
-
-MAX_VCPUS_PER_AIX_LINUX_PARTITION = (
-    SYS_PROC_CONFIG + DELIM +
-    'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
-
-MEMORY_INSTALLED = (SYS_MEM_CONFIG + DELIM + 'InstalledSystemMemory')
-
-MEMORY_AVAIL = (SYS_MEM_CONFIG + DELIM + 'CurrentAvailableSystemMemory')
-
-MEMORY_CONFIGURABLE = (SYS_MEM_CONFIG + DELIM + 'ConfigurableSystemMemory')
-
-MEMORY_REGION_SIZE = (SYS_MEM_CONFIG + DELIM + 'MemoryRegionSize')
-
-SYS_FIRMWARE_MEM = (SYS_MEM_CONFIG + DELIM + 'MemoryUsedByHypervisor')
-
-HOST_IP_ADDRESS = ROOT + PRIMARY_IP_ADDRESS
-
-# VIOS
-VIOS_LINK = ROOT + "AssociatedVirtualIOServers" + DELIM + "link"
-
+# XPath components shared by LPAR and VIOS
+LPAR_MEM_CONFIG = 'PartitionMemoryConfiguration'
+LPAR_PROC_CONFIG = 'PartitionProcessorConfiguration'
 
 # procs
 CURR_USE_DED_PROCS = LPAR_PROC_CONFIG + DELIM + 'CurrentHasDedicatedProcessors'
@@ -173,7 +52,6 @@ DES_MAX_PROCS = DED_PROC_CONFIG + DELIM + 'MaximumProcessors'
 DES_MIN_PROCS = DED_PROC_CONFIG + DELIM + 'MinimumProcessors'
 
 # shared proc
-POOL_ID = ROOT + 'PoolID'
 CURR_VCPU = CURR_SHARED_PROC_CONFIG + DELIM + 'AllocatedVirtualProcessors'
 CURR_MAX_VCPU = (
     CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMaximumVirtualProcessors')
@@ -190,7 +68,6 @@ CURR_MAX_PROC_UNITS = (
     CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMaximumProcessingUnits')
 CURR_MIN_PROC_UNITS = (
     CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMinimumProcessingUnits')
-CURR_RSRV_PROC_UNITS = ROOT + 'CurrentReservedProcessingUnits'
 DES_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'DesiredProcessingUnits'
 MAX_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'MaximumProcessingUnits'
 MIN_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'MinimumProcessingUnits'
@@ -211,36 +88,10 @@ RUN_MEM = LPAR_MEM_CONFIG + DELIM + 'RuntimeMemory'
 
 SHARED_MEM_ENABLED = LPAR_MEM_CONFIG + DELIM + 'SharedMemoryEnabled'
 
-DEFAULT_SHARING_MODE = 'share_idle_procs'
-DEFAULT = 'default'
-FALSE = 'false'
 ZERO = '0'
-CURRENT_PROC_MODE = ROOT + 'CurrentProcessorCompatibilityMode'
-PENDING_PROC_MODE = ROOT + 'PendingProcessorCompatibilityMode'
-OPERATING_SYSTEM_VER = ROOT + 'OperatingSystemVersion'
-DLPAR_MEM_CAPABLE = (
-    LPAR_CAPABILITIES + DELIM + 'DynamicLogicalPartitionMemoryCapable')
-DLPAR_PROC_CAPABLE = (
-    LPAR_CAPABILITIES + DELIM + 'DynamicLogicalPartitionProcessorCapable')
 RMC_STATE = 'ResourceMonitoringControlState'
-REF_CODE = 'ReferenceCode'
-MIGRATION_STATE = 'MigrationState'
-
-# Tagged IO
-TAGGED_IO = PARTITION_IO + DELIM + 'TaggedIO'
-LOAD_SOURCE = TAGGED_IO + DELIM + 'LoadSource'
 
 SUFFIX_TYPE_DO = 'do'
-SUFFIX_PARM_POWER_ON = 'PowerOn'
-SUFFIX_PARM_POWER_OFF = 'PowerOff'
-SUFFIX_PARM_MIGRATE = 'Migrate'
-SUFFIX_PARM_CLI_RUNNER = 'CLIRunner'
-SUFFIX_PARM_MIGRATE_RECOVER = 'MigrateRecover'
-SUFFIX_PARM_QUERY_RESERVE_MEM = 'QueryReservedMemoryRequiredForPartition'
-SUFFIX_PARM_CLOSE_VTERM = 'CloseVterm'
-SUFFIX_PARM_LUA_RECOVERY = 'LUARecovery'
-
-WEB_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/'
 
 # LUA Recovery status codes
 LUA_STATUS_DEVICE_IN_USE = '1'
@@ -291,53 +142,53 @@ REMOTE_SLOT_NUM = 'RemoteSlotNumber'
 CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
 SCSI_CLIENT = 'VirtualSCSIClientAdapter'
 FC_CLIENT = 'VirtualFibreChannelClientAdapter'
-SERVER_LPAR_ID_PATH = ROOT + SERVER_ADAPTER + DELIM + LOCAL_LPAR_ID
+SERVER_LPAR_ID_PATH = SERVER_ADAPTER + DELIM + LOCAL_LPAR_ID
 ASSOC_LPAR = 'AssociatedLogicalPartition'
 BACKING_DEV = 'BackingDeviceName'
 MAP_PORT = 'MapPort'
 PORT_WWPN = 'WWPN'
 WWPNS = 'WWPNs'
-SHARED_ETHERNET_ADAPTERS = ROOT + 'SharedEthernetAdapters'
+SHARED_ETHERNET_ADAPTERS = 'SharedEthernetAdapters'
 SHARED_ETHERNET_ADAPTER = (
     SHARED_ETHERNET_ADAPTERS + DELIM + 'SharedEthernetAdapter')
-FREE_ETHERNET_ADAPTERS = ROOT + 'FreeEthenetBackingDevicesForSEA'
+FREE_ETHERNET_ADAPTERS = 'FreeEthenetBackingDevicesForSEA'
 IO_ADAPTER_CHOICE = FREE_ETHERNET_ADAPTERS + DELIM + 'IOAdapterChoice'
 ETHERNET_BACKING_DEVICE = IO_ADAPTER_CHOICE + DELIM + 'EthernetBackingDevice'
 IP_INTERFACE = 'IPInterface'
 IP_ADDRESS = 'IPAddress'
 IF_ADDR = IP_INTERFACE + DELIM + IP_ADDRESS
-VSWITCH_ID = ROOT + 'VirtualSwitchID'
-ASSOC_VSWITCH = ROOT + 'AssociatedVirtualSwitch'
+VSWITCH_ID = 'VirtualSwitchID'
+ASSOC_VSWITCH = 'AssociatedVirtualSwitch'
 ASSOC_VSWITCH_LINK = ASSOC_VSWITCH + DELIM + LINK
-PORT_VLAN_ID = ROOT + 'PortVLANID'
-VIRTUAL_NETWORKS = ROOT + 'VirtualNetworks'
+PORT_VLAN_ID = 'PortVLANID'
+VIRTUAL_NETWORKS = 'VirtualNetworks'
 DEVICE_NAME = 'DeviceName'
 TAGGED_VLAN_SUPPORTED = 'TaggedVLANSupported'
-TAGGED_VLAN_IDS = ROOT + 'TaggedVLANIDs'
-TRUNK_ADAPTERS = ROOT + 'TrunkAdapters'
+TAGGED_VLAN_IDS = 'TaggedVLANIDs'
+TRUNK_ADAPTERS = 'TrunkAdapters'
 TRUNK_ADAPTER = TRUNK_ADAPTERS + DELIM + 'TrunkAdapter'
-VIRTUAL_SWITCH_ID = ROOT + 'VirtualSwitchID'
-TRUNK_PRIORITY = ROOT + 'TrunkPriority'
-LOAD_GROUPS = ROOT + 'LoadGroups'
+VIRTUAL_SWITCH_ID = 'VirtualSwitchID'
+TRUNK_PRIORITY = 'TrunkPriority'
+LOAD_GROUPS = 'LoadGroups'
 LOAD_GROUP = LOAD_GROUPS + DELIM + 'LoadGroup'
 
 # like vhost0
 ADAPTER_NAME = 'AdapterName'
 # Storage mapping names and path
 SCSI_MAPPINGS = 'VirtualSCSIMappings'
-VIRT_SCSI_MAPPINGS = ROOT + SCSI_MAPPINGS
+VIRT_SCSI_MAPPINGS = SCSI_MAPPINGS
 SCSI_MAPPING_ELEM = 'VirtualSCSIMapping'
-SCSI_MAPPING_PATH = ROOT + SCSI_MAPPINGS + DELIM + SCSI_MAPPING_ELEM
+SCSI_MAPPING_PATH = SCSI_MAPPINGS + DELIM + SCSI_MAPPING_ELEM
 FC_MAPPINGS = 'VirtualFibreChannelMappings'
-VIRT_FIBRE_CHANNEL_COLLECTION = ROOT + FC_MAPPINGS
+VIRT_FIBRE_CHANNEL_COLLECTION = FC_MAPPINGS
 FC_MAPPING_ELEM = 'VirtualFibreChannelMapping'
 FC_MAPPING_PATH = VIRT_FIBRE_CHANNEL_COLLECTION + DELIM + FC_MAPPING_ELEM
 VFC_MAPPING_CLIENT_ADAPTER_PATH = FC_MAPPING_PATH + DELIM + 'ClientAdapter'
 WWPNS_PATH = VFC_MAPPING_CLIENT_ADAPTER_PATH + DELIM + WWPNS
 SWITCH_ID = 'SwitchId'
 SWITCH_NAME = 'SwitchName'
-SERVER_ADAPTER_PATH = ROOT + SERVER_ADAPTER
-CLIENT_ADAPTER_PATH = ROOT + CLIENT_ADAPTER
+SERVER_ADAPTER_PATH = SERVER_ADAPTER
+CLIENT_ADAPTER_PATH = CLIENT_ADAPTER
 CLIENT_VIR_SLOT_NUM_REL_PATH = CLIENT_ADAPTER_PATH + DELIM + VIR_SLOT_NUM
 CLIENT_CONN_LPAR_REL_PATH = CLIENT_ADAPTER_PATH + DELIM + CONN_LPAR_ID
 CLIENT_REMOTE_LPAR_REL_PATH = CLIENT_ADAPTER_PATH + DELIM + REMOTE_LPAR_ID
@@ -350,7 +201,7 @@ SERVER_BACKING_DEV_REL_PATH = SERVER_ADAPTER_PATH + DELIM + BACKING_DEV
 SERVER_MAP_PORT_REL_PATH = SERVER_ADAPTER_PATH + DELIM + MAP_PORT
 CLIENT_LPAR_REL_PATH = CLIENT_ADAPTER_PATH + DELIM + LOCAL_LPAR_ID
 CLIENT_WWPNS_REL_PATH = CLIENT_ADAPTER_PATH + DELIM + WWPNS
-PORT_WWPN_REL_PATH = ROOT + PORT + DELIM + PORT_WWPN
+PORT_WWPN_REL_PATH = PORT + DELIM + PORT_WWPN
 
 # Storage element
 STORAGE = 'Storage'
@@ -358,11 +209,9 @@ STORAGE = 'Storage'
 PV = 'PhysicalVolume'
 PVS = 'PhysicalVolumes'
 PVS_PATH = PVS + DELIM + PV
-VDISK = 'VirtualDisk'
-LU = 'LogicalUnit'
 VOPT = 'VirtualOpticalMedia'
 STORAGE_POOLS = 'StoragePools'
-STORAGE_POOL_LINKS = ROOT + STORAGE_POOLS + DELIM + LINK
+STORAGE_POOL_LINKS = STORAGE_POOLS + DELIM + LINK
 NPIV = 'npiv'
 # vdisk attribute
 DISK_NAME = 'DiskName'
@@ -381,10 +230,10 @@ UDID = 'UniqueDeviceID'
 TARGET_DEV = 'TargetDevice'
 VIRT_TARGET_DEV = 'VirtualTargetDevice'
 LU_ADDR = 'LogicalUnitAddress'
-LU_ADDR_REL_PATH = ROOT + VIRT_TARGET_DEV + DELIM + LU_ADDR
+LU_ADDR_REL_PATH = VIRT_TARGET_DEV + DELIM + LU_ADDR
 # like vtscsi1
 TARGET_NAME = 'TargetName'
-TARGET_NAME_REL_PATH = ROOT + VIRT_TARGET_DEV + DELIM + TARGET_NAME
+TARGET_NAME_REL_PATH = VIRT_TARGET_DEV + DELIM + TARGET_NAME
 
 # Storage type element
 STORAGE_TYPE = 'StorageType'
@@ -393,8 +242,6 @@ VDISK_TYPE = 'VIRTUAL_DISK'
 PV_TYPE = 'PHYSICAL_VOLUME'
 LU_TYPE = 'LOGICAL_UNIT'
 VOPT_TYPE = 'VIRTUAL_OPTICAL_MEDIA'
-
-POST_RETRIES = CONF.pypowervm_update_collision_retries
 
 # PowerVM extended properties
 EXT_SCSI_MAP = VIOS_VSCSI_MAP_EXT_PROP
@@ -438,15 +285,15 @@ PVM_JOB_STATUS_RUNNING = 'RUNNING'
 PVM_JOB_STATUS_COMPLETED_OK = 'COMPLETED_OK'
 PVM_JOB_STATUS_COMPLETED_WITH_WARNINGS = 'COMPLETED_WITH_WARNINGS'
 PVM_JOB_STATUS_COMPLETED_WITH_ERROR = 'COMPLETED_WITH_ERROR'
-JOB_ID = ROOT + 'JobID'
-JOB_STATUS = ROOT + 'Status'
-RESPONSE_EXCEPTION = ROOT + 'ResponseException'
+JOB_ID = 'JobID'
+JOB_STATUS = 'Status'
+RESPONSE_EXCEPTION = 'ResponseException'
 JOB_MESSAGE = RESPONSE_EXCEPTION + DELIM + 'Message'
 JOB_STACKTRACE = RESPONSE_EXCEPTION + DELIM + 'StackTrace'
-JOB_PARAM = ROOT + 'Results' + DELIM + 'JobParameter'
+JOB_PARAM = 'Results' + DELIM + 'JobParameter'
 JOB_RESULTS_NAME = JOB_PARAM + DELIM + 'ParameterName'
 JOB_RESULTS_VALUE = JOB_PARAM + DELIM + 'ParameterValue'
-REQ_OP = ROOT + 'RequestedOperation'
+REQ_OP = 'RequestedOperation'
 JOB_GROUP_NAME = REQ_OP + DELIM + 'GroupName'
 JOB_OPERATION_NAME = REQ_OP + DELIM + 'OperationName'
 
@@ -458,9 +305,9 @@ REPOSITORY_SIZE = 'RepositorySize'
 OPTICAL_MEDIA = 'OpticalMedia'
 VIRTUAL_OPTICAL_MEDIA = 'VirtualOpticalMedia'
 MEDIA_NAME = 'MediaName'
-MEDIA_REPOSITORIES_PATH = ROOT + MEDIA_REPOSITORIES
+MEDIA_REPOSITORIES_PATH = MEDIA_REPOSITORIES
 VIRT_MEDIA_REPOSITORY_PATH = (
     MEDIA_REPOSITORIES_PATH + DELIM + VIRTUAL_MEDIA_REPOS_ELEM)
 OPTICAL_MEDIA_PATH = (
     VIRT_MEDIA_REPOSITORY_PATH + DELIM + OPTICAL_MEDIA)
-VOPT_MEDIA_PATH = ROOT + STORAGE + DELIM + VOPT + DELIM + MEDIA_NAME
+VOPT_MEDIA_PATH = STORAGE + DELIM + VOPT + DELIM + MEDIA_NAME
