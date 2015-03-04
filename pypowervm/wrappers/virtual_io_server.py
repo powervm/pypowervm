@@ -96,6 +96,8 @@ class XAGEnum(object):
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer')
 class VIOS(ewrap.EntryWrapper):
 
+    search_keys = dict(name='PartitionName', id='PartitionID')
+
     @property
     def name(self):
         return self._get_val_str(_VIO_PARTITION_NAME)

@@ -253,6 +253,8 @@ class LPARTypeEnum(object):
 @ewrap.EntryWrapper.pvm_type('LogicalPartition')
 class LPAR(ewrap.EntryWrapper):
 
+    search_keys = dict(name='PartitionName', id='PartitionID')
+
     @property
     def state(self):
         """See LogicalPartitionStateEnum.

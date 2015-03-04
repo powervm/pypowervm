@@ -40,9 +40,11 @@ _N_VIOS_LINK = 'VirtualIOServer'
 _N_MTMS = ms.MTMS.schema_type
 
 
-@ewrap.Wrapper.pvm_type('Cluster')
+@ewrap.EntryWrapper.pvm_type('Cluster')
 class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
+
+    search_keys = dict(name='ClusterName')
 
     @classmethod
     def bld(cls, name, repos_pv, first_node):
@@ -121,7 +123,7 @@ class Cluster(ewrap.EntryWrapper):
         self.replace_list(_CL_NODES, ns)
 
 
-@ewrap.Wrapper.pvm_type('Node', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('Node', has_metadata=True)
 class Node(ewrap.ElementWrapper):
     """A Node represents a VIOS member of a Cluster.
 

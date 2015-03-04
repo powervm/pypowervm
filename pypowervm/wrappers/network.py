@@ -68,7 +68,7 @@ _VADPT_PVID = 'PortVLANID'
 _VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
-@ewrap.Wrapper.pvm_type('VirtualSwitch')
+@ewrap.EntryWrapper.pvm_type('VirtualSwitch')
 class VSwitch(ewrap.EntryWrapper):
     """Wraps the Virtual Switch entries.
 
@@ -98,7 +98,7 @@ class VSwitch(ewrap.EntryWrapper):
         return self._get_val_str(_VSW_MODE)
 
 
-@ewrap.Wrapper.pvm_type('NetworkBridge')
+@ewrap.EntryWrapper.pvm_type('NetworkBridge')
 class NetBridge(ewrap.EntryWrapper):
     """Wrapper object for the NetBridge entry.
 

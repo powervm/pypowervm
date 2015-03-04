@@ -38,7 +38,7 @@ class FTypeEnum(object):
     BROKERED_DISK_IMAGE = 'BROKERED_DISK_IMAGE'
 
 
-@ewrap.Wrapper.pvm_type('File', ns=pc.WEB_NS)
+@ewrap.EntryWrapper.pvm_type('File', ns=pc.WEB_NS)
 class File(ewrap.EntryWrapper):
     """Wraps the File Metadata for files on the VIOS.
 

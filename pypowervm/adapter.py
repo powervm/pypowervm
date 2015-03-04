@@ -722,6 +722,55 @@ class Adapter(object):
                              sensitive=sensitive)
         return resp
 
+    def search(self, wrap_cls, negate=False, **kwargs):
+        """Performs a REST API search.
+
+        Searches for object(s) of the type indicated by wrap_cls having (or not
+        having) the key/value indicated by the (single) kwarg.
+
+        Regular expressions and comparators are not supported.
+
+        Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
+
+        :param wrap_cls: A subclass of EntryWrapper.  The wrapper class must
+                         define a search_keys member, which is a dictionary
+                         mapping a convenient kwarg key to a search key
+                         supported by the REST API for that object type.  To
+                         retrieve an XML report of the supported search keys
+                         for object Foo, perform:
+                         read('Foo', suffix_type='search')
+        :param negate: If True, the search is negated - we find all objects of
+                       the indicated type where the search key does *not* equal
+                       the search value.
+        :param kwargs: Exactly one key=value.  The key must correspond to a key
+                       in wrap_cls.search_keys.  The value is the value to
+                       search for.
+        :return: A list of instances of the wrap_cls.  The list may be empty
+                 (no results were found).  It may contain more than one
+                 instance (e.g. for a negated search, or for one where the key
+                 does not represent a unique property of the object).
+        """
+        if len(kwargs) != 1:
+            raise ValueError('The search() method requires exactly one'
+                             'key=value argument.')
+        key = list(kwargs)[0]
+        val = str(kwargs[key])
+        op = '!=' if negate else '=='
+        try:
+            search_key = wrap_cls.search_keys[key]
+        # TODO(IBM) Support fallback search by [GET feed] + loop
+        except AttributeError:
+            raise ValueError('Wrapper class %s does not support search.' %
+                             wrap_cls.__name__)
+        except KeyError:
+            raise ValueError("Wrapper class %s does not support search key "
+                             "'%s'." % (wrap_cls.__name__, key))
+        search_parm = "(%s%s'%s')" % (search_key, op, val)
+        # Let this throw HttpError if the caller got it wrong
+        resp = self.read(wrap_cls.schema_type, suffix_type='search',
+                         suffix_parm=search_parm)
+        return wrap_cls.wrap(resp)
+
     def update(self, data, etag, root_type, root_id=None, child_type=None,
                child_id=None, suffix_type=None, service='uom', timeout=-1,
                auditmemento=None, xag=None, sensitive=False, helpers=None):
