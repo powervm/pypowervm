@@ -27,6 +27,7 @@ import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
 from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 logging.basicConfig()
 
@@ -237,6 +238,31 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('POST', ret_update_value.reqmethod)
         self.assertEqual(200, ret_update_value.status)
         self.assertEqual(reqpath, ret_update_value.reqpath)
+
+    @mock.patch('requests.Session')
+    def test_extend_path(self, mock_session):
+        # Init test data
+        adapter = adp.Adapter(self.sess, use_cache=False)
+
+        path = adapter.extend_path('basepath', suffix_type='suffix',
+                                   suffix_parm='suffix_parm',
+                                   detail='detail',
+                                   xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+
+        expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
+                        'group=ViosFCMapping')
+        self.assertEqual(expectedPath, path)
+
+        # Multiple XAGs
+        path = adapter.extend_path('basepath', suffix_type='suffix',
+                                   suffix_parm='suffix_parm',
+                                   detail='detail',
+                                   xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING,
+                                        pvm_vios.XAGEnum.VIOS_NETWORK])
+
+        expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
+                        'group=ViosFCMapping,ViosNetwork')
+        self.assertEqual(expectedPath, path)
 
     @mock.patch('requests.Session')
     def test_delete(self, mock_session):

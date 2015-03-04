@@ -16,6 +16,7 @@
 
 import abc
 import copy
+import functools
 import logging
 import re
 
@@ -66,12 +67,19 @@ _NEXT_SLOT = 'UseNextAvailableSlotID'
 
 class XAGEnum(object):
     """Extended Attribute Groups for VirtualIOServer GET."""
+    @functools.total_ordering
     class _Handler(object):
         def __init__(self, name):
             self.name = name
 
         def __str__(self):
             return self.name
+
+        def __eq__(self, other):
+            return self.name == other.name
+
+        def __lt__(self, other):
+            return self.name < other.name
 
         @property
         def attrs(self):
@@ -568,7 +576,7 @@ class VSCSIMapping(VStorageMapping):
         :param stg: Either a VDisk or VOptMedia wrapper representing the
                     backing storage to assign.
         """
-        elem = self._find_or_seed(_MAP_STORAGE)
+        elem = self._find_or_seed(_MAP_STORAGE, attrib={})
         elem.append(stg.element)
 
 
