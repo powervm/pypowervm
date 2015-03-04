@@ -568,7 +568,7 @@ class VSCSIMapping(VStorageMapping):
         :param stg: Either a VDisk or VOptMedia wrapper representing the
                     backing storage to assign.
         """
-        elem = self._find_or_seed(_MAP_STORAGE)
+        elem = self._find_or_seed(_MAP_STORAGE, attrib={})
         elem.append(stg.element)
 
 

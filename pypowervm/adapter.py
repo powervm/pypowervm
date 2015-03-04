@@ -1011,7 +1011,7 @@ class Adapter(object):
         if xag:
             # sort xag in order
             xag.sort()
-            path += '?group=%s' % ','.join(xag)
+            path += '?group=%s' % ','.join(map(str, xag))
         return path
 
     @staticmethod
