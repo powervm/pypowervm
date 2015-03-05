@@ -425,6 +425,8 @@ class LU(ewrap.ElementWrapper):
 class SSP(ewrap.EntryWrapper):
     """A Shared Storage Pool containing PVs and LUs."""
 
+    search_keys = dict(name='StoragePoolName')
+
     @classmethod
     def bld(cls, name, data_pv_list):
         """Create a fresh SSP EntryWrapper.

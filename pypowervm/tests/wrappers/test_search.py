@@ -39,7 +39,7 @@ class TestSearch(unittest.TestCase):
         net.CNA: None,
         net.VSwitch: None,
         spp.SharedProcPool: None,
-        stor.SSP: None,
+        stor.SSP: dict(name='StoragePoolName'),
         stor.VG: None,
         vf.File: None,
         vios.VIOS: dict(name='PartitionName', id='PartitionID'),
