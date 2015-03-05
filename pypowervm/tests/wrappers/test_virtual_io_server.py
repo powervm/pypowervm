@@ -22,6 +22,7 @@ import unittest
 
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.storage as pvm_stor
 import pypowervm.wrappers.virtual_io_server as vios
 
 
@@ -101,7 +102,7 @@ class TestViosMappings(twrap.TestWrapper):
     wrapper_class_to_test = vios.VIOS
 
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_scsi_mapping_vopt(self, mock_adpt):
+    def test_bld_scsi_mapping_vopt(self, mock_adpt):
         """Validation that the element is correct."""
         mock_adpt.build_href.return_value = "a_link"
         vmap = vios.VSCSIMapping.bld_to_vopt(mock_adpt, 'host_uuid',
@@ -112,9 +113,10 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual(vmap.server_adapter.side, 'Server')
         self.assertEqual('media_name', vmap.backing_storage.media_name)
         self.assertEqual('a_link', vmap.client_lpar_href)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.VOptMedia)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_scsi_mapping_vdisk(self, mock_adpt):
+    def test_bld_scsi_mapping_vdisk(self, mock_adpt):
         """Validation that the element is correct."""
         mock_adpt.build_href.return_value = "a_link"
         vmap = vios.VSCSIMapping.bld_to_vdisk(mock_adpt, 'host_uuid',
@@ -125,6 +127,37 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.VDisk)
+
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_bld_scsi_mapping_lu(self, mock_adpt):
+        """Validation that the element is correct."""
+        mock_adpt.build_href.return_value = "a_link"
+        vmap = vios.VSCSIMapping.bld_to_lu(mock_adpt, 'host_uuid',
+                                           'client_lpar_uuid', 'udid',
+                                           'disk_name')
+        self.assertIsNotNone(vmap)
+        self.assertIsNotNone(vmap.element)
+        self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual('Server', vmap.server_adapter.side)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
+        self.assertEqual('udid', vmap.backing_storage.udid)
+        self.assertEqual('a_link', vmap.client_lpar_href)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.LU)
+
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_bld_scsi_mapping_pv(self, mock_adpt):
+        """Validation that the element is correct."""
+        mock_adpt.build_href.return_value = "a_link"
+        vmap = vios.VSCSIMapping.bld_to_pv(mock_adpt, 'host_uuid',
+                                           'client_lpar_uuid', 'disk_name')
+        self.assertIsNotNone(vmap)
+        self.assertIsNotNone(vmap.element)
+        self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual('Server', vmap.server_adapter.side)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
+        self.assertEqual('a_link', vmap.client_lpar_href)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.PV)
 
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
