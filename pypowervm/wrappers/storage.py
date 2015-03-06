@@ -396,7 +396,7 @@ class VDisk(ewrap.ElementWrapper):
 
 @ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True)
 class LU(ewrap.ElementWrapper):
-    """A Logical Unit (usually part of a SharedStoragePool."""
+    """A Logical Unit (usually part of a SharedStoragePool)."""
 
     @classmethod
     def bld_ref(cls, name, udid):

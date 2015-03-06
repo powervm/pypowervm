@@ -567,9 +567,8 @@ class VSCSIMapping(VStorageMapping):
         :param host_uuid: (TEMPORARY) The host system's UUID.
         :param client_lpar_uuid: The client LPAR's UUID that the disk should be
                                  connected to.
-        :param media_name: The name of the Virtual Optical Media device to add.
-                           Maps to the volume_group's VirtualOpticalMedia
-                           media_name.
+        :param udid: The UDID of the LU.
+        :param disk_name: The name of the LU.
         :returns: The new VSCSIMapping Wrapper.
         """
         return cls.bld(adapter, host_uuid, client_lpar_uuid,
@@ -608,17 +607,15 @@ class VSCSIMapping(VStorageMapping):
         VirtualDisk or VirtualOpticalMedia.  May return None.
         """
         elem = self.element.find(_MAP_STORAGE)
-        if elem is not None:
-            # Loop through the supported media types, and wrap if an
-            # appropriate one is found.
-            for media_type in [stor.VDisk, stor.VOptMedia, stor.LU, stor.PV]:
-                e = elem.find(media_type.schema_type)
-                if e is not None:
-                    return media_type.wrap(e)
-
-            # Some unknown type, throw error
-            raise Exception('Found unknown type %s' % e.toxmlstring())
-        return None
+        if elem is None:
+            return None
+        # If backing storage exists, it comprises a single child of elem.
+        media = elem.getchildren()
+        if len(media) != 1:
+            return None
+        # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
+        # Allow ElementWrapper to detect (from the registry) and wrap correctly
+        return ewrap.ElementWrapper.wrap(media[0])
 
     def _backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk or VOpt.
