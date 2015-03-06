@@ -398,13 +398,35 @@ class VDisk(ewrap.ElementWrapper):
 class LU(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool."""
 
+    @classmethod
+    def bld_ref(cls, name, udid):
+        """Creates the a fresh LU wrapper.
+
+        The name matches the device name on the system.
+
+        :param name: The name of the logical unit on the Virtual I/O Server.
+        :param udid: Universal Disk Identifier.
+        :returns: An Element that can be used for a PhysicalVolume create.
+        """
+        pv = super(LU, cls)._bld()
+        # Assignment order is significant
+        pv._name(name)
+        pv._udid(udid)
+        return pv
+
     @property
     def name(self):
         return self._get_val_str(_LU_NAME)
 
+    def _name(self, value):
+        return self.set_parm_value(_LU_NAME, value)
+
     @property
     def udid(self):
         return self._get_val_str(_LU_UDID)
+
+    def _udid(self, value):
+        return self.set_parm_value(_LU_UDID, value)
 
     @property
     def capacity(self):
