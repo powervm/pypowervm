@@ -411,5 +411,14 @@ class TestCreateLogicalPartition(unittest.TestCase):
         self.assertEqual(self.sections['lpar_1'],
                          self.section_tostring(lpar_elem))
 
+
+class TestPhysFCPort(unittest.TestCase):
+
+    def test_bld(self):
+        port = lpar.PhysFCPort.bld('fcs0')
+        self.assertIsNotNone(port)
+        self.assertEqual('fcs0', port.name)
+
+
 if __name__ == "__main__":
     unittest.main()

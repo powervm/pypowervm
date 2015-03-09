@@ -825,6 +825,21 @@ class PhysFCAdapter(IOAdapter):
 class PhysFCPort(ewrap.ElementWrapper):
     """A Physical Fibre Channel Port."""
 
+    @classmethod
+    def bld(cls, name):
+        """Create a port.
+
+        This is typically used when another element (ex. Virtual FC Mapping)
+        requires a port to be specified in it.  Rather than query to find
+        the port, one can simply be built and referenced as a child element.
+
+        :param name: The name of the physical FC port.  End users need to
+                     verify the port name.  Typically starts with 'fcs'.
+        """
+        port = super(PhysFCPort, cls)._bld()
+        port._name(name)
+        return port
+
     @property
     def loc_code(self):
         return self._get_val_str(_PFC_PORT_LOC_CODE)
@@ -832,6 +847,9 @@ class PhysFCPort(ewrap.ElementWrapper):
     @property
     def name(self):
         return self._get_val_str(_PFC_PORT_NAME)
+
+    def _name(self, value):
+        return self.set_parm_value(_PFC_PORT_NAME, value)
 
     @property
     def udid(self):
