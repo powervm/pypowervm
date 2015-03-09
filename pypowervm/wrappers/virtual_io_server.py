@@ -123,10 +123,6 @@ class VIOS(ewrap.EntryWrapper):
         return self.rmc_state == 'active'
 
     @property
-    def virtual_scsi_mappings(self):
-        return self.element.find(c.VIRT_SCSI_MAPPINGS)
-
-    @property
     def media_repository(self):
         return self.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
 
@@ -636,10 +632,35 @@ class VFCClientAdapter(VClientStorageAdapter):
     Paired with a VFCServerAdapter.
     """
 
+    @classmethod
+    def bld(cls, wwpns=None):
+        """Create a fresh Virtual Fibre Channel Client Adapter.
+
+        :param wwpns: An optional set of two client WWPNs to set on the
+                      adapter.
+        """
+        adpt = super(VFCClientAdapter, cls).bld()
+
+        if wwpns is not None:
+            adpt._wwpns(wwpns)
+
+        return adpt
+
+    def _wwpns(self, value):
+        """Sets the WWPN string.
+
+        :param value: The set (or list) of WWPNs.  Should only contain two.
+        """
+        self.set_parm_value(_VADPT_WWPNS, " ".join(value))
+
     @property
     def wwpns(self):
-        """Returns a String (delimited by spaces) that contains the WWPNs."""
-        return self._get_val_str(_VADPT_WWPNS)
+        """Returns a set that contains the WWPNs.  If no WWPNs, empty set."""
+        val = self._get_val_str(_VADPT_WWPNS)
+        if val is None:
+            return set()
+        else:
+            return set(val.split(' '))
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -675,7 +696,8 @@ class VFCMapping(VStorageMapping):
     _server_adapter_cls = VFCServerAdapter
 
     @classmethod
-    def bld_to_fc_port(cls, adapter, host_uuid, client_lpar_uuid):
+    def bld(cls, adapter, host_uuid, client_lpar_uuid, backing_phy_port,
+            client_wwpns=None):
         """Creates the VFCMapping object to connect to a Physical FC Port.
 
         This is used when creating a new mapping between a Client LPAR and the
@@ -689,13 +711,36 @@ class VFCMapping(VStorageMapping):
 
         :param adapter: The pypowervm Adapter that will be used to create the
                         mapping.
-        :param host_uuid: (TEMPORARY) The host system's UUID.
+        :param host_uuid: The host system's UUID.
         :param client_lpar_uuid: The client LPAR's UUID that the disk should be
                                  connected to.
+        :param backing_phy_port: The name of the physical FC port that backs
+                                 the virtual adapter.
+        :param client_wwpns: An optional set of two WWPNs that can be set upon
+                             the mapping.  These represent the client VMs
+                             WWPNs on the client FC adapter.  If not set, the
+                             system will dynamically generate them.
         :returns: The new VFCMapping Wrapper.
         """
-        # TODO(IBM) Implement
-        pass
+        s_map = super(VFCMapping, cls)._bld()
+        # Create the 'Associated Logical Partition' element of the mapping.
+        s_map._client_lpar_href(
+            cls._crt_related_href(adapter, host_uuid, client_lpar_uuid))
+        s_map._client_adapter(VFCClientAdapter.bld(wwpns=client_wwpns))
+
+        # Create the backing port and change label.  API requires it be
+        # Port, even though it is a Physical FC Port
+        backing_port = lpar.PhysFCPort.bld_ref(backing_phy_port)
+        backing_port.element.tag = 'Port'
+        s_map._backing_port(backing_port)
+
+        s_map._server_adapter(VFCServerAdapter.bld())
+        return s_map
+
+    def _backing_port(self, value):
+        """Sets the backing port."""
+        elem = self._find_or_seed(_MAP_PORT)
+        self.element.replace(elem, value.element)
 
     @property
     def backing_port(self):

@@ -259,6 +259,23 @@ class TestViosMappings(twrap.TestWrapper):
         self.dwrap.vfc_mappings = mappings
         self.assertEqual(len(self.dwrap.vfc_mappings), orig_size)
 
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_bld_vfc_mapping(self, mock_adpt):
+        mock_adpt.build_href.return_value = "a_link"
+        mapping = vios.VFCMapping.bld(mock_adpt, 'host_uuid',
+                                      'client_lpar_uuid', 'fcs0', ['aa', 'bb'])
+        self.assertIsNotNone(mapping)
+
+        # Validate the FC Backing port
+        self.assertIsNotNone(mapping.backing_port)
+
+        # Validate the Server Adapter
+        self.assertIsNotNone(mapping.server_adapter)
+
+        # Validate the Client Adapter
+        self.assertIsNotNone(mapping.client_adapter)
+        self.assertEqual(set(['aa', 'bb']), mapping.client_adapter.wwpns)
+
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):
 
