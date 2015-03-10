@@ -621,7 +621,7 @@ class Adapter(object):
                 # don't need to check age because we know we just refreshed
                 rsp = self._get_resp_from_cache(path, etag=_etag)
                 if rsp:
-                    if _etag and _etag == rsp.headers.get('etag'):
+                    if _etag and _etag == rsp.etag:
                         # ETag matches what caller specified, so return an
                         # HTTP 304 (Not Modified) response
                         rsp.status = 304
@@ -680,7 +680,7 @@ class Adapter(object):
             # cache and build entry response from that.
             resp = self._get_resp_from_cache(path, age, etag)
             if resp:
-                if etag and etag == resp.headers.get('etag'):
+                if etag and etag == resp.etag:
                     # ETag matches what caller specified, so return an
                     # HTTP 304 (Not Modified) response
                     resp.status = 304
@@ -693,7 +693,7 @@ class Adapter(object):
                 # our GET request by using its ETag to see if it has changed
                 cached_resp = self._get_resp_from_cache(path)
                 if cached_resp:
-                    etag = cached_resp.headers.get('etag')
+                    etag = cached_resp.etag
                     etag_from_cache = True
         if not resp:
             resp = _locked_refresh(dt.datetime.now(), cached_resp, etag,
@@ -721,55 +721,6 @@ class Adapter(object):
                              timeout=timeout, auditmemento=auditmemento,
                              sensitive=sensitive)
         return resp
-
-    def search(self, wrap_cls, negate=False, **kwargs):
-        """Performs a REST API search.
-
-        Searches for object(s) of the type indicated by wrap_cls having (or not
-        having) the key/value indicated by the (single) kwarg.
-
-        Regular expressions and comparators are not supported.
-
-        Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
-
-        :param wrap_cls: A subclass of EntryWrapper.  The wrapper class must
-                         define a search_keys member, which is a dictionary
-                         mapping a convenient kwarg key to a search key
-                         supported by the REST API for that object type.  To
-                         retrieve an XML report of the supported search keys
-                         for object Foo, perform:
-                         read('Foo', suffix_type='search')
-        :param negate: If True, the search is negated - we find all objects of
-                       the indicated type where the search key does *not* equal
-                       the search value.
-        :param kwargs: Exactly one key=value.  The key must correspond to a key
-                       in wrap_cls.search_keys.  The value is the value to
-                       search for.
-        :return: A list of instances of the wrap_cls.  The list may be empty
-                 (no results were found).  It may contain more than one
-                 instance (e.g. for a negated search, or for one where the key
-                 does not represent a unique property of the object).
-        """
-        if len(kwargs) != 1:
-            raise ValueError('The search() method requires exactly one'
-                             'key=value argument.')
-        key = list(kwargs)[0]
-        val = str(kwargs[key])
-        op = '!=' if negate else '=='
-        try:
-            search_key = wrap_cls.search_keys[key]
-        # TODO(IBM) Support fallback search by [GET feed] + loop
-        except AttributeError:
-            raise ValueError('Wrapper class %s does not support search.' %
-                             wrap_cls.__name__)
-        except KeyError:
-            raise ValueError("Wrapper class %s does not support search key "
-                             "'%s'." % (wrap_cls.__name__, key))
-        search_parm = "(%s%s'%s')" % (search_key, op, val)
-        # Let this throw HttpError if the caller got it wrong
-        resp = self.read(wrap_cls.schema_type, suffix_type='search',
-                         suffix_parm=search_parm)
-        return wrap_cls.wrap(resp)
 
     def update(self, data, etag, root_type, root_id=None, child_type=None,
                child_id=None, suffix_type=None, service='uom', timeout=-1,
@@ -799,7 +750,7 @@ class Adapter(object):
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
-                if resp and etag == resp.headers.get('etag'):
+                if resp and etag == resp.etag:
                     # need to invalidate this in the cache
                     self._cache.remove(path)
                 # see if we need to invalidate feed in cache
@@ -809,7 +760,7 @@ class Adapter(object):
                 feed_paths = self._cache.get_feed_paths(path)
                 for feed_path in feed_paths:
                     resp = self._build_entry_resp(feed_path, uuid)
-                    if not resp or etag == resp.headers.get('etag'):
+                    if not resp or etag == resp.etag:
                         # need to invalidate this in the cache
                         self._cache.remove(feed_path)
                         LOG.debug('Invalidate feed %s for uuid %s' %
@@ -896,7 +847,7 @@ class Adapter(object):
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
-                if resp and etag == resp.headers.get('etag'):
+                if resp and etag == resp.etag:
                     # need to invalidate this in the cache
                     self._cache.remove(path)
                 # see if we need to invalidate feed in cache
@@ -906,7 +857,7 @@ class Adapter(object):
                 feed_paths = self._cache.get_feed_paths(path)
                 for feed_path in feed_paths:
                     resp = self._build_entry_resp(feed_path, uuid)
-                    if not resp or etag == resp.headers.get('etag'):
+                    if not resp or etag == resp.etag:
                         # need to invalidate this in the cache
                         self._cache.remove(feed_path)
                         LOG.debug('Invalidate feed %s for uuid %s' %
@@ -1181,6 +1132,10 @@ class Response(object):
         # if the Response is built from cached feed
         self.orig_reqpath = orig_reqpath
 
+    @property
+    def etag(self):
+        return self.headers.get('etag', None)
+
     def _unmarshal_atom(self):
         err_reason = None
         if self.body:
@@ -1275,6 +1230,10 @@ class Entry(object):
     def __init__(self, properties, element):
         self.properties = properties
         self.element = Element.wrapelement(element)
+
+    @property
+    def etag(self):
+        return self.properties.get('etag', None)
 
     @classmethod
     def unmarshal_atom_entry(cls, entryelem):

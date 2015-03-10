@@ -27,8 +27,6 @@ import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
 from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.wrappers.cluster as clust
-import pypowervm.wrappers.storage as stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 logging.basicConfig()
@@ -452,54 +450,6 @@ class TestElementWrapper(unittest.TestCase):
         return entry.element.findall('SharedEthernetAdapters/'
                                      'SharedEthernetAdapter')
 
-
-class TestSearch(unittest.TestCase):
-    """Tests for Adapter.search()."""
-
-    def setUp(self):
-        super(TestSearch, self).setUp()
-        self.adp = adp.Adapter(mock.patch('requests.Session'), use_cache=False)
-
-    def _validate_request(self, path, *feedcontents):
-        def validate_request(meth, _path, *args, **kwargs):
-            self.assertTrue(_path.endswith(path))
-            resp = adp.Response('meth', 'path', 'status', 'reason', {},
-                                reqheaders={'Accept': ''})
-            resp.feed = adp.Feed({}, feedcontents)
-            return resp
-        return validate_request
-
-    @mock.patch('pypowervm.adapter.Adapter._request')
-    def test_good(self, mock_rq):
-        mock_rq.side_effect = self._validate_request(
-            "/rest/api/uom/Cluster/search/(ClusterName=='cl1')",
-            clust.Cluster.bld('cl1', stor.PV.bld('hdisk1', 'udid1'),
-                              clust.Node.bld(hostname='vios1')).entry)
-
-        clwraps = self.adp.search(clust.Cluster, name='cl1')
-        self.assertEqual(len(clwraps), 1)
-        cl = clwraps[0]
-        self.assertIsInstance(cl, clust.Cluster)
-        self.assertEqual(cl.name, 'cl1')
-        self.assertEqual(cl.repos_pv.name, 'hdisk1')
-        self.assertEqual(cl.nodes[0].hostname, 'vios1')
-
-    @mock.patch('pypowervm.adapter.Adapter._request')
-    def test_negate(self, mock_rq):
-        mock_rq.side_effect = self._validate_request(
-            "/rest/api/uom/Cluster/search/(ClusterName!='cl1')")
-        clwraps = self.adp.search(clust.Cluster, negate=True, name='cl1')
-        self.assertEqual(clwraps, [])
-
-    def test_no_search_keys(self):
-        """Ensure a wrapper with no search_keys member gives ValueError."""
-        with self.assertRaises(ValueError):
-            self.adp.search(clust.Node, foo='bar')
-
-    def test_no_such_search_key(self):
-        """Ensure an invalid search key gives ValueError."""
-        with self.assertRaises(ValueError):
-            self.adp.search(clust.Cluster, foo='bar')
 
 if __name__ == '__main__':
     unittest.main()
