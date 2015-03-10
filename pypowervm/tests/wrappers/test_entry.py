@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 from lxml import etree
 import mock
 import six
@@ -22,8 +24,10 @@ import unittest
 
 import pypowervm.adapter as apt
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.network as net
+import pypowervm.wrappers.storage as stor
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
@@ -408,6 +412,125 @@ class TestActionableList(unittest.TestCase):
 
         # Make sure our function was called each time
         self.assertEqual(5, function.call_count)
+
+
+class TestSearch(unittest.TestCase):
+    """Tests for EntryWrapper.search()."""
+
+    def setUp(self):
+        super(TestSearch, self).setUp()
+        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+
+    def _validate_request(self, path, *feedcontents):
+        def validate_request(meth, _path, *args, **kwargs):
+            self.assertTrue(_path.endswith(path))
+            resp = apt.Response('meth', 'path', 'status', 'reason', {},
+                                reqheaders={'Accept': ''})
+            resp.feed = apt.Feed({}, feedcontents)
+            return resp
+        return validate_request
+
+    @mock.patch('pypowervm.adapter.Adapter._request')
+    def test_good(self, mock_rq):
+        mock_rq.side_effect = self._validate_request(
+            "/rest/api/uom/Cluster/search/(ClusterName=='cl1')",
+            clust.Cluster.bld('cl1', stor.PV.bld('hdisk1', 'udid1'),
+                              clust.Node.bld(hostname='vios1')).entry)
+
+        clwraps = clust.Cluster.search(self.adp, name='cl1')
+        self.assertEqual(len(clwraps), 1)
+        cl = clwraps[0]
+        self.assertIsInstance(cl, clust.Cluster)
+        self.assertEqual(cl.name, 'cl1')
+        self.assertEqual(cl.repos_pv.name, 'hdisk1')
+        self.assertEqual(cl.nodes[0].hostname, 'vios1')
+
+    @mock.patch('pypowervm.adapter.Adapter._request')
+    def test_negate(self, mock_rq):
+        mock_rq.side_effect = self._validate_request(
+            "/rest/api/uom/Cluster/search/(ClusterName!='cl1')")
+        clwraps = clust.Cluster.search(self.adp, negate=True, name='cl1')
+        self.assertEqual(clwraps, [])
+
+    def test_no_search_keys(self):
+        """Ensure a wrapper with no search_keys member gives AttributeError."""
+        with self.assertRaises(AttributeError):
+            clust.Node.search(self.adp, foo='bar')
+
+    def test_no_such_search_key(self):
+        """Ensure an invalid search key gives ValueError."""
+        with self.assertRaises(ValueError):
+            clust.Cluster.search(self.adp, foo='bar')
+
+
+class TestRefresh(unittest.TestCase):
+    clust_uuid = 'cluster_uuid'
+    clust_href = 'https://server:12443/rest/api/uom/Cluster' + clust_uuid
+
+    """Tests for Adapter.refresh()."""
+    def setUp(self):
+        super(TestRefresh, self).setUp()
+        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
+        self.old_etag = '123'
+        self.clust_old = clust.Cluster.bld(
+            'mycluster', stor.PV.bld('hdisk1', 'udid1'),
+            clust.Node.bld('hostname1'))
+        self.clust_old._etag = None
+        self.clust_old.entry.properties = props
+        self.new_etag = '456'
+        self.clust_new = clust.Cluster.bld(
+            'mycluster', stor.PV.bld('hdisk2', 'udid2'),
+            clust.Node.bld('hostname2'))
+        self.clust_new._etag = self.new_etag
+        self.clust_new.entry.properties = props
+        self.resp304 = apt.Response(
+            'meth', 'path', 304, 'reason', {'etag': self.old_etag})
+        self.resp200old = apt.Response(
+            'meth', 'path', 200, 'reason', {'etag': self.old_etag})
+        self.resp200old.entry = self.clust_old.entry
+        self.resp200new = apt.Response(
+            'meth', 'path', 200, 'reason', {'etag': self.new_etag})
+        self.resp200new.entry = self.clust_new.entry
+
+    def _mock_read_by_href(self, in_etag, out_resp):
+        def read_by_href(href, etag, *args, **kwargs):
+            self.assertEqual(href, self.clust_href)
+            self.assertEqual(etag, in_etag)
+            return out_resp
+        return read_by_href
+
+    def _assert_clusters_equal(self, cl1, cl2):
+        self.assertEqual(cl1.name, cl2.name)
+        self.assertEqual(cl1.repos_pv.name, cl2.repos_pv.name)
+        self.assertEqual(cl1.repos_pv.udid, cl2.repos_pv.udid)
+        self.assertEqual(cl1.nodes[0].hostname, cl2.nodes[0].hostname)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_href')
+    def test_no_etag(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_href(
+            None, self.resp200old)
+        clust_old_save = copy.deepcopy(self.clust_old)
+        self.clust_old.refresh(self.adp)
+        self._assert_clusters_equal(clust_old_save, self.clust_old)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_href')
+    def test_etag_match(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_href(
+            self.old_etag, self.resp200old)
+        self.clust_old._etag = self.old_etag
+        clust_old_save = copy.deepcopy(self.clust_old)
+        self.clust_old.refresh(self.adp)
+        self._assert_clusters_equal(clust_old_save, self.clust_old)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_href')
+    def test_etag_no_match(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_href(
+            self.old_etag, self.resp200new)
+        self.clust_old._etag = self.old_etag
+        clust_new_save = copy.deepcopy(self.clust_new)
+        self.clust_old.refresh(self.adp)
+        self._assert_clusters_equal(clust_new_save, self.clust_old)
 
 if __name__ == '__main__':
     unittest.main()

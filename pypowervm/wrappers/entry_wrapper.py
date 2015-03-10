@@ -412,13 +412,15 @@ class EntryWrapper(Wrapper):
     # If it's an Entry, it must be a ROOT or CHILD
     has_metadata = True
 
+    def __init__(self, entry, etag=None):
+        self.entry = entry
+        self._etag = etag
+
     @classmethod
     def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None):
-        ret = cls()
         element = cls._bld_element(
             tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
-        ret.entry = adpt.Entry({'title': element.tag}, element.element)
-        return ret
+        return cls(adpt.Entry({'title': element.tag}, element.element))
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -451,9 +453,9 @@ class EntryWrapper(Wrapper):
             if response_or_entry.entry is not None:
                 return cls.wrap(
                     response_or_entry.entry,
-                    etag=response_or_entry.headers.get('etag', None))
+                    etag=response_or_entry.etag)
             elif response_or_entry.feed is not None:
-                return [cls.wrap(ent, etag=ent.properties.get('etag', None))
+                return [cls.wrap(ent, etag=ent.etag)
                         for ent in response_or_entry.feed.entries]
             else:
                 raise KeyError(_("Response is missing 'entry' property."))
@@ -467,14 +469,80 @@ class EntryWrapper(Wrapper):
             wcls = (cls._class_for_element(response_or_entry.element)
                     if cls.schema_type is None
                     else cls)
-            wrap = wcls()
-            wrap.entry = response_or_entry
-            wrap._etag = etag
-            return wrap
+            return wcls(response_or_entry, etag)
 
         # response_or_entry is neither a Response nor an Entry
         fmt = _("Must supply a Response or Entry to wrap.  Got %s")
         raise TypeError(fmt % str(type(response_or_entry)))
+
+    def refresh(self, adapter):
+        """Fetch the latest version of the entry from the REST API server.
+
+        This method updates the contents of self in-place.  There is no return.
+        :param adapter: The pypowervm.adapter.Adapter instance through which to
+                        perform the refresh.
+        :return: EntryWrapper representing the latest data from the REST API
+                 server.  If the input wrapper contains etag information and
+                 the server responds 304 (Not Modified), the original wrapper
+                 is returned.  Otherwise, a fresh EntryWrapper of the
+                 appropriate type is returned.
+        """
+        resp = adapter.read_by_href(self.href, etag=self.etag)
+        if resp.status != 304:
+            # Update self with the contents of the new response.
+            self.__init__(resp.entry, resp.etag)
+
+    @classmethod
+    def search(cls, adapter, negate=False, **kwargs):
+        """Performs a REST API search.
+
+        Searches for object(s) of the type indicated by wrap_cls having (or not
+        having) the key/value indicated by the (single) kwarg.
+
+        Regular expressions and comparators are not supported.
+
+        Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
+
+        :param cls: A subclass of EntryWrapper.  The wrapper class must
+                         define a search_keys member, which is a dictionary
+                         mapping a convenient kwarg key to a search key
+                         supported by the REST API for that object type.  To
+                         retrieve an XML report of the supported search keys
+                         for object Foo, perform:
+                         read('Foo', suffix_type='search')
+        :param adapter: The pypowervm.adapter.Adapter instance through which to
+                        perform the search.
+        :param negate: If True, the search is negated - we find all objects of
+                       the indicated type where the search key does *not* equal
+                       the search value.
+        :param kwargs: Exactly one key=value.  The key must correspond to a key
+                       in cls.search_keys.  The value is the value to search
+                       for.
+        :return: A list of instances of the cls.  The list may be empty
+                 (no results were found).  It may contain more than one
+                 instance (e.g. for a negated search, or for one where the key
+                 does not represent a unique property of the object).
+        """
+        if len(kwargs) != 1:
+            raise ValueError('The search() method requires exactly one'
+                             'key=value argument.')
+        key = list(kwargs)[0]
+        val = str(kwargs[key])
+        op = '!=' if negate else '=='
+        try:
+            search_key = cls.search_keys[key]
+        # TODO(IBM) Support fallback search by [GET feed] + loop
+        except AttributeError:
+            raise ValueError('Wrapper class %s does not support search.' %
+                             cls.__name__)
+        except KeyError:
+            raise ValueError("Wrapper class %s does not support search key "
+                             "'%s'." % (cls.__name__, key))
+        search_parm = "(%s%s'%s')" % (search_key, op, val)
+        # Let this throw HttpError if the caller got it wrong
+        resp = adapter.read(cls.schema_type, suffix_type='search',
+                            suffix_parm=search_parm)
+        return cls.wrap(resp)
 
     @property
     def element(self):
