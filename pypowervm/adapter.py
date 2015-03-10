@@ -722,6 +722,26 @@ class Adapter(object):
                              sensitive=sensitive)
         return resp
 
+    def refresh(self, entry_wrapper):
+        """Fetch the latest version of an entry from the REST API server.
+
+        Currently only supports ROOT objects. (TODO(IBM): Support CHILD)
+
+        :param entry_wrapper: pypowervm.wrappers.entry_wrapper.EntryWrapper to
+                              refresh.
+        :return: EntryWrapper representing the latest data from the REST API
+                 server.  If the input wrapper contains etag information and
+                 the server responds 304 (Not Modified), the original wrapper
+                 is returned.  Otherwise, a fresh EntryWrapper of the
+                 appropriate type is returned.
+        """
+        resp = self.read(entry_wrapper.schema_type, root_id=entry_wrapper.uuid,
+                         etag=entry_wrapper.etag)
+        if resp.status == 304:
+            return entry_wrapper
+        # Use the original wrapper's 'wrap' classmethod on the new response.
+        return entry_wrapper.wrap(resp)
+
     def search(self, wrap_cls, negate=False, **kwargs):
         """Performs a REST API search.
 

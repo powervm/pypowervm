@@ -501,5 +501,69 @@ class TestSearch(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.adp.search(clust.Cluster, foo='bar')
 
+
+class TestRefresh(unittest.TestCase):
+    """Tests for Adapter.refresh()."""
+    def setUp(self):
+        super(TestRefresh, self).setUp()
+        self.adp = adp.Adapter(mock.patch('requests.Session'), use_cache=False)
+        props = {'id', 'cluster_uuid'}
+        self.old_etag = '123'
+        self.clust_old = clust.Cluster.bld(
+            'mycluster', stor.PV.bld('hdisk1', 'udid1'),
+            clust.Node.bld('hostname1'))
+        self.clust_old._etag = None
+        self.clust_old.properties = props
+        self.new_etag = '456'
+        self.clust_new = clust.Cluster.bld(
+            'mycluster', stor.PV.bld('hdisk2', 'udid2'),
+            clust.Node.bld('hostname2'))
+        self.clust_new._etag = self.new_etag
+        self.clust_new.properties = props
+        self.resp304 = adp.Response(
+            'meth', 'path', 304, 'reason', {'etag': self.old_etag})
+        self.resp200old = adp.Response(
+            'meth', 'path', 200, 'reason', {'etag': self.old_etag})
+        self.resp200old.entry = self.clust_old.entry
+        self.resp200new = adp.Response(
+            'meth', 'path', 200, 'reason', {'etag': self.new_etag})
+        self.resp200new.entry = self.clust_new.entry
+
+    def _mock_read_by_path(self, in_etag, out_resp):
+        def read_by_path(path, etag, *args, **kwargs):
+            self.assertEqual(path, '/rest/api/uom/Cluster')
+            self.assertEqual(etag, in_etag)
+            return out_resp
+        return read_by_path
+
+    def _assert_clusters_equal(self, cl1, cl2):
+        self.assertEqual(cl1.name, cl2.name)
+        self.assertEqual(cl1.repos_pv.name, cl2.repos_pv.name)
+        self.assertEqual(cl1.repos_pv.udid, cl2.repos_pv.udid)
+        self.assertEqual(cl1.nodes[0].hostname, cl2.nodes[0].hostname)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_no_etag(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_path(
+            None, self.resp200old)
+        wrap = self.adp.refresh(self.clust_old)
+        self._assert_clusters_equal(wrap, self.clust_old)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_etag_match(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_path(
+            self.old_etag, self.resp200old)
+        self.clust_old._etag = self.old_etag
+        wrap = self.adp.refresh(self.clust_old)
+        self._assert_clusters_equal(wrap, self.clust_old)
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_etag_no_match(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_path(
+            self.old_etag, self.resp200new)
+        self.clust_old._etag = self.old_etag
+        wrap = self.adp.refresh(self.clust_old)
+        self._assert_clusters_equal(wrap, self.clust_new)
+
 if __name__ == '__main__':
     unittest.main()
