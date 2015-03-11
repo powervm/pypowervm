@@ -356,6 +356,23 @@ class TestPartitionIOConfiguration(twrap.TestWrapper):
         self.assertEqual(0, len(self.io_config.io_slots))
 
 
+class TestMemCfg(unittest.TestCase):
+    """Test cases to test the lpar mem operations."""
+    def setUp(self):
+        super(TestMemCfg, self).setUp()
+
+    def tearDown(self):
+        super(TestMemCfg, self).tearDown()
+
+    def test_mem(self):
+        mem_wrap = lpar.PartitionMemoryConfiguration.bld(
+            1024, min_mem=512, max_mem=2048)
+        self.assertIsNotNone(mem_wrap)
+        self.assertEqual(512, mem_wrap.min_mem)
+        self.assertEqual(1024, mem_wrap.desired_mem)
+        self.assertEqual(2048, mem_wrap.max_mem)
+
+
 class TestCreateLogicalPartition(unittest.TestCase):
     """Test cases to test the lpar operations."""
     def setUp(self):
@@ -374,40 +391,40 @@ class TestCreateLogicalPartition(unittest.TestCase):
     def test_ded_procs(self):
         """Test crt_ded_procs_struct() method."""
         # Test minimum parms
-        dprocs = lpar.crt_ded_procs('2')
+        dprocs = lpar.crt_ded_procs(2)
         self.assertEqual(self.sections['ded_procs'],
                          self.section_tostring(dprocs))
         # All parms
-        dprocs = lpar.crt_ded_procs('2',
+        dprocs = lpar.crt_ded_procs(2,
                                     sharing_mode=lpar._DED_SHARING_MODES[0],
-                                    min_proc='2', max_proc='2')
+                                    min_proc=2, max_proc=2)
         self.assertEqual(self.sections['ded_procs'],
                          self.section_tostring(dprocs))
 
     def test_shared_procs(self):
         """Test crt_shared_procs_struct() method."""
         # Test minimum parms
-        sprocs = lpar.crt_shared_procs('1.2', '2')
+        sprocs = lpar.crt_shared_procs(1.2, 2)
         self.assertEqual(self.sections['shared_procs'],
                          self.section_tostring(sprocs))
         # All parms
-        sprocs = lpar.crt_shared_procs('1.2', '2',
+        sprocs = lpar.crt_shared_procs(1.2, 2,
                                        sharing_mode=lpar._SHARING_MODES[1],
-                                       uncapped_weight='128',
-                                       min_proc_unit='1.2',
-                                       max_proc_unit='1.2',
-                                       min_proc='2',
-                                       max_proc='2')
+                                       uncapped_weight=128,
+                                       min_proc_unit=1.2,
+                                       max_proc_unit=1.2,
+                                       min_proc=2,
+                                       max_proc=2)
         self.assertEqual(self.sections['shared_procs'],
                          self.section_tostring(sprocs))
 
     def test_lpar_struct(self):
         """Test crt_lpar_struct() method."""
-        dprocs = lpar.crt_ded_procs('2')
+        dprocs = lpar.crt_ded_procs(2)
         lpar_elem = lpar.crt_lpar('the_name', 'OS400', dprocs,
-                                  '1024', min_mem='1024',
+                                  1024, min_mem=1024,
                                   max_mem='1024',
-                                  max_io_slots='64')
+                                  max_io_slots=64)
         self.assertEqual(self.sections['lpar_1'],
                          self.section_tostring(lpar_elem))
 
