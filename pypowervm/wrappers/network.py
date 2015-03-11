@@ -32,6 +32,9 @@ _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
 
 _NB_PVID = 'PortVLANID'
 _NB_VNETS = 'VirtualNetworks'
+_NB_FAILOVER = 'FailoverEnabled'
+_NB_LOADBALANCE = 'LoadBalancingEnabled'
+_NB_DEV_ID = 'UniqueDeviceID'
 NB_SEAS = 'SharedEthernetAdapters'
 NB_SEA = 'SharedEthernetAdapter'
 _NB_LG = 'LoadGroup'
@@ -107,6 +110,34 @@ class NetBridge(ewrap.EntryWrapper):
     Network Bridge will have two identically structured Shared Ethernet
     Adapters belonging to different Virtual I/O Servers.
     """
+
+    @classmethod
+    def bld(cls, pvid, load_groups, seas,
+            failover=False, load_balancing=False):
+        """Create the NetBridge entry that can be used for a create operation.
+
+        This is used when creating a NetBridge.
+
+        :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
+        :param load_groups: The load groups associated with this Network
+                            Bridge
+        :param seas: The shared ethernet adapters associated with this
+                     Network Bridge
+        :param failover: True if failover enabled
+        :param load_balancing: True if load balancing enabled
+        :returns: A new NetBridge EntryWrapper that represents the new
+                  NetBridge.
+        """
+        nb = super(NetBridge, cls)._bld()
+        nb.set_parm_value(_NB_FAILOVER, str(failover).lower())
+        nb.set_parm_value(_NB_LOADBALANCE, str(load_balancing).lower())
+        nb.load_grps = load_groups
+        nb.set_parm_value(_NB_PVID, pvid)
+        nb.seas = seas
+        nb.set_parm_value(_NB_DEV_ID, 1)
+        nb.set_parm_value(_NB_VNETS, [])
+        nb._rebuild_vnet_list()
+        return nb
 
     @property
     def pvid(self):
