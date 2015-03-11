@@ -30,24 +30,57 @@ _VSW_MODE = 'SwitchMode'
 VSW_DEFAULT_VSWITCH = 'ETHERNET0'
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
 
-_NB_PVID = 'PortVLANID'
-_NB_VNETS = 'VirtualNetworks'
-NB_SEAS = 'SharedEthernetAdapters'
-NB_SEA = 'SharedEthernetAdapter'
-_NB_LG = 'LoadGroup'
+_NB_FAILOVER = 'FailoverEnabled'
+_NB_LOADBALANCE = 'LoadBalancingEnabled'
 _NB_LGS = 'LoadGroups'
+_NB_PVID = 'PortVLANID'
+NB_SEAS = 'SharedEthernetAdapters'
+_NB_DEV_ID = 'UniqueDeviceID'
+_NB_VNETS = 'VirtualNetworks'
+_NB_LG = 'LoadGroup'
+NB_SEA = 'SharedEthernetAdapter'
+_NB_EL_ORDER = (_NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS, _NB_PVID, NB_SEAS,
+                _NB_DEV_ID, _NB_VNETS)
 
-_SEA_DEV_NAME = 'DeviceName'
 _SEA_VIO_HREF = 'AssignedVirtualIOServer'
+_SEA_BACKING_DEV = 'BackingDeviceChoice'
+_SEA_HA_MODE = 'HighAvailabilityMode'
+_SEA_DEV_NAME = 'DeviceName'
+_SEA_JUMBO_FRAMES = 'JumboFramesEnabled'
+_SEA_PVID = 'PortVLANID'
+_SEA_QOS_MODE = 'QualityOfServiceMode'
+_SEA_QUEUE_SIZE = 'QueueSize'
+_SEA_THREAD_MODE = 'ThreadModeEnabled'
 SEA_TRUNKS = 'TrunkAdapters'
+_SEA_PRIMARY = 'IsPrimary'
+_SEA_IP_INTERFACE = 'IPInterface'
+_SEA_DEV_ID = 'UniqueDeviceID'
+_SEA_LARGE_SEND = 'LargeSend'
+_SEA_EL_ORDER = (_SEA_VIO_HREF, _SEA_BACKING_DEV, _SEA_HA_MODE,
+                 _SEA_DEV_NAME, _SEA_JUMBO_FRAMES, _SEA_PVID,
+                 _SEA_QOS_MODE, _SEA_QUEUE_SIZE, _SEA_THREAD_MODE,
+                 _SEA_PRIMARY, _SEA_IP_INTERFACE, _SEA_DEV_ID,
+                 _SEA_LARGE_SEND)
 
 TA_ROOT = 'TrunkAdapter'
+_TA_CONN_NAME = 'DynamicReconfigurationConnectorName'
+_TA_LOC_CODE = 'LocationCode'
+_TA_REQUIRED = 'RequiredAdapter'
+_TA_VARIED_ON = 'VariedOn'
+_TA_VIRTUAL_SLOT = 'VirtualSlotNumber'
+_TA_ALLOWED_MAC = 'AllowedOperatingSystemMACAddresses'
+_TA_MAC = 'MACAddress'
 _TA_PVID = 'PortVLANID'
-_TA_DEV_NAME = 'DeviceName'
-_TA_TAG_SUPP = 'TaggedVLANSupported'
+_TA_QOS_PRI = 'QualityOfServicePriorityEnabled'
 _TA_VLAN_IDS = 'TaggedVLANIDs'
+_TA_TAG_SUPP = 'TaggedVLANSupported'
 _TA_VS_ID = 'VirtualSwitchID'
+_TA_DEV_NAME = 'DeviceName'
 _TA_TRUNK_PRI = 'TrunkPriority'
+_TA_EL_ORDER = (_TA_CONN_NAME, _TA_LOC_CODE, _TA_REQUIRED, _TA_VARIED_ON,
+                _TA_VIRTUAL_SLOT, _TA_ALLOWED_MAC, _TA_MAC, _TA_PVID,
+                _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP, _TA_VS_ID,
+                _TA_DEV_NAME, _TA_TRUNK_PRI)
 
 _LG_PVID = 'PortVLANID'
 _LG_TRUNKS = 'TrunkAdapters'
@@ -98,7 +131,7 @@ class VSwitch(ewrap.EntryWrapper):
         return self._get_val_str(_VSW_MODE)
 
 
-@ewrap.EntryWrapper.pvm_type('NetworkBridge')
+@ewrap.EntryWrapper.pvm_type('NetworkBridge', child_order=_NB_EL_ORDER)
 class NetBridge(ewrap.EntryWrapper):
     """Wrapper object for the NetBridge entry.
 
@@ -108,10 +141,58 @@ class NetBridge(ewrap.EntryWrapper):
     Adapters belonging to different Virtual I/O Servers.
     """
 
+    @classmethod
+    def bld(cls, pvid, backing_adpts, vlan_ids,
+            vswitch_id=VSW_DEFAULT_VSWITCH):
+        """Create the NetBridge entry that can be used for a create operation.
+
+        This is used when creating a NetBridge.
+
+        :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
+        :param backing_adpts: The backing ethernet adapter names for 1 or 2
+                              VIOS servers, depending whether failover is
+                              required.
+        :param vlan_ids: List of Additional VLAN ids for the trunk adapters.
+        :param vswitch_id: String ID of the backing vswitch
+        :returns: A new NetBridge EntryWrapper that represents the new
+                  NetBridge.
+        """
+        nb = super(NetBridge, cls)._bld()
+
+        if not backing_adpts:
+            raise ValueError()
+
+        # Set required failover flag based on number of VIOSs. True for 2,
+        # False for 1. We can determine this based on the number of provided
+        # backing adpts. If its 0 we should throw an exception, 1 means only
+        # 1 VIOS, 2 or more means we are defaulting to failover.
+        nb._failover(len(backing_adpts) != 1)
+
+        # Set required load balancing flag to false as default. Based on
+        # Load Group configuration.
+        nb._load_balanced(False)
+
+        # Collection must be set based on schema requirements.
+        nb.replace_list(_NB_LGS, [])
+
+        # Set PVID to user provided value.
+        nb._pvid(pvid)
+
+        seas = []
+        for backing_adpt in backing_adpts:
+            seas.append(SEA.bld(pvid, backing_adpt, vlan_ids, vswitch_id))
+        nb.seas = seas
+
+        return nb
+
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Network Bridge."""
         return self._get_val_int(_NB_PVID)
+
+    def _pvid(self, value):
+        """Private setter for the PVID used by Network Bridge builder."""
+        self.set_parm_value(_NB_PVID, value)
 
     @property
     def virtual_network_uri_list(self):
@@ -238,15 +319,53 @@ class NetBridge(ewrap.EntryWrapper):
         # Wasn't found,
         return False
 
+    def _failover(self, value):
+        """Private setter for the failover attr.
 
-@ewrap.ElementWrapper.pvm_type('SharedEthernetAdapter', has_metadata=True)
+        Determined by backing adapters on NetworkBridge creation.
+        """
+        self.set_parm_value(_NB_FAILOVER, u.sanitize_bool_for_api(value))
+
+    def _load_balanced(self, value):
+        """Private setter for the failover attr.
+
+        False by default on Network Bridge creation.
+        """
+        self.set_parm_value(_NB_LOADBALANCE, u.sanitize_bool_for_api(value))
+
+
+@ewrap.ElementWrapper.pvm_type('SharedEthernetAdapter', has_metadata=True,
+                               child_order=_SEA_EL_ORDER)
 class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
+
+    @classmethod
+    def bld(cls, pvid, adpt_name, vlan_ids, vswitch_id=VSW_DEFAULT_VSWITCH):
+        """Create the SEA entry that can be used for NetBridge creation.
+
+        :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
+        :param backing_adpts: List of the backing ethernet adapter names for
+                              1 or 2 VIOS servers, depending if failover is
+                              required.
+        :param vlan_ids: Additional VLAN ids for the trunk adapters.
+        :param vswitch_id: String ID of the backing vswitch
+        :returns: A new SEA ElementWrapper that represents the new SEA.
+        """
+        sea = super(SEA, cls)._bld()
+
+        sea._pvid(pvid)
+
+        sea._primary_adpt(TrunkAdapter.bld(pvid, adpt_name, vlan_ids))
+
+        return sea
 
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
         return self._get_val_int(c.PORT_VLAN_ID)
+
+    def _pvid(self, value):
+        self.set_parm_value(c.PORT_VLAN_ID, value)
 
     @property
     def dev_name(self):
@@ -275,6 +394,13 @@ class SEA(ewrap.ElementWrapper):
         """
         return self._get_trunks()[0]
 
+    def _primary_adpt(self, value):
+        new_list = [value]
+        if self._get_trunks():
+            new_list += self._get_trunks()
+
+        self.replace_list(SEA_TRUNKS, new_list)
+
     def _get_trunks(self):
         """Returns all of the trunk adapters.
 
@@ -288,9 +414,35 @@ class SEA(ewrap.ElementWrapper):
         return trunks
 
 
-@ewrap.ElementWrapper.pvm_type('TrunkAdapter')
+@ewrap.ElementWrapper.pvm_type('TrunkAdapter', child_order=_TA_EL_ORDER)
 class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
+
+    @classmethod
+    def bld(cls, pvid, adpt_name, vlan_ids, trunk_pri=1,
+            vswitch_id=VSW_DEFAULT_VSWITCH):
+        """Create the TrunkAdapter element that can be used for SEA creation.
+
+        :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
+        :param backing_adpts: List of the backing ethernet adapter names for
+                              1 or 2 VIOS servers, depending if failover is
+                              required.
+        :param vlan_ids: Additional VLAN ids for the trunk adapters.
+        :param trunk_pri: Trunk priority of this adapter. Defaults to 1.
+        :param vswitch_id: String ID of the backing vswitch
+        :returns: A new TrunkAdapter ElementWrapper that represents the new
+                  TrunkAdapter.
+        """
+        ta = super(TrunkAdapter, cls)._bld()
+
+        ta._required(True)
+        ta.pvid = pvid
+        ta.tagged_vlans = vlan_ids
+        ta.has_tag_support = True if vlan_ids else False
+        ta._vswitch_id(vswitch_id)
+        ta._trunk_pri(trunk_pri)
+
+        return ta
 
     @property
     def pvid(self):
@@ -299,7 +451,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
     @pvid.setter
     def pvid(self, value):
-        self.set_parm_value_int(_TA_PVID, value)
+        self.set_parm_value(_TA_PVID, value)
 
     @property
     def dev_name(self):
@@ -316,7 +468,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
     @has_tag_support.setter
     def has_tag_support(self, new_val):
-        self.set_parm_value(_TA_TAG_SUPP, str(new_val))
+        self.set_parm_value(_TA_TAG_SUPP, u.sanitize_bool_for_api(new_val))
 
     @property
     def tagged_vlans(self):
@@ -346,10 +498,19 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """Returns the virtual switch identifier."""
         return self._get_val_int(_TA_VS_ID)
 
+    def _vswitch_id(self, value):
+        self.set_parm_value(_TA_VS_ID, value)
+
     @property
     def trunk_pri(self):
         """Returns the trunk priority of the adapter."""
         return self._get_val_int(_TA_TRUNK_PRI)
+
+    def _trunk_pri(self, value):
+        self.set_parm_value(_TA_TRUNK_PRI, value)
+
+    def _required(self, value):
+        self.set_parm_value(_TA_REQUIRED, u.sanitize_bool_for_api(value))
 
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
