@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import pypowervm.adapter as adr
 import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -33,18 +32,25 @@ _DED_MIN_PROCS = 'MinimumProcessors'
 _DED_PROC_CFG = 'DedicatedProcessorConfiguration'
 _HAS_DED_PROCS = 'HasDedicatedProcessors'
 _SHARING_MODE = 'SharingMode'
+_CURR_SHARING_MODE = 'CurrentSharingMode'
 
 _SHR_PROC_CFG = 'SharedProcessorConfiguration'
 _PROC_UNIT = 'DesiredProcessingUnits'
-_MIN_PU = 'MinimumProcessingUnits'
-_MAX_PU = 'MaximumProcessingUnits'
+_MIN_PROC_UNIT = 'MinimumProcessingUnits'
+_MAX_PROC_UNIT = 'MaximumProcessingUnits'
 _DES_VIRT_PROC = 'DesiredVirtualProcessors'
 _MIN_VIRT_PROC = 'MinimumVirtualProcessors'
 _MAX_VIRT_PROC = 'MaximumVirtualProcessors'
+_SHARED_PROC_POOL_ID = 'SharedProcessorPoolID'
 
 _MEM = 'DesiredMemory'
 _MAX_MEM = 'MaximumMemory'
 _MIN_MEM = 'MinimumMemory'
+_RUN_MEM = 'RuntimeMemory'
+_CURR_MEM = 'CurrentMemory'
+_CURR_MAX_MEM = 'CurrentMaximumMemory'
+_CURR_MIN_MEM = 'CurrentMinimumMemory'
+_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
 
 _LPAR_NAME = 'PartitionName'
 _LPAR_ID = 'PartitionID'
@@ -58,9 +64,10 @@ _LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
 _LPAR_IO_CFG = 'PartitionIOConfiguration'
 
 # Dedicated sharing modes
-_DED_SHARING_MODES = ('sre idle proces', 'keep idle procs',
-                      'sre idle procs active', 'sre idle procs always')
-_SHARING_MODES = ('capped', 'uncapped')
+DED_SHARING_MODES = ('sre idle proces', 'keep idle procs',
+                     'sre idle procs active', 'sre idle procs always')
+# Shared Proc, sharing modes.
+SHARING_MODES = ('capped', 'uncapped')
 _UNCAPPED_WEIGHT = 'UncappedWeight'
 
 _AVAIL_PRIORITY = 'AvailabilityPriority'
@@ -120,7 +127,7 @@ _REF_CODE = 'ReferenceCode'
 _MIGRATION_STATE = 'MigrationState'
 
 
-def crt_ded_procs(proc, sharing_mode=_DED_SHARING_MODES[0],
+def crt_ded_procs(proc, sharing_mode=DED_SHARING_MODES[0],
                   min_proc=None, max_proc=None):
     """Create the dedicated processor structure
 
@@ -130,32 +137,18 @@ def crt_ded_procs(proc, sharing_mode=_DED_SHARING_MODES[0],
                      the proc param
     :param max_proc: The maximum number of processors. Defaults to the same as
                      the proc param
+
+    :returns: Dedicated processor element
     """
 
-    if min_proc is None:
-        min_proc = proc
-    if max_proc is None:
-        max_proc = proc
+    dproc = PartitionProcessorConfiguration.bld_dedicated(
+        proc, min_proc=min_proc, max_proc=max_proc, sharing_mode=sharing_mode)
 
-    proc_details = [adr.Element(_DED_PROCS, text=proc),
-                    adr.Element(_DED_MAX_PROCS, text=max_proc),
-                    adr.Element(_DED_MIN_PROCS, text=min_proc)]
-
-    proc_cfg = [adr.Element(_DED_PROC_CFG,
-                            attrib=c.DEFAULT_SCHEMA_ATTR,
-                            children=proc_details),
-                adr.Element(_HAS_DED_PROCS, text=T),
-                adr.Element(_SHARING_MODE, text=sharing_mode)]
-
-    proc_ele = adr.Element(_LPAR_PROC_CFG,
-                           attrib=c.DEFAULT_SCHEMA_ATTR,
-                           children=proc_cfg)
-
-    return proc_ele
+    return dproc.element
 
 
-def crt_shared_procs(proc_unit, proc, sharing_mode=_SHARING_MODES[1],
-                     uncapped_weight='128',
+def crt_shared_procs(proc_unit, proc, sharing_mode=SHARING_MODES[1],
+                     uncapped_weight=128,
                      min_proc_unit=None, max_proc_unit=None,
                      min_proc=None, max_proc=None):
     """Create the shared processor structure
@@ -170,42 +163,19 @@ def crt_shared_procs(proc_unit, proc, sharing_mode=_SHARING_MODES[1],
                      the proc param
     :param max_proc: The maximum number of processors. Defaults to the same as
                      the proc param
+    :returns: shared processor element
     """
 
-    if min_proc_unit is None:
-        min_proc_unit = proc_unit
-    if max_proc_unit is None:
-        max_proc_unit = proc_unit
-    if min_proc is None:
-        min_proc = proc
-    if max_proc is None:
-        max_proc = proc
-
-    proc_details = [adr.Element(_PROC_UNIT, text=proc_unit),
-                    adr.Element(_DES_VIRT_PROC, text=proc),
-                    adr.Element(_MAX_PU, text=max_proc_unit),
-                    adr.Element(_MAX_VIRT_PROC, text=max_proc),
-                    adr.Element(_MIN_PU, text=min_proc_unit),
-                    adr.Element(_MIN_VIRT_PROC, text=min_proc)]
-
-    if sharing_mode == 'uncapped':
-        proc_details.append(adr.Element(_UNCAPPED_WEIGHT,
-                            text=str(uncapped_weight)))
-    proc_cfg = [adr.Element(_HAS_DED_PROCS, text=F),
-                adr.Element(_SHR_PROC_CFG,
-                            attrib=c.DEFAULT_SCHEMA_ATTR,
-                            children=proc_details),
-                adr.Element(_SHARING_MODE, text=sharing_mode)]
-
-    proc_ele = adr.Element(_LPAR_PROC_CFG,
-                           attrib=c.DEFAULT_SCHEMA_ATTR,
-                           children=proc_cfg)
-
-    return proc_ele
+    shr_proc = PartitionProcessorConfiguration.bld_shared(
+        proc_unit, proc,
+        sharing_mode=sharing_mode, uncapped_weight=uncapped_weight,
+        min_proc_unit=min_proc_unit, max_proc_unit=max_proc_unit,
+        min_proc=min_proc, max_proc=max_proc, proc_pool=0)
+    return shr_proc.element
 
 
 def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
-             max_io_slots='64'):
+             max_io_slots=64):
     """Create the LPAR element structure
 
     :param name: The name of the lpar
@@ -218,30 +188,17 @@ def crt_lpar(name, type_, proc_cfg, mem, min_mem=None, max_mem=None,
                     mem param
     :param max_io_slots: The number of IO slots to configure for the
     partition (str)
-
+    :returns: LPAR element
     """
-    if min_mem is None:
-        min_mem = mem
-    if max_mem is None:
-        max_mem = mem
 
-    io_cfg = [adr.Element(_MAX_IO_SLOT, text=max_io_slots)]
-    memory = [adr.Element(_MEM, text=mem),
-              adr.Element(_MAX_MEM, text=max_mem),
-              adr.Element(_MIN_MEM, text=min_mem)]
+    io_cfg = PartitionIOConfiguration.bld(max_io_slots)
+    mem_wrap = PartitionMemoryConfiguration.bld(
+        mem, min_mem=min_mem, max_mem=max_mem)
 
-    attrs = [adr.Element(_LPAR_IO_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
-                         children=io_cfg),
-             adr.Element(_LPAR_MEM_CFG, attrib=c.DEFAULT_SCHEMA_ATTR,
-                         children=memory),
-             adr.Element(_LPAR_NAME, text=name),
-             proc_cfg,
-             adr.Element(_LPAR_TYPE, text=type_)
-             ]
-    lpar = adr.Element(LPAR.schema_type, attrib=c.DEFAULT_SCHEMA_ATTR,
-                       children=attrs)
-
-    return lpar
+    lpar = LPAR.bld(name, mem_wrap,
+                    PartitionProcessorConfiguration.wrap(proc_cfg),
+                    io_cfg=io_cfg, env=type_)
+    return lpar.element
 
 
 class LPARTypeEnum(object):
@@ -254,6 +211,29 @@ class LPARTypeEnum(object):
 class LPAR(ewrap.EntryWrapper):
 
     search_keys = dict(name='PartitionName', id='PartitionID')
+
+    @classmethod
+    def bld(cls, name, mem_cfg, proc_cfg, env=LPARTypeEnum.AIXLINUX,
+            io_cfg=None):
+        """Creates an LPAR wrapper.
+
+        :param name: The name of the lpar
+        :param mem_cfg: The memory configuration wrapper
+        :param proc_cfg: The processor configuration wrapper
+        :param env: The type of lpar, taken from LPARTypeEnum
+        :param io_cfg: The i/o configuration wrapper
+
+        :returns: LPAR wrapper
+        """
+
+        lpar = super(LPAR, cls)._bld()
+        if io_cfg:
+            lpar.io_config = io_cfg
+        lpar.mem_config = mem_cfg
+        lpar.name = name
+        lpar.proc_config = proc_cfg
+        lpar._env(env)
+        return lpar
 
     @property
     def state(self):
@@ -269,6 +249,10 @@ class LPAR(ewrap.EntryWrapper):
         """Short name (not ID, MTMS, or hostname)."""
         return self._get_val_str(_LPAR_NAME)
 
+    @name.setter
+    def name(self, val):
+        self.set_parm_value(_LPAR_NAME, val)
+
     @property
     def id(self):
         """Short ID (not UUID)."""
@@ -282,6 +266,9 @@ class LPAR(ewrap.EntryWrapper):
         should only happen for VIOSEntry.
         """
         return self._get_val_str(_LPAR_TYPE)
+
+    def _env(self, val):
+        self.set_parm_value(_LPAR_TYPE, val)
 
     @property
     def current_mem(self):
@@ -585,8 +572,386 @@ class LPAR(ewrap.EntryWrapper):
     @property
     def io_config(self):
         """The Partition I/O Configuration for the LPAR."""
-        elem = self.element.find(IO_CFG_ROOT)
+        elem = self.element.find(_LPAR_IO_CFG)
         return PartitionIOConfiguration.wrap(elem)
+
+    @io_config.setter
+    def io_config(self, io_cfg):
+        """The Partition I/O Configuration for the LPAR."""
+        elem = self._find_or_seed(_LPAR_IO_CFG)
+        self.element.replace(elem, io_cfg.element)
+
+    @property
+    def mem_config(self):
+        """The Partition Memory Configuration for the LPAR."""
+        elem = self.element.find(_LPAR_MEM_CFG)
+        return PartitionMemoryConfiguration.wrap(elem)
+
+    @mem_config.setter
+    def mem_config(self, io_cfg):
+        """The Partition Memory Configuration for the LPAR."""
+        elem = self._find_or_seed(_LPAR_MEM_CFG)
+        self.element.replace(elem, io_cfg.element)
+
+    @property
+    def proc_config(self):
+        """The Partition Processor Configuration for the LPAR."""
+        elem = self.element.find(_LPAR_PROC_CFG)
+        return PartitionProcessorConfiguration.wrap(elem)
+
+    @proc_config.setter
+    def proc_config(self, proc_config):
+        """The Partition Processor Configuration for the LPAR."""
+        elem = self._find_or_seed(_LPAR_PROC_CFG)
+        self.element.replace(elem, proc_config.element)
+
+
+@ewrap.ElementWrapper.pvm_type(_LPAR_MEM_CFG, has_metadata=True)
+class PartitionMemoryConfiguration(ewrap.ElementWrapper):
+    """Represents the partitions Memory Configuration."""
+
+    @classmethod
+    def bld(cls, mem, min_mem=None, max_mem=None):
+        """Creates the ParitionMemoryConfiguration.
+
+        :param mem: The amount of memory for the partition in MB
+        :param min_mem: The minimum amount of memory in MB. Defaults to
+            the mem param
+        :param max_mem: The maximum amount of memory in MB. Defaults to
+            the mem param
+        :returns: The memory configuration wrapper.
+        """
+        if min_mem is None:
+            min_mem = mem
+        if max_mem is None:
+            max_mem = mem
+
+        cfg = super(PartitionMemoryConfiguration, cls)._bld()
+        cfg.desired_mem = mem
+        cfg.max_mem = max_mem
+        cfg.min_mem = min_mem
+
+        return cfg
+
+    @property
+    def current_mem(self):
+        return self._get_val_int(_CURR_MEM, c.ZERO)
+
+    @property
+    def current_max_mem(self):
+        return self._get_val_int(_CURR_MAX_MEM, c.ZERO)
+
+    @property
+    def current_min_mem(self):
+        return self._get_val_int(_CURR_MIN_MEM, c.ZERO)
+
+    @property
+    def desired_mem(self):
+        return self._get_val_int(_MEM, c.ZERO)
+
+    @desired_mem.setter
+    def desired_mem(self, mem):
+        self.set_parm_value(_MEM, str(mem))
+
+    @property
+    def max_mem(self):
+        return self._get_val_int(_MAX_MEM, c.ZERO)
+
+    @max_mem.setter
+    def max_mem(self, mem):
+        self.set_parm_value(_MAX_MEM, str(mem))
+
+    @property
+    def min_mem(self):
+        return self._get_val_int(_MIN_MEM, c.ZERO)
+
+    @min_mem.setter
+    def min_mem(self, mem):
+        self.set_parm_value(_MIN_MEM, str(mem))
+
+    @property
+    def run_mem(self):
+        """Runtime memory."""
+        return self._get_val_int(_RUN_MEM, c.ZERO)
+
+    @property
+    def current_mem_share_enabled(self):
+        # The default is None instead of False so that the caller
+        # can know if the value is not set
+        return self._get_val_bool(_SHARED_MEM_ENABLED, None)
+
+
+@ewrap.ElementWrapper.pvm_type(_LPAR_PROC_CFG, has_metadata=True)
+class PartitionProcessorConfiguration(ewrap.ElementWrapper):
+    """Represents the partitions Processor Configuration.
+
+    Comprised of either the shared or dedicated processor config.
+    """
+
+    @classmethod
+    def bld_shared(cls, proc_unit, proc,
+                   sharing_mode=SHARING_MODES[1], uncapped_weight=128,
+                   min_proc_unit=None, max_proc_unit=None,
+                   min_proc=None, max_proc=None, proc_pool=0):
+        """Builds a Shared Processor configuration wrapper.
+
+        :param proc_unit: Amount of desired proc units (float)
+        :param proc: Number of virtual processors (int)
+        :param sharing_mode: Sharing mode of the processors (uncapped)
+        :param uncapped_weight: Uncapped weight of the processors (0-255)
+        :param min_proc_unit: Minimum proc units, default to proc unit value
+        :param max_proc_unit: Maximum proc units, default to proc unit value
+        :param min_proc: Minimum processors, default to proc value
+        :param max_proc: Maximum processors, default to proc value
+        :param proc_pool: The shared processor pool for the lpar, defaults to 0
+        :returns: Processor Config with shared processors
+
+        """
+        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld()
+        proc_cfg._has_dedicated_proc(False)
+
+        sproc = SharedProcessorConfiguration.bld(
+            proc_unit, proc, uncapped_weight=uncapped_weight,
+            min_proc_unit=min_proc_unit, max_proc_unit=max_proc_unit,
+            min_proc=min_proc, max_proc=max_proc, proc_pool=proc_pool)
+
+        proc_cfg._shared_proc_cfg(sproc)
+        proc_cfg.sharing_mode = sharing_mode
+        return proc_cfg
+
+    @classmethod
+    def bld_dedicated(cls, proc, min_proc=None, max_proc=None,
+                      sharing_mode=DED_SHARING_MODES[0]):
+
+        """Builds a Dedicated Processor configuration wrapper.
+
+        :param proc: Number of virtual processors (int)
+        :param min_proc: Minimum processors, default to proc value
+        :param max_proc: Maximum processors, default to proc value
+        :param sharing_mode: Sharing mode of the processors, 'sre idle proces'
+        :returns: Processor Config with dedicated processors
+
+        """
+
+        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld()
+
+        dproc = DedicatedProcessorConfiguration.bld(
+            proc, min_proc=min_proc, max_proc=max_proc)
+
+        proc_cfg._dedicated_proc_cfg(dproc)
+        proc_cfg._has_dedicated_proc(True)
+        proc_cfg.sharing_mode = sharing_mode
+        return proc_cfg
+
+    @property
+    def has_dedicated_proc(self):
+        return self._get_val_bool(_HAS_DED_PROCS)
+
+    def _has_dedicated_proc(self, val):
+        self.set_parm_value(_HAS_DED_PROCS, u.sanitize_bool_for_api(val))
+
+    @property
+    def sharing_mode(self):
+        """Sharing mode.
+
+        Note that the getter retrieves the CURRENT sharing mode; and the
+        setter sets the (PENDING) sharing mode.
+        """
+        return self._get_val_str(_CURR_SHARING_MODE)
+
+    @sharing_mode.setter
+    def sharing_mode(self, value):
+        """Sharing mode.
+
+        Note that the getter retrieves the CURRENT sharing mode; and the
+        setter sets the (PENDING) sharing mode.
+        """
+        self.set_parm_value(_SHARING_MODE, value)
+
+    @property
+    def shared_proc_cfg(self):
+        """Returns the Shared Processor Configuration."""
+        return SharedProcessorConfiguration.wrap(
+            self.element.find(_SHR_PROC_CFG))
+
+    def _shared_proc_cfg(self, spc):
+        elem = self._find_or_seed(_SHR_PROC_CFG)
+        self.element.replace(elem, spc.element)
+
+    @property
+    def dedicated_proc_cfg(self):
+        """Returns the Dedicated Processor Configuration."""
+        return DedicatedProcessorConfiguration.wrap(
+            self.element.find(_DED_PROC_CFG))
+
+    def _dedicated_proc_cfg(self, dpc):
+        elem = self._find_or_seed(_DED_PROC_CFG)
+        self.element.replace(elem, dpc.element)
+
+
+@ewrap.ElementWrapper.pvm_type(_SHR_PROC_CFG, has_metadata=True)
+class SharedProcessorConfiguration(ewrap.ElementWrapper):
+    """Represents the partitions Shared Processor Configuration."""
+
+    @classmethod
+    def bld(cls, proc_unit, proc, uncapped_weight=None,
+            min_proc_unit=None, max_proc_unit=None,
+            min_proc=None, max_proc=None, proc_pool=0):
+        """Builds a Shared Processor configuration wrapper.
+
+        :param proc_unit: Amount of desired proc units (float)
+        :param proc: Number of virtual processors (int)
+        :param uncapped_weight: Uncapped weight of the processors, 0-255
+        :param min_proc_unit: Minimum proc units, default to proc unit value
+        :param max_proc_unit: Maximum proc units, default to proc unit value
+        :param min_proc: Minimum processors, default to proc value
+        :param max_proc: Maximum processors, default to proc value
+        :param proc_pool: The shared processor pool for the lpar, defaults to 0
+        :returns: Processor Config with shared processors
+
+        """
+
+        # Set defaults if not specified
+        if min_proc_unit is None:
+            min_proc_unit = proc_unit
+        if max_proc_unit is None:
+            max_proc_unit = proc_unit
+        if min_proc is None:
+            min_proc = proc
+        if max_proc is None:
+            max_proc = proc
+
+        sproc = super(SharedProcessorConfiguration, cls)._bld()
+
+        sproc.desired_proc_units = proc_unit
+        sproc.desired_vcpus = proc
+        sproc.max_proc_units = max_proc_unit
+        sproc.max_vcpus = max_proc
+        sproc.min_proc_units = min_proc_unit
+        sproc.min_vcpus = min_proc
+        sproc.shared_proc_pool_id = proc_pool
+        if uncapped_weight is not None:
+            sproc.uncapped_weight = uncapped_weight
+
+        return sproc
+
+    @property
+    def desired_proc_units(self):
+        return self._get_val_float(_PROC_UNIT)
+
+    @desired_proc_units.setter
+    def desired_proc_units(self, val):
+        self.set_parm_value(_PROC_UNIT, u.sanitize_float_for_api(val))
+
+    @property
+    def max_proc_units(self):
+        return self._get_val_float(_MAX_PROC_UNIT)
+
+    @max_proc_units.setter
+    def max_proc_units(self, val):
+        self.set_parm_value(_MAX_PROC_UNIT, u.sanitize_float_for_api(val))
+
+    @property
+    def min_proc_units(self):
+        return self._get_val_float(_MIN_PROC_UNIT)
+
+    @min_proc_units.setter
+    def min_proc_units(self, val):
+        self.set_parm_value(_MIN_PROC_UNIT, u.sanitize_float_for_api(val))
+
+    @property
+    def desired_vcpus(self):
+        return self._get_val_int(_DES_VIRT_PROC, 0)
+
+    @desired_vcpus.setter
+    def desired_vcpus(self, val):
+        self.set_parm_value(_DES_VIRT_PROC, val)
+
+    @property
+    def max_vcpus(self):
+        return self._get_val_int(_MAX_VIRT_PROC, 0)
+
+    @max_vcpus.setter
+    def max_vcpus(self, val):
+        self.set_parm_value(_MAX_VIRT_PROC, val)
+
+    @property
+    def min_vcpus(self):
+        return self._get_val_int(_MIN_VIRT_PROC, 0)
+
+    @min_vcpus.setter
+    def min_vcpus(self, val):
+        self.set_parm_value(_MIN_VIRT_PROC, val)
+
+    @property
+    def shared_proc_pool_id(self):
+        return self._get_val_int(_SHARED_PROC_POOL_ID, 0)
+
+    @shared_proc_pool_id.setter
+    def shared_proc_pool_id(self, val):
+        self.set_parm_value(_SHARED_PROC_POOL_ID, val)
+
+    @property
+    def uncapped_weight(self):
+        return self._get_val_int(_UNCAPPED_WEIGHT, 0)
+
+    @uncapped_weight.setter
+    def uncapped_weight(self, val):
+        self.set_parm_value(_UNCAPPED_WEIGHT, str(val))
+
+
+@ewrap.ElementWrapper.pvm_type(_DED_PROC_CFG, has_metadata=True)
+class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
+    """Represents the partitions Dedicated Processor Configuration."""
+
+    @classmethod
+    def bld(cls, proc, min_proc=None, max_proc=None):
+        """Builds a Dedicated Processor configuration wrapper.
+
+        :param proc: Number of virtual processors (int)
+        :param min_proc: Minimum processors, default to proc value
+        :param max_proc: Maximum processors, default to proc value
+        :returns: Processor Config with dedicated processors
+
+        """
+
+        # Set defaults if not specified
+        if min_proc is None:
+            min_proc = proc
+        if max_proc is None:
+            max_proc = proc
+
+        dproc = super(DedicatedProcessorConfiguration, cls)._bld()
+
+        dproc.desired_procs = proc
+        dproc.max_procs = max_proc
+        dproc.min_procs = min_proc
+
+        return dproc
+
+    @property
+    def desired_procs(self):
+        return self._get_val_str(_DED_PROCS, c.ZERO)
+
+    @desired_procs.setter
+    def desired_procs(self, value):
+        self.set_parm_value(_DED_PROCS, value)
+
+    @property
+    def max_procs(self):
+        return self._get_val_str(_DED_MAX_PROCS, c.ZERO)
+
+    @max_procs.setter
+    def max_procs(self, value):
+        self.set_parm_value(_DED_MAX_PROCS, value)
+
+    @property
+    def min_procs(self):
+        return self._get_val_str(_DED_MIN_PROCS, c.ZERO)
+
+    @min_procs.setter
+    def min_procs(self, value):
+        self.set_parm_value(_DED_MIN_PROCS, value)
 
 
 @ewrap.ElementWrapper.pvm_type('PartitionIOConfiguration', has_metadata=True)
@@ -597,6 +962,18 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
     to physical hardware (io_slots) and those that get used by virtual
     hardware.
     """
+
+    @classmethod
+    def bld(cls, max_virt_slots):
+        """Builds a Partition IO configuration wrapper.
+
+        :param max_virt_slots: Number of virtual slots (int)
+        :returns: Partition IO configuration wrapper
+
+        """
+        cfg = super(PartitionIOConfiguration, cls)._bld()
+        cfg.max_virtual_slots = max_virt_slots
+        return cfg
 
     @property
     def max_virtual_slots(self):
