@@ -205,6 +205,12 @@ def sanitize_bool_for_api(bool_val):
     return str(bool_val).lower()
 
 
+def sanitize_float_for_api(float_val, precision=2):
+    """Sanitizes a float value for use in the API."""
+    template = '%.' + str(precision) + 'f'
+    return template % float(float_val)
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 
