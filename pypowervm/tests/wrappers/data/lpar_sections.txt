@@ -16,23 +16,26 @@
 #
 #
 SECTION:shared_procs
+<uom:Metadata xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/"><uom:Atom/></uom:Metadata>
 <uom:HasDedicatedProcessors xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">false</uom:HasDedicatedProcessors>
-<uom:SharedProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:DesiredProcessingUnits>1.2</uom:DesiredProcessingUnits><uom:DesiredVirtualProcessors>2</uom:DesiredVirtualProcessors><uom:MaximumProcessingUnits>1.2</uom:MaximumProcessingUnits><uom:MaximumVirtualProcessors>2</uom:MaximumVirtualProcessors><uom:MinimumProcessingUnits>1.2</uom:MinimumProcessingUnits><uom:MinimumVirtualProcessors>2</uom:MinimumVirtualProcessors><uom:UncappedWeight>128</uom:UncappedWeight></uom:SharedProcessorConfiguration>
+<uom:SharedProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredProcessingUnits>1.20</uom:DesiredProcessingUnits><uom:DesiredVirtualProcessors>2</uom:DesiredVirtualProcessors><uom:MaximumProcessingUnits>1.20</uom:MaximumProcessingUnits><uom:MaximumVirtualProcessors>2</uom:MaximumVirtualProcessors><uom:MinimumProcessingUnits>1.20</uom:MinimumProcessingUnits><uom:MinimumVirtualProcessors>2</uom:MinimumVirtualProcessors><uom:SharedProcessorPoolID>0</uom:SharedProcessorPoolID><uom:UncappedWeight>128</uom:UncappedWeight></uom:SharedProcessorConfiguration>
 <uom:SharingMode xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">uncapped</uom:SharingMode>
 END OF SECTION
 #
 SECTION:ded_procs
-<uom:DedicatedProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:DesiredProcessors>2</uom:DesiredProcessors><uom:MaximumProcessors>2</uom:MaximumProcessors><uom:MinimumProcessors>2</uom:MinimumProcessors></uom:DedicatedProcessorConfiguration>
+<uom:Metadata xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/"><uom:Atom/></uom:Metadata>
+<uom:DedicatedProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredProcessors>2</uom:DesiredProcessors><uom:MaximumProcessors>2</uom:MaximumProcessors><uom:MinimumProcessors>2</uom:MinimumProcessors></uom:DedicatedProcessorConfiguration>
 <uom:HasDedicatedProcessors xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">true</uom:HasDedicatedProcessors>
 <uom:SharingMode xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">sre idle proces</uom:SharingMode>
 END OF SECTION
 #
 #
 SECTION:lpar_1
-<uom:PartitionIOConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
-<uom:PartitionMemoryConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
+<uom:Metadata xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/"><uom:Atom/></uom:Metadata>
+<uom:PartitionIOConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
+<uom:PartitionMemoryConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
 <uom:PartitionName xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">the_name</uom:PartitionName>
-<uom:PartitionProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:DedicatedProcessorConfiguration schemaVersion="V1_0"><uom:DesiredProcessors>2</uom:DesiredProcessors><uom:MaximumProcessors>2</uom:MaximumProcessors><uom:MinimumProcessors>2</uom:MinimumProcessors></uom:DedicatedProcessorConfiguration><uom:HasDedicatedProcessors>true</uom:HasDedicatedProcessors><uom:SharingMode>sre idle proces</uom:SharingMode></uom:PartitionProcessorConfiguration>
+<uom:PartitionProcessorConfiguration xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DedicatedProcessorConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredProcessors>2</uom:DesiredProcessors><uom:MaximumProcessors>2</uom:MaximumProcessors><uom:MinimumProcessors>2</uom:MinimumProcessors></uom:DedicatedProcessorConfiguration><uom:HasDedicatedProcessors>true</uom:HasDedicatedProcessors><uom:SharingMode>sre idle proces</uom:SharingMode></uom:PartitionProcessorConfiguration>
 <uom:PartitionType xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">OS400</uom:PartitionType>
 END OF SECTION
 
