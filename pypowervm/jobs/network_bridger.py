@@ -129,9 +129,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
 
     # At this point, the network bridge should just need to be updated.  The
     # Load Groups on the Network Bridge should be correct.
-    adapter.update(req_nb.element, req_nb.etag, pvm_ms.System.schema_type,
-                   root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
-                   child_id=req_nb.uuid)
+    req_nb.update(adapter)
 
 
 @pvm_retry.retry()
@@ -307,18 +305,11 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     impacted_nb.load_grps.remove(impacted_lg)
 
     # Need two updates.  One to remove the load group.
-    nb_resp = adapter.update(impacted_nb.element, impacted_nb.etag,
-                             pvm_ms.System.schema_type, root_id=host_uuid,
-                             child_type=pvm_net.NetBridge.schema_type,
-                             child_id=impacted_nb.uuid)
+    impacted_nb = impacted_nb.update(adapter)
 
     # A second to add the new load group in
-    impacted_nb = pvm_net.NetBridge.wrap(nb_resp)
     impacted_nb.load_grps.append(new_lg_w)
-    adapter.update(
-        impacted_nb.element, impacted_nb.etag, pvm_ms.System.schema_type,
-        root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
-        child_id=impacted_nb.uuid)
+    impacted_nb = impacted_nb.update(adapter)
 
     # Now that the old vid is detached from the load group, need to delete
     # the Virtual Network (because it was 'tagged' = False).
@@ -409,9 +400,7 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
         matching_lg.virtual_network_uri_list.remove(vnet_uri)
 
     # Now update the network bridge.
-    adapter.update(req_nb.element, req_nb.etag, pvm_ms.System.schema_type,
-                   root_id=host_uuid, child_type=pvm_net.NetBridge.schema_type,
-                   child_id=req_nb.uuid)
+    req_nb.update(adapter)
 
 
 def _find_vnet_uri_from_lg(adapter, lg, vlan):
