@@ -36,8 +36,13 @@ _CL_NODE = 'Node'
 # Node Constants
 _N_HOSTNAME = 'HostName'
 _N_LPARID = 'PartitionID'
+_N_NAME = 'PartitionName'
 _N_VIOS_LINK = 'VirtualIOServer'
+_N_VIOS_LEVEL = 'VirtualIOServerLevel'
+_N_IPADDR = 'IPAddress'
 _N_MTMS = ms.MTMS.schema_type
+_N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, _N_MTMS, _N_VIOS_LEVEL,
+               _N_VIOS_LINK, _N_IPADDR)
 
 
 @ewrap.EntryWrapper.pvm_type('Cluster')
@@ -123,7 +128,8 @@ class Cluster(ewrap.EntryWrapper):
         self.replace_list(_CL_NODES, ns)
 
 
-@ewrap.ElementWrapper.pvm_type('Node', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('Node', has_metadata=True,
+                               child_order=_N_EL_ORDER)
 class Node(ewrap.ElementWrapper):
     """A Node represents a VIOS member of a Cluster.
 
@@ -153,15 +159,14 @@ class Node(ewrap.ElementWrapper):
         :param vios_uri: String URI representing this Node.
         """
         node = cls._bld()
-        # The order of these assignments IS significant
-        if hostname:
-            node._hostname(hostname)
+        if vios_uri:
+            node._vios_uri(vios_uri)
         if lpar_id:
             node._lpar_id(lpar_id)
         if mtms:
             node._mtms(mtms)
-        if vios_uri:
-            node._vios_uri(vios_uri)
+        if hostname:
+            node._hostname(hostname)
         return node
 
     @property
@@ -190,10 +195,9 @@ class Node(ewrap.ElementWrapper):
         :param new_mtms: May be either a string of the form 'MT-M*S' or a
                          managed_system.MTMS ElementWrapper.
         """
-        el = self._find_or_seed(_N_MTMS)
         if not isinstance(new_mtms, ms.MTMS):
             new_mtms = ms.MTMS.bld(new_mtms)
-        self.element.replace(el, new_mtms.element)
+        self.inject(new_mtms.element)
 
     @property
     def vios_uri(self):
