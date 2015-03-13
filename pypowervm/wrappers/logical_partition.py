@@ -598,10 +598,10 @@ class LPAR(ewrap.EntryWrapper):
         return PartitionMemoryConfiguration.wrap(elem)
 
     @mem_config.setter
-    def mem_config(self, io_cfg):
+    def mem_config(self, mem_cfg):
         """The Partition Memory Configuration for the LPAR."""
         elem = self._find_or_seed(_LPAR_MEM_CFG)
-        self.element.replace(elem, io_cfg.element)
+        self.element.replace(elem, mem_cfg.element)
 
     @property
     def proc_config(self):
