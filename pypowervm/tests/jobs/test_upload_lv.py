@@ -21,6 +21,7 @@ import pypowervm.exceptions as exc
 from pypowervm.jobs import upload_lv
 import pypowervm.tests.jobs.util as tju
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.storage as pvm_stor
 import pypowervm.wrappers.vios_file as vf
 
 import unittest
@@ -76,10 +77,10 @@ class TestUploadLV(unittest.TestCase):
 
         # First need to load in the various test responses.
         vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
-        mock_adpt.update.return_value = vg_post_disk_create
+        mock_adpt.update_by_path.return_value = pvm_stor.VG.wrap(vg_post_crt)
         mock_create_file.return_value = self._fake_meta()
 
         f_uuid = upload_lv.upload_new_vdisk(
@@ -105,10 +106,10 @@ class TestUploadLV(unittest.TestCase):
 
         # First need to load in the various test responses.
         vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
-        mock_adpt.update.return_value = vg_post_disk_create
+        mock_adpt.update_by_path.return_value = pvm_stor.VG.wrap(vg_post_crt)
         mock_create_file.return_value = self._fake_meta()
 
         self.assertRaises(exc.Error,

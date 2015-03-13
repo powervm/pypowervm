@@ -78,10 +78,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     vol_grp.virtual_disks.append(new_vdisk)
 
     # Now perform an update on the adapter.
-    resp = adapter.update(vol_grp.entry.element, vol_grp_data.etag,
-                          vios.VIOS.schema_type, v_uuid, stor.VG.schema_type,
-                          vol_grp_uuid, xag=None)
-    vol_grp = stor.VG.wrap(resp.entry)
+    vol_grp = vol_grp.update(adapter)
 
     # The new Virtual Disk should be created.  Find the one we created.
     n_vdisk = None
