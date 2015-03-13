@@ -1432,6 +1432,65 @@ class Element(object):
         """Adds subelement to the end of this element's list of subelements."""
         self.element.append(subelement.element)
 
+    def inject(self, subelement, ordering_list=(), replace=True):
+        """Inserts subelement at the correct position in self's children.
+
+        Uses ordering_list to determine the proper spot at which to insert the
+        specified subelement.
+
+        :param subelement: The element to inject as a child of this element.
+        :param ordering_list: Iterable of string tag names representing the
+                              desired ordering of children for this element.
+                              If subelement's tag is not included in this list,
+                              the behavior is self.append(subelement).
+        :param replace: If True, and an existing child with subelement's tag is
+                        found, it is replaced.  If False, subelement is added
+                        after the existing child(ren).  Note: You probably want
+                        to use True only/always when subelement is maxOccurs=1.
+                        Conversely, you probably want to use False only/always
+                        when subelement is unbounded.  If you use True and more
+                        than one matching child is found, the last one is
+                        replaced.
+        """
+        def ln(tag):
+            """Localname of an tag (without namespace)."""
+            return etree.QName(tag).localname
+
+        children = list(self.element)
+        # If no children, just append
+        if not children:
+            self.append(subelement)
+            return
+
+        # Any children with the subelement's tag?
+        subfound = self.findall(subelement.tag)
+        if subfound:
+            if replace:
+                self.replace(subfound[-1], subelement)
+            else:
+                subfound[-1].element.addnext(subelement.element)
+            return
+
+        # Now try to figure out insertion point based on ordering_list.
+        # Ignore namespaces.
+        ordlist = [ln(tag) for tag in ordering_list]
+        subtag = ln(subelement.element.tag)
+        # If subelement's tag is not in the ordering list, append
+        if subtag not in ordlist:
+            self.append(subelement)
+            return
+
+        # Get the tags preceding that of subelement
+        pres = ordlist[:ordlist.index(subtag)]
+        # Find the first child whose tag is not in that list
+        for child in children:
+            if ln(child.tag) not in pres:
+                # Found the insertion point
+                child.addprevious(subelement.element)
+                return
+        # If we got here, all existing children need to precede subelement.
+        self.append(subelement)
+
     def find(self, match):
         """Finds the first subelement matching match.
 

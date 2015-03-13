@@ -417,6 +417,136 @@ class TestElement(unittest.TestCase):
             're/uom/mc/2012_10/"><![CDATA[text]]></uom:tag>'.encode('utf-8'))
 
 
+class TestElementInject(unittest.TestCase):
+
+    def setUp(self):
+        super(TestElementInject, self).setUp()
+        self.ordering_list = ('AdapterType', 'UseNextAvailableSlotID',
+                              'RemoteLogicalPartitionID', 'RemoteSlotNumber')
+        self.child_at = adp.Element('AdapterType', text='Client')
+        self.child_unasi = adp.Element('UseNextAvailableSlotID', text='true')
+        self.child_rlpi1 = adp.Element('RemoteLogicalPartitionID', text='1')
+        self.child_rlpi2 = adp.Element('RemoteLogicalPartitionID', text='2')
+        self.child_rlpi3 = adp.Element('RemoteLogicalPartitionID', text='3')
+        self.child_rsn = adp.Element('RemoteSlotNumber', text='12')
+        self.all_children = [
+            self.child_at, self.child_unasi, self.child_rlpi1, self.child_rsn]
+
+    @staticmethod
+    def _mk_el(children):
+        return adp.Element('VirtualSCSIClientAdapter',
+                           attrib={'schemaVersion': 'V1_0'},
+                           children=children)
+
+    def assert_expected_children(self, parent, *expected_children):
+        """Assert that *children are the children of parent, in that order.
+
+        :param parent: Parent adapter.Element
+        :param children: Child adapter.Elements
+        """
+        actual = list(parent.element)
+        expected = [child.element for child in expected_children]
+        self.assertEqual(actual, expected)
+
+    def test_no_children(self):
+        """Inject when the element has no children - should "append"."""
+        el = self._mk_el([])
+        el.inject(self.child_rlpi1)
+        self.assert_expected_children(el, self.child_rlpi1)
+        # Result should be same regardless of other params
+        el = self._mk_el([])
+        el.inject(self.child_rlpi1, self.ordering_list, replace=False)
+        self.assert_expected_children(el, self.child_rlpi1)
+
+    def test_subelement_found_one_replace_true(self):
+        """Replace existing child with same tag."""
+        el = self._mk_el(self.all_children)
+        el.inject(self.child_rlpi2, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi2, self.child_rsn)
+        # Proving default replace=True - same result if specified
+        el = self._mk_el(self.all_children)
+        el.inject(self.child_rlpi2, self.ordering_list, replace=True)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi2, self.child_rsn)
+
+    def test_subelement_found_mult_replace_true(self):
+        """Replace existing child with same tag when >1 such children.
+
+        Should replace the last such child.
+        """
+        el = self._mk_el([self.child_at, self.child_unasi, self.child_rlpi1,
+                          self.child_rlpi3, self.child_rsn])
+        el.inject(self.child_rlpi2, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rlpi2,
+                                      self.child_rsn)
+
+    def test_subelement_found_replace_false(self):
+        """Inject after existing child(ren) with same tag."""
+        el = self._mk_el(self.all_children)
+        el.inject(self.child_rlpi2, self.ordering_list, False)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rlpi2,
+                                      self.child_rsn)
+        el.inject(self.child_rlpi3, self.ordering_list, False)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rlpi2,
+                                      self.child_rlpi3, self.child_rsn)
+
+    def test_subelement_not_in_ordering_list(self):
+        """Subelement not in ordering list - should append."""
+        el = self._mk_el(self.all_children)
+        ch = adp.Element('SomeNewElement', text='foo')
+        el.inject(ch, ordering_list=self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rsn, ch)
+
+    def test_first_populated(self):
+        """Inject the first child when children are otherwise populated."""
+        el = self._mk_el(self.all_children[1:])
+        el.inject(self.child_at, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rsn)
+
+    def test_first_sparse(self):
+        """Inject the first child when children are sparsely populated."""
+        # This is most interesting when the existing child is not the one right
+        # next to the injectee.
+        el = self._mk_el([self.child_rlpi1])
+        el.inject(self.child_at, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_rlpi1)
+
+    def test_last_populated(self):
+        """Inject the last child when children are otherwise populated."""
+        el = self._mk_el(self.all_children[:-1])
+        el.inject(self.child_rsn, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rsn)
+
+    def test_last_sparse(self):
+        """Inject the last child when children are sparsely populated."""
+        # This is most interesting when the existing child is not the one right
+        # next to the injectee.
+        el = self._mk_el([self.child_unasi])
+        el.inject(self.child_rsn, self.ordering_list)
+        self.assert_expected_children(el, self.child_unasi, self.child_rsn)
+
+    def test_middle_populated(self):
+        """Inject a middle child when children are otherwise populated."""
+        el = self._mk_el([self.child_at, self.child_unasi, self.child_rsn])
+        el.inject(self.child_rlpi1, self.ordering_list)
+        self.assert_expected_children(el, self.child_at, self.child_unasi,
+                                      self.child_rlpi1, self.child_rsn)
+
+    def test_middle_sparse(self):
+        """Inject a middle child when children are sparsely populated."""
+        el = self._mk_el([self.child_at, self.child_rsn])
+        el.inject(self.child_rlpi1, self.ordering_list)
+        self.assert_expected_children(
+            el, self.child_at, self.child_rlpi1, self.child_rsn)
+
+
 class TestElementWrapper(unittest.TestCase):
     """Tests for the ElementWrapper class."""
 
