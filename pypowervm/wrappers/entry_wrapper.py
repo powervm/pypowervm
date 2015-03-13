@@ -51,7 +51,7 @@ class Wrapper(object):
 
     @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
-                 attrib=wc.DEFAULT_SCHEMA_ATTR):
+                 attrib=wc.DEFAULT_SCHEMA_ATTR, child_order=None):
         """Decorator for {Entry|Element}Wrappers of PowerVM objects.
 
         Sets foundational fields used for construction of new wrapper instances
@@ -68,6 +68,9 @@ class Wrapper(object):
         :param ns: PowerVM REST API Schema namespace of the subclass.
         :param attrib: Default attributes for fresh Element when factory
                        constructor is used.
+        :param child_order: Ordered list of the element names of the first-
+                            level children of this element/entry.  Used for
+                            order-agnostic construction/setting of values.
         """
         def inner(class_):
             class_.schema_type = schema_type
@@ -77,9 +80,18 @@ class Wrapper(object):
                 class_.schema_ns = ns
             if attrib is not None:
                 class_.default_attrib = attrib
+            if child_order:
+                co = list(child_order)
+                if class_.has_metadata and co[0] != 'Metadata':
+                    co.insert(0, 'Metadata')
+                class_._child_order = tuple(co)
             Wrapper._pvm_object_registry[schema_type] = class_
             return class_
         return inner
+
+    @property
+    def child_order(self):
+        return getattr(self, '_child_order', ())
 
     def _find(self, property_name, use_find_all=False):
         """Will find a given element within the object.
@@ -115,7 +127,7 @@ class Wrapper(object):
         else:
             new_elem = adpt.Element(prop_name, attrib=attrib,
                                     children=[])
-            root_elem.append(new_elem)
+            root_elem.inject(new_elem, self.child_order)
             return new_elem
 
     def replace_list(self, prop_name, prop_children,
@@ -170,7 +182,9 @@ class Wrapper(object):
             if create:
                 element_value = adpt.Element(property_name, ns=self.schema_ns,
                                              attrib=None, text=str(value))
-                self.element.append(element_value)
+                self.element.inject(element_value,
+                                    ordering_list=self.child_order,
+                                    replace=True)
 
         element_value.text = str(value)
 
@@ -347,10 +361,10 @@ class Wrapper(object):
                 new_el = append_point._find(next_prop)
                 if new_el is None:
                     new_el = adpt.Element(next_prop)
-                    append_point.element.append(new_el)
+                    append_point.element.inject(new_el, self.child_order)
                 append_point = ElementWrapper.wrap(new_el)
             link = adpt.Element(l[-1])
-            append_point.element.append(link)
+            append_point.element.inject(link, self.child_order)
         # At this point we have found or created the propname element.  Its
         # handle is in the link var.
         link.attrib['href'] = href
