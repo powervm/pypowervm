@@ -549,8 +549,17 @@ class EntryWrapper(Wrapper):
                             suffix_parm=search_parm)
         return cls.wrap(resp)
 
-    def update(self, adapter):
-        return adapter.update_by_path(self, self.etag, self.href)
+    def update(self, adapter, xag=None):
+        """Performs adapter.update of this wrapper.
+
+        :param adapter: The pypowervm.adapter.Adapter through which to perform
+                        the update.
+        :param xag: List of extended attribute group names.
+        :return: The updated wrapper, per the response from the Adapter.update.
+        """
+        # No-op if xag is empty/None
+        path = adapter.extend_path(self.href, xag=xag)
+        return self.wrap(adapter.update_by_path(self, self.etag, path))
 
     @property
     def element(self):

@@ -32,6 +32,13 @@ import pypowervm.wrappers.storage as stor
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
 
+def _assert_clusters_equal(tc, cl1, cl2):
+    tc.assertEqual(cl1.name, cl2.name)
+    tc.assertEqual(cl1.repos_pv.name, cl2.repos_pv.name)
+    tc.assertEqual(cl1.repos_pv.udid, cl2.repos_pv.udid)
+    tc.assertEqual(cl1.nodes[0].hostname, cl2.nodes[0].hostname)
+
+
 class SubWrapper(ewrap.Wrapper):
     schema_type = 'SubWrapper'
     type_and_uuid = 'SubWrapper_TestClass'
@@ -501,19 +508,13 @@ class TestRefresh(unittest.TestCase):
             return out_resp
         return read_by_href
 
-    def _assert_clusters_equal(self, cl1, cl2):
-        self.assertEqual(cl1.name, cl2.name)
-        self.assertEqual(cl1.repos_pv.name, cl2.repos_pv.name)
-        self.assertEqual(cl1.repos_pv.udid, cl2.repos_pv.udid)
-        self.assertEqual(cl1.nodes[0].hostname, cl2.nodes[0].hostname)
-
     @mock.patch('pypowervm.adapter.Adapter.read_by_href')
     def test_no_etag(self, mock_read):
         mock_read.side_effect = self._mock_read_by_href(
             None, self.resp200old)
         clust_old_save = copy.deepcopy(self.clust_old)
         clust_refreshed = self.clust_old.refresh(self.adp)
-        self._assert_clusters_equal(clust_old_save, clust_refreshed)
+        _assert_clusters_equal(self, clust_old_save, clust_refreshed)
 
     @mock.patch('pypowervm.adapter.Adapter.read_by_href')
     def test_etag_match(self, mock_read):
@@ -531,7 +532,7 @@ class TestRefresh(unittest.TestCase):
         self.clust_old._etag = self.old_etag
         clust_new_save = copy.deepcopy(self.clust_new)
         clust_refreshed = self.clust_old.refresh(self.adp)
-        self._assert_clusters_equal(clust_new_save, clust_refreshed)
+        _assert_clusters_equal(self, clust_new_save, clust_refreshed)
 
 
 class TestUpdate(unittest.TestCase):
@@ -551,8 +552,26 @@ class TestUpdate(unittest.TestCase):
 
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update(self, mock_ubp):
-        self.cl.update(self.adp)
+        new_etag = '456'
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp.entry = self.cl.entry
+        mock_ubp.return_value = resp
+        newcl = self.cl.update(self.adp)
         mock_ubp.assert_called_with(self.cl, self.clust_etag, self.clust_href)
+        _assert_clusters_equal(self, self.cl, newcl)
+        self.assertEqual(newcl.etag, new_etag)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_update_xag(self, mock_ubp):
+        new_etag = '456'
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp.entry = self.cl.entry
+        mock_ubp.return_value = resp
+        newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
+        mock_ubp.assert_called_with(self.cl, self.clust_etag,
+                                    self.clust_href + '?group=one,three,two')
+        _assert_clusters_equal(self, self.cl, newcl)
+        self.assertEqual(newcl.etag, new_etag)
 
 if __name__ == '__main__':
     unittest.main()
