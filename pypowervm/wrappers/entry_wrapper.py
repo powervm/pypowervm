@@ -549,6 +549,9 @@ class EntryWrapper(Wrapper):
                             suffix_parm=search_parm)
         return cls.wrap(resp)
 
+    def update(self, adapter):
+        return adapter.update_by_path(self, self.etag, self.href)
+
     @property
     def element(self):
         return self.entry.element

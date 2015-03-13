@@ -464,10 +464,11 @@ class TestSearch(unittest.TestCase):
 
 
 class TestRefresh(unittest.TestCase):
+    """Tests for Adapter.refresh()."""
+
     clust_uuid = 'cluster_uuid'
     clust_href = 'https://server:12443/rest/api/uom/Cluster' + clust_uuid
 
-    """Tests for Adapter.refresh()."""
     def setUp(self):
         super(TestRefresh, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
@@ -531,6 +532,27 @@ class TestRefresh(unittest.TestCase):
         clust_new_save = copy.deepcopy(self.clust_new)
         clust_refreshed = self.clust_old.refresh(self.adp)
         self._assert_clusters_equal(clust_new_save, clust_refreshed)
+
+
+class TestUpdate(unittest.TestCase):
+    clust_uuid = 'cluster_uuid'
+    clust_href = 'https://server:12443/rest/api/uom/Cluster' + clust_uuid
+    clust_etag = '123'
+
+    def setUp(self):
+        super(TestUpdate, self).setUp()
+        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
+        self.cl = clust.Cluster.bld(
+            'mycluster', stor.PV.bld('hdisk1', 'udid1'),
+            clust.Node.bld('hostname1'))
+        self.cl._etag = self.clust_etag
+        self.cl.entry.properties = props
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_update(self, mock_ubp):
+        self.cl.update(self.adp)
+        mock_ubp.assert_called_with(self.cl, self.clust_etag, self.clust_href)
 
 if __name__ == '__main__':
     unittest.main()
