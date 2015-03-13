@@ -93,29 +93,24 @@ class TestNetworkBridger(unittest.TestCase):
 
         def validate_of_update_nb(*kargs, **kwargs):
             # Validate args
-            self.assertEqual('ManagedSystem', kargs[2])
-            elem = kargs[0]
-            self.assertIsNotNone(elem)
-            netbr = pvm_net.NetBridge.wrap(adpt.Entry([], elem))
+            nb = kargs[0]
+            self.assertIsNotNone(nb)
             self.assertEqual(1,
-                             len(netbr.load_grps[0].virtual_network_uri_list))
+                             len(nb.load_grps[0].virtual_network_uri_list))
             self.assertEqual(2,
-                             len(netbr.load_grps[1].virtual_network_uri_list))
+                             len(nb.load_grps[1].virtual_network_uri_list))
+            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
 
-            # Validate the named args
-            self.assertEqual('host_uuid', kwargs.get('root_id'))
-            self.assertEqual('NetworkBridge', kwargs.get('child_type'))
-            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
-                             kwargs.get('child_id'))
+            return nb.entry
 
-        mock_adpt.update.side_effect = validate_of_update_nb
+        mock_adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke
         net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
                                  'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2000)
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update.call_count)
+        self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
     @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
     @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
@@ -133,20 +128,14 @@ class TestNetworkBridger(unittest.TestCase):
 
         def validate_of_update_nb(*kargs, **kwargs):
             # Validate args
-            self.assertEqual('ManagedSystem', kargs[2])
-            elem = kargs[0]
-            self.assertIsNotNone(elem)
-            nb = pvm_net.NetBridge.wrap(adpt.Entry({}, elem))
+            nb = kargs[0]
             self.assertEqual(1, len(nb.load_grps[0].virtual_network_uri_list))
             self.assertEqual(2, len(nb.load_grps[1].virtual_network_uri_list))
-
-            # Validate the named args
-            self.assertEqual('host_uuid', kwargs.get('root_id'))
-            self.assertEqual('NetworkBridge', kwargs.get('child_type'))
             self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
-                             kwargs.get('child_id'))
+                             nb.uuid)
+            return nb.entry
 
-        mock_adpt.update.side_effect = validate_of_update_nb
+        mock_adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke.  VLAN 2227 should be on there already.
         net_br.ensure_vlans_on_nb(mock_adpt, 'host_uuid',
@@ -154,7 +143,7 @@ class TestNetworkBridger(unittest.TestCase):
                                   [2227, 2000])
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update.call_count)
+        self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
     @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
     @mock.patch('pypowervm.jobs.network_bridger._find_available_ld_grp')
@@ -178,30 +167,21 @@ class TestNetworkBridger(unittest.TestCase):
 
         def validate_of_update_nb(*kargs, **kwargs):
             # Validate args
-            self.assertEqual('ManagedSystem', kargs[2])
-            elem = kargs[0]
-            self.assertIsNotNone(elem)
-            netbr = pvm_net.NetBridge.wrap(adpt.Entry([], elem))
-            self.assertEqual(1,
-                             len(netbr.load_grps[0].virtual_network_uri_list))
-            self.assertEqual(2,
-                             len(netbr.load_grps[2].virtual_network_uri_list))
+            nb = kargs[0]
+            self.assertIsNotNone(nb)
+            self.assertEqual(1, len(nb.load_grps[0].virtual_network_uri_list))
+            self.assertEqual(2, len(nb.load_grps[2].virtual_network_uri_list))
+            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
+            return nb.entry
 
-            # Validate the named args
-            self.assertEqual('host_uuid', kwargs.get('root_id'))
-            self.assertEqual('NetworkBridge', kwargs.get('child_type'))
-            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
-                             kwargs.get('child_id'))
-            pass
-
-        mock_adpt.update.side_effect = validate_of_update_nb
+        mock_adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke
         net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
                                  'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2000)
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update.call_count)
+        self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_find_vswitch(self, mock_adpt):
@@ -274,11 +254,17 @@ class TestNetworkBridger(unittest.TestCase):
         mock_find_vnet.return_value = mock.MagicMock()
         mock_find_vnet.return_value.href = 'other'
 
+        # Make this function return itself.
+        def return_self(*kargs, **kwargs):
+            return kargs[0].entry
+
+        mock_adpt.update_by_path.side_effect = return_self
+
         net_br._reassign_arbitrary_vid(mock_adpt, host_uuid, 4094, 4093, nb)
 
         # Make sure the mocks were called
         self.assertEqual(1, mock_find_vnet.call_count)
-        self.assertEqual(2, mock_adpt.update.call_count)
+        self.assertEqual(2, mock_adpt.update_by_path.call_count)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_remove_vlan_from_nb(self, mock_adpt):
@@ -290,13 +276,14 @@ class TestNetworkBridger(unittest.TestCase):
 
         def validate_update(*kargs, **kwargs):
             # Make sure the load groups are down to just 1 now.
-            nb = pvm_net.NetBridge.wrap(adpt.Entry({}, kargs[0]))
+            nb = kargs[0]
             self.assertEqual(1, len(nb.load_grps))
+            return nb.entry
 
-        mock_adpt.update.side_effect = validate_update
+        mock_adpt.update_by_path.side_effect = validate_update
 
         net_br.remove_vlan_from_nb(mock_adpt, host_uuid, nb_uuid, 1000)
-        self.assertEqual(1, mock_adpt.update.call_count)
+        self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_remove_vlan_from_nb_bad_vid(self, mock_adpt):

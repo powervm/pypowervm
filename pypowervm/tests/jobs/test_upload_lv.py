@@ -76,10 +76,10 @@ class TestUploadLV(unittest.TestCase):
 
         # First need to load in the various test responses.
         vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
-        mock_adpt.update.return_value = vg_post_disk_create
+        mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
         f_uuid = upload_lv.upload_new_vdisk(
@@ -105,10 +105,10 @@ class TestUploadLV(unittest.TestCase):
 
         # First need to load in the various test responses.
         vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_disk_create = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
 
         mock_adpt.read.return_value = vg_orig
-        mock_adpt.update.return_value = vg_post_disk_create
+        mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
         self.assertRaises(exc.Error,
