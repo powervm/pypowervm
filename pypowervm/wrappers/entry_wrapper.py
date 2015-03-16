@@ -153,19 +153,12 @@ class Wrapper(object):
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
         """
-        root_elem = self.element
         new_elem = adpt.Element(prop_name,
                                 attrib=attrib,
                                 children=[x.element for
                                           x in prop_children])
-        # Find existing
-        existing = root_elem.find(prop_name)
 
-        if existing:
-            root_elem.element.replace(existing.element, new_elem.element)
-        else:
-            # If it existed, we need to maintain the order in the tree.
-            root_elem.append(new_elem)
+        self.inject(new_elem)
 
     @property
     @abc.abstractmethod
