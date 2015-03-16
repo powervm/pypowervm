@@ -183,6 +183,18 @@ class TestVolumeGroup(twrap.TestWrapper):
             ':VirtualDisks schemaVersion="V1_0"/></uom:VolumeGroup>'.
             encode('utf-8'))
 
+    def test_bld(self):
+        vg = stor.VG.bld('myvg', [stor.PV.bld('hdisk1')])
+        self.assertEqual(
+            vg.toxmlstring(),
+            '<uom:VolumeGroup xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:GroupName>myvg</uom:GroupName><uom:P'
+            'hysicalVolumes schemaVersion="V1_0"><uom:PhysicalVolume schemaVer'
+            'sion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:VolumeNa'
+            'me>hdisk1</uom:VolumeName></uom:PhysicalVolume></uom:PhysicalVolu'
+            'mes></uom:VolumeGroup>'.encode('utf-8'))
+
 
 class TestSharedStoragePool(twrap.TestWrapper):
 
