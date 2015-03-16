@@ -537,7 +537,8 @@ class TestRefresh(unittest.TestCase):
 
 class TestUpdate(unittest.TestCase):
     clust_uuid = 'cluster_uuid'
-    clust_href = 'https://server:12443/rest/api/uom/Cluster' + clust_uuid
+    clust_path = '/rest/api/uom/Cluster' + clust_uuid
+    clust_href = 'https://server:12443' + clust_path
     clust_etag = '123'
 
     def setUp(self):
@@ -557,7 +558,7 @@ class TestUpdate(unittest.TestCase):
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp)
-        mock_ubp.assert_called_with(self.cl, self.clust_etag, self.clust_href)
+        mock_ubp.assert_called_with(self.cl, self.clust_etag, self.clust_path)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -569,7 +570,7 @@ class TestUpdate(unittest.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
         mock_ubp.assert_called_with(self.cl, self.clust_etag,
-                                    self.clust_href + '?group=one,three,two')
+                                    self.clust_path + '?group=one,three,two')
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
