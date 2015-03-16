@@ -92,6 +92,13 @@ _SSP_PV = c.PV
 class VG(ewrap.EntryWrapper):
     """Represents a Volume Group that resides on the Virtual I/O Server."""
 
+    @classmethod
+    def bld(cls, name, pv_list):
+        vg = super(VG, cls)._bld()
+        vg.name = name
+        vg.phys_vols = pv_list
+        return vg
+
     @property
     def name(self):
         return self._get_val_str(_VG_NAME)
