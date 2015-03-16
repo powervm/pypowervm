@@ -33,7 +33,7 @@ from lxml import etree
 try:
     import urlparse
 except ImportError:
-    from urllib.parse import urlparse
+    import urllib.parse as urlparse
 
 import oslo_concurrency.lockutils as locku
 import requests

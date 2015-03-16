@@ -131,6 +131,21 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(wrap2, util.find_wrapper(wraps, 'b'))
         self.assertIsNone(util.find_wrapper(wraps, 'c'))
 
+    def test_path_from_href(self):
+        href = 'https://server:1234/rest/api/uom/Obj/UUID?group=One,Two#frag'
+        self.assertTrue(util.path_from_href(href),
+                        '/rest/api/uom/Obj/UUID?group=One,Two')
+        self.assertTrue(util.path_from_href(href, include_query=True),
+                        '/rest/api/uom/Obj/UUID?group=One,Two')
+        self.assertTrue(util.path_from_href(href, include_fragment=False),
+                        '/rest/api/uom/Obj/UUID')
+        self.assertTrue(util.path_from_href(href, include_query=False),
+                        '/rest/api/uom/Obj/UUID?group=One,Two#frag')
+        self.assertTrue(util.path_from_href(href, include_fragment=True),
+                        '/rest/api/uom/Obj/UUID?group=One,Two')
+        self.assertTrue(util.path_from_href(href, include_query=False,
+                                            include_fragment=True),
+                        '/rest/api/uom/Obj/UUID#frag')
 
 if __name__ == "__main__":
     unittest.main()
