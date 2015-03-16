@@ -51,14 +51,23 @@ _VREPO_NAME = 'RepositoryName'
 _VREPO_SIZE = 'RepositorySize'
 
 # Volume Group Constants
-_VG_NAME = 'GroupName'
-_VG_CAPACITY = 'GroupCapacity'
-_VG_SERIAL_ID = 'GroupSerialID'
-_VG_FREE_SPACE = 'FreeSpace'
 _VG_AVAILABLE_SIZE = 'AvailableSize'
+_VG_BACKING_DEVICE_COUNT = 'BackingDeviceCount'
+_VG_FREE_SPACE = 'FreeSpace'
+_VG_CAPACITY = 'GroupCapacity'
+_VG_NAME = 'GroupName'
+_VG_SERIAL_ID = 'GroupSerialID'
+_VG_STATE = 'GroupState'
+_VG_MAX_LVS = 'MaximumLogicalVolumes'
 _VG_MEDIA_REPOS = 'MediaRepositories'
+_VG_MIN_ALLOC_SIZE = 'MinimumAllocationSize'
 _VG_PHS_VOLS = 'PhysicalVolumes'
+_VG_UDID = c.UDID
 _VG_VDISKS = 'VirtualDisks'
+_VG_EL_ORDER = (_VG_AVAILABLE_SIZE, _VG_BACKING_DEVICE_COUNT, _VG_FREE_SPACE,
+                _VG_CAPACITY, _VG_NAME, _VG_SERIAL_ID, _VG_STATE, _VG_MAX_LVS,
+                _VG_MEDIA_REPOS, _VG_MIN_ALLOC_SIZE, _VG_PHS_VOLS, _VG_UDID,
+                _VG_VDISKS)
 
 # LogicalUnit Constants
 _LU_THIN = 'ThinDevice'
@@ -76,10 +85,9 @@ _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
 _SSP_LU = 'LogicalUnit'
 _SSP_PVS = c.PVS
-_SSP_PV = c.PV
 
 
-@ewrap.EntryWrapper.pvm_type('VolumeGroup')
+@ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
 class VG(ewrap.EntryWrapper):
     """Represents a Volume Group that resides on the Virtual I/O Server."""
 
@@ -87,10 +95,18 @@ class VG(ewrap.EntryWrapper):
     def name(self):
         return self._get_val_str(_VG_NAME)
 
+    @name.setter
+    def name(self, val):
+        self.set_parm_value(_VG_NAME, val)
+
     @property
     def capacity(self):
         """Overall capacity in GB (float)."""
         return self._get_val_float(_VG_CAPACITY)
+
+    @capacity.setter
+    def capacity(self, val):
+        self.set_parm_value(_VG_CAPACITY, val)
 
     @property
     def available_size(self):
@@ -151,6 +167,9 @@ class VG(ewrap.EntryWrapper):
                            the existing Virtual Disks.
         """
         self.replace_list(_VG_VDISKS, virt_disks)
+
+
+_SSP_PV = c.PV
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualMediaRepository', has_metadata=True)

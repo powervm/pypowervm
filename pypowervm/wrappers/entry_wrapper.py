@@ -150,14 +150,8 @@ class Wrapper(object):
                                 attrib=attrib,
                                 children=[x.element for
                                           x in prop_children])
-        # Find existing
-        existing = root_elem.find(prop_name)
 
-        if existing:
-            root_elem.element.replace(existing.element, new_elem.element)
-        else:
-            # If it existed, we need to maintain the order in the tree.
-            root_elem.append(new_elem)
+        root_elem.inject(new_elem, self.child_order)
 
     @property
     @abc.abstractmethod
