@@ -16,6 +16,7 @@
 
 import logging
 
+import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -427,6 +428,23 @@ class LU(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool)."""
 
     @classmethod
+    def bld(cls, name, capacity, thin=None):
+        """Build a fresh wrapper for LU creation within an SSP.
+
+        :param name: The name to assign to the new LogicalUnit
+        :param capacity: Capacity in GB for the new LogicalUnit
+        :param thin: Provision the new LU as thin (True) or thick (False).
+        :return: A new LU wrapper suitable for adding to SSP.logical_units
+                 prior to update.
+        """
+        lu = super(LU, cls)._bld()
+        lu._name(name)
+        lu._capacity(capacity)
+        if thin is not None:
+            lu._is_thin(thin)
+        return lu
+
+    @classmethod
     def bld_ref(cls, name, udid):
         """Creates the a fresh LU wrapper.
 
@@ -436,11 +454,11 @@ class LU(ewrap.ElementWrapper):
         :param udid: Universal Disk Identifier.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
-        pv = super(LU, cls)._bld()
+        lu = super(LU, cls)._bld()
         # Assignment order is significant
-        pv._name(name)
-        pv._udid(udid)
-        return pv
+        lu._name(name)
+        lu._udid(udid)
+        return lu
 
     @property
     def name(self):
@@ -461,6 +479,10 @@ class LU(ewrap.ElementWrapper):
         """Float capacity in GB."""
         return self._get_val_float(_LU_CAPACITY)
 
+    def _capacity(self, val):
+        """val is float."""
+        self.set_parm_value(_LU_CAPACITY, u.sanitize_float_for_api(val))
+
     @property
     def lu_type(self):
         """String enum value e.g. "VirtualIO_Disk."""
@@ -469,6 +491,10 @@ class LU(ewrap.ElementWrapper):
     @property
     def is_thin(self):
         return self._get_val_bool(_LU_THIN)
+
+    def _is_thin(self, val):
+        """val is boolean."""
+        self.set_parm_value(_LU_THIN, u.sanitize_bool_for_api(val))
 
 
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')

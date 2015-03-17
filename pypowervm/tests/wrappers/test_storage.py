@@ -256,6 +256,32 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(pv.schema_ns, pc.UOM_NS)
         self.assertEqual(pv.name, 'hdisk231')
 
+    def test_lu_bld(self):
+        lu = stor.LU.bld('lu_name', 123)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:UnitCapacity>123.00</uom:UnitCapacit'
+            'y><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            encode('utf-8'))
+        lu = stor.LU.bld('lu_name', 1.236, thin=True)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
+            ':UnitCapacity>1.24</uom:UnitCapacity><uom:UnitName>lu_name</uom:U'
+            'nitName></uom:LogicalUnit>'.encode('utf-8'))
+        lu = stor.LU.bld('lu_name', .123, thin=False)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>false</uom:ThinDevice><uo'
+            'm:UnitCapacity>0.12</uom:UnitCapacity><uom:UnitName>lu_name</uom:'
+            'UnitName></uom:LogicalUnit>'.encode('utf-8'))
+
     def test_lu_ordering(self):
         lu = stor.LU._bld()
         lu._name('lu_name')
