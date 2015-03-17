@@ -256,12 +256,38 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(pv.schema_ns, pc.UOM_NS)
         self.assertEqual(pv.name, 'hdisk231')
 
+    def test_lu_bld(self):
+        lu = stor.LU.bld('lu_name', 123)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:UnitCapacity>123.000000</uom:UnitCap'
+            'acity><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            encode('utf-8'))
+        lu = stor.LU.bld('lu_name', 1.2345678, thin=True)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
+            ':UnitCapacity>1.234568</uom:UnitCapacity><uom:UnitName>lu_name</u'
+            'om:UnitName></uom:LogicalUnit>'.encode('utf-8'))
+        lu = stor.LU.bld('lu_name', .12300019999, thin=False)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>false</uom:ThinDevice><uo'
+            'm:UnitCapacity>0.123000</uom:UnitCapacity><uom:UnitName>lu_name</'
+            'uom:UnitName></uom:LogicalUnit>'.encode('utf-8'))
+
     def test_lu_ordering(self):
         lu = stor.LU._bld()
         lu._name('lu_name')
         lu._udid('lu_udid')
         lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
-        lu.set_parm_value(stor._LU_CAPACITY, 123)
+        lu._capacity(123)
         lu.set_parm_value(stor._LU_THIN, 'true')
         self.assertEqual(
             lu.toxmlstring(),
@@ -269,8 +295,8 @@ class TestSharedStoragePool(twrap.TestWrapper):
             'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
             'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
             ':UniqueDeviceID>lu_udid</uom:UniqueDeviceID><uom:UnitCapacity>123'
-            '</uom:UnitCapacity><uom:ClonedFrom>cloned_from</uom:ClonedFrom><u'
-            'om:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            '.000000</uom:UnitCapacity><uom:ClonedFrom>cloned_from</uom:Cloned'
+            'From><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
             encode('utf-8'))
 
 if __name__ == '__main__':
