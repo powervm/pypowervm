@@ -571,8 +571,11 @@ class EntryWrapper(Wrapper):
         :param xag: List of extended attribute group names.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
+        # adapter.update_by_path expects the path (e.g.
+        # '/rest/api/uom/Object/UUID'), not the whole href.
+        path = util.path_from_href(self.href)
         # No-op if xag is empty/None
-        path = adapter.extend_path(self.href, xag=xag)
+        path = adapter.extend_path(path, xag=xag)
         return self.wrap(adapter.update_by_path(self, self.etag, path))
 
     @property

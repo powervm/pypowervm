@@ -23,7 +23,7 @@ import ssl
 try:
     import urlparse
 except ImportError:
-    from urllib.parse import urlparse
+    import urllib.parse as urlparse
 
 from oslo.utils import units
 from pyasn1.codec.der import decoder as der_decoder
@@ -42,6 +42,26 @@ def sanitize_path(path):
     if path.endswith('/'):
         path = path[:-1]
     return path
+
+
+def path_from_href(href, include_query=True, include_fragment=False):
+    """Returns the path [and ?query [and #fragment]] component of a link.
+
+    :param href: A full link string of the form
+                 '<scheme>://<netloc>/<path>;<params>?<query>#<fragment>'
+    :param include_query: If True, any ?<query> portion of the link will be
+                          included in the return value.
+    :param include_fragment: If True, any #<fragment> portion of the link will
+                             be included in the return value.
+    :return: A string representing the specified portion of the input link.
+    """
+    parsed = urlparse.urlparse(href)
+    ret = parsed.path
+    if include_query and parsed.query:
+        ret += '?' + parsed.query
+    if include_fragment and parsed.fragment:
+        ret += '#' + parsed.fragment
+    return ret
 
 
 def determine_paths(resp):
