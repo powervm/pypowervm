@@ -73,8 +73,12 @@ _VG_EL_ORDER = (_VG_AVAILABLE_SIZE, _VG_BACKING_DEVICE_COUNT, _VG_FREE_SPACE,
 _LU_THIN = 'ThinDevice'
 _LU_UDID = c.UDID
 _LU_CAPACITY = 'UnitCapacity'
-_LU_NAME = 'UnitName'
 _LU_TYPE = 'LogicalUnitType'
+_LU_CLONED_FROM = 'ClonedFrom'
+_LU_IN_USE = 'InUse'
+_LU_NAME = 'UnitName'
+_LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
+                _LU_IN_USE, _LU_NAME)
 
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
@@ -417,7 +421,8 @@ class VDisk(ewrap.ElementWrapper):
         return self._get_val_str(_DISK_UDID)
 
 
-@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
+                               child_order=_LU_EL_ORDER)
 class LU(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool)."""
 
