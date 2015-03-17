@@ -47,7 +47,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(2, len(vopts))
 
         self.assertEqual('blank_media1', vopts[0].media_name)
-        self.assertEqual('0.0977', vopts[0].size)
+        self.assertEqual(0.0977, vopts[0].size)
         self.assertEqual('0eblank_media1', vopts[0].udid)
         self.assertEqual('rw', vopts[0].mount_type)
 
@@ -90,7 +90,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(vdisks))
 
-        disk = stor.VDisk.bld('disk_name', 10, 'label')
+        disk = stor.VDisk.bld('disk_name', 10.9876543, 'label')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -101,7 +101,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         # make sure the second virt disk matches what we put in
         vdisk = self.dwrap.virtual_disks[1]
         self.assertEqual('disk_name', vdisk.name)
-        self.assertEqual(10, vdisk.capacity)
+        self.assertEqual(10.987654, vdisk.capacity)
         self.assertEqual('label', vdisk.label)
         self.assertEqual(None, vdisk.udid)
 
@@ -133,7 +133,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(media_repos))
 
-        vmedia_repo = stor.VMediaRepos.bld('repo', 10)
+        vmedia_repo = stor.VMediaRepos.bld('repo', 10.12345)
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
@@ -144,7 +144,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         # Make sure that the second media repo matches
         repo = self.dwrap.vmedia_repos[1]
         self.assertEqual('repo', repo.name)
-        self.assertEqual(10, repo.size)
+        self.assertEqual(10.12345, repo.size)
         self.assertEqual(0, len(repo.optical_media))
 
     def test_update_media_repo(self):
@@ -154,7 +154,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         vopt_medias = media_repos[0].optical_media
         self.assertEqual(2, len(vopt_medias))
 
-        new_media = stor.VOptMedia.bld('name', '0.123', 'r')
+        new_media = stor.VOptMedia.bld('name', 0.123, 'r')
         self.assertIsNotNone(new_media)
 
         vopt_medias.append(new_media)
@@ -164,7 +164,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         # Check the attributes
         media = media_repos[0].optical_media[2]
         self.assertEqual('name', media.media_name)
-        self.assertEqual('0.123', media.size)
+        self.assertEqual(0.123, media.size)
         self.assertEqual('r', media.mount_type)
 
     def test_ordering(self):
@@ -173,7 +173,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         vg.virtual_disks = []
         vg.name = 'vgname'
         vg.vmedia_repos = []
-        vg._capacity(123)
+        vg.set_parm_value(stor._VG_CAPACITY, 123)
         vg.phys_vols = []
         self.assertEqual(
             vg.toxmlstring(),
