@@ -165,6 +165,24 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual('0.123', media.size)
         self.assertEqual('r', media.mount_type)
 
+    def test_ordering(self):
+        """Set fields out of order; ensure they end up in the right order."""
+        vg = stor.VG._bld()
+        vg.virtual_disks = []
+        vg.name = 'vgname'
+        vg.vmedia_repos = []
+        vg._capacity(123)
+        vg.phys_vols = []
+        self.assertEqual(
+            vg.toxmlstring(),
+            '<uom:VolumeGroup xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:GroupCapacity>123</uom:GroupCapacity'
+            '><uom:GroupName>vgname</uom:GroupName><uom:MediaRepositories sche'
+            'maVersion="V1_0"/><uom:PhysicalVolumes schemaVersion="V1_0"/><uom'
+            ':VirtualDisks schemaVersion="V1_0"/></uom:VolumeGroup>'.
+            encode('utf-8'))
+
 
 class TestSharedStoragePool(twrap.TestWrapper):
 
