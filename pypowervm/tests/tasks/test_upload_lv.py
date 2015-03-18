@@ -18,8 +18,8 @@ import mock
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as exc
-from pypowervm.jobs import upload_lv
-import pypowervm.tests.jobs.util as tju
+from pypowervm.tasks import upload_lv
+import pypowervm.tests.tasks.util as tju
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.vios_file as vf
 
@@ -41,7 +41,7 @@ class TestUploadLV(unittest.TestCase):
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.jobs.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.upload_lv._create_file')
     def test_upload_new_vopt(self, mock_create_file, mock_adpt):
         """Tests the uploads of the virtual disks."""
 
@@ -71,7 +71,7 @@ class TestUploadLV(unittest.TestCase):
         self.assertIsNotNone(f_uuid)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.jobs.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.upload_lv._create_file')
     def test_upload_new_vdisk(self, mock_create_file, mock_adpt):
         """Tests the uploads of the virtual disks."""
 
@@ -100,7 +100,7 @@ class TestUploadLV(unittest.TestCase):
         self.assertIsNone(f_uuid)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.jobs.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.upload_lv._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file, mock_adpt):
         """Tests the failure path for uploading of the virtual disks."""
 

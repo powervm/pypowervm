@@ -18,8 +18,8 @@
 import mock
 
 import pypowervm.adapter as adp
-from pypowervm.jobs import cna
-import pypowervm.tests.jobs.util as tju
+from pypowervm.tasks import cna
+import pypowervm.tests.tasks.util as tju
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -33,7 +33,7 @@ VNET_FILE = 'fake_virtual_network_feed.txt'
 class TestCNA(unittest.TestCase):
     """Unit Tests for creating Client Network Adapters."""
 
-    @mock.patch('pypowervm.jobs.cna._find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_crt_cna(self, mock_adpt, mock_vnet_find):
         """Tests the creation of Client Network Adapters."""

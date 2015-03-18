@@ -21,7 +21,7 @@ import mock
 
 from pypowervm import adapter as adpt
 from pypowervm import exceptions as pvm_exc
-from pypowervm.jobs import network_bridger as net_br
+from pypowervm.tasks import network_bridger as net_br
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import network as pvm_net
 
@@ -58,7 +58,7 @@ class TestNetworkBridger(unittest.TestCase):
                                  'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2227)
         self.assertEqual(1, mock_adpt.read.call_count)
 
-    @mock.patch('pypowervm.jobs.network_bridger._reassign_arbitrary_vid')
+    @mock.patch('pypowervm.tasks.network_bridger._reassign_arbitrary_vid')
     @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_ensure_vlan_on_nb_reassign(self, mock_adpt, mock_support_vlan,
@@ -77,8 +77,8 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(2, mock_adpt.read.call_count)
         self.assertEqual(1, mock_reassign.call_count)
 
-    @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
+    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_ensure_vlan_on_nb_new_vlan(self, mock_adpt, mock_arb_vid,
                                         mock_find_vnet):
@@ -112,8 +112,8 @@ class TestNetworkBridger(unittest.TestCase):
         # Validate the calls
         self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
+    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_ensure_vlans_on_nb_new_vlan(self, mock_adpt, mock_arb_vid,
                                          mock_find_vnet):
@@ -145,9 +145,9 @@ class TestNetworkBridger(unittest.TestCase):
         # Validate the calls
         self.assertEqual(1, mock_adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.jobs.network_bridger._find_available_ld_grp')
-    @mock.patch('pypowervm.jobs.network_bridger._is_arbitrary_vid')
+    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger._find_available_ld_grp')
+    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_ensure_vlan_on_nb_new_lg(self, mock_adpt, mock_arb_vid,
                                       mock_avail_lg, mock_find_vnet):
@@ -232,8 +232,8 @@ class TestNetworkBridger(unittest.TestCase):
         self.assertEqual(4092, net_br._find_new_arbitrary_vid(nbs,
                                                               others=[4093]))
 
-    @mock.patch('pypowervm.jobs.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.jobs.network_bridger._find_vswitch')
+    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger._find_vswitch')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_reassign_arbitrary_vid(self, mock_adpt, mock_vsw,
                                     mock_find_vnet):
