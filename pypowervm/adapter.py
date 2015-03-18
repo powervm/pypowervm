@@ -507,7 +507,7 @@ class Adapter(object):
                        auditmemento=None, sensitive=False, helpers=None):
         """Create a new resource where the URI path is already known."""
         path = util.sanitize_path(path)
-        m = re.search('%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         if not content_service:
@@ -518,7 +518,7 @@ class Adapter(object):
             headers['Content-Type'] = const.TYPE_TEMPLATE % (content_service,
                                                              'JobRequest')
         else:
-            p = path.split('\?', 1)[0]  # strip off details, if present
+            p = urlparse.urlparse(path).path  # strip off details, if present
             headers['Content-Type'] = const.TYPE_TEMPLATE % (
                 content_service, p.rsplit('/', 1)[1])
 
@@ -702,7 +702,7 @@ class Adapter(object):
 
     def _read_by_path(self, path, etag, timeout, auditmemento, sensitive,
                       helpers=None):
-        m = re.search('%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {}
@@ -791,7 +791,7 @@ class Adapter(object):
 
     def _update_by_path(self, data, etag, path, timeout, auditmemento,
                         sensitive, helpers=None):
-        m = re.match('%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.match(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
@@ -875,7 +875,7 @@ class Adapter(object):
         return resp
 
     def _delete_by_path(self, path, etag, timeout, auditmemento, helpers=None):
-        m = re.search('%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {}
@@ -1365,7 +1365,7 @@ class Element(object):
     @property
     def tag(self):
         tag = self.element.tag
-        m = re.search('\{.*\}(.*)', tag)
+        m = re.search(r'\{.*\}(.*)', tag)
         return tag if not m else m.group(1)
 
     @tag.setter
@@ -1379,7 +1379,7 @@ class Element(object):
     @property
     def namespace(self):
         qtag = self.element.tag
-        m = re.search('\{(.*)\}', qtag)
+        m = re.search(r'\{(.*)\}', qtag)
         return m.group(1) if m else ''
 
     @namespace.setter
@@ -1582,7 +1582,7 @@ class Element(object):
             return path
         parts = path.split('/')
         for i in range(len(parts)):
-            if parts[i] and not re.match('[\.\*\[\{]', parts[i]):
+            if parts[i] and not re.match(r'[\.\*\[\{]', parts[i]):
                 parts[i] = str(QName(ns, parts[i]))
         return '/'.join(parts)
 
