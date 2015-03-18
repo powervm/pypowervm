@@ -16,7 +16,7 @@
 
 import unittest
 
-from pypowervm.jobs import wwpn
+from pypowervm.tasks import wwpn
 
 
 class TestWWPN(unittest.TestCase):

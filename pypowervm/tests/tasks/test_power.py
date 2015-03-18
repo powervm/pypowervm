@@ -18,7 +18,7 @@ import mock
 
 import pypowervm.adapter as adpt
 from pypowervm import exceptions as pexc
-from pypowervm.jobs import power
+from pypowervm.tasks import power
 
 import unittest
 

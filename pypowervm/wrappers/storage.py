@@ -135,7 +135,7 @@ class VG(ewrap.EntryWrapper):
 
     @property
     def vmedia_repos(self):
-        """Returns a list of VMediaRepos wrappers."""
+        """Returns a list of  wrappers."""
         es = ewrap.WrapperElemList(self._find_or_seed(_VG_MEDIA_REPOS),
                                    VMediaRepos)
         return es

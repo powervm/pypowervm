@@ -16,11 +16,11 @@
 
 # This script attempts to create a real cluster on a real system using the
 # cluster_ssp module.  Execute from project root directory as:
-# PYTHONPATH=. python pypowervm/tests/jobs/create_cluster.py
+# PYTHONPATH=. python pypowervm/tests/tasks/create_cluster.py
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as ex
-import pypowervm.jobs.cluster_ssp as cs
+import pypowervm.tasks.cluster_ssp as cs
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.storage as stor
 
