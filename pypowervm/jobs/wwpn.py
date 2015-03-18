@@ -31,4 +31,4 @@ def build_wwpn_pair(adapter, host_uuid):
     resp = "C0"
     while len(resp) < 14:
         resp += random.choice('0123456789ABCDEF')
-    return (resp + "00", resp + "01")
+    return resp + "00", resp + "01"
