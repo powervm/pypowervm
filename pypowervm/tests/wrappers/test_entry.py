@@ -328,6 +328,15 @@ class TestWrapperElemList(unittest.TestCase):
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))
 
+    def test_in(self):
+        # This really does fail without __contains__
+        elem = self.elem_set[0]
+        self.assertIn(elem, self.elem_set)
+
+    def test_index(self):
+        elem = self.elem_set[0]
+        self.assertEqual(self.elem_set.index(elem), 0)
+
 
 class TestActionableList(unittest.TestCase):
     """Tests for the Actionable List class."""

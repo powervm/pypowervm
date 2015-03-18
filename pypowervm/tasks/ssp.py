@@ -45,3 +45,44 @@ def crt_lu(adap, ssp, name, size, thin=None):
         if lu.name == name:
             newlu = lu
     return ssp, newlu
+
+
+def rm_lu(adap, ssp, lu=None, name=None, udid=None):
+    """Remove a LogicalUnit from a SharedStoragePool.
+
+    This method allows the LU to be specified by wrapper, name, or UDID.
+
+    :param adap: The pypowervm.adapter.Adapter through which to request the
+                 change.
+    :param ssp: SSP EntryWrapper denoting the Shared Storage Pool from which to
+                remove the LU.
+    :param lu: LU ElementWrapper indicating the LU to remove.  If specified,
+               the name and udid parameters are ignored.
+    :param name: The name of the LU to remove.  If both name and udid are
+                 specified, udid is used.
+    :param udid: The UDID of the LU to remove.  If both name and udid are
+                 specified, udid is used.
+    :return: The updated SSP wrapper.  (It will contain the modified LU list
+             and have a new etag.)
+    :return: LU ElementWrapper representing the Logical Unit removed.
+    """
+    lus = ssp.logical_units
+    lu_to_rm = None
+    label = None
+    if lu:
+        try:
+            lu_to_rm = lus[lus.index(lu)]
+        except ValueError:
+            raise exc.LUNotFoundError(lu_label=lu.name, ssp_name=ssp.name)
+    else:
+        for l in lus:
+            # This should implicitly account for 'None'
+            if l.udid == udid or l.name == name:
+                lu_to_rm = l
+                break
+        if lu_to_rm is None:
+            label = name or udid
+            raise exc.LUNotFoundError(lu_label=label, ssp_name=ssp.name)
+    lus.remove(lu_to_rm)
+    ssp = ssp.update(adap)
+    return ssp, lu_to_rm

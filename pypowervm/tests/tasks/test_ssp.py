@@ -43,27 +43,63 @@ class TestSSP(unittest.TestCase):
         self.adp.update_by_path = _mock_update_by_path
         self.adp.extend_path = lambda x, xag: x
         self.ssp = stor.SSP.bld('ssp1', [])
+        for i in range(5):
+            lu = stor.LU.bld('lu%d' % i, i+1)
+            lu._udid('udid_' + lu.name)
+            self.ssp.logical_units.append(lu)
         self.ssp.entry.properties = {
             'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
         self.ssp._etag = 'before'
 
     def test_crt_lu(self):
-        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu1', 10)
-        self.assertEqual(lu.name, 'lu1')
-        self.assertEqual(lu.udid, 'udid_lu1')
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10)
+        self.assertEqual(lu.name, 'lu5')
+        self.assertEqual(lu.udid, 'udid_lu5')
         self.assertTrue(lu.is_thin)
         self.assertEqual(ssp.etag, 'after')
         self.assertIn(lu, ssp.logical_units)
 
     def test_crt_lu_thin(self):
-        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu1', 10, thin=True)
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10, thin=True)
         self.assertTrue(lu.is_thin)
 
     def test_crt_lu_thick(self):
-        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu1', 10, thin=False)
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10, thin=False)
         self.assertFalse(lu.is_thin)
 
     def test_crt_lu_name_conflict(self):
-        self.ssp.logical_units.append(stor.LU.bld('lu1', 10))
         self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.adp,
                           self.ssp, 'lu1', 5)
+
+    def test_rm_lu_by_lu(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, lu=lu)
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_by_name(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, name='lu2')
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_by_udid(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, udid='udid_lu2')
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_not_found(self):
+        # By LU
+        lu = stor.LU.bld('lu5', 6)
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          lu=lu)
+        # By name
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          name='lu5')
+        # By UDID
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          udid='lu5_udid')
