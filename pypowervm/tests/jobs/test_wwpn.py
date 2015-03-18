@@ -21,9 +21,6 @@ from pypowervm.jobs import wwpn
 
 class TestWWPN(unittest.TestCase):
 
-    def setUp(self):
-        super(TestWWPN, self).setUp()
-
     def test_build_wwpn_pair(self):
         # By its nature, this is a random generation algorithm.  Run it
         # several times...just to increase probability of issues.

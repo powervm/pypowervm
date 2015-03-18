@@ -374,9 +374,6 @@ class TestCreateLogicalPartition(unittest.TestCase):
         super(TestCreateLogicalPartition, self).setUp()
         self.sections = xml_sections.load_xml_sections('lpar_sections.txt')
 
-    def tearDown(self):
-        super(TestCreateLogicalPartition, self).tearDown()
-
     def section_tostring(self, section):
         sec_text = ''.encode('ascii')
         for entry in section:
