@@ -187,6 +187,29 @@ class Wrapper(object):
 
         element_value.text = str(value)
 
+    def set_float_gb_value(self, property_name, value, create=True):
+        """Special case of set_parm_value for floats of Gigabyte.Type.
+
+        o Gigabyte.Type can't handle more than 6dp.
+        o Floating point representation issues can mean that e.g. 0.1 + 0.2
+        yields 0.30000000000000004.
+        o str() rounds to 12dp.
+
+        So this method converts a float (or float string) to a string with
+        exactly 6dp before storing it in the property.
+
+        :param property_name: The schema name of the property to set (see
+                              set_parm_value).
+        :param value: The floating point number or floating point string to be
+                      set.
+        :param create: If True, and the property is not found, it will be
+                       created.  Otherwise this method will throw an exception.
+                       (See set_parm_value.)
+        """
+        self.set_parm_value(property_name,
+                            util.sanitize_float_for_api(value, precision=6),
+                            create=create)
+
     def __get_val(self, property_name, default=None, converter=None):
         """Retrieve the value of an element within this wrapper's ElementTree.
 

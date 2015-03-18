@@ -117,9 +117,6 @@ class VG(ewrap.EntryWrapper):
         """Overall capacity in GB (float)."""
         return self._get_val_float(_VG_CAPACITY)
 
-    def _capacity(self, val):
-        self.set_parm_value(_VG_CAPACITY, val)
-
     @property
     def available_size(self):
         """Available size for new volumes in GB (float)."""
@@ -200,7 +197,7 @@ class VMediaRepos(ewrap.ElementWrapper):
         onto the object.
 
         :param name: The name of the Virtual Media Repository.
-        :param size: The size of the repository in GB.
+        :param size: The size of the repository in GB (float).
         :returns: A VMediaRepos wrapper that can be used for create.
         """
         vmr = super(VMediaRepos, cls)._bld()
@@ -231,11 +228,11 @@ class VMediaRepos(ewrap.ElementWrapper):
 
     @property
     def size(self):
-        """Returns the size in GB (int)."""
-        return self._get_val_int(_VREPO_SIZE)
+        """Returns the size in GB (float)."""
+        return self._get_val_float(_VREPO_SIZE)
 
     def _size(self, new_size):
-        self.set_parm_value(_VREPO_SIZE, new_size)
+        self.set_float_gb_value(_VREPO_SIZE, new_size)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualOpticalMedia', has_metadata=True)
@@ -250,7 +247,7 @@ class VOptMedia(ewrap.ElementWrapper):
         VirtualMediaRepository.
 
         :param name: The device name.
-        :param size: The device size in GB.  However, it has decimal precision.
+        :param size: The device size in GB, decimal precision.
         :param mount_type: The type of mount.  Defaults to RW.  Can be set to R
         :returns: A VOptMedia wrapper that can be used for create.
         """
@@ -277,11 +274,11 @@ class VOptMedia(ewrap.ElementWrapper):
 
     @property
     def size(self):
-        """Size is a str.  Represented in GB - has decimal precision."""
-        return self._get_val_str(_VOPT_SIZE)
+        """Size is a float represented in GB."""
+        return self._get_val_float(_VOPT_SIZE)
 
     def _size(self, new_size):
-        self.set_parm_value(_VOPT_SIZE, new_size)
+        self.set_float_gb_value(_VOPT_SIZE, new_size)
 
     @property
     def udid(self):
@@ -415,7 +412,7 @@ class VDisk(ewrap.ElementWrapper):
 
     @capacity.setter
     def capacity(self, capacity):
-        self.set_parm_value(_DISK_CAPACITY, capacity)
+        self.set_float_gb_value(_DISK_CAPACITY, capacity)
 
     @property
     def udid(self):
@@ -480,10 +477,7 @@ class LU(ewrap.ElementWrapper):
 
     def _capacity(self, val):
         """val is float."""
-        # Work around the representation error, since str rounds to 12dp.
-        # REST API accepts a max precision of 6dp for Gigabyte.Type
-        self.set_parm_value(
-            _LU_CAPACITY, u.sanitize_float_for_api(val, precision=6))
+        self.set_float_gb_value(_LU_CAPACITY, val)
 
     @property
     def lu_type(self):
