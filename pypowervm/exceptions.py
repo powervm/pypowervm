@@ -569,3 +569,8 @@ class VMPowerOnFailure(AbstractMsgFmtError):
 class PvidOfNetworkBridgeError(AbstractMsgFmtError):
     msg_fmt = _("Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN "
                 "Identifier on a different Network Bridge.")
+
+
+class DuplicateLUNameError(AbstractMsgFmtError):
+    msg_fmt = _("A Logical Unit with name %(lu_name)s already exists on Shared"
+                " Storage Pool %(ssp_name)s.")

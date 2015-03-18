@@ -486,7 +486,7 @@ class LU(ewrap.ElementWrapper):
 
     @property
     def is_thin(self):
-        return self._get_val_bool(_LU_THIN)
+        return self._get_val_bool(_LU_THIN, default=None)
 
     def _is_thin(self, val):
         """val is boolean."""
