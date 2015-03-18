@@ -95,7 +95,7 @@ class Job(ewrap.EntryWrapper):
         """
         return self._get_val_str(wc.JOB_STATUS)
 
-    def get_job_response_exception_message(self, default=''):
+    def get_job_resp_exception_msg(self, default=''):
         """Gets the job message string from the ResponseException.
 
         :returns: String containing the job message or
@@ -151,7 +151,7 @@ class Job(ewrap.EntryWrapper):
         """
         message = self.get_job_results_message(default=default)
         if not message:
-            message = self.get_job_response_exception_message(default=default)
+            message = self.get_job_resp_exception_msg(default=default)
         return message
 
     def run_job(self, adapter, uuid, job_parms=None,

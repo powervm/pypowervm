@@ -158,9 +158,9 @@ class TestJobEntryWrapper(unittest.TestCase):
                                 "get_job_message",
                                 EXPECTED_EXCEPTION_MESSAGE, '')
 
-    def test_get_job_response_exception_message(self):
+    def test_get_job_resp_exception_msg(self):
         self.call_simple_getter(TestJobEntryWrapper._exception_wrapper,
-                                "get_job_response_exception_message",
+                                "get_job_resp_exception_msg",
                                 EXPECTED_EXCEPTION_MESSAGE, '')
 
     def test_get_job_results_message(self):
