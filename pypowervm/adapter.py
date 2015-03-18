@@ -1364,28 +1364,24 @@ class Element(object):
 
     @property
     def tag(self):
-        tag = self.element.tag
-        m = re.search(r'\{.*\}(.*)', tag)
-        return tag if not m else m.group(1)
+        return QName(self.element.tag).localname
 
     @tag.setter
     def tag(self, tag):
         ns = self.namespace
         if ns:
-            self.element.tag = '{%s}%s' % (ns, tag)
+            self.element.tag = QName(ns, tag).text
         else:
             self.element.tag = tag
 
     @property
     def namespace(self):
-        qtag = self.element.tag
-        m = re.search(r'\{(.*)\}', qtag)
-        return m.group(1) if m else ''
+        ns = etree.QName(self.element.tag).namespace
+        return '' if ns is None else ns
 
     @namespace.setter
     def namespace(self, ns):
-        tag = self.tag
-        self.element.tag = '{%s}%s' % (ns, tag)
+        self.element.tag = QName(ns, self.tag).text
 
     @property
     def text(self):

@@ -416,6 +416,32 @@ class TestElement(unittest.TestCase):
             '<uom:tag xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmwa'
             're/uom/mc/2012_10/"><![CDATA[text]]></uom:tag>'.encode('utf-8'))
 
+    def test_tag_namespace(self):
+        el = adp.Element('tag')
+        self.assertEqual(el.element.tag, '{http://www.ibm.com/xmlns/systems/po'
+                                         'wer/firmware/uom/mc/2012_10/}tag')
+        # adapter.Element.tag strips the namespace
+        self.assertEqual(el.tag, 'tag')
+        self.assertEqual(el.namespace, 'http://www.ibm.com/xmlns/systems/powe'
+                                       'r/firmware/uom/mc/2012_10/')
+        # Test setter
+        el.tag = 'gat'
+        self.assertEqual(el.element.tag, '{http://www.ibm.com/xmlns/systems/po'
+                                         'wer/firmware/uom/mc/2012_10/}gat')
+        self.assertEqual(el.tag, 'gat')
+        el.namespace = 'foo'
+        self.assertEqual(el.namespace, 'foo')
+        # Now with no namespace
+        el = adp.Element('tag', ns='')
+        self.assertEqual(el.element.tag, 'tag')
+        self.assertEqual(el.tag, 'tag')
+        self.assertEqual(el.namespace, '')
+        el.tag = 'gat'
+        self.assertEqual(el.element.tag, 'gat')
+        self.assertEqual(el.tag, 'gat')
+        el.namespace = 'foo'
+        self.assertEqual(el.namespace, 'foo')
+
 
 class TestElementInject(unittest.TestCase):
 
