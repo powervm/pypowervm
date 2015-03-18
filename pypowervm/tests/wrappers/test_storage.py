@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
+
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
@@ -253,3 +255,23 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(pv.schema_type, stor.PV.schema_type)
         self.assertEqual(pv.schema_ns, pc.UOM_NS)
         self.assertEqual(pv.name, 'hdisk231')
+
+    def test_lu_ordering(self):
+        lu = stor.LU._bld()
+        lu._name('lu_name')
+        lu._udid('lu_udid')
+        lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
+        lu.set_parm_value(stor._LU_CAPACITY, 123)
+        lu.set_parm_value(stor._LU_THIN, 'true')
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
+            ':UniqueDeviceID>lu_udid</uom:UniqueDeviceID><uom:UnitCapacity>123'
+            '</uom:UnitCapacity><uom:ClonedFrom>cloned_from</uom:ClonedFrom><u'
+            'om:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            encode('utf-8'))
+
+if __name__ == '__main__':
+    unittest.main()
