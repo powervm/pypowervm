@@ -92,7 +92,7 @@ class TestLogicalPartition(unittest.TestCase):
         self.TC._dedicated_entry = entries[0]
 
         self.set_shared_test_property_values()
-        self.set_dedicated_test_property_values()
+        self.set_dedicated_test_prop_vals()
 
         TestLogicalPartition._shared_wrapper = lpar.LPAR.wrap(
             self.TC._shared_entry)
@@ -147,7 +147,7 @@ class TestLogicalPartition(unittest.TestCase):
         self.set_single_value(
             entry, c.CURR_MAX_VCPU, EXPECTED_CURR_MAX_VCPU)
 
-    def set_dedicated_test_property_values(self):
+    def set_dedicated_test_prop_vals(self):
         """Set expected values in entry so test code can work consistently."""
 
         entry = self.TC._dedicated_entry
