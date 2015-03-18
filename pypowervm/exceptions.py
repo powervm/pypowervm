@@ -77,7 +77,7 @@ class InvalidVIOConfig(AbstractMsgFmtError):
 
 class AttrRequired(AbstractMsgFmtError):
     msg_fmt = _("%(attr)s is a required attribute for virtual machine "
-                " '%(instance_name)s'.")
+                "'%(instance_name)s'.")
 
 
 class AttrValueInvalid(AbstractMsgFmtError):
@@ -86,15 +86,15 @@ class AttrValueInvalid(AbstractMsgFmtError):
 
 
 class DesiredLTMin(AbstractMsgFmtError):
-    msg_fmt = _("The value for minimum %(attr)s (%(value)s) cannot be greater"
-                " than the desired %(attr)s (%(des_value)s) for virtual"
-                " machine '%(instance_name)s'.")
+    msg_fmt = _("The value for minimum %(attr)s (%(value)s) cannot be greater "
+                "than the desired %(attr)s (%(des_value)s) for virtual "
+                "machine '%(instance_name)s'.")
 
 
 class DesiredGTMax(AbstractMsgFmtError):
     msg_fmt = _("The value for maximum %(attr)s (%(value)s) cannot be less "
-                " than the desired %(attr)s (%(des_value)s) for virtual"
-                " machine '%(instance_name)s'.")
+                "than the desired %(attr)s (%(des_value)s) for virtual "
+                "machine '%(instance_name)s'.")
 
 
 class BothMinMax(AbstractMsgFmtError):
@@ -111,15 +111,15 @@ class NotLMBMultiple(AbstractMsgFmtError):
 
 
 class InvalidAvailPriority(AbstractMsgFmtError):
-    msg_fmt = _("'%(availability_priority)s' is not a valid value for"
-                " availability priority for virtual machine "
+    msg_fmt = _("'%(availability_priority)s' is not a valid value for "
+                "availability priority for virtual machine "
                 "'%(instance_name)s'. Specify a value between 0 and 255.")
 
 
 class InvalidProcCompat(AbstractMsgFmtError):
-    msg_fmt = _("'%(processor_compatibility)s' is not a valid option for"
-                " processor compatibility for virtual machine"
-                " '%(instance_name)s'. Valid options include the "
+    msg_fmt = _("'%(processor_compatibility)s' is not a valid option for "
+                "processor compatibility for virtual machine "
+                "'%(instance_name)s'. Valid options include the "
                 "following: '%(valid_values)s'.")
 
 
@@ -138,71 +138,71 @@ class InvalidBoolean(AbstractMsgFmtError):
 
 
 class InvalidDedShareMode(AbstractMsgFmtError):
-    msg_fmt = _("'%(ded_share_mode)s' is not a valid option for sharing mode"
-                " for dedicated processors for virtual machine "
-                "'%(instance_name)s'. Valid options include the following:"
-                " '%(valid_values)s'.")
+    msg_fmt = _("'%(ded_share_mode)s' is not a valid option for sharing mode "
+                "for dedicated processors for virtual machine "
+                "'%(instance_name)s'. Valid options include the following: "
+                "'%(valid_values)s'.")
 
 
 class InvalidAttrWithDed(AbstractMsgFmtError):
-    msg_fmt = _("'%(option)s' is not a valid option for dedicated processor"
-                " mode for virtual machine '%(instance_name)s'.")
+    msg_fmt = _("'%(option)s' is not a valid option for dedicated processor "
+                "mode for virtual machine '%(instance_name)s'.")
 
 
 class InvalidAttrWithShared(AbstractMsgFmtError):
-    msg_fmt = _("'%(option)s' is not a valid option for shared processor"
-                " mode for virtual machine '%(instance_name)s'.")
+    msg_fmt = _("'%(option)s' is not a valid option for shared processor "
+                "mode for virtual machine '%(instance_name)s'.")
 
 
 class InvalidAttrWithCapped(AbstractMsgFmtError):
-    msg_fmt = _("Sharing weight is not a valid option for capped sharing"
-                " mode for virtual machine '%(instance_name)s'.")
+    msg_fmt = _("Sharing weight is not a valid option for capped sharing "
+                "mode for virtual machine '%(instance_name)s'.")
 
 
 class InvalidSharedWeight(AbstractMsgFmtError):
-    msg_fmt = _("'%(shared_weight)s' is not a valid value for shared"
-                " processor weight for virtual machine '%(instance_name)s'."
-                " Specify a value between 0 and 255.")
+    msg_fmt = _("'%(shared_weight)s' is not a valid value for shared "
+                "processor weight for virtual machine '%(instance_name)s'. "
+                "Specify a value between 0 and 255.")
 
 
 class MustSpecifyVCPURange(AbstractMsgFmtError):
     msg_fmt = _("If you specify a minimum and maximum value for processing "
-                "units, you must also specify a minimum and maximum value for"
-                " virtual CPUs for virtual machine '%(instance_name)s'.")
+                "units, you must also specify a minimum and maximum value for "
+                "virtual CPUs for virtual machine '%(instance_name)s'.")
 
 
 class MustSpecifyProcUnits(AbstractMsgFmtError):
     msg_fmt = _("If you specify a minimum and maximum value for processing "
-                "units, you must also specify a value for desired processing"
-                " units for virtual machine '%(instance_name)s'.")
+                "units, you must also specify a value for desired processing "
+                "units for virtual machine '%(instance_name)s'.")
 
 
 class InvalidProcUnitsPerVCPU(AbstractMsgFmtError):
-    msg_fmt = _("There must be a minimum of %(proc_units_per_vcpu)s processing"
-                " units per virtual CPU. The requested %(level)s processing"
-                " units were '%(proc_units)s' and the requested %(level)s"
-                " virtual CPUs were '%(vcpus)d' for virtual machine"
-                " '%(instance_name)s'.")
+    msg_fmt = _("There must be a minimum of %(proc_units_per_vcpu)s "
+                "processing units per virtual CPU. The requested %(level)s "
+                "processing units were '%(proc_units)s' and the requested "
+                "%(level)s virtual CPUs were '%(vcpus)d' for virtual machine "
+                "'%(instance_name)s'.")
 
 
 class ProcUnitsGTVCPUs(AbstractMsgFmtError):
-    msg_fmt = _("The number of processing units cannot be a larger value than"
-                " the number of virtual CPUs. The requested %(level)s "
+    msg_fmt = _("The number of processing units cannot be a larger value than "
+                "the number of virtual CPUs. The requested %(level)s "
                 "processing units were '%(proc_units)s' and the requested "
-                "%(level)s virtual CPUs were '%(vcpus)d' for virtual machine"
-                " '%(instance_name)s'.")
+                "%(level)s virtual CPUs were '%(vcpus)d' for virtual machine "
+                "'%(instance_name)s'.")
 
 
 class VCPUsAboveMaxAllowed(AbstractMsgFmtError):
-    msg_fmt = _("The desired processors (%(vcpus)d) cannot be above the"
-                " maximum processors allowed per partition (%(max_allowed)d)"
-                " for virtual machine '%(instance_name)s'.")
+    msg_fmt = _("The desired processors (%(vcpus)d) cannot be above the "
+                "maximum processors allowed per partition (%(max_allowed)d) "
+                "for virtual machine '%(instance_name)s'.")
 
 
 class MaxVCPUsAboveMaxAllowed(AbstractMsgFmtError):
-    msg_fmt = _("The maximum processors (%(vcpus)d) cannot be above the"
-                " maximum system capacity processor limit %(max_allowed)d)"
-                " for virtual machine '%(instance_name)s'.")
+    msg_fmt = _("The maximum processors (%(vcpus)d) cannot be above the "
+                "maximum system capacity processor limit %(max_allowed)d) "
+                "for virtual machine '%(instance_name)s'.")
 
 
 class NoRMCConnectivity(AbstractMsgFmtError):
@@ -217,13 +217,13 @@ class VolumeAttachFailed(AbstractMsgFmtError):
 
 
 class VolumeDetachFailed(AbstractMsgFmtError):
-    msg_fmt = _("Unable to detach storage %(backing_dev)s from virtual"
-                " machine %(instance_name)s. %(reason)s")
+    msg_fmt = _("Unable to detach storage %(backing_dev)s from virtual "
+                "machine %(instance_name)s. %(reason)s")
 
 
 class VolumeLookupFailed(AbstractMsgFmtError):
-    msg_fmt = _("Unable to determine that the volume with id %(uuid)s has"
-                " been discovered or mapped on a Virtual I/O Server")
+    msg_fmt = _("Unable to determine that the volume with id %(uuid)s has "
+                "been discovered or mapped on a Virtual I/O Server")
 
 
 class VIOSNotFound(AbstractMsgFmtError):
@@ -236,17 +236,17 @@ class StorageTypeNotSupported(AbstractMsgFmtError):
 
 
 class DesiredOutsideCurrentRange(AbstractMsgFmtError):
-    msg_fmt = _("Desired %(attr)s requested (%(desired)s) is outside the"
-                " currently assigned minimum (%(min)s) and maximum (%(max)s)"
-                " values for virtual machine '%(instance_name)s'. Either "
-                "specify a valid value for desired %(attr)s or power off the"
-                " virtual machine before resizing.")
+    msg_fmt = _("Desired %(attr)s requested (%(desired)s) is outside the "
+                "currently assigned minimum (%(min)s) and maximum (%(max)s) "
+                "values for virtual machine '%(instance_name)s'. Either "
+                "specify a valid value for desired %(attr)s or power off the "
+                "virtual machine before resizing.")
 
 
 class UnsupportedInDLPAR(AbstractMsgFmtError):
-    msg_fmt = _("Changing %(attr)s is not supported while virtual machine"
-                " '%(instance_name)s' is running. The virtual machine must"
-                " be powered off first.")
+    msg_fmt = _("Changing %(attr)s is not supported while virtual machine "
+                "'%(instance_name)s' is running. The virtual machine must "
+                "be powered off first.")
 
 
 class UpdateFailed(AbstractMsgFmtError):
@@ -255,8 +255,8 @@ class UpdateFailed(AbstractMsgFmtError):
 
 
 class SNoStorageConnectivityFound(AbstractMsgFmtError):
-    msg_fmt = _("Unable to find a supported storage connection type in the"
-                " list of storage connectivity groups: %(scg_conn_types)s")
+    msg_fmt = _("Unable to find a supported storage connection type in the "
+                "list of storage connectivity groups: %(scg_conn_types)s")
 
 
 class AdapterCreateFailed(AbstractMsgFmtError):
@@ -266,8 +266,8 @@ class AdapterCreateFailed(AbstractMsgFmtError):
 
 class InvalidStorageConnectivityInfo(AbstractMsgFmtError):
     msg_fmt = _("Unable to perform this operation with the storage "
-                "connectivity group provided for virtual machine"
-                " %(instance_name)s.")
+                "connectivity group provided for virtual machine "
+                "%(instance_name)s.")
 
 
 class UpdateInfoIncomplete(AbstractMsgFmtError):
@@ -339,7 +339,7 @@ class VIOSIsTooBusy(AbstractMsgFmtError):
 
 class VIOSMissingPhysicalPort(AbstractMsgFmtError):
     msg_fmt = _("Virtual I/O Server %(vios_name)s does not have any "
-                " fibre channel ports listed in the storage connectivity "
+                "fibre channel ports listed in the storage connectivity "
                 "group.")
 
 
@@ -515,9 +515,9 @@ class PowerVMAPIError(AbstractMsgFmtError):
 
 
 class NoOSForVM(AbstractMsgFmtError):
-    msg_fmt = _("Virtual machine '%(instance_name)s' does not have an"
-                " operating system identified.  The process for bringing"
-                " the virtual machine under management by PowerVC must "
+    msg_fmt = _("Virtual machine '%(instance_name)s' does not have an "
+                "operating system identified.  The process for bringing "
+                "the virtual machine under management by PowerVC must "
                 "be completed.")
 
 
@@ -538,8 +538,8 @@ class ErrorExtendingVolume(AbstractMsgFmtError):
 
 class NoLicenseSRC(AbstractMsgFmtError):
     msg_fmt = _("Unable to deploy virtual machine '%(instance_name)s' "
-                "because the host does not support the operating system"
-                " installed on this image")
+                "because the host does not support the operating system "
+                "installed on this image")
 
 
 class UnSupportedOSVersion(AbstractMsgFmtError):
@@ -569,3 +569,8 @@ class VMPowerOnFailure(AbstractMsgFmtError):
 class PvidOfNetworkBridgeError(AbstractMsgFmtError):
     msg_fmt = _("Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN "
                 "Identifier on a different Network Bridge.")
+
+
+class DuplicateLUNameError(AbstractMsgFmtError):
+    msg_fmt = _("A Logical Unit with name %(lu_name)s already exists on "
+                "Shared Storage Pool %(ssp_name)s.")

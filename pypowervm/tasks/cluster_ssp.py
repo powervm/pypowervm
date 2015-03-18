@@ -16,6 +16,7 @@
 
 import logging
 
+import pypowervm.exceptions as exc
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.constants as c
 from pypowervm.wrappers import job
@@ -62,3 +63,32 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
             'sspXml', ssp.toxmlstring(), cdata=True)]
     jwrap.run_job(adapter, None, job_parms=jparams)
     return jwrap
+
+
+def crt_lu(adp, ssp, name, size, thin=None):
+    """Create a Logical Unit on the specified Shared Storage Pool.
+
+    :param adp: The pypowervm.adapter.Adapter through which to request the
+                change.
+    :param ssp: SSP EntryWrapper denoting the Shared Storage Pool on which to
+                create the LU.
+    :param name: Name for the new Logical Unit.
+    :param size: LU size in GB with decimal precision.
+    :param thin: Provision the new LU as Thin (True) or Thick (False).  If
+                 unspecified, use the server default.
+    :return: The updated SSP wrapper.  (It will contain the new LU and have a
+             new etag.)
+    :return: LU ElementWrapper representing the Logical Unit just created.
+    """
+    # Refuse to add with duplicate name
+    if name in [lu.name for lu in ssp.logical_units]:
+        raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
+
+    lu = stor.LU.bld(name, size, thin)
+    ssp.logical_units.append(lu)
+    ssp = ssp.update(adp)
+    newlu = None
+    for lu in ssp.logical_units:
+        if lu.name == name:
+            newlu = lu
+    return ssp, newlu

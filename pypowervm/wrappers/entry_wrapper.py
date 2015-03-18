@@ -771,6 +771,10 @@ class WrapperElemList(list):
         string += ']'
         return string
 
+    def __contains__(self, item):
+        elems = self.root_elem.findall(self.child_type)
+        return item.element in elems
+
     def extend(self, seq):
         for elem in seq:
             self.append(elem)

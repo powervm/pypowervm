@@ -200,10 +200,10 @@ class2msg = {
     "'proc_units_param' and the requested level_param virtual CPUs were '456' "
     "for virtual machine 'instance_name_param'.",
     pvmex.AttrRequired:
-    "attr_param is a required attribute for virtual machine  "
+    "attr_param is a required attribute for virtual machine "
     "'instance_name_param'.",
     pvmex.DesiredGTMax:
-    "The value for maximum attr_param (345) cannot be less  than the desired "
+    "The value for maximum attr_param (345) cannot be less than the desired "
     "attr_param (des_value_param) for virtual machine 'instance_name_param'.",
     pvmex.VIOSNotFound:
     "Unable to locate the Virtual I/O Server for this operation",
@@ -241,7 +241,7 @@ class2msg = {
     "desired attr_param (des_value_param) for virtual machine "
     "'instance_name_param'.",
     pvmex.VIOSMissingPhysicalPort:
-    "Virtual I/O Server vios_name_param does not have any  fibre channel "
+    "Virtual I/O Server vios_name_param does not have any fibre channel "
     "ports listed in the storage connectivity group.",
     pvmex.VGMissing:
     "Unable to find volume group 'volume_group_name_param' on Virtual I/O "
@@ -356,9 +356,9 @@ class2msg = {
     "An error occurred while working with objects returned "
     "from the PowerVM API.",
     pvmex.NoOSForVM:
-    "Virtual machine 'instance_name_param' does not have an"
-    " operating system identified.  The process for bringing"
-    " the virtual machine under management by PowerVC must "
+    "Virtual machine 'instance_name_param' does not have an "
+    "operating system identified.  The process for bringing "
+    "the virtual machine under management by PowerVC must "
     "be completed.",
     pvmex.UnsupportedOSForVM:
     "The operating system os_distro_param for virtual machine "
@@ -371,8 +371,8 @@ class2msg = {
     "An error occurred when extending volume volume_id_param",
     pvmex.NoLicenseSRC:
     "Unable to deploy virtual machine 'instance_name_param' "
-    "because the host does not support the operating system"
-    " installed on this image",
+    "because the host does not support the operating system "
+    "installed on this image",
     pvmex.UnSupportedOSVersion:
     "Unable to deploy virtual machine 'instance_name_param' "
     "because the host does not support the operating system"

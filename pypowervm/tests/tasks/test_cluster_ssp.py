@@ -17,6 +17,7 @@
 import mock
 
 import pypowervm.adapter as adp
+import pypowervm.exceptions as exc
 import pypowervm.tasks.cluster_ssp as cs
 import pypowervm.tests.tasks.util as tju
 import pypowervm.util as u
@@ -28,6 +29,18 @@ import pypowervm.wrappers.storage as stor
 import unittest
 
 CREATE_CLUSTER = 'cluster_create_job_template.txt'
+
+
+def _mock_update_by_path(ssp, etag, path):
+    # Spoof adding UDID and defaulting thinness
+    for lu in ssp.logical_units:
+        if not lu.udid:
+            lu._udid('udid_' + lu.name)
+        if lu.is_thin is None:
+            lu._is_thin(True)
+    resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'})
+    resp.entry = ssp.entry
+    return resp
 
 
 class TestClusterSSP(unittest.TestCase):
@@ -94,6 +107,39 @@ class TestClusterSSP(unittest.TestCase):
                            node, data)
         # run_job() should run delete_job() at the end
         self.assertEqual(mock_del_job.call_count, 1)
+
+
+class TestSSP(unittest.TestCase):
+
+    def setUp(self):
+        self.adp = mock.patch('pypowervm.adapter.Adapter')
+        self.adp.update_by_path = _mock_update_by_path
+        self.adp.extend_path = lambda x, xag: x
+        self.ssp = stor.SSP.bld('ssp1', [])
+        self.ssp.entry.properties = {
+            'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
+        self.ssp._etag = 'before'
+
+    def test_crt_lu(self):
+        ssp, lu = cs.crt_lu(self.adp, self.ssp, 'lu1', 10)
+        self.assertEqual(lu.name, 'lu1')
+        self.assertEqual(lu.udid, 'udid_lu1')
+        self.assertTrue(lu.is_thin)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertIn(lu, ssp.logical_units)
+
+    def test_crt_lu_thin(self):
+        ssp, lu = cs.crt_lu(self.adp, self.ssp, 'lu1', 10, thin=True)
+        self.assertTrue(lu.is_thin)
+
+    def test_crt_lu_thick(self):
+        ssp, lu = cs.crt_lu(self.adp, self.ssp, 'lu1', 10, thin=False)
+        self.assertFalse(lu.is_thin)
+
+    def test_crt_lu_name_conflict(self):
+        self.ssp.logical_units.append(stor.LU.bld('lu1', 10))
+        self.assertRaises(exc.DuplicateLUNameError, cs.crt_lu, self.adp,
+                          self.ssp, 'lu1', 5)
 
 if __name__ == '__main__':
     unittest.main()
