@@ -164,7 +164,7 @@ def _lua_recovery_xml(itls, vendor=LUA_TYPE_IBM):
     root.append(adpt.Element("reliableITL", text="false", ns=''))
 
     # There is only one device in the device list.
-    deviceList = adpt.Element("deviceList", ns='')
+    device_list = adpt.Element("deviceList", ns='')
     device = adpt.Element("device", ns='')
     device.append(adpt.Element("vendor", text=vendor, ns=''))
     device.append(adpt.Element("deviceTag", text="1", ns=''))
@@ -182,8 +182,8 @@ def _lua_recovery_xml(itls, vendor=LUA_TYPE_IBM):
         itl_list.append(itl_elem)
 
     device.append(itl_list)
-    deviceList.append(device)
-    root.append(deviceList)
+    device_list.append(device)
+    root.append(device_list)
 
     return root.toxmlstring().decode('utf-8')
 
@@ -225,17 +225,17 @@ def _process_lua_result(result):
 def _validate_lua_status(status, dev_name, udid, message):
     """Logs any issues with the LUA."""
 
-    if (status == LUA_STATUS_DEVICE_AVAILABLE):
+    if status == LUA_STATUS_DEVICE_AVAILABLE:
         LOG.info(_("LUA Discovery Successful Device Found: %s"),
                  dev_name)
-    elif (status == LUA_STATUS_FOUND_ITL_ERR):
+    elif status == LUA_STATUS_FOUND_ITL_ERR:
         # Message is already set.
         LOG.warn(_("ITL Error encountered: %s"), message)
         pass
-    elif (status == LUA_STATUS_DEVICE_IN_USE):
+    elif status == LUA_STATUS_DEVICE_IN_USE:
         LOG.warn(_("%s Device is currently in use"), dev_name)
-    elif (status == LUA_STATUS_FOUND_DEVICE_UNKNOWN_UDID):
+    elif status == LUA_STATUS_FOUND_DEVICE_UNKNOWN_UDID:
         LOG.warn(_("%s Device discovered with unknown uuid"), dev_name)
-    elif (status == LUA_STATUS_INCORRECT_ITL):
+    elif status == LUA_STATUS_INCORRECT_ITL:
         LOG.warn(_("Failed to Discover the Device : %s"), dev_name)
     return status, dev_name, message, udid
