@@ -18,7 +18,7 @@ import mock
 
 import unittest
 
-from pypowervm.jobs import hdisk
+from pypowervm.tasks import hdisk
 
 
 class TestHDisk(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestHDisk(unittest.TestCase):
 
         self.assertEqual(LUA_XML, hdisk._lua_recovery_xml(all_itls))
 
-    @mock.patch('pypowervm.jobs.hdisk.LOG')
+    @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):
         """This tests the branches of validate_lua_status."""
         hdisk._validate_lua_status(hdisk.LUA_STATUS_DEVICE_AVAILABLE,
@@ -98,7 +98,7 @@ class TestHDisk(unittest.TestCase):
                                    'dev_name', 'udid', 'message')
         self.assertEqual(4, mock_log.warn.call_count)
 
-    @mock.patch('pypowervm.jobs.hdisk._process_lua_result')
+    @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_discover_hdisk(self, mock_adapter, mock_job, mock_lua_result):

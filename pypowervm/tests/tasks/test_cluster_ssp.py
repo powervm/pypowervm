@@ -17,8 +17,8 @@
 import mock
 
 import pypowervm.adapter as adp
-import pypowervm.jobs.cluster_ssp as cs
-import pypowervm.tests.jobs.util as tju
+import pypowervm.tasks.cluster_ssp as cs
+import pypowervm.tests.tasks.util as tju
 import pypowervm.util as u
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.constants as wc
