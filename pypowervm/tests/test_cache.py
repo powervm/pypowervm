@@ -23,9 +23,6 @@ logging.basicConfig()
 
 
 class TestCache(unittest.TestCase):
-    def setUp(self):
-        return
-
     def test_byaccess_order(self):
         self.cache_multicheck('byaccess')
 

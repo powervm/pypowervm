@@ -332,9 +332,6 @@ class TestWrapperElemList(unittest.TestCase):
 class TestActionableList(unittest.TestCase):
     """Tests for the Actionable List class."""
 
-    def setUp(self):
-        super(TestActionableList, self).setUp()
-
     def test_extend(self):
         def test(new_list):
             self.assertEqual([1, 2, 3, 4, 5], new_list)

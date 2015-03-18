@@ -36,6 +36,7 @@ class TestUploadLV(unittest.TestCase):
     """Unit Tests for Instance uploads."""
 
     def setUp(self):
+        super(TestUploadLV, self).setUp()
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
 

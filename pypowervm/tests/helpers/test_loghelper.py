@@ -32,8 +32,6 @@ fake_resp1 = adp.Response('GET', '/some/path', 200, 'OK', ['headers'])
 
 
 class TestLogHelper(unittest.TestCase):
-    def setUp(self):
-        return
 
     @mock.patch('pypowervm.adapter.Session')
     @mock.patch('pypowervm.helpers.log_helper.LOG')

@@ -32,9 +32,6 @@ def cat_string_helper(func, string):
 
 
 class TestHelpers(unittest.TestCase):
-    def setUp(self):
-        return
-
     def test_none(self):
         adpt = adp.Adapter('mock_session', use_cache=False, helpers=None)
         self.assertEqual(None, adpt._helpers)

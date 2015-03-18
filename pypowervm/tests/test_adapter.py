@@ -42,6 +42,7 @@ class TestAdapter(unittest.TestCase):
     """Test cases to test the adapter classes and methods."""
 
     def setUp(self):
+        super(TestAdapter, self).setUp()
         """Set up a mocked Session instance."""
         # Init test data
         host = '0.0.0.0'
@@ -85,6 +86,7 @@ class TestAdapter(unittest.TestCase):
     def tearDown(self):
         """Tear down the Session instance."""
         self.sess = None
+        super(TestAdapter, self).tearDown()
 
     @mock.patch('requests.Session')
     def test_read(self, mock_session):
