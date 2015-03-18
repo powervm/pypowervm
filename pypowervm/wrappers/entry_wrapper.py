@@ -748,6 +748,10 @@ class WrapperElemList(list):
         elem = self.root_elem.findall(self.child_type)[idx]
         return self.child_class.wrap(elem, **self.injects)
 
+    def index(self, value):
+        elems = self.root_elem.findall(self.child_type)
+        return elems.index(value.element)
+
     def __getslice__(self, i, j):
         elems = self.root_elem.findall(self.child_type)
         return [self.child_class.wrap(x, **self.injects)

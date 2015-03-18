@@ -574,3 +574,8 @@ class PvidOfNetworkBridgeError(AbstractMsgFmtError):
 class DuplicateLUNameError(AbstractMsgFmtError):
     msg_fmt = _("A Logical Unit with name %(lu_name)s already exists on "
                 "Shared Storage Pool %(ssp_name)s.")
+
+
+class LUNotFoundError(AbstractMsgFmtError):
+    msg_fmt = _("Could not find Logical Unit %(lu_label)s in Shared Storage "
+                "Pool %(ssp_name)s.")
