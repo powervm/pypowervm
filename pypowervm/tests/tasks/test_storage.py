@@ -18,9 +18,10 @@ import mock
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as exc
-from pypowervm.tasks import upload_lv
+import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
 
 import unittest
@@ -32,6 +33,18 @@ UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
 
 
+def _mock_update_by_path(ssp, etag, path):
+    # Spoof adding UDID and defaulting thinness
+    for lu in ssp.logical_units:
+        if not lu.udid:
+            lu._udid('udid_' + lu.name)
+        if lu.is_thin is None:
+            lu._is_thin(True)
+    resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'})
+    resp.entry = ssp.entry
+    return resp
+
+
 class TestUploadLV(unittest.TestCase):
     """Unit Tests for Instance uploads."""
 
@@ -41,14 +54,14 @@ class TestUploadLV(unittest.TestCase):
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.tasks.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vopt(self, mock_create_file, mock_adpt):
         """Tests the uploads of the virtual disks."""
 
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                       f_size=50)
+        f_uuid = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                f_size=50)
 
         # Test that vopt was 'uploaded'
         mock_adpt.upload_file.assert_called_with(mock.ANY, None)
@@ -62,8 +75,8 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = upload_lv.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                       f_size=50)
+        f_uuid = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -71,7 +84,7 @@ class TestUploadLV(unittest.TestCase):
         self.assertIsNotNone(f_uuid)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.tasks.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk(self, mock_create_file, mock_adpt):
         """Tests the uploads of the virtual disks."""
 
@@ -83,7 +96,7 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid = upload_lv.upload_new_vdisk(
+        f_uuid = ts.upload_new_vdisk(
             mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
             d_size=25, sha_chksum='abc123')
 
@@ -100,7 +113,7 @@ class TestUploadLV(unittest.TestCase):
         self.assertIsNone(f_uuid)
 
     @mock.patch('pypowervm.adapter.Adapter')
-    @mock.patch('pypowervm.tasks.upload_lv._create_file')
+    @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file, mock_adpt):
         """Tests the failure path for uploading of the virtual disks."""
 
@@ -112,15 +125,13 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
-        self.assertRaises(exc.Error,
-                          upload_lv.upload_new_vdisk, mock_adpt,
+        self.assertRaises(exc.Error, ts.upload_new_vdisk, mock_adpt,
                           self.v_uuid, self.vg_uuid, None, 'test3', 50)
 
         # Test cleanup failure
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = upload_lv.upload_new_vdisk(
-            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
-            sha_chksum='abc123')
+        f_uuid = ts.upload_new_vdisk(mock_adpt, self.v_uuid, self.vg_uuid,
+                                     None, 'test2', 50, sha_chksum='abc123')
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
@@ -151,8 +162,8 @@ class TestUploadLV(unittest.TestCase):
             return ret
         mock_adpt.create.side_effect = validate_in
 
-        upload_lv._create_file(mock_adpt, 'f_name', 'f_type', 'v_uuid',
-                               'chk', 50, 'tdev_uuid')
+        ts._create_file(mock_adpt, 'f_name', 'f_type', 'v_uuid', 'chk', 50,
+                        'tdev_uuid')
         self.assertTrue(mock_adpt.create.called)
 
     def _fake_meta(self):
@@ -164,7 +175,76 @@ class TestUploadLV(unittest.TestCase):
     def test_upload_cleanup(self, mock_adpt):
         """Tests the upload cleanup."""
 
-        upload_lv.upload_cleanup(mock_adpt, '123')
+        ts.upload_cleanup(mock_adpt, '123')
 
         mock_adpt.delete.assert_called_once_with(
             vf.File.schema_type, service='web', root_id='123')
+
+
+class TestLU(unittest.TestCase):
+
+    def setUp(self):
+        self.adp = mock.patch('pypowervm.adapter.Adapter')
+        self.adp.update_by_path = _mock_update_by_path
+        self.adp.extend_path = lambda x, xag: x
+        self.ssp = stor.SSP.bld('ssp1', [])
+        for i in range(5):
+            lu = stor.LU.bld('lu%d' % i, i+1)
+            lu._udid('udid_' + lu.name)
+            self.ssp.logical_units.append(lu)
+        self.ssp.entry.properties = {
+            'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
+        self.ssp._etag = 'before'
+
+    def test_crt_lu(self):
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10)
+        self.assertEqual(lu.name, 'lu5')
+        self.assertEqual(lu.udid, 'udid_lu5')
+        self.assertTrue(lu.is_thin)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertIn(lu, ssp.logical_units)
+
+    def test_crt_lu_thin(self):
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10, thin=True)
+        self.assertTrue(lu.is_thin)
+
+    def test_crt_lu_thick(self):
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10, thin=False)
+        self.assertFalse(lu.is_thin)
+
+    def test_crt_lu_name_conflict(self):
+        self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.adp,
+                          self.ssp, 'lu1', 5)
+
+    def test_rm_lu_by_lu(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, lu=lu)
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_by_name(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, name='lu2')
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_by_udid(self):
+        lu = self.ssp.logical_units[2]
+        ssp, lurm = ts.rm_lu(self.adp, self.ssp, udid='udid_lu2')
+        self.assertEqual(lu, lurm)
+        self.assertEqual(ssp.etag, 'after')
+        self.assertEqual(len(ssp.logical_units), 4)
+
+    def test_rm_lu_not_found(self):
+        # By LU
+        lu = stor.LU.bld('lu5', 6)
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          lu=lu)
+        # By name
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          name='lu5')
+        # By UDID
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
+                          udid='lu5_udid')
