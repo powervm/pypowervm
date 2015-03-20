@@ -21,6 +21,7 @@ import pypowervm.exceptions as exc
 from pypowervm.tasks import upload_lv
 import pypowervm.tests.tasks.util as tju
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.storage as pvm_stor
 import pypowervm.wrappers.vios_file as vf
 
 import unittest
@@ -83,7 +84,7 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid = upload_lv.upload_new_vdisk(
+        n_vdisk, f_uuid = upload_lv.upload_new_vdisk(
             mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
             d_size=25, sha_chksum='abc123')
 
@@ -98,6 +99,8 @@ class TestUploadLV(unittest.TestCase):
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNone(f_uuid)
+        self.assertIsNotNone(n_vdisk)
+        self.assertIsInstance(n_vdisk, pvm_stor.VDisk)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.tasks.upload_lv._create_file')
