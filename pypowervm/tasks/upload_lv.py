@@ -47,11 +47,13 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
                    match the file.  Must be at least as large as the file.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :return: Normally this method will return None, indicating that the disk
-             and image were uploaded without issue.  If for some reason the
-             File metadata for the VIOS was not cleaned up, the return value
-             is the File UUID.  This is simply a metadata marker to be later
-             used as input to the 'upload_cleanup' method.
+    :return: The first return value is the virtual disk that the file is
+             uploaded into.
+    :return: Normally the second return value will be None, indicating that the
+             disk and image were uploaded without issue.  If for some reason
+             the File metadata for the VIOS was not cleaned up, the return
+             value is the File UUID.  This is simply a metadata marker to be
+             later used as input to the 'upload_cleanup' method.
     """
     # Get the existing volume group
     vol_grp_data = adapter.read(vios.VIOS.schema_type, v_uuid,
@@ -107,8 +109,8 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
         except Exception:
             LOG.exception('Unable to cleanup after file upload.'
                           ' File uuid: %s' % vio_file.uuid)
-            return vio_file.uuid
-    return None
+            return n_vdisk, vio_file.uuid
+    return n_vdisk, None
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,

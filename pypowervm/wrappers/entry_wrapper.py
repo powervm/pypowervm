@@ -723,46 +723,59 @@ class WrapperElemList(list):
      - Removing from the list (ex. list.remove(other_elem))
     """
 
-    def __init__(self, root_elem, child_class, **kwargs):
+    def __init__(self, root_elem, child_class=None, **kwargs):
         """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
                           element, not a wrapper.
                           Ex. The element for 'SharedEthernetAdapters'.
         :param child_class: The child class (subclass of ElementWrapper).
+                            This is optional.  If not specified, will wrap
+                            all children elements.
         :param kwargs: Optional additional named arguments that may be passed
                        into the wrapper on creation.
         """
         self.root_elem = root_elem
-        self.child_class = child_class
-        self.child_type = child_class.schema_type
+        if child_class is not None:
+            self.child_class = child_class
+        else:
+            # Default to the ElementWrapper, which should resolve to the
+            # appropriate class type.
+            self.child_class = ElementWrapper
         self.injects = kwargs
+
+    def __find_elems(self):
+        if (self.child_class is not None and
+                self.child_class is not ElementWrapper):
+            return self.root_elem.findall(self.child_class.schema_type)
+        else:
+            return self.root_elem.getchildren()
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
-            all_elems = self.root_elem.findall(self.child_type)
+            all_elems = self.__find_elems()
             all_elems = all_elems[idx.start:idx.stop:idx.step]
             return [self.child_class.wrap(x, **self.injects)
                     for x in all_elems]
 
-        elem = self.root_elem.findall(self.child_type)[idx]
+        elem = self.__find_elems()[idx]
         return self.child_class.wrap(elem, **self.injects)
 
     def __getslice__(self, i, j):
-        elems = self.root_elem.findall(self.child_type)
+        elems = self.__find_elems()
         return [self.child_class.wrap(x, **self.injects)
                 for x in elems[i:j]]
 
     def __len__(self, *args, **kwargs):
-        return len(self.root_elem.findall(self.child_type))
+        return len(self.__find_elems())
 
     def __iter__(self):
-        elems = self.root_elem.findall(self.child_type)
+        elems = self.__find_elems()
         for elem in elems:
             yield self.child_class.wrap(elem, **self.injects)
 
     def __str__(self):
-        elems = self.root_elem.findall(self.child_type)
+        elems = self.__find_elems()
         string = '['
         for elem in elems:
             string += str(elem)
