@@ -60,12 +60,12 @@ class TestUploadLV(unittest.TestCase):
 
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
                                 f_size=50)
 
         # Test that vopt was 'uploaded'
         mock_adpt.upload_file.assert_called_with(mock.ANY, None)
-        self.assertIsNone(f_uuid)
+        self.assertIsNone(f_wrap)
 
         # Ensure cleanup was called
         mock_adpt.delete.assert_called_once_with(
@@ -75,13 +75,13 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
                                 f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
-        self.assertIsNotNone(f_uuid)
+        self.assertIsNotNone(f_wrap)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.tasks.storage._create_file')
@@ -96,7 +96,7 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.update_by_path.return_value = vg_post_crt
         mock_create_file.return_value = self._fake_meta()
 
-        f_uuid = ts.upload_new_vdisk(
+        f_wrap = ts.upload_new_vdisk(
             mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
             d_size=25, sha_chksum='abc123')
 
@@ -110,7 +110,7 @@ class TestUploadLV(unittest.TestCase):
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
-        self.assertIsNone(f_uuid)
+        self.assertIsNone(f_wrap)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.tasks.storage._create_file')
@@ -130,13 +130,13 @@ class TestUploadLV(unittest.TestCase):
 
         # Test cleanup failure
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_uuid = ts.upload_new_vdisk(mock_adpt, self.v_uuid, self.vg_uuid,
+        f_wrap = ts.upload_new_vdisk(mock_adpt, self.v_uuid, self.vg_uuid,
                                      None, 'test2', 50, sha_chksum='abc123')
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
-        self.assertIsNotNone(f_uuid)
+        self.assertIsNotNone(f_wrap)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_create_file(self, mock_adpt):
@@ -170,15 +170,6 @@ class TestUploadLV(unittest.TestCase):
         """Returns a fake meta class for the _create_file mock."""
         resp = tju.load_file(UPLOADED_FILE)
         return vf.File.wrap(resp)
-
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_upload_cleanup(self, mock_adpt):
-        """Tests the upload cleanup."""
-
-        ts.upload_cleanup(mock_adpt, '123')
-
-        mock_adpt.delete.assert_called_once_with(
-            vf.File.schema_type, service='web', root_id='123')
 
 
 class TestLU(unittest.TestCase):
