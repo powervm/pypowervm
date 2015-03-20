@@ -52,13 +52,9 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     :return: Normally the second return value will be None, indicating that the
              disk and image were uploaded without issue.  If for some reason
              the File metadata for the VIOS was not cleaned up, the return
-             value is the File UUID.  This is simply a metadata marker to be
-             later used as input to the 'upload_cleanup' method.
+             value is the File EntryWrapper.  This is simply a metadata marker
+             to be later used as input to the 'upload_cleanup' method.
     """
-    # Get the existing volume group
-    vol_grp_data = adapter.read(vios.VIOS.schema_type, v_uuid,
-                                stor.VG.schema_type, vol_grp_uuid)
-    vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
@@ -74,43 +70,17 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # TODO(IBM) Temporary - need to round up to the highest GB.  This should
     # be done by the platform in the future.
     gb_size = math.ceil(gb_size)
-    new_vdisk = stor.VDisk.bld(d_name, gb_size)
 
-    # Append it to the list.
-    vol_grp.virtual_disks.append(new_vdisk)
-
-    # Now perform an update on the adapter.
-    vol_grp = vol_grp.update(adapter)
-
-    # The new Virtual Disk should be created.  Find the one we created.
-    n_vdisk = None
-    for vdisk in vol_grp.virtual_disks:
-        if vdisk.name == d_name:
-            n_vdisk = vdisk
-            break
-    if not n_vdisk:
-        # This should never occur since the update went through without error,
-        # but adding just in case as we don't want to create the file meta
-        # without a backing disk.
-        raise exc.Error("Unable to locate new vDisk on file upload.")
+    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     vio_file = _create_file(
         adapter, d_name, vf.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
         f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
-    try:
-        # Upload the file
-        adapter.upload_file(vio_file.element, d_stream)
-    finally:
-        try:
-            # Cleanup after the upload
-            upload_cleanup(adapter, vio_file.uuid)
-        except Exception:
-            LOG.exception('Unable to cleanup after file upload.'
-                          ' File uuid: %s' % vio_file.uuid)
-            return n_vdisk, vio_file.uuid
-    return n_vdisk, None
+
+    maybe_file = _upload_stream(adapter, vio_file, d_stream)
+    return n_vdisk, maybe_file
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -130,34 +100,23 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     :return: Normally this method will return None, indicating that the disk
              and image were uploaded without issue.  If for some reason the
              File metadata for the VIOS was not cleaned up, the return value
-             is the File UUID.  This is simply a metadata marker to be later
-             used as input to the 'upload_cleanup' method.
+             is the File EntryWrapper.  This is simply a marker to be later
+             used to retry the cleanup.
     """
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FTypeEnum.BROKERED_MEDIA_ISO, v_uuid,
         sha_chksum, f_size)
-    try:
-        # Next, upload the file
-        adapter.upload_file(vio_file.element, d_stream)
-    finally:
-        try:
-            # Cleanup after the upload
-            upload_cleanup(adapter, vio_file.uuid)
-        except Exception:
-            LOG.exception('Unable to cleanup after file upload.'
-                          ' File uuid: %s' % vio_file.uuid)
-            return vio_file.uuid
-    return None
+    return _upload_stream(adapter, vio_file, d_stream)
 
 
-def upload_cleanup(adapter, f_uuid):
-    """Cleanup after a file upload.
+def _upload_stream(adapter, vio_file, d_stream):
+    """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
     platform, they create artifacts on the platform.  These artifacts
     must be cleaned up because there is a 100 file limit.  When the file UUID
-    is cleaned, two things can happend:
+    is cleaned, two things can happen:
 
     1) if the file is targeted to the PowerVM management platform, then both
     the file and the metadata artifacts are cleaned up.
@@ -168,11 +127,29 @@ def upload_cleanup(adapter, f_uuid):
     It's safe to cleanup VIOS file artifacts directly after uploading, as it
     will not affect the VIOS entity.
 
-    :param adapter: The adapter to talk over the API.
-    :param f_uuid: The file UUID to clean up.
-    :returns: The response from the delete operation.
+    :param adapter: The pypowervm.adapter.Adapter through which to request the
+                     change.
+    :param vio_file: The File EntryWrapper representing the metadata for the
+                     file.
+    :return: Normally this method will return None, indicating that the disk
+             and image were uploaded without issue.  If for some reason the
+             File metadata for the VIOS was not cleaned up, the return value
+             is the File EntryWrapper.  This is simply a marker to be later
+             used to retry the cleanup.
     """
-    return adapter.delete(vf.File.schema_type, root_id=f_uuid, service='web')
+    try:
+        # Upload the file
+        adapter.upload_file(vio_file.element, d_stream)
+    finally:
+        try:
+            # Cleanup after the upload
+            adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
+                           service='web')
+        except Exception:
+            LOG.exception('Unable to cleanup after file upload.'
+                          ' File uuid: %s' % vio_file.uuid)
+            return vio_file
+    return None
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
@@ -197,6 +174,44 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     # Create the file.
     resp = adapter.create(fd.element, vf.File.schema_type, service='web')
     return vf.File.wrap(resp)
+
+
+def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size):
+    """Creates a new Virtual Disk in the specified volume group.
+
+    :param adapter: The pypowervm.adapter.Adapter through which to request the
+                     change.
+    :param v_uuid: The UUID of the Virtual I/O Server that will host the disk.
+    :param vol_grp_uuid: The volume group that will host the new Virtual Disk.
+    :param d_name: The name that should be given to the disk on the Virtual
+                   I/O Server that will contain the file.
+    :param d_size: The size of the disk in GB.
+    :return: VDisk ElementWrapper representing the new VirtualDisk from the
+             server response (i.e. UDID will be populated).
+    :raise exc.Error: If the server response from attempting to add the VDisk
+                      does not contain the new VDisk.
+    """
+    # Get the existing volume group
+    vol_grp_data = adapter.read(vios.VIOS.schema_type, v_uuid,
+                                stor.VG.schema_type, vol_grp_uuid)
+    vol_grp = stor.VG.wrap(vol_grp_data.entry)
+
+    new_vdisk = stor.VDisk.bld(d_name, d_size)
+
+    # Append it to the list.
+    vol_grp.virtual_disks.append(new_vdisk)
+
+    # Now perform an update on the adapter.
+    vol_grp = vol_grp.update(adapter)
+
+    # The new Virtual Disk should be created.  Find the one we created.
+    for vdisk in vol_grp.virtual_disks:
+        if vdisk.name == d_name:
+            return vdisk
+    # This should never occur since the update went through without error,
+    # but adding just in case as we don't want to create the file meta
+    # without a backing disk.
+    raise exc.Error("Unable to locate new vDisk on file upload.")
 
 
 def crt_lu(adapter, ssp, name, size, thin=None):
