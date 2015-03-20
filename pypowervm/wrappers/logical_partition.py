@@ -128,12 +128,15 @@ class DedicatedSharingModesEnum():
     SHARE_IDLE_PROCS_ACTIVE = 'sre idle procs active'
     SHARE_IDLE_PROCS_ALWAYS = 'sre idle procs always'
     KEEP_IDLE_PROCS = 'keep idle procs'
+    ALL_MODES = (SHARE_IDLE_PROCS + SHARE_IDLE_PROCS_ACTIVE +
+                 SHARE_IDLE_PROCS_ALWAYS + KEEP_IDLE_PROCS)
 
 
 # Shared Proc, sharing modes.
 class SharingModesEnum():
     CAPPED = 'capped'
     UNCAPPED = 'uncapped'
+    ALL_MODES = (CAPPED + UNCAPPED)
 
 
 def crt_ded_procs(proc,
@@ -598,10 +601,10 @@ class LPAR(ewrap.EntryWrapper):
         return PartitionMemoryConfiguration.wrap(elem)
 
     @mem_config.setter
-    def mem_config(self, io_cfg):
+    def mem_config(self, mem_cfg):
         """The Partition Memory Configuration for the LPAR."""
         elem = self._find_or_seed(_LPAR_MEM_CFG)
-        self.element.replace(elem, io_cfg.element)
+        self.element.replace(elem, mem_cfg.element)
 
     @property
     def proc_config(self):
