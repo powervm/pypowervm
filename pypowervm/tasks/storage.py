@@ -112,6 +112,49 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return _upload_stream(adapter, vio_file, d_stream)
 
 
+def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
+                  d_size=None, sha_chksum=None):
+    """Creates a new SSP Logical Unit and uploads a data stream to it.
+
+    :param adapter: The pypowervm.adapter.Adapter through which to request the
+                    change.
+    :param v_uuid: The UUID of the Virtual I/O Server through which to perform
+                   the upload.  (Note that the new LU will be visible from any
+                   VIOS in the Shared Storage Pool's Cluster.)
+    :param ssp: SSP EntryWrapper representing the Shared Storage Pool on which
+                to create the new Logical Unit.
+    :param d_stream: The data stream (either a file handle or stream) to
+                     upload.  Must have the 'read' method that returns a chunk
+                     of bytes.
+    :param lu_name: The name that should be given to the new LU.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param d_size: (OPTIONAL) The size of the LU (in bytes).  Not required if
+                   it should match the file.  Must be at least as large as the
+                   file.
+    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+                       integrity checks.
+    :return: Normally this method will return None, indicating that the LU was
+             created and the image was uploaded without issue.  If for some
+             reason the File metadata for the VIOS was not cleaned up, the
+             return value is the File EntryWrapper.  This is simply a marker to
+             be later used to retry the cleanup.
+    """
+    # Create the new Logical Unit.  The LU size needs to be in decimal GB.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
+    gb_size = util.convert_bytes_to_gb(d_size)
+
+    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size)
+
+    # Create the file, specifying the UDID from the new Logical Unit.
+    # The File name matches the LU name.
+    vio_file = _create_file(
+        adapter, lu_name, vf.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
+        f_size=f_size, tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
+
+    return _upload_stream(adapter, vio_file, d_stream)
+
+
 def _upload_stream(adapter, vio_file, d_stream):
     """Upload a file stream and clean up the metadata afterward.
 
@@ -130,7 +173,7 @@ def _upload_stream(adapter, vio_file, d_stream):
     will not affect the VIOS entity.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change.
+                    change.
     :param vio_file: The File EntryWrapper representing the metadata for the
                      file.
     :return: Normally this method will return None, indicating that the disk
