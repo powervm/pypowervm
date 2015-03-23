@@ -31,8 +31,7 @@ class TestSCSIMapper(unittest.TestCase):
 
     def setUp(self):
         # Mapping LPAR IDs
-        self.mock_lpar_id_p = mock.patch('pypowervm.wrappers.'
-                                         'virtual_io_server.'
+        self.mock_lpar_id_p = mock.patch('pypowervm.wrappers.storage.'
                                          'VSCSIClientAdapter.lpar_id')
         self.mock_lpar_id = self.mock_lpar_id_p.start()
         self.mock_lpar_id.return_value = 2

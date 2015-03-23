@@ -14,7 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import logging
+
+import six
 
 import pypowervm.util as u
 import pypowervm.wrappers.constants as c
@@ -91,6 +94,19 @@ _SSP_LUS = 'LogicalUnits'
 _SSP_LU = 'LogicalUnit'
 _SSP_PVS = c.PVS
 _SSP_PV = c.PV
+
+# Virtual Adapter Constants
+_VADPT_LPAR_ID = 'LocalPartitionID'
+_VADPT_UDID = 'UniqueDeviceID'
+_VADPT_MAP_PORT = 'MapPort'
+_VADPT_WWPNS = 'WWPNs'
+_VADPT_BACK_DEV_NAME = 'BackingDeviceName'
+_VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_VARIED_ON = 'VariedOn'
+_VADPT_NAME = 'AdapterName'
+_VADPT_TYPE = 'AdapterType'
+_NEXT_SLOT = 'UseNextAvailableSlotID'
+_LOCATION_CODE = 'LocationCode'
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -558,3 +574,163 @@ class SSP(ewrap.EntryWrapper):
     @physical_volumes.setter
     def physical_volumes(self, pvs):
         self.replace_list(_SSP_PVS, pvs)
+
+
+@six.add_metaclass(abc.ABCMeta)
+class VStorageAdapter(ewrap.ElementWrapper):
+    """Parent class for the virtual storage adapters (FC or SCSI)."""
+    has_metadata = True
+
+    @classmethod
+    def _bld_new(cls, side):
+        """Build a {Client|Server}Adapter requesting a new virtual adapter.
+
+        :param side: Either 'Client' or 'Server'.
+        :returns: A fresh ClientAdapter or ServerAdapter wrapper with
+                  UseNextAvailableSlotID=true
+        """
+        adp = super(VStorageAdapter, cls)._bld()
+        adp._side(side)
+        adp._use_next_slot(True)
+        return adp
+
+    @property
+    def side(self):
+        """Will return either Server or Client.
+
+        A Server indicates that this is a virtual adapter that resides on the
+        Virtual I/O Server.
+
+        A Client indicates that this is an adapter residing on a Client LPAR.
+        """
+        return self._get_val_str(_VADPT_TYPE)
+
+    def _side(self, t):
+        self.set_parm_value(_VADPT_TYPE, t)
+
+    @property
+    def is_varied_on(self):
+        """True if the adapter is varied on."""
+        return self._get_val_str(_VADPT_VARIED_ON)
+
+    @property
+    def slot_number(self):
+        """The (int) slot number that the adapter is in."""
+        return self._get_val_int(_VADPT_SLOT_NUM)
+
+    def _use_next_slot(self, use):
+        self.set_parm_value(_NEXT_SLOT, u.sanitize_bool_for_api(use))
+
+    @property
+    def loc_code(self):
+        """The device's location code."""
+        return self._get_val_str(_LOCATION_CODE)
+
+
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.ElementWrapper.pvm_type('ClientAdapter', has_metadata=True)
+class VClientStorageAdapter(VStorageAdapter):
+    """Parent class for Client Virtual Storage Adapters."""
+
+    @classmethod
+    def bld(cls):
+        return super(VClientStorageAdapter, cls)._bld_new('Client')
+
+    @property
+    def lpar_id(self):
+        """The LPAR ID the contains this client adapter."""
+        return self._get_val_str(_VADPT_LPAR_ID)
+
+
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.ElementWrapper.pvm_type('ServerAdapter', has_metadata=True)
+class VServerStorageAdapter(VStorageAdapter):
+    """Parent class for Server Virtual Storage Adapters."""
+
+    @classmethod
+    def bld(cls):
+        return super(VServerStorageAdapter, cls)._bld_new('Server')
+
+    @property
+    def name(self):
+        """The adapter's name on the Virtual I/O Server."""
+        return self._get_val_str(_VADPT_NAME)
+
+    @property
+    def udid(self):
+        """The device's Unique Device Identifier."""
+        return self._get_val_str(_VADPT_UDID)
+
+
+# pvm_type decorator by superclass (it is not unique)
+class VSCSIClientAdapter(VClientStorageAdapter):
+    """The Virtual SCSI Adapter that hosts storage traffic.
+
+    Paired with a VSCSIServerAdapter.
+    """
+    pass  # Implemented by superclasses
+
+
+# pvm_type decorator by superclass (it is not unique)
+class VSCSIServerAdapter(VServerStorageAdapter):
+    """The Virtual SCSI Adapter that hosts storage traffic.
+
+    Paired with a VSCSIClientAdapter.
+    """
+
+    @property
+    def backing_dev_name(self):
+        """The backing device name that this virtual adapter is hooked into."""
+        return self._get_val_str(_VADPT_BACK_DEV_NAME)
+
+
+# pvm_type decorator by superclass (it is not unique)
+class VFCClientAdapter(VClientStorageAdapter):
+    """The Virtual Fibre Channel Adapter on the client LPAR.
+
+    Paired with a VFCServerAdapter.
+    """
+
+    @classmethod
+    def bld(cls, wwpns=None):
+        """Create a fresh Virtual Fibre Channel Client Adapter.
+
+        :param wwpns: An optional set of two client WWPNs to set on the
+                      adapter.
+        """
+        adpt = super(VFCClientAdapter, cls).bld()
+
+        if wwpns is not None:
+            adpt._wwpns(wwpns)
+
+        return adpt
+
+    def _wwpns(self, value):
+        """Sets the WWPN string.
+
+        :param value: The set (or list) of WWPNs.  Should only contain two.
+        """
+        if value is not None:
+            self.set_parm_value(_VADPT_WWPNS, " ".join(value))
+
+    @property
+    def wwpns(self):
+        """Returns a set that contains the WWPNs.  If no WWPNs, empty set."""
+        val = self._get_val_str(_VADPT_WWPNS)
+        if val is None:
+            return set()
+        else:
+            return set(val.split(' '))
+
+
+# pvm_type decorator by superclass (it is not unique)
+class VFCServerAdapter(VServerStorageAdapter):
+    """The Virtual Fibre Channel Adapter on the VIOS.
+
+    Paired with a VFCClientAdapter.
+    """
+
+    @property
+    def map_port(self):
+        """The physical FC port name that this virtual port is connect to."""
+        return self._get_val_str(_VADPT_MAP_PORT)

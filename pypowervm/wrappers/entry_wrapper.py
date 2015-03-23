@@ -762,7 +762,7 @@ class WrapperElemList(list):
         return self.child_class.wrap(elem, **self.injects)
 
     def index(self, value):
-        elems = self.root_elem.findall(self.child_type)
+        elems = self.__find_elems()
         return elems.index(value.element)
 
     def __getslice__(self, i, j):
@@ -789,7 +789,7 @@ class WrapperElemList(list):
         return string
 
     def __contains__(self, item):
-        elems = self.root_elem.findall(self.child_type)
+        elems = self.__find_elems()
         return item.element in elems
 
     def extend(self, seq):
