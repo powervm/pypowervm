@@ -18,7 +18,6 @@ import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-from pypowervm.tests.wrappers.util import xml_sections
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.logical_partition as lpar
 
@@ -366,56 +365,6 @@ class TestMemCfg(unittest.TestCase):
         self.assertEqual(512, mem_wrap.min_mem)
         self.assertEqual(1024, mem_wrap.desired_mem)
         self.assertEqual(2048, mem_wrap.max_mem)
-
-
-class TestCreateLogicalPartition(unittest.TestCase):
-    """Test cases to test the lpar operations."""
-    def setUp(self):
-        super(TestCreateLogicalPartition, self).setUp()
-        self.sections = xml_sections.load_xml_sections('lpar_sections.txt')
-
-    def section_tostring(self, section):
-        sec_text = ''.encode('ascii')
-        for entry in section:
-            sec_text += entry.toxmlstring() + '\n'.encode('ascii')
-        return sec_text.decode('ascii')
-
-    def test_ded_procs(self):
-        """Test crt_ded_procs_struct() method."""
-        # Test minimum parms
-        dprocs = lpar.crt_ded_procs(2)
-        self.assertEqual(self.sections['ded_procs'],
-                         self.section_tostring(dprocs))
-        # All parms
-        dprocs = lpar.crt_ded_procs(
-            2, sharing_mode=lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
-            min_proc=2, max_proc=2)
-        self.assertEqual(self.sections['ded_procs'],
-                         self.section_tostring(dprocs))
-
-    def test_shared_procs(self):
-        """Test crt_shared_procs_struct() method."""
-        # Test minimum parms
-        sprocs = lpar.crt_shared_procs(1.2, 2)
-        self.assertEqual(self.sections['shared_procs'],
-                         self.section_tostring(sprocs))
-        # All parms
-        sprocs = lpar.crt_shared_procs(
-            1.2, 2, sharing_mode=lpar.SharingModesEnum.UNCAPPED,
-            uncapped_weight=128, min_proc_unit=1.2,
-            max_proc_unit=1.2, min_proc=2, max_proc=2)
-        self.assertEqual(self.sections['shared_procs'],
-                         self.section_tostring(sprocs))
-
-    def test_lpar_struct(self):
-        """Test crt_lpar_struct() method."""
-        dprocs = lpar.crt_ded_procs(2)
-        lpar_elem = lpar.crt_lpar('the_name', 'OS400', dprocs,
-                                  1024, min_mem=1024,
-                                  max_mem='1024',
-                                  max_io_slots=64)
-        self.assertEqual(self.sections['lpar_1'],
-                         self.section_tostring(lpar_elem))
 
 
 class TestPhysFCPort(unittest.TestCase):
