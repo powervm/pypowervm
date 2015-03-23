@@ -42,7 +42,7 @@ def load_xml_sections(file_name):
             if ln.startswith(END_OF_SECTION):
                 return buf
 
-            buf += ln
+            buf += ln.strip('\n')
 
         return buf
 
