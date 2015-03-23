@@ -44,6 +44,7 @@ SHARING_MODE = 'sharing_mode'
 UNCAPPED_WEIGHT = 'uncapped_weight'
 SPP = 'proc_pool'
 MAX_IO_SLOTS = 'max_io_slots'
+AVAIL_PRIORITY = 'avail_priority'
 
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
@@ -122,7 +123,7 @@ class DefaultStandardize(Standardize):
     """
     def __init__(self, attr, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
-                 uncapped_weight=64, spp=0):
+                 uncapped_weight=64, spp=0, avail_priority=127):
         """Initialize the standardizer
 
         :param attr: dict of lpar attributes provided by the user
@@ -136,6 +137,7 @@ class DefaultStandardize(Standardize):
             are shared and a weight is not specified
         :param spp: shared processor pool to assign if the processors are
             shared and the pool is not specified
+        :param avail_priority: availability priority of the LPAR
         """
 
         super(DefaultStandardize, self).__init__(attr)
@@ -144,6 +146,7 @@ class DefaultStandardize(Standardize):
         self.max_slots = max_slots
         self.uncapped_weight = uncapped_weight
         self.spp = spp
+        self.avail_priority = avail_priority
 
     def _set_prop(self, attr, prop, base_prop):
         """Copies a property if present or copies the base property."""
@@ -164,6 +167,7 @@ class DefaultStandardize(Standardize):
             raise LPARBuilderException(msg)
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
+        AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -201,6 +205,7 @@ class DefaultStandardize(Standardize):
         attr = {NAME: self.attr[NAME]}
         self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
+        self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
 
         # Validate the attributes
         self._validate_general(attrs=attr)
@@ -504,6 +509,15 @@ class IOSlots(IntBoundField):
                                       allow_none=allow_none)
 
 
+class AvailPriority(IntBoundField):
+    min_bound = 0
+    max_bound = 255
+
+    def __init__(self, value, allow_none=False):
+        super(AvailPriority, self).__init__('Availability Priority', value,
+                                            allow_none=allow_none)
+
+
 class LPARBuilder(object):
     def __init__(self, attr, stdz):
         self.attr = attr
@@ -611,7 +625,9 @@ class LPARBuilder(object):
         else:
             proc_cfg = self.build_ded_proc()
 
+        # Update any general attributes
         std = self.stdz.general()
+        lpar_w.avail_priority = std[AVAIL_PRIORITY]
         io_cfg = lpar.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
 
         # Now start replacing the sections
