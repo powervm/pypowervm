@@ -191,3 +191,37 @@ class TestLPARBuilder(unittest.TestCase):
         stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         self.assertRaises(ValueError, bldr.build)
+
+        # Avail priority outside max
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    avail_priority=332)
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Avail priority bad parm
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    avail_priority='BADVALUE')
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Avail priority at min value
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    avail_priority=0)
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.avail_priority, '0')
+
+        # Avail priority at max value
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    avail_priority=255)
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.avail_priority, '255')
