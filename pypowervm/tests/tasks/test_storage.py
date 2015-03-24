@@ -141,6 +141,36 @@ class TestUploadLV(unittest.TestCase):
         self.assertIsNotNone(f_wrap)
 
     @mock.patch('pypowervm.adapter.Adapter')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_lu(self, mock_create_file, mock_adpt):
+        """Tests create/upload of SSP LU."""
+        ssp_in = stor.SSP.bld('ssp1', [])
+        ssp_in.entry.properties = {'links': {'SELF': [
+            '/rest/api/uom/SharedStoragePool/ssp_uuid']}}
+        ssp_out = stor.SSP.bld('ssp1', [])
+        lu1 = stor.LU.bld('lu1', 123)
+        lu1._udid('lu1_udid')
+        ssp_out.logical_units = [lu1]
+        mock_adpt.update_by_path.return_value = ssp_out.entry
+        mock_create_file.return_value = self._fake_meta()
+
+        f_wrap = ts.upload_new_lu(
+            mock_adpt, self.v_uuid, ssp_in, None, 'lu1', 123,
+            d_size=25, sha_chksum='abc123')
+
+        # Ensure the create file was called
+        mock_create_file.assert_called_once_with(
+            mock_adpt, 'lu1', vf.FTypeEnum.BROKERED_DISK_IMAGE, self.v_uuid,
+            f_size=123, tdev_udid='lu1_udid',
+            sha_chksum='abc123')
+
+        # Ensure cleanup was called after the upload
+        mock_adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+        self.assertIsNone(f_wrap)
+
+    @mock.patch('pypowervm.adapter.Adapter')
     def test_create_file(self, mock_adpt):
         """Validates that the _create_file builds the Element properly."""
         def validate_in(*args, **kwargs):
