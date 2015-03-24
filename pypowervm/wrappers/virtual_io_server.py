@@ -134,6 +134,19 @@ class VIOS(ewrap.EntryWrapper):
         return set(self._get_vals(path))
 
     @property
+    def pfc_ports(self):
+        """The physical Fibre Channel ports assigned to the VIOS."""
+        path = u.xpath(lpar.IO_CFG_ROOT, lpar.IO_SLOTS_ROOT,
+                       lpar.IO_SLOT_ROOT, lpar.ASSOC_IO_SLOT_ROOT,
+                       lpar.RELATED_IO_ADPT_ROOT, lpar.IO_PFC_ADPT_ROOT,
+                       lpar.PFC_PORTS_ROOT, lpar.PFC_PORT_ROOT)
+        elems = self._find(path, use_find_all=True)
+        resp = []
+        for elem in elems:
+            resp.append(lpar.PhysFCPort.wrap(elem))
+        return resp
+
+    @property
     def is_license_accepted(self):
         return self._get_val_bool(_VIO_LICENSE, default=True)
 

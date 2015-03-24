@@ -95,6 +95,20 @@ class TestVIOSWrapper(twrap.TestWrapper):
         for virt_path in virt_paths:
             self.assertEqual(2, len(virt_path))
 
+    def test_pfc_ports(self):
+        """Tests that the physical FC ports can be gathered."""
+        ports = self.dwrap.pfc_ports
+        self.assertIsNotNone(ports)
+        self.assertEqual(2, len(ports))
+
+        # Validate attributes on one.
+        self.assertEqual('U78AB.001.WZSJBM3-P1-C2-T2', ports[0].loc_code)
+        self.assertEqual('fcs1', ports[0].name)
+        self.assertEqual('1aU78AB.001.WZSJBM3-P1-C2-T2', ports[0].udid)
+        self.assertEqual('10000090FA1B6303', ports[0].wwpn)
+        self.assertEqual(0, ports[0].npiv_available_ports)
+        self.assertEqual(0, ports[0].npiv_total_ports)
+
 
 class TestViosMappings(twrap.TestWrapper):
 
