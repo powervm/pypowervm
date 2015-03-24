@@ -40,6 +40,8 @@ def _mock_update_by_path(ssp, etag, path):
             lu._udid('udid_' + lu.name)
         if lu.is_thin is None:
             lu._is_thin(True)
+        if lu.lu_type is None:
+            lu._lu_type(stor.LUTypeEnum.DISK)
     resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'})
     resp.entry = ssp.entry
     return resp
@@ -147,21 +149,24 @@ class TestUploadLV(unittest.TestCase):
         ssp_in = stor.SSP.bld('ssp1', [])
         ssp_in.entry.properties = {'links': {'SELF': [
             '/rest/api/uom/SharedStoragePool/ssp_uuid']}}
-        ssp_out = stor.SSP.bld('ssp1', [])
-        lu1 = stor.LU.bld('lu1', 123)
-        lu1._udid('lu1_udid')
-        ssp_out.logical_units = [lu1]
-        mock_adpt.update_by_path.return_value = ssp_out.entry
+        mock_adpt.update_by_path.side_effect = _mock_update_by_path
         mock_create_file.return_value = self._fake_meta()
+        size_b = 12345678
 
-        f_wrap = ts.upload_new_lu(
-            mock_adpt, self.v_uuid, ssp_in, None, 'lu1', 123,
+        new_lu, f_wrap = ts.upload_new_lu(
+            mock_adpt, self.v_uuid, ssp_in, None, 'lu1', size_b,
             d_size=25, sha_chksum='abc123')
+
+        # Check the new LU's properties
+        self.assertEqual(new_lu.name, 'lu1')
+        self.assertAlmostEqual(new_lu.capacity, float(size_b) / (1024**3), 6)
+        self.assertTrue(new_lu.is_thin)
+        self.assertEqual(new_lu.lu_type, stor.LUTypeEnum.IMAGE)
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
             mock_adpt, 'lu1', vf.FTypeEnum.BROKERED_DISK_IMAGE, self.v_uuid,
-            f_size=123, tdev_udid='lu1_udid',
+            f_size=size_b, tdev_udid='udid_lu1',
             sha_chksum='abc123')
 
         # Ensure cleanup was called after the upload
@@ -224,6 +229,7 @@ class TestLU(unittest.TestCase):
         self.assertEqual(lu.name, 'lu5')
         self.assertEqual(lu.udid, 'udid_lu5')
         self.assertTrue(lu.is_thin)
+        self.assertEqual(lu.lu_type, stor.LUTypeEnum.DISK)
         self.assertEqual(ssp.etag, 'after')
         self.assertIn(lu, ssp.logical_units)
 
@@ -234,6 +240,11 @@ class TestLU(unittest.TestCase):
     def test_crt_lu_thick(self):
         ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10, thin=False)
         self.assertFalse(lu.is_thin)
+
+    def test_crt_lu_type_image(self):
+        ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10,
+                            typ=stor.LUTypeEnum.IMAGE)
+        self.assertEqual(lu.lu_type, stor.LUTypeEnum.IMAGE)
 
     def test_crt_lu_name_conflict(self):
         self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.adp,

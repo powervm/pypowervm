@@ -55,7 +55,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
              disk and image were uploaded without issue.  If for some reason
              the File metadata for the VIOS was not cleaned up, the return
              value is the File EntryWrapper.  This is simply a metadata marker
-             to be later used as input to the 'upload_cleanup' method.
+             to be later used to retry the cleanup.
     """
 
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
@@ -133,10 +133,12 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
                    file.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :return: Normally this method will return None, indicating that the LU was
-             created and the image was uploaded without issue.  If for some
-             reason the File metadata for the VIOS was not cleaned up, the
-             return value is the File EntryWrapper.  This is simply a marker to
+    :return: The first return value is an LU EntryWrapper corresponding to the
+             Logical Unit into which the file was uploaded.
+    :return: Normally the second return value will be None, indicating that the
+             LU was created and the image was uploaded without issue.  If for
+             some reason the File metadata for the VIOS was not cleaned up, the
+             return value is the LU EntryWrapper.  This is simply a marker to
              be later used to retry the cleanup.
     """
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
@@ -144,7 +146,8 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
         d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size)
 
-    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size)
+    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size,
+                         typ=stor.LUTypeEnum.IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
@@ -152,7 +155,8 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
         adapter, lu_name, vf.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
         f_size=f_size, tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
 
-    return _upload_stream(adapter, vio_file, d_stream)
+    maybe_file = _upload_stream(adapter, vio_file, d_stream)
+    return new_lu, maybe_file
 
 
 def _upload_stream(adapter, vio_file, d_stream):
@@ -259,7 +263,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
 
 
-def crt_lu(adapter, ssp, name, size, thin=None):
+def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
@@ -270,6 +274,8 @@ def crt_lu(adapter, ssp, name, size, thin=None):
     :param size: LU size in GB with decimal precision.
     :param thin: Provision the new LU as Thin (True) or Thick (False).  If
                  unspecified, use the server default.
+    :param typ: The type of LU to create, one of the LUTypeEnum values.  If
+                unspecified, use the server default.
     :return: The updated SSP wrapper.  (It will contain the new LU and have a
              new etag.)
     :return: LU ElementWrapper representing the Logical Unit just created.
@@ -278,7 +284,7 @@ def crt_lu(adapter, ssp, name, size, thin=None):
     if name in [lu.name for lu in ssp.logical_units]:
         raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
 
-    lu = stor.LU.bld(name, size, thin)
+    lu = stor.LU.bld(name, size, thin, typ)
     ssp.logical_units.append(lu)
     ssp = ssp.update(adapter)
     newlu = None
