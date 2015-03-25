@@ -41,6 +41,7 @@ EXPECTED_CURR_PROC_UNITS = 0.5
 EXPECTED_CURR_MIN_PROC_UNITS = 0.5
 EXPECTED_CURR_UNCAPPED_WEIGHT = 128
 EXPECTED_AVAIL_PRIORITY = 127
+EXPECTED_SRR = True
 EXPECTED_CURR_PROC_COMPAT_MODE = 'POWER6_Plus'
 EXPECTED_PENDING_PROC_COMPAT_MODE = 'default'
 EXPECTED_OPERATING_SYSTEM_VER = 'Linux/Red Hat 2.6.32-358.el6.ppc64 6.4'
@@ -311,6 +312,10 @@ class TestLogicalPartition(unittest.TestCase):
     def test_get_avail_priority(self):
         self.call_simple_getter(
             "avail_priority", str(EXPECTED_AVAIL_PRIORITY), ZERO_STR)
+
+    def test_get_srr(self):
+        self.call_simple_getter(
+            "srr_enabled", EXPECTED_SRR, False)
 
     def test_get_proc_compat_modes(self):
         self.call_simple_getter(

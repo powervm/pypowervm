@@ -57,8 +57,6 @@ _LPAR_ID = 'PartitionID'
 _LPAR_TYPE = 'PartitionType'
 _LPAR_STATE = 'PartitionState'
 
-_MAX_IO_SLOT = 'MaximumVirtualIOSlots'
-
 _LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
 _LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
 _LPAR_IO_CFG = 'PartitionIOConfiguration'
@@ -67,6 +65,7 @@ _UNCAPPED_WEIGHT = 'UncappedWeight'
 
 _AVAIL_PRIORITY = 'AvailabilityPriority'
 _RESTRICTED_IO = 'IsRestrictedIOPartition'
+_SRR = 'SimplifiedRemoteRestartCapable'
 _CNA_LINKS = u.xpath('ClientNetworkAdapters', c.LINK)
 
 # Constants for the Partition I/O Configuration
@@ -122,30 +121,42 @@ _REF_CODE = 'ReferenceCode'
 _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = (_AVAIL_PRIORITY, _LPAR_IO_CFG, _LPAR_MEM_CFG, _LPAR_NAME,
-                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE)
+                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE, _SRR,
+                  _RESTRICTED_IO)
 
 
 # Dedicated sharing modes
-class DedicatedSharingModesEnum():
+class DedicatedSharingModesEnum(object):
     SHARE_IDLE_PROCS = 'sre idle proces'
     SHARE_IDLE_PROCS_ACTIVE = 'sre idle procs active'
     SHARE_IDLE_PROCS_ALWAYS = 'sre idle procs always'
     KEEP_IDLE_PROCS = 'keep idle procs'
-    ALL_MODES = (SHARE_IDLE_PROCS + SHARE_IDLE_PROCS_ACTIVE +
-                 SHARE_IDLE_PROCS_ALWAYS + KEEP_IDLE_PROCS)
+    ALL_MODES = (SHARE_IDLE_PROCS, SHARE_IDLE_PROCS_ACTIVE,
+                 SHARE_IDLE_PROCS_ALWAYS, KEEP_IDLE_PROCS)
 
 
 # Shared Proc, sharing modes.
-class SharingModesEnum():
+class SharingModesEnum(object):
     CAPPED = 'capped'
     UNCAPPED = 'uncapped'
-    ALL_MODES = (CAPPED + UNCAPPED)
+    ALL_MODES = (CAPPED, UNCAPPED)
 
 
 class LPARTypeEnum(object):
     """Subset of LogicalPartitionEnvironmentEnum - client LPAR types."""
     OS400 = 'OS400'
     AIXLINUX = 'AIX/Linux'
+
+
+class LPARCompatEnum(object):
+    DEFAULT = 'default'
+    POWER6 = 'POWER6'
+    POWER6_PLUS = 'POWER6_Plus'
+    POWER7 = 'POWER7'
+    POWER7_PLUS = 'POWER7_Plus'
+    POWER8 = 'POWER8'
+    ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER7, POWER7_PLUS,
+                  POWER8)
 
 
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
@@ -374,7 +385,7 @@ class LPAR(ewrap.EntryWrapper):
     def proc_compat_mode(self):
         """*Current* processor compatibility mode.
 
-        See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
+        See LPARCompatEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
         return self._get_val_str(_CURRENT_PROC_MODE)
@@ -383,7 +394,7 @@ class LPAR(ewrap.EntryWrapper):
     def pending_proc_compat_mode(self):
         """Pending processor compatibility mode.
 
-        See LogicalPartitionProcessorCompatibilityModeEnum.  E.g. 'POWER7',
+        See LPARCompatEnum.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
         return self._get_val_str(_PENDING_PROC_MODE)
@@ -408,6 +419,18 @@ class LPAR(ewrap.EntryWrapper):
         e.g. 'active', 'inactive', 'busy', etc.
         """
         return self._get_val_str(c.RMC_STATE)
+
+    @property
+    def srr_enabled(self):
+        """Simplied remote restart.
+
+        :returns: Returns SRR config boolean
+        """
+        return self._get_val_bool(_SRR, False)
+
+    @srr_enabled.setter
+    def srr_enabled(self, value):
+        self.set_parm_value(_SRR, value, attrib=c.ATTR_SCHEMA120)
 
     @property
     def ref_code(self):
