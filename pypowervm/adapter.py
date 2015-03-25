@@ -696,8 +696,18 @@ class Adapter(object):
                     etag = cached_resp.etag
                     etag_from_cache = True
         if not resp:
-            resp = _locked_refresh(dt.datetime.now(), cached_resp, etag,
-                                   etag_from_cache)
+            # If the path is cacheable but it's not currently in our cache,
+            # then do the request in series and use the cached results
+            # if possible
+            if is_cacheable:
+                resp = _locked_refresh(dt.datetime.now(), cached_resp, etag,
+                                       etag_from_cache)
+            else:
+                resp = self._read_by_path(path, etag, timeout, auditmemento,
+                                          sensitive, helpers=helpers)
+                if 'atom' in resp.reqheaders['Accept']:
+                    resp._unmarshal_atom()
+
         return resp
 
     def _read_by_path(self, path, etag, timeout, auditmemento, sensitive,
