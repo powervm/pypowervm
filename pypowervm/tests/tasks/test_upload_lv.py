@@ -27,7 +27,6 @@ import pypowervm.wrappers.vios_file as vf
 import unittest
 
 
-VIOS_FILE = 'upload_vios.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
