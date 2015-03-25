@@ -169,20 +169,21 @@ class Wrapper(object):
         """
         pass
 
-    def set_parm_value(self, property_name, value, create=True):
+    def set_parm_value(self, property_name, value, create=True, attrib=None):
         """Set a child element value, possibly creating the child.
 
         :param property_name: The schema name of the property to set.
         :param value: The (string) value to assign to the property's 'text'.
         :param create: If True, and the property is not found, it will be
         created.  Otherwise this method will throw an exception.
+        :param attrib: The element attributes to use if the element is created.
         """
         element_value = self._find(property_name)
         if element_value is None:
             self.log_missing_value(property_name)
             if create:
                 element_value = adpt.Element(property_name, ns=self.schema_ns,
-                                             attrib=None, text=str(value))
+                                             attrib=attrib, text=str(value))
                 self.inject(element_value)
 
         element_value.text = str(value)

@@ -19,6 +19,7 @@ import logging
 
 import six
 
+from pypowervm import i18n
 from pypowervm.wrappers import logical_partition as lpar
 
 # Dict keys used for input to the builder
@@ -45,11 +46,13 @@ UNCAPPED_WEIGHT = 'uncapped_weight'
 SPP = 'proc_pool'
 MAX_IO_SLOTS = 'max_io_slots'
 AVAIL_PRIORITY = 'avail_priority'
+SRR_CAPABLE = 'srr_capability'
+PROC_COMPAT = 'processor_compatibility'
 
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
 # Keys that indicate that shared processors are being configured
-SHARED_PROC_KEYS = PROC_UNITS_KEYS + (UNCAPPED_WEIGHT,)
+SHARED_PROC_KEYS = (PROC_UNITS_KEYS, UNCAPPED_WEIGHT)
 
 MEM_LOW_BOUND = 128
 VCPU_LOW_BOUND = 1
@@ -59,7 +62,7 @@ MAX_LPAR_NAME_LEN = 40  # TODO(IBM): validate this value.
 LOG = logging.getLogger(__name__)
 
 # TODO(IBM) translation
-_LE = lambda x: x
+_LE = i18n._
 
 
 class LPARBuilderException(Exception):
@@ -82,7 +85,9 @@ class Standardize(object):
         """Validates and standardizes the general LPAR attributes.
 
         :returns: dict of attributes.
-            Expected: NAME, ENV, MAX_IO_SLOTS
+            Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
+                      PROC_COMPAT
+            Optional: SRR_CAPABLE
         """
         pass
 
@@ -120,10 +125,17 @@ class DefaultStandardize(Standardize):
     simple approach for augmenting missing LPAR settings.  It does
     reasonable validation of the LPAR attributes.
 
+    It first validates the user input as-is, then fills in any missing
+    attributest that are required and supported by the host.  Finally,
+    it validates what it's sending back to the caller.  If any validation
+    rules are missed, the PowerVM management interface will catch them
+    and surface an error at that time.
+
     """
     def __init__(self, attr, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
-                 uncapped_weight=64, spp=0, avail_priority=127):
+                 uncapped_weight=64, spp=0, avail_priority=127,
+                 srr='false', proc_compat=lpar.LPARCompatEnum.DEFAULT):
         """Initialize the standardizer
 
         :param attr: dict of lpar attributes provided by the user
@@ -147,14 +159,16 @@ class DefaultStandardize(Standardize):
         self.uncapped_weight = uncapped_weight
         self.spp = spp
         self.avail_priority = avail_priority
+        self.srr = srr
+        self.proc_compat = proc_compat
 
-    def _set_prop(self, attr, prop, base_prop):
+    def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
-        attr[prop] = self.attr.get(prop, self.attr[base_prop])
+        attr[prop] = convert_func(self.attr.get(prop, self.attr[base_prop]))
 
-    def _set_val(self, attr, prop, value):
+    def _set_val(self, attr, prop, value, convert_func=str):
         """Copies a property if present or uses the supplied value."""
-        attr[prop] = self.attr.get(prop, value)
+        attr[prop] = convert_func(self.attr.get(prop, value))
 
     def _validate_general(self, attrs=None, partial=False):
         if attrs is None:
@@ -168,6 +182,10 @@ class DefaultStandardize(Standardize):
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
         AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
+        # SRR is always optional since the host may not be capable of it.
+        SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
+                                allow_none=True).validate()
+        ProcCompatMode(attrs.get(PROC_COMPAT), allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -197,15 +215,24 @@ class DefaultStandardize(Standardize):
 
         # If specified, ensure the dedicated procs value is valid
         DedicatedProc(attrs.get(DED_PROCS), allow_none=True).validate()
+        DedProcShareMode(attrs.get(SHARING_MODE), allow_none=True).validate()
 
     def general(self):
         # Validate the settings sent in
         self._validate_general(partial=True)
 
         attr = {NAME: self.attr[NAME]}
-        self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX)
+        self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX,
+                      convert_func=LPARType.convert_value)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
+        # See if the host is capable of SRR before setting it.
+        host_cap = self.mngd_sys.get_capabilities()
+        if host_cap['simplified_remote_restart_capable']:
+            self._set_val(attr, SRR_CAPABLE, self.srr,
+                          convert_func=SimplifiedRemoteRestart.convert_value)
+        self._set_val(attr, PROC_COMPAT, lpar.LPARCompatEnum.DEFAULT,
+                      convert_func=ProcCompatMode.convert_value)
 
         # Validate the attributes
         self._validate_general(attrs=attr)
@@ -253,7 +280,8 @@ class DefaultStandardize(Standardize):
         self._set_prop(attr, MAX_VCPU, VCPU)
         self._set_prop(attr, MIN_VCPU, VCPU)
         self._set_val(attr, SHARING_MODE,
-                      lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS)
+                      lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
+                      convert_func=DedProcShareMode.convert_value)
         self._validate_lpar_ded_cpu(attrs=attr)
         return attr
 
@@ -261,24 +289,29 @@ class DefaultStandardize(Standardize):
 @six.add_metaclass(abc.ABCMeta)
 class Field(object):
     """Represents a field to validate."""
-    type_ = str
+    _type = str
 
-    def __init__(self, name, value, allow_none=True):
-        self.name = name
+    def __init__(self, value, name=None, allow_none=True):
+        self.name = name if name is not None else self.__class__._name
         self.value = value
         self.typed_value = None
         self.allow_none = allow_none
 
+    @classmethod
+    def convert_value(cls, value):
+        """Static converter for the Field type."""
+        return cls._type(value)
+
     def _type_error(self, value, exc=TypeError):
         values = dict(field=self.name, value=value)
-        msg = _LE('Field %(field)s has invalid value: %(value)s') % values
+        msg = _LE("Field '%(field)s' has invalid value: '%(value)s'") % values
         LOG.error(msg)
         raise exc(msg)
 
     def _convert_value(self, value):
         """Does the actual conversion of the value and returns it."""
         try:
-            return self.type_(value)
+            return self.convert_value(value)
         except (TypeError, ValueError) as e:
             self._type_error(value, exc=e.__class__)
 
@@ -300,63 +333,60 @@ class Field(object):
 @six.add_metaclass(abc.ABCMeta)
 class BoolField(Field):
     """Facilitates validating boolean fields."""
-    type_ = bool
+    _type = bool
 
-    def __init__(self, name, value, allow_none=True):
-        super(BoolField, self).__init__(name, value, allow_none=allow_none)
-
-    def _convert_value(self, value):
+    @classmethod
+    def convert_value(cls, value):
         # Special case string values, so random strings don't map to True
         if isinstance(value, six.string_types):
-            return value.lower() in ['true', 'yes']
-        try:
-            return self.type_(value)
-        except TypeError:
-            self._type_error(value)
+            if value.lower() in ['true', 'yes']:
+                return True
+            if value.lower() in ['false', 'no']:
+                return False
+        elif isinstance(value, bool):
+                return value
+        raise ValueError('Could not convert %s.' % value)
 
 
 @six.add_metaclass(abc.ABCMeta)
 class ChoiceField(Field):
     _choices = None
 
-    def _convert_value(self, value):
+    @classmethod
+    def convert_value(cls, value):
         if value is None:
-            self._type_error(value)
+            raise ValueError('None value is not valid.')
         value = value.lower()
-        for choice in self._choices:
+        for choice in cls._choices:
             if value == choice.lower():
                 return choice
-
         # If we didn't find it, that's a problem...
-        self._type_error(value)
+        raise ValueError('Value not valid: %s' % value)
 
 
 @six.add_metaclass(abc.ABCMeta)
 class BoundField(Field):
-    min_bound = None
-    max_bound = None
-
-    def __init__(self, name, value, allow_none=False):
-        super(BoundField, self).__init__(name, value, allow_none=allow_none)
+    _min_bound = None
+    _max_bound = None
 
     def validate(self):
         super(BoundField, self).validate()
         # If value was not converted to the type, then don't validate bounds
         if self.typed_value is None:
             return
-        if (self.min_bound is not None and
-                self.typed_value < self._convert_value(self.min_bound)):
+        if (self._min_bound is not None and
+                self.typed_value < self._convert_value(self._min_bound)):
             values = dict(field=self.name, value=self.typed_value,
-                          minimum=self.min_bound)
+                          minimum=self._min_bound)
             msg = _LE("Field '%(field)s' has a value below the minimum. "
                       "Value: %(value)s Minimum: %(minimum)s") % values
             LOG.error(msg)
             raise ValueError(msg)
 
-        if (self.max_bound is not None and
-                self.typed_value > self._convert_value(self.max_bound)):
+        if (self._max_bound is not None and
+                self.typed_value > self._convert_value(self._max_bound)):
             values = dict(field=self.name, value=self.typed_value,
-                          maximum=self.max_bound)
+                          maximum=self._max_bound)
             msg = _LE("Field '%(field)s' has a value above the maximum. "
                       "Value: %(value)s Maximum: %(maximum)s") % values
 
@@ -366,35 +396,37 @@ class BoundField(Field):
 
 @six.add_metaclass(abc.ABCMeta)
 class IntBoundField(BoundField):
-    type_ = int
+    _type = int
 
 
 @six.add_metaclass(abc.ABCMeta)
 class FloatBoundField(BoundField):
-    type_ = float
+    _type = float
 
 
 @six.add_metaclass(abc.ABCMeta)
 class MinDesiredMaxField(object):
 
-    def __init__(self, name, field_type, min_name, des_name, max_name,
+    def __init__(self, field_type, min_name, des_name, max_name,
                  min_value, desired_value, max_value,
-                 min_min=None, max_max=None,
+                 min_min=None, max_max=None, name=None,
                  allow_none=True):
-        self.name = name
+        self.name = name if name is not None else self.__class__._name
 
-        self.min_field = field_type(min_name, min_value, allow_none=allow_none)
-        self.min_field.max_bound = desired_value
-        self.min_field.min_bound = min_min
+        self.min_field = field_type(
+            min_value, name=min_name, allow_none=allow_none)
+        self.min_field._max_bound = desired_value
+        self.min_field._min_bound = min_min
 
         self.des_field = field_type(
-            des_name, desired_value, allow_none=allow_none)
-        self.des_field.min_bound = min_value
-        self.des_field.max_bound = max_value
+            desired_value, name=des_name, allow_none=allow_none)
+        self.des_field._min_bound = min_value
+        self.des_field._max_bound = max_value
 
-        self.max_field = field_type(max_name, max_value, allow_none=allow_none)
-        self.max_field.min_bound = desired_value
-        self.max_field.max_bound = max_max
+        self.max_field = field_type(
+            max_value, name=max_name, allow_none=allow_none)
+        self.max_field._min_bound = desired_value
+        self.max_field._max_bound = max_max
 
     def validate(self):
         # Do specific validations before the general ones
@@ -436,15 +468,17 @@ class MinDesiredMaxField(object):
 
 
 class Memory(MinDesiredMaxField):
+    _name = 'Memory'
+
     def __init__(self, min_value, desired_value, max_value, lmb_size,
                  allow_none=True):
         super(Memory, self).__init__(
-            'Memory', IntBoundField, 'Minimum Memory', 'Desired Memory',
+            IntBoundField, 'Minimum Memory', 'Desired Memory',
             'Maximum Memory', min_value, desired_value, max_value,
             allow_none=allow_none)
         self.lmb_size = lmb_size
         # Set the lowest memory we'll honor
-        self.min_field.min_bound = MEM_LOW_BOUND
+        self.min_field._min_bound = MEM_LOW_BOUND
         # Don't allow the desired memory to not be specified.
         self.des_field.allow_none = False
 
@@ -466,56 +500,72 @@ class Memory(MinDesiredMaxField):
 
 
 class VCpu(MinDesiredMaxField):
+    _name = 'VCPU'
+
     def __init__(self, min_value, desired_value, max_value, allow_none=True):
         super(VCpu, self).__init__(
-            'VCPU', IntBoundField, 'Minimum VCPU', 'Desired VCPU',
+            IntBoundField, 'Minimum VCPU', 'Desired VCPU',
             'Maximum VCPU', min_value, desired_value, max_value,
             allow_none=allow_none)
         # Set the lowest VCPU we'll honor
-        self.min_field.min_bound = VCPU_LOW_BOUND
+        self.min_field._min_bound = VCPU_LOW_BOUND
 
 
 class ProcUnits(MinDesiredMaxField):
+    _name = 'ProcUnits'
+
     def __init__(self, min_value, desired_value, max_value, allow_none=True):
         super(ProcUnits, self).__init__(
-            'ProcUnits', FloatBoundField, 'Minimum Proc Units',
+            FloatBoundField, 'Minimum Proc Units',
             'Desired Proc Units', 'Maximum Proc Units', min_value,
             desired_value, max_value,
             allow_none=allow_none)
         # Set the lowest ProcUnits we'll honor
-        self.min_field.min_bound = PROC_UNITS_LOW_BOUND
+        self.min_field._min_bound = PROC_UNITS_LOW_BOUND
 
 
 class DedicatedProc(BoolField):
-    def __init__(self, value, allow_none=True):
-        super(DedicatedProc, self).__init__(
-            'Dedicated Processors', value, allow_none=allow_none)
+    _name = 'Dedicated Processors'
 
 
 class LPARType(ChoiceField):
     _choices = (lpar.LPARTypeEnum.AIXLINUX, lpar.LPARTypeEnum.OS400)
+    _name = 'Logical Partition Type'
 
     def __init__(self, value, allow_none=False):
-        super(LPARType, self).__init__('Logical Partition Type', value,
-                                       allow_none=allow_none)
+        super(LPARType, self).__init__(value, allow_none=allow_none)
+
+
+class ProcCompatMode(ChoiceField):
+    _choices = lpar.LPARCompatEnum.ALL_VALUES
+    _name = 'Processor Compatability Mode'
+
+
+class DedProcShareMode(ChoiceField):
+    _choices = lpar.DedicatedSharingModesEnum.ALL_VALUES
+    _name = 'Dedicated Processor Sharing Mode'
+
+    def __init__(self, value, allow_none=False):
+        super(DedProcShareMode, self).__init__(value, allow_none=allow_none)
 
 
 class IOSlots(IntBoundField):
-    min_bound = 2  # slot 0 & 1 are always in use
-    max_bound = 65534
+    _min_bound = 2  # slot 0 & 1 are always in use
+    _max_bound = 65534
+    _name = 'I/O Slots'
 
     def __init__(self, value, allow_none=False):
-        super(IOSlots, self).__init__('I/O Slots', value,
-                                      allow_none=allow_none)
+        super(IOSlots, self).__init__(value, allow_none=allow_none)
 
 
 class AvailPriority(IntBoundField):
-    min_bound = 0
-    max_bound = 255
+    _min_bound = 0
+    _max_bound = 255
+    _name = 'Availability Priority'
 
-    def __init__(self, value, allow_none=False):
-        super(AvailPriority, self).__init__('Availability Priority', value,
-                                            allow_none=allow_none)
+
+class SimplifiedRemoteRestart(BoolField):
+    _name = 'Simplified Remote Restart'
 
 
 class LPARBuilder(object):
@@ -567,7 +617,7 @@ class LPARBuilder(object):
         # Check the sharing mode values if any
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in lpar.SharingModesEnum.ALL_MODES):
+                smode in lpar.SharingModesEnum.ALL_VALUES):
             return True
 
         return False
@@ -579,7 +629,7 @@ class LPARBuilder(object):
         # Check for dedicated sharing mode
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in lpar.DedicatedSharingModesEnum.ALL_MODES):
+                smode in lpar.DedicatedSharingModesEnum.ALL_VALUES):
                 return True
 
     def _shared_procs_specified(self):
@@ -590,7 +640,7 @@ class LPARBuilder(object):
         just default to shared if we can't determine either way.
         """
         if self.attr.get(DED_PROCS, None) is not None:
-            return not self.attr[DED_PROCS]
+            return not DedicatedProc.convert_value(self.attr[DED_PROCS])
 
         # Check each key that would indicate sharing procs
         if self._shared_proc_keys_specified():
@@ -628,6 +678,11 @@ class LPARBuilder(object):
         # Update any general attributes
         std = self.stdz.general()
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
+        lpar_w.proc_compat_mode = std[PROC_COMPAT]
+        # Host may not be capable of SRR, so only add it if it's in the
+        # standardized attributes
+        if std.get(SRR_CAPABLE) is not None:
+            lpar_w.srr_enabled = std[SRR_CAPABLE]
         io_cfg = lpar.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
 
         # Now start replacing the sections
