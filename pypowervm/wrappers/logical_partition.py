@@ -121,6 +121,9 @@ _OPERATING_SYSTEM_VER = 'OperatingSystemVersion'
 _REF_CODE = 'ReferenceCode'
 _MIGRATION_STATE = 'MigrationState'
 
+_LPAR_EL_ORDER = (_AVAIL_PRIORITY, _LPAR_IO_CFG, _LPAR_MEM_CFG, _LPAR_NAME,
+                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE)
+
 
 # Dedicated sharing modes
 class DedicatedSharingModesEnum():
@@ -145,7 +148,8 @@ class LPARTypeEnum(object):
     AIXLINUX = 'AIX/Linux'
 
 
-@ewrap.EntryWrapper.pvm_type('LogicalPartition')
+@ewrap.EntryWrapper.pvm_type('LogicalPartition',
+                             child_order=_LPAR_EL_ORDER)
 class LPAR(ewrap.EntryWrapper):
 
     search_keys = dict(name='PartitionName', id='PartitionID')
