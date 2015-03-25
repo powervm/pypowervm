@@ -32,3 +32,44 @@ def build_wwpn_pair(adapter, host_uuid):
     while len(resp) < 14:
         resp += random.choice('0123456789ABCDEF')
     return resp + "00", resp + "01"
+
+
+def find_vio_for_wwpn(vios_wraps, p_port_wwpn):
+    """Will find the VIOS that has a PhysFCPort for the p_port_wwpn.
+
+    :param vios_wraps: A list or set of VIOS wrappers.
+    :param p_port_wwpn: The physical ports WWPN.
+    :return: The VIOS wrapper that contains a physical port with the WWPN.
+             If there is not one, then None will be returned.
+    :return: The port on the VIOS wrapper that represents the physical port.
+    """
+    # Sanitize our input
+    s_p_port_wwpn = sanitize(p_port_wwpn)
+    for vios_w in vios_wraps:
+        for port in vios_w.pfc_ports:
+            # No need to sanitize the API WWPN, it comes from the API.
+            if port.wwpn == s_p_port_wwpn:
+                return vios_w, port
+    return None, None
+
+
+def intersect_wwpns(wwpn_set1, wwpn_set2):
+    """Will return the intersection of WWPNs between the two sets.
+
+    :param wwpn_set1: A set or list of WWPNs.
+    :param wwpn_set2: A set or list of WWPNs.
+    :return: The intersection of the WWPNs.  Will maintain the WWPN format
+             of wwpn_set1, but the comparison done will be agnostic of
+             formats (ex. colons and/or upper/lower case).
+    """
+    wwpn_set2 = set([sanitize(x) for x in wwpn_set2])
+    return [y for y in wwpn_set1 if sanitize(y) in wwpn_set2]
+
+
+def sanitize(wwpn):
+    """Updates the format of the WWPN to match the expected PowerVM format.
+
+    :param wwpn: The original WWPN.
+    :return: A WWPN of the format expected by the API.
+    """
+    return wwpn.upper().replace(':', '')
