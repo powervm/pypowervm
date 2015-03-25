@@ -579,3 +579,10 @@ class DuplicateLUNameError(AbstractMsgFmtError):
 class LUNotFoundError(AbstractMsgFmtError):
     msg_fmt = _("Could not find Logical Unit %(lu_label)s in Shared Storage "
                 "Pool %(ssp_name)s.")
+
+
+class UnableToFindFCPortMap(AbstractMsgFmtError):
+    msg_fmt = _("Unable to find a physical port to map a virtual Fibre "
+                "Channel port to.  This is due to either a Virtual I/O "
+                "Server being unavailable, or improper port specification "
+                "for the physical Fibre Channel ports.")
