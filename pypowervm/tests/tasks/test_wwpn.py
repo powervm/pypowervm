@@ -75,3 +75,61 @@ class TestWWPN(unittest.TestCase):
         list2 = set(['aabbccddeeff'])
         self.assertEqual(['AA:BB:CC:DD:EE:FF'],
                          wwpn.intersect_wwpns(list1, list2))
+
+    def test_derive_npiv_map(self):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA45473B', '10:00:00:90:fa:45:17:58']
+
+        # Virtual WWPNs can be faked, and simplified.
+        v_port_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+        # Run the derivation now
+        resp = wwpn.derive_npiv_map(vios_wraps, p_wwpns, v_port_wwpns)
+        self.assertIsNotNone(resp)
+        self.assertEqual(5, len(resp))
+
+        # Make sure we only get two unique keys back.
+        unique_keys = set([i[0] for i in resp])
+        self.assertEqual(set(['10000090FA45473B', '10000090FA451758']),
+                         unique_keys)
+
+    def test_find_map_port(self):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+
+        # Happy path, should find the first port on the VIOS
+        p1 = wwpn._find_map_port(vios_w.pfc_ports, [])
+        self.assertIsNotNone(p1)
+
+        # Lets add a mapping where P1 is used.  Should not get that result
+        # back.
+        p2 = wwpn._find_map_port(vios_w.pfc_ports, [(p1.wwpn, '')])
+        self.assertIsNotNone(p2)
+        self.assertNotEqual(p1, p2)
+
+        # Now add a third and fourth port.  Same assertions.
+        p3 = wwpn._find_map_port(vios_w.pfc_ports, [(p1.wwpn, ''),
+                                                    (p2.wwpn, '')])
+        self.assertIsNotNone(p3)
+        self.assertNotIn(p3, [p1, p2])
+
+        p4 = wwpn._find_map_port(vios_w.pfc_ports, [(p1.wwpn, ''),
+                                                    (p2.wwpn, ''),
+                                                    (p3.wwpn, '')])
+        self.assertIsNotNone(p4)
+        self.assertNotIn(p4, [p1, p2, p3])
+
+        # Artificially inflate the use of other ports.
+        port_use = [(p1.wwpn, ''), (p2.wwpn, ''), (p3.wwpn, ''), (p4.wwpn, ''),
+                    (p1.wwpn, ''), (p2.wwpn, ''), (p4.wwpn, '')]
+        p_temp = wwpn._find_map_port(vios_w.pfc_ports, port_use)
+        self.assertIsNotNone(p_temp)
+        self.assertNotIn(p_temp, [p1, p2, p4])
+
+    def test_fuse_vfc_ports(self):
+        self.assertEqual(['A B'], wwpn._fuse_vfc_ports(['a', 'b']))
+        self.assertEqual(['AA BB'], wwpn._fuse_vfc_ports(['a:a', 'b:b']))
+        self.assertEqual(['A B', 'C D'],
+                         wwpn._fuse_vfc_ports(['a', 'b', 'c', 'd']))
