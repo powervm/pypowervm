@@ -39,6 +39,8 @@ _IBMi_LPM_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IBMiLogicalPartitionMobilityCapable')
 _IBMi_RESTRICTEDIO_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IBMiRestrictedIOModeCapable')
+_SIMP_REMOTE_RESTART_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -217,7 +219,9 @@ class System(ewrap.EntryWrapper):
                     'custom_mac_addr_capable':
                     self._get_val_bool(_VETH_MAC_ADDR_CAP, True),
                     'ibmi_restrictedio_capable':
-                    self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False)
+                    self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False),
+                    'simplified_remote_restart_capable':
+                    self._get_val_bool(_SIMP_REMOTE_RESTART_CAP, False)
                     }
         return cap_data
 

@@ -34,12 +34,21 @@ class TestLPARBuilder(unittest.TestCase):
         file_name = os.path.join(dirname, 'data', 'lpar_builder.txt')
         self.sections = xml_sections.load_xml_sections(file_name)
 
-        # Build a fake managed system wrapper
-        self.mngd_sys = mock.Mock()
-        type(self.mngd_sys).proc_units_avail = (
-            mock.PropertyMock(return_value=20.0))
-        type(self.mngd_sys).memory_region_size = (
-            mock.PropertyMock(return_value=128))
+        def _bld_mgd_sys(proc_units, mem_reg, srr):
+            # Build a fake managed system wrapper
+            mngd_sys = mock.Mock()
+            type(mngd_sys).proc_units_avail = (
+                mock.PropertyMock(return_value=proc_units))
+            type(mngd_sys).memory_region_size = (
+                mock.PropertyMock(return_value=mem_reg))
+            capabilities = {
+                'simplified_remote_restart_capable': srr
+            }
+            mngd_sys.get_capabilities.return_value = capabilities
+            return mngd_sys
+
+        self.mngd_sys = _bld_mgd_sys(20.0, 128, True)
+        self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False)
 
     def assert_xml(self, entry, string):
         self.assertEqual(entry.element.toxmlstring(),
@@ -125,27 +134,39 @@ class TestLPARBuilder(unittest.TestCase):
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         self.assertRaises(ValueError, bldr.build)
 
-        # Good non-defaulted IO Slots
-        attr = dict(name='lpar', memory=1024, max_io_slots=64,
-                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=1)
+        # Good non-defaulted IO Slots and SRR
+        attr = dict(name='TheName', memory=1024, max_io_slots=64,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=1,
+                    srr_capability=False)
         stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['shared_lpar'])
+
+        # Bad SRR value.
+        attr = dict(name='lpar', memory=1024, max_io_slots=64,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=1,
+                    srr_capability='Frog')
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        self.assertRaises(TypeError, bldr.build)
 
         # Uncapped / capped shared procs
         attr = dict(name='TheName', env=lpar.LPARTypeEnum.AIXLINUX,
                     memory=1024, vcpu=1,
-                    sharing_mode=lpar.SharingModesEnum.CAPPED)
+                    sharing_mode=lpar.SharingModesEnum.CAPPED,
+                    srr_capability='true')
         stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['capped_lpar'])
 
+        # Uncapped and no SRR capability
         attr = dict(name='TheName', env=lpar.LPARTypeEnum.AIXLINUX,
                     memory=1024, vcpu=1,
                     sharing_mode=lpar.SharingModesEnum.UNCAPPED,
                     uncapped_weight=100)
-        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+        stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys_no_srr)
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['uncapped_lpar'])
@@ -153,7 +174,8 @@ class TestLPARBuilder(unittest.TestCase):
         # Build dedicated but only via dedicated attributes
         m = lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS_ALWAYS
         attr = dict(name='TheName', env=lpar.LPARTypeEnum.AIXLINUX,
-                    memory=1024, vcpu=1, sharing_mode=m)
+                    memory=1024, vcpu=1, sharing_mode=m,
+                    processor_compatibility='PoWeR7')
         stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         new_lpar = bldr.build()
@@ -225,3 +247,12 @@ class TestLPARBuilder(unittest.TestCase):
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         new_lpar = bldr.build()
         self.assertEqual(new_lpar.avail_priority, '255')
+
+        # Proc compat
+        for pc in lpar.LPARCompatEnum.ALL_VALUES:
+            attr = dict(name='name', memory=1024, vcpu=1,
+                        processor_compatibility=pc)
+            stdz = lpar_bldr.DefaultStandardize(attr, self.mngd_sys)
+            bldr = lpar_bldr.LPARBuilder(attr, stdz)
+            new_lpar = bldr.build()
+            self.assertEqual(new_lpar.pending_proc_compat_mode, pc)

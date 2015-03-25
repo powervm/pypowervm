@@ -19,6 +19,7 @@ import logging
 
 import six
 
+from pypowervm import i18n
 from pypowervm.wrappers import logical_partition as lpar
 
 # Dict keys used for input to the builder
@@ -45,11 +46,13 @@ UNCAPPED_WEIGHT = 'uncapped_weight'
 SPP = 'proc_pool'
 MAX_IO_SLOTS = 'max_io_slots'
 AVAIL_PRIORITY = 'avail_priority'
+SRR_CAPABLE = 'srr_capability'
+PROC_COMPAT = 'processor_compatibility'
 
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
 # Keys that indicate that shared processors are being configured
-SHARED_PROC_KEYS = PROC_UNITS_KEYS + (UNCAPPED_WEIGHT,)
+SHARED_PROC_KEYS = (PROC_UNITS_KEYS, UNCAPPED_WEIGHT)
 
 MEM_LOW_BOUND = 128
 VCPU_LOW_BOUND = 1
@@ -59,7 +62,7 @@ MAX_LPAR_NAME_LEN = 40  # TODO(IBM): validate this value.
 LOG = logging.getLogger(__name__)
 
 # TODO(IBM) translation
-_LE = lambda x: x
+_LE = i18n._
 
 
 class LPARBuilderException(Exception):
@@ -82,7 +85,9 @@ class Standardize(object):
         """Validates and standardizes the general LPAR attributes.
 
         :returns: dict of attributes.
-            Expected: NAME, ENV, MAX_IO_SLOTS
+            Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
+                      PROC_COMPAT
+            Optional: SRR_CAPABLE
         """
         pass
 
@@ -120,10 +125,17 @@ class DefaultStandardize(Standardize):
     simple approach for augmenting missing LPAR settings.  It does
     reasonable validation of the LPAR attributes.
 
+    It first validates the user input as-is, then fills in any missing
+    attributest that are required and supported by the host.  Finally,
+    it validates what it's sending back to the caller.  If any validation
+    rules are missed, the PowerVM management interface will catch them
+    and surface an error at that time.
+
     """
     def __init__(self, attr, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
-                 uncapped_weight=64, spp=0, avail_priority=127):
+                 uncapped_weight=64, spp=0, avail_priority=127,
+                 srr='false', proc_compat=lpar.LPARCompatEnum.DEFAULT):
         """Initialize the standardizer
 
         :param attr: dict of lpar attributes provided by the user
@@ -147,14 +159,16 @@ class DefaultStandardize(Standardize):
         self.uncapped_weight = uncapped_weight
         self.spp = spp
         self.avail_priority = avail_priority
+        self.srr = srr
+        self.proc_compat = proc_compat
 
-    def _set_prop(self, attr, prop, base_prop):
+    def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
-        attr[prop] = self.attr.get(prop, self.attr[base_prop])
+        attr[prop] = convert_func(self.attr.get(prop, self.attr[base_prop]))
 
-    def _set_val(self, attr, prop, value):
+    def _set_val(self, attr, prop, value, convert_func=str):
         """Copies a property if present or uses the supplied value."""
-        attr[prop] = self.attr.get(prop, value)
+        attr[prop] = convert_func(self.attr.get(prop, value))
 
     def _validate_general(self, attrs=None, partial=False):
         if attrs is None:
@@ -168,6 +182,10 @@ class DefaultStandardize(Standardize):
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
         AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
+        # SRR is always optional since the host may not be capable of it.
+        SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
+                                allow_none=True).validate()
+        ProcCompatMode(attrs.get(PROC_COMPAT), allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -197,15 +215,24 @@ class DefaultStandardize(Standardize):
 
         # If specified, ensure the dedicated procs value is valid
         DedicatedProc(attrs.get(DED_PROCS), allow_none=True).validate()
+        DedProcShareMode(attrs.get(SHARING_MODE), allow_none=True).validate()
 
     def general(self):
         # Validate the settings sent in
         self._validate_general(partial=True)
 
         attr = {NAME: self.attr[NAME]}
-        self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX)
+        self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX,
+                      convert_func=LPARType.convert_value)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
+        # See if the host is capable of SRR before setting it.
+        host_cap = self.mngd_sys.get_capabilities()
+        if host_cap['simplified_remote_restart_capable']:
+            self._set_val(attr, SRR_CAPABLE, self.srr,
+                          convert_func=SimplifiedRemoteRestart.convert_value)
+        self._set_val(attr, PROC_COMPAT, lpar.LPARCompatEnum.DEFAULT,
+                      convert_func=ProcCompatMode.convert_value)
 
         # Validate the attributes
         self._validate_general(attrs=attr)
@@ -253,7 +280,8 @@ class DefaultStandardize(Standardize):
         self._set_prop(attr, MAX_VCPU, VCPU)
         self._set_prop(attr, MIN_VCPU, VCPU)
         self._set_val(attr, SHARING_MODE,
-                      lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS)
+                      lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
+                      convert_func=DedProcShareMode.convert_value)
         self._validate_lpar_ded_cpu(attrs=attr)
         return attr
 
@@ -269,6 +297,11 @@ class Field(object):
         self.typed_value = None
         self.allow_none = allow_none
 
+    @classmethod
+    def convert_value(cls, value):
+        """Static converter for the Field type."""
+        return cls.type_(value)
+
     def _type_error(self, value, exc=TypeError):
         values = dict(field=self.name, value=value)
         msg = _LE('Field %(field)s has invalid value: %(value)s') % values
@@ -278,7 +311,7 @@ class Field(object):
     def _convert_value(self, value):
         """Does the actual conversion of the value and returns it."""
         try:
-            return self.type_(value)
+            return self.convert_value(value)
         except (TypeError, ValueError) as e:
             self._type_error(value, exc=e.__class__)
 
@@ -305,13 +338,22 @@ class BoolField(Field):
     def __init__(self, name, value, allow_none=True):
         super(BoolField, self).__init__(name, value, allow_none=allow_none)
 
-    def _convert_value(self, value):
+    @classmethod
+    def convert_value(cls, value):
         # Special case string values, so random strings don't map to True
         if isinstance(value, six.string_types):
-            return value.lower() in ['true', 'yes']
+            if value.lower() in ['true', 'yes']:
+                return 'true'
+            if value.lower() in ['false', 'no']:
+                return 'false'
+        elif isinstance(value, bool):
+                return 'true' if value else 'false'
+        raise ValueError('Could not convert %s.' % value)
+
+    def _convert_value(self, value):
         try:
-            return self.type_(value)
-        except TypeError:
+            return self.convert_value(value)
+        except (ValueError, TypeError):
             self._type_error(value)
 
 
@@ -319,16 +361,22 @@ class BoolField(Field):
 class ChoiceField(Field):
     _choices = None
 
-    def _convert_value(self, value):
+    @classmethod
+    def convert_value(cls, value):
         if value is None:
-            self._type_error(value)
+            raise ValueError('None value is not valid.')
         value = value.lower()
-        for choice in self._choices:
+        for choice in cls._choices:
             if value == choice.lower():
                 return choice
-
         # If we didn't find it, that's a problem...
-        self._type_error(value)
+        raise ValueError('Value not valid: %s' % value)
+
+    def _convert_value(self, value):
+        try:
+            return self.convert_value(value)
+        except (ValueError, TypeError):
+            self._type_error(value)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -500,6 +548,22 @@ class LPARType(ChoiceField):
                                        allow_none=allow_none)
 
 
+class ProcCompatMode(ChoiceField):
+    _choices = lpar.LPARCompatEnum.ALL_VALUES
+
+    def __init__(self, value, allow_none=False):
+        super(ProcCompatMode, self).__init__('Processor Compatability Mode',
+                                             value, allow_none=allow_none)
+
+
+class DedProcShareMode(ChoiceField):
+    _choices = lpar.DedicatedSharingModesEnum.ALL_MODES
+
+    def __init__(self, value, allow_none=False):
+        super(DedProcShareMode, self).__init__(
+            'Dedicated Processor Sharing Mode', value, allow_none=allow_none)
+
+
 class IOSlots(IntBoundField):
     min_bound = 2  # slot 0 & 1 are always in use
     max_bound = 65534
@@ -516,6 +580,12 @@ class AvailPriority(IntBoundField):
     def __init__(self, value, allow_none=False):
         super(AvailPriority, self).__init__('Availability Priority', value,
                                             allow_none=allow_none)
+
+
+class SimplifiedRemoteRestart(BoolField):
+    def __init__(self, value, allow_none=True):
+        super(SimplifiedRemoteRestart, self).__init__(
+            'Simplified Remote Restart', value, allow_none=allow_none)
 
 
 class LPARBuilder(object):
@@ -590,7 +660,7 @@ class LPARBuilder(object):
         just default to shared if we can't determine either way.
         """
         if self.attr.get(DED_PROCS, None) is not None:
-            return not self.attr[DED_PROCS]
+            return not DedicatedProc.convert_value(self.attr[DED_PROCS])
 
         # Check each key that would indicate sharing procs
         if self._shared_proc_keys_specified():
@@ -628,6 +698,11 @@ class LPARBuilder(object):
         # Update any general attributes
         std = self.stdz.general()
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
+        lpar_w.proc_compat_mode = std[PROC_COMPAT]
+        # Host may not be capable of SRR, so only add it if it's in the
+        # standardized attributes
+        if std.get(SRR_CAPABLE) is not None:
+            lpar_w.srr_enabled = std[SRR_CAPABLE]
         io_cfg = lpar.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
 
         # Now start replacing the sections
