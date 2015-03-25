@@ -231,6 +231,15 @@ def sanitize_float_for_api(float_val, precision=2):
     return template % float(float_val)
 
 
+def sanitize_wwpn_for_api(wwpn):
+    """Updates the format of the WWPN to match the expected PowerVM format.
+
+    :param wwpn: The original WWPN.
+    :return: A WWPN of the format expected by the API.
+    """
+    return wwpn.upper().replace(':', '')
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 
