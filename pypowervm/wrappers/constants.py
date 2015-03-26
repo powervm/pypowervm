@@ -21,6 +21,8 @@ DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
 DELIM = '/'
 LINK = 'link'
 
+# Types
+MGT_CONSOLE = 'ManagementConsole'
 
 # XPath components shared by LPAR and VIOS
 LPAR_MEM_CONFIG = 'PartitionMemoryConfiguration'
@@ -92,6 +94,7 @@ ZERO = '0'
 RMC_STATE = 'ResourceMonitoringControlState'
 
 SUFFIX_TYPE_DO = 'do'
+SUFFIX_PARM_CLI_RUNNER = 'CLIRunner'
 
 # LUA Recovery status codes
 LUA_STATUS_DEVICE_IN_USE = '1'

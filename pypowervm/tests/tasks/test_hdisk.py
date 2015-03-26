@@ -117,3 +117,15 @@ class TestHDisk(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
+
+    @mock.patch('pypowervm.wrappers.job.Job.wrap')
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_invoke_rmdev(self, mock_adapter, mock_create_job_p, mock_run_job,
+                          mock_wrap):
+
+        hdisk.invoke_rmdev(mock_adapter, 'host_name', 'vios_name', 'dev_name',
+                           'vios_uuid')
+        # Validate method invocations
+        self.assertEqual(1, mock_adapter.read.call_count)

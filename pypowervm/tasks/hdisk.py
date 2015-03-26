@@ -20,6 +20,7 @@ import logging
 from lxml import etree
 
 from pypowervm import adapter as adpt
+import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 from pypowervm.wrappers import constants as c
 from pypowervm.wrappers import job as pvm_job
@@ -239,3 +240,40 @@ def _validate_lua_status(status, dev_name, udid, message):
     elif status == LUA_STATUS_INCORRECT_ITL:
         LOG.warn(_("Failed to Discover the Device : %s"), dev_name)
     return status, dev_name, message, udid
+
+
+def invoke_rmdev(adapter, host_name, vios_name, dev_name, vios_uuid):
+    """Command to remove the device from the VIOS
+
+    :param adapter: The pypowervm adapter.
+    :param host_name: The name of the host.
+    :param vios_name: The name of the VIOS.
+    :param dev_name: The name of the device to remove.
+    :param vios_uuid: The Virtual I/O Server UUID.
+    """
+    def _call_rmdev(host_name, vios_name, dev_name):
+        try:
+            rm_cmd = ('viosvrcmd -m ' + host_name + ' -p ' + vios_name +
+                      ' -c \"rmdev -dev ' + dev_name + '\"')
+            LOG.debug('RMDEV Command Input: %s' % rm_cmd)
+            # Get the K2 response for the CLIRunner command
+            resp = adapter.read(c.MGT_CONSOLE, None,
+                                suffixType=c.SUFFIX_TYPE_DO,
+                                suffixParm=c.SUFFIX_PARM_CLI_RUNNER)
+
+            # Create the job parameters
+            job_wrapper = pvm_job.Job.wrap(resp)
+            ack_parm = 'acknowledgeThisAPIMayGoAwayInTheFuture'
+            job_parms = [job_wrapper.create_job_parameter('cmd', rm_cmd),
+                         job_wrapper.create_job_parameter(ack_parm,
+                                                          'true')]
+            job_wrapper.run_job(adapter, None, job_parms=job_parms)
+
+        except pexc.JobRequestFailed as error:
+            LOG.info(_('CLIRunner Error: %s') % error)
+            pass
+
+        result = job_wrapper.get_job_status()
+        return result
+
+    return _call_rmdev(host_name, vios_name, dev_name)
