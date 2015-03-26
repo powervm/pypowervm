@@ -84,6 +84,13 @@ _LU_NAME = 'UnitName'
 _LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
                 _LU_IN_USE, _LU_NAME)
 
+
+class LUTypeEnum(object):
+    DISK = "VirtualIO_Disk"
+    HIBERNATION = "VirtualIO_Hibernation"
+    IMAGE = "VirtualIO_Image"
+    AMS = "VirtualIO_Active_Memory_Sharing"
+
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
 _SSP_UDID = c.UDID
@@ -441,12 +448,13 @@ class LU(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool)."""
 
     @classmethod
-    def bld(cls, name, capacity, thin=None):
+    def bld(cls, name, capacity, thin=None, typ=None):
         """Build a fresh wrapper for LU creation within an SSP.
 
         :param name: The name to assign to the new LogicalUnit
         :param capacity: Capacity in GB for the new LogicalUnit
         :param thin: Provision the new LU as thin (True) or thick (False).
+        :param typ: Logical Unit type, one of the LUTypeEnum values.
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
@@ -455,6 +463,8 @@ class LU(ewrap.ElementWrapper):
         lu._capacity(capacity)
         if thin is not None:
             lu._is_thin(thin)
+        if typ is not None:
+            lu._lu_type(typ)
         return lu
 
     @classmethod
@@ -499,6 +509,9 @@ class LU(ewrap.ElementWrapper):
     def lu_type(self):
         """String enum value e.g. "VirtualIO_Disk."""
         return self._get_val_str(_LU_TYPE)
+
+    def _lu_type(self, val):
+        self.set_parm_value(_LU_TYPE, val)
 
     @property
     def is_thin(self):
