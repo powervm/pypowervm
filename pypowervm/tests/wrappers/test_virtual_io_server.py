@@ -290,7 +290,7 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Validate the Client Adapter
         self.assertIsNotNone(mapping.client_adapter)
-        self.assertEqual(set(['aa', 'bb']), mapping.client_adapter.wwpns)
+        self.assertEqual(set(['AA', 'BB']), mapping.client_adapter.wwpns)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):
