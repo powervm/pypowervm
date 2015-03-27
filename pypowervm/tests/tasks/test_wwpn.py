@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 import unittest
 
 from pypowervm import exceptions as e
@@ -169,3 +171,185 @@ class TestWWPN(unittest.TestCase):
         self.assertEqual(['AA BB'], wwpn._fuse_vfc_ports(['a:a', 'b:b']))
         self.assertEqual(['A B', 'C D'],
                          wwpn._fuse_vfc_ports(['a', 'b', 'c', 'd']))
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.'
+                '_client_lpar_href')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_add_port_mapping_multi_vios(self, mock_adapter,
+                                         mock_client_lpar_href):
+        """Validates that the port mappings are added cross VIOSes."""
+        # Determine the vios original values
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+        vios2_name = vios_wraps[1].name
+        vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
+
+        # Mock data/functions
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_client_lpar_href.return_value = 'fake_href'
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count + 5,
+                                 len(vios_w.vfc_mappings))
+            elif vios2_name == vios_w.name:
+                self.assertEqual(vios2_orig_map_count + 5,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            return vios_w.entry
+        mock_adapter.update_by_path.side_effect = mock_update
+
+        # Subset the WWPNs on that VIOS
+        fabric_A_wwpns = ['10000090FA5371F2', '10000090FA53720A']
+        fabric_B_wwpns = ['10000090FA5371F1', '10000090FA537209']
+
+        # Fake Virtual WWPNs
+        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        v_fabric_B_wwpns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+
+        # Get the mappings
+        fabric_A_maps = wwpn.derive_npiv_map(vios_wraps, fabric_A_wwpns,
+                                             v_fabric_A_wwpns)
+        vios_wraps.reverse()
+        fabric_B_maps = wwpn.derive_npiv_map(vios_wraps, fabric_B_wwpns,
+                                             v_fabric_B_wwpns)
+        full_map = fabric_A_maps + fabric_B_maps
+
+        # Now call the add action
+        wwpn.add_npiv_port_mappings(mock_adapter, 'host_uuid', 'vm_uuid',
+                                    full_map)
+
+        # The update should have been called twice.  Once for each VIOS.
+        self.assertEqual(2, mock_adapter.update_by_path.call_count)
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.'
+                '_client_lpar_href')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_add_port_mapping_single_vios(self, mock_adapter,
+                                          mock_client_lpar_href):
+        """Validates that the port mappings are added on single VIOS.
+
+        Specifically ensures that the port mappings are not added to the second
+        VIOS.  No unnecessary VIOS updates...
+        """
+        # Determine the vios original values
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+
+        # Mock data/functions
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_client_lpar_href.return_value = 'fake_href'
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count + 10,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            return vios_w.entry
+        mock_adapter.update_by_path.side_effect = mock_update
+
+        # Subset the WWPNs on that VIOS
+        fabric_A_wwpns = ['10000090FA5371F2']
+        fabric_B_wwpns = ['10000090FA5371F1']
+
+        # Fake Virtual WWPNs
+        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        v_fabric_B_wwpns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+
+        # Get the mappings
+        fabric_A_maps = wwpn.derive_npiv_map(vios_wraps, fabric_A_wwpns,
+                                             v_fabric_A_wwpns)
+        vios_wraps.reverse()
+        fabric_B_maps = wwpn.derive_npiv_map(vios_wraps, fabric_B_wwpns,
+                                             v_fabric_B_wwpns)
+        full_map = fabric_A_maps + fabric_B_maps
+
+        # Now call the add action
+        wwpn.add_npiv_port_mappings(mock_adapter, 'host_uuid', 'vm_uuid',
+                                    full_map)
+
+        # The update should have been called once.
+        self.assertEqual(1, mock_adapter.update_by_path.call_count)
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.'
+                '_client_lpar_href')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_remove_port_mapping_multi_vios(self, mock_adapter,
+                                            mock_client_lpar_href):
+        """Validates that the port mappings are removed cross VIOSes."""
+        # Determine the vios original values
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+        vios2_name = vios_wraps[1].name
+        vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
+
+        # Mock data/functions
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_client_lpar_href.return_value = 'fake_href'
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count - 1,
+                                 len(vios_w.vfc_mappings))
+            elif vios2_name == vios_w.name:
+                self.assertEqual(vios2_orig_map_count - 1,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            return vios_w.entry
+        mock_adapter.update_by_path.side_effect = mock_update
+
+        p_map_vio1 = ('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')
+        p_map_vio2 = ('10000090FA537209', 'C05076079CFF0E58 C05076079CFF0E59')
+        maps = [p_map_vio1, p_map_vio2]
+
+        # Now call the add action
+        wwpn.remove_npiv_port_mappings(mock_adapter, 'host_uuid', maps)
+
+        # The update should have been called twice.  Once for each VIOS.
+        self.assertEqual(2, mock_adapter.update_by_path.call_count)
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.'
+                '_client_lpar_href')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_remove_port_mapping_single_vios(self, mock_adapter,
+                                             mock_client_lpar_href):
+        """Validates that the port mappings are removed on single VIOS."""
+        # Determine the vios original values
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+
+        # Mock data/functions
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_client_lpar_href.return_value = 'fake_href'
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count - 1,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            return vios_w.entry
+        mock_adapter.update_by_path.side_effect = mock_update
+
+        maps = [('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')]
+
+        # Now call the add action
+        wwpn.remove_npiv_port_mappings(mock_adapter, 'host_uuid', maps)
+
+        # The update should have been called twice.  Once for each VIOS.
+        self.assertEqual(1, mock_adapter.update_by_path.call_count)
