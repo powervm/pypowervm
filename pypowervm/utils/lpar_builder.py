@@ -78,7 +78,14 @@ class Standardize(object):
     that are presented and augmenting those which are required to create
     the LPAR.
     """
-    def __init__(self, attr):
+    def __init__(self):
+        self.attr = None
+
+    def set_attr(self, attr):
+        """Set the attributes to be validated and standardized.
+
+        :param attr: dict of lpar attributes provided by the user
+        """
         self.attr = attr
 
     def general(self):
@@ -132,13 +139,12 @@ class DefaultStandardize(Standardize):
     and surface an error at that time.
 
     """
-    def __init__(self, attr, mngd_sys,
+    def __init__(self, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
                  uncapped_weight=64, spp=0, avail_priority=127,
                  srr='false', proc_compat=lpar.LPARCompatEnum.DEFAULT):
         """Initialize the standardizer
 
-        :param attr: dict of lpar attributes provided by the user
         :param mngd_sys: managed_system wrapper of the host to deploy to.
             This is used to validate the fields and standardize against the
             host.
@@ -152,7 +158,7 @@ class DefaultStandardize(Standardize):
         :param avail_priority: availability priority of the LPAR
         """
 
-        super(DefaultStandardize, self).__init__(attr)
+        super(DefaultStandardize, self).__init__()
         self.mngd_sys = mngd_sys
         self.proc_units_factor = proc_units_factor
         self.max_slots = max_slots
@@ -572,10 +578,11 @@ class LPARBuilder(object):
     def __init__(self, attr, stdz):
         self.attr = attr
         self.stdz = stdz
-        for attr in MINIMUM_ATTRS:
-            if self.attr.get(attr) is None:
+        for val in MINIMUM_ATTRS:
+            if self.attr.get(val) is None:
                 raise LPARBuilderException('Missing required attribute: %s'
-                                           % attr)
+                                           % val)
+        stdz.set_attr(attr)
 
     def build_ded_proc(self):
         # Ensure no shared proc keys are present
