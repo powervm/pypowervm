@@ -76,7 +76,7 @@ class TestCluster(twrap.TestWrapper):
             '98498bed-c78a-3a4f-b90a-4b715418fcb6/VirtualIOServer/58C9EB1D-'
             '7213-4956-A011-77D43CC4ACCC')
         self.assertEqual(
-            node.vios_uuid.upper(), '58C9EB1D-7213-4956-A011-77D43CC4ACCC')
+            node.vios_uuid, '58C9EB1D-7213-4956-A011-77D43CC4ACCC')
         # Make sure the different Node entries are there
         self.assertEqual(nodes[1].hostname, 'bar.example.com')
         # Test MTMS

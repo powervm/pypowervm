@@ -162,13 +162,15 @@ def validate_certificate(host, port, certpath, certext):
     return True
 
 
-def get_req_path_uuid(path):
+def get_req_path_uuid(path, preserve_case=False):
     """Extract request target uuid of sanitized path."""
-    if '/' in path:
+    p = path_from_href(path, include_query=False, include_fragment=False)
+    if '/' in p:
         target_id = path.rsplit('/', 1)[1]
         uuid_match = re.match(const.UUID_REGEX, target_id)
         if uuid_match:
-            return uuid_match.group(0).lower()
+            ret = uuid_match.group(0)
+            return ret if preserve_case else ret.lower()
     return None
 
 

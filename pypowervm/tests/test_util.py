@@ -147,5 +147,37 @@ class TestUtil(unittest.TestCase):
                                              include_fragment=True),
                          '/rest/api/uom/Obj/UUID#frag')
 
+    def test_get_req_path_uuid(self):
+        # Fail: no '/'
+        path = dummyuuid
+        self.assertIsNone(util.get_req_path_uuid(path))
+        path = '/' + dummyuuid
+        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid
+        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        # Fail: last path element is not a UUID
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid + '/Child'
+        self.assertIsNone(util.get_req_path_uuid(path))
+        # Fail: last path element is not quiiiite a UUID
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid[1:]
+        self.assertIsNone(util.get_req_path_uuid(path))
+        # Ignore query/fragment
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid +
+                '?group=One,Two#frag')
+        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        # Fail: last path element (having removed query/fragment) is not a UUID
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid +
+                '/Child?group=One,Two#frag')
+        self.assertIsNone(util.get_req_path_uuid(path))
+        # Default case conversion
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid.upper()
+        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        self.assertEqual(dummyuuid, util.get_req_path_uuid(
+            path, preserve_case=False))
+        # Force no case conversion
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid.upper()
+        self.assertEqual(dummyuuid.upper(), util.get_req_path_uuid(
+            path, preserve_case=True))
+
 if __name__ == "__main__":
     unittest.main()

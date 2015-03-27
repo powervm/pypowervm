@@ -218,4 +218,4 @@ class Node(ewrap.ElementWrapper):
         """
         uri = self.vios_uri
         if uri is not None:
-            return u.get_req_path_uuid(uri)
+            return u.get_req_path_uuid(uri, preserve_case=True)
