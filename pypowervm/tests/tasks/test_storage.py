@@ -20,6 +20,7 @@ import pypowervm.adapter as adp
 import pypowervm.exceptions as exc
 import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
+import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -27,6 +28,8 @@ import pypowervm.wrappers.vios_file as vf
 import unittest
 
 
+CLUSTER = "cluster.txt"
+LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
@@ -281,3 +284,30 @@ class TestLU(unittest.TestCase):
         # By UDID
         self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
                           udid='lu5_udid')
+
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    def test_crt_lu_linked_clone(self, mock_run_job, mock_read):
+        clust1 = clust.Cluster.wrap(tju.load_file(CLUSTER))
+        mock_read.return_value = tju.load_file(LU_LINKED_CLONE_JOB)
+        self.adp.read = mock_read
+
+        def verify_run_job(adapter, uuid, job_parms):
+            self.assertEqual(clust1.uuid, uuid)
+            self.assertEqual(
+                '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
+                '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
+                'rameterName>SourceUDID</web:ParameterName><web:ParameterValue'
+                '>udid_lu0</web:ParameterValue></web:JobParameter>'.encode(
+                    'utf-8'),
+                job_parms[0].toxmlstring())
+            self.assertEqual(
+                '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
+                '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
+                'rameterName>DestinationUDID</web:ParameterName><web:Parameter'
+                'Value>udid_linked_lu</web:ParameterValue></web:JobParameter>'.
+                encode('utf-8'),
+                job_parms[1].toxmlstring())
+        mock_run_job.side_effect = verify_run_job
+        ts.crt_lu_linked_clone(
+            self.adp, self.ssp, clust1, self.ssp.logical_units[0], 'linked_lu')
