@@ -267,6 +267,86 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
     return ssp, dst_lu
 
 
+def reduce_lu_linked_clone(adapter, ssp, disk_lu):
+    """Remove a linked clone LU and maybe its backing Image LU.
+
+    If this is the last Disk cloned to its Image LU, the Image LU is also
+    removed.
+
+    (This is 'reduce' in the same sense as the AIX command 'reducevg', which
+    deletes the VG once the last PV is removed.)
+
+    :param adapter: The pypowervm.adapter.Adapter through which to request the
+                     change(s).
+    :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
+                which to operate.
+    :param disk_lu: The LU EntryWrapper representing the Disk LU linked clone
+                    to remove.
+    :return: The updated SSP EntryWrapper.
+    """
+    # Find the right image LU
+    image_lu = _image_lu_for_clone(ssp, disk_lu)
+    if image_lu is None:
+        raise exc.BackingLUNotFoundError(lu_name=disk_lu.name,
+                                         ssp_name=ssp.name)
+
+    # Remove the disk_lu.  Don't flush the update yet.
+    LOG.info(_("Removing Disk LU %(lu_name)s from SSP %(ssp_name)s")
+             % dict(lu_name=disk_lu.name, ssp_name=ssp.name))
+    ssp, removed_lu = rm_lu(None, ssp, lu=disk_lu, update=False)
+
+    # Remove the image LU *if* it's no longer in use
+    if _image_lu_in_use(ssp, image_lu):
+        LOG.info(_("Not removing Image LU %(lu_name)s from SSP %(ssp_name)s "
+                   "because it is still in use.")
+                 % dict(lu_name=image_lu.name, ssp_name=ssp.name))
+    else:
+        LOG.info(_("Removing Image LU %(lu_name)s from SSP %(ssp_name)s "
+                   "because it is no longer in use.")
+                 % dict(lu_name=image_lu.name, ssp_name=ssp.name))
+        ssp.logical_units.remove(image_lu)
+
+    # Finally, push the update back to PowerVM
+    return ssp.update(adapter)
+
+
+def _image_lu_for_clone(ssp, clone_lu):
+    """Given a Disk LU linked clone, find the Image LU to which it is linked.
+
+    :param ssp: The SSP EntryWrapper to search.
+    :param clone_lu: The LU EntryWrapper representing the Disk LU linked clone
+                     whose backing Image LU is to be found.
+    :return: The LU EntryWrapper representing the Image LU backing the
+             clone_lu.  None if no such Image LU can be found.
+    """
+    # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
+    image_udid = clone_lu.cloned_from_udid[2:]
+    for lu in ssp.logical_units:
+        if lu.lu_type != stor.LUTypeEnum.IMAGE:
+            continue
+        if lu.udid[2:] == image_udid:
+            return lu
+    return None
+
+
+def _image_lu_in_use(ssp, image_lu):
+    """Determine whether an Image LU still has any Disk LU linked clones.
+
+    :param ssp: The SSP EntryWrapper to search.
+    :param image_lu: LU EntryWrapper representing the Image LU.
+    :return: True if the SSP contains any Disk LU linked clones backed by the
+             image_lu; False otherwise.
+    """
+    # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
+    image_udid = image_lu.udid[2:]
+    for lu in ssp.logical_units:
+        if lu.lu_type != stor.LUTypeEnum.DISK:
+            continue
+        if lu.cloned_from_udid[2:] == image_udid:
+            return True
+    return False
+
+
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     """Creates a new Virtual Disk in the specified volume group.
 
@@ -337,7 +417,7 @@ def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     return ssp, newlu
 
 
-def rm_lu(adapter, ssp, lu=None, udid=None, name=None):
+def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
     """Remove a LogicalUnit from a SharedStoragePool.
 
     This method allows the LU to be specified by wrapper, name, or UDID.
@@ -352,6 +432,8 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None):
                  specified, udid is used.
     :param name: The name of the LU to remove.  If both name and udid are
                  specified, udid is used.
+    :param update: If True, flush the change back through the adapter.  If
+                   False, just update the ssp wrapper locally.
     :return: The updated SSP wrapper.  (It will contain the modified LU list
              and have a new etag.)
     :return: LU ElementWrapper representing the Logical Unit removed.
@@ -373,5 +455,6 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None):
             label = name or udid
             raise exc.LUNotFoundError(lu_label=label, ssp_name=ssp.name)
     lus.remove(lu_to_rm)
-    ssp = ssp.update(adapter)
+    if update:
+        ssp = ssp.update(adapter)
     return ssp, lu_to_rm
