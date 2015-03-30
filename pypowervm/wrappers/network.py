@@ -68,7 +68,12 @@ _VADPT_PVID = 'PortVLANID'
 _VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
-@ewrap.EntryWrapper.pvm_type('VirtualSwitch')
+class VSwitchModeEnum(object):
+    VEB = "Veb"
+    VEPA = "Vepa"
+
+
+@ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True)
 class VSwitch(ewrap.EntryWrapper):
     """Wraps the Virtual Switch entries.
 
@@ -79,6 +84,19 @@ class VSwitch(ewrap.EntryWrapper):
     plane segregation.
     """
 
+    @classmethod
+    def bld(cls, name, switch_mode=VSwitchModeEnum.VEB):
+        """Creates a VSwitch that can be used for a create operation.
+
+        :param name: The name for the virtual switch.  Must be unique.
+        :param switch_mode: The mode of virtual switch (see VSwitchModeEnum).
+        :returns: The ElementWrapper that represents the new VSwitch.
+        """
+        vswitch = super(VSwitch, cls)._bld()
+        vswitch.name = name
+        vswitch._mode(switch_mode)
+        return vswitch
+
     @property
     def name(self):
         """The name associated with the Virtual Switch."""
@@ -87,6 +105,10 @@ class VSwitch(ewrap.EntryWrapper):
             return VSW_DEFAULT_VSWITCH
         return name
 
+    @name.setter
+    def name(self, new_name):
+        self.set_parm_value(_VSW_NAME, new_name)
+
     @property
     def switch_id(self):
         """The internal ID (not UUID) for the Virtual Switch."""
@@ -94,8 +116,15 @@ class VSwitch(ewrap.EntryWrapper):
 
     @property
     def mode(self):
-        """The mode that the switch is in (ex. VEB)."""
+        """The mode that the switch is in (ex. Veb).
+
+        This is a string value that represents one of the values in the
+        VSwitchModeEnum enumeration.
+        """
         return self._get_val_str(_VSW_MODE)
+
+    def _mode(self, new_mode):
+        self.set_parm_value(_VSW_MODE, new_mode)
 
 
 @ewrap.EntryWrapper.pvm_type('NetworkBridge')

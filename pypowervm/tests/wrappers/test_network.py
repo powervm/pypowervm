@@ -64,6 +64,16 @@ class TestVSwitch(twrap.TestWrapper):
     file = 'fake_vswitch_feed.txt'
     wrapper_class_to_test = net.VSwitch
 
+    def test_bld(self):
+        """Tests that the vSwitch element can be built."""
+        vs = net.VSwitch.bld('Test')
+        self.assertEqual('Test', vs.name)
+        self.assertEqual(net.VSwitchModeEnum.VEB, vs.mode)
+
+        vs = net.VSwitch.bld('Test', net.VSwitchModeEnum.VEPA)
+        self.assertEqual('Test', vs.name)
+        self.assertEqual(net.VSwitchModeEnum.VEPA, vs.mode)
+
     def test_feed(self):
         """Tests the feed of virtual switches."""
         vswitches = net.VSwitch.wrap(self.resp)
