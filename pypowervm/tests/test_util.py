@@ -114,6 +114,15 @@ class TestUtil(unittest.TestCase):
         # Try changing the low value
         self.assertEqual(.0005, util.convert_bytes_to_gb(1, .0005))
 
+    def test_round_gb_size_up(self):
+        self.assertEqual(12.35, util.round_gb_size_up(12.34000000001))
+        self.assertEqual(12.34000000001, util.round_gb_size_up(12.34000000001,
+                                                               dp=11))
+        self.assertEqual(1048576, util.round_gb_size_up(1048576.0, dp=0))
+        self.assertEqual(1048576, util.round_gb_size_up(1048575.1, dp=0))
+        self.assertEqual(1048576, util.round_gb_size_up(1048576, dp=0))
+        self.assertEqual(1048600, util.round_gb_size_up(1048576.1234, dp=-2))
+
     def test_sanitize_bool_for_api(self):
         self.assertEqual('true', util.sanitize_bool_for_api(True))
         self.assertEqual('false', util.sanitize_bool_for_api(False))

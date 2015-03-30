@@ -17,6 +17,7 @@
 import datetime as dt
 import hashlib
 import logging
+import math
 import re
 import socket
 import ssl
@@ -208,6 +209,23 @@ def convert_bytes_to_gb(bytes_, low_value=.0001):
     if gb_size < low_value:
         return low_value
     return gb_size
+
+
+def round_gb_size_up(gb_size, dp=2):
+    """Rounds a GB disk size (as a decimal float) up to suit the platform.
+
+    Use this method to ensure that new vdisks, LUs, etc. are big enough, as the
+    platform generally rounds inputs to the nearest [whatever].  For example, a
+    disk of size 4.321GB may wind up at 4.32GB after rounding, possibly leaving
+    insufficient space for the image.
+    :param gb_size: A decimal float representing the GB size to be rounded.
+    :param dp: The number of decimal places to round (up) to.  May be zero
+    (round to next highest integer) or negative, (e.g. -1 will round to the
+    next highest ten).
+    :return: A new decimal float which is greater than or equal to the input.
+    """
+    shift = 10.0**dp
+    return float(math.ceil(gb_size * shift))/shift
 
 
 def sanitize_mac_for_api(mac):

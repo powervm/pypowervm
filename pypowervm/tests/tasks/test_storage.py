@@ -153,7 +153,7 @@ class TestUploadLV(unittest.TestCase):
             '/rest/api/uom/SharedStoragePool/ssp_uuid']}}
         mock_adpt.update_by_path.side_effect = _mock_update_by_path
         mock_create_file.return_value = self._fake_meta()
-        size_b = 12345678
+        size_b = 1224067890
 
         new_lu, f_wrap = ts.upload_new_lu(
             mock_adpt, self.v_uuid, ssp_in, None, 'lu1', size_b,
@@ -161,7 +161,8 @@ class TestUploadLV(unittest.TestCase):
 
         # Check the new LU's properties
         self.assertEqual(new_lu.name, 'lu1')
-        self.assertAlmostEqual(new_lu.capacity, float(size_b) / (1024**3), 6)
+        # 1224067890 / 1GB = 1.140002059; round up to 2dp
+        self.assertEqual(new_lu.capacity, 1.15)
         self.assertTrue(new_lu.is_thin)
         self.assertEqual(new_lu.lu_type, stor.LUTypeEnum.IMAGE)
 
@@ -311,3 +312,6 @@ class TestLU(unittest.TestCase):
         mock_run_job.side_effect = verify_run_job
         ts.crt_lu_linked_clone(
             self.adp, self.ssp, clust1, self.ssp.logical_units[0], 'linked_lu')
+
+if __name__ == '__main__':
+    unittest.main()
