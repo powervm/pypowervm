@@ -20,6 +20,8 @@ import math
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
 from pypowervm import util
+import pypowervm.wrappers.constants as c
+from pypowervm.wrappers import job
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
 import pypowervm.wrappers.virtual_io_server as vios
@@ -223,6 +225,46 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     # Create the file.
     resp = adapter.create(fd.element, vf.File.schema_type, service='web')
     return vf.File.wrap(resp)
+
+
+def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
+                        lu_size_gb=0):
+    """Create a new LU as a linked clone to a backing image LU.
+
+    :param adapter: The pypowervm.adapter.Adapter through which to request the
+                     change.
+    :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
+                which to create the new LU.
+    :param cluster: The Cluster EntryWrapper representing the Cluster against
+                    which to invoke the LULinkedClone Job.
+    :param src_lu: The LU EntryWrapper representing the link source.
+    :param new_lu_name: The name to be given to the new LU.
+    :param lu_size_gb: The size of the new LU in GB with decimal precision.  If
+                       this is not specified or is smaller than the size of the
+                       image_lu, the size of the image_lu is used.
+    :return: The updated SSP EntryWrapper containing the newly-created LU.
+    :return: The newly created and linked LU.
+    """
+    # New LU must be at least as big as the backing LU.
+    lu_size_gb = max(lu_size_gb, src_lu.capacity)
+
+    # Create the LU
+    ssp, dst_lu = crt_lu(adapter, ssp, new_lu_name, lu_size_gb, thin=True,
+                         typ=stor.LUTypeEnum.DISK)
+
+    # Run the job to link the new LU to the source
+    jresp = adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
+                         suffix_parm='LULinkedClone')
+    jwrap = job.Job.wrap(jresp)
+
+    jparams = [
+        jwrap.create_job_parameter(
+            'SourceUDID', src_lu.udid),
+        jwrap.create_job_parameter(
+            'DestinationUDID', dst_lu.udid)]
+    jwrap.run_job(adapter, cluster.uuid, job_parms=jparams)
+
+    return ssp, dst_lu
 
 
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
