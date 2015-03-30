@@ -581,6 +581,11 @@ class LUNotFoundError(AbstractMsgFmtError):
                 "Pool %(ssp_name)s.")
 
 
+class BackingLUNotFoundError(AbstractMsgFmtError):
+    msg_fmt = _("Could not find backing Image LU for Disk LU %(lu_name)s in "
+                "SSP %(ssp_name)s")
+
+
 class UnableToFindFCPortMap(AbstractMsgFmtError):
     msg_fmt = _("Unable to find a physical port to map a virtual Fibre "
                 "Channel port to.  This is due to either a Virtual I/O "

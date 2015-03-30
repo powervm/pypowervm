@@ -285,6 +285,37 @@ class TestLU(unittest.TestCase):
         self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adp, self.ssp,
                           udid='lu5_udid')
 
+
+class TestLULinkedClone(unittest.TestCase):
+
+    def setUp(self):
+        self.adp = mock.patch('pypowervm.adapter.Adapter')
+        self.adp.update_by_path = _mock_update_by_path
+        self.adp.extend_path = lambda x, xag: x
+        self.ssp = stor.SSP.bld('ssp1', [])
+        self.img_lu1 = self._mk_img_lu(1)
+        self.ssp.logical_units.append(self.img_lu1)
+        self.img_lu2 = self._mk_img_lu(2)
+        self.ssp.logical_units.append(self.img_lu2)
+        self.dsk_lu3 = self._mk_dsk_lu(3, 2)
+        self.ssp.logical_units.append(self.dsk_lu3)
+        self.dsk_lu4 = self._mk_dsk_lu(4, 2)
+        self.ssp.logical_units.append(self.dsk_lu4)
+        self.ssp.entry.properties = {
+            'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
+        self.ssp._etag = 'before'
+
+    def _mk_img_lu(self, idx):
+        lu = stor.LU.bld('img_lu%d' % idx, 123, typ=stor.LUTypeEnum.IMAGE)
+        lu._udid('xxImage-LU-UDID-%d' % idx)
+        return lu
+
+    def _mk_dsk_lu(self, idx, cloned_from_idx):
+        lu = stor.LU.bld('dsk_lu%d' % idx, 123, typ=stor.LUTypeEnum.DISK)
+        lu._udid('xxDisk-LU-UDID-%d' % idx)
+        lu._cloned_from_udid('yyImage-LU-UDID-%d' % cloned_from_idx)
+        return lu
+
     @mock.patch('pypowervm.adapter.Adapter.read')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_crt_lu_linked_clone(self, mock_run_job, mock_read):
@@ -298,8 +329,8 @@ class TestLU(unittest.TestCase):
                 '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
                 '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
                 'rameterName>SourceUDID</web:ParameterName><web:ParameterValue'
-                '>udid_lu0</web:ParameterValue></web:JobParameter>'.encode(
-                    'utf-8'),
+                '>xxImage-LU-UDID-1</web:ParameterValue></web:JobParameter>'.
+                encode('utf-8'),
                 job_parms[0].toxmlstring())
             self.assertEqual(
                 '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
@@ -311,3 +342,26 @@ class TestLU(unittest.TestCase):
         mock_run_job.side_effect = verify_run_job
         ts.crt_lu_linked_clone(
             self.adp, self.ssp, clust1, self.ssp.logical_units[0], 'linked_lu')
+
+    def test_image_lu_in_use(self):
+        self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
+        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu2))
+
+    def test_image_lu_for_clone(self):
+        self.assertEqual(self.img_lu2,
+                         ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+
+    def test_reduce_lu_linked_clone(self):
+        lu_names = set(lu.name for lu in self.ssp.logical_units)
+        # This one should remove the disk LU but *not* the image LU
+        ssp = ts.reduce_lu_linked_clone(self.adp, self.ssp, self.dsk_lu3)
+        lu_names.remove(self.dsk_lu3.name)
+        self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
+        # This one should remove *both* the disk LU and the image LU
+        ssp = ts.reduce_lu_linked_clone(self.adp, self.ssp, self.dsk_lu4)
+        lu_names.remove(self.dsk_lu4.name)
+        lu_names.remove(self.img_lu2.name)
+        self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
+
+if __name__ == '__main__':
+    unittest.main()
