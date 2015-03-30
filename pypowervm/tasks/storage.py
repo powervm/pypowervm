@@ -146,7 +146,7 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
         d_size = f_size
-    gb_size = util.convert_bytes_to_gb(d_size)
+    gb_size = util.convert_bytes_to_gb(d_size, dp=2)
 
     ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size,
                          typ=stor.LUTypeEnum.IMAGE)
