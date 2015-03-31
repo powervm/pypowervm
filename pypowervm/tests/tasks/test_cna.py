@@ -22,6 +22,7 @@ from pypowervm.tasks import cna
 import pypowervm.tests.tasks.util as tju
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import network as pvm_net
 
 import unittest
 
@@ -52,6 +53,36 @@ class TestCNA(unittest.TestCase):
         mock_adpt.create.side_effect = validate_of_create
 
         n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5)
+        self.assertIsNotNone(n_cna)
+
+    @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_crt_cna_new_vswitch(self, mock_adpt, mock_vnet_find):
+        """Validates the create will also create the vSwitch."""
+        # First need to load in the various test responses.
+        vs = tju.load_file(VSWITCH_FILE)
+        mock_adpt.read.return_value = vs
+
+        # Create a side effect that can validate the input into the create
+        # call.
+        def validate_of_create(*kargs, **kwargs):
+            self.assertIsNotNone(kargs[0])
+            if 'LogicalPartition' == kargs[1]:
+                self.assertEqual('LogicalPartition', kargs[1])
+                self.assertEqual('fake_lpar', kwargs.get('root_id'))
+                self.assertEqual('ClientNetworkAdapter',
+                                 kwargs.get('child_type'))
+                return mock.MagicMock()
+            else:
+                # Is the vSwitch create
+                self.assertEqual('ManagedSystem', kargs[1])
+                self.assertEqual('VirtualSwitch', kwargs.get('child_type'))
+                # Return a previously created vSwitch...
+                return pvm_net.VSwitch.wrap(vs)[0].entry
+        mock_adpt.create.side_effect = validate_of_create
+
+        n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5,
+                            vswitch='Temp', crt_vswitch=True)
         self.assertIsNotNone(n_cna)
 
     @mock.patch('pypowervm.adapter.Adapter')

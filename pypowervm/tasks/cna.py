@@ -22,8 +22,8 @@ from pypowervm.wrappers import network
 
 
 def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
-            vswitch=network.VSW_DEFAULT_VSWITCH, slot_num=None, mac_addr=None,
-            addl_vlans=None):
+            vswitch=network.VSW_DEFAULT_VSWITCH, crt_vswitch=False,
+            slot_num=None, mac_addr=None, addl_vlans=None):
     """Puts a new ClientNetworkAdapter on a given LPAR.
 
     This will update the LPAR and put a new CNA on it.  If the LPAR is active
@@ -36,6 +36,9 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     :param pvid: The primary VLAN ID.
     :param vswitch: The name of the virtual switch that this CNA will be
                     attached to.
+    :param crt_vswitch: A boolean to indicate that if the vSwitch can not be
+                        found, the system should attempt to create one (with
+                        the default parameters - ex: Veb mode).
     :param slot_num: Optional slot number to use for the CNA.  If not
                      specified, will utilize the next available slot on the
                      LPAR.
@@ -60,20 +63,26 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     vswitch_wraps = network.VSwitch.wrap(vswitch_resp)
     for vs_w in vswitch_wraps:
         if vs_w.name == vswitch:
-            vswitch_href = vs_w.href
             vswitch_w = vs_w
             break
 
-    if vswitch_href is None:
-        raise exc.Error(_('Unable to find the Virtual Switch %s on the '
-                          'system.') % vswitch)
+    if vswitch_w is None:
+        if crt_vswitch:
+            vswitch_w = network.VSwitch.bld(vswitch)
+            resp = adapter.create(vswitch_w, ms.System.schema_type,
+                                  root_id=host_uuid,
+                                  child_type=network.VSwitch.schema_type)
+            vswitch_w = network.VSwitch.wrap(resp)
+        else:
+            raise exc.Error(_('Unable to find the Virtual Switch %s on the '
+                              'system.') % vswitch)
 
     # Find the virtual network.  Ensures that the system is ready for this.
-    _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_href)
+    _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_w.href)
 
     # Build and create the CNA
     net_adpt = network.CNA.bld(
-        pvid, vswitch_href, slot_num=slot_num, mac_addr=mac_addr,
+        pvid, vswitch_w.href, slot_num=slot_num, mac_addr=mac_addr,
         addl_tagged_vlans=addl_tagged_vlans)
     resp = adapter.create(net_adpt, lpar.LPAR.schema_type, root_id=lpar_uuid,
                           child_type=network.CNA.schema_type)
