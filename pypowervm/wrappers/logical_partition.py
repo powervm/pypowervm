@@ -57,9 +57,22 @@ _LPAR_ID = 'PartitionID'
 _LPAR_TYPE = 'PartitionType'
 _LPAR_STATE = 'PartitionState'
 
+_LPAR_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
+_LPAR_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
+_LPAR_CNA = 'ClientNetworkAdapters'
+_LPAR_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
+_LPAR_ASSOCIATED_GROUPS = 'AssociatedGroups'
+_LPAR_ASSOCIATED_TASKS = 'AssociatedTasks'
+_LPAR_VFCA = 'VirtualFibreChannelClientAdapters'
+_LPAR_VSCA = 'VirtualSCSIClientAdapters'
+_LPAR_DED_NICS = 'DedicatedVirtualNICs'
+
 _LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
 _LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
 _LPAR_IO_CFG = 'PartitionIOConfiguration'
+
+_HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
+_PROFILE_IO_ADPTS = 'ProfileVirtualIOAdapters'
 
 _UNCAPPED_WEIGHT = 'UncappedWeight'
 
@@ -121,8 +134,11 @@ _REF_CODE = 'ReferenceCode'
 _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = (_AVAIL_PRIORITY, _LPAR_IO_CFG, _LPAR_MEM_CFG, _LPAR_NAME,
-                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE, _SRR,
-                  _RESTRICTED_IO)
+                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE,
+                  _LPAR_SRIOV_ETH, _LPAR_SRIOV_FC_ETH, _LPAR_CNA,
+                  _LPAR_HOST_ETH, _LPAR_ASSOCIATED_GROUPS,
+                  _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
+                  _LPAR_DED_NICS, _SRR, _RESTRICTED_IO)
 
 
 # Dedicated sharing modes
@@ -186,6 +202,7 @@ class LPAR(ewrap.EntryWrapper):
         lpar.name = name
         lpar.proc_config = proc_cfg
         lpar._env(env)
+
         return lpar
 
     @property
@@ -939,6 +956,7 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
         """
         cfg = super(PartitionIOConfiguration, cls)._bld()
         cfg.max_virtual_slots = max_virt_slots
+
         return cfg
 
     @property
