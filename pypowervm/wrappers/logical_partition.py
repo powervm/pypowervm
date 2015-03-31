@@ -57,9 +57,23 @@ _LPAR_ID = 'PartitionID'
 _LPAR_TYPE = 'PartitionType'
 _LPAR_STATE = 'PartitionState'
 
+_LPAR_PROFILES = 'PartitionProfiles'
+_LPAR_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
+_LPAR_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
+_LPAR_CNA = 'ClientNetworkAdapters'
+_LPAR_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
+_LPAR_ASSOCIATED_GROUPS = 'AssociatedGroups'
+_LPAR_ASSOCIATED_TASKS = 'AssociatedTasks'
+_LPAR_VFCA = 'VirtualFibreChannelClientAdapters'
+_LPAR_VSCA = 'VirtualSCSIClientAdapters'
+_LPAR_DED_NICS = 'DedicatedVirtualNICs'
+
 _LPAR_PROC_CFG = 'PartitionProcessorConfiguration'
 _LPAR_MEM_CFG = 'PartitionMemoryConfiguration'
 _LPAR_IO_CFG = 'PartitionIOConfiguration'
+
+_HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
+_PROFILE_IO_ADPTS = 'ProfileVirtualIOAdapters'
 
 _UNCAPPED_WEIGHT = 'UncappedWeight'
 
@@ -121,8 +135,11 @@ _REF_CODE = 'ReferenceCode'
 _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = (_AVAIL_PRIORITY, _LPAR_IO_CFG, _LPAR_MEM_CFG, _LPAR_NAME,
-                  _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE, _SRR,
-                  _RESTRICTED_IO)
+                  _LPAR_PROC_CFG, _LPAR_PROFILES, _LPAR_TYPE,
+                  _PENDING_PROC_MODE, _LPAR_SRIOV_ETH, _LPAR_SRIOV_FC_ETH,
+                  _LPAR_CNA, _LPAR_HOST_ETH, _LPAR_ASSOCIATED_GROUPS,
+                  _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
+                  _LPAR_DED_NICS, _SRR, _RESTRICTED_IO)
 
 
 # Dedicated sharing modes
@@ -186,6 +203,18 @@ class LPAR(ewrap.EntryWrapper):
         lpar.name = name
         lpar.proc_config = proc_cfg
         lpar._env(env)
+
+        # Empty collections to satisfy schema
+        lpar._profiles('')
+        lpar._sriov_eth_ports('')
+        lpar._sriov_fc_eth_ports('')
+        lpar._cnas('')
+        lpar._host_eth_ports([])
+        lpar._associated_groups('')
+        lpar._associated_tasks('')
+        lpar._virtual_fbca('')
+        lpar._virtual_fsca('')
+        lpar._ded_nics('')
         return lpar
 
     @property
@@ -222,6 +251,38 @@ class LPAR(ewrap.EntryWrapper):
 
     def _env(self, val):
         self.set_parm_value(_LPAR_TYPE, val)
+
+    def _profiles(self, val):
+        self.set_parm_value(_LPAR_PROFILES, val)
+
+    def _sriov_eth_ports(self, val):
+        self.set_parm_value(_LPAR_SRIOV_ETH, val)
+
+    def _sriov_fc_eth_ports(self, val):
+        self.set_parm_value(_LPAR_SRIOV_FC_ETH, val)
+
+    def _cnas(self, val):
+        self.set_parm_value(_LPAR_CNA, val)
+
+    def _host_eth_ports(self, val):
+        self.replace_list(_LPAR_HOST_ETH, val)
+
+    def _associated_groups(self, val):
+        self.set_parm_value(_LPAR_ASSOCIATED_GROUPS, val,
+                            attrib=c.ATTR_SCHEMA120)
+
+    def _associated_tasks(self, val):
+        self.set_parm_value(_LPAR_ASSOCIATED_TASKS, val,
+                            attrib=c.ATTR_SCHEMA120)
+
+    def _virtual_fbca(self, val):
+        self.set_parm_value(_LPAR_VFCA, val)
+
+    def _virtual_fsca(self, val):
+        self.set_parm_value(_LPAR_VSCA, val)
+
+    def _ded_nics(self, val):
+        self.set_parm_value(_LPAR_DED_NICS, val)
 
     @property
     def current_mem(self):
@@ -938,7 +999,11 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 
         """
         cfg = super(PartitionIOConfiguration, cls)._bld()
+        cfg._host_channel_adpts([])
         cfg.max_virtual_slots = max_virt_slots
+        cfg._io_slots([])
+        cfg._profile_virtual_io_adapters([])
+
         return cfg
 
     @property
@@ -961,6 +1026,15 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
         """
         es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT), IOSlot)
         return es
+
+    def _io_slots(self, value):
+        self.replace_list(IO_SLOTS_ROOT, value)
+
+    def _host_channel_adpts(self, value):
+        self.replace_list(_HOST_CHANNEL_ADAPTERS, value)
+
+    def _profile_virtual_io_adapters(self, value):
+        self.replace_list(_PROFILE_IO_ADPTS, value)
 
 
 @ewrap.ElementWrapper.pvm_type('ProfileIOSlot', has_metadata=True)
