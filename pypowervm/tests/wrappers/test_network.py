@@ -147,6 +147,33 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
 
+    def test_crt_net_bridge(self):
+        # Create mocked data
+        pvid = 1
+        nb = net.NetBridge.bld(pvid, ['ent0'], [1, 2, 3])
+
+        self.assertIsNotNone(nb)
+        self.assertEqual(1, nb.pvid)
+        self.assertEqual(1, len(nb.seas))
+        self.assertEqual(0, len(nb.load_grps))
+        self.assertEqual(3, len(nb.seas[0]._get_trunks()[0].tagged_vlans))
+
+    def test_crt_sea(self):
+        # Create mocked data
+        pvid = 1
+        sea = net.SEA.bld(pvid, ['ent0'], [1, 2, 3])
+
+        self.assertIsNotNone(sea)
+        self.assertEqual(1, sea.pvid)
+
+    def test_crt_trunk_adapter(self):
+        # Create mocked data
+        pvid = 1
+        ta = net.TrunkAdapter.bld(pvid, ['ent0'], [1, 2, 3])
+
+        self.assertIsNotNone(ta)
+        self.assertEqual(1, ta.pvid)
+
     def test_crt_load_group(self):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
