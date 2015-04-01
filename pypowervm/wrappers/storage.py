@@ -490,6 +490,16 @@ class LU(ewrap.ElementWrapper):
         """
         return self.name == other.name and self.udid == other.udid
 
+    def __hash__(self):
+        """For comparing sets of LUs."""
+        # The contract of hash is that two equal thingies must have the same
+        # hash, but two thingies with the same hash are not necessarily equal.
+        # The hash is used for assigning keys to hash buckets in a dictionary:
+        # if two keys hash the same, their items go into the same bucket, but
+        # they're still different items.
+        conv = int if six.PY3 else long
+        return conv(self.udid[2:], base=16)
+
     @property
     def name(self):
         return self._get_val_str(_LU_NAME)

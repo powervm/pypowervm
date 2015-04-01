@@ -312,5 +312,31 @@ class TestSharedStoragePool(twrap.TestWrapper):
         lu1._name('another_lu')
         self.assertNotEqual(lu1, lu2)
 
+    def test_lu_hash(self):
+        udid1 = ('27cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        # Only prefix differs.  Should fail == but hash equal
+        udid2 = ('29cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        # Last bit differs
+        udid3 = ('27cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d9')
+        # First bit differs
+        udid4 = ('274fc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        lu1 = stor.LU.bld('mylu', 1)
+        lu2 = stor.LU.bld('mylu', 2)
+        lu1._udid(udid1)
+        lu2._udid(udid1)
+        self.assertEqual({lu1}, {lu2})
+        lu2._udid(udid2)
+        self.assertNotEqual({lu1}, {lu2})
+        self.assertEqual(hash(lu1), hash(lu2))
+        lu2._udid(udid3)
+        self.assertNotEqual({lu1}, {lu2})
+        lu2._udid(udid4)
+        self.assertNotEqual({lu1}, {lu2})
+
+
 if __name__ == '__main__':
     unittest.main()
