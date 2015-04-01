@@ -767,6 +767,17 @@ BODY{
                     <MountType kb="CUD" kxe="false">rw</MountType>
                     <Size kb="CUR" kxe="false">0.000000</Size>
                 </VirtualOpticalMedia>
+                <LogicalUnit schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+                    <UniqueDeviceID kxe="false" kb="ROR">270c88f8e2d36711e490ce40f2e95daf30a6d61c0dee5ec6f6a011b300b9d0830d</UniqueDeviceID>
+                    <UnitCapacity kb="COR" kxe="false">1</UnitCapacity>
+                    <LogicalUnitType kb="COD" kxe="false">VirtualIO_Disk</LogicalUnitType>
+                    <ClonedFrom kb="COD" kxe="false">270c88f8e2d36711e490ce40f2e95daf3036ba45c3517660646bca27f4503ffb8f</ClonedFrom>
+                    <UnitName kb="CUR" kxe="false">boot_cdfbb633</UnitName>
+                </LogicalUnit>
             </Storage>
             <TargetDevice kb="CUR" kxe="false">
                 <LogicalVolumeVirtualTargetDevice schemaVersion="V1_2_0">

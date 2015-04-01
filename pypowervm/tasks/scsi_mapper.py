@@ -155,6 +155,36 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
     return resp_list
 
 
+def _search_func(wcls, name_prop='name', names=None, prefixes=None):
+    """Generate a search function for _remove_storage_elem's search_func param.
+
+    :param wcls: The Wrapper class of the object being matched.
+    :param name_prop: The property of wcls on which to match.
+    :param names: (Optional) A list of names to match.  If names and prefixes
+                  are both None or empty, all inputs of the specified wcls will
+                  be matched.
+    :param prefixes: (Optional) A list of prefixes that can be specified
+                     to serve as identifiers for potential matches.  Ignored
+                     if names is specified.  If names and prefixes are both
+                     None or empty, all inputs of the specified wcls will be
+                     matched.
+    :return: A callable search function suitable for passing to the search_func
+             parameter of the _remove_storage_elem method.
+    """
+    def search_func(existing_elem):
+        if not isinstance(existing_elem, wcls):
+            return False
+        if names:
+            return getattr(existing_elem, name_prop) in names
+        elif prefixes:
+            for prefix in prefixes:
+                if getattr(existing_elem, name_prop).startswith(prefix):
+                    return True
+        # Neither names nor prefixes specified - hit everything
+        return True
+    return search_func
+
+
 def remove_vopt_mapping(adapter, vios_uuid, client_lpar_id, media_name=None):
     """Will remove the mapping for VOpt media.
 
@@ -172,17 +202,10 @@ def remove_vopt_mapping(adapter, vios_uuid, client_lpar_id, media_name=None):
     :return: A list of the backing VOpt media that was removed.
     """
 
-    # The search function for virtual optical
-    def search_func(existing_elem):
-        if not isinstance(existing_elem, pvm_stor.VOptMedia):
-            return False
-        if media_name is not None:
-            return existing_elem.media_name == media_name
-        else:
-            return True
-
     return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
-                                search_func)
+                                _search_func(pvm_stor.VOptMedia,
+                                             name_prop='media_name',
+                                             names=[media_name]))
 
 
 def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
@@ -206,17 +229,33 @@ def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     :return: A list of the backing VDisk objects that were removed.
     """
 
-    # The search function for virtual optical
-    def search_func(existing_elem):
-        if not isinstance(existing_elem, pvm_stor.VDisk):
-            return False
-        if disk_names is not None:
-            return existing_elem.name in disk_names
-        elif disk_prefixes is not None:
-            for disk_prefix in disk_prefixes:
-                if existing_elem.name.startswith(disk_prefix):
-                    return True
-        return True
+    return _remove_storage_elem(
+        adapter, vios_uuid, client_lpar_id,
+        _search_func(pvm_stor.VDisk, names=disk_names, prefixes=disk_prefixes))
 
-    return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
-                                search_func)
+
+def remove_lu_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
+                      disk_prefixes=None):
+    """Remove mappings for one or more SSP LUs associated with an LPAR.
+
+    This method will remove the mapping between the Logical Unit and the
+    client partition.  It does not delete the LU.  Will leave other elements on
+    the vSCSI bus intact.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios_uuid: The virtual I/O server UUID that the mapping should be
+                      removed from.
+    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param disk_names: (Optional) A list of names of the LUs to remove from
+                       the SCSI bus.  If None, all LUs asssociated with the
+                       LPAR will be removed.
+    :param disk_prefixes: (Optional) A list of prefixes that can be specified
+                          to serve as identifiers for potential disks.  Ignored
+                          if the disk_name is specified.
+    :return: A list of LU EntryWrappers representing the mappings that were
+             removed.
+    """
+
+    return _remove_storage_elem(
+        adapter, vios_uuid, client_lpar_id,
+        _search_func(pvm_stor.LU, names=disk_names, prefixes=disk_prefixes))
