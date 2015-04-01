@@ -490,6 +490,11 @@ class LU(ewrap.ElementWrapper):
         """
         return self.name == other.name and self.udid == other.udid
 
+    def __hash__(self):
+        """For comparing sets of LUs."""
+        conv = int if six.PY3 else long
+        return conv(self.udid[2:], base=16)
+
     @property
     def name(self):
         return self._get_val_str(_LU_NAME)
