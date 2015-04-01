@@ -27,8 +27,10 @@ LOG = logging.getLogger(__name__)
 _VSW_NAME = 'SwitchName'
 _VSW_ID = 'SwitchID'
 _VSW_MODE = 'SwitchMode'
+_VSW_VIRT_NETS = 'VirtualNetworks'
 VSW_DEFAULT_VSWITCH = 'ETHERNET0'
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
+_VSW_EL_ORDER = (_VSW_ID, _VSW_MODE, _VSW_NAME, _VSW_VIRT_NETS)
 
 _NB_FAILOVER = 'FailoverEnabled'
 _NB_LOADBALANCE = 'LoadBalancingEnabled'
@@ -106,7 +108,8 @@ class VSwitchModeEnum(object):
     VEPA = "Vepa"
 
 
-@ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True)
+@ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True,
+                             child_order=_VSW_EL_ORDER)
 class VSwitch(ewrap.EntryWrapper):
     """Wraps the Virtual Switch entries.
 
@@ -128,6 +131,7 @@ class VSwitch(ewrap.EntryWrapper):
         vswitch = super(VSwitch, cls)._bld()
         vswitch.name = name
         vswitch._mode(switch_mode)
+        vswitch.virtual_network_uri_list = []
         return vswitch
 
     @property
@@ -158,6 +162,31 @@ class VSwitch(ewrap.EntryWrapper):
 
     def _mode(self, new_mode):
         self.set_parm_value(_VSW_MODE, new_mode)
+
+    @property
+    def virtual_network_uri_list(self):
+        """Returns a list of the Virtual Network URIs.
+
+        If a VLAN/Virtual Network should be added, it should be done here.
+        """
+        uri_resp_list = list(self.get_href(u.xpath(_LG_VNETS, c.LINK)))
+        return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
+
+    @virtual_network_uri_list.setter
+    def virtual_network_uri_list(self, new_list):
+        self.__update_uri_list(new_list)
+
+    def __update_uri_list(self, new_list):
+        new_elems = []
+        for item in new_list:
+            new_elems.append(adpt.Element('link', attrib={'href': item,
+                                                          'rel': 'related'}))
+        new_vnet_elem = adpt.Element('VirtualNetworks', children=new_elems)
+        old_elems = self.element.find(_VSW_VIRT_NETS)
+        if old_elems is not None:
+            self.element.replace(old_elems, new_vnet_elem)
+        else:
+            self.element.append(new_vnet_elem)
 
 
 @ewrap.EntryWrapper.pvm_type('NetworkBridge', child_order=_NB_EL_ORDER)
