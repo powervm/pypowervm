@@ -521,6 +521,13 @@ class LU(ewrap.ElementWrapper):
         """val is boolean."""
         self.set_parm_value(_LU_THIN, u.sanitize_bool_for_api(val))
 
+    @property
+    def cloned_from_udid(self):
+        return self._get_val_str(_LU_CLONED_FROM)
+
+    def _cloned_from_udid(self, val):
+        self.set_parm_value(_LU_CLONED_FROM, val)
+
 
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')
 class SSP(ewrap.EntryWrapper):
