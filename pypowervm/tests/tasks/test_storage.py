@@ -379,5 +379,12 @@ class TestLULinkedClone(unittest.TestCase):
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
 
+    def test_remove_lu_linked_clone_no_update(self):
+        def trap_update(*a, **k):
+            self.fail()
+        self.adp.update_by_path = trap_update
+        ts.remove_lu_linked_clone(self.adp, self.ssp, self.dsk_lu3,
+                                  update=False)
+
 if __name__ == '__main__':
     unittest.main()

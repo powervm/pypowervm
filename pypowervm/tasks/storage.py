@@ -267,7 +267,8 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
     return ssp, dst_lu
 
 
-def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False):
+def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False,
+                           update=True):
     """Remove a linked clone LU and maybe its backing Image LU.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
@@ -279,6 +280,9 @@ def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False):
     :param del_unused_image: If True, and the removed Disk LU was the last one
                              linked to its backing Image LU, the backing Image
                              LU is also removed.
+    :param update: If True, flush the change back through the adapter.  If
+                   False, just update the ssp wrapper locally.  Use this to
+                   optimize multiple concurrent removals.
     :return: The updated SSP EntryWrapper.
     """
     # Find the right image LU
@@ -304,8 +308,10 @@ def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False):
                       % dict(lu_name=image_lu.name, ssp_name=ssp.name))
             ssp.logical_units.remove(image_lu)
 
-    # Finally, push the update back to PowerVM
-    return ssp.update(adapter)
+    # Finally, push the update back to PowerVM if requested.
+    if update:
+        ssp = ssp.update(adapter)
+    return ssp
 
 
 def _image_lu_for_clone(ssp, clone_lu):
