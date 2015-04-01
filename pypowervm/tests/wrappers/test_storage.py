@@ -299,5 +299,18 @@ class TestSharedStoragePool(twrap.TestWrapper):
             'From><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
             encode('utf-8'))
 
+    def test_lu_equality(self):
+        lu1 = stor.LU.bld('mylu', 1)
+        lu2 = stor.LU.bld('mylu', 2)
+        self.assertEqual(lu1, lu2)
+        lu1._udid('lu_udid')
+        lu2._udid('lu_udid')
+        self.assertEqual(lu1, lu2)
+        lu2._udid('another_udid')
+        self.assertNotEqual(lu1, lu2)
+        lu2._udid('lu_udid')
+        lu1._name('another_lu')
+        self.assertNotEqual(lu1, lu2)
+
 if __name__ == '__main__':
     unittest.main()

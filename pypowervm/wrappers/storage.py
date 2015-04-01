@@ -482,6 +482,14 @@ class LU(ewrap.ElementWrapper):
         lu._udid(udid)
         return lu
 
+    def __eq__(self, other):
+        """Name and UDID are sufficient for equality.
+
+        For example, if we change an LU's capacity, it's still the same LU.
+        We're counting on UDIDs not being repeated in any reasonable scenario.
+        """
+        return self.name == other.name and self.udid == other.udid
+
     @property
     def name(self):
         return self._get_val_str(_LU_NAME)
