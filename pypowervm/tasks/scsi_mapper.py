@@ -259,3 +259,23 @@ def remove_lu_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     return _remove_storage_elem(
         adapter, vios_uuid, client_lpar_id, _remove_search_func(
             pvm_stor.LU, names=disk_names, prefixes=disk_prefixes))
+
+
+def remove_pv_mapping(adapter, vios_uuid, client_lpar_id, backing_dev):
+    """Will remove the PV mapping.
+
+    This method will remove the pv mapping. It does not delete the device.
+    Will leave other elements on the vSCSI bus intact.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios_uuid: The virtual I/O server UUID that the mapping should be
+                      removed from.
+    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param backing_dev: The physical port name or volume name to be removed.
+    :return: A list of the backing physical device objects that were removed.
+    """
+
+    return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
+                                _remove_search_func(pvm_stor.PV,
+                                                    name_prop='name',
+                                                    names=[backing_dev]))
