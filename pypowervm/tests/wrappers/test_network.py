@@ -150,7 +150,7 @@ class TestNetwork(twrap.TestWrapper):
     def test_crt_net_bridge(self):
         # Create mocked data
         pvid = 1
-        nb = net.NetBridge.bld(pvid, ['ent0'], [1, 2, 3])
+        nb = net.NetBridge.bld(pvid, [('127.0.0.1', 'ent0')], [1, 2, 3])
 
         self.assertIsNotNone(nb)
         self.assertEqual(1, nb.pvid)
@@ -161,7 +161,7 @@ class TestNetwork(twrap.TestWrapper):
     def test_crt_sea(self):
         # Create mocked data
         pvid = 1
-        sea = net.SEA.bld(pvid, ['ent0'], [1, 2, 3])
+        sea = net.SEA.bld(pvid, '127.0.0.1', 'ent0', [1, 2, 3])
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
