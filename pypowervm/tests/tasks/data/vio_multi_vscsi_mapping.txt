@@ -749,6 +749,23 @@ BODY{
                 <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
             </ServerAdapter>
             <Storage kxe="false" kb="CUR">
+               <PhysicalVolume schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kb="CUD" kxe="false">MPIO IBM 2076 FC Disk</Description>
+                    <LocationCode kb="ROR" kxe="false">U78CB.001.WZS007Y-P1-C3-T1-W500507680210E522-L5000000000000</LocationCode>
+                    <PersistentReserveKeyValue kb="ROR" kxe="false">none</PersistentReserveKeyValue>
+                    <ReservePolicy kb="CUD" kxe="false">SinglePath</ReservePolicy>
+                    <ReservePolicyAlgorithm kb="CUD" kxe="false">Failover</ReservePolicyAlgorithm>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDA2MA==</UniqueDeviceID>
+                    <AvailableForUsage kb="CUD" kxe="false">false</AvailableForUsage>
+                    <VolumeCapacity kb="CUR" kxe="false">2048</VolumeCapacity>
+                    <VolumeName kb="CUR" kxe="false">hdisk10</VolumeName>
+                    <VolumeState kb="ROR" kxe="false">active</VolumeState>
+                    <VolumeUniqueID kb="ROR" kxe="false">33213600507680282861D880000000000006004214503IBMfcp</VolumeUniqueID>
+                    <IsFibreChannelBacked kb="ROR" kxe="false">false</IsFibreChannelBacked>
+                </PhysicalVolume>
                 <VirtualDisk schemaVersion="V1_2_0">
                     <Metadata>
                         <Atom/>
