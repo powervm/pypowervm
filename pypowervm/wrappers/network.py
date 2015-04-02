@@ -171,16 +171,18 @@ class NetBridge(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, pvid, backing_adpts, vlan_ids,
+    def bld(cls, pvid, vios_to_backing_adpts, vlan_ids,
             vswitch_id=VSW_DEFAULT_VSWITCH):
         """Create the NetBridge entry that can be used for a create operation.
 
         This is used when creating a NetBridge.
 
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
-        :param backing_adpts: The backing trunk adapter names for 1 or 2
-                              VIOS servers, depending whether failover is
-                              required.
+        :param vios_to_backing_adpts: An argument containing a list of tuples
+                                      between VIOS href and the VIOS backing
+                                      trunk adapter names for 1 or 2 VIOS
+                                      servers, depending whether failover is
+                                      required.
         :param vlan_ids: List of Additional VLAN ids for the trunk adapters.
                          Maximum of 20.
         :param vswitch_id: String ID of the backing vswitch
@@ -189,14 +191,14 @@ class NetBridge(ewrap.EntryWrapper):
         """
         nb = super(NetBridge, cls)._bld()
 
-        if not backing_adpts:
+        if not vios_to_backing_adpts:
             raise ValueError()
 
         # Set required failover flag based on number of VIOSs. True for 2,
         # False for 1. We can determine this based on the number of provided
         # backing adpts. If its 0 we should throw an exception, 1 means only
         # 1 VIOS, 2 or more means we are defaulting to failover.
-        nb._failover(len(backing_adpts) != 1)
+        nb._failover(len(vios_to_backing_adpts) != 1)
 
         # Set required load balancing flag to false as default. Based on
         # Load Group configuration.
@@ -208,8 +210,9 @@ class NetBridge(ewrap.EntryWrapper):
         # Set PVID to user provided value.
         nb._pvid(pvid)
 
-        nb.seas = [SEA.bld(pvid, adpt, vlan_ids, vswitch_id)
-                   for adpt in backing_adpts]
+        nb.seas = [SEA.bld(pvid, vios_adpt[0], vios_adpt[1],
+                           vlan_ids, vswitch_id)
+                   for vios_adpt in vios_to_backing_adpts]
 
         return nb
 
@@ -368,10 +371,12 @@ class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
     @classmethod
-    def bld(cls, pvid, adpt_name, vlan_ids, vswitch_id=VSW_DEFAULT_VSWITCH):
+    def bld(cls, pvid, vios_href, adpt_name, vlan_ids,
+            vswitch_id=VSW_DEFAULT_VSWITCH):
         """Create the SEA entry that can be used for NetBridge creation.
 
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
+        :param vios_href: The Assigned VIOS href.
         :param adpt_name: Name of the trunk adapter behind the parent VIOS
                           of this SEA.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
@@ -381,6 +386,8 @@ class SEA(ewrap.ElementWrapper):
         sea = super(SEA, cls)._bld()
 
         sea._pvid(pvid)
+
+        sea._vio_uri(vios_href)
 
         sea._primary_adpt(TrunkAdapter.bld(pvid, adpt_name, vlan_ids))
 
@@ -402,6 +409,9 @@ class SEA(ewrap.ElementWrapper):
     def vio_uri(self):
         """The URI to the corresponding VIOS."""
         return self.get_href(_SEA_VIO_HREF, one_result=True)
+
+    def _vio_uri(self, value):
+        self.set_parm_value(_SEA_VIO_HREF, value)
 
     @property
     def addl_adpts(self):
