@@ -475,6 +475,14 @@ class TestSearch(unittest.TestCase):
         with self.assertRaises(ValueError):
             clust.Cluster.search(self.adp, foo='bar')
 
+    @mock.patch('pypowervm.adapter.Adapter._request')
+    def test_quote(self, mock_rq):
+        """Ensure special chars in the search value are properly encoded."""
+        mock_rq.side_effect = self._validate_request(
+            "/rest/api/uom/Cluster/search/(ClusterName=="
+            "'%3B%2F%3F%3A%40%20%26%3D%2B%24%2C')")
+        clust.Cluster.search(self.adp, name=';/?:@ &=+$,')
+
 
 class TestRefresh(unittest.TestCase):
     """Tests for Adapter.refresh()."""

@@ -16,6 +16,7 @@
 
 import abc
 import logging
+import urllib
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
@@ -581,7 +582,8 @@ class EntryWrapper(Wrapper):
         except KeyError:
             raise ValueError("Wrapper class %s does not support search key "
                              "'%s'." % (cls.__name__, key))
-        search_parm = "(%s%s'%s')" % (search_key, op, val)
+        quote = urllib.parse.quote if six.PY3 else urllib.quote
+        search_parm = "(%s%s'%s')" % (search_key, op, quote(val, safe=''))
         # Let this throw HttpError if the caller got it wrong
         resp = adapter.read(cls.schema_type, suffix_type='search',
                             suffix_parm=search_parm)
