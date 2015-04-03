@@ -19,6 +19,9 @@ import mock
 import unittest
 
 from pypowervm.tasks import hdisk
+import pypowervm.tests.tasks.util as tju
+
+VIOS_FEED = 'fake_vios_feed.txt'
 
 
 class TestHDisk(unittest.TestCase):
@@ -117,3 +120,15 @@ class TestHDisk(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
+
+    @mock.patch('pypowervm.wrappers.job.Job.job_status')
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_remove_hdisk(self, mock_adapter, mock_run_job, mock_job_status):
+        mock_adapter.read.return_value = (tju.load_file(VIOS_FEED)
+                                          .feed.entries[0])
+
+        hdisk.remove_hdisk(mock_adapter, 'host_name', 'dev_name', 'vios_uuid')
+        # Validate method invocations
+        self.assertEqual(2, mock_adapter.read.call_count)
+        self.assertEqual(1, mock_run_job.call_count)

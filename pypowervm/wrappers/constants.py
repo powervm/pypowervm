@@ -24,6 +24,8 @@ ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
 DELIM = '/'
 LINK = 'link'
 
+# Types
+MGT_CONSOLE = 'ManagementConsole'
 
 # XPath components shared by LPAR and VIOS
 LPAR_MEM_CONFIG = 'PartitionMemoryConfiguration'
