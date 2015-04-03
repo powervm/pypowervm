@@ -19,7 +19,6 @@ import unittest
 
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.network as net
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
@@ -56,7 +55,7 @@ class TestVNetwork(twrap.TestWrapper):
         self.assertEqual(net.VNet.schema_type, 'VirtualNetwork')
         self.assertEqual(net.VNet.schema_ns, pc.UOM_NS)
         self.assertTrue(net.VNet.has_metadata)
-        self.assertEqual(net.VNet.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.VNet.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestVSwitch(twrap.TestWrapper):
@@ -96,7 +95,7 @@ class TestVSwitch(twrap.TestWrapper):
         self.assertEqual(net.VSwitch.schema_type, 'VirtualSwitch')
         self.assertEqual(net.VSwitch.schema_ns, pc.UOM_NS)
         self.assertTrue(net.VSwitch.has_metadata)
-        self.assertEqual(net.VSwitch.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.VSwitch.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestLoadGroup(unittest.TestCase):
@@ -104,7 +103,7 @@ class TestLoadGroup(unittest.TestCase):
         self.assertEqual(net.LoadGroup.schema_type, 'LoadGroup')
         self.assertEqual(net.LoadGroup.schema_ns, pc.UOM_NS)
         self.assertTrue(net.LoadGroup.has_metadata)
-        self.assertEqual(net.LoadGroup.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.LoadGroup.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestTrunkAdapter(unittest.TestCase):
@@ -113,7 +112,7 @@ class TestTrunkAdapter(unittest.TestCase):
         self.assertEqual(net.TrunkAdapter.schema_ns, pc.UOM_NS)
         self.assertFalse(net.TrunkAdapter.has_metadata)
         self.assertEqual(net.TrunkAdapter.default_attrib,
-                         wc.DEFAULT_SCHEMA_ATTR)
+                         pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestSEA(unittest.TestCase):
@@ -121,7 +120,7 @@ class TestSEA(unittest.TestCase):
         self.assertEqual(net.SEA.schema_type, 'SharedEthernetAdapter')
         self.assertEqual(net.SEA.schema_ns, pc.UOM_NS)
         self.assertTrue(net.SEA.has_metadata)
-        self.assertEqual(net.SEA.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.SEA.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestNetBridge(unittest.TestCase):
@@ -129,7 +128,7 @@ class TestNetBridge(unittest.TestCase):
         self.assertEqual(net.NetBridge.schema_type, 'NetworkBridge')
         self.assertEqual(net.NetBridge.schema_ns, pc.UOM_NS)
         self.assertTrue(net.NetBridge.has_metadata)
-        self.assertEqual(net.NetBridge.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.NetBridge.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 
 class TestNetwork(twrap.TestWrapper):
@@ -441,7 +440,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertEqual(net.CNA.schema_type, 'ClientNetworkAdapter')
         self.assertEqual(net.CNA.schema_ns, pc.UOM_NS)
         self.assertTrue(net.CNA.has_metadata)
-        self.assertEqual(net.CNA.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(net.CNA.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,8 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pypowervm.const as pc
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 import logging
@@ -78,7 +79,7 @@ _UNCAPPED_WEIGHT = 'UncappedWeight'
 _AVAIL_PRIORITY = 'AvailabilityPriority'
 _RESTRICTED_IO = 'IsRestrictedIOPartition'
 _SRR = 'SimplifiedRemoteRestartCapable'
-_CNA_LINKS = u.xpath('ClientNetworkAdapters', c.LINK)
+_CNA_LINKS = u.xpath('ClientNetworkAdapters', wc.LINK)
 
 # Constants for the Partition I/O Configuration
 IO_CFG_ROOT = _LPAR_IO_CFG
@@ -225,7 +226,7 @@ class LPAR(ewrap.EntryWrapper):
     @property
     def id(self):
         """Short ID (not UUID)."""
-        return int(self._get_val_str(_LPAR_ID, c.ZERO))
+        return int(self._get_val_str(_LPAR_ID, wc.ZERO))
 
     @property
     def env(self):
@@ -241,143 +242,143 @@ class LPAR(ewrap.EntryWrapper):
 
     @property
     def current_mem(self):
-        return self._get_val_str(c.CURR_MEM, c.ZERO)
+        return self._get_val_str(wc.CURR_MEM, wc.ZERO)
 
     @property
     def current_max_mem(self):
-        return self._get_val_str(c.CURR_MAX_MEM, c.ZERO)
+        return self._get_val_str(wc.CURR_MAX_MEM, wc.ZERO)
 
     @property
     def current_min_mem(self):
-        return self._get_val_str(c.CURR_MIN_MEM, c.ZERO)
+        return self._get_val_str(wc.CURR_MIN_MEM, wc.ZERO)
 
     @property
     def desired_mem(self):
-        return self._get_val_str(c.DES_MEM, c.ZERO)
+        return self._get_val_str(wc.DES_MEM, wc.ZERO)
 
     @property
     def max_mem(self):
-        return self._get_val_str(c.DES_MAX_MEM, c.ZERO)
+        return self._get_val_str(wc.DES_MAX_MEM, wc.ZERO)
 
     @property
     def min_mem(self):
-        return self._get_val_str(c.DES_MIN_MEM, c.ZERO)
+        return self._get_val_str(wc.DES_MIN_MEM, wc.ZERO)
 
     @property
     def run_mem(self):
-        return self._get_val_str(c.RUN_MEM, c.ZERO)
+        return self._get_val_str(wc.RUN_MEM, wc.ZERO)
 
     @property
     def current_mem_share_enabled(self):
         # The default is None instead of False so that the caller
         # can know if the value is not set
-        return self._get_val_bool(c.SHARED_MEM_ENABLED, None)
+        return self._get_val_bool(wc.SHARED_MEM_ENABLED, None)
 
     @property
     def current_proc_mode_is_dedicated(self):
         """Returns boolean True if dedicated, False if shared or not found."""
-        return self._get_val_bool(c.CURR_USE_DED_PROCS, False)
+        return self._get_val_bool(wc.CURR_USE_DED_PROCS, False)
 
     @property
     def proc_mode_is_dedicated(self):
         """Returns boolean True if dedicated, False if shared or not found."""
-        return self._get_val_bool(c.USE_DED_PROCS, False)
+        return self._get_val_bool(wc.USE_DED_PROCS, False)
 
     @property
     def current_procs(self):
-        return self._get_val_str(c.CURR_PROCS, c.ZERO)
+        return self._get_val_str(wc.CURR_PROCS, wc.ZERO)
 
     @property
     def current_max_procs(self):
-        return self._get_val_str(c.CURR_MAX_PROCS, c.ZERO)
+        return self._get_val_str(wc.CURR_MAX_PROCS, wc.ZERO)
 
     @property
     def current_min_procs(self):
-        return self._get_val_str(c.CURR_MIN_PROCS, c.ZERO)
+        return self._get_val_str(wc.CURR_MIN_PROCS, wc.ZERO)
 
     @property
     def desired_procs(self):
-        return self._get_val_str(c.DES_PROCS, c.ZERO)
+        return self._get_val_str(wc.DES_PROCS, wc.ZERO)
 
     @property
     def max_procs(self):
-        return self._get_val_str(c.DES_MAX_PROCS, c.ZERO)
+        return self._get_val_str(wc.DES_MAX_PROCS, wc.ZERO)
 
     @property
     def min_procs(self):
-        return self._get_val_str(c.DES_MIN_PROCS, c.ZERO)
+        return self._get_val_str(wc.DES_MIN_PROCS, wc.ZERO)
 
     @property
     def current_vcpus(self):
-        return self._get_val_str(c.CURR_VCPU, c.ZERO)
+        return self._get_val_str(wc.CURR_VCPU, wc.ZERO)
 
     @property
     def current_max_vcpus(self):
-        return self._get_val_str(c.CURR_MAX_VCPU, c.ZERO)
+        return self._get_val_str(wc.CURR_MAX_VCPU, wc.ZERO)
 
     @property
     def current_min_vcpus(self):
-        return self._get_val_str(c.CURR_MIN_VCPU, c.ZERO)
+        return self._get_val_str(wc.CURR_MIN_VCPU, wc.ZERO)
 
     @property
     def desired_vcpus(self):
-        return self._get_val_str(c.DES_VCPU, c.ZERO)
+        return self._get_val_str(wc.DES_VCPU, wc.ZERO)
 
     @property
     def max_vcpus(self):
-        return self._get_val_str(c.DES_MAX_VCPU, c.ZERO)
+        return self._get_val_str(wc.DES_MAX_VCPU, wc.ZERO)
 
     @property
     def min_vcpus(self):
-        return self._get_val_str(c.DES_MIN_VCPU, c.ZERO)
+        return self._get_val_str(wc.DES_MIN_VCPU, wc.ZERO)
 
     @property
     def current_proc_units(self):
-        return self._get_val_str(c.CURR_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.CURR_PROC_UNITS, wc.ZERO)
 
     @property
     def current_max_proc_units(self):
-        return self._get_val_str(c.CURR_MAX_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.CURR_MAX_PROC_UNITS, wc.ZERO)
 
     @property
     def current_min_proc_units(self):
-        return self._get_val_str(c.CURR_MIN_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.CURR_MIN_PROC_UNITS, wc.ZERO)
 
     @property
     def desired_proc_units(self):
-        return self._get_val_str(c.DES_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.DES_PROC_UNITS, wc.ZERO)
 
     @property
     def max_proc_units(self):
-        return self._get_val_str(c.MAX_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.MAX_PROC_UNITS, wc.ZERO)
 
     @property
     def min_proc_units(self):
-        return self._get_val_str(c.MIN_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.MIN_PROC_UNITS, wc.ZERO)
 
     @property
     def run_procs(self):
-        return self._get_val_str(c.RUN_PROCS, c.ZERO)
+        return self._get_val_str(wc.RUN_PROCS, wc.ZERO)
 
     @property
     def run_vcpus(self):
-        return self._get_val_str(c.RUN_VCPU, c.ZERO)
+        return self._get_val_str(wc.RUN_VCPU, wc.ZERO)
 
     @property
     def current_uncapped_weight(self):
-        return self._get_val_str(c.CURR_UNCAPPED_WEIGHT, c.ZERO)
+        return self._get_val_str(wc.CURR_UNCAPPED_WEIGHT, wc.ZERO)
 
     @property
     def uncapped_weight(self):
-        return self._get_val_str(c.UNCAPPED_WEIGHT, c.ZERO)
+        return self._get_val_str(wc.UNCAPPED_WEIGHT, wc.ZERO)
 
     @property
     def shared_proc_pool_id(self):
-        return int(self._get_val_str(c.SHARED_PROC_POOL_ID, c.ZERO))
+        return int(self._get_val_str(wc.SHARED_PROC_POOL_ID, wc.ZERO))
 
     @property
     def avail_priority(self):
-        return self._get_val_str(_AVAIL_PRIORITY, c.ZERO)
+        return self._get_val_str(_AVAIL_PRIORITY, wc.ZERO)
 
     @property
     def sharing_mode(self):
@@ -386,7 +387,7 @@ class LPAR(ewrap.EntryWrapper):
         Note that the getter retrieves the CURRENT sharing mode; and the
         setter sets the (PENDING) sharing mode.
         """
-        return self._get_val_str(c.CURR_SHARING_MODE)
+        return self._get_val_str(wc.CURR_SHARING_MODE)
 
     @property
     def migration_state(self):
@@ -434,7 +435,7 @@ class LPAR(ewrap.EntryWrapper):
 
         e.g. 'active', 'inactive', 'busy', etc.
         """
-        return self._get_val_str(c.RMC_STATE)
+        return self._get_val_str(wc.RMC_STATE)
 
     @property
     def srr_enabled(self):
@@ -447,7 +448,7 @@ class LPAR(ewrap.EntryWrapper):
     @srr_enabled.setter
     def srr_enabled(self, value):
         self.set_parm_value(_SRR, u.sanitize_bool_for_api(value),
-                            attrib=c.ATTR_SCHEMA120)
+                            attrib=pc.ATTR_SCHEMA120)
 
     @property
     def ref_code(self):
@@ -474,15 +475,15 @@ class LPAR(ewrap.EntryWrapper):
 
     @desired_mem.setter
     def desired_mem(self, value):
-        self.set_parm_value(c.DES_MEM, value)
+        self.set_parm_value(wc.DES_MEM, value)
 
     @max_mem.setter
     def max_mem(self, value):
-        self.set_parm_value(c.DES_MAX_MEM, value)
+        self.set_parm_value(wc.DES_MAX_MEM, value)
 
     @min_mem.setter
     def min_mem(self, value):
-        self.set_parm_value(c.DES_MIN_MEM, value)
+        self.set_parm_value(wc.DES_MIN_MEM, value)
 
     @proc_compat_mode.setter
     def proc_compat_mode(self, value):
@@ -504,52 +505,52 @@ class LPAR(ewrap.EntryWrapper):
         Note that the getter retrieves the CURRENT sharing mode; and the
         setter sets the (PENDING) sharing mode.
         """
-        self.set_parm_value(c.SHARING_MODE, value)
+        self.set_parm_value(wc.SHARING_MODE, value)
 
     @desired_procs.setter
     def desired_procs(self, value):
-        self.set_parm_value(c.DES_PROCS, value)
+        self.set_parm_value(wc.DES_PROCS, value)
 
     @max_procs.setter
     def max_procs(self, value):
-        self.set_parm_value(c.DES_MAX_PROCS, value)
+        self.set_parm_value(wc.DES_MAX_PROCS, value)
 
     @min_procs.setter
     def min_procs(self, value):
-        self.set_parm_value(c.DES_MIN_PROCS, value)
+        self.set_parm_value(wc.DES_MIN_PROCS, value)
 
     @desired_vcpus.setter
     def desired_vcpus(self, value):
-        self.set_parm_value(c.DES_VCPU, value)
+        self.set_parm_value(wc.DES_VCPU, value)
 
     @max_vcpus.setter
     def max_vcpus(self, value):
-        self.set_parm_value(c.DES_MAX_VCPU, value)
+        self.set_parm_value(wc.DES_MAX_VCPU, value)
 
     @min_vcpus.setter
     def min_vcpus(self, value):
-        self.set_parm_value(c.DES_MIN_VCPU, value)
+        self.set_parm_value(wc.DES_MIN_VCPU, value)
 
     @desired_proc_units.setter
     def desired_proc_units(self, value):
-        self.set_parm_value(c.DES_PROC_UNITS, value)
+        self.set_parm_value(wc.DES_PROC_UNITS, value)
 
     @max_proc_units.setter
     def max_proc_units(self, value):
-        self.set_parm_value(c.MAX_PROC_UNITS, value)
+        self.set_parm_value(wc.MAX_PROC_UNITS, value)
 
     @min_proc_units.setter
     def min_proc_units(self, value):
-        self.set_parm_value(c.MIN_PROC_UNITS, value)
+        self.set_parm_value(wc.MIN_PROC_UNITS, value)
 
     @uncapped_weight.setter
     def uncapped_weight(self, value):
-        self.set_parm_value(c.UNCAPPED_WEIGHT, value)
+        self.set_parm_value(wc.UNCAPPED_WEIGHT, value)
 
     @proc_mode_is_dedicated.setter
     def proc_mode_is_dedicated(self, value):
         """Expects 'true' (string) for dedicated or 'false' for shared."""
-        self.set_parm_value(c.USE_DED_PROCS, value)
+        self.set_parm_value(wc.USE_DED_PROCS, value)
 
     @property
     def io_config(self):
@@ -617,19 +618,19 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
 
     @property
     def current_mem(self):
-        return self._get_val_int(_CURR_MEM, c.ZERO)
+        return self._get_val_int(_CURR_MEM, wc.ZERO)
 
     @property
     def current_max_mem(self):
-        return self._get_val_int(_CURR_MAX_MEM, c.ZERO)
+        return self._get_val_int(_CURR_MAX_MEM, wc.ZERO)
 
     @property
     def current_min_mem(self):
-        return self._get_val_int(_CURR_MIN_MEM, c.ZERO)
+        return self._get_val_int(_CURR_MIN_MEM, wc.ZERO)
 
     @property
     def desired_mem(self):
-        return self._get_val_int(_MEM, c.ZERO)
+        return self._get_val_int(_MEM, wc.ZERO)
 
     @desired_mem.setter
     def desired_mem(self, mem):
@@ -637,7 +638,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
 
     @property
     def max_mem(self):
-        return self._get_val_int(_MAX_MEM, c.ZERO)
+        return self._get_val_int(_MAX_MEM, wc.ZERO)
 
     @max_mem.setter
     def max_mem(self, mem):
@@ -645,7 +646,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
 
     @property
     def min_mem(self):
-        return self._get_val_int(_MIN_MEM, c.ZERO)
+        return self._get_val_int(_MIN_MEM, wc.ZERO)
 
     @min_mem.setter
     def min_mem(self, mem):
@@ -654,7 +655,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
     @property
     def run_mem(self):
         """Runtime memory."""
-        return self._get_val_int(_RUN_MEM, c.ZERO)
+        return self._get_val_int(_RUN_MEM, wc.ZERO)
 
     @property
     def current_mem_share_enabled(self):
@@ -913,7 +914,7 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
 
     @property
     def desired_procs(self):
-        return self._get_val_str(_DED_PROCS, c.ZERO)
+        return self._get_val_str(_DED_PROCS, wc.ZERO)
 
     @desired_procs.setter
     def desired_procs(self, value):
@@ -921,7 +922,7 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
 
     @property
     def max_procs(self):
-        return self._get_val_str(_DED_MAX_PROCS, c.ZERO)
+        return self._get_val_str(_DED_MAX_PROCS, wc.ZERO)
 
     @max_procs.setter
     def max_procs(self, value):
@@ -929,7 +930,7 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
 
     @property
     def min_procs(self):
-        return self._get_val_str(_DED_MIN_PROCS, c.ZERO)
+        return self._get_val_str(_DED_MIN_PROCS, wc.ZERO)
 
     @min_procs.setter
     def min_procs(self, value):

@@ -95,7 +95,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     v_port_wwpn pairs exceed the total number of p_port_wwpns.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
-                       extended attribute group (xag) of VIOS_FC_MAPPING.
+                       extended attribute group (xag) of FC_MAPPING.
     :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
                          map the ports to.  These WWPNs should reside on
                          Physical FC Ports on the VIOS wrappers that were
@@ -308,7 +308,7 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
     # Get all the VIOSes
     vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
                              child_type=pvm_vios.VIOS.schema_type,
-                             xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+                             xag=[pvm_vios.VIOS.xags.FC_MAPPING])
     vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
 
     # List of VIOSes that need to be updated.
@@ -330,7 +330,7 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
 
     # Now run the update against the affected VIOSes
     for vios_w in vioses_to_update.values():
-        vios_w.update(adapter, xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+        vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.FC_MAPPING])
 
 
 def _remove_npiv_port_map(adapter, vios_wraps, npiv_port_map):

@@ -249,7 +249,7 @@ class TestAdapter(unittest.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+                                   xag=[pvm_vios.VIOS.xags.FC_MAPPING])
 
         expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
                         'group=ViosFCMapping')
@@ -259,8 +259,8 @@ class TestAdapter(unittest.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING,
-                                        pvm_vios.XAGEnum.VIOS_NETWORK])
+                                   xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                        pvm_vios.VIOS.xags.NETWORK])
 
         expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
                         'group=ViosFCMapping,ViosNetwork')
