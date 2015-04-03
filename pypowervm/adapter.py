@@ -17,6 +17,7 @@
 import abc
 import copy
 import datetime as dt
+import functools
 import hashlib
 import logging
 import os
@@ -1593,6 +1594,34 @@ class Element(object):
         return '/'.join(parts)
 
 
+class XAGEnum(object):
+    @functools.total_ordering
+    class _Handler(object):
+        def __init__(self, name):
+            self.name = name
+
+        def __str__(self):
+            return self.name
+
+        def __eq__(self, other):
+            return self.name == other.name
+
+        def __lt__(self, other):
+            return self.name < other.name
+
+        @property
+        def attrs(self):
+            schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
+            schema['group'] = self.name
+            return schema
+
+    def __init__(self, **kwargs):
+        self.NONE = self._Handler('None')
+        self.ALL = self._Handler('All')
+        for key, val in kwargs.items():
+            setattr(self, key, self._Handler(val))
+
+
 class ElementIterator(object):
     def __init__(self, it):
         self.it = it
@@ -1612,7 +1641,7 @@ class EventListener(object):
         self.handlers = []
         self._pthread = None
         try:
-            self.oper = Adapter(session, use_cache=False)
+            self.adp = Adapter(session, use_cache=False)
             allevents = self.getevents()  # initialize
         except pvmex.Error as e:
             raise pvmex.Error('Failed to initialize event feed listener: %s'
@@ -1624,7 +1653,7 @@ class EventListener(object):
     def subscribe(self, handler):
         if not isinstance(handler, EventHandler):
             raise ValueError('Handler must be an EventHandler')
-        if self.oper is None:
+        if self.adp is None:
             raise Exception('Shutting down')
         with self._lock:
             if handler in self.handlers:
@@ -1646,12 +1675,12 @@ class EventListener(object):
                 self._pthread = None
 
     def shutdown(self):
-        host = self.oper.session.host
+        host = self.adp.session.host
         LOG.info('Shutting down EventListener for %s' % host)
         with self._lock:
             for handler in self.handlers:
                 self.unsubscribe(handler)
-            self.oper = None
+            self.adp = None
         LOG.info('EventListener shutdown complete for %s' % host)
 
     def getevents(self):
@@ -1660,9 +1689,9 @@ class EventListener(object):
 
         # Read event feed
         try:
-            resp = self.oper.read('Event?QUEUE_CLIENTKEY_METHOD='
-                                  'USE_APPLICATIONID&QUEUE_APPLICATIONID=%s'
-                                  % self.appid, timeout=self.timeout)
+            resp = self.adp.read('Event?QUEUE_CLIENTKEY_METHOD='
+                                 'USE_APPLICATIONID&QUEUE_APPLICATIONID=%s'
+                                 % self.appid, timeout=self.timeout)
         except pvmex.Error:
             # TODO(IBM): improve error handling
             LOG.exception('error while getting PowerVM events')

@@ -52,7 +52,7 @@ class Wrapper(object):
 
     @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
-                 attrib=wc.DEFAULT_SCHEMA_ATTR, child_order=None):
+                 attrib=pc.DEFAULT_SCHEMA_ATTR, child_order=None):
         """Decorator for {Entry|Element}Wrappers of PowerVM objects.
 
         Sets foundational fields used for construction of new wrapper instances
@@ -117,7 +117,7 @@ class Wrapper(object):
 
         return found_value  # May be None
 
-    def _find_or_seed(self, prop_name, attrib=wc.DEFAULT_SCHEMA_ATTR):
+    def _find_or_seed(self, prop_name, attrib=pc.DEFAULT_SCHEMA_ATTR):
         """Will find the existing element, or create if needed.
 
         If the element is not found, it will be added to the child list
@@ -140,7 +140,7 @@ class Wrapper(object):
             return new_elem
 
     def replace_list(self, prop_name, prop_children,
-                     attrib=wc.DEFAULT_SCHEMA_ATTR):
+                     attrib=pc.DEFAULT_SCHEMA_ATTR):
         """Replaces a property on this Entry that contains a children list.
 
         The prop_children represent the new elements for the property.

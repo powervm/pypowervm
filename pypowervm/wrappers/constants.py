@@ -14,13 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-DEFAULT_SCHEMA_VERSION = 'V1_0'
-SCHEMA_VER120 = 'V1_2_0'
-SCHEMA_VER = 'schemaVersion'
-ATTR_SCHEMA = 'ksv'
-DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
-ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
-
 DELIM = '/'
 LINK = 'link'
 

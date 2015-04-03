@@ -308,7 +308,7 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
     # Get all the VIOSes
     vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
                              child_type=pvm_vios.VIOS.schema_type,
-                             xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+                             xag=[pvm_vios.VIOS.xags.VIOS_FC_MAPPING])
     vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
 
     # List of VIOSes that need to be updated.
@@ -330,7 +330,7 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
 
     # Now run the update against the affected VIOSes
     for vios_w in vioses_to_update.values():
-        vios_w.update(adapter, xag=[pvm_vios.XAGEnum.VIOS_FC_MAPPING])
+        vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.VIOS_FC_MAPPING])
 
 
 def _remove_npiv_port_map(adapter, vios_wraps, npiv_port_map):

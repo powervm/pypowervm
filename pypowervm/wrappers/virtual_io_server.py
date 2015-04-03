@@ -16,14 +16,14 @@
 
 import abc
 import copy
-import functools
 import logging
 import re
 
 import six
 
+import pypowervm.adapter as adp
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
+import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
@@ -53,38 +53,16 @@ _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 
 
-class XAGEnum(object):
-    """Extended Attribute Groups for VirtualIOServer GET."""
-    @functools.total_ordering
-    class _Handler(object):
-        def __init__(self, name):
-            self.name = name
-
-        def __str__(self):
-            return self.name
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __lt__(self, other):
-            return self.name < other.name
-
-        @property
-        def attrs(self):
-            schema = copy.copy(c.DEFAULT_SCHEMA_ATTR)
-            schema['group'] = self.name
-            return schema
-
-    VIOS_NETWORK = _Handler('ViosNetwork')
-    VIOS_STORAGE = _Handler('ViosStorage')
-    VIOS_SCSI_MAPPING = _Handler('ViosSCSIMapping')
-    VIOS_FC_MAPPING = _Handler('ViosFCMapping')
-
-
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer')
 class VIOS(ewrap.EntryWrapper):
 
     search_keys = dict(name='PartitionName', id='PartitionID')
+
+    # Extended Attribute Groups
+    xags = adp.XAGEnum(VIOS_NETWORK='ViosNetwork',
+                       VIOS_STORAGE='ViosStorage',
+                       VIOS_SCSI_MAPPING='ViosSCSIMapping',
+                       VIOS_FC_MAPPING='ViosFCMapping')
 
     @property
     def name(self):
@@ -92,7 +70,7 @@ class VIOS(ewrap.EntryWrapper):
 
     @property
     def partition_id(self):
-        return int(self._get_val_str(_VIO_PARTITION_ID, c.ZERO))
+        return int(self._get_val_str(_VIO_PARTITION_ID, wc.ZERO))
 
     @property
     def state(self):
@@ -104,7 +82,7 @@ class VIOS(ewrap.EntryWrapper):
 
     @property
     def rmc_state(self):
-        return self._get_val_str(c.RMC_STATE)
+        return self._get_val_str(wc.RMC_STATE)
 
     @property
     def is_rmc_active(self):
@@ -112,7 +90,7 @@ class VIOS(ewrap.EntryWrapper):
 
     @property
     def media_repository(self):
-        return self.element.find(c.VIRT_MEDIA_REPOSITORY_PATH)
+        return self.element.find(wc.VIRT_MEDIA_REPOSITORY_PATH)
 
     def get_vfc_wwpns(self):
         """Returns a list of the virtual FC WWPN pairs for the vios.
@@ -122,7 +100,7 @@ class VIOS(ewrap.EntryWrapper):
              ('c05076065a8b0060', 'c05076065a8b0061'))
         """
         return set([frozenset(x.split()) for x in
-                    self._get_vals(c.WWPNS_PATH)])
+                    self._get_vals(wc.WWPNS_PATH)])
 
     def get_pfc_wwpns(self):
         """Returns a set of the Physical FC Adapter WWPNs on this VIOS."""
@@ -159,13 +137,13 @@ class VIOS(ewrap.EntryWrapper):
         policy = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self.element.findall(c.PVS_PATH)
+        volumes = self.element.findall(wc.PVS_PATH)
         for volume in volumes:
-            vol_uuid = volume.findtext(c.VOL_UID)
+            vol_uuid = volume.findtext(wc.VOL_UID)
             match = re.search(r'^[0-9]{5}([0-9A-F]{32}).+$', vol_uuid)
 
             if match and match.group(1) == disk_uuid:
-                policy = volume.findtext(c.RESERVE_POLICY)
+                policy = volume.findtext(wc.RESERVE_POLICY)
                 break
 
         return policy
@@ -179,34 +157,34 @@ class VIOS(ewrap.EntryWrapper):
         name = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self.element.findall(c.PVS_PATH)
+        volumes = self.element.findall(wc.PVS_PATH)
         for volume in volumes:
-            vol_uuid = volume.findtext(c.UDID)
+            vol_uuid = volume.findtext(wc.UDID)
             if vol_uuid:
                 LOG.debug('get_hdisk_from_uuid match: %s' % vol_uuid)
                 LOG.debug('get_hdisk_from_uuid disk_uuid: %s' % disk_uuid)
                 if vol_uuid == disk_uuid:
-                    name = volume.findtext(c.VOL_NAME)
+                    name = volume.findtext(wc.VOL_NAME)
                     break
 
         return name
 
     @property
     def current_mem(self):
-        return self._get_val_str(c.CURR_MEM, c.ZERO)
+        return self._get_val_str(wc.CURR_MEM, wc.ZERO)
 
     @property
     def current_proc_mode(self):
         # Returns true if dedicated or false if shared
-        return self._get_val_bool(c.CURR_USE_DED_PROCS)
+        return self._get_val_bool(wc.CURR_USE_DED_PROCS)
 
     @property
     def current_procs(self):
-        return self._get_val_str(c.CURR_PROCS, c.ZERO)
+        return self._get_val_str(wc.CURR_PROCS, wc.ZERO)
 
     @property
     def current_proc_units(self):
-        return self._get_val_str(c.CURR_PROC_UNITS, c.ZERO)
+        return self._get_val_str(wc.CURR_PROC_UNITS, wc.ZERO)
 
     @property
     def is_mover_service_partition(self):
@@ -226,10 +204,10 @@ class VIOS(ewrap.EntryWrapper):
 
         # Get all the shared ethernet adapters and free
         # ethernet devices and pull the IPs
-        seas = self.element.findall(c.SHARED_ETHERNET_ADAPTER)
-        free_eths = self.element.findall(c.ETHERNET_BACKING_DEVICE)
+        seas = self.element.findall(wc.SHARED_ETHERNET_ADAPTER)
+        free_eths = self.element.findall(wc.ETHERNET_BACKING_DEVICE)
         for eth in seas + free_eths:
-            ip = eth.findtext(c.IF_ADDR)
+            ip = eth.findtext(wc.IF_ADDR)
             if ip and ip not in ip_list:
                 ip_list.append(ip)
 
@@ -238,7 +216,7 @@ class VIOS(ewrap.EntryWrapper):
     @property
     def vfc_mappings(self):
         """Returns a WrapperElemList of the VFCMapping objects."""
-        def_attrib = XAGEnum.VIOS_FC_MAPPING.attrs
+        def_attrib = self.xags.VIOS_FC_MAPPING.attrs
         es = ewrap.WrapperElemList(
             self._find_or_seed(_VIO_VFC_MAPPINGS, attrib=def_attrib),
             VFCMapping)
@@ -247,12 +225,12 @@ class VIOS(ewrap.EntryWrapper):
     @vfc_mappings.setter
     def vfc_mappings(self, new_mappings):
         self.replace_list(_VIO_VFC_MAPPINGS, new_mappings,
-                          attrib=XAGEnum.VIOS_SCSI_MAPPING.attrs)
+                          attrib=self.xags.VIOS_SCSI_MAPPING.attrs)
 
     @property
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
-        def_attrib = XAGEnum.VIOS_SCSI_MAPPING.attrs
+        def_attrib = self.xags.VIOS_SCSI_MAPPING.attrs
         es = ewrap.WrapperElemList(
             self._find_or_seed(_VIO_SCSI_MAPPINGS, attrib=def_attrib),
             VSCSIMapping)
@@ -261,18 +239,18 @@ class VIOS(ewrap.EntryWrapper):
     @scsi_mappings.setter
     def scsi_mappings(self, new_mappings):
         self.replace_list(_VIO_SCSI_MAPPINGS, new_mappings,
-                          attrib=XAGEnum.VIOS_SCSI_MAPPING.attrs)
+                          attrib=self.xags.VIOS_SCSI_MAPPING.attrs)
 
     @property
     def seas(self):
-        def_attrib = XAGEnum.VIOS_NETWORK.attrs
+        def_attrib = self.xags.VIOS_NETWORK.attrs
         es = ewrap.WrapperElemList(
             self._find_or_seed(net.NB_SEAS, attrib=def_attrib), net.SEA)
         return es
 
     @property
     def trunk_adapters(self):
-        def_attrib = XAGEnum.VIOS_NETWORK.attrs
+        def_attrib = self.xags.VIOS_NETWORK.attrs
         es = ewrap.WrapperElemList(
             self._find_or_seed(net.SEA_TRUNKS, attrib=def_attrib),
             net.TrunkAdapter)
