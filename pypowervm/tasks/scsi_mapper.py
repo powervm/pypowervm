@@ -47,7 +47,7 @@ def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
                        scsi bus before creating a second SCSI bus.
     """
     vios_resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid,
-                             xag=[pvm_vios.XAGEnum.VIOS_SCSI_MAPPING])
+                             xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
     # Loop through the existing SCSI Mappings.  Seeing if we have one that
@@ -57,13 +57,13 @@ def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
         if _can_be_fused(existing_scsi_map, scsi_map, fuse_limit):
             new_elems = scsi_map.backing_storage_elems
             existing_scsi_map.backing_storage_elems.extend(new_elems)
-            vios_w.update(adapter, xag=[pvm_vios.XAGEnum.VIOS_SCSI_MAPPING])
+            vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
             return
 
     # If we got here, the SCSI mapping could not fuse with any existing.
     # Should just add it as a new mapping.
     existing_scsi_mappings.append(scsi_map)
-    vios_w.update(adapter, xag=[pvm_vios.XAGEnum.VIOS_SCSI_MAPPING])
+    vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
 
 def _can_be_fused(existing_scsi_map, new_scsi_map, fuse_limit):
@@ -106,7 +106,7 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
     :return: The list of the storage elements that were removed from the maps.
     """
     vios_resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid,
-                             xag=[pvm_vios.XAGEnum.VIOS_SCSI_MAPPING])
+                             xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
     matching_map = None
@@ -149,7 +149,7 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
         resp_list.append(scsi_elem)
 
     # Update the VIOS
-    vios_w.update(adapter, xag=[pvm_vios.XAGEnum.VIOS_SCSI_MAPPING])
+    vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
     # return the list of removed elements
     return resp_list
