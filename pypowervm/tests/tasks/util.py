@@ -16,7 +16,10 @@
 
 import os
 
+from pypowervm import adapter as adpt
+from pypowervm import exceptions as pvm_exc
 from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.wrappers import constants as const
 
 
 def load_file(file_name):
@@ -25,3 +28,11 @@ def load_file(file_name):
     data_dir = os.path.join(data_dir, 'data')
     file_path = os.path.join(data_dir, file_name)
     return pvmhttp.load_pvm_resp(file_path).get_response()
+
+
+def raiseRetryException():
+    """Used for other tests wishing to raise an exception to a force retry."""
+    resp = adpt.Response('reqmethod', 'reqpath',
+                         const.HTTP_STATUS_ETAG_MISMATCH, 'reason', 'headers')
+    http_exc = pvm_exc.HttpError('msg', resp)
+    raise http_exc
