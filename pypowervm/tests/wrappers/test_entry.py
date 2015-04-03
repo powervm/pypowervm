@@ -448,7 +448,7 @@ class TestSearch(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_good(self, mock_rq):
         mock_rq.side_effect = self._validate_request(
-            "/rest/api/uom/Cluster/search/(ClusterName=='cl1')",
+            "/rest/api/uom/Cluster/search/(ClusterName=='cl1')?group=None",
             clust.Cluster.bld('cl1', stor.PV.bld('hdisk1', 'udid1'),
                               clust.Node.bld(hostname='vios1')).entry)
 
@@ -463,7 +463,7 @@ class TestSearch(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_negate(self, mock_rq):
         mock_rq.side_effect = self._validate_request(
-            "/rest/api/uom/Cluster/search/(ClusterName!='cl1')")
+            "/rest/api/uom/Cluster/search/(ClusterName!='cl1')?group=None")
         clwraps = clust.Cluster.search(self.adp, negate=True, name='cl1')
         self.assertEqual(clwraps, [])
 
@@ -482,7 +482,7 @@ class TestSearch(unittest.TestCase):
         """Ensure special chars in the search value are properly encoded."""
         mock_rq.side_effect = self._validate_request(
             "/rest/api/uom/Cluster/search/(ClusterName=="
-            "'%3B%2F%3F%3A%40%20%26%3D%2B%24%2C')")
+            "'%3B%2F%3F%3A%40%20%26%3D%2B%24%2C')?group=None")
         clust.Cluster.search(self.adp, name=';/?:@ &=+$,')
 
     @mock.patch('pypowervm.adapter.Adapter.read')
@@ -601,7 +601,8 @@ class TestUpdate(unittest.TestCase):
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp)
-        mock_ubp.assert_called_with(self.cl, self.clust_etag, self.clust_path)
+        mock_ubp.assert_called_with(self.cl, self.clust_etag,
+                                    self.clust_path + '?group=None')
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
