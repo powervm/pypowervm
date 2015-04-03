@@ -252,9 +252,9 @@ class TestAdapter(unittest.TestCase):
                                    detail='detail',
                                    xag=[pvm_vios.VIOS.xags.FC_MAPPING])
 
-        expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
-                        'group=ViosFCMapping')
-        self.assertEqual(expectedPath, path)
+        expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
+                         'group=ViosFCMapping')
+        self.assertEqual(expected_path, path)
 
         # Multiple XAGs
         path = adapter.extend_path('basepath', suffix_type='suffix',
@@ -263,9 +263,28 @@ class TestAdapter(unittest.TestCase):
                                    xag=[pvm_vios.VIOS.xags.FC_MAPPING,
                                         pvm_vios.VIOS.xags.NETWORK])
 
-        expectedPath = ('basepath/suffix/suffix_parm?detail=detail?'
-                        'group=ViosFCMapping,ViosNetwork')
-        self.assertEqual(expectedPath, path)
+        expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
+                         'group=ViosFCMapping,ViosNetwork')
+        self.assertEqual(expected_path, path)
+
+        # Verify sorting
+        path = adapter.extend_path('basepath', suffix_type='suffix',
+                                   suffix_parm='suffix_parm',
+                                   detail='detail',
+                                   xag=[pvm_vios.VIOS.xags.NETWORK,
+                                        pvm_vios.VIOS.xags.FC_MAPPING])
+
+        expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
+                         'group=ViosFCMapping,ViosNetwork')
+        self.assertEqual(expected_path, path)
+
+        # Explicitly no XAG
+        path = adapter.extend_path('basepath', suffix_type='suffix',
+                                   suffix_parm='suffix_parm', detail='detail',
+                                   xag=[])
+
+        expected_path = 'basepath/suffix/suffix_parm?detail=detail'
+        self.assertEqual(expected_path, path)
 
     @mock.patch('requests.Session')
     def test_delete(self, mock_session):

@@ -1009,6 +1009,38 @@ class Adapter(object):
     @staticmethod
     def extend_path(basepath, suffix_type=None, suffix_parm=None, detail=None,
                     xag=None):
+        """Extend a base path with zero or more of suffix, detail, and xag.
+
+        :param basepath: The path string to be extended.
+        :param suffix_type: Suffix key (string) to be appended.
+        :param suffix_parm: Suffix parameter value to be appended.  Ignored if
+                            suffix_type is not specified.
+        :param detail: Value for the 'detail' query parameter.
+        :param xag: List of extended attribute group enum values.  If
+                    unspecified or None, 'None' will be appended.  If the empty
+                    list, no extended attribute query parameter will be added,
+                    resulting in the server's default extended attribute group
+                    behavior.
+        :return:
+        """
+        def append_query_param(bpath, qparam):
+            """Add a query param to a path that may already have one.
+
+            If the path already has a querystring, separate with '&'; else
+            start the querystring with '?'.
+
+            :param bpath: The base path to which to append the query parameter.
+            :param qparam: String query parameter, typically of the form
+                           "key=value".
+            :return: The augmented path.
+            """
+            # If there's already a query string
+            sep = '&' if '?' in bpath else '?'
+            return bpath + sep + qparam
+
+        if xag is None:
+            xag = [ent.XAGEnum().NONE]
+
         path = basepath
         if suffix_type:
             # operations, do, jobs, cancel, quick, search, ${search-string}
@@ -1016,11 +1048,12 @@ class Adapter(object):
             if suffix_parm:
                 path += '/' + suffix_parm
         if detail:
-            path += '?detail=' + detail
+            path = append_query_param(path, 'detail=' + detail)
         if xag:
             # sort xag in order
             xag.sort()
-            path += '?group=%s' % ','.join(map(str, xag))
+            path = append_query_param(path,
+                                      'group=%s' % ','.join(map(str, xag)))
         return path
 
     @staticmethod
