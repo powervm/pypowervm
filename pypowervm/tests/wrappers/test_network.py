@@ -152,7 +152,7 @@ class TestNetwork(twrap.TestWrapper):
     def test_crt_net_bridge(self):
         # Create mocked data
         pvid = 1
-        nb = net.NetBridge.bld(pvid, ['ent0'], [1, 2, 3])
+        nb = net.NetBridge.bld(pvid, [('127.0.0.1', 'ent0')], [1, 2, 3])
 
         self.assertIsNotNone(nb)
         self.assertEqual(1, nb.pvid)
@@ -160,13 +160,34 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(0, len(nb.load_grps))
         self.assertEqual(3, len(nb.seas[0]._get_trunks()[0].tagged_vlans))
 
-    def test_crt_sea(self):
-        # Create mocked data
-        pvid = 1
-        sea = net.SEA.bld(pvid, ['ent0'], [1, 2, 3])
+        sea = nb.seas[0]
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
+        self.assertEqual('127.0.0.1', sea.vio_uri)
+        ta = sea.primary_adpt
+        self.assertTrue(ta._required)
+        self.assertEqual(1, ta.pvid)
+        self.assertEqual([1, 2, 3], ta.tagged_vlans)
+        self.assertTrue(ta.has_tag_support)
+        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(1, ta.trunk_pri)
+
+    def test_crt_sea(self):
+        # Create mocked data
+        pvid = 1
+        sea = net.SEA.bld(pvid, '127.0.0.1', 'ent0', [1, 2, 3])
+
+        self.assertIsNotNone(sea)
+        self.assertEqual(1, sea.pvid)
+        self.assertEqual('127.0.0.1', sea.vio_uri)
+        ta = sea.primary_adpt
+        self.assertTrue(ta._required)
+        self.assertEqual(1, ta.pvid)
+        self.assertEqual([1, 2, 3], ta.tagged_vlans)
+        self.assertTrue(ta.has_tag_support)
+        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(1, ta.trunk_pri)
 
     def test_crt_trunk_adapter(self):
         # Create mocked data
@@ -174,7 +195,12 @@ class TestNetwork(twrap.TestWrapper):
         ta = net.TrunkAdapter.bld(pvid, ['ent0'], [1, 2, 3])
 
         self.assertIsNotNone(ta)
+        self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
+        self.assertEqual([1, 2, 3], ta.tagged_vlans)
+        self.assertTrue(ta.has_tag_support)
+        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(1, ta.trunk_pri)
 
     def test_crt_load_group(self):
         # Create my mocked data
