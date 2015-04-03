@@ -540,28 +540,34 @@ class EntryWrapper(Wrapper):
     def search(cls, adapter, negate=False, **kwargs):
         """Performs a REST API search.
 
-        Searches for object(s) of the type indicated by wrap_cls having (or not
+        Searches for object(s) of the type indicated by cls having (or not
         having) the key/value indicated by the (single) kwarg.
 
         Regular expressions and comparators are not supported.
 
         Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
+        Currently, extended attribute groups are not supported (TODO(IBM):
+        Support xags)
 
-        :param cls: A subclass of EntryWrapper.  The wrapper class must
-                         define a search_keys member, which is a dictionary
-                         mapping a convenient kwarg key to a search key
-                         supported by the REST API for that object type.  To
-                         retrieve an XML report of the supported search keys
-                         for object Foo, perform:
-                         read('Foo', suffix_type='search')
+        :param cls: A subclass of EntryWrapper.  The wrapper class may define
+                    a search_keys member, which is a dictionary mapping a
+                    convenient kwarg key to a search key supported by the REST
+                    API for that object type.  To retrieve an XML report of the
+                    supported search keys for object Foo, perform: read('Foo',
+                    suffix_type='search').  If the wrapper class does not
+                    define a search_keys member, the fallback search algorithm
+                    performs a GET of the entire feed of the object type and
+                    loops through it looking for (mis)matches on the @property
+                    indicated by the search key.
         :param adapter: The pypowervm.adapter.Adapter instance through which to
                         perform the search.
         :param negate: If True, the search is negated - we find all objects of
                        the indicated type where the search key does *not* equal
                        the search value.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
-                       in cls.search_keys.  The value is the value to search
-                       for.
+                       in cls.search_keys OR the name of a getter @property on
+                       the EntryWrapper subclass.  The value is the value to
+                       search for.
         :return: A list of instances of the cls.  The list may be empty
                  (no results were found).  It may contain more than one
                  instance (e.g. for a negated search, or for one where the key
@@ -570,24 +576,36 @@ class EntryWrapper(Wrapper):
         if len(kwargs) != 1:
             raise ValueError('The search() method requires exactly one'
                              'key=value argument.')
-        key = list(kwargs)[0]
-        val = str(kwargs[key])
-        op = '!=' if negate else '=='
+        key, val = kwargs.popitem()
         try:
             search_key = cls.search_keys[key]
-        # TODO(IBM) Support fallback search by [GET feed] + loop
-        except AttributeError:
-            raise ValueError('Wrapper class %s does not support search.' %
-                             cls.__name__)
-        except KeyError:
-            raise ValueError("Wrapper class %s does not support search key "
-                             "'%s'." % (cls.__name__, key))
+        except (AttributeError, KeyError):
+            # Fallback search by [GET feed] + loop
+            return cls._search_by_feed(adapter, cls.schema_type, negate, key,
+                                       val)
+
+        op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
-        search_parm = "(%s%s'%s')" % (search_key, op, quote(val, safe=''))
+        search_parm = "(%s%s'%s')" % (search_key, op, quote(str(val), safe=''))
         # Let this throw HttpError if the caller got it wrong
         resp = adapter.read(cls.schema_type, suffix_type='search',
                             suffix_parm=search_parm)
         return cls.wrap(resp)
+
+    @classmethod
+    def _search_by_feed(cls, adapter, root_type, negate, key, val):
+        if not hasattr(cls, key):
+            raise ValueError("Wrapper class %s does not support search key "
+                             "'%s'." % (cls.__name__, key))
+        # XAG_NONE because that's what REST API search returns by default
+        feedwrap = cls.wrap(adapter.read(root_type, xag=[pc.XAG_NONE]))
+        retlist = []
+        for entry in feedwrap:
+            entval = getattr(entry, key, None)
+            include = (entval != val) if negate else (entval == val)
+            if include:
+                retlist.append(entry)
+        return retlist
 
     def update(self, adapter, xag=None):
         """Performs adapter.update of this wrapper.
