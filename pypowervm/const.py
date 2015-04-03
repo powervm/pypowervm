@@ -21,6 +21,7 @@ UNCACHEABLE = ('/rest/api/web/', '/rest/api/pcm/',
                '/quick', '/search/', '?detail', '/jobs')
 # TODO(IBM): invalidate SSP cache based on ClusterLULinkedClone jobs
 
+XAG_NONE = 'None'
 API_BASE_PATH = '/rest/api/'
 LOGON_PATH = API_BASE_PATH + 'web/Logon'
 TYPE_TEMPLATE = 'application/vnd.ibm.powervm.%s+xml; type=%s'
