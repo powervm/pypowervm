@@ -23,6 +23,7 @@ import six
 import unittest
 
 import pypowervm.adapter as apt
+import pypowervm.const as pc
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -482,6 +483,33 @@ class TestSearch(unittest.TestCase):
             "/rest/api/uom/Cluster/search/(ClusterName=="
             "'%3B%2F%3F%3A%40%20%26%3D%2B%24%2C')")
         clust.Cluster.search(self.adp, name=';/?:@ &=+$,')
+
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_search_by_feed(self, mock_read):
+        """Test a search key that's not in search_keys."""
+        def validate_read(root_type, xag='bogus'):
+            # This should be called by _search_by_feed, not by search.
+            # Otherwise, we'll get an exception on the arg list.
+            self.assertEqual(net.NetBridge.schema_type, root_type)
+            self.assertEqual([pc.XAG_NONE], xag)
+            return pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
+        mock_read.side_effect = validate_read
+        # vswitch_id is particularly cool because it's not just a top-level
+        # child element - it dives into the SEAs, finds the primary trunk
+        # adapter, and returns the vswitch ID from there.
+        rets = net.NetBridge.search(self.adp, vswitch_id=0)
+        self.assertEqual(1, len(rets))
+        nb = rets[0]
+        self.assertIsInstance(nb, net.NetBridge)
+        self.assertEqual('d648eb60-4d39-34ad-ae2b-928d8c9577ad', nb.uuid)
+        # Now do a search that returns more than one item
+        rets = net.NetBridge.search(self.adp, pvid=1)
+        self.assertEqual(2, len(rets))
+        self.assertIsInstance(rets[0], net.NetBridge)
+        self.assertIsInstance(rets[1], net.NetBridge)
+        self.assertEqual({'d648eb60-4d39-34ad-ae2b-928d8c9577ad',
+                          '764f3423-04c5-3b96-95a3-4764065400bd'},
+                         {nb.uuid for nb in rets})
 
 
 class TestRefresh(unittest.TestCase):
