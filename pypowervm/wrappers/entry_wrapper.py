@@ -445,6 +445,18 @@ class Wrapper(object):
         except KeyError:
             return cls
 
+    def _bld_link_list(self, container_type, links):
+        """Creates an element with a list of <link> children.
+
+        :param container_type: The element that will contain the elements.
+        :param links: The set of strings which are link elements.
+        """
+        new_elems = []
+        for item in links:
+            new_elems.append(adpt.Element('link', attrib={'href': item,
+                                                          'rel': 'related'}))
+        return adpt.Element(container_type, children=new_elems)
+
 
 class EntryWrapper(Wrapper):
     """Base Wrapper for the Entry object types."""
