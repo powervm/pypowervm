@@ -18,7 +18,7 @@ import unittest
 
 import mock
 
-import pypowervm.adapter as adp
+import pypowervm.entities as ent
 import pypowervm.tasks.cluster_ssp as cs
 import pypowervm.tests.tasks.util as tju
 import pypowervm.util as u
@@ -45,7 +45,7 @@ class TestClusterSSP(unittest.TestCase):
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):
             self.assertEqual(entry_type, clust.Cluster.schema_type)
-            job = jwrap.Job.wrap(adp.Entry({}, job_el))
+            job = jwrap.Job.wrap(ent.Entry({}, job_el))
             param_vals = job._get_vals(u.xpath(
                 'JobParameters', 'JobParameter', 'ParameterValue'))
             self.assertEqual(

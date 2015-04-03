@@ -21,7 +21,7 @@ import re
 
 import six
 
-import pypowervm.adapter as adp
+import pypowervm.entities as ent
 import pypowervm.util as u
 import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -59,7 +59,7 @@ class VIOS(ewrap.EntryWrapper):
     search_keys = dict(name='PartitionName', id='PartitionID')
 
     # Extended Attribute Groups
-    xags = adp.XAGEnum(NETWORK='ViosNetwork',
+    xags = ent.XAGEnum(NETWORK='ViosNetwork',
                        STORAGE='ViosStorage',
                        SCSI_MAPPING='ViosSCSIMapping',
                        FC_MAPPING='ViosFCMapping')

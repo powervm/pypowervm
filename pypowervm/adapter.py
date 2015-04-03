@@ -17,7 +17,6 @@
 import abc
 import copy
 import datetime as dt
-import functools
 import hashlib
 import logging
 import os
@@ -43,14 +42,13 @@ import six
 
 from pypowervm import cache
 from pypowervm import const
+import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
 from pypowervm import util
 
 # Preserve CDATA on the way in (also ensures it is not mucked with on the way
 # out)
 etree.set_default_parser(etree.XMLParser(strip_cdata=False, encoding='utf-8'))
-
-QName = etree.QName
 
 
 # Setup logging
@@ -142,12 +140,11 @@ class Session(object):
     def request(self, method, path, headers=None, body='', sensitive=False,
                 verify=False, timeout=-1, auditmemento=None, relogin=True,
                 login=False, filehandle=None, chunksize=65536):
+        """Send an HTTP/HTTPS request to a PowerVM interface."""
 
         # Don't use mutable default args
         if headers is None:
             headers = {}
-
-        """Send an HTTP/HTTPS request to a PowerVM interface."""
 
         session = requests.Session()
         session.verify = verify
@@ -405,7 +402,7 @@ class Session(object):
                 self.request('DELETE', const.LOGON_PATH, relogin=False)
             except Exception:
                 LOG.exception('Problem logging off.  Ignoring.')
-                pass
+
             self._logged_in = False
             # this should only ever be called when Session has gone out of
             # scope, but just in case someone calls it directly while requests
@@ -519,7 +516,8 @@ class Adapter(object):
             headers['Content-Type'] = const.TYPE_TEMPLATE % (content_service,
                                                              'JobRequest')
         else:
-            p = urlparse.urlparse(path).path  # strip off details, if present
+            # strip off details, if present
+            p = urlparse.urlparse(path).path
             headers['Content-Type'] = const.TYPE_TEMPLATE % (
                 content_service, p.rsplit('/', 1)[1])
 
@@ -989,10 +987,10 @@ class Adapter(object):
 
     @staticmethod
     def build_job_parm(name, value):
-        p = Element('JobParameter', attrib={'schemaVersion': 'V1_0'},
-                    ns=const.WEB_NS)
-        p.append(Element('ParameterName', text=name, ns=const.WEB_NS))
-        p.append(Element('ParameterValue', text=value, ns=const.WEB_NS))
+        p = ent.Element('JobParameter', attrib={'schemaVersion': 'V1_0'},
+                        ns=const.WEB_NS)
+        p.append(ent.Element('ParameterName', text=name, ns=const.WEB_NS))
+        p.append(ent.Element('ParameterValue', text=value, ns=const.WEB_NS))
         return p
 
     @classmethod
@@ -1048,7 +1046,8 @@ class Adapter(object):
                 if root_id and not child_type:
                     raise ValueError('Unexpected root_id')
         elif req_method == 'read':
-            pass  # no read-specific validation at this time
+            # no read-specific validation at this time
+            pass
         elif req_method == 'update':
             if 'preferences' in [root_type, child_type]:
                 if child_id:
@@ -1157,11 +1156,11 @@ class Response(object):
                 err_reason = ('Error parsing XML response from PowerVM: %s' %
                               str(e))
             if root is not None and root.tag == str(
-                    QName(const.ATOM_NS, 'feed')):
-                self.feed = Feed.unmarshal_atom_feed(root)
+                    etree.QName(const.ATOM_NS, 'feed')):
+                self.feed = ent.Feed.unmarshal_atom_feed(root)
             elif root is not None and root.tag == str(
-                    QName(const.ATOM_NS, 'entry')):
-                self.entry = Entry.unmarshal_atom_entry(root)
+                    etree.QName(const.ATOM_NS, 'entry')):
+                self.entry = ent.Entry.unmarshal_atom_entry(root)
             elif err_reason is None:
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
@@ -1172,7 +1171,7 @@ class Response(object):
                 else:
                     # PowerVM returns HTTP 204 (No Content) when you
                     # ask for a feed that has no entries.
-                    self.feed = Feed({}, [])
+                    self.feed = ent.Feed({}, [])
             elif self.status == 304:
                 pass
             else:
@@ -1194,451 +1193,6 @@ class Response(object):
                                   self)
 
 
-class Feed(object):
-    """Represents an Atom Feed returned from PowerVM."""
-    def __init__(self, properties, entries):
-        self.properties = properties
-        self.entries = entries
-
-    def findentries(self, subelem, text):
-        entries = []
-        for entry in self.entries:
-            subs = entry.element.findall(subelem)
-            for s in subs:
-                if s.text == text:
-                    entries.append(entry)
-                    break
-        return entries
-
-    @classmethod
-    def unmarshal_atom_feed(cls, feedelem):
-        """Factory method producing a Feed object from a parsed ElementTree
-
-        :param feedelem: Parsed ElementTree object representing an atom feed.
-        :return: a new Feed object representing the feedelem parameter.
-        """
-        feedprops = {}
-        entries = []
-        for child in list(feedelem):
-            if child.tag == str(QName(const.ATOM_NS, 'entry')):
-                entries.append(Entry.unmarshal_atom_entry(child))
-            elif not list(child):
-                pat = '{%s}' % const.ATOM_NS
-                if re.match(pat, child.tag):
-                    # strip off atom namespace qualification for easier access
-                    param_name = child.tag[child.tag.index('}') + 1:]
-                else:
-                    # leave qualified anything that is not in the atom
-                    # namespace
-                    param_name = child.tag
-                # TODO(IBM): handle links?
-                feedprops[param_name] = child.text
-        return cls(feedprops, entries)
-
-
-class Entry(object):
-    """Represents an Atom Entry returned by the PowerVM API."""
-    def __init__(self, properties, element):
-        self.properties = properties
-        self.element = Element.wrapelement(element)
-
-    @property
-    def etag(self):
-        return self.properties.get('etag', None)
-
-    @classmethod
-    def unmarshal_atom_entry(cls, entryelem):
-        """Factory method producing an Entry object from a parsed ElementTree
-
-        :param entryelem: Parsed ElementTree object representing an atom entry.
-        :return: a new Entry object representing the entryelem parameter.
-        """
-        entryprops = {}
-        element = None
-        for child in list(entryelem):
-            if child.tag == str(QName(const.ATOM_NS, 'content')):
-                # PowerVM API only has one element per entry
-                element = child[0]
-            elif not list(child):
-                pat = '{%s}' % const.ATOM_NS
-                if re.match(pat, child.tag):
-                    # strip off atom namespace qualification for easier access
-                    param_name = child.tag[child.tag.index('}') + 1:]
-                else:
-                    # leave qualified anything that is not in the atom
-                    # namespace
-                    param_name = child.tag
-                if param_name == 'link':
-                    entryprops[param_name] = child.get('href')
-                    rel = child.get('rel')
-                    if rel:
-                        if 'links' not in entryprops:
-                            entryprops['links'] = {}
-                        if rel not in entryprops['links']:
-                            entryprops['links'][rel] = []
-                        entryprops['links'][rel].append(child.get('href'))
-                elif param_name == 'category':
-                    entryprops[param_name] = child.get('term')
-                elif param_name == '{%s}etag' % const.UOM_NS:
-                    entryprops['etag'] = child.text
-                elif child.text:
-                    entryprops[param_name] = child.text
-        return cls(entryprops, element)
-
-
-class Element(object):
-    def __init__(self, tag, ns=const.UOM_NS, attrib=None, text='',
-                 children=(), cdata=False):
-        # Defaults shouldn't be mutable
-        attrib = attrib if attrib else {}
-        if ns:
-            self.element = etree.Element(str(QName(ns, tag)),
-                                         attrib=attrib)
-        else:
-            self.element = etree.Element(tag, attrib=attrib)
-        if text:
-            self.element.text = etree.CDATA(text) if cdata else text
-        for c in children:
-            self.element.append(c.element)
-
-    def __len__(self):
-        return len(self.element)
-
-    def __getitem__(self, index):
-        return Element.wrapelement(self.element[index])
-
-    def __setitem__(self, index, value):
-        if not isinstance(value, Element):
-            raise ValueError('Value must be of type Element')
-        self.element[index] = value.element
-
-    def __delitem__(self, index):
-        del self.element[index]
-
-    def __eq__(self, other):
-        if other is None:
-            return False
-        return self._element_equality(self, other)
-
-    def _element_equality(self, one, two):
-        """Tests element equality.
-
-        There is no common mechanism for defining 'equality' in the element
-        tree.  This provides a good enough equality that meets the schema
-        definition.
-
-        :param one: The first element.  Is the backing element.
-        :param two: The second element.  Is the backing element.
-        :returns: True if the children, text, attributes and tag are equal.
-        """
-
-        # Make sure that the children length is equal
-        one_children = one.getchildren()
-        two_children = two.getchildren()
-        if len(one_children) != len(two_children):
-            return False
-
-        # If there are no children, different set of tests
-        if len(one_children) == 0:
-            if one.text != two.text:
-                return False
-
-            if one.tag != two.tag:
-                return False
-        else:
-            # Recursively validate
-            for one_child in one_children:
-                found = util.find_equivalent(one_child, two_children)
-                if found is None:
-                    return False
-
-                # Found a match, remove it as it is no longer a valid match.
-                # Its equivalence was validated by the upper block.
-                two_children.remove(found)
-
-        return True
-
-    def getchildren(self):
-        """Returns the children as a list of Elements."""
-        return [Element.wrapelement(i) for i in self.element.getchildren()]
-
-    @classmethod
-    def wrapelement(cls, element):
-        if element is None:
-            return None
-        e = cls('element')  # create with minimum inputs
-        e.element = element  # assign element over the one __init__ creates
-        return e
-
-    def toxmlstring(self):
-        return etree.tostring(self.element)
-
-    @property
-    def tag(self):
-        return QName(self.element.tag).localname
-
-    @tag.setter
-    def tag(self, tag):
-        ns = self.namespace
-        if ns:
-            self.element.tag = QName(ns, tag).text
-        else:
-            self.element.tag = tag
-
-    @property
-    def namespace(self):
-        ns = etree.QName(self.element.tag).namespace
-        return '' if ns is None else ns
-
-    @namespace.setter
-    def namespace(self, ns):
-        self.element.tag = QName(ns, self.tag).text
-
-    @property
-    def text(self):
-        return self.element.text
-
-    @text.setter
-    def text(self, text):
-        self.element.text = text
-
-    @property
-    def attrib(self):
-        return self.element.attrib
-
-    @attrib.setter
-    def attrib(self, attrib):
-        self.element.attrib = attrib
-
-    def get(self, key, default=None):
-        """Gets the element attribute named key.
-
-        Returns the attribute value, or default if the attribute was not found.
-        """
-        return self.element.get(key, default)
-
-    def items(self):
-        """Returns the element attributes as a sequence of (name, value) pairs.
-
-        The attributes are returned in an arbitrary order.
-        """
-        return self.element.items()
-
-    def keys(self):
-        """Returns the element attribute names as a list.
-
-        The names are returned in an arbitrary order.
-        """
-        return self.element.keys()
-
-    def set(self, key, value):
-        """Set the attribute key on the element to value."""
-        self.element.set(key, value)
-
-    def append(self, subelement):
-        """Adds subelement to the end of this element's list of subelements."""
-        self.element.append(subelement.element)
-
-    def inject(self, subelement, ordering_list=(), replace=True):
-        """Inserts subelement at the correct position in self's children.
-
-        Uses ordering_list to determine the proper spot at which to insert the
-        specified subelement.
-
-        :param subelement: The element to inject as a child of this element.
-        :param ordering_list: Iterable of string tag names representing the
-                              desired ordering of children for this element.
-                              If subelement's tag is not included in this list,
-                              the behavior is self.append(subelement).
-        :param replace: If True, and an existing child with subelement's tag is
-                        found, it is replaced.  If False, subelement is added
-                        after the existing child(ren).  Note: You probably want
-                        to use True only/always when subelement is maxOccurs=1.
-                        Conversely, you probably want to use False only/always
-                        when subelement is unbounded.  If you use True and more
-                        than one matching child is found, the last one is
-                        replaced.
-        """
-        def ln(tag):
-            """Localname of a tag (without namespace)."""
-            return etree.QName(tag).localname
-
-        children = list(self.element)
-        # If no children, just append
-        if not children:
-            self.append(subelement)
-            return
-
-        # Any children with the subelement's tag?
-        subfound = self.findall(subelement.tag)
-        if subfound:
-            if replace:
-                self.replace(subfound[-1], subelement)
-            else:
-                subfound[-1].element.addnext(subelement.element)
-            return
-
-        # Now try to figure out insertion point based on ordering_list.
-        # Ignore namespaces.
-        ordlist = [ln(tag) for tag in ordering_list]
-        subtag = ln(subelement.element.tag)
-        # If subelement's tag is not in the ordering list, append
-        if subtag not in ordlist:
-            self.append(subelement)
-            return
-
-        # Get the tags preceding that of subelement
-        pres = ordlist[:ordlist.index(subtag)]
-        # Find the first child whose tag is not in that list
-        for child in children:
-            if ln(child.tag) not in pres:
-                # Found the insertion point
-                child.addprevious(subelement.element)
-                return
-        # If we got here, all existing children need to precede subelement.
-        self.append(subelement)
-
-    def find(self, match):
-        """Finds the first subelement matching match.
-
-        :param match: May be a tag name or path.
-        :return: an element instance or None.
-        """
-        qpath = Element._qualifypath(match, self.namespace)
-        e = self.element.find(qpath)
-        if e is not None:  # must specify "is not None" here to work
-            return Element.wrapelement(e)
-        else:
-            return None
-
-    def findall(self, match):
-        """Finds all matching subelements.
-
-        :param match: May be a tag name or path.
-        :return: a list containing all matching elements in document order.
-        """
-        qpath = Element._qualifypath(match, self.namespace)
-        e_iter = self.element.findall(qpath)
-        elems = []
-        for e in e_iter:
-            elems.append(Element.wrapelement(e))
-        return elems
-
-    def findtext(self, match, default=None):
-        """Finds text for the first subelement matching match.
-
-        :param match: May be a tag name or path.
-        :return: the text content of the first matching element, or default
-                 if no element was found. Note that if the matching element
-                 has no text content an empty string is returned.
-        """
-        qpath = Element._qualifypath(match, self.namespace)
-        text = self.element.findtext(qpath, default)
-        return text if text else default
-
-    def insert(self, index, subelement):
-        """Inserts subelement at the given position in this element.
-
-        :raises TypeError: if subelement is not an etree.Element.
-        """
-        self.element.insert(index, subelement.element)
-
-    def iter(self, tag=None):
-        """Creates a tree iterator with the current element as the root.
-
-        The iterator iterates over this element and all elements below it, in
-        document (depth first) order. If tag is not None or '*', only elements
-        whose tag equals tag are returned from the iterator. If the tree
-        structure is modified during iteration, the result is undefined.
-        """
-        # Determine which iterator to use
-        # etree.Element.getiterator has been deprecated in favor of
-        # etree.Element.iter, but the latter was not added until python 2.7
-        if hasattr(self.element, 'iter'):
-            lib_iter = self.element.iter
-        else:
-            lib_iter = self.element.getiterator
-
-        # Fix up the tag value
-        if not tag or tag == '*':
-            qtag = None
-        else:
-            qtag = str(QName(self.namespace, tag))
-
-        it = lib_iter(tag=qtag)
-
-        for e in it:
-            yield Element.wrapelement(e)
-
-    def replace(self, existing, new_element):
-        """Replaces the existing child Element with the new one."""
-        self.element.replace(existing.element,
-                             new_element.element)
-
-    def remove(self, subelement):
-        """Removes subelement from the element.
-
-        Unlike the find* methods this method compares elements based on the
-        instance identity, not on tag value or contents.
-        """
-        self.element.remove(subelement.element)
-
-    @staticmethod
-    def _qualifypath(path, ns):
-        if not ns:
-            return path
-        parts = path.split('/')
-        for i in range(len(parts)):
-            if parts[i] and not re.match(r'[\.\*\[\{]', parts[i]):
-                parts[i] = str(QName(ns, parts[i]))
-        return '/'.join(parts)
-
-
-class XAGEnum(object):
-    """Extended Attribute Groups enumeration for an EntryWrapper subclass.
-
-    Intended use: Within an EntryWrapper subclass, define a class variable xags
-    of type XAGEnum, initialized with the names of the extended attribute
-    groups supported by the corresponding PowerVM REST object.  The keys may be
-    any value convenient for use in the consuming code.
-
-    Extended attribute groups 'All' and 'None' are supplied for you.
-    """
-    @functools.total_ordering
-    class _Handler(object):
-        def __init__(self, name):
-            self.name = name
-
-        def __str__(self):
-            return self.name
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __lt__(self, other):
-            return self.name < other.name
-
-        @property
-        def attrs(self):
-            schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
-            schema['group'] = self.name
-            return schema
-
-    def __init__(self, **kwargs):
-        self.NONE = self._Handler('None')
-        self.ALL = self._Handler('All')
-        for key, val in kwargs.items():
-            setattr(self, key, self._Handler(val))
-
-
-class ElementIterator(object):
-    def __init__(self, it):
-        self.it = it
-
-    def __next__(self):
-        return Element.wrapelement(next(self.it))
-
-
 class EventListener(object):
     def __init__(self, session, timeout=-1, interval=15):
         if session is None:
@@ -1651,7 +1205,8 @@ class EventListener(object):
         self._pthread = None
         try:
             self.adp = Adapter(session, use_cache=False)
-            allevents = self.getevents()  # initialize
+            # initialize
+            allevents = self.getevents()
         except pvmex.Error as e:
             raise pvmex.Error('Failed to initialize event feed listener: %s'
                               % e)
@@ -1786,8 +1341,9 @@ def unmarshal_httperror(resp):
     # Attempt to extract PowerVM API's HttpErrorResponse object
     try:
         root = etree.fromstring(resp.body)
-        if root is not None and root.tag == str(QName(const.ATOM_NS, 'entry')):
-            resp.err = Entry.unmarshal_atom_entry(root).element
+        if root is not None and root.tag == str(etree.QName(const.ATOM_NS,
+                                                            'entry')):
+            resp.err = ent.Entry.unmarshal_atom_entry(root).element
     except Exception:
         pass
 
@@ -1800,7 +1356,7 @@ def get_entry_from_feed(feedelem, uuid):
     entry = None
     etag = None
     for f_elem in list(feedelem):
-        if f_elem.tag == str(QName(const.ATOM_NS, 'entry')):
+        if f_elem.tag == str(etree.QName(const.ATOM_NS, 'entry')):
             etag = None
             for e_elem in list(f_elem):
                 if not list(e_elem):
@@ -1816,9 +1372,8 @@ def get_entry_from_feed(feedelem, uuid):
                         param_name = e_elem.tag
                     if param_name == '{%s}etag' % const.UOM_NS:
                         etag = e_elem.text
-                    elif param_name == 'id':
-                        if e_elem.text.lower() == uuid:
-                            entry = etree.tostring(f_elem)
+                    elif param_name == 'id' and e_elem.text.lower() == uuid:
+                        entry = etree.tostring(f_elem)
 
         if entry is not None:
             return entry, etag
