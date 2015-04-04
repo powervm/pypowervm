@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import logging
 
 from oslo_concurrency import lockutils as lock
@@ -67,41 +68,52 @@ def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
-    # Loop through the existing SCSI Mappings.  Seeing if we have one that
-    # we can utilize.
-    existing_scsi_mappings = vios_w.scsi_mappings
-    for existing_scsi_map in existing_scsi_mappings:
-        if _can_be_fused(existing_scsi_map, scsi_map, fuse_limit):
-            new_elems = scsi_map.backing_storage_elems
-            existing_scsi_map.backing_storage_elems.extend(new_elems)
-            vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
-            return
+    # Separate out the mappings into the applicable ones for this client.
+    separated_mappings = _separate_mappings(vios_w, scsi_map.client_lpar_href)
 
-    # If we got here, the SCSI mapping could not fuse with any existing.
-    # Should just add it as a new mapping.
-    existing_scsi_mappings.append(scsi_map)
+    # What we need to figure out is, within the existing mappings, can we
+    # reuse the existing client and server adapter (which we can only do if
+    # below the fuse limit), or if we need to create a new adapter pair.
+    for mapping_list in separated_mappings.values():
+        if len(mapping_list) < fuse_limit:
+            # Swap in the first maps client/server adapters into the existing
+            # map.  We call the semi-private methods as this is not something
+            # that an 'update' would do...this is part of the 'create' flow.
+            c_map = mapping_list[0]
+            scsi_map._client_adapter(copy.deepcopy(c_map.client_adapter))
+            scsi_map._server_adapter(copy.deepcopy(c_map.server_adapter))
+            break
+
+    # Add the mapping.  It may have been updated to have a different client
+    # and server adapter.  It may be the original (which creates a new client
+    # and server pair).
+    vios_w.scsi_mappings.append(scsi_map)
     vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
 
-def _can_be_fused(existing_scsi_map, new_scsi_map, fuse_limit):
-    """Determines if the existing map can absorb the content of the new map."""
-    # If there is no client adapter, then it can't match.
-    exist_c_adpt = existing_scsi_map.client_adapter
-    if exist_c_adpt is None:
-        return False
+def _separate_mappings(vios_w, client_href):
+    """Separates out the systems existing mappings into silos.
 
-    # Are they not going to the same client LPAR ID?
-    new_c_adpt = new_scsi_map.client_adapter
-    if exist_c_adpt.lpar_id != new_c_adpt.lpar_id:
-        return False
+    :param vios_w: The pypowervm wrapper for the VIOS.
+    :param client_href: The client to separate the mappings for.
+    :return: A dictionary where the key is the server adapter (which is
+             bound to the client).  The value is the list mappings that use
+             the server adapter.
+    """
+    # The key is server_adapter.udid, the value is the list of applicable
+    # mappings to the server adapter.
+    resp = {}
 
-    # Did we reach a fusion limit?
-    existing_count = len(existing_scsi_map.backing_storage_elems)
-    new_count = len(new_scsi_map.backing_storage_elems)
-    if (existing_count + new_count) > fuse_limit:
-        return False
+    existing_mappings = vios_w.scsi_mappings
+    for existing_map in existing_mappings:
+        if existing_map.client_lpar_href == client_href:
+            # Valid map to consider
+            key = existing_map.server_adapter.udid
+            if resp.get(key) is None:
+                resp[key] = []
+            resp[key].append(existing_map)
 
-    return True
+    return resp
 
 
 @lock.synchronized('vscsi_mapping')
@@ -109,9 +121,9 @@ def _can_be_fused(existing_scsi_map, new_scsi_map, fuse_limit):
 def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
     """Removes the storage element from a SCSI bus and clears out bus.
 
-    Will remove the SCSI element from the VIOSes vSCSI Mappings.  If it is
-    the last storage element on the vSCSI mapping, will also remove the entire
-    mapping.
+    Will remove the vSCSI Mappings from the VIOS if the search_func indicates
+    that the mapping is a match.  The search_func is only invoked if the
+    client_lpar_id matches.
 
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
@@ -128,9 +140,9 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
-    # The first element is the SCSI map, the second is the scsi element within
-    # the map to remove.
-    matching_pairs = []
+    # The maps that match that need to be removed
+    matching_maps = []
+    client_lpar_id = str(client_lpar_id)
 
     # Loop through the existing SCSI Mappings.  Try to find the matching map.
     existing_scsi_mappings = vios_w.scsi_mappings
@@ -139,30 +151,23 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
         if existing_scsi_map.client_adapter is None:
             continue
 
-        # If to a different VM, continue on.
-        if existing_scsi_map.client_adapter.lpar_id != client_lpar_id:
+        # If to a different VM, continue on.  client_lpar_id was converted
+        # to a str above.
+        if str(existing_scsi_map.client_adapter.lpar_id) != client_lpar_id:
             continue
 
-        # Loop through and query the search function to see if we have the
-        # correct one.
-        for stor_elem in existing_scsi_map.backing_storage_elems:
-            if search_func(stor_elem):
-                # Found a match!
-                matching_pairs.append((existing_scsi_map, stor_elem))
+        if search_func(existing_scsi_map.backing_storage):
+            # Found a match!
+            matching_maps.append(existing_scsi_map)
 
-    if len(matching_pairs) == 0:
+    if len(matching_maps) == 0:
         return []
 
-    # For each matching element, we need to determine if it is the last in
-    # the map (and if so, we remove the map).  If not, we just remove that
-    # element from the map.
+    # Remove each invalid map.
     resp_list = []
-    for matching_map, scsi_elem in matching_pairs:
-        if len(matching_map.backing_storage_elems) == 1:
-            existing_scsi_mappings.remove(matching_map)
-        else:
-            matching_map.backing_storage_elems.remove(scsi_elem)
-        resp_list.append(scsi_elem)
+    for matching_map in matching_maps:
+        existing_scsi_mappings.remove(matching_map)
+        resp_list.append(matching_map.backing_storage)
 
     # Update the VIOS
     vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
@@ -217,11 +222,11 @@ def remove_vopt_mapping(adapter, vios_uuid, client_lpar_id, media_name=None):
                        virtual optical media from this client lpar.
     :return: A list of the backing VOpt media that was removed.
     """
-
+    names = [media_name] if media_name else None
     return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
                                 _remove_search_func(pvm_stor.VOptMedia,
                                                     name_prop='media_name',
-                                                    names=[media_name]))
+                                                    names=names))
 
 
 def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,

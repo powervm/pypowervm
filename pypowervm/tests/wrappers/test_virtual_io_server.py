@@ -125,11 +125,9 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap.element)
         self.assertEqual(vmap.client_adapter.side, 'Client')
         self.assertEqual(vmap.server_adapter.side, 'Server')
-        self.assertEqual('media_name',
-                         vmap.backing_storage_elems[0].media_name)
+        self.assertEqual('media_name', vmap.backing_storage.media_name)
         self.assertEqual('a_link', vmap.client_lpar_href)
-        self.assertIsInstance(vmap.backing_storage_elems[0],
-                              pvm_stor.VOptMedia)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.VOptMedia)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_bld_scsi_mapping_vdisk(self, mock_adpt):
@@ -141,9 +139,9 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
         self.assertEqual('Server', vmap.server_adapter.side)
-        self.assertEqual('disk_name', vmap.backing_storage_elems[0].name)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
-        self.assertIsInstance(vmap.backing_storage_elems[0], pvm_stor.VDisk)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.VDisk)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_bld_scsi_mapping_lu(self, mock_adpt):
@@ -156,10 +154,10 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
         self.assertEqual('Server', vmap.server_adapter.side)
-        self.assertEqual('disk_name', vmap.backing_storage_elems[0].name)
-        self.assertEqual('udid', vmap.backing_storage_elems[0].udid)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
+        self.assertEqual('udid', vmap.backing_storage.udid)
         self.assertEqual('a_link', vmap.client_lpar_href)
-        self.assertIsInstance(vmap.backing_storage_elems[0], pvm_stor.LU)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.LU)
 
     @mock.patch('pypowervm.adapter.Adapter')
     def test_bld_scsi_mapping_pv(self, mock_adpt):
@@ -171,9 +169,9 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
         self.assertEqual('Server', vmap.server_adapter.side)
-        self.assertEqual('disk_name', vmap.backing_storage_elems[0].name)
+        self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
-        self.assertIsInstance(vmap.backing_storage_elems[0], pvm_stor.PV)
+        self.assertIsInstance(vmap.backing_storage, pvm_stor.PV)
 
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
@@ -182,15 +180,14 @@ class TestViosMappings(twrap.TestWrapper):
         found_client_uri = False
         static_map = None
         for mapping in mappings:
-            if (mapping.client_lpar_href and
-                    len(mapping.backing_storage_elems) > 0):
+            if mapping.client_lpar_href and mapping.backing_storage:
                 found_client_uri = True
                 static_map = mapping
         self.assertTrue(found_client_uri)
 
         # We'll use the previous mapping as a baseline for further validation
         self.assertIsNotNone(static_map.client_adapter)
-        self.assertIsNotNone(static_map.backing_storage_elems[0])
+        self.assertIsNotNone(static_map.backing_storage)
         self.assertIsNotNone(static_map.server_adapter)
 
         # Deeper check on each of these.

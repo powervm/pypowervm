@@ -749,6 +749,66 @@ BODY{
                 <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
             </ServerAdapter>
             <Storage kxe="false" kb="CUR">
+                <VirtualDisk schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DiskCapacity kb="CUR" kxe="false">60</DiskCapacity>
+                    <DiskLabel kb="CUR" kxe="false">None</DiskLabel>
+                    <DiskName kb="CUR" kxe="false">Ubuntu1410</DiskName>
+                    <UniqueDeviceID kb="ROR" kxe="false">0300025d4a00007a000000014b36d9deaf.1</UniqueDeviceID>
+                </VirtualDisk>
+            </Storage>
+            <TargetDevice kb="CUR" kxe="false">
+                <LogicalVolumeVirtualTargetDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kb="CUR" kxe="false">vtscsi0</TargetName>
+                    <UniqueDeviceID kb="ROR" kxe="false">09b4fdf7bdec405d57</UniqueDeviceID>
+                </LogicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIMapping>
+        <VirtualSCSIMapping schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V2-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V2-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">1</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">1000</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V1-C1000</ServerLocationCode>
+            </ClientAdapter>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C1000</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C1000</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">1000</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vhost0</AdapterName>
+                <BackingDeviceName kb="CUR" kxe="false">Ubuntu1410</BackingDeviceName>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">3</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V2-C3</ServerLocationCode>
+                <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
+            </ServerAdapter>
+            <Storage kxe="false" kb="CUR">
                <PhysicalVolume schemaVersion="V1_2_0">
                     <Metadata>
                         <Atom/>
@@ -766,15 +826,57 @@ BODY{
                     <VolumeUniqueID kb="ROR" kxe="false">33213600507680282861D880000000000006004214503IBMfcp</VolumeUniqueID>
                     <IsFibreChannelBacked kb="ROR" kxe="false">false</IsFibreChannelBacked>
                 </PhysicalVolume>
-                <VirtualDisk schemaVersion="V1_2_0">
+            </Storage>
+            <TargetDevice kb="CUR" kxe="false">
+                <LogicalVolumeVirtualTargetDevice schemaVersion="V1_2_0">
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <DiskCapacity kb="CUR" kxe="false">60</DiskCapacity>
-                    <DiskLabel kb="CUR" kxe="false">None</DiskLabel>
-                    <DiskName kb="CUR" kxe="false">Ubuntu1410</DiskName>
-                    <UniqueDeviceID kb="ROR" kxe="false">0300025d4a00007a000000014b36d9deaf.1</UniqueDeviceID>
-                </VirtualDisk>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kb="CUR" kxe="false">vtscsi0</TargetName>
+                    <UniqueDeviceID kb="ROR" kxe="false">09b4fdf7bdec405d57</UniqueDeviceID>
+                </LogicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIMapping>
+        <VirtualSCSIMapping schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V2-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V2-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">1</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">1000</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V1-C1000</ServerLocationCode>
+            </ClientAdapter>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C1000</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C1000</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">1000</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vhost0</AdapterName>
+                <BackingDeviceName kb="CUR" kxe="false">Ubuntu1410</BackingDeviceName>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">3</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V2-C3</ServerLocationCode>
+                <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
+            </ServerAdapter>
+            <Storage kxe="false" kb="CUR">
                 <VirtualOpticalMedia schemaVersion="V1_2_0">
                     <Metadata>
                         <Atom/>
@@ -784,6 +886,57 @@ BODY{
                     <MountType kb="CUD" kxe="false">rw</MountType>
                     <Size kb="CUR" kxe="false">0.000000</Size>
                 </VirtualOpticalMedia>
+            </Storage>
+            <TargetDevice kb="CUR" kxe="false">
+                <LogicalVolumeVirtualTargetDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kb="CUR" kxe="false">vtscsi0</TargetName>
+                    <UniqueDeviceID kb="ROR" kxe="false">09b4fdf7bdec405d57</UniqueDeviceID>
+                </LogicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIMapping>
+        <VirtualSCSIMapping schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V2-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V2-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">1</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">1000</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V1-C1000</ServerLocationCode>
+            </ClientAdapter>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C1000</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C1000</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">1000</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vhost0</AdapterName>
+                <BackingDeviceName kb="CUR" kxe="false">Ubuntu1410</BackingDeviceName>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">3</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V2-C3</ServerLocationCode>
+                <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
+            </ServerAdapter>
+            <Storage kxe="false" kb="CUR">
                 <LogicalUnit schemaVersion="V1_2_0">
                     <Metadata>
                         <Atom/>
