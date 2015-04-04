@@ -23,15 +23,16 @@ import six
 import unittest
 
 import pypowervm.adapter as apt
-import pypowervm.const as pc
 import pypowervm.entities as ent
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
+LPAR_FILE = 'lpar.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -488,11 +489,11 @@ class TestSearch(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.read')
     def test_search_by_feed(self, mock_read):
         """Test a search key that's not in search_keys."""
-        def validate_read(root_type, xag='bogus'):
+        def validate_read(root_type, xag):
             # This should be called by _search_by_feed, not by search.
             # Otherwise, we'll get an exception on the arg list.
             self.assertEqual(net.NetBridge.schema_type, root_type)
-            self.assertEqual([pc.XAG_NONE], xag)
+            self.assertIsNone(xag)
             return pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         mock_read.side_effect = validate_read
         # vswitch_id is particularly cool because it's not just a top-level
@@ -511,6 +512,22 @@ class TestSearch(unittest.TestCase):
         self.assertEqual({'d648eb60-4d39-34ad-ae2b-928d8c9577ad',
                           '764f3423-04c5-3b96-95a3-4764065400bd'},
                          {nb.uuid for nb in rets})
+
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_search_with_xag(self, mock_read):
+        """Test a search key that's in search_keys, but specifying xag."""
+        def validate_read(root_type, xag):
+            # This should be called by _search_by_feed, not by search.
+            # Otherwise, we'll get an exception on the arg list.
+            self.assertEqual(lpar.LPAR.schema_type, root_type)
+            self.assertEqual(['Foo', 'Bar'], xag)
+            return pvmhttp.load_pvm_resp(LPAR_FILE).get_response()
+        mock_read.side_effect = validate_read
+        rets = lpar.LPAR.search(self.adp, name='linux1', xag=['Foo', 'Bar'])
+        self.assertEqual(1, len(rets))
+        linux1 = rets[0]
+        self.assertIsInstance(linux1, lpar.LPAR)
+        self.assertEqual('9068B0FB-1CF0-4D23-8A23-31AC87D5F5D2', linux1.uuid)
 
 
 class TestRefresh(unittest.TestCase):
