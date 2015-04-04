@@ -30,18 +30,6 @@ VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
 class TestSCSIMapper(unittest.TestCase):
 
     def setUp(self):
-        # Mapping LPAR IDs
-        self.mock_lpar_id_p = mock.patch('pypowervm.wrappers.storage.'
-                                         'VSCSIClientAdapter.lpar_id')
-        self.mock_lpar_id = self.mock_lpar_id_p.start()
-        self.mock_lpar_id.return_value = 2
-
-        self.mock_client_adpt_p = mock.patch('pypowervm.wrappers.'
-                                             'virtual_io_server.VSCSIMapping.'
-                                             'client_adapter')
-        self.mock_client_adpt = self.mock_client_adpt_p.start()
-        self.mock_client_adpt.lpar_id = 2
-
         # Common Adapter
         self.mock_adpt_p = mock.patch('pypowervm.adapter.Adapter')
         self.mock_adpt = self.mock_adpt_p.start()
@@ -51,7 +39,10 @@ class TestSCSIMapper(unittest.TestCase):
                                           'virtual_io_server.'
                                           'VSCSIMapping._crt_related_href')
         self.mock_crt_href = self.mock_crt_href_p.start()
-        self.mock_crt_href.return_value = 'href'
+        href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+                'c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/'
+                '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC')
+        self.mock_crt_href.return_value = href
 
         # Mock the delay function, by overriding the sleep
         self.mock_delay_p = mock.patch('time.sleep')
@@ -63,8 +54,6 @@ class TestSCSIMapper(unittest.TestCase):
         # End patching
         self.mock_crt_href_p.stop()
         self.mock_adpt_p.stop()
-        self.mock_client_adpt_p.stop()
-        self.mock_lpar_id_p.stop()
         self.mock_delay_p.stop()
 
     def test_mapping(self):
@@ -74,9 +63,11 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(1, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(5, num_elems)
+            self.assertEqual(5, len(vios_w.scsi_mappings))
+            self.assertEqual(vios_w.scsi_mappings[0].client_adapter,
+                             vios_w.scsi_mappings[4].client_adapter)
+            self.assertEqual(vios_w.scsi_mappings[0].server_adapter,
+                             vios_w.scsi_mappings[4].server_adapter)
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
@@ -109,9 +100,7 @@ class TestSCSIMapper(unittest.TestCase):
 
             if attempt_count == 3:
                 vios_w = kargs[0]
-                self.assertEqual(1, len(vios_w.scsi_mappings))
-                num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-                self.assertEqual(4, num_elems)
+                self.assertEqual(5, len(vios_w.scsi_mappings))
                 return vios_w.entry
             else:
                 tju.raiseRetryException()
@@ -138,11 +127,14 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(2, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(4, num_elems)
-            num_elems = len(vios_w.scsi_mappings[1].backing_storage_elems)
-            self.assertEqual(1, num_elems)
+            self.assertEqual(5, len(vios_w.scsi_mappings))
+
+            # Make sure that the adapters do not match
+            self.assertNotEqual(vios_w.scsi_mappings[0].client_adapter,
+                                vios_w.scsi_mappings[4].client_adapter)
+            self.assertNotEqual(vios_w.scsi_mappings[0].server_adapter,
+                                vios_w.scsi_mappings[4].server_adapter)
+
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
@@ -154,7 +146,7 @@ class TestSCSIMapper(unittest.TestCase):
 
         # Run the code
         scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'fake_vios_uuid',
-                                      mapping, fuse_limit=3)
+                                      mapping, fuse_limit=4)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.mock_adpt.update_by_path.call_count)
@@ -166,9 +158,7 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(1, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(3, num_elems)
+            self.assertEqual(3, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
@@ -204,9 +194,7 @@ class TestSCSIMapper(unittest.TestCase):
 
             if attempt_count == 3:
                 vios_w = kargs[0]
-                self.assertEqual(1, len(vios_w.scsi_mappings))
-                num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-                self.assertEqual(2, num_elems)
+                self.assertEqual(3, len(vios_w.scsi_mappings))
                 return vios_w.entry
             else:
                 tju.raiseRetryException()
@@ -232,9 +220,7 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(1, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(3, num_elems)
+            self.assertEqual(3, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
@@ -256,9 +242,7 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(1, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(3, num_elems)
+            self.assertEqual(3, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
@@ -279,9 +263,7 @@ class TestSCSIMapper(unittest.TestCase):
         # Validate that the mapping was removed to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(1, len(vios_w.scsi_mappings))
-            num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-            self.assertEqual(3, num_elems)
+            self.assertEqual(3, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.mock_adpt.update_by_path.side_effect = validate_update
