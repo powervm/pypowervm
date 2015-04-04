@@ -379,7 +379,7 @@ class VSCSIMapping(VStorageMapping):
             cls._crt_related_href(adapter, host_uuid, client_lpar_uuid))
         s_map._client_adapter(stor.VClientStorageAdapter.bld())
         s_map._server_adapter(stor.VServerStorageAdapter.bld())
-        s_map.backing_storage_elems = [stg_ref]
+        s_map._backing_storage(stg_ref)
         return s_map
 
     @classmethod
@@ -489,19 +489,33 @@ class VSCSIMapping(VStorageMapping):
                        stor.PV.bld(disk_name))
 
     @property
-    def backing_storage_elems(self):
-        """The backing storage elements (if applicable).
+    def backing_storage(self):
+        """The backing storage element (if applicable).
 
-        Refer to the 'volume_group' wrapper.  This is a list of elements, that
-        consists of VDisk, VOptMedia, PV or LU elements.
+        Refer to the 'volume_group' wrapper.  This element may be a
+        VirtualDisk or VirtualOpticalMedia.  May return None.
         """
-        es = ewrap.WrapperElemList(self._find_or_seed(_MAP_STORAGE),
-                                   child_class=None)
-        return es
+        elem = self.element.find(_MAP_STORAGE)
+        if elem is None:
+            return None
+        # If backing storage exists, it comprises a single child of elem.
+        media = elem.getchildren()
+        if len(media) != 1:
+            return None
+        # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
+        # Allow ElementWrapper to detect (from the registry) and wrap correctly
+        return ewrap.ElementWrapper.wrap(media[0])
 
-    @backing_storage_elems.setter
-    def backing_storage_elems(self, new_storage_elems):
-        self.replace_list(_MAP_STORAGE, new_storage_elems, attrib=None)
+    def _backing_storage(self, stg):
+        """Sets the backing storage of this mapping to a VDisk or VOpt.
+
+        Currently assumes this mapping does not already have storage assigned.
+
+        :param stg: Either a VDisk or VOptMedia wrapper representing the
+                    backing storage to assign.
+        """
+        elem = self._find_or_seed(_MAP_STORAGE, attrib={})
+        elem.append(stg.element)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)

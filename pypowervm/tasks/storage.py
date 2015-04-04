@@ -468,6 +468,7 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
             label = name or udid
             raise exc.LUNotFoundError(lu_label=label, ssp_name=ssp.name)
     lus.remove(lu_to_rm)
+
     if update:
         with lock.lock(_LOCK_SSP):
             ssp = ssp.update(adapter)
