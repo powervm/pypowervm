@@ -17,6 +17,8 @@
 import logging
 import math
 
+from oslo_concurrency import lockutils as lock
+
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
 from pypowervm import util
@@ -30,6 +32,9 @@ FILE_UUID = 'FileUUID'
 
 # Setup logging
 LOG = logging.getLogger(__name__)
+
+_LOCK_SSP = 'ssp_op_lock'
+_LOCK_VOL_GRP = 'vol_grp_lock'
 
 
 def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
@@ -248,7 +253,8 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
     # New LU must be at least as big as the backing LU.
     lu_size_gb = max(lu_size_gb, src_lu.capacity)
 
-    # Create the LU
+    # Create the LU.  No locking needed on this method, as the crt_lu handles
+    # the locking.
     ssp, dst_lu = crt_lu(adapter, ssp, new_lu_name, lu_size_gb, thin=True,
                          typ=stor.LUTypeEnum.DISK)
 
@@ -267,6 +273,7 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
     return ssp, dst_lu
 
 
+@lock.synchronized(_LOCK_SSP)
 def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False,
                            update=True):
     """Remove a linked clone LU and maybe its backing Image LU.
@@ -351,6 +358,7 @@ def _image_lu_in_use(ssp, image_lu):
     return False
 
 
+@lock.synchronized(_LOCK_VOL_GRP)
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     """Creates a new Virtual Disk in the specified volume group.
 
@@ -389,6 +397,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
 
 
+@lock.synchronized(_LOCK_SSP)
 def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
@@ -460,5 +469,6 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
             raise exc.LUNotFoundError(lu_label=label, ssp_name=ssp.name)
     lus.remove(lu_to_rm)
     if update:
-        ssp = ssp.update(adapter)
+        with lock.lock(_LOCK_SSP):
+            ssp = ssp.update(adapter)
     return ssp, lu_to_rm
