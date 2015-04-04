@@ -529,6 +529,37 @@ class TestSearch(unittest.TestCase):
         self.assertIsInstance(linux1, lpar.LPAR)
         self.assertEqual('9068B0FB-1CF0-4D23-8A23-31AC87D5F5D2', linux1.uuid)
 
+    @mock.patch('pypowervm.adapter.Adapter._request')
+    def test_child_with_search_key(self, mock_rq):
+        """CHILD search on a class with a search key (uses search API)."""
+        mock_rq.side_effect = self._validate_request(
+            "/rest/api/uom/SomeParent/some_uuid/Cluster/search/"
+            "(ClusterName=='mycluster')?group=None")
+        clust.Cluster.search(self.adp, name='mycluster',
+                             parent_type='SomeParent', parent_uuid='some_uuid')
+
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_child_no_search_key(self, mock_read):
+        """CHILD search on a class without search key (uses GET-feed-loop)."""
+        def validate_read(root_type, root_id, child_type, xag):
+            # This should be called by _search_by_feed, not by search.
+            # Otherwise, we'll get an exception on the arg list.
+            self.assertEqual('SomeParent', root_type)
+            self.assertEqual('some_uuid', root_id)
+            self.assertEqual('NetworkBridge', child_type)
+            self.assertIsNone(xag)
+            return pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
+        mock_read.side_effect = validate_read
+        net.NetBridge.search(self.adp, vswitch_id=0, parent_type='SomeParent',
+                             parent_uuid='some_uuid')
+
+    def test_child_bad_args(self):
+        """Specifying parent_type xor parent_uuid is an error."""
+        self.assertRaises(ValueError, net.NetBridge.search, self.adp,
+                          vswitch_id=0, parent_type='SomeParent')
+        self.assertRaises(ValueError, net.NetBridge.search, self.adp,
+                          vswitch_id=0, parent_uuid='some_uuid')
+
 
 class TestRefresh(unittest.TestCase):
     """Tests for Adapter.refresh()."""
