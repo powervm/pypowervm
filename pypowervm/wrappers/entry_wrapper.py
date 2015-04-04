@@ -163,7 +163,7 @@ class Wrapper(object):
 
     @property
     @abc.abstractmethod
-    def type_and_uuid(self):
+    def _type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
         This is useful for error messages, logging, etc.
@@ -247,7 +247,7 @@ class Wrapper(object):
                       "in object %(pvmobject)s") % {
                         "property_name": property_name,
                         "value": text,
-                        "pvmobject": self.type_and_uuid})
+                        "pvmobject": self._type_and_uuid})
 
                 LOG.error(message)
                 return default
@@ -325,7 +325,7 @@ class Wrapper(object):
             _('The expected parameter of %(param)s was not found in '
               '%(identifier)s') % {
                 "param": param,
-                "identifier": self.type_and_uuid})
+                "identifier": self._type_and_uuid})
         LOG.debug(error_message)
 
     def get_href(self, propname, one_result=False):
@@ -668,7 +668,7 @@ class EntryWrapper(Wrapper):
             return None
 
     @property
-    def type_and_uuid(self):
+    def _type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
         This is useful for error messages, logging, etc.
@@ -677,7 +677,7 @@ class EntryWrapper(Wrapper):
         uuid = self.uuid
 
         if entry_type is None:
-            entry_type = "UnknownType"
+            entry_type = self.__class__.__name__
 
         if uuid is None:
             uuid = "UnknownUUID"
@@ -721,15 +721,15 @@ class ElementWrapper(Wrapper):
         return wrap
 
     @property
-    def type_and_uuid(self):
-        """Return the type and uuid of this entry together in one string.
+    def _type_and_uuid(self):
+        """Return the type of this element.
 
         This is useful for error messages, logging, etc.
         """
         entry_type = self.schema_type
 
         if entry_type is None:
-            entry_type = "UnknownType"
+            entry_type = self.__class__.__name__
 
         return entry_type
 
