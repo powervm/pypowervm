@@ -111,7 +111,7 @@ class TestSCSIMapper(unittest.TestCase):
                 vios_w = kargs[0]
                 self.assertEqual(1, len(vios_w.scsi_mappings))
                 num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-                self.assertEqual(4, num_elems)
+                self.assertEqual(5, num_elems)
                 return vios_w.entry
             else:
                 tju.raiseRetryException()
@@ -206,7 +206,7 @@ class TestSCSIMapper(unittest.TestCase):
                 vios_w = kargs[0]
                 self.assertEqual(1, len(vios_w.scsi_mappings))
                 num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
-                self.assertEqual(2, num_elems)
+                self.assertEqual(3, num_elems)
                 return vios_w.entry
             else:
                 tju.raiseRetryException()

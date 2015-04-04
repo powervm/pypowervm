@@ -550,7 +550,7 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     @classmethod
-    def search(cls, adapter, negate=False, **kwargs):
+    def search(cls, adapter, negate=False, xag=None, **kwargs):
         """Performs a REST API search.
 
         Searches for object(s) of the type indicated by cls having (or not
@@ -559,27 +559,27 @@ class EntryWrapper(Wrapper):
         Regular expressions and comparators are not supported.
 
         Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
-        Currently, extended attribute groups are not supported (TODO(IBM):
-        Support xags)
 
         :param cls: A subclass of EntryWrapper.  The wrapper class may define
                     a search_keys member, which is a dictionary mapping a
-                    convenient kwarg key to a search key supported by the REST
-                    API for that object type.  To retrieve an XML report of the
-                    supported search keys for object Foo, perform: read('Foo',
-                    suffix_type='search').  If the wrapper class does not
-                    define a search_keys member, the fallback search algorithm
-                    performs a GET of the entire feed of the object type and
-                    loops through it looking for (mis)matches on the @property
-                    indicated by the search key.
+                    @property getter method name to a search key supported by
+                    the REST API for that object type.  To retrieve an XML
+                    report of the supported search keys for object Foo,
+                    perform: read('Foo', suffix_type='search').
+                    If the wrapper class does not define a search_keys member,
+                    OR if xag is None, the fallback search algorithm performs a
+                    GET of the entire feed of the object type and loops through
+                    it looking for (mis)matches on the @property indicated by
+                    the search key.
         :param adapter: The pypowervm.adapter.Adapter instance through which to
                         perform the search.
         :param negate: If True, the search is negated - we find all objects of
                        the indicated type where the search key does *not* equal
                        the search value.
+        :param xag: List of extended attribute group names.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
-                       in cls.search_keys OR the name of a getter @property on
-                       the EntryWrapper subclass.  The value is the value to
+                       in cls.search_keys and/or the name of a getter @property
+                       on the EntryWrapper subclass.  The value is the value to
                        search for.
         :return: A list of instances of the cls.  The list may be empty
                  (no results were found).  It may contain more than one
@@ -591,11 +591,14 @@ class EntryWrapper(Wrapper):
                              'key=value argument.')
         key, val = kwargs.popitem()
         try:
+            if xag is not None:
+                # Cheater's way to cause _search_by_feed to be invoked
+                raise AttributeError()
             search_key = cls.search_keys[key]
         except (AttributeError, KeyError):
             # Fallback search by [GET feed] + loop
             return cls._search_by_feed(adapter, cls.schema_type, negate, key,
-                                       val)
+                                       val, xag)
 
         op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
@@ -606,12 +609,11 @@ class EntryWrapper(Wrapper):
         return cls.wrap(resp)
 
     @classmethod
-    def _search_by_feed(cls, adapter, root_type, negate, key, val):
+    def _search_by_feed(cls, adapter, root_type, negate, key, val, xag):
         if not hasattr(cls, key):
             raise ValueError("Wrapper class %s does not support search key "
                              "'%s'." % (cls.__name__, key))
-        # XAG_NONE because that's what REST API search returns by default
-        feedwrap = cls.wrap(adapter.read(root_type, xag=[pc.XAG_NONE]))
+        feedwrap = cls.wrap(adapter.read(root_type, xag=xag))
         retlist = []
         for entry in feedwrap:
             entval = getattr(entry, key, None)
