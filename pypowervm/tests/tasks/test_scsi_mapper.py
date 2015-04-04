@@ -53,6 +53,10 @@ class TestSCSIMapper(unittest.TestCase):
         self.mock_crt_href = self.mock_crt_href_p.start()
         self.mock_crt_href.return_value = 'href'
 
+        # Mock the delay function, by overriding the sleep
+        self.mock_delay_p = mock.patch('time.sleep')
+        self.mock_delay = self.mock_delay_p.start()
+
     def tearDown(self):
         unittest.TestCase.tearDown(self)
 
@@ -61,6 +65,7 @@ class TestSCSIMapper(unittest.TestCase):
         self.mock_adpt_p.stop()
         self.mock_client_adpt_p.stop()
         self.mock_lpar_id_p.stop()
+        self.mock_delay_p.stop()
 
     def test_mapping(self):
         # Mock Data
@@ -87,6 +92,44 @@ class TestSCSIMapper(unittest.TestCase):
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.mock_adpt.update_by_path.call_count)
+
+    def test_mapping_retry(self):
+        """Tests that a mapping function will be retried."""
+        # Mock Data
+        self.mock_adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+
+        global attempt_count
+        attempt_count = 0
+
+        # Validate that the mapping was added to existing.  First few times
+        # through loop, force a retry exception
+        def validate_update(*kargs, **kwargs):
+            global attempt_count
+            attempt_count += 1
+
+            if attempt_count == 3:
+                vios_w = kargs[0]
+                self.assertEqual(1, len(vios_w.scsi_mappings))
+                num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
+                self.assertEqual(4, num_elems)
+                return vios_w.entry
+            else:
+                tju.raiseRetryException()
+
+        self.mock_adpt.update_by_path.side_effect = validate_update
+
+        # Create the new mapping
+        mapping = pvm_vios.VSCSIMapping.bld_to_pv(self.mock_adpt, 'host_uuid',
+                                                  'client_lpar_uuid',
+                                                  'disk_name')
+
+        # Run the code
+        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'fake_vios_uuid',
+                                      mapping)
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(3, self.mock_adpt.update_by_path.call_count)
+        self.assertEqual(3, attempt_count)
 
     def test_mapping_new_mapping(self):
         # Mock Data
@@ -138,6 +181,47 @@ class TestSCSIMapper(unittest.TestCase):
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.mock_adpt.update_by_path.call_count)
+        self.assertEqual(1, len(resp))
+        self.assertIsInstance(resp[0], pvm_stor.VOptMedia)
+
+    def test_remove_storage_vopt_retry(self):
+        """Tests removing the storage vOpt with multiple retries."""
+        # Mock Data.  The retry will call this three times.  They have to
+        # be indepdent loads, otherwise the data gets re-used and the remove
+        # will not be properly invoked.
+        self.mock_adpt.read.side_effect = [tju.load_file(VIO_MULTI_MAP_FILE),
+                                           tju.load_file(VIO_MULTI_MAP_FILE),
+                                           tju.load_file(VIO_MULTI_MAP_FILE)]
+
+        global attempt_count
+        attempt_count = 0
+
+        # Validate that the mapping was removed from existing.  First few
+        # loops, force a retry
+        def validate_update(*kargs, **kwargs):
+            global attempt_count
+            attempt_count += 1
+
+            if attempt_count == 3:
+                vios_w = kargs[0]
+                self.assertEqual(1, len(vios_w.scsi_mappings))
+                num_elems = len(vios_w.scsi_mappings[0].backing_storage_elems)
+                self.assertEqual(2, num_elems)
+                return vios_w.entry
+            else:
+                tju.raiseRetryException()
+
+        self.mock_adpt.update_by_path.side_effect = validate_update
+
+        # Run the code
+        media_name = 'bldr1_dfe05349_kyleh_config.iso'
+        resp = scsi_mapper.remove_vopt_mapping(self.mock_adpt,
+                                               'fake_vios_uuid', 2,
+                                               media_name=media_name)
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(3, self.mock_adpt.update_by_path.call_count)
+        self.assertEqual(3, attempt_count)
         self.assertEqual(1, len(resp))
         self.assertIsInstance(resp[0], pvm_stor.VOptMedia)
 

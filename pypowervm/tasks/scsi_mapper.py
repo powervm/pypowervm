@@ -14,10 +14,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
+
+from oslo_concurrency import lockutils as lock
+
+import time
+
+from pypowervm.i18n import _
+from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
+LOG = logging.getLogger(__name__)
 
+
+def _delay(attempt, max_attempts, *args, **kwds):
+    LOG.warn(_('Retrying modification of SCSI Mapping.'))
+    time.sleep(1)
+
+
+@lock.synchronized('vscsi_mapping')
+@pvm_retry.retry(delay_func=_delay)
 def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
@@ -87,6 +104,8 @@ def _can_be_fused(existing_scsi_map, new_scsi_map, fuse_limit):
     return True
 
 
+@lock.synchronized('vscsi_mapping')
+@pvm_retry.retry(delay_func=_delay)
 def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
     """Removes the storage element from a SCSI bus and clears out bus.
 
