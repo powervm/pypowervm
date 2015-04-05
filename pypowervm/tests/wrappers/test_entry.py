@@ -42,7 +42,7 @@ def _assert_clusters_equal(tc, cl1, cl2):
 
 class SubWrapper(ewrap.Wrapper):
     schema_type = 'SubWrapper'
-    type_and_uuid = 'SubWrapper_TestClass'
+    _type_and_uuid = 'SubWrapper_TestClass'
 
     def __init__(self, **kwargs):
         class Txt(object):
