@@ -21,6 +21,13 @@ UNCACHEABLE = ('/rest/api/web/', '/rest/api/pcm/',
                '/quick', '/search/', '?detail', '/jobs')
 # TODO(IBM): invalidate SSP cache based on ClusterLULinkedClone jobs
 
+DEFAULT_SCHEMA_VERSION = 'V1_0'
+SCHEMA_VER120 = 'V1_2_0'
+SCHEMA_VER = 'schemaVersion'
+ATTR_SCHEMA = 'ksv'
+DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
+ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
+
 XAG_NONE = 'None'
 API_BASE_PATH = '/rest/api/'
 LOGON_PATH = API_BASE_PATH + 'web/Logon'

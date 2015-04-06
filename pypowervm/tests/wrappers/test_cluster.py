@@ -20,7 +20,6 @@ import pypowervm.adapter as adp
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.cluster as clust
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.storage as stor
 
@@ -115,12 +114,12 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(clust.Cluster.schema_type, 'Cluster')
         self.assertEqual(clust.Cluster.schema_ns, pc.UOM_NS)
         self.assertTrue(clust.Cluster.has_metadata)
-        self.assertEqual(clust.Cluster.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(clust.Cluster.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
         # Node
         self.assertEqual(clust.Node.schema_type, 'Node')
         self.assertEqual(clust.Node.schema_ns, pc.UOM_NS)
         self.assertTrue(clust.Node.has_metadata)
-        self.assertEqual(clust.Node.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(clust.Node.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
     def test_bld_cluster(self):
         n1 = clust.Node.bld(hostname='a.example.com')

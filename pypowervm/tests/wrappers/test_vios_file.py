@@ -16,7 +16,6 @@
 
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.vios_file as vf
 
 
@@ -29,7 +28,7 @@ class TestVIOSFile(twrap.TestWrapper):
         self.assertEqual(vf.File.schema_type, 'File')
         self.assertEqual(vf.File.schema_ns, pc.WEB_NS)
         self.assertTrue(vf.File.has_metadata)
-        self.assertEqual(vf.File.default_attrib, wc.DEFAULT_SCHEMA_ATTR)
+        self.assertEqual(vf.File.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
     def test_file(self):
         self.assertTrue(len(self.entries) > 0)
