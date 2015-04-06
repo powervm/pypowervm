@@ -128,9 +128,6 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
-    matching_map = None
-    scsi_elem = None
-
     # The first element is the SCSI map, the second is the scsi element within
     # the map to remove.
     matching_pairs = []

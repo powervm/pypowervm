@@ -19,7 +19,7 @@ import logging
 
 from lxml import etree
 
-from pypowervm import adapter as adpt
+import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 from pypowervm.wrappers import constants as c
@@ -151,34 +151,34 @@ def _lua_recovery_xml(itls, vendor=LUA_TYPE_IBM):
     :param vendor: The LUA vendor.  See the LUA_TYPE_* Constants.
     :return: The CDATA XML that is used for the lua_recovery job.
     """
-    root = adpt.Element("XML_LIST", ns='')
+    root = ent.Element("XML_LIST", ns='')
 
     # The general attributes
     # TODO(IBM) Need to determine value of making these constants modifiable
-    general = adpt.Element("general", ns='')
-    general.append(adpt.Element("cmd_version", text=LUA_CMD_VERSION, ns=''))
-    general.append(adpt.Element("version", text=LUA_VERSION, ns=''))
+    general = ent.Element("general", ns='')
+    general.append(ent.Element("cmd_version", text=LUA_CMD_VERSION, ns=''))
+    general.append(ent.Element("version", text=LUA_VERSION, ns=''))
     root.append(general)
 
     # TODO(IBM) This can be re-evaluated.  Set to true if you know for sure
     # the ITLs are alive.  If there are any bad ITLs, this should be false.
-    root.append(adpt.Element("reliableITL", text="false", ns=''))
+    root.append(ent.Element("reliableITL", text="false", ns=''))
 
     # There is only one device in the device list.
-    device_list = adpt.Element("deviceList", ns='')
-    device = adpt.Element("device", ns='')
-    device.append(adpt.Element("vendor", text=vendor, ns=''))
-    device.append(adpt.Element("deviceTag", text="1", ns=''))
+    device_list = ent.Element("deviceList", ns='')
+    device = ent.Element("device", ns='')
+    device.append(ent.Element("vendor", text=vendor, ns=''))
+    device.append(ent.Element("deviceTag", text="1", ns=''))
 
-    itl_list = adpt.Element("itlList", ns='')
-    itl_list.append(adpt.Element("number", text="%d" % (len(itls)), ns=''))
+    itl_list = ent.Element("itlList", ns='')
+    itl_list.append(ent.Element("number", text="%d" % (len(itls)), ns=''))
 
     for itl in itls:
-        itl_elem = adpt.Element("itl", ns='')
+        itl_elem = ent.Element("itl", ns='')
 
-        itl_elem.append(adpt.Element("Iwwpn", text=itl.initiator, ns=''))
-        itl_elem.append(adpt.Element("Twwpn", text=itl.target, ns=''))
-        itl_elem.append(adpt.Element("lua", text=itl.lun, ns=''))
+        itl_elem.append(ent.Element("Iwwpn", text=itl.initiator, ns=''))
+        itl_elem.append(ent.Element("Twwpn", text=itl.target, ns=''))
+        itl_elem.append(ent.Element("lua", text=itl.lun, ns=''))
 
         itl_list.append(itl_elem)
 

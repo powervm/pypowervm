@@ -20,6 +20,7 @@ import unittest
 import mock
 
 from pypowervm import adapter as adpt
+import pypowervm.entities as ent
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import network_bridger as net_br
 from pypowervm.tests.wrappers.util import pvmhttp
@@ -239,7 +240,7 @@ class TestNetworkBridger(unittest.TestCase):
                                     mock_find_vnet):
         vnet = pvm_net.VNet._bld().entry
         resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp1.feed = adpt.Feed({}, [vnet])
+        resp1.feed = ent.Feed({}, [vnet])
         mock_adpt.read.return_value = resp1
         mock_adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]

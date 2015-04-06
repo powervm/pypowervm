@@ -20,8 +20,8 @@ import time
 from oslo.config import cfg
 import six
 
-import pypowervm.adapter as adp
 import pypowervm.const as pc
+import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
 import pypowervm.wrappers.constants as wc
@@ -60,12 +60,12 @@ class Job(ewrap.EntryWrapper):
            :param cdata: If True, the value text will be wrapped in CDATA tags
            :returns: JobParameter Element
         """
-        job_parm = adp.Element('JobParameter',
+        job_parm = ent.Element('JobParameter',
                                attrib={'schemaVersion': 'V1_0'},
                                ns=pc.WEB_NS)
-        job_parm.append(adp.Element('ParameterName',
+        job_parm.append(ent.Element('ParameterName',
                                     text=name, ns=pc.WEB_NS))
-        job_parm.append(adp.Element('ParameterValue',
+        job_parm.append(ent.Element('ParameterValue',
                                     text=value, ns=pc.WEB_NS, cdata=cdata))
         return job_parm
 

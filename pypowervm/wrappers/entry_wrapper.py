@@ -20,6 +20,7 @@ import urllib
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
+import pypowervm.entities as ent
 from pypowervm.i18n import _
 from pypowervm import util
 import pypowervm.wrappers.constants as wc
@@ -134,8 +135,8 @@ class Wrapper(object):
         if existing:
             return existing
         else:
-            new_elem = adpt.Element(prop_name, attrib=attrib,
-                                    children=[])
+            new_elem = ent.Element(prop_name, attrib=attrib,
+                                   children=[])
             self.inject(new_elem)
             return new_elem
 
@@ -154,10 +155,10 @@ class Wrapper(object):
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
         """
-        new_elem = adpt.Element(prop_name,
-                                attrib=attrib,
-                                children=[x.element for
-                                          x in prop_children])
+        new_elem = ent.Element(prop_name,
+                               attrib=attrib,
+                               children=[x.element for
+                                         x in prop_children])
 
         self.inject(new_elem)
 
@@ -183,8 +184,8 @@ class Wrapper(object):
         if element_value is None:
             self.log_missing_value(property_name)
             if create:
-                element_value = adpt.Element(property_name, ns=self.schema_ns,
-                                             attrib=attrib, text=str(value))
+                element_value = ent.Element(property_name, ns=self.schema_ns,
+                                            attrib=attrib, text=str(value))
                 self.inject(element_value)
 
         element_value.text = str(value)
@@ -384,11 +385,11 @@ class Wrapper(object):
                 next_prop = l.pop(0)
                 new_el = append_point._find(next_prop)
                 if new_el is None:
-                    new_el = adpt.Element(next_prop)
+                    new_el = ent.Element(next_prop)
                     append_point.element.inject(
                         new_el, ordering_list=self.child_order)
                 append_point = ElementWrapper.wrap(new_el)
-            link = adpt.Element(l[-1])
+            link = ent.Element(l[-1])
             append_point.element.inject(link, ordering_list=self.child_order)
         # At this point we have found or created the propname element.  Its
         # handle is in the link var.
@@ -423,9 +424,9 @@ class Wrapper(object):
         children = []
         if has_metadata:
             children.append(
-                adpt.Element('Metadata', ns=ns, children=[
-                    adpt.Element('Atom', ns=ns)]))
-        return adpt.Element(tag, ns=ns, attrib=attrib, children=children)
+                ent.Element('Metadata', ns=ns, children=[
+                    ent.Element('Atom', ns=ns)]))
+        return ent.Element(tag, ns=ns, attrib=attrib, children=children)
 
     @classmethod
     def _class_for_element(cls, element):
@@ -453,9 +454,9 @@ class Wrapper(object):
         """
         new_elems = []
         for item in links:
-            new_elems.append(adpt.Element('link', attrib={'href': item,
-                                                          'rel': 'related'}))
-        return adpt.Element(container_type, children=new_elems)
+            new_elems.append(ent.Element('link', attrib={'href': item,
+                                                         'rel': 'related'}))
+        return ent.Element(container_type, children=new_elems)
 
 
 class EntryWrapper(Wrapper):
@@ -471,7 +472,7 @@ class EntryWrapper(Wrapper):
     def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None):
         element = cls._bld_element(
             tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
-        return cls(adpt.Entry({'title': element.tag}, element.element))
+        return cls(ent.Entry({'title': element.tag}, element.element))
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -506,13 +507,13 @@ class EntryWrapper(Wrapper):
                     response_or_entry.entry,
                     etag=response_or_entry.etag)
             elif response_or_entry.feed is not None:
-                return [cls.wrap(ent, etag=ent.etag)
-                        for ent in response_or_entry.feed.entries]
+                return [cls.wrap(entry, etag=entry.etag)
+                        for entry in response_or_entry.feed.entries]
             else:
                 raise KeyError(_("Response is missing 'entry' property."))
 
         # Else process Entry if specified
-        if isinstance(response_or_entry, adpt.Entry):
+        if isinstance(response_or_entry, ent.Entry):
             # If schema_type is set, cls represents a legal subclass - use it.
             # Otherwise, try to discover an appropriate subclass based on the
             # element.  If that fails, it will default to the invoking class,

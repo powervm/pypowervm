@@ -17,7 +17,7 @@
 import copy
 import logging
 
-from pypowervm import adapter as adpt
+import pypowervm.entities as ent
 import pypowervm.util as u
 import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -267,7 +267,7 @@ class NetBridge(ewrap.EntryWrapper):
         # Find and replace the current element.
         cur_vnets = self.element.find(_NB_VNETS)
         self.element.replace(cur_vnets,
-                             adpt.Element(_NB_VNETS, children=new_vnets))
+                             ent.Element(_NB_VNETS, children=new_vnets))
 
     @property
     def seas(self):

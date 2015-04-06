@@ -16,7 +16,7 @@
 
 import mock
 
-import pypowervm.adapter as adpt
+import pypowervm.entities as ent
 from pypowervm import exceptions as pexc
 from pypowervm.tasks import power
 
@@ -29,7 +29,7 @@ class TestPower(unittest.TestCase):
     def setUp(self):
         super(TestPower, self).setUp()
         mock_resp = mock.MagicMock()
-        mock_resp.entry = adpt.Entry({}, adpt.Element('Dummy'))
+        mock_resp.entry = ent.Entry({}, ent.Element('Dummy'))
         self.mock_adpt = mock.MagicMock()
         self.mock_adpt.read.return_value = mock_resp
 

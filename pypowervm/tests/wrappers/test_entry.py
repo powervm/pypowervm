@@ -24,6 +24,7 @@ import unittest
 
 import pypowervm.adapter as apt
 import pypowervm.const as pc
+import pypowervm.entities as ent
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -112,7 +113,7 @@ class TestWrapper(unittest.TestCase):
 class TestEntryWrapper(unittest.TestCase):
 
     def test_etag(self):
-        fake_entry = apt.Entry({}, apt.Element('fake_entry'))
+        fake_entry = ent.Entry({}, ent.Element('fake_entry'))
         etag = '1234'
         ew = ewrap.EntryWrapper.wrap(fake_entry, etag=etag)
         self.assertEqual(etag, ew.etag)
@@ -129,7 +130,7 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertRaises(KeyError, ewrap.EntryWrapper.wrap, resp)
 
         # Set an entry...
-        entry = apt.Entry({}, apt.Element('entry'))
+        entry = ent.Entry({}, ent.Element('entry'))
         resp.entry = entry
 
         # Run
@@ -149,9 +150,9 @@ class TestEntryWrapper(unittest.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        e1 = apt.Entry({'etag': '1'}, apt.Element('e1'))
-        e2 = apt.Entry({'etag': '2'}, apt.Element('e2'))
-        resp.feed = apt.Feed({}, [e1, e2])
+        e1 = ent.Entry({'etag': '1'}, ent.Element('e1'))
+        e2 = ent.Entry({'etag': '2'}, ent.Element('e2'))
+        resp.feed = ent.Feed({}, [e1, e2])
 
         # Run
         ew = ewrap.EntryWrapper.wrap(resp)
@@ -230,7 +231,7 @@ class TestElementWrapper(unittest.TestCase):
 
         # Now 'SomePowerObject' is registered.  Prove that we can use wrap() to
         # instantiate MyElement4 straight from ElementWrapper.
-        el = apt.Element('SomePowerObject', ns='baz', attrib={'foo': 'bar'})
+        el = ent.Element('SomePowerObject', ns='baz', attrib={'foo': 'bar'})
         w = ewrap.ElementWrapper.wrap(el)
         self.assertIsInstance(w, MyElement4)
 
@@ -302,7 +303,7 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
-            apt.Element('SharedEthernetAdapter'))
+            ent.Element('SharedEthernetAdapter'))
         self.assertEqual(1, len(self.elem_set))
 
         # Test Append
@@ -315,8 +316,8 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_extend(self):
         seas = [
-            ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter')),
-            ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter'))
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter')),
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
         ]
         self.assertEqual(1, len(self.elem_set))
         self.elem_set.extend(seas)
@@ -324,7 +325,7 @@ class TestWrapperElemList(unittest.TestCase):
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
-        e = ewrap.ElementWrapper.wrap(apt.Element('SharedEthernetAdapter'))
+        e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))
@@ -440,7 +441,7 @@ class TestSearch(unittest.TestCase):
             self.assertTrue(_path.endswith(path))
             resp = apt.Response('meth', 'path', 'status', 'reason', {},
                                 reqheaders={'Accept': ''})
-            resp.feed = apt.Feed({}, feedcontents)
+            resp.feed = ent.Feed({}, feedcontents)
             return resp
         return validate_request
 

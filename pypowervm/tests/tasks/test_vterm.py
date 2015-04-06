@@ -16,7 +16,7 @@
 
 import mock
 
-import pypowervm.adapter as adpt
+import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
 from pypowervm.tasks import vterm
 
@@ -31,7 +31,7 @@ class TestVterm(unittest.TestCase):
     def test_close_vterm(self, mock_adpt, mock_run_job):
         """Performs a close LPAR vterm test."""
         mock_resp = mock.MagicMock()
-        mock_resp.entry = adpt.Entry({}, adpt.Element('Dummy'))
+        mock_resp.entry = ent.Entry({}, ent.Element('Dummy'))
         mock_adpt = mock.MagicMock()
         mock_adpt.read.return_value = mock_resp
         vterm.close_vterm(mock_adpt, '12345')
