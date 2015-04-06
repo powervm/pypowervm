@@ -51,6 +51,8 @@ _MAP_SERVER_ADAPTER = 'ServerAdapter'
 _MAP_STORAGE = 'Storage'
 _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
+_MAP_ORDER = (_MAP_CLIENT_LPAR, _MAP_CLIENT_ADAPTER, _MAP_SERVER_ADAPTER,
+              _MAP_STORAGE)
 
 
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer')
@@ -288,7 +290,7 @@ class VStorageMapping(ewrap.ElementWrapper):
     """Base class for VSCSIMapping and VFCMapping."""
 
     @staticmethod
-    def _crt_related_href(adapter, host_uuid, client_lpar_uuid):
+    def crt_related_href(adapter, host_uuid, client_lpar_uuid):
         """Creates the Element for the 'AssociatedLogicalPartition'."""
         return adapter.build_href(ms.System.schema_type, host_uuid,
                                   lpar.LPAR.schema_type, client_lpar_uuid)
@@ -330,7 +332,8 @@ class VStorageMapping(ewrap.ElementWrapper):
         self.element.replace(elem, sa.element)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualSCSIMapping', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('VirtualSCSIMapping', has_metadata=True,
+                               child_order=_MAP_ORDER)
 class VSCSIMapping(VStorageMapping):
     """The mapping of a VIOS SCSI adapter to the Client LPAR SCSI adapter.
 
@@ -354,117 +357,18 @@ class VSCSIMapping(VStorageMapping):
         s_map = super(VSCSIMapping, cls)._bld()
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
-            cls._crt_related_href(adapter, host_uuid, client_lpar_uuid))
+            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
         s_map._client_adapter(stor.VClientStorageAdapter.bld())
         s_map._server_adapter(stor.VServerStorageAdapter.bld())
         s_map._backing_storage(stg_ref)
         return s_map
 
     @classmethod
-    def bld_to_vdisk(cls, adapter, host_uuid, client_lpar_uuid, disk_name):
-        """Creates the VSCSIMapping Wrapper for a VirtualDisk.
-
-        This is used when creating a new mapping between a Client LPAR and the
-        VirtualIOServer.  This creates a SCSI connection between a VirtualDisk
-        and the corresponding client LPAR.
-
-        The response object should be used for creating the mapping via an
-        update call in the Adapter.  The response object will not have UDIDs
-        (as those are not assigned until the update is done).  This holds true
-        for other elements as well.
-
-        :param adapter: The pypowervm Adapter that will be used to create the
-                        mapping.
-        :param host_uuid: (TEMPORARY) The host system's UUID.
-        :param client_lpar_uuid: The client LPAR's UUID that the disk should be
-                                 connected to.
-        :param disk_name: The name of the VirtualDisk that should be used.  Can
-                          be determined by referencing the VolumeGroup.
-        :returns: The Element that represents the new VSCSIMapping (it is
-                  not the Wrapper, but the element that serves as input into
-                  the VSCSIMapping wrapper).
-        """
-        return cls.bld(adapter, host_uuid, client_lpar_uuid,
-                       stor.VDisk.bld_ref(disk_name))
-
-    @classmethod
-    def bld_to_vopt(cls, adapter, host_uuid, client_lpar_uuid, media_name):
-        """Creates the VSCSIMapping object for Virtual Optical Media.
-
-        This is used when creating a new mapping between a Client LPAR and
-        Virtual Optical Media that the Virtual I/O Server is hosting.  This
-        creates a SCSI connection between a virtual media and the corresponding
-        client LPAR.
-
-        The response object should be used for creating the mapping via an
-        update call in the Adapter.  The response object will not have UDIDs
-        (as those are not assigned until the update is done).  This holds true
-        for other elements as well.
-
-        :param adapter: The pypowervm Adapter that will be used to create the
-                        mapping.
-        :param host_uuid: (TEMPORARY) The host system's UUID.
-        :param client_lpar_uuid: The client LPAR's UUID that the disk should be
-                                 connected to.
-        :param media_name: The name of the Virtual Optical Media device to add.
-                           Maps to the volume_group's VirtualOpticalMedia
-                           media_name.
-        :returns: The new VSCSIMapping Wrapper.
-        """
-        return cls.bld(adapter, host_uuid, client_lpar_uuid,
-                       stor.VOptMedia.bld_ref(media_name))
-
-    @classmethod
-    def bld_to_lu(cls, adapter, host_uuid, client_lpar_uuid, udid,
-                  disk_name):
-        """Creates the VSCSIMapping object for a LU.
-
-        This is used when creating a new mapping between a Client LPAR and
-        a LU (typically Shared Storage Pool based) that the Virtual I/O Server
-        is hosting.  This creates a SCSI connection between a LUN and the
-        corresponding client LPAR.
-
-        The response object should be used for creating the mapping via an
-        update call in the Adapter.  The response object will not have UDIDs
-        (as those are not assigned until the update is done).  This holds true
-        for other elements as well.
-
-        :param adapter: The pypowervm Adapter that will be used to create the
-                        mapping.
-        :param host_uuid: (TEMPORARY) The host system's UUID.
-        :param client_lpar_uuid: The client LPAR's UUID that the disk should be
-                                 connected to.
-        :param udid: The UDID of the LU.
-        :param disk_name: The name of the LU.
-        :returns: The new VSCSIMapping Wrapper.
-        """
-        return cls.bld(adapter, host_uuid, client_lpar_uuid,
-                       stor.LU.bld_ref(disk_name, udid))
-
-    @classmethod
-    def bld_to_pv(cls, adapter, host_uuid, client_lpar_uuid, disk_name):
-        """Creates the VSCSIMapping object for a Physical Volume.
-
-        This is used when creating a new mapping between a Client LPAR and
-        a physical volume (typically for classic vSCSI connections) that the
-        Virtual I/O Server is hosting.  This creates a SCSI connection between
-        a physical volume (ex. hdisk) and the corresponding client LPAR.
-
-        The response object should be used for creating the mapping via an
-        update call in the Adapter.  The response object will not have UDIDs
-        (as those are not assigned until the update is done).  This holds true
-        for other elements as well.
-
-        :param adapter: The pypowervm Adapter that will be used to create the
-                        mapping.
-        :param host_uuid: (TEMPORARY) The host system's UUID.
-        :param client_lpar_uuid: The client LPAR's UUID that the disk should be
-                                 connected to.
-        :param disk_name: The name of the hdisk to map the client LPAR to.
-        :returns: The new VSCSIMapping Wrapper.
-        """
-        return cls.bld(adapter, host_uuid, client_lpar_uuid,
-                       stor.PV.bld(disk_name))
+    def bld_from_existing(cls, existing_map, stg_ref):
+        """Clones the existing mapping, but swaps in the new storage elem."""
+        new_map = copy.deepcopy(existing_map)
+        new_map._backing_storage(stg_ref)
+        return new_map
 
     @property
     def backing_storage(self):
@@ -485,15 +389,19 @@ class VSCSIMapping(VStorageMapping):
         return ewrap.ElementWrapper.wrap(media[0])
 
     def _backing_storage(self, stg):
-        """Sets the backing storage of this mapping to a VDisk or VOpt.
+        """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
 
         Currently assumes this mapping does not already have storage assigned.
 
-        :param stg: Either a VDisk or VOptMedia wrapper representing the
+        :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
                     backing storage to assign.
         """
-        elem = self._find_or_seed(_MAP_STORAGE, attrib={})
-        elem.append(stg.element)
+        # Always replace.  Because while the storage has one element, it can't
+        # inject properly if the backing type changes (ex. cloning from vOpt to
+        # vDisk).
+        stor_elem = ent.Element(_MAP_STORAGE, attrib={}, children=[])
+        stor_elem.inject(stg.element)
+        self.inject(stor_elem)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
@@ -545,7 +453,7 @@ class VFCMapping(VStorageMapping):
         s_map = super(VFCMapping, cls)._bld()
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
-            cls._crt_related_href(adapter, host_uuid, client_lpar_uuid))
+            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
         s_map._client_adapter(stor.VFCClientAdapter.bld(wwpns=client_wwpns))
 
         # Create the backing port and change label.  API requires it be

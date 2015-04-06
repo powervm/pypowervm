@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 import logging
 
 from oslo_concurrency import lockutils as lock
@@ -36,31 +35,29 @@ def _delay(attempt, max_attempts, *args, **kwds):
 
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(delay_func=_delay)
-def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
+def add_vscsi_mapping(adapter, host_uuid, vios_uuid, lpar_uuid, storage_elem,
+                      fuse_limit=32):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
-    This method takes in a vSCSI mapping for a Virtual I/O Server and performs
-    the mapping.
+    This method is used to connect a storage element (either a vDisk, vOpt,
+    PV or LU) that resides on a Virtual I/O Server to a Virtual Machine.
 
-    The extra intelligence that this method provides is that it will fuse
-    common vSCSI mappings together.  The fusing looks at the source and target
-    and will determine if they can re-utilize an existing scsi mapping.
+    This is achieved using a 'vSCSI Mapping'.  The invoker does not need to
+    interact with the mapping.
 
-    This reduces the number of server/client adapters that are required to the
-    virtual machine.  However, there is a limit to how much fusing should be
-    done before a new vSCSI mapping bus is used.  That can be defined by
-    specifying the 'fuse_limit'.
-
-    The fuse_limit should be set low if the scsi bus is going to be quite busy.
-    If the traffic over the scsi bus is going to be low, a significantly
-    higher limit can be used.  If you are unsure what the traffic will be, use
-    the default.
+    A given mapping is essentially a 'vSCSI bus', which can host multiple
+    storage elements.  This method has a fuse limit which throttles the number
+    of devices on a given vSCSI bus.  The throttle should be lower if the
+    storage elements are high I/O, and higher otherwise.
 
     :param adapter: The pypowervm adapter for API communication.
+    :param host_uuid: The UUID of the host system.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       added to.
-    :param scsi_map: The mapping to add.  As noted above, this may be fused
-                     with another scsi mapping on the virtual I/O server.
+    :param lpar_uuid: The UUID of the LPAR that will have the connected
+                      storage.
+    :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
+                         that is to be connected.
     :param fuse_limit: (Optional) The max number of devices to allow on one
                        scsi bus before creating a second SCSI bus.
     """
@@ -68,8 +65,15 @@ def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
+    # Get the client lpar href
+    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
+                                                       lpar_uuid)
+
     # Separate out the mappings into the applicable ones for this client.
-    separated_mappings = _separate_mappings(vios_w, scsi_map.client_lpar_href)
+    separated_mappings = _separate_mappings(vios_w, lpar_href)
+
+    # Used if we need to clone an existing mapping
+    clonable_map = None
 
     # What we need to figure out is, within the existing mappings, can we
     # reuse the existing client and server adapter (which we can only do if
@@ -79,10 +83,17 @@ def add_vscsi_mapping(adapter, vios_uuid, scsi_map, fuse_limit=32):
             # Swap in the first maps client/server adapters into the existing
             # map.  We call the semi-private methods as this is not something
             # that an 'update' would do...this is part of the 'create' flow.
-            c_map = mapping_list[0]
-            scsi_map._client_adapter(copy.deepcopy(c_map.client_adapter))
-            scsi_map._server_adapter(copy.deepcopy(c_map.server_adapter))
+            clonable_map = mapping_list[0]
             break
+
+    # If we have a clonable map, we can replicate that.  Otherwise we need
+    # to build from scratch.
+    if clonable_map is not None:
+        scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(clonable_map,
+                                                           storage_elem)
+    else:
+        scsi_map = pvm_vios.VSCSIMapping.bld(adapter, host_uuid, lpar_uuid,
+                                             storage_elem)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
