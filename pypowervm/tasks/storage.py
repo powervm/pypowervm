@@ -106,6 +106,8 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
                    for integrity checks.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
+    :return: The vOpt loaded into the media repository.  This is a reference,
+             for use in scsi mappings.
     :return: Normally this method will return None, indicating that the disk
              and image were uploaded without issue.  If for some reason the
              File metadata for the VIOS was not cleaned up, the return value
@@ -116,7 +118,12 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     vio_file = _create_file(
         adapter, f_name, vf.FTypeEnum.BROKERED_MEDIA_ISO, v_uuid,
         sha_chksum, f_size)
-    return _upload_stream(adapter, vio_file, d_stream)
+    f_uuid = _upload_stream(adapter, vio_file, d_stream)
+
+    # Simply return a reference to this.
+    reference = stor.VOptMedia.bld_ref(f_name)
+
+    return reference, f_uuid
 
 
 def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,

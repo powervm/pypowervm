@@ -64,12 +64,15 @@ class TestUploadLV(unittest.TestCase):
 
         mock_create_file.return_value = self._fake_meta()
 
-        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                f_size=50)
+        v_opt, f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                       f_size=50)
 
         # Test that vopt was 'uploaded'
         mock_adpt.upload_file.assert_called_with(mock.ANY, None)
         self.assertIsNone(f_wrap)
+        self.assertIsNotNone(v_opt)
+        self.assertIsInstance(v_opt, stor.VOptMedia)
+        self.assertEqual('test2', v_opt.media_name)
 
         # Ensure cleanup was called
         mock_adpt.delete.assert_called_once_with(
@@ -79,13 +82,17 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                f_size=50)
+
+        vopt, f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                      f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNotNone(f_wrap)
+        self.assertIsNotNone(vopt)
+        self.assertIsInstance(vopt, stor.VOptMedia)
+        self.assertEqual('test2', v_opt.media_name)
 
     @mock.patch('pypowervm.adapter.Adapter')
     @mock.patch('pypowervm.tasks.storage._create_file')
