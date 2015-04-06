@@ -471,7 +471,7 @@ class Adapter(object):
     def create(self, element, root_type, root_id=None, child_type=None,
                child_id=None, suffix_type=None, suffix_parm=None, detail=None,
                service='uom', content_service=None, timeout=-1,
-               auditmemento=None, xag=None, sensitive=False, helpers=None):
+               auditmemento=None, sensitive=False, helpers=None):
         """Create a new resource.
 
         Will build the URI path using the provided arguments.
@@ -480,7 +480,7 @@ class Adapter(object):
                        suffix_type, suffix_parm, detail)
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
-                               xag=xag)
+                               xag=[])
         return self.create_by_path(
             element, path, content_service=content_service, timeout=timeout,
             auditmemento=auditmemento, sensitive=sensitive, helpers=helpers)
