@@ -550,15 +550,14 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     @classmethod
-    def search(cls, adapter, negate=False, xag=None, **kwargs):
+    def search(cls, adapter, negate=False, xag=None, parent_type=None,
+               parent_uuid=None, **kwargs):
         """Performs a REST API search.
 
         Searches for object(s) of the type indicated by cls having (or not
         having) the key/value indicated by the (single) kwarg.
 
         Regular expressions and comparators are not supported.
-
-        Currently, only ROOT objects are supported.  (TODO(IBM): Support CHILD)
 
         :param cls: A subclass of EntryWrapper.  The wrapper class may define
                     a search_keys member, which is a dictionary mapping a
@@ -577,6 +576,11 @@ class EntryWrapper(Wrapper):
                        the indicated type where the search key does *not* equal
                        the search value.
         :param xag: List of extended attribute group names.
+        :param parent_type: If searching for CHILD objects, this parameter must
+                            specify the REST schema type of the parent ROOT
+                            object.
+        :param parent_uuid: If searching for CHILD objects, this parameter must
+                            specify the UUID of the parent ROOT object.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
                        in cls.search_keys and/or the name of a getter @property
                        on the EntryWrapper subclass.  The value is the value to
@@ -586,9 +590,16 @@ class EntryWrapper(Wrapper):
                  instance (e.g. for a negated search, or for one where the key
                  does not represent a unique property of the object).
         """
+        # CHILD search is all or nothing.  Both must be str or NoneType.
+        if type(parent_type) != type(parent_uuid):
+            raise ValueError(
+                _('When searching for ROOT types, neither parent_type nor '
+                  'parent_uuid may be specified.  When searching for CHILD '
+                  'types, both must be specified.'))
+
         if len(kwargs) != 1:
-            raise ValueError('The search() method requires exactly one'
-                             'key=value argument.')
+            raise ValueError(_('The search() method requires exactly one '
+                               'key=value argument.'))
         key, val = kwargs.popitem()
         try:
             if xag is not None:
@@ -598,22 +609,27 @@ class EntryWrapper(Wrapper):
         except (AttributeError, KeyError):
             # Fallback search by [GET feed] + loop
             return cls._search_by_feed(adapter, cls.schema_type, negate, key,
-                                       val, xag)
+                                       val, xag, parent_type, parent_uuid)
 
         op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
         search_parm = "(%s%s'%s')" % (search_key, op, quote(str(val), safe=''))
         # Let this throw HttpError if the caller got it wrong
-        resp = adapter.read(cls.schema_type, suffix_type='search',
-                            suffix_parm=search_parm)
+        resp = cls._read_parent_or_child(adapter, cls.schema_type, parent_type,
+                                         parent_uuid, suffix_type='search',
+                                         suffix_parm=search_parm)
         return cls.wrap(resp)
 
     @classmethod
-    def _search_by_feed(cls, adapter, root_type, negate, key, val, xag):
+    def _search_by_feed(cls, adapter, target_type, negate, key, val, xag,
+                        parent_type, parent_uuid):
         if not hasattr(cls, key):
-            raise ValueError("Wrapper class %s does not support search key "
-                             "'%s'." % (cls.__name__, key))
-        feedwrap = cls.wrap(adapter.read(root_type, xag=xag))
+            raise ValueError(_("Wrapper class %(class)s does not support "
+                               "search key '%(key)s'.") %
+                             {'class': cls.__name__, 'key': key})
+        feedwrap = cls.wrap(cls._read_parent_or_child(adapter, target_type,
+                                                      parent_type, parent_uuid,
+                                                      xag=xag))
         retlist = []
         for entry in feedwrap:
             entval = getattr(entry, key, None)
@@ -621,6 +637,15 @@ class EntryWrapper(Wrapper):
             if include:
                 retlist.append(entry)
         return retlist
+
+    @staticmethod
+    def _read_parent_or_child(adapter, target_type, parent_type, parent_uuid,
+                              **kwargs):
+        if parent_type is not None:
+            return adapter.read(parent_type, root_id=parent_uuid,
+                                child_type=target_type, **kwargs)
+        else:
+            return adapter.read(target_type, **kwargs)
 
     def update(self, adapter, xag=None):
         """Performs adapter.update of this wrapper.
