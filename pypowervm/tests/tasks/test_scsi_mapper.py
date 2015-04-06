@@ -22,7 +22,6 @@ import unittest
 from pypowervm.tasks import scsi_mapper
 from pypowervm.tests.tasks import util as tju
 from pypowervm.wrappers import storage as pvm_stor
-from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
 
@@ -37,7 +36,7 @@ class TestSCSIMapper(unittest.TestCase):
         # Fake URI
         self.mock_crt_href_p = mock.patch('pypowervm.wrappers.'
                                           'virtual_io_server.'
-                                          'VSCSIMapping._crt_related_href')
+                                          'VSCSIMapping.crt_related_href')
         self.mock_crt_href = self.mock_crt_href_p.start()
         href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                 'c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/'
@@ -72,22 +71,23 @@ class TestSCSIMapper(unittest.TestCase):
 
         self.mock_adpt.update_by_path.side_effect = validate_update
 
-        # Create the new mapping
-        mapping = pvm_vios.VSCSIMapping.bld_to_pv(self.mock_adpt, 'host_uuid',
-                                                  'client_lpar_uuid',
-                                                  'disk_name')
+        # Create the new storage dev
+        pv = pvm_stor.PV.bld('pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'fake_vios_uuid',
-                                      mapping)
+        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'host_uuid', 'vios_uuid',
+                                      'lpar_uuid', pv)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.mock_adpt.update_by_path.call_count)
 
     def test_mapping_retry(self):
         """Tests that a mapping function will be retried."""
-        # Mock Data
-        self.mock_adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        # Mock Data.  Need to load this once per retry, or else the mappings
+        # get appended with each other.
+        self.mock_adpt.read.side_effect = [tju.load_file(VIO_MULTI_MAP_FILE),
+                                           tju.load_file(VIO_MULTI_MAP_FILE),
+                                           tju.load_file(VIO_MULTI_MAP_FILE)]
 
         global attempt_count
         attempt_count = 0
@@ -107,14 +107,12 @@ class TestSCSIMapper(unittest.TestCase):
 
         self.mock_adpt.update_by_path.side_effect = validate_update
 
-        # Create the new mapping
-        mapping = pvm_vios.VSCSIMapping.bld_to_pv(self.mock_adpt, 'host_uuid',
-                                                  'client_lpar_uuid',
-                                                  'disk_name')
+        # Create the new storage dev
+        pv = pvm_stor.PV.bld('pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'fake_vios_uuid',
-                                      mapping)
+        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'host_uuid', 'vios_uuid',
+                                      'lpar_uuid', pv)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(3, self.mock_adpt.update_by_path.call_count)
@@ -139,14 +137,12 @@ class TestSCSIMapper(unittest.TestCase):
 
         self.mock_adpt.update_by_path.side_effect = validate_update
 
-        # Create the new mapping
-        mapping = pvm_vios.VSCSIMapping.bld_to_pv(self.mock_adpt, 'host_uuid',
-                                                  'client_lpar_uuid',
-                                                  'disk_name')
+        # Create the new storage dev
+        pv = pvm_stor.PV.bld('pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'fake_vios_uuid',
-                                      mapping, fuse_limit=4)
+        scsi_mapper.add_vscsi_mapping(self.mock_adpt, 'host_uuid', 'vios_uuid',
+                                      'lpar_uuid', pv, fuse_limit=4)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.mock_adpt.update_by_path.call_count)
