@@ -471,7 +471,7 @@ class Adapter(object):
     def create(self, element, root_type, root_id=None, child_type=None,
                child_id=None, suffix_type=None, suffix_parm=None, detail=None,
                service='uom', content_service=None, timeout=-1,
-               auditmemento=None, xag=None, sensitive=False, helpers=None):
+               auditmemento=None, sensitive=False, helpers=None):
         """Create a new resource.
 
         Will build the URI path using the provided arguments.
@@ -480,7 +480,7 @@ class Adapter(object):
                        suffix_type, suffix_parm, detail)
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
-                               xag=xag)
+                               xag=[])
         return self.create_by_path(
             element, path, content_service=content_service, timeout=timeout,
             auditmemento=auditmemento, sensitive=sensitive, helpers=helpers)
@@ -504,7 +504,7 @@ class Adapter(object):
     def create_by_path(self, element, path, content_service=None, timeout=-1,
                        auditmemento=None, sensitive=False, helpers=None):
         """Create a new resource where the URI path is already known."""
-        path = util.sanitize_path(path)
+        path = util.dice_href(path)
         m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
@@ -659,7 +659,7 @@ class Adapter(object):
 
         # end _locked_refresh
 
-        path = util.sanitize_path(path)
+        path = util.dice_href(path)
         # First, test whether we should be pulling from cache, determined
         # by asking a) is there a cache? and b) is this path cacheable?
         is_cacheable = self._cache and not any(p in path for p in
@@ -749,7 +749,7 @@ class Adapter(object):
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
                        sensitive=False, helpers=None):
         """Update an existing resource where the URI path is already known."""
-        path = util.sanitize_path(path)
+        path = util.dice_href(path)
         try:
             resp = self._update_by_path(data, etag, path, timeout,
                                         auditmemento, sensitive,
@@ -847,7 +847,8 @@ class Adapter(object):
     def delete_by_path(self, path, etag=None, timeout=-1, auditmemento=None,
                        helpers=None):
         """Delete an existing resource where the URI path is already known."""
-        path = util.sanitize_path(path)
+        path = util.dice_href(path, include_query=False,
+                              include_fragment=False)
         try:
             resp = self._delete_by_path(path, etag, timeout, auditmemento,
                                         helpers=helpers)
@@ -1130,7 +1131,7 @@ class Adapter(object):
 
     def invalidate_cache_elem_by_path(self, path, invalidate_feeds=False):
         """Invalidates a cache entry where the URI path is already known."""
-        path = util.sanitize_path(path)
+        path = util.dice_href(path)
 
         if self._cache is not None:
             # need to invalidate this path in the cache
@@ -1361,7 +1362,7 @@ class _EventHandler(EventHandler):
                 if v == 'invalidate':
                     self.cache.clear()
             elif v in ['delete', 'invalidate']:
-                path = util.sanitize_path(urlparse.urlparse(k).path)
+                path = util.dice_href(k)
                 # remove from cache
                 self.cache.remove(path)
                 # if entry, remove corresponding feeds from cache

@@ -657,7 +657,7 @@ class EntryWrapper(Wrapper):
         """
         # adapter.update_by_path expects the path (e.g.
         # '/rest/api/uom/Object/UUID'), not the whole href.
-        path = util.path_from_href(self.href)
+        path = util.dice_href(self.href, include_fragment=False)
         # No-op if xag is empty/None
         path = adapter.extend_path(path, xag=xag)
         return self.wrap(adapter.update_by_path(self, self.etag, path))

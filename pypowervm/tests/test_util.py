@@ -143,21 +143,25 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(wrap2, util.find_wrapper(wraps, 'b'))
         self.assertIsNone(util.find_wrapper(wraps, 'c'))
 
-    def test_path_from_href(self):
-        href = 'https://server:1234/rest/api/uom/Obj/UUID?group=One,Two#frag'
-        self.assertEqual(util.path_from_href(href),
-                         '/rest/api/uom/Obj/UUID?group=One,Two')
-        self.assertEqual(util.path_from_href(href, include_query=True),
-                         '/rest/api/uom/Obj/UUID?group=One,Two')
-        self.assertEqual(util.path_from_href(href, include_fragment=False),
-                         '/rest/api/uom/Obj/UUID?group=One,Two')
-        self.assertEqual(util.path_from_href(href, include_query=False),
-                         '/rest/api/uom/Obj/UUID')
-        self.assertEqual(util.path_from_href(href, include_fragment=True),
+    def test_dice_href(self):
+        href = 'https://server:1234/rest/api/uom/Obj/UUID//?group=One,Two#frag'
+        self.assertEqual(util.dice_href(href),
                          '/rest/api/uom/Obj/UUID?group=One,Two#frag')
-        self.assertEqual(util.path_from_href(href, include_query=False,
-                                             include_fragment=True),
+        self.assertEqual(util.dice_href(href, include_query=True),
+                         '/rest/api/uom/Obj/UUID?group=One,Two#frag')
+        self.assertEqual(util.dice_href(href, include_fragment=False),
+                         '/rest/api/uom/Obj/UUID?group=One,Two')
+        self.assertEqual(util.dice_href(href, include_query=False),
                          '/rest/api/uom/Obj/UUID#frag')
+        self.assertEqual(util.dice_href(href, include_fragment=True),
+                         '/rest/api/uom/Obj/UUID?group=One,Two#frag')
+        self.assertEqual(util.dice_href(href, include_query=False,
+                                        include_fragment=True),
+                         '/rest/api/uom/Obj/UUID#frag')
+        self.assertEqual(util.dice_href(href, include_scheme_netloc=True,
+                                        include_query=False,
+                                        include_fragment=False),
+                         'https://server:1234/rest/api/uom/Obj/UUID')
 
     def test_get_req_path_uuid(self):
         # Fail: no '/'

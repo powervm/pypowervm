@@ -187,7 +187,7 @@ class TestAdapter(unittest.TestCase):
 
         # Verify Correct path was built in build_path()
         reqpath = adp.Adapter.build_path('uom', root_type, root_id,
-                                         child_type)
+                                         child_type, xag=[])
 
         # Verify the return value
         # self.assertIsInstance(ret_create_value, adp.Response)
@@ -322,7 +322,7 @@ class TestAdapter(unittest.TestCase):
         ret_delete_value = adapter.delete(root_type, root_id)
 
         # Verify Correct path was built in build_path()
-        reqpath = adp.Adapter.build_path('uom', root_type, root_id)
+        reqpath = adp.Adapter.build_path('uom', root_type, root_id, xag=[])
 
         # Verify the return value
         # self.assertIsInstance(ret_delete_value, adp.Response)

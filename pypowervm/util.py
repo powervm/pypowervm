@@ -38,18 +38,17 @@ LOG = logging.getLogger(__name__)
 _DELIM = '/'
 
 
-def sanitize_path(path):
-    # trim trailing '/' from path, if present
-    if path.endswith('/'):
-        path = path[:-1]
-    return path
-
-
-def path_from_href(href, include_query=True, include_fragment=False):
-    """Returns the path [and ?query [and #fragment]] component of a link.
+def dice_href(href, include_scheme_netloc=False, include_query=True,
+              include_fragment=True):
+    """Parse, sanitize, and reassemble an href.
 
     :param href: A full link string of the form
-                 '<scheme>://<netloc>/<path>;<params>?<query>#<fragment>'
+                 '<scheme>://<netloc>/<path>;<params>?<query>#<fragment>'.
+                 This method also works if the <scheme>://<netloc> is omitted,
+                 (but obviously include_scheme_netloc has no effect).
+    :param include_scheme_netloc: If True, the <scheme>://<netloc> portion is
+                                  included in the returned string.  If False,
+                                  it is stripped.
     :param include_query: If True, any ?<query> portion of the link will be
                           included in the return value.
     :param include_fragment: If True, any #<fragment> portion of the link will
@@ -57,7 +56,13 @@ def path_from_href(href, include_query=True, include_fragment=False):
     :return: A string representing the specified portion of the input link.
     """
     parsed = urlparse.urlparse(href)
-    ret = parsed.path
+    ret = ''
+    if include_scheme_netloc:
+        ret += parsed.scheme + '://' + parsed.netloc
+    ret += parsed.path
+    # trim trailing '/'s from path, if present
+    while ret.endswith('/'):
+        ret = ret[:-1]
     if include_query and parsed.query:
         ret += '?' + parsed.query
     if include_fragment and parsed.fragment:
@@ -165,7 +170,7 @@ def validate_certificate(host, port, certpath, certext):
 
 def get_req_path_uuid(path, preserve_case=False):
     """Extract request target uuid of sanitized path."""
-    p = path_from_href(path, include_query=False, include_fragment=False)
+    p = dice_href(path, include_query=False, include_fragment=False)
     if '/' in p:
         target_id = path.rsplit('/', 1)[1]
         uuid_match = re.match(const.UUID_REGEX, target_id)
