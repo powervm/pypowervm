@@ -32,6 +32,7 @@ CLUSTER = "cluster.txt"
 LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
+UPLOAD_VOL_GRP_FEED = 'upload_volgrp_feed.txt'
 UPLOADED_FILE = 'upload_file.txt'
 
 
@@ -63,13 +64,16 @@ class TestUploadLV(unittest.TestCase):
         """Tests the uploads of the virtual disks."""
 
         mock_create_file.return_value = self._fake_meta()
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_FEED)
+        mock_adpt.read.return_value = vg_orig
 
-        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                f_size=50)
+        v_opt, f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                       f_size=50)
 
         # Test that vopt was 'uploaded'
         mock_adpt.upload_file.assert_called_with(mock.ANY, None)
         self.assertIsNone(f_wrap)
+        self.assertIsNotNone(v_opt)
 
         # Ensure cleanup was called
         mock_adpt.delete.assert_called_once_with(
@@ -79,8 +83,10 @@ class TestUploadLV(unittest.TestCase):
         # Test cleanup failure
         mock_adpt.reset_mock()
         mock_adpt.delete.side_effect = exc.Error('Something bad')
-        f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
-                                f_size=50)
+        mock_adpt.read.return_value = vg_orig
+
+        vopt, f_wrap = ts.upload_vopt(mock_adpt, self.v_uuid, None, 'test2',
+                                      f_size=50)
 
         mock_adpt.delete.assert_called_once_with(
             'File', service='web',
