@@ -20,6 +20,7 @@ import mock
 
 import unittest
 
+import pypowervm.adapter as adpt
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.storage as pvm_stor
@@ -348,6 +349,15 @@ class TestViosMappings(twrap.TestWrapper):
         # Validate the Client Adapter
         self.assertIsNotNone(mapping.client_adapter)
         self.assertEqual(set(['AA', 'BB']), mapping.client_adapter.wwpns)
+
+    @mock.patch('pypowervm.adapter.Session')
+    def test_crt_related_href(self, mock_sess):
+        """Tests to make sure that related elements are well formed."""
+        mock_sess.dest = 'root'
+        adapter = adpt.Adapter(mock_sess)
+        href = vios.VStorageMapping.crt_related_href(adapter, 'host', 'lpar')
+        self.assertEqual('root/rest/api/uom/ManagedSystem/host/'
+                         'LogicalPartition/lpar', href)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):

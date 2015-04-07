@@ -293,7 +293,8 @@ class VStorageMapping(ewrap.ElementWrapper):
     def crt_related_href(adapter, host_uuid, client_lpar_uuid):
         """Creates the Element for the 'AssociatedLogicalPartition'."""
         return adapter.build_href(ms.System.schema_type, host_uuid,
-                                  lpar.LPAR.schema_type, client_lpar_uuid)
+                                  lpar.LPAR.schema_type, client_lpar_uuid,
+                                  xag=[])
 
     @property
     def client_lpar_href(self):
