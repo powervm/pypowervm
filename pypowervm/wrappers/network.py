@@ -47,6 +47,7 @@ _NB_EL_ORDER = (_NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS, _NB_PVID, NB_SEAS,
 
 _SEA_VIO_HREF = 'AssignedVirtualIOServer'
 _SEA_BACKING_DEV = 'BackingDeviceChoice'
+_SEA_ETH_BACK_DEV = 'EthernetBackingDevice'
 _SEA_HA_MODE = 'HighAvailabilityMode'
 _SEA_DEV_NAME = 'DeviceName'
 _SEA_JUMBO_FRAMES = 'JumboFramesEnabled'
@@ -65,7 +66,20 @@ _SEA_EL_ORDER = (_SEA_VIO_HREF, _SEA_BACKING_DEV, _SEA_HA_MODE,
                  _SEA_PRIMARY, _SEA_IP_INTERFACE, _SEA_DEV_ID,
                  _SEA_LARGE_SEND)
 
+_SEA_EBD_ADAPTER_ID = 'AdapterID'
+_SEA_EBD_DESCRIPTION = 'Description'
+_SEA_EBD_DEV_NAME = 'DeviceName'
+_SEA_EBD_DEV_TYPE = 'DeviceType'
+_SEA_EBD_DYN_CONN_NAME = 'DynamicReconfigurationConnectorName'
+_SEA_EBD_PHYS_LOC = 'PhysicalLocation'
+_SEA_EBD_UDID = 'UniqueDeviceID'
+_SEA_EBD_ORDER = (_SEA_EBD_ADAPTER_ID, _SEA_EBD_DESCRIPTION,
+                  _SEA_EBD_DEV_NAME, _SEA_EBD_DEV_TYPE,
+                  _SEA_EBD_DYN_CONN_NAME, _SEA_EBD_PHYS_LOC,
+                  _SEA_EBD_UDID)
+
 TA_ROOT = 'TrunkAdapter'
+_TA_AUTOGEN_VSLOT_NUM = 0
 _TA_CONN_NAME = 'DynamicReconfigurationConnectorName'
 _TA_LOC_CODE = 'LocationCode'
 _TA_REQUIRED = 'RequiredAdapter'
@@ -80,10 +94,11 @@ _TA_TAG_SUPP = 'TaggedVLANSupported'
 _TA_VS_ID = 'VirtualSwitchID'
 _TA_DEV_NAME = 'DeviceName'
 _TA_TRUNK_PRI = 'TrunkPriority'
+_TA_ASSOC_VSWITCH = 'AssociatedVirtualSwitch'
 _TA_EL_ORDER = (_TA_CONN_NAME, _TA_LOC_CODE, _TA_REQUIRED, _TA_VARIED_ON,
                 _TA_VIRTUAL_SLOT, _TA_ALLOWED_MAC, _TA_MAC, _TA_PVID,
-                _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP, _TA_VS_ID,
-                _TA_DEV_NAME, _TA_TRUNK_PRI)
+                _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP, _TA_ASSOC_VSWITCH,
+                _TA_VS_ID, _TA_DEV_NAME, _TA_TRUNK_PRI)
 
 _LG_PVID = 'PortVLANID'
 _LG_TRUNKS = 'TrunkAdapters'
@@ -190,8 +205,7 @@ class NetBridge(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, pvid, vios_to_backing_adpts, vlan_ids,
-            vswitch_id=VSW_DEFAULT_VSWITCH_ID):
+    def bld(cls, pvid, vios_to_backing_adpts, vlan_ids, vswitch):
         """Create the NetBridge entry that can be used for a create operation.
 
         This is used when creating a NetBridge.
@@ -204,7 +218,7 @@ class NetBridge(ewrap.EntryWrapper):
                                       required.
         :param vlan_ids: List of Additional VLAN ids for the trunk adapters.
                          Maximum of 20.
-        :param vswitch_id: Integer ID of the backing vswitch
+        :param vswitch: The vswitch wrapper to retrieve ID and href.
         :returns: A new NetBridge EntryWrapper that represents the new
                   NetBridge.
         """
@@ -230,7 +244,7 @@ class NetBridge(ewrap.EntryWrapper):
         nb._pvid(pvid)
 
         nb.seas = [SEA.bld(pvid, vios_adpt[0], vios_adpt[1],
-                           vlan_ids, vswitch_id)
+                           vlan_ids, vswitch)
                    for vios_adpt in vios_to_backing_adpts]
 
         return nb
@@ -390,24 +404,24 @@ class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
     @classmethod
-    def bld(cls, pvid, vios_href, adpt_name, vlan_ids,
-            vswitch_id=VSW_DEFAULT_VSWITCH_ID):
+    def bld(cls, pvid, vios_href, adpt_name, vlan_ids, vswitch):
         """Create the SEA entry that can be used for NetBridge creation.
 
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vios_href: The Assigned VIOS href.
-        :param adpt_name: Name of the trunk adapter behind the parent VIOS
+        :param adpt_name: Name of the trunk adapter backing the parent VIOS
                           of this SEA.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
-        :param vswitch_id: Integer ID of the backing vswitch
+        :param vswitch: The vswitch wrapper to retrieve ID and href.
         :returns: A new SEA ElementWrapper that represents the new SEA.
         """
         sea = super(SEA, cls)._bld()
         sea._pvid(pvid)
 
         sea._vio_uri(vios_href)
+        sea._backing_device(EthernetBackingDevice.bld(adpt_name))
 
-        sea._primary_adpt(TrunkAdapter.bld(pvid, adpt_name, vlan_ids))
+        sea._primary_adpt(TrunkAdapter.bld(pvid, vlan_ids, vswitch))
 
         return sea
 
@@ -469,22 +483,37 @@ class SEA(ewrap.ElementWrapper):
             trunks.append(TrunkAdapter.wrap(trunk_elem))
         return trunks
 
+    @property
+    def backing_device(self):
+        """The BackingDeviceChoice for this SEA."""
+        elem = self.element.find(_SEA_BACKING_DEV)
+        if elem is None:
+            return None
+        return ewrap.ElementWrapper.wrap(elem[0])
+
+    def _backing_device(self, eth_back_dev):
+        """The BackingDeviceChoice for this SEA.
+
+        :param eth_back_dev: The EthernetBackingDevice for this
+                             BackingDeviceChoice.
+        """
+        stor_elem = ent.Element(_SEA_BACKING_DEV, attrib={}, children=[])
+        stor_elem.inject(eth_back_dev.element)
+        self.inject(stor_elem)
+
 
 @ewrap.ElementWrapper.pvm_type('TrunkAdapter', child_order=_TA_EL_ORDER)
 class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
 
     @classmethod
-    def bld(cls, pvid, adpt_name, vlan_ids, trunk_pri=1,
-            vswitch_id=VSW_DEFAULT_VSWITCH_ID):
+    def bld(cls, pvid, vlan_ids, vswitch, trunk_pri=1):
         """Create the TrunkAdapter element that can be used for SEA creation.
 
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
-        :param adpt_name: Name of the trunk adapter behind the parent VIOS
-                          of this SEA.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
+        :param vswitch: The vswitch wrapper to retrieve ID and href.
         :param trunk_pri: Trunk priority of this adapter. Defaults to 1.
-        :param vswitch_id: Integer ID of the backing vswitch
         :returns: A new TrunkAdapter ElementWrapper that represents the new
                   TrunkAdapter.
         """
@@ -494,8 +523,14 @@ class TrunkAdapter(ewrap.ElementWrapper):
         ta.pvid = pvid
         ta.tagged_vlans = vlan_ids
         ta.has_tag_support = True if vlan_ids else False
-        ta._vswitch_id(vswitch_id)
+        ta._vswitch_id(vswitch.switch_id)
         ta._trunk_pri(trunk_pri)
+        # TODO(IBM): This is a bug. We should not require a
+        #            virtual slot number to be specified. -1
+        #            indicates to the server that we want an
+        #            automatically generated vslot_number
+        ta._virtual_slot_number(_TA_AUTOGEN_VSLOT_NUM)
+        ta._associated_vswitch_uri(vswitch.href)
 
         return ta
 
@@ -566,6 +601,23 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
     def _required(self, value):
         self.set_parm_value(_TA_REQUIRED, u.sanitize_bool_for_api(value))
+
+    @property
+    def virtual_slot_number(self):
+        """Returns the virtual slot number for this adapter."""
+        return self._get_val_int(_TA_VIRTUAL_SLOT)
+
+    def _virtual_slot_number(self, value):
+        self.set_parm_value(_TA_VIRTUAL_SLOT, value)
+
+    @property
+    def associated_vswitch_uri(self):
+        """Returns the associated vswitch href."""
+        return self.get_href(u.xpath(_TA_ASSOC_VSWITCH, c.LINK),
+                             one_result=True)
+
+    def _associated_vswitch_uri(self, href):
+        self.set_href(u.xpath(_TA_ASSOC_VSWITCH, c.LINK), href)
 
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
@@ -872,3 +924,39 @@ class CNA(ewrap.EntryWrapper):
     @vswitch_uri.setter
     def vswitch_uri(self, new_val):
         self.set_href(u.xpath(_VADPT_VSWITCH, c.LINK), new_val)
+
+
+@ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
+                               child_order=_SEA_EBD_ORDER)
+class EthernetBackingDevice(ewrap.ElementWrapper):
+    """Represents the SEA EthernetBackingDevice."""
+
+    @classmethod
+    def bld(cls, dev_name):
+        """Creates the EthernetBackingDevice element.
+
+        :param dev_name: The device name (e.g. eth0).
+        :returns: The EthernetBackingDevice element for SEAs.
+        """
+        cfg = super(EthernetBackingDevice, cls)._bld()
+        cfg._dev_name(dev_name)
+
+        # TODO(IBM) remove this once the schema no longer requires it.
+        cfg._adapter_id(1)
+
+        return cfg
+
+    @property
+    def dev_name(self):
+        return self._get_val_str(_SEA_DEV_NAME)
+
+    def _dev_name(self, dev_name):
+        self.set_parm_value(_SEA_DEV_NAME, str(dev_name))
+
+    @property
+    def adapter_id(self):
+        return self._get_val_int(_SEA_EBD_ADAPTER_ID)
+
+    def _adapter_id(self, value):
+        # TODO(IBM) remove this once the schema no longer requires it.
+        return self.set_parm_value(_SEA_EBD_ADAPTER_ID, value)
