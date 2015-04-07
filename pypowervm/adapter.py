@@ -73,6 +73,11 @@ class Session(object):
         self.username = username
         self.password = password
 
+        # TODO(IBM) This flag should get set as part of the logon request.
+        # Indicates if the API is communicating with an HMC or another mgmt
+        # point.
+        self.is_hmc = True
+
         audmem = auditmemento
         if not audmem:
             # Assume 'default' unless we can calculate the proper default
@@ -445,6 +450,11 @@ class Adapter(object):
             return helpers
         else:
             return [helpers]
+
+    @property
+    def is_hmc(self):
+        """Returns whether or not an HMC is backing the PowerVM API."""
+        return self.session.is_hmc
 
     def _request(self, method, path, helpers=None, **kwds):
         """Common request method.

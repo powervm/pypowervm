@@ -77,7 +77,10 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
                               'system.') % vswitch)
 
     # Find the virtual network.  Ensures that the system is ready for this.
-    _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w, vswitch_w.href)
+    # This is only needed if the API is running against an HMC.
+    if adapter.is_hmc:
+        _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w,
+                             vswitch_w.href)
 
     # Build and create the CNA
     net_adpt = network.CNA.bld(
