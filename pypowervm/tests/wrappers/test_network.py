@@ -150,8 +150,10 @@ class TestNetwork(twrap.TestWrapper):
 
     def test_crt_net_bridge(self):
         # Create mocked data
-        pvid = 1
-        nb = net.NetBridge.bld(pvid, [('127.0.0.1', 'ent0')], [1, 2, 3])
+        nb = net.NetBridge.bld(pvid=1,
+                               vios_to_backing_adpts=[('127.0.0.1', 'ent0')],
+                               vlan_ids=[1, 2, 3],
+                               vswitch_href='127.0.0.1')
 
         self.assertIsNotNone(nb)
         self.assertEqual(1, nb.pvid)
@@ -164,6 +166,9 @@ class TestNetwork(twrap.TestWrapper):
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
         self.assertEqual('127.0.0.1', sea.vio_uri)
+        self.assertEqual(net._SEA_DEFAULT_EBD_DEV_NAME,
+                         sea.backing_device.eth_backing_device.dev_name)
+
         ta = sea.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
@@ -171,15 +176,21 @@ class TestNetwork(twrap.TestWrapper):
         self.assertTrue(ta.has_tag_support)
         self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual('127.0.0.1', ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_DEFAULT_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_sea(self):
         # Create mocked data
-        pvid = 1
-        sea = net.SEA.bld(pvid, '127.0.0.1', 'ent0', [1, 2, 3])
+        sea = net.SEA.bld(pvid=1, vios_href='127.0.0.1',
+                          adpt_name='ent0', vlan_ids=[1, 2, 3],
+                          vswitch_href='127.0.0.1')
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
         self.assertEqual('127.0.0.1', sea.vio_uri)
+        self.assertEqual(net._SEA_DEFAULT_EBD_DEV_NAME,
+                         sea.backing_device.eth_backing_device.dev_name)
+
         ta = sea.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
@@ -187,11 +198,15 @@ class TestNetwork(twrap.TestWrapper):
         self.assertTrue(ta.has_tag_support)
         self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual('127.0.0.1', ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_DEFAULT_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_trunk_adapter(self):
         # Create mocked data
-        pvid = 1
-        ta = net.TrunkAdapter.bld(pvid, ['ent0'], [1, 2, 3])
+        ta = net.TrunkAdapter.bld(pvid=1,
+                                  adpt_name='ent0',
+                                  vlan_ids=[1, 2, 3],
+                                  vswitch_href='127.0.0.1')
 
         self.assertIsNotNone(ta)
         self.assertTrue(ta._required)
@@ -200,6 +215,8 @@ class TestNetwork(twrap.TestWrapper):
         self.assertTrue(ta.has_tag_support)
         self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual('127.0.0.1', ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_DEFAULT_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_load_group(self):
         # Create my mocked data
