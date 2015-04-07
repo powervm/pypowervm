@@ -197,6 +197,36 @@ class TestLPARBuilder(unittest.TestCase):
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)
 
+        # Ensure the calculated procs are not below the min
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    min_proc_units=3)
+        bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        procs = new_lpar.proc_config.shared_proc_cfg
+        self.assertEqual(3.0, procs.min_proc_units)
+
+        # Ensure the calculated procs are below the max
+        attr = dict(name='lpar', memory=2048,
+                    env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,
+                    max_proc_units=2.1)
+        stdz = lpar_bldr.DefaultStandardize(
+            self.mngd_sys, proc_units_factor=0.9)
+        bldr = lpar_bldr.LPARBuilder(attr, stdz)
+        new_lpar = bldr.build()
+        procs = new_lpar.proc_config.shared_proc_cfg
+        self.assertEqual(2.1, procs.max_proc_units)
+
+        # Ensure proc units factor is between 0.1 and 1.0
+        self.assertRaises(
+            lpar_bldr.LPARBuilderException,
+            lpar_bldr.DefaultStandardize,
+            self.mngd_sys, proc_units_factor=1.01)
+        self.assertRaises(
+            lpar_bldr.LPARBuilderException,
+            lpar_bldr.DefaultStandardize,
+            self.mngd_sys, proc_units_factor=0.01)
+
         # Avail priority outside max
         attr = dict(name='lpar', memory=2048,
                     env=lpar.LPARTypeEnum.AIXLINUX, vcpu=3,

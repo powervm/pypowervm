@@ -161,6 +161,10 @@ class DefaultStandardize(Standardize):
         super(DefaultStandardize, self).__init__()
         self.mngd_sys = mngd_sys
         self.proc_units_factor = proc_units_factor
+        if proc_units_factor > 1 or proc_units_factor < 0.05:
+            msg = _LE('Processor units factor must be between 0.05 and 1.0. '
+                      'Value: %s') % proc_units_factor
+            raise LPARBuilderException(msg)
         self.max_slots = max_slots
         self.uncapped_weight = uncapped_weight
         self.spp = spp
@@ -257,6 +261,15 @@ class DefaultStandardize(Standardize):
         return attr
 
     def shr_proc(self):
+        def _compare(prop, value, compare_func, typ):
+            v1 = self.attr.get(prop)
+            # Ensure the property is specified
+            if v1 is None:
+                return value
+
+            # Compare
+            return compare_func(typ(v1), value)
+
         # Validate the partial settings
         self._validate_shared_proc(partial=True)
 
@@ -264,7 +277,20 @@ class DefaultStandardize(Standardize):
         self._set_prop(attr, MAX_VCPU, VCPU)
         self._set_prop(attr, MIN_VCPU, VCPU)
 
-        proc_units = int(attr[VCPU]) * self.proc_units_factor
+        # See if we need to calculate a default proc_units value and min/max
+        # Before setting the proc units ensure it's between min/max
+        spec_proc_units = attr.get(PROC_UNITS)
+        if spec_proc_units is None:
+            proc_units = int(attr[VCPU]) * self.proc_units_factor
+
+            # Ensure it's at least as large as a specified min value
+            proc_units = _compare(MIN_PROC_U, proc_units, max, float)
+
+            # Ensure it's smaller than a specified max value
+            proc_units = _compare(MAX_PROC_U, proc_units, min, float)
+        else:
+            proc_units = float(spec_proc_units)
+
         self._set_val(attr, PROC_UNITS, proc_units)
         self._set_val(attr, MIN_PROC_U, proc_units)
         self._set_val(attr, MAX_PROC_U, proc_units)
