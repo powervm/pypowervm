@@ -18,6 +18,7 @@ import copy
 import unittest
 
 import pypowervm.const as pc
+import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net
 
@@ -153,57 +154,99 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual('http', uri_list[0][:4])
 
     def test_crt_net_bridge(self):
+        vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
+
+        vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
+
+        if self.resp.feed:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
+        else:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+
         # Create mocked data
-        pvid = 1
-        nb = net.NetBridge.bld(pvid, [('127.0.0.1', 'ent0')], [1, 2, 3])
+        nb = net.NetBridge.bld(pvid=1,
+                               vios_to_backing_adpts=[('127.0.0.1', 'ent0')],
+                               vlan_ids=[1, 2, 3],
+                               vswitch=vsw_wrap)
 
         self.assertIsNotNone(nb)
         self.assertEqual(1, nb.pvid)
         self.assertEqual(1, len(nb.seas))
         self.assertEqual(0, len(nb.load_grps))
-        self.assertEqual(3, len(nb.seas[0]._get_trunks()[0].tagged_vlans))
 
         sea = nb.seas[0]
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
         self.assertEqual('127.0.0.1', sea.vio_uri)
+        self.assertEqual('ent0',
+                         sea.backing_device.dev_name)
+
         ta = sea.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
         self.assertEqual([1, 2, 3], ta.tagged_vlans)
         self.assertTrue(ta.has_tag_support)
-        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_AUTOGEN_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_sea(self):
+        vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
+
+        vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
+
+        if self.resp.feed:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
+        else:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+
         # Create mocked data
-        pvid = 1
-        sea = net.SEA.bld(pvid, '127.0.0.1', 'ent0', [1, 2, 3])
+        sea = net.SEA.bld(pvid=1, vios_href='127.0.0.1',
+                          adpt_name='ent0', vlan_ids=[1, 2, 3],
+                          vswitch=vsw_wrap)
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
         self.assertEqual('127.0.0.1', sea.vio_uri)
+        self.assertEqual('ent0',
+                         sea.backing_device.dev_name)
+
         ta = sea.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
         self.assertEqual([1, 2, 3], ta.tagged_vlans)
         self.assertTrue(ta.has_tag_support)
-        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_AUTOGEN_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_trunk_adapter(self):
+        vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
+
+        vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
+
+        if self.resp.feed:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
+        else:
+            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+
         # Create mocked data
-        pvid = 1
-        ta = net.TrunkAdapter.bld(pvid, ['ent0'], [1, 2, 3])
+        ta = net.TrunkAdapter.bld(pvid=1,
+                                  vlan_ids=[1, 2, 3],
+                                  vswitch=vsw_wrap)
 
         self.assertIsNotNone(ta)
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
         self.assertEqual([1, 2, 3], ta.tagged_vlans)
         self.assertTrue(ta.has_tag_support)
-        self.assertEqual(net.VSW_DEFAULT_VSWITCH_ID, ta.vswitch_id)
+        self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
+        self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
+        self.assertEqual(net._TA_AUTOGEN_VSLOT_NUM, ta.virtual_slot_number)
 
     def test_crt_load_group(self):
         # Create my mocked data
