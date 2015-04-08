@@ -88,8 +88,12 @@ class TestVSwitch(twrap.TestWrapper):
         self.assertEqual('Veb', self.dwrap.mode)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                          '4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/'
-                         '4d9735ae-feaf-32c2-a1bc-102026df9168',
+                         '4d9735ae-feaf-32c2-a1bc-102026df9168?group=None',
                          self.dwrap.href)
+        self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+                         '4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/'
+                         '4d9735ae-feaf-32c2-a1bc-102026df9168',
+                         self.dwrap.related_href)
 
     def test_wrapper_class(self):
         self.assertEqual(net.VSwitch.schema_type, 'VirtualSwitch')

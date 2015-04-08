@@ -89,7 +89,7 @@ class TestNetworkBridger(unittest.TestCase):
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_vnet = mock.MagicMock()
-        mock_vnet.href = 'fake_href'
+        mock_vnet.related_href = 'fake_href'
         mock_find_vnet.return_value = mock_vnet
 
         def validate_of_update_nb(*kargs, **kwargs):
@@ -124,7 +124,7 @@ class TestNetworkBridger(unittest.TestCase):
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_vnet = mock.MagicMock()
-        mock_vnet.href = 'fake_href'
+        mock_vnet.related_href = 'fake_href'
         mock_find_vnet.return_value = mock_vnet
 
         def validate_of_update_nb(*kargs, **kwargs):
@@ -161,9 +161,9 @@ class TestNetworkBridger(unittest.TestCase):
 
         # Make the fake virtual networks (the new, then the arb vid)
         mock_vnet = mock.MagicMock()
-        mock_vnet.href = 'fake_href'
+        mock_vnet.related_href = 'fake_href'
         mock_vnet_avid = mock.MagicMock()
-        mock_vnet_avid.href = 'fake_avid_href'
+        mock_vnet_avid.related_href = 'fake_avid_href'
         mock_find_vnet.side_effect = [mock_vnet, mock_vnet_avid]
 
         def validate_of_update_nb(*kargs, **kwargs):
@@ -253,7 +253,7 @@ class TestNetworkBridger(unittest.TestCase):
         mock_vsw.return_value = vsw
 
         mock_find_vnet.return_value = mock.MagicMock()
-        mock_find_vnet.return_value.href = 'other'
+        mock_find_vnet.return_value.related_href = 'other'
 
         # Make this function return itself.
         def return_self(*kargs, **kwargs):

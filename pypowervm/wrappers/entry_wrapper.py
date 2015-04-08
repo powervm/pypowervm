@@ -684,6 +684,18 @@ class EntryWrapper(Wrapper):
             return None
 
     @property
+    def related_href(self):
+        """Returns the URI to be used for references in other elements.
+
+        This will return a root URI (no extended attributes, no fragments).
+        This should be used as needed to support entries/elements that have
+        relationships to others.
+        """
+        temp_href = self.href
+        return util.dice_href(temp_href, include_scheme_netloc=True,
+                              include_query=False, include_fragment=False)
+
+    @property
     def uuid(self):
         """Returns the uuid of the entry."""
         if self.entry is None:

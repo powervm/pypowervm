@@ -16,14 +16,14 @@ BODY{
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
     <id>b9eb81ac-a98d-3b65-a055-431219689198</id>
     <updated>2015-01-20T00:11:02.465Z</updated>
-    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch"/>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch?group=None"/>
     <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
     <generator>IBM Power Systems Management Console</generator>
     <entry>
         <id>4d9735ae-feaf-32c2-a1bc-102026df9168</id>
         <title>VirtualSwitch</title>
         <published>2015-01-20T00:11:02.740Z</published>
-        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/4d9735ae-feaf-32c2-a1bc-102026df9168"/>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/4abca7ff-3710-3160-b9e4-cb4456c33f43/VirtualSwitch/4d9735ae-feaf-32c2-a1bc-102026df9168?group=None"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>
