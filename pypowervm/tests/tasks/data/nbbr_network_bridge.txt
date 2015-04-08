@@ -17,14 +17,14 @@ BODY{
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
     <id>0ad02639-3eb2-3c5b-807a-e933548d556a</id>
     <updated>2015-02-17T23:02:20.911Z</updated>
-    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge"/>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge?group=None"/>
     <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
     <generator>IBM Power Systems Management Console</generator>
     <entry>
         <id>b6a027a8-5c0b-3ac0-8547-b516f5ba6151</id>
         <title>NetworkBridge</title>
         <published>2015-02-17T23:02:21.590Z</published>
-        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge/b6a027a8-5c0b-3ac0-8547-b516f5ba6151"/>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge/b6a027a8-5c0b-3ac0-8547-b516f5ba6151?group=None"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>

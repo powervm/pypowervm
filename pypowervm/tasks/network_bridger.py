@@ -118,14 +118,14 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
                                             vswitch_w, tagged=False)
 
             # Now create the new load group...
-            vnet_uris = [arb_vnet.href, vid_vnet.href]
+            vnet_uris = [arb_vnet.related_href, vid_vnet.related_href]
             ld_grp = pvm_net.LoadGroup.bld(arb_vid, vnet_uris)
 
             # Append to network bridge...
             req_nb.load_grps.append(ld_grp)
         else:
             # There was a Load Group.  Just need to append this vnet to it.
-            ld_grp.virtual_network_uri_list.append(vid_vnet.href)
+            ld_grp.virtual_network_uri_list.append(vid_vnet.related_href)
 
     # At this point, the network bridge should just need to be updated.  The
     # Load Groups on the Network Bridge should be correct.
@@ -204,7 +204,7 @@ def _find_or_create_vnet(adapter, host_uuid, vnets, vlan, vswitch,
     # Could not find one.  Time to create it.
     name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                         'vswitch': vswitch.name}
-    vnet_elem = pvm_net.VNet.bld(name, vlan, vswitch.href, tagged)
+    vnet_elem = pvm_net.VNet.bld(name, vlan, vswitch.related_href, tagged)
     resp = adapter.create(
         vnet_elem, pvm_ms.System.schema_type, root_id=host_uuid,
         child_type=pvm_net.VNet.schema_type)
@@ -299,7 +299,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
     uris = copy.copy(impacted_lg.virtual_network_uri_list)
     if old_uri is not None:
         uris.remove(old_uri)
-    uris.insert(0, new_vnet.href)
+    uris.insert(0, new_vnet.related_href)
     new_lg_w = pvm_net.LoadGroup.bld(new_vid, uris)
 
     impacted_nb.load_grps.remove(impacted_lg)
@@ -416,5 +416,5 @@ def _find_vnet_uri_from_lg(adapter, lg, vlan):
         vnet_resp = adapter.read_by_href(vnet_uri)
         vnet_net = pvm_net.VNet.wrap(vnet_resp)
         if vnet_net.vlan == vlan:
-            return vnet_net.href
+            return vnet_net.related_href
     return None

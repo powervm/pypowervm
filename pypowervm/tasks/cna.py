@@ -80,11 +80,11 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     # This is only needed if the API is running against an HMC.
     if adapter.is_hmc:
         _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w,
-                             vswitch_w.href)
+                             vswitch_w.related_href)
 
     # Build and create the CNA
     net_adpt = network.CNA.bld(
-        pvid, vswitch_w.href, slot_num=slot_num, mac_addr=mac_addr,
+        pvid, vswitch_w.related_href, slot_num=slot_num, mac_addr=mac_addr,
         addl_tagged_vlans=addl_tagged_vlans)
     resp = adapter.create(net_adpt, lpar.LPAR.schema_type, root_id=lpar_uuid,
                           child_type=network.CNA.schema_type)
