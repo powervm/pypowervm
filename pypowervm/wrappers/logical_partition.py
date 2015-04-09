@@ -58,6 +58,7 @@ _LPAR_ID = 'PartitionID'
 _LPAR_TYPE = 'PartitionType'
 _LPAR_STATE = 'PartitionState'
 
+_LPAR_ASSOCIATED_SYSTEM = 'AssociatedManagedSystem'
 _LPAR_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _LPAR_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _LPAR_CNA = 'ClientNetworkAdapters'
@@ -135,6 +136,7 @@ _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = (_AVAIL_PRIORITY, _LPAR_IO_CFG, _LPAR_MEM_CFG, _LPAR_NAME,
                   _LPAR_PROC_CFG, _LPAR_TYPE, _PENDING_PROC_MODE,
+                  _LPAR_ASSOCIATED_SYSTEM,
                   _LPAR_SRIOV_ETH, _LPAR_SRIOV_FC_ETH, _LPAR_CNA,
                   _LPAR_HOST_ETH, _LPAR_ASSOCIATED_GROUPS,
                   _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
@@ -239,6 +241,12 @@ class LPAR(ewrap.EntryWrapper):
 
     def _env(self, val):
         self.set_parm_value(_LPAR_TYPE, val)
+
+    @property
+    def assoc_sys_uuid(self):
+        """UUID of the associated ManagedSystem."""
+        href = self.get_href(_LPAR_ASSOCIATED_SYSTEM, one_result=True)
+        return u.get_req_path_uuid(href, preserve_case=True) if href else None
 
     @property
     def current_mem(self):

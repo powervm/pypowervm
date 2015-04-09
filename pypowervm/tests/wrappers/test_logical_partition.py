@@ -45,7 +45,7 @@ EXPECTED_SRR = True
 EXPECTED_CURR_PROC_COMPAT_MODE = 'POWER6_Plus'
 EXPECTED_PENDING_PROC_COMPAT_MODE = 'default'
 EXPECTED_OPERATING_SYSTEM_VER = 'Linux/Red Hat 2.6.32-358.el6.ppc64 6.4'
-
+EXPECTED_ASSOC_SYSTEM_UUID = 'a168a3ec-bb3e-3ead-86c1-7d98b9d50239'
 EXPECTED_CURRENT_SHARE_MODE = "uncapped"
 EXPECTED_LPAR_STATE = "not activated"
 ZERO_STR = '0'
@@ -339,6 +339,10 @@ class TestLogicalPartition(unittest.TestCase):
 
     def test_io_config(self):
         self.assertIsNotNone(TestLogicalPartition._dedicated_wrapper.io_config)
+
+    def test_associated_managed_system_uuid(self):
+        self.call_simple_getter("assoc_sys_uuid", EXPECTED_ASSOC_SYSTEM_UUID,
+                                None)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):
