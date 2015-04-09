@@ -133,6 +133,7 @@ class System(ewrap.EntryWrapper):
 
     @property
     def proc_units(self):
+        '''Proc units property'''
         return self._get_val_str(_PROC_UNITS_INSTALLED, 0)
 
     @property
