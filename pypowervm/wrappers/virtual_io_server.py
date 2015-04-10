@@ -23,6 +23,7 @@ import six
 
 import pypowervm.entities as ent
 import pypowervm.util as u
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
@@ -40,9 +41,6 @@ _LOCATION_CODE = 'LocationCode'
 _VIO_VFC_MAPPINGS = 'VirtualFibreChannelMappings'
 _VIO_SCSI_MAPPINGS = 'VirtualSCSIMappings'
 _VIO_LICENSE = 'VirtualIOServerLicenseAccepted'
-_VIO_PARTITION_NAME = 'PartitionName'
-_VIO_PARTITION_ID = 'PartitionID'
-_VIO_PARTITION_STATE = 'PartitionState'
 _MOVER_SERVICE_PARTITION = 'MoverServicePartition'
 
 # Mapping Constants
@@ -56,39 +54,13 @@ _MAP_ORDER = (_MAP_CLIENT_LPAR, _MAP_CLIENT_ADAPTER, _MAP_SERVER_ADAPTER,
 
 
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer')
-class VIOS(ewrap.EntryWrapper):
-
-    search_keys = dict(name='PartitionName', id='PartitionID')
+class VIOS(bp.BasePartition):
 
     # Extended Attribute Groups
     xags = ent.XAGEnum(NETWORK='ViosNetwork',
                        STORAGE='ViosStorage',
                        SCSI_MAPPING='ViosSCSIMapping',
                        FC_MAPPING='ViosFCMapping')
-
-    @property
-    def name(self):
-        return self._get_val_str(_VIO_PARTITION_NAME)
-
-    @property
-    def partition_id(self):
-        return int(self._get_val_str(_VIO_PARTITION_ID, wc.ZERO))
-
-    @property
-    def state(self):
-        return self._get_val_str(_VIO_PARTITION_STATE)
-
-    @property
-    def is_running(self):
-        return self.state == 'running'
-
-    @property
-    def rmc_state(self):
-        return self._get_val_str(wc.RMC_STATE)
-
-    @property
-    def is_rmc_active(self):
-        return self.rmc_state == 'active'
 
     @property
     def media_repository(self):
@@ -106,24 +78,24 @@ class VIOS(ewrap.EntryWrapper):
 
     def get_pfc_wwpns(self):
         """Returns a set of the Physical FC Adapter WWPNs on this VIOS."""
-        path = u.xpath(lpar.IO_CFG_ROOT, lpar.IO_SLOTS_ROOT,
-                       lpar.IO_SLOT_ROOT, lpar.ASSOC_IO_SLOT_ROOT,
-                       lpar.RELATED_IO_ADPT_ROOT, lpar.IO_PFC_ADPT_ROOT,
-                       lpar.PFC_PORTS_ROOT, lpar.PFC_PORT_ROOT,
-                       lpar.PFC_PORT_WWPN)
+        path = u.xpath(bp.IO_CFG_ROOT, bp.IO_SLOTS_ROOT,
+                       bp.IO_SLOT_ROOT, bp.ASSOC_IO_SLOT_ROOT,
+                       bp.RELATED_IO_ADPT_ROOT, bp.IO_PFC_ADPT_ROOT,
+                       bp.PFC_PORTS_ROOT, bp.PFC_PORT_ROOT,
+                       bp.PFC_PORT_WWPN)
         return set(self._get_vals(path))
 
     @property
     def pfc_ports(self):
         """The physical Fibre Channel ports assigned to the VIOS."""
-        path = u.xpath(lpar.IO_CFG_ROOT, lpar.IO_SLOTS_ROOT,
-                       lpar.IO_SLOT_ROOT, lpar.ASSOC_IO_SLOT_ROOT,
-                       lpar.RELATED_IO_ADPT_ROOT, lpar.IO_PFC_ADPT_ROOT,
-                       lpar.PFC_PORTS_ROOT, lpar.PFC_PORT_ROOT)
+        path = u.xpath(bp.IO_CFG_ROOT, bp.IO_SLOTS_ROOT,
+                       bp.IO_SLOT_ROOT, bp.ASSOC_IO_SLOT_ROOT,
+                       bp.RELATED_IO_ADPT_ROOT, bp.IO_PFC_ADPT_ROOT,
+                       bp.PFC_PORTS_ROOT, bp.PFC_PORT_ROOT)
         elems = self._find(path, use_find_all=True)
         resp = []
         for elem in elems:
-            resp.append(lpar.PhysFCPort.wrap(elem))
+            resp.append(bp.PhysFCPort.wrap(elem))
         return resp
 
     @property
@@ -170,23 +142,6 @@ class VIOS(ewrap.EntryWrapper):
                     break
 
         return name
-
-    @property
-    def current_mem(self):
-        return self._get_val_str(wc.CURR_MEM, wc.ZERO)
-
-    @property
-    def current_proc_mode(self):
-        # Returns true if dedicated or false if shared
-        return self._get_val_bool(wc.CURR_USE_DED_PROCS)
-
-    @property
-    def current_procs(self):
-        return self._get_val_str(wc.CURR_PROCS, wc.ZERO)
-
-    @property
-    def current_proc_units(self):
-        return self._get_val_str(wc.CURR_PROC_UNITS, wc.ZERO)
 
     @property
     def is_mover_service_partition(self):
@@ -257,12 +212,6 @@ class VIOS(ewrap.EntryWrapper):
             self._find_or_seed(net.SEA_TRUNKS, attrib=def_attrib),
             net.TrunkAdapter)
         return es
-
-    @property
-    def io_config(self):
-        """The Partition I/O Configuration for the VIOS."""
-        elem = self.element.find(lpar.IO_CFG_ROOT)
-        return lpar.PartitionIOConfiguration.wrap(elem)
 
     def derive_orphan_trunk_adapters(self):
         """Builds a list of trunk adapters not attached to a SEA."""
@@ -458,7 +407,7 @@ class VFCMapping(VStorageMapping):
 
         # Create the backing port and change label.  API requires it be
         # Port, even though it is a Physical FC Port
-        backing_port = lpar.PhysFCPort.bld_ref(backing_phy_port)
+        backing_port = bp.PhysFCPort.bld_ref(backing_phy_port)
         backing_port.element.tag = 'Port'
         s_map._backing_port(backing_port)
 
@@ -479,5 +428,5 @@ class VFCMapping(VStorageMapping):
         """
         elem = self.element.find(_MAP_PORT)
         if elem is not None:
-            return lpar.PhysFCPort.wrap(elem)
+            return bp.PhysFCPort.wrap(elem)
         return None

@@ -20,74 +20,8 @@ LINK = 'link'
 # Types
 MGT_CONSOLE = 'ManagementConsole'
 
-# XPath components shared by LPAR and VIOS
-LPAR_MEM_CONFIG = 'PartitionMemoryConfiguration'
-LPAR_PROC_CONFIG = 'PartitionProcessorConfiguration'
-
-# procs
-CURR_USE_DED_PROCS = LPAR_PROC_CONFIG + DELIM + 'CurrentHasDedicatedProcessors'
-USE_DED_PROCS = LPAR_PROC_CONFIG + DELIM + 'HasDedicatedProcessors'
-DED_PROC_CONFIG = (
-    LPAR_PROC_CONFIG + DELIM + 'DedicatedProcessorConfiguration')
-CURR_DED_PROC_CONFIG = (
-    LPAR_PROC_CONFIG + DELIM + 'CurrentDedicatedProcessorConfiguration')
-SHARED_PROC_CONFIG = (
-    LPAR_PROC_CONFIG + DELIM + 'SharedProcessorConfiguration')
-CURR_SHARED_PROC_CONFIG = (
-    LPAR_PROC_CONFIG + DELIM + 'CurrentSharedProcessorConfiguration')
-CURR_SHARING_MODE = LPAR_PROC_CONFIG + DELIM + 'CurrentSharingMode'
-SHARING_MODE = LPAR_PROC_CONFIG + DELIM + 'SharingMode'
-
-# dedicated proc
-CURR_PROCS = CURR_DED_PROC_CONFIG + DELIM + 'CurrentProcessors'
-CURR_MAX_PROCS = CURR_DED_PROC_CONFIG + DELIM + 'CurrentMaximumProcessors'
-CURR_MIN_PROCS = CURR_DED_PROC_CONFIG + DELIM + 'CurrentMinimumProcessors'
-
-RUN_PROCS = CURR_DED_PROC_CONFIG + DELIM + 'RunProcessors'
-
-DES_PROCS = DED_PROC_CONFIG + DELIM + 'DesiredProcessors'
-DES_MAX_PROCS = DED_PROC_CONFIG + DELIM + 'MaximumProcessors'
-DES_MIN_PROCS = DED_PROC_CONFIG + DELIM + 'MinimumProcessors'
-
-# shared proc
-CURR_VCPU = CURR_SHARED_PROC_CONFIG + DELIM + 'AllocatedVirtualProcessors'
-CURR_MAX_VCPU = (
-    CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMaximumVirtualProcessors')
-CURR_MIN_VCPU = (
-    CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMinimumVirtualProcessors')
-
-RUN_VCPU = CURR_SHARED_PROC_CONFIG + DELIM + 'AllocatedVirtualProcessors'
-
-DES_VCPU = SHARED_PROC_CONFIG + DELIM + 'DesiredVirtualProcessors'
-DES_MAX_VCPU = SHARED_PROC_CONFIG + DELIM + 'MaximumVirtualProcessors'
-DES_MIN_VCPU = SHARED_PROC_CONFIG + DELIM + 'MinimumVirtualProcessors'
-CURR_PROC_UNITS = CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentProcessingUnits'
-CURR_MAX_PROC_UNITS = (
-    CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMaximumProcessingUnits')
-CURR_MIN_PROC_UNITS = (
-    CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentMinimumProcessingUnits')
-DES_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'DesiredProcessingUnits'
-MAX_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'MaximumProcessingUnits'
-MIN_PROC_UNITS = SHARED_PROC_CONFIG + DELIM + 'MinimumProcessingUnits'
-CURR_UNCAPPED_WEIGHT = (
-    CURR_SHARED_PROC_CONFIG + DELIM + 'CurrentUncappedWeight')
-UNCAPPED_WEIGHT = SHARED_PROC_CONFIG + DELIM + 'UncappedWeight'
-SHARED_PROC_POOL_ID = SHARED_PROC_CONFIG + DELIM + 'SharedProcessorPoolID'
-
-# memory
-CURR_MEM = LPAR_MEM_CONFIG + DELIM + 'CurrentMemory'
-CURR_MAX_MEM = LPAR_MEM_CONFIG + DELIM + 'CurrentMaximumMemory'
-CURR_MIN_MEM = LPAR_MEM_CONFIG + DELIM + 'CurrentMinimumMemory'
-DES_MEM = LPAR_MEM_CONFIG + DELIM + 'DesiredMemory'
-DES_MAX_MEM = LPAR_MEM_CONFIG + DELIM + 'MaximumMemory'
-DES_MIN_MEM = LPAR_MEM_CONFIG + DELIM + 'MinimumMemory'
-
-RUN_MEM = LPAR_MEM_CONFIG + DELIM + 'RuntimeMemory'
-
-SHARED_MEM_ENABLED = LPAR_MEM_CONFIG + DELIM + 'SharedMemoryEnabled'
-
+# TODO(efried): Most uses of ZERO are wrong at this point - should be 0 or None
 ZERO = '0'
-RMC_STATE = 'ResourceMonitoringControlState'
 
 SUFFIX_TYPE_DO = 'do'
 
@@ -108,6 +42,7 @@ HTTP_STATUS_NOT_FOUND = 404
 HTTP_STATUS_ETAG_MISMATCH = 412
 HTTP_STATUS_CONNECTION_RESET = 104
 
+# TODO(efried): Get rid of all things xag outside of VIOS.xag
 # extended properties
 VIOS_VSCSI_MAP_EXT_PROP = 'ViosSCSIMapping'
 VIOS_VFC_MAP_EXT_PROP = 'ViosFCMapping'
@@ -295,6 +230,7 @@ REQ_OP = 'RequestedOperation'
 JOB_GROUP_NAME = REQ_OP + DELIM + 'GroupName'
 JOB_OPERATION_NAME = REQ_OP + DELIM + 'OperationName'
 
+# TODO(efried): (Re)move these
 # Media Repositories
 MEDIA_REPOSITORIES = 'MediaRepositories'
 VIRTUAL_MEDIA_REPOS_ELEM = 'VirtualMediaRepository'

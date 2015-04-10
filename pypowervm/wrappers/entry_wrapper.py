@@ -111,6 +111,8 @@ class Wrapper(object):
                              queries.
         """
         element = self.element
+        if element is None:
+            return None
         if use_find_all:
             found_value = element.findall(property_name)
         else:

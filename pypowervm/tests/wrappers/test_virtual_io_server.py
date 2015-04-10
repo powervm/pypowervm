@@ -22,7 +22,7 @@ import unittest
 
 import pypowervm.adapter as adpt
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.storage as pvm_stor
 import pypowervm.wrappers.virtual_io_server as vios
 
@@ -120,9 +120,9 @@ class TestViosMappings(twrap.TestWrapper):
     def test_bld_scsi_mapping_vopt(self, mock_adpt):
         """Validation that the element is correct."""
         mock_adpt.build_href.return_value = "a_link"
-        vOpt = pvm_stor.VOptMedia.bld_ref('media_name')
+        vopt = pvm_stor.VOptMedia.bld_ref('media_name')
         vmap = vios.VSCSIMapping.bld(mock_adpt, 'host_uuid',
-                                     'client_lpar_uuid', vOpt)
+                                     'client_lpar_uuid', vopt)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual(vmap.client_adapter.side, 'Client')
@@ -132,8 +132,8 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsInstance(vmap.backing_storage, pvm_stor.VOptMedia)
 
         # Test the cloning
-        vOpt2 = pvm_stor.VOptMedia.bld_ref('media_name2')
-        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, vOpt2)
+        vopt2 = pvm_stor.VOptMedia.bld_ref('media_name2')
+        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, vopt2)
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual(vmap2.client_adapter.side, 'Client')
@@ -143,8 +143,8 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.VOptMedia)
 
         # Clone to a different device type
-        vDisk = pvm_stor.VDisk.bld_ref('disk_name')
-        vmap3 = vios.VSCSIMapping.bld_from_existing(vmap, vDisk)
+        vdisk = pvm_stor.VDisk.bld_ref('disk_name')
+        vmap3 = vios.VSCSIMapping.bld_from_existing(vmap, vdisk)
         self.assertIsNotNone(vmap3)
         self.assertIsNotNone(vmap3.element)
         self.assertEqual('Client', vmap3.client_adapter.side)
@@ -157,9 +157,9 @@ class TestViosMappings(twrap.TestWrapper):
     def test_bld_scsi_mapping_vdisk(self, mock_adpt):
         """Validation that the element is correct."""
         mock_adpt.build_href.return_value = "a_link"
-        vDisk = pvm_stor.VDisk.bld_ref('disk_name')
+        vdisk = pvm_stor.VDisk.bld_ref('disk_name')
         vmap = vios.VSCSIMapping.bld(mock_adpt, 'host_uuid',
-                                     'client_lpar_uuid', vDisk)
+                                     'client_lpar_uuid', vdisk)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
@@ -170,8 +170,8 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Test cloning
         mock_adpt.build_href.return_value = "a_link"
-        vDisk2 = pvm_stor.VDisk.bld_ref('disk_name2')
-        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, vDisk2)
+        vdisk2 = pvm_stor.VDisk.bld_ref('disk_name2')
+        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, vdisk2)
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
@@ -305,13 +305,13 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(ca.loc_code)
         self.assertEqual(ca.side, 'Client')
 
-        bp = static_map.backing_port
-        self.assertIsNotNone(bp.loc_code)
-        self.assertIsNotNone(bp.name)
-        self.assertIsNotNone(bp.udid)
-        self.assertIsNotNone(bp.wwpn)
-        self.assertIsNotNone(bp.npiv_available_ports)
-        self.assertIsNotNone(bp.npiv_total_ports)
+        bport = static_map.backing_port
+        self.assertIsNotNone(bport.loc_code)
+        self.assertIsNotNone(bport.name)
+        self.assertIsNotNone(bport.udid)
+        self.assertIsNotNone(bport.wwpn)
+        self.assertIsNotNone(bport.npiv_available_ports)
+        self.assertIsNotNone(bport.npiv_total_ports)
 
         sa = static_map.server_adapter
         self.assertIsNotNone(sa.name)
@@ -348,7 +348,7 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Validate the Client Adapter
         self.assertIsNotNone(mapping.client_adapter)
-        self.assertEqual(set(['AA', 'BB']), mapping.client_adapter.wwpns)
+        self.assertEqual({'AA', 'BB'}, mapping.client_adapter.wwpns)
 
     @mock.patch('pypowervm.adapter.Session')
     def test_crt_related_href(self, mock_sess):
@@ -420,7 +420,7 @@ class TestGenericIOAdapter(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
                          self.io_adpt.dyn_reconfig_conn_name)
         self.assertEqual('T9', self.io_adpt.phys_loc_code)
-        self.assertFalse(isinstance(self.io_adpt, lpar.PhysFCAdapter))
+        self.assertFalse(isinstance(self.io_adpt, bp.PhysFCAdapter))
 
 
 class TestPhysFCAdapter(twrap.TestWrapper):
@@ -441,7 +441,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
                          self.io_adpt.dyn_reconfig_conn_name)
         self.assertEqual('C2', self.io_adpt.phys_loc_code)
-        self.assertTrue(isinstance(self.io_adpt, lpar.PhysFCAdapter))
+        self.assertTrue(isinstance(self.io_adpt, bp.PhysFCAdapter))
 
     def test_fc_ports(self):
         self.assertEqual(2, len(self.io_adpt.fc_ports))
