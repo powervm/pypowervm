@@ -54,6 +54,33 @@ class TestCNA(unittest.TestCase):
 
         n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
+        self.assertEqual(1, mock_vnet_find.call_count)
+
+    @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_crt_cna_no_vnet_crt(self, mock_adpt, mock_vnet_find):
+        """Tests the creation of Client Network Adapters.
+
+        The virtual network creation shouldn't be done in this flow.
+        """
+        # First need to load in the various test responses.
+        vs = tju.load_file(VSWITCH_FILE)
+        mock_adpt.read.return_value = vs
+        mock_adpt.traits.vnet_aware = False
+
+        # Create a side effect that can validate the input into the create
+        # call.
+        def validate_of_create(*kargs, **kwargs):
+            self.assertIsNotNone(kargs[0])
+            self.assertEqual('LogicalPartition', kargs[1])
+            self.assertEqual('fake_lpar', kwargs.get('root_id'))
+            self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
+            return mock.MagicMock()
+        mock_adpt.create.side_effect = validate_of_create
+
+        n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5)
+        self.assertIsNotNone(n_cna)
+        self.assertEqual(0, mock_vnet_find.call_count)
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
     @mock.patch('pypowervm.adapter.Adapter')
@@ -96,13 +123,15 @@ class TestCNA(unittest.TestCase):
         fake_vs.name = 'ETHERNET0'
 
         host_uuid = '67dca605-3923-34da-bd8f-26a378fc817f'
-        uri = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
-               '67dca605-3923-34da-bd8f-26a378fc817f/VirtualSwitch/'
-               'ec8aaa54-9837-3c23-a541-a4e4be3ae489')
+        fake_vs.related_href = ('https://9.1.2.3:12443/rest/api/uom/'
+                                'ManagedSystem/'
+                                '67dca605-3923-34da-bd8f-26a378fc817f/'
+                                'VirtualSwitch/'
+                                'ec8aaa54-9837-3c23-a541-a4e4be3ae489')
 
         # This should find a vnet.
         vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2227',
-                                             fake_vs, uri)
+                                             fake_vs)
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
@@ -110,6 +139,6 @@ class TestCNA(unittest.TestCase):
         resp.entry = ewrap.EntryWrapper._bld(tag='VirtualNetwork').entry
         mock_adpt.create.return_value = resp
         vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2228',
-                                             fake_vs, uri)
+                                             fake_vs)
         self.assertIsNotNone(vnet_resp)
         self.assertEqual(1, mock_adpt.create.call_count)

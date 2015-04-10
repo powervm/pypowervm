@@ -77,8 +77,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
                               'system.') % vswitch)
 
     # Find the virtual network.  Ensures that the system is ready for this.
-    _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w,
-                         vswitch_w.related_href)
+    if adapter.traits.vnet_aware:
+        _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w)
 
     # Build and create the CNA
     net_adpt = network.CNA.bld(
@@ -89,7 +89,7 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     return resp.entry
 
 
-def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
+def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
     # Read the existing virtual networks.  Try to locate...
     vnet_feed_resp = adapter.read(ms.System.schema_type, host_uuid,
                                   network.VNet.schema_type)
@@ -104,7 +104,7 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch, vswitch_href):
     # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
-    vnet = network.VNet.bld(name, vlan, vswitch_href, tagged)
+    vnet = network.VNet.bld(name, vlan, vswitch.related_href, tagged)
     crt_resp = adapter.create(vnet, ms.System.schema_type, root_id=host_uuid,
                               child_type=network.VNet.schema_type)
     return network.VNet.wrap(crt_resp)
