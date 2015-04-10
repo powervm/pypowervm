@@ -44,6 +44,7 @@ from pypowervm import cache
 from pypowervm import const
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
+from pypowervm import traits as pvm_traits
 from pypowervm import util
 
 # Preserve CDATA on the way in (also ensures it is not mucked with on the way
@@ -110,6 +111,9 @@ class Session(object):
         self.schema_version = None
         self._eventlistener = None
         self._logon()
+
+        # Set the API traits after logon.
+        self.traits = pvm_traits.APITraits(self)
 
     def __del__(self):
         try:
@@ -445,6 +449,10 @@ class Adapter(object):
             return helpers
         else:
             return [helpers]
+
+    @property
+    def traits(self):
+        return self.session.traits
 
     def _request(self, method, path, helpers=None, **kwds):
         """Common request method.
