@@ -18,7 +18,7 @@ import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
-import pypowervm.wrappers.constants as c
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 
 LPAR_HTTPRESP_FILE = "lpar.txt"
@@ -69,30 +69,27 @@ class TestLogicalPartition(unittest.TestCase):
             return
 
         ms_http = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE)
-        self.assertNotEqual(ms_http, None,
-                            "Could not load %s " %
-                            LPAR_HTTPRESP_FILE)
+        self.assertIsNotNone(ms_http,
+                             "Could not load %s " %
+                             LPAR_HTTPRESP_FILE)
 
         entries = ms_http.response.feed.findentries(
-            lpar._LPAR_NAME, SHARED_LPAR_NAME)
+            bp._BP_NAME, SHARED_LPAR_NAME)
 
-        self.assertNotEqual(entries, None,
-                            "Could not find %s in %s" %
-                            (SHARED_LPAR_NAME, LPAR_HTTPRESP_FILE))
+        self.assertIsNotNone(entries,
+                             "Could not find %s in %s" %
+                             (SHARED_LPAR_NAME, LPAR_HTTPRESP_FILE))
 
         self.TC._shared_entry = entries[0]
 
         entries = ms_http.response.feed.findentries(
-            lpar._LPAR_NAME, DEDICATED_LPAR_NAME)
+            bp._BP_NAME, DEDICATED_LPAR_NAME)
 
-        self.assertNotEqual(entries, None,
-                            "Could not find %s in %s" %
-                            (DEDICATED_LPAR_NAME, LPAR_HTTPRESP_FILE))
+        self.assertIsNotNone(entries,
+                             "Could not find %s in %s" %
+                             (DEDICATED_LPAR_NAME, LPAR_HTTPRESP_FILE))
 
         self.TC._dedicated_entry = entries[0]
-
-        self.set_shared_test_property_values()
-        self.set_dedicated_test_prop_vals()
 
         TestLogicalPartition._shared_wrapper = lpar.LPAR.wrap(
             self.TC._shared_entry)
@@ -100,10 +97,13 @@ class TestLogicalPartition(unittest.TestCase):
         TestLogicalPartition._dedicated_wrapper = lpar.LPAR.wrap(
             self.TC._dedicated_entry)
 
+        self.set_shared_test_property_values()
+        self.set_dedicated_test_prop_vals()
+
         mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
-        self.assertNotEqual(mc_http, None,
-                            "Could not load %s" %
-                            MC_HTTPRESP_FILE)
+        self.assertIsNotNone(mc_http,
+                             "Could not load %s" %
+                             MC_HTTPRESP_FILE)
 
         # Create a bad wrapper to use when retrieving properties which don't
         # exist
@@ -128,47 +128,47 @@ class TestLogicalPartition(unittest.TestCase):
 
     def set_shared_test_property_values(self):
         """Set expected values in entry so test code can work consistently."""
-        entry = self.TC._shared_entry
+        entry = self.TC._shared_wrapper
         self.set_single_value(
-            entry, c.CURR_MEM, EXPECTED_CURR_MEM)
+            entry.mem_config, bp._MEM_CURR, EXPECTED_CURR_MEM)
 
         self.set_single_value(
-            entry, c.CURR_MAX_MEM, EXPECTED_CURR_MAX_MEM)
+            entry.mem_config, bp._MEM_CURR_MAX, EXPECTED_CURR_MAX_MEM)
 
         self.set_single_value(
-            entry, c.CURR_MIN_MEM, EXPECTED_CURR_MIN_MEM)
+            entry.mem_config, bp._MEM_CURR_MIN, EXPECTED_CURR_MIN_MEM)
 
         self.set_single_value(
-            entry, c.CURR_VCPU, EXPECTED_CURR_VCPU)
+            entry, bp._CSPC_ALLOC_VCPU, EXPECTED_CURR_VCPU)
 
         self.set_single_value(
-            entry, c.CURR_MIN_VCPU, EXPECTED_CURR_MIN_VCPU)
+            entry, bp._CSPC_MIN_VCPU, EXPECTED_CURR_MIN_VCPU)
 
         self.set_single_value(
-            entry, c.CURR_MAX_VCPU, EXPECTED_CURR_MAX_VCPU)
+            entry, bp._CSPC_MAX_VCPU, EXPECTED_CURR_MAX_VCPU)
 
     def set_dedicated_test_prop_vals(self):
         """Set expected values in entry so test code can work consistently."""
 
-        entry = self.TC._dedicated_entry
+        entry = self.TC._dedicated_wrapper
 
         self.set_single_value(
-            entry, c.CURR_MEM, EXPECTED_CURR_MEM)
+            entry.mem_config, bp._MEM_CURR, EXPECTED_CURR_MEM)
 
         self.set_single_value(
-            entry, c.CURR_MAX_MEM, EXPECTED_CURR_MAX_MEM)
+            entry.mem_config, bp._MEM_CURR_MAX, EXPECTED_CURR_MAX_MEM)
 
         self.set_single_value(
-            entry, c.CURR_MIN_MEM, EXPECTED_CURR_MIN_MEM)
+            entry.mem_config, bp._MEM_CURR_MIN, EXPECTED_CURR_MIN_MEM)
 
         self.set_single_value(
-            entry, c.CURR_PROCS, EXPECTED_CURR_PROCS)
+            entry, bp._CDPC_CURR_PROCS, EXPECTED_CURR_PROCS)
 
         self.set_single_value(
-            entry, c.CURR_MIN_PROCS, EXPECTED_CURR_MIN_PROCS)
+            entry, bp._CDPC_CURR_MIN_PROCS, EXPECTED_CURR_MIN_PROCS)
 
         self.set_single_value(
-            entry, c.CURR_MAX_PROCS, EXPECTED_CURR_MAX_PROCS)
+            entry, bp._CDPC_CURR_MAX_PROCS, EXPECTED_CURR_MAX_PROCS)
 
     def verify_equal(self, method_name, returned_value, expected_value):
         if returned_value is not None and expected_value is not None:
@@ -211,7 +211,7 @@ class TestLogicalPartition(unittest.TestCase):
     def test_get_val_str(self):
         expected_value = SHARED_LPAR_NAME
         value = TestLogicalPartition._shared_wrapper._get_val_str(
-            lpar._LPAR_NAME)
+            bp._BP_NAME)
 
         self.verify_equal("_get_val_str", value, expected_value)
 
@@ -240,15 +240,15 @@ class TestLogicalPartition(unittest.TestCase):
 
     def test_get_current_mem(self):
         self.call_simple_getter(
-            "current_mem", str(EXPECTED_CURR_MEM), ZERO_STR)
+            "current_mem", EXPECTED_CURR_MEM, ZERO_STR)
 
     def test_get_current_max_mem(self):
         self.call_simple_getter(
-            "current_max_mem", str(EXPECTED_CURR_MAX_MEM), ZERO_STR)
+            "current_max_mem", EXPECTED_CURR_MAX_MEM, ZERO_STR)
 
     def test_get_current_min_mem(self):
         self.call_simple_getter(
-            "current_min_mem", str(EXPECTED_CURR_MIN_MEM), ZERO_STR)
+            "current_min_mem", EXPECTED_CURR_MIN_MEM, ZERO_STR)
 
     def test_get_current_sharing_mode(self):
         self.call_simple_getter(
@@ -368,7 +368,7 @@ class TestMemCfg(unittest.TestCase):
     """Test cases to test the lpar mem operations."""
 
     def test_mem(self):
-        mem_wrap = lpar.PartitionMemoryConfiguration.bld(
+        mem_wrap = bp.PartitionMemoryConfiguration.bld(
             1024, min_mem=512, max_mem=2048)
         self.assertIsNotNone(mem_wrap)
         self.assertEqual(512, mem_wrap.min_mem)
@@ -379,7 +379,7 @@ class TestMemCfg(unittest.TestCase):
 class TestPhysFCPort(unittest.TestCase):
 
     def test_bld(self):
-        port = lpar.PhysFCPort.bld_ref('fcs0')
+        port = bp.PhysFCPort.bld_ref('fcs0')
         self.assertIsNotNone(port)
         self.assertEqual('fcs0', port.name)
 
