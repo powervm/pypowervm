@@ -265,14 +265,6 @@ class BasePartition(ewrap.EntryWrapper):
         return u.get_req_path_uuid(href, preserve_case=True) if href else None
 
     @property
-    def cna_uris(self):
-        """List of URI strings to the partition's ClientNetworkAdapters.
-
-        This is a READ ONLY list.
-        """
-        return self.get_href(_BP_CNA_LINKS)
-
-    @property
     def rmc_state(self):
         """See ResourceMonitoringControlStateEnum.
 
