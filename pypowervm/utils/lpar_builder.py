@@ -20,6 +20,7 @@ import logging
 import six
 
 from pypowervm import i18n
+from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
 
 # Dict keys used for input to the builder
@@ -142,7 +143,7 @@ class DefaultStandardize(Standardize):
     def __init__(self, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
                  uncapped_weight=64, spp=0, avail_priority=127,
-                 srr='false', proc_compat=lpar.LPARCompatEnum.DEFAULT):
+                 srr='false', proc_compat=bp.LPARCompatEnum.DEFAULT):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -232,7 +233,7 @@ class DefaultStandardize(Standardize):
         self._validate_general(partial=True)
 
         attr = {NAME: self.attr[NAME]}
-        self._set_val(attr, ENV, lpar.LPARTypeEnum.AIXLINUX,
+        self._set_val(attr, ENV, bp.LPARTypeEnum.AIXLINUX,
                       convert_func=LPARType.convert_value)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
@@ -241,7 +242,7 @@ class DefaultStandardize(Standardize):
         if host_cap['simplified_remote_restart_capable']:
             self._set_val(attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
-        self._set_val(attr, PROC_COMPAT, lpar.LPARCompatEnum.DEFAULT,
+        self._set_val(attr, PROC_COMPAT, bp.LPARCompatEnum.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
 
         # Validate the attributes
@@ -294,10 +295,10 @@ class DefaultStandardize(Standardize):
         self._set_val(attr, PROC_UNITS, proc_units)
         self._set_val(attr, MIN_PROC_U, proc_units)
         self._set_val(attr, MAX_PROC_U, proc_units)
-        self._set_val(attr, SHARING_MODE, lpar.SharingModesEnum.UNCAPPED)
+        self._set_val(attr, SHARING_MODE, bp.SharingModesEnum.UNCAPPED)
 
         # If uncapped sharing mode then set the weight
-        if attr.get(SHARING_MODE) == lpar.SharingModesEnum.UNCAPPED:
+        if attr.get(SHARING_MODE) == bp.SharingModesEnum.UNCAPPED:
             self._set_val(attr, UNCAPPED_WEIGHT, self.uncapped_weight)
         self._set_val(attr, SPP, self.spp)
 
@@ -312,7 +313,7 @@ class DefaultStandardize(Standardize):
         self._set_prop(attr, MAX_VCPU, VCPU)
         self._set_prop(attr, MIN_VCPU, VCPU)
         self._set_val(attr, SHARING_MODE,
-                      lpar.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
+                      bp.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
                       convert_func=DedProcShareMode.convert_value)
         self._validate_lpar_ded_cpu(attrs=attr)
         return attr
@@ -561,7 +562,7 @@ class DedicatedProc(BoolField):
 
 
 class LPARType(ChoiceField):
-    _choices = (lpar.LPARTypeEnum.AIXLINUX, lpar.LPARTypeEnum.OS400)
+    _choices = (bp.LPARTypeEnum.AIXLINUX, bp.LPARTypeEnum.OS400)
     _name = 'Logical Partition Type'
 
     def __init__(self, value, allow_none=False):
@@ -569,12 +570,12 @@ class LPARType(ChoiceField):
 
 
 class ProcCompatMode(ChoiceField):
-    _choices = lpar.LPARCompatEnum.ALL_VALUES
+    _choices = bp.LPARCompatEnum.ALL_VALUES
     _name = 'Processor Compatability Mode'
 
 
 class DedProcShareMode(ChoiceField):
-    _choices = lpar.DedicatedSharingModesEnum.ALL_VALUES
+    _choices = bp.DedicatedSharingModesEnum.ALL_VALUES
     _name = 'Dedicated Processor Sharing Mode'
 
     def __init__(self, value, allow_none=False):
@@ -615,7 +616,7 @@ class LPARBuilder(object):
         # TODO(IBM):
 
         std = self.stdz.ded_proc()
-        dproc = lpar.PartitionProcessorConfiguration.bld_dedicated(
+        dproc = bp.PartitionProcessorConfiguration.bld_dedicated(
             std[VCPU], min_proc=std[MIN_VCPU], max_proc=std[MAX_VCPU],
             sharing_mode=std[SHARING_MODE])
         return dproc
@@ -628,7 +629,7 @@ class LPARBuilder(object):
         # The weight may not be set if it's not uncapped
         uncapped_weight = std.get(UNCAPPED_WEIGHT)
         # Build the shared procs
-        shr_proc = lpar.PartitionProcessorConfiguration.bld_shared(
+        shr_proc = bp.PartitionProcessorConfiguration.bld_shared(
             std[PROC_UNITS], std[VCPU], sharing_mode=std[SHARING_MODE],
             uncapped_weight=uncapped_weight,
             min_proc_unit=std[MIN_PROC_U], max_proc_unit=std[MAX_PROC_U],
@@ -637,7 +638,7 @@ class LPARBuilder(object):
 
     def build_mem(self):
         std = self.stdz.memory()
-        mem_wrap = lpar.PartitionMemoryConfiguration.bld(
+        mem_wrap = bp.PartitionMemoryConfiguration.bld(
             std[MEM], min_mem=std[MIN_MEM], max_mem=std[MAX_MEM])
         return mem_wrap
 
@@ -650,7 +651,7 @@ class LPARBuilder(object):
         # Check the sharing mode values if any
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in lpar.SharingModesEnum.ALL_VALUES):
+                smode in bp.SharingModesEnum.ALL_VALUES):
             return True
 
         return False
@@ -662,7 +663,7 @@ class LPARBuilder(object):
         # Check for dedicated sharing mode
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in lpar.DedicatedSharingModesEnum.ALL_VALUES):
+                smode in bp.DedicatedSharingModesEnum.ALL_VALUES):
                 return True
 
     def _shared_procs_specified(self):
@@ -691,9 +692,9 @@ class LPARBuilder(object):
         std = self.stdz.general()
 
         lpar_w = lpar.LPAR.bld(
-            std[NAME], lpar.PartitionMemoryConfiguration.bld(0),
-            lpar.PartitionProcessorConfiguration.bld_dedicated(0),
-            io_cfg=lpar.PartitionIOConfiguration.bld(0),
+            std[NAME], bp.PartitionMemoryConfiguration.bld(0),
+            bp.PartitionProcessorConfiguration.bld_dedicated(0),
+            io_cfg=bp.PartitionIOConfiguration.bld(0),
             env=std[ENV])
         return self.rebuild(lpar_w)
 
@@ -716,7 +717,7 @@ class LPARBuilder(object):
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
             lpar_w.srr_enabled = std[SRR_CAPABLE]
-        io_cfg = lpar.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
+        io_cfg = bp.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg
