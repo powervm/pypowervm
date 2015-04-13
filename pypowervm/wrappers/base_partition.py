@@ -45,10 +45,16 @@ BP_EL_ORDER = (
     _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH
 )
 
-# Dedicated Processor Configuration (_DPC)
-_DPC_DES_PROCS = 'DesiredProcessors'
-_DPC_MAX_PROCS = 'MaximumProcessors'
-_DPC_MIN_PROCS = 'MinimumProcessors'
+# Partition Capabilities (_CAP)
+_CAP_DLPAR_IO_CAPABLE = 'DynamicLogicalPartitionIOCapable'
+_CAP_DLPAR_MEM_CAPABLE = 'DynamicLogicalPartitionMemoryCapable'
+_CAP_DLPAR_PROC_CAPABLE = 'DynamicLogicalPartitionProcessorCapable'
+
+# Processor Configuration (_PC)
+_PC_HAS_DED_PROCS = 'HasDedicatedProcessors'
+_PC_DED_PROC_CFG = 'DedicatedProcessorConfiguration'
+_PC_SHR_PROC_CFG = 'SharedProcessorConfiguration'
+_PC_SHARING_MODE = 'SharingMode'
 
 # Shared Processor Configuration (_SPC)
 _SPC_DES_PROC_UNIT = 'DesiredProcessingUnits'
@@ -60,14 +66,15 @@ _SPC_MAX_VIRT_PROC = 'MaximumVirtualProcessors'
 _SPC_SHARED_PROC_POOL_ID = 'SharedProcessorPoolID'
 _SPC_UNCAPPED_WEIGHT = 'UncappedWeight'
 
+# Dedicated Processor Configuration (_DPC)
+_DPC_DES_PROCS = 'DesiredProcessors'
+_DPC_MAX_PROCS = 'MaximumProcessors'
+_DPC_MIN_PROCS = 'MinimumProcessors'
+
 # Partition Memory Configuration (_MEM)
 _MEM_DES = 'DesiredMemory'
 _MEM_MAX = 'MaximumMemory'
 _MEM_MIN = 'MinimumMemory'
-_MEM_RUN = 'RuntimeMemory'
-_MEM_CURR = 'CurrentMemory'
-_MEM_CURR_MAX = 'CurrentMaximumMemory'
-_MEM_CURR_MIN = 'CurrentMinimumMemory'
 _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
 
 # Partition I/O Configuration (_IO)
@@ -107,48 +114,6 @@ _PFC_PORT_AVAILABLE_PORTS = 'AvailablePorts'
 _PFC_PORT_TOTAL_PORTS = 'TotalPorts'
 PFC_PORTS_ROOT = 'PhysicalFibreChannelPorts'
 PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
-
-_CAP_DLPAR_MEM_CAPABLE = u.xpath(
-    _BP_CAPABILITIES, 'DynamicLogicalPartitionMemoryCapable')
-_CAP_DLPAR_PROC_CAPABLE = u.xpath(
-    _BP_CAPABILITIES, 'DynamicLogicalPartitionProcessorCapable')
-
-# Processor Configuration (_PC)
-_PC_HAS_DED_PROCS = 'HasDedicatedProcessors'
-_PC_DED_PROC_CFG = 'DedicatedProcessorConfiguration'
-_PC_SHR_PROC_CFG = 'SharedProcessorConfiguration'
-_PC_SHARING_MODE = 'SharingMode'
-_PC_CURR_SHARING_MODE = 'CurrentSharingMode'
-_PC_CURR_USE_DED_PROCS = u.xpath(_BP_PROC_CFG, 'CurrentHasDedicatedProcessors')
-_PC_DED_PROC_CONFIG = u.xpath(_BP_PROC_CFG, 'DedicatedProcessorConfiguration')
-_PC_CURR_DED_PROC_CONFIG = u.xpath(
-    _BP_PROC_CFG, 'CurrentDedicatedProcessorConfiguration')
-_PC_CURR_SHARED_PROC_CONFIG = u.xpath(
-    _BP_PROC_CFG, 'CurrentSharedProcessorConfiguration')
-
-# Current Dedicated Processor Configuration (_CDPC)
-_CDPC_CURR_PROCS = u.xpath(_PC_CURR_DED_PROC_CONFIG, 'CurrentProcessors')
-_CDPC_CURR_MAX_PROCS = u.xpath(
-    _PC_CURR_DED_PROC_CONFIG, 'CurrentMaximumProcessors')
-_CDPC_CURR_MIN_PROCS = u.xpath(
-    _PC_CURR_DED_PROC_CONFIG, 'CurrentMinimumProcessors')
-_CDPC_RUN_PROCS = u.xpath(_PC_CURR_DED_PROC_CONFIG, 'RunProcessors')
-
-# Current Shared Processor Configuration (_CSPC)
-_CSPC_ALLOC_VCPU = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'AllocatedVirtualProcessors')
-_CSPC_MAX_VCPU = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentMaximumVirtualProcessors')
-_CSPC_MIN_VCPU = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentMinimumVirtualProcessors')
-_CSPC_PROC_UNITS = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentProcessingUnits')
-_CSPC_MAX_PROC_UNITS = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentMaximumProcessingUnits')
-_CSPC_MIN_PROC_UNITS = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentMinimumProcessingUnits')
-_CSPC_UNCAPPED_WEIGHT = u.xpath(
-    _PC_CURR_SHARED_PROC_CONFIG, 'CurrentUncappedWeight')
 
 
 class SharingModesEnum(object):
@@ -243,8 +208,7 @@ class BasePartition(ewrap.EntryWrapper):
     @property
     def id(self):
         """Short ID (not UUID)."""
-        # TODO(efried): This should use _get_val_int and default to None
-        return int(self._get_val_str(_BP_ID, wc.ZERO))
+        return self._get_val_int(_BP_ID)
 
     @property
     def env(self):
@@ -285,46 +249,8 @@ class BasePartition(ewrap.EntryWrapper):
         return self.rmc_state == 'active'
 
     @property
-    def io_config(self):
-        """The Partition I/O Configuration."""
-        elem = self._find(_BP_IO_CFG)
-        return PartitionIOConfiguration.wrap(elem)
-
-    @io_config.setter
-    def io_config(self, io_cfg):
-        """The Partition I/O Configuration for the LPAR."""
-        elem = self._find_or_seed(_BP_IO_CFG)
-        # TODO(efried): All instances of _find_or_seed + element.replace should
-        # probably be inject instead
-        self.element.replace(elem, io_cfg.element)
-
-    @property
-    def mem_config(self):
-        """The Partition Memory Configuration for the LPAR."""
-        elem = self._find(_BP_MEM_CFG)
-        return PartitionMemoryConfiguration.wrap(elem)
-
-    @mem_config.setter
-    def mem_config(self, mem_cfg):
-        """The Partition Memory Configuration for the LPAR."""
-        elem = self._find_or_seed(_BP_MEM_CFG)
-        self.element.replace(elem, mem_cfg.element)
-
-    @property
-    def proc_config(self):
-        """The Partition Processor Configuration for the LPAR."""
-        elem = self._find(_BP_PROC_CFG)
-        return PartitionProcessorConfiguration.wrap(elem)
-
-    @proc_config.setter
-    def proc_config(self, proc_config):
-        """The Partition Processor Configuration for the LPAR."""
-        elem = self._find_or_seed(_BP_PROC_CFG)
-        self.element.replace(elem, proc_config.element)
-
-    @property
     def avail_priority(self):
-        return self._get_val_str(_BP_AVAIL_PRIORITY, wc.ZERO)
+        return self._get_val_int(_BP_AVAIL_PRIORITY, 0)
 
     @avail_priority.setter
     def avail_priority(self, value):
@@ -363,207 +289,68 @@ class BasePartition(ewrap.EntryWrapper):
         :returns: Returns true or false if DLPAR capable
         :returns: Returns RMC state as string
         """
-
-        # Pull the dlpar and rmc values from PowerVM
-        mem_dlpar = self._get_val_bool(_CAP_DLPAR_MEM_CAPABLE)
-        proc_dlpar = self._get_val_bool(_CAP_DLPAR_PROC_CAPABLE)
-
-        dlpar = mem_dlpar and proc_dlpar
+        dlpar = self.capabilities.mem_dlpar and self.capabilities.proc_dlpar
 
         return dlpar, self.rmc_state
 
     @property
-    def current_mem(self):
-        return self.mem_config.current_mem
+    def capabilities(self):
+        elem = self._find(_BP_CAPABILITIES)
+        return PartitionCapabilities.wrap(elem)
 
     @property
-    def current_max_mem(self):
-        return self.mem_config.current_max_mem
+    def io_config(self):
+        """The Partition I/O Configuration."""
+        elem = self._find(_BP_IO_CFG)
+        return PartitionIOConfiguration.wrap(elem)
+
+    @io_config.setter
+    def io_config(self, io_cfg):
+        """The Partition I/O Configuration for the LPAR."""
+        elem = self._find_or_seed(_BP_IO_CFG)
+        # TODO(efried): All instances of _find_or_seed + element.replace should
+        # probably be inject instead
+        self.element.replace(elem, io_cfg.element)
 
     @property
-    def current_min_mem(self):
-        return self.mem_config.current_min_mem
+    def mem_config(self):
+        """The Partition Memory Configuration for the LPAR."""
+        elem = self._find(_BP_MEM_CFG)
+        return PartitionMemoryConfiguration.wrap(elem)
+
+    @mem_config.setter
+    def mem_config(self, mem_cfg):
+        """The Partition Memory Configuration for the LPAR."""
+        elem = self._find_or_seed(_BP_MEM_CFG)
+        self.element.replace(elem, mem_cfg.element)
 
     @property
-    def desired_mem(self):
-        return self.mem_config.desired_mem
+    def proc_config(self):
+        """The Partition Processor Configuration for the LPAR."""
+        elem = self._find(_BP_PROC_CFG)
+        return PartitionProcessorConfiguration.wrap(elem)
 
-    @desired_mem.setter
-    def desired_mem(self, value):
-        self.mem_config.desired_mem = value
+    @proc_config.setter
+    def proc_config(self, proc_config):
+        """The Partition Processor Configuration for the LPAR."""
+        elem = self._find_or_seed(_BP_PROC_CFG)
+        self.element.replace(elem, proc_config.element)
+
+
+@ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True)
+class PartitionCapabilities(ewrap.ElementWrapper):
+    """See LogicalPartitionCapabilities."""
+    @property
+    def io_dlpar(self):
+        return self._get_val_bool(_CAP_DLPAR_IO_CAPABLE)
 
     @property
-    def max_mem(self):
-        return self.mem_config.max_mem
-
-    @max_mem.setter
-    def max_mem(self, value):
-        self.mem_config.max_mem = value
+    def mem_dlpar(self):
+        return self._get_val_bool(_CAP_DLPAR_MEM_CAPABLE)
 
     @property
-    def min_mem(self):
-        return self.mem_config.min_mem
-
-    @min_mem.setter
-    def min_mem(self, value):
-        self.mem_config.min_mem = value
-
-    @property
-    def run_mem(self):
-        return self.mem_config.run_mem
-
-    @property
-    def current_mem_share_enabled(self):
-        return self.mem_config.current_mem_share_enabled
-
-    @property
-    def current_proc_mode_is_dedicated(self):
-        """Returns boolean True if dedicated, False if shared or not found."""
-        return self._get_val_bool(_PC_CURR_USE_DED_PROCS, False)
-
-    @property
-    def proc_mode_is_dedicated(self):
-        return self.proc_config.has_dedicated_proc
-
-    def _proc_mode_is_dedicated(self, value):
-        """Expects 'true' (string) for dedicated or 'false' for shared."""
-        self.proc_config._has_dedicated_proc(value)
-
-    @property
-    def current_procs(self):
-        return self._get_val_str(_CDPC_CURR_PROCS, wc.ZERO)
-
-    @property
-    def current_max_procs(self):
-        return self._get_val_str(_CDPC_CURR_MAX_PROCS, wc.ZERO)
-
-    @property
-    def current_min_procs(self):
-        return self._get_val_str(_CDPC_CURR_MIN_PROCS, wc.ZERO)
-
-    @property
-    def desired_procs(self):
-        return self.proc_config.dedicated_proc_cfg.desired_procs
-
-    @desired_procs.setter
-    def desired_procs(self, value):
-        self.proc_config.dedicated_proc_cfg.desired_procs = value
-
-    @property
-    def max_procs(self):
-        return self.proc_config.dedicated_proc_cfg.max_procs
-
-    @max_procs.setter
-    def max_procs(self, value):
-        self.proc_config.dedicated_proc_cfg.max_procs = value
-
-    @property
-    def min_procs(self):
-        return self.proc_config.dedicated_proc_cfg.min_procs
-
-    @min_procs.setter
-    def min_procs(self, value):
-        self.proc_config.dedicated_proc_cfg.min_procs = value
-
-    @property
-    def current_vcpus(self):
-        return self._get_val_str(_CSPC_ALLOC_VCPU, wc.ZERO)
-
-    @property
-    def current_max_vcpus(self):
-        return self._get_val_str(_CSPC_MAX_VCPU, wc.ZERO)
-
-    @property
-    def current_min_vcpus(self):
-        return self._get_val_str(_CSPC_MIN_VCPU, wc.ZERO)
-
-    @property
-    def desired_vcpus(self):
-        return self.proc_config.shared_proc_cfg.desired_vcpus
-
-    @desired_vcpus.setter
-    def desired_vcpus(self, value):
-        self.proc_config.shared_proc_cfg.desired_vcpus = value
-
-    @property
-    def max_vcpus(self):
-        return self.proc_config.shared_proc_cfg.max_vcpus
-
-    @max_vcpus.setter
-    def max_vcpus(self, value):
-        self.proc_config.shared_proc_cfg.max_vcpus = value
-
-    @property
-    def min_vcpus(self):
-        return self.proc_config.shared_proc_cfg.min_vcpus
-
-    @min_vcpus.setter
-    def min_vcpus(self, value):
-        self.proc_config.shared_proc_cfg.min_vcpus = value
-
-    @property
-    def current_proc_units(self):
-        return self._get_val_str(_CSPC_PROC_UNITS, wc.ZERO)
-
-    @property
-    def current_max_proc_units(self):
-        return self._get_val_str(_CSPC_MAX_PROC_UNITS, wc.ZERO)
-
-    @property
-    def current_min_proc_units(self):
-        return self._get_val_str(_CSPC_MIN_PROC_UNITS, wc.ZERO)
-
-    @property
-    def desired_proc_units(self):
-        return self.proc_config.shared_proc_cfg.desired_proc_units
-
-    @desired_proc_units.setter
-    def desired_proc_units(self, value):
-        self.proc_config.shared_proc_cfg.desired_proc_units = value
-
-    @property
-    def max_proc_units(self):
-        return self.proc_config.shared_proc_cfg.max_proc_units
-
-    @max_proc_units.setter
-    def max_proc_units(self, value):
-        self.proc_config.shared_proc_cfg.max_proc_units = value
-
-    @property
-    def min_proc_units(self):
-        return self.proc_config.shared_proc_cfg.min_proc_units
-
-    @min_proc_units.setter
-    def min_proc_units(self, value):
-        self.proc_config.shared_proc_cfg.min_proc_units = value
-
-    @property
-    def run_procs(self):
-        return self._get_val_str(_CDPC_RUN_PROCS, wc.ZERO)
-
-    @property
-    def current_uncapped_weight(self):
-        return self._get_val_str(_CSPC_UNCAPPED_WEIGHT, wc.ZERO)
-
-    @property
-    def uncapped_weight(self):
-        return self.proc_config.shared_proc_cfg.uncapped_weight
-
-    @uncapped_weight.setter
-    def uncapped_weight(self, value):
-        self.proc_config.shared_proc_cfg.uncapped_weight = value
-
-    @property
-    def shared_proc_pool_id(self):
-        return self.proc_config.shared_proc_cfg.shared_proc_pool_id
-
-    @property
-    def sharing_mode(self):
-        return self.proc_config.sharing_mode
-
-    @sharing_mode.setter
-    def sharing_mode(self, value):
-        self.proc_config.sharing_mode = value
+    def proc_dlpar(self):
+        return self._get_val_bool(_CAP_DLPAR_PROC_CAPABLE)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_PROC_CFG, has_metadata=True)
@@ -593,7 +380,7 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
 
         """
         proc_cfg = super(PartitionProcessorConfiguration, cls)._bld()
-        proc_cfg._has_dedicated_proc(False)
+        proc_cfg._has_dedicated(False)
 
         sproc = SharedProcessorConfiguration.bld(
             proc_unit, proc, uncapped_weight=uncapped_weight,
@@ -624,35 +411,25 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
             proc, min_proc=min_proc, max_proc=max_proc)
 
         proc_cfg._dedicated_proc_cfg(dproc)
-        proc_cfg._has_dedicated_proc(True)
+        proc_cfg._has_dedicated(True)
         proc_cfg.sharing_mode = sharing_mode
         return proc_cfg
 
     @property
-    def has_dedicated_proc(self):
+    def has_dedicated(self):
         """Returns boolean True if dedicated, False if shared or not found."""
         return self._get_val_bool(_PC_HAS_DED_PROCS)
 
-    def _has_dedicated_proc(self, val):
+    def _has_dedicated(self, val):
         """Expects 'true' (string) for dedicated or 'false' for shared."""
         self.set_parm_value(_PC_HAS_DED_PROCS, u.sanitize_bool_for_api(val))
 
     @property
     def sharing_mode(self):
-        """Sharing mode.
-
-        Note that the getter retrieves the CURRENT sharing mode; and the
-        setter sets the (PENDING) sharing mode.
-        """
-        return self._get_val_str(_PC_CURR_SHARING_MODE)
+        return self._get_val_str(_PC_SHARING_MODE)
 
     @sharing_mode.setter
     def sharing_mode(self, value):
-        """Sharing mode.
-
-        Note that the getter retrieves the CURRENT sharing mode; and the
-        setter sets the (PENDING) sharing mode.
-        """
         self.set_parm_value(_PC_SHARING_MODE, value)
 
     @property
@@ -697,55 +474,38 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
             max_mem = mem
 
         cfg = super(PartitionMemoryConfiguration, cls)._bld()
-        cfg.desired_mem = mem
-        cfg.max_mem = max_mem
-        cfg.min_mem = min_mem
+        cfg.desired = mem
+        cfg.max = max_mem
+        cfg.min = min_mem
 
         return cfg
 
     @property
-    def current_mem(self):
-        return self._get_val_int(_MEM_CURR, wc.ZERO)
+    def desired(self):
+        return self._get_val_int(_MEM_DES)
 
-    @property
-    def current_max_mem(self):
-        return self._get_val_int(_MEM_CURR_MAX, wc.ZERO)
-
-    @property
-    def current_min_mem(self):
-        return self._get_val_int(_MEM_CURR_MIN, wc.ZERO)
-
-    @property
-    def desired_mem(self):
-        return self._get_val_int(_MEM_DES, wc.ZERO)
-
-    @desired_mem.setter
-    def desired_mem(self, mem):
+    @desired.setter
+    def desired(self, mem):
         self.set_parm_value(_MEM_DES, str(mem))
 
     @property
-    def max_mem(self):
-        return self._get_val_int(_MEM_MAX, wc.ZERO)
+    def max(self):
+        return self._get_val_int(_MEM_MAX)
 
-    @max_mem.setter
-    def max_mem(self, mem):
+    @max.setter
+    def max(self, mem):
         self.set_parm_value(_MEM_MAX, str(mem))
 
     @property
-    def min_mem(self):
-        return self._get_val_int(_MEM_MIN, wc.ZERO)
+    def min(self):
+        return self._get_val_int(_MEM_MIN)
 
-    @min_mem.setter
-    def min_mem(self, mem):
+    @min.setter
+    def min(self, mem):
         self.set_parm_value(_MEM_MIN, str(mem))
 
     @property
-    def run_mem(self):
-        """Runtime memory."""
-        return self._get_val_int(_MEM_RUN, wc.ZERO)
-
-    @property
-    def current_mem_share_enabled(self):
+    def shared_enabled(self):
         # The default is None instead of False so that the caller
         # can know if the value is not set
         return self._get_val_bool(_MEM_SHARED_MEM_ENABLED, None)
@@ -785,72 +545,72 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
         sproc = super(SharedProcessorConfiguration, cls)._bld()
 
-        sproc.desired_proc_units = proc_unit
-        sproc.desired_vcpus = proc
-        sproc.max_proc_units = max_proc_unit
-        sproc.max_vcpus = max_proc
-        sproc.min_proc_units = min_proc_unit
-        sproc.min_vcpus = min_proc
-        sproc.shared_proc_pool_id = proc_pool
+        sproc.desired_units = proc_unit
+        sproc.desired_virtual = proc
+        sproc.max_units = max_proc_unit
+        sproc.max_virtual = max_proc
+        sproc.min_units = min_proc_unit
+        sproc.min_virtual = min_proc
+        sproc.pool_id = proc_pool
         if uncapped_weight is not None:
             sproc.uncapped_weight = uncapped_weight
 
         return sproc
 
     @property
-    def desired_proc_units(self):
+    def desired_units(self):
         return self._get_val_float(_SPC_DES_PROC_UNIT)
 
-    @desired_proc_units.setter
-    def desired_proc_units(self, val):
+    @desired_units.setter
+    def desired_units(self, val):
         self.set_parm_value(_SPC_DES_PROC_UNIT, u.sanitize_float_for_api(val))
 
     @property
-    def max_proc_units(self):
+    def max_units(self):
         return self._get_val_float(_SPC_MAX_PROC_UNIT)
 
-    @max_proc_units.setter
-    def max_proc_units(self, val):
+    @max_units.setter
+    def max_units(self, val):
         self.set_parm_value(_SPC_MAX_PROC_UNIT, u.sanitize_float_for_api(val))
 
     @property
-    def min_proc_units(self):
+    def min_units(self):
         return self._get_val_float(_SPC_MIN_PROC_UNIT)
 
-    @min_proc_units.setter
-    def min_proc_units(self, val):
+    @min_units.setter
+    def min_units(self, val):
         self.set_parm_value(_SPC_MIN_PROC_UNIT, u.sanitize_float_for_api(val))
 
     @property
-    def desired_vcpus(self):
-        return self._get_val_int(_SPC_DES_VIRT_PROC, 0)
+    def desired_virtual(self):
+        return self._get_val_int(_SPC_DES_VIRT_PROC)
 
-    @desired_vcpus.setter
-    def desired_vcpus(self, val):
+    @desired_virtual.setter
+    def desired_virtual(self, val):
         self.set_parm_value(_SPC_DES_VIRT_PROC, val)
 
     @property
-    def max_vcpus(self):
-        return self._get_val_int(_SPC_MAX_VIRT_PROC, 0)
+    def max_virtual(self):
+        return self._get_val_int(_SPC_MAX_VIRT_PROC)
 
-    @max_vcpus.setter
-    def max_vcpus(self, val):
+    @max_virtual.setter
+    def max_virtual(self, val):
         self.set_parm_value(_SPC_MAX_VIRT_PROC, val)
 
     @property
-    def min_vcpus(self):
-        return self._get_val_int(_SPC_MIN_VIRT_PROC, 0)
+    def min_virtual(self):
+        return self._get_val_int(_SPC_MIN_VIRT_PROC)
 
-    @min_vcpus.setter
-    def min_vcpus(self, val):
+    @min_virtual.setter
+    def min_virtual(self, val):
         self.set_parm_value(_SPC_MIN_VIRT_PROC, val)
 
     @property
-    def shared_proc_pool_id(self):
+    def pool_id(self):
         return self._get_val_int(_SPC_SHARED_PROC_POOL_ID, 0)
 
-    @shared_proc_pool_id.setter
-    def shared_proc_pool_id(self, val):
+    @pool_id.setter
+    def pool_id(self, val):
         self.set_parm_value(_SPC_SHARED_PROC_POOL_ID, val)
 
     @property
@@ -859,12 +619,12 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
     @uncapped_weight.setter
     def uncapped_weight(self, val):
-        self.set_parm_value(_SPC_UNCAPPED_WEIGHT, str(val))
+        self.set_parm_value(_SPC_UNCAPPED_WEIGHT, val)
 
 
 @ewrap.ElementWrapper.pvm_type(_PC_DED_PROC_CFG, has_metadata=True)
 class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
-    """Represents the partitions Dedicated Processor Configuration."""
+    """Represents the partition's Dedicated Processor Configuration."""
 
     @classmethod
     def bld(cls, proc, min_proc=None, max_proc=None):
@@ -885,34 +645,34 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
 
         dproc = super(DedicatedProcessorConfiguration, cls)._bld()
 
-        dproc.desired_procs = proc
-        dproc.max_procs = max_proc
-        dproc.min_procs = min_proc
+        dproc.desired = proc
+        dproc.max = max_proc
+        dproc.min = min_proc
 
         return dproc
 
     @property
-    def desired_procs(self):
-        return self._get_val_str(_DPC_DES_PROCS, wc.ZERO)
+    def desired(self):
+        return self._get_val_int(_DPC_DES_PROCS, 0)
 
-    @desired_procs.setter
-    def desired_procs(self, value):
+    @desired.setter
+    def desired(self, value):
         self.set_parm_value(_DPC_DES_PROCS, value)
 
     @property
-    def max_procs(self):
-        return self._get_val_str(_DPC_MAX_PROCS, wc.ZERO)
+    def max(self):
+        return self._get_val_int(_DPC_MAX_PROCS, 0)
 
-    @max_procs.setter
-    def max_procs(self, value):
+    @max.setter
+    def max(self, value):
         self.set_parm_value(_DPC_MAX_PROCS, value)
 
     @property
-    def min_procs(self):
-        return self._get_val_str(_DPC_MIN_PROCS, wc.ZERO)
+    def min(self):
+        return self._get_val_int(_DPC_MIN_PROCS, 0)
 
-    @min_procs.setter
-    def min_procs(self, value):
+    @min.setter
+    def min(self, value):
         self.set_parm_value(_DPC_MIN_PROCS, value)
 
 

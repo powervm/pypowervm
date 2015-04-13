@@ -205,7 +205,7 @@ class TestLPARBuilder(unittest.TestCase):
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
         new_lpar = bldr.build()
         procs = new_lpar.proc_config.shared_proc_cfg
-        self.assertEqual(3.0, procs.min_proc_units)
+        self.assertEqual(3.0, procs.min_units)
 
         # Ensure the calculated procs are below the max
         attr = dict(name='lpar', memory=2048,
@@ -216,7 +216,7 @@ class TestLPARBuilder(unittest.TestCase):
         bldr = lpar_bldr.LPARBuilder(attr, stdz)
         new_lpar = bldr.build()
         procs = new_lpar.proc_config.shared_proc_cfg
-        self.assertEqual(2.1, procs.max_proc_units)
+        self.assertEqual(2.1, procs.max_units)
 
         # Ensure proc units factor is between 0.1 and 1.0
         self.assertRaises(
@@ -248,7 +248,7 @@ class TestLPARBuilder(unittest.TestCase):
                     avail_priority=0)
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
         new_lpar = bldr.build()
-        self.assertEqual(new_lpar.avail_priority, '0')
+        self.assertEqual(new_lpar.avail_priority, 0)
 
         # Avail priority at max value
         attr = dict(name='lpar', memory=2048,
@@ -256,7 +256,7 @@ class TestLPARBuilder(unittest.TestCase):
                     avail_priority=255)
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
         new_lpar = bldr.build()
-        self.assertEqual(new_lpar.avail_priority, '255')
+        self.assertEqual(new_lpar.avail_priority, 255)
 
         # Proc compat
         for pc in bp.LPARCompatEnum.ALL_VALUES:

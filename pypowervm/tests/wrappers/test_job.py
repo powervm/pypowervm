@@ -34,10 +34,6 @@ EXPECTED_GROUP_NAME = 'LogicalPartition'
 EXPECTED_OPERATION_NAME = 'PowerOff'
 
 
-ZERO_STR = '0'
-ZERO_INT = 0
-
-
 class TestJobEntryWrapper(unittest.TestCase):
 
     _request_wrapper = None

@@ -20,8 +20,6 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
-import pypowervm.wrappers.constants as c
-
 _POOL_ID = 'PoolID'
 _CURR_RSRV_PROC_UNITS = 'CurrentReservedProcessingUnits'
 
@@ -36,5 +34,5 @@ class SharedProcPool(ewrap.EntryWrapper):
 
     @property
     def curr_rsrv_proc_units(self):
-        """Floating point string: number of reserved processing units."""
-        return self._get_val_str(_CURR_RSRV_PROC_UNITS, c.ZERO)
+        """Floating point number of reserved processing units."""
+        return self._get_val_float(_CURR_RSRV_PROC_UNITS, 0)

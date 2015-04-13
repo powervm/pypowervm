@@ -20,9 +20,6 @@ LINK = 'link'
 # Types
 MGT_CONSOLE = 'ManagementConsole'
 
-# TODO(efried): Most uses of ZERO are wrong at this point - should be 0 or None
-ZERO = '0'
-
 SUFFIX_TYPE_DO = 'do'
 
 # LUA Recovery status codes

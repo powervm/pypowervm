@@ -54,9 +54,9 @@ BODY{
         <Metadata>
             <Atom/>
         </Metadata>
-        <DynamicLogicalPartitionIOCapable kb="ROR" kxe="false">false</DynamicLogicalPartitionIOCapable>
+        <DynamicLogicalPartitionIOCapable kb="ROR" kxe="false">true</DynamicLogicalPartitionIOCapable>
         <DynamicLogicalPartitionMemoryCapable kb="ROR" kxe="false">false</DynamicLogicalPartitionMemoryCapable>
-        <DynamicLogicalPartitionProcessorCapable kb="ROR" kxe="false">false</DynamicLogicalPartitionProcessorCapable>
+        <DynamicLogicalPartitionProcessorCapable kb="ROR" kxe="false">true</DynamicLogicalPartitionProcessorCapable>
         <InternalAndExternalIntrusionDetectionCapable kxe="false" kb="CUD">false</InternalAndExternalIntrusionDetectionCapable>
         <ResourceMonitoringControlOperatingSystemShutdownCapable kb="CUD" kxe="false">false</ResourceMonitoringControlOperatingSystemShutdownCapable>
     </PartitionCapabilities>
@@ -118,13 +118,13 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <DesiredProcessingUnits kb="CUD" kxe="false">0.5</DesiredProcessingUnits>
-            <DesiredVirtualProcessors kb="CUD" kxe="false">1</DesiredVirtualProcessors>
-            <MaximumProcessingUnits kb="CUD" kxe="false">0.5</MaximumProcessingUnits>
-            <MaximumVirtualProcessors kb="CUD" kxe="false">1</MaximumVirtualProcessors>
+            <DesiredProcessingUnits kb="CUD" kxe="false">1.5</DesiredProcessingUnits>
+            <DesiredVirtualProcessors kb="CUD" kxe="false">2</DesiredVirtualProcessors>
+            <MaximumProcessingUnits kb="CUD" kxe="false">2.5</MaximumProcessingUnits>
+            <MaximumVirtualProcessors kb="CUD" kxe="false">3</MaximumVirtualProcessors>
             <MinimumProcessingUnits kb="CUD" kxe="false">0.5</MinimumProcessingUnits>
             <MinimumVirtualProcessors kb="CUD" kxe="false">1</MinimumVirtualProcessors>
-            <SharedProcessorPoolID kb="CUD" kxe="false">0</SharedProcessorPoolID>
+            <SharedProcessorPoolID kb="CUD" kxe="false">9</SharedProcessorPoolID>
             <UncappedWeight kb="CUD" kxe="false">128</UncappedWeight>
         </SharedProcessorConfiguration>
         <SharingMode kb="CUD" kxe="false">uncapped</SharingMode>
@@ -3146,8 +3146,8 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <DesiredProcessors kb="CUD" kxe="false">1</DesiredProcessors>
-            <MaximumProcessors kb="CUD" kxe="false">1</MaximumProcessors>
+            <DesiredProcessors kb="CUD" kxe="false">2</DesiredProcessors>
+            <MaximumProcessors kb="CUD" kxe="false">3</MaximumProcessors>
             <MinimumProcessors kb="CUD" kxe="false">1</MinimumProcessors>
         </DedicatedProcessorConfiguration>
         <HasDedicatedProcessors kb="CUD" kxe="false">true</HasDedicatedProcessors>

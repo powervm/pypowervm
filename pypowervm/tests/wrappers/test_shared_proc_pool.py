@@ -21,10 +21,8 @@ import pypowervm.wrappers.shared_proc_pool as spp
 
 SHRPROC_HTTPRESP_FILE = "shrprocpool.txt"
 MC_HTTPRESP_FILE = "managementconsole.txt"
-POOLID = '1'
-EXPECTED_CURR_RSRV_PROC_UNITS = '.1'
-
-ZERO_STR = '0'
+POOLID = 1
+EXPECTED_CURR_RSRV_PROC_UNITS = 0.1
 
 
 class TestShrPrcPoolTestCase(unittest.TestCase):
@@ -118,26 +116,12 @@ class TestShrPrcPoolTestCase(unittest.TestCase):
             bad_value = bad_value()
         self.verify_equal(method_name, bad_value, expected_bad_value)
 
-    def test_get_val_str(self):
-        expected_value = POOLID
-        value = TestShrPrcPoolTestCase._proc_pool_wrapper._get_val_str(
-            spp._POOL_ID)
-
-        self.verify_equal("_get_val_str", value, expected_value)
-
-        expected_value = None
-        value = TestShrPrcPoolTestCase._proc_pool_wrapper._get_val_str(
-            'BogusName')
-
-        self.verify_equal(
-            "_get_val_str for BogusName ", value, expected_value)
-
     def test_get_pool_id(self):
-        self.call_simple_getter("id", int(POOLID), int(ZERO_STR))
+        self.call_simple_getter("id", POOLID, 0)
 
     def test_get_curr_rsrv_proc_units(self):
         self.call_simple_getter("curr_rsrv_proc_units",
-                                EXPECTED_CURR_RSRV_PROC_UNITS, ZERO_STR)
+                                EXPECTED_CURR_RSRV_PROC_UNITS, 0)
 
 if __name__ == "__main__":
     unittest.main()
