@@ -222,13 +222,6 @@ class TestLogicalPartition(unittest.TestCase):
         self.verify_equal(
             "_get_val_str for BogusName ", value, expected_value)
 
-    def test_get_cna_links(self):
-        """Test getting the list of ClientNetworkAdapters."""
-        lpar_resp = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE).get_response()
-        lpar_wrapper = lpar.LPAR.wrap(lpar_resp.feed.entries[2])
-
-        self.assertEqual(1, len(lpar_wrapper.cna_uris))
-
     def test_get_state(self):
         self.call_simple_getter("state", EXPECTED_LPAR_STATE, None)
 
