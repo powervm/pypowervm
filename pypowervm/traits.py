@@ -1,0 +1,61 @@
+# Copyright 2015 IBM Corp.
+#
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+
+class APITraits(object):
+    """Represents capabilities inherent to the backing API server.
+
+    For instance, depending on a schema version, or the backing REST server,
+    there may be different code paths that the user needs to go through.
+
+    A key example of this would be the VirtualNetworks.  The HMC requires
+    that Virtual Networks be the driver of code paths for various code paths.
+    However, in other API servers, the Virtual Networks are simply realized
+    based off the VLANs/virtual switches that adapters are currently tied
+    to.
+
+    This class encapsulates the various traits so that tasks and users do not
+    have to inspect the header data directly to determine how the API should
+    behave.
+    """
+
+    def __init__(self, session):
+        self.session = session
+
+    @property
+    def vnet_aware(self):
+        """Indicates whether Virtual Networks are pre-reqs to Network changes.
+
+        Some APIs (such as modifying the SEA or creating a Client Network
+        Adapter) require that the VirtualNetwork (or VNet wrapper) be
+        pre-created for the operation.  This is typically done when working
+        against an HMC.
+
+        This trait will return True if the Virtual Networks need to be
+        passed in on NetworkBridge or Client Network Adapter creation, or
+        False if the API should directly work with VLANs and Virtual Switches.
+        """
+        return self._is_hmc()
+
+    def _is_hmc(self):
+        """Internal attribute to determine if HMC.  Used for trait behavior.
+
+        Not for external use.
+        """
+        if not hasattr(self, 'is_hmc'):
+            # TODO(IBM) Determine this off of future data from the API.
+            self.is_hmc = False
+        return self.is_hmc
