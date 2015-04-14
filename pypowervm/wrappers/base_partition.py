@@ -14,8 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pypowervm.const as c
 import pypowervm.util as u
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 # Base Partition (_BP)
@@ -35,7 +35,7 @@ _BP_ASSOCIATED_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
-_BP_CNA_LINKS = u.xpath('ClientNetworkAdapters', wc.LINK)
+_BP_CNA_LINKS = u.xpath('ClientNetworkAdapters', c.LINK)
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
 
 BP_EL_ORDER = (

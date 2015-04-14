@@ -14,8 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pypowervm.const as c
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 import logging

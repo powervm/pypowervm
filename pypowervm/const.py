@@ -28,7 +28,6 @@ ATTR_SCHEMA = 'ksv'
 DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
 ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
 
-XAG_NONE = 'None'
 API_BASE_PATH = '/rest/api/'
 LOGON_PATH = API_BASE_PATH + 'web/Logon'
 TYPE_TEMPLATE = 'application/vnd.ibm.powervm.%s+xml; type=%s'
@@ -43,11 +42,14 @@ LOGONREQUEST_TEMPLATE = six.u(
 ATOM_NS = 'http://www.w3.org/2005/Atom'
 XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
 WEB_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/'
-UOM_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/'
 UOM_BASE_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/uom/mc'
+UOM_NS = UOM_BASE_NS + '/2012_10/'
 
 UUID_REGEX = ('[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-' +
               '[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}')
+
+SUFFIX_TYPE_DO = 'do'
+LINK = 'link'
 
 
 class HTTPStatusEnum(object):
