@@ -32,22 +32,27 @@ LUA_CMD_VERSION = '3'
 LUA_VERSION = '2.0'
 LUA_RECOVERY = 'LUARecovery'
 
-LUA_TYPE_IBM = "IBM"
-LUA_TYPE_EMC = "EMC"
-LUA_TYPE_NETAPP = "NETAPP"
-LUA_TYPE_HDS = "HDS"
-LUA_TYPE_HP = "HP"
-LUA_TYPE_OTHER = "OTHER"
 
-# LUA Recovery status codes
-LUA_STATUS_DEVICE_IN_USE = '1'
-LUA_STATUS_ITL_NOT_RELIABLE = '2'
-LUA_STATUS_DEVICE_AVAILABLE = '3'
-LUA_STATUS_STORAGE_NOT_INTEREST = '4'
-LUA_STATUS_LUA_NOT_INTEREST = '5'
-LUA_STATUS_INCORRECT_ITL = '6'
-LUA_STATUS_FOUND_DEVICE_UNKNOWN_UDID = '7'
-LUA_STATUS_FOUND_ITL_ERR = '8'
+class LUATypeEnum(object):
+    """LUA Vendors."""
+    IBM = "IBM"
+    EMC = "EMC"
+    NETAPP = "NETAPP"
+    HDS = "HDS"
+    HP = "HP"
+    OTHER = "OTHER"
+
+
+class LUAStatusEnum(object):
+    """LUA Recovery status codes."""
+    DEVICE_IN_USE = '1'
+    ITL_NOT_RELIABLE = '2'
+    DEVICE_AVAILABLE = '3'
+    STORAGE_NOT_INTEREST = '4'
+    LUA_NOT_INTEREST = '5'
+    INCORRECT_ITL = '6'
+    FOUND_DEVICE_UNKNOWN_UDID = '7'
+    FOUND_ITL_ERR = '8'
 
 
 class ITL(object):
@@ -105,7 +110,7 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, vendor=LUA_TYPE_IBM):
+def discover_hdisk(adapter, vios_uuid, itls, vendor=LUATypeEnum.IBM):
     """This method should be invoked after a new disk should be discovered.
 
     When a new disk is created externally (say on a block device), the Virtual
@@ -115,9 +120,9 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUA_TYPE_IBM):
     :param adapter: The pypowervm adapter.
     :param vios_uuid: The Virtual I/O Server UUID.
     :param itls: A list of ITL objects.
-    :param vendor: The vendor for the LUN.  See the LUA_TYPE_* constants.
+    :param vendor: The vendor for the LUN.  See the LUATypeEnum.* constants.
     :return status: The status code from the discover process.
-                    See LUA_STATUS_* constants.
+                    See LUAStatusEnum.* constants.
     :return dev_name: The name of the discovered hdisk.
     :return udid: The UDID of the device.
     """
@@ -139,7 +144,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUA_TYPE_IBM):
     return status, devname, udid
 
 
-def _lua_recovery_xml(itls, vendor=LUA_TYPE_IBM):
+def _lua_recovery_xml(itls, vendor=LUATypeEnum.IBM):
     """Builds the XML that is used as input for the lua_recovery job.
 
     The lua_recovery provides a very quick way for the system to discover
@@ -148,7 +153,7 @@ def _lua_recovery_xml(itls, vendor=LUA_TYPE_IBM):
     :param itls: The list of ITL objects that define the various connections
                  between the server port (initiator), disk port (target) and
                  disk itself.
-    :param vendor: The LUA vendor.  See the LUA_TYPE_* Constants.
+    :param vendor: The LUA vendor.  See the LUATypeEnum.* Constants.
     :return: The CDATA XML that is used for the lua_recovery job.
     """
     root = ent.Element("XML_LIST", ns='')
@@ -193,7 +198,7 @@ def _process_lua_result(result):
     """Processes the Output XML returned by LUARecovery.
 
     :return status: The status code from the discover process.
-                    See LUA_STATUS_* constants.
+                    See LUAStatusEnum.* constants.
     :return dev_name: The name of the discovered hdisk.
     :return udid: The UDID of the device.
     """
@@ -226,18 +231,18 @@ def _process_lua_result(result):
 def _validate_lua_status(status, dev_name, udid, message):
     """Logs any issues with the LUA."""
 
-    if status == LUA_STATUS_DEVICE_AVAILABLE:
+    if status == LUAStatusEnum.DEVICE_AVAILABLE:
         LOG.info(_("LUA Discovery Successful Device Found: %s"),
                  dev_name)
-    elif status == LUA_STATUS_FOUND_ITL_ERR:
+    elif status == LUAStatusEnum.FOUND_ITL_ERR:
         # Message is already set.
         LOG.warn(_("ITL Error encountered: %s"), message)
         pass
-    elif status == LUA_STATUS_DEVICE_IN_USE:
+    elif status == LUAStatusEnum.DEVICE_IN_USE:
         LOG.warn(_("%s Device is currently in use"), dev_name)
-    elif status == LUA_STATUS_FOUND_DEVICE_UNKNOWN_UDID:
+    elif status == LUAStatusEnum.FOUND_DEVICE_UNKNOWN_UDID:
         LOG.warn(_("%s Device discovered with unknown uuid"), dev_name)
-    elif status == LUA_STATUS_INCORRECT_ITL:
+    elif status == LUAStatusEnum.INCORRECT_ITL:
         LOG.warn(_("Failed to Discover the Device : %s"), dev_name)
     return status, dev_name, message, udid
 
