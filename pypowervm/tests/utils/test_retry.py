@@ -17,6 +17,7 @@
 import unittest
 
 from pypowervm import adapter as adpt
+from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm.utils import retry as pvm_retry
 
@@ -56,12 +57,13 @@ class TestRetry(unittest.TestCase):
         self.assertEqual(called_count, 1)
 
         # Test retry with an http code
-        @pvm_retry.retry(tries=4, http_codes=(412,))
+        @pvm_retry.retry(tries=4, http_codes=(c.HTTPStatusEnum.ETAG_MISMATCH,))
         def http_except_method(x, y):
             global called_count
             called_count += 1
-            resp = adpt.Response('reqmethod', 'reqpath', 412,
-                                 'reason', 'headers')
+            resp = adpt.Response(
+                'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
+                'reason', 'headers')
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -78,8 +80,9 @@ class TestRetry(unittest.TestCase):
         def func_except_method(x, y):
             global called_count
             called_count += 1
-            resp = adpt.Response('reqmethod', 'reqpath', 412,
-                                 'reason', 'headers')
+            resp = adpt.Response(
+                'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
+                'reason', 'headers')
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -133,8 +136,9 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             if called_count == 1:
                 # etag mismatch
-                resp = adpt.Response('reqmethod', 'reqpath', 412,
-                                     'reason', 'headers')
+                resp = adpt.Response(
+                    'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
+                    'reason', 'headers')
                 http_exc = pvm_exc.HttpError('msg', resp)
                 raise http_exc
 
