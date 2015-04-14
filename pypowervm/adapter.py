@@ -20,6 +20,7 @@ import datetime as dt
 import hashlib
 import logging
 import os
+import ssl
 
 if os.name == 'posix':
     import pwd
@@ -38,6 +39,7 @@ except ImportError:
 import oslo_concurrency.lockutils as locku
 import requests
 import requests.exceptions as rqex
+import requests.packages.urllib3.poolmanager as pool_m
 import six
 
 from pypowervm import cache
@@ -62,6 +64,14 @@ register_namespace('atom', const.ATOM_NS)
 register_namespace('xsi', const.XSI_NS)
 register_namespace('web', const.WEB_NS)
 register_namespace('uom', const.UOM_NS)
+
+
+class TLSAdapter(requests.adapters.HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = pool_m.PoolManager(num_pools=connections,
+                                              maxsize=maxsize,
+                                              block=block,
+                                              ssl_version=ssl.PROTOCOL_TLSv1_2)
 
 
 class Session(object):
@@ -151,6 +161,8 @@ class Session(object):
             headers = {}
 
         session = requests.Session()
+        session.mount('https://', TLSAdapter())
+        session.mount('http://', TLSAdapter())
         session.verify = verify
 
         url = self.dest + path
