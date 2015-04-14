@@ -48,3 +48,9 @@ UOM_BASE_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/uom/mc'
 
 UUID_REGEX = ('[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-' +
               '[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}')
+
+
+class HTTPStatusEnum(object):
+    """Small subset of HTTP status codes as used by PowerVM."""
+    UNAUTHORIZED = 401
+    ETAG_MISMATCH = 412

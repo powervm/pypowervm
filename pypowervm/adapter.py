@@ -41,7 +41,7 @@ import requests.exceptions as rqex
 import six
 
 from pypowervm import cache
-from pypowervm import const
+from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
 from pypowervm import traits as pvm_traits
@@ -58,10 +58,10 @@ LOG = logging.getLogger(__name__)
 register_namespace = etree.register_namespace
 
 # Register the namespaces we'll use
-register_namespace('atom', const.ATOM_NS)
-register_namespace('xsi', const.XSI_NS)
-register_namespace('web', const.WEB_NS)
-register_namespace('uom', const.UOM_NS)
+register_namespace('atom', c.ATOM_NS)
+register_namespace('xsi', c.XSI_NS)
+register_namespace('web', c.WEB_NS)
+register_namespace('uom', c.UOM_NS)
 
 
 class Session(object):
@@ -253,8 +253,8 @@ class Session(object):
                       (response.text if not sensitive else "<sensitive>"))
 
         # re-login processing
-        if response.status_code == 401:
-            LOG.debug('Processing HTTP 401')
+        if response.status_code == c.HTTPStatusEnum.UNAUTHORIZED:
+            LOG.debug('Processing HTTP Unauthorized')
 
             with self._lock:
                 if not relogin:
@@ -274,7 +274,8 @@ class Session(object):
                             self._logon()
                         except pvmex.Error as e:
                             if e.response:
-                                if e.response.status == 401:
+                                if (e.response.status ==
+                                        c.HTTPStatusEnum.UNAUTHORIZED):
                                     # can't continue re-login attempts lest we
                                     # lock the account
                                     self._relogin_unsafe = True
@@ -301,7 +302,7 @@ class Session(object):
                                             sensitive=sensitive, verify=verify,
                                             timeout=timeout, relogin=False)
                     except pvmex.HttpError as e:
-                        if e.response.status == 401:
+                        if e.response.status == c.HTTPStatusEnum.UNAUTHORIZED:
                             # This is a special case... normally on a 401 we
                             # would retry login, but we won't here because
                             # we just did that... Handle it specially.
@@ -345,12 +346,12 @@ class Session(object):
     def _logon(self):
         LOG.info("Session logging on %s" % self.host)
         headers = {
-            'Accept': const.TYPE_TEMPLATE % ('web', 'LogonResponse'),
-            'Content-Type': const.TYPE_TEMPLATE % ('web', 'LogonRequest')
+            'Accept': c.TYPE_TEMPLATE % ('web', 'LogonResponse'),
+            'Content-Type': c.TYPE_TEMPLATE % ('web', 'LogonRequest')
         }
         passwd = sax_utils.escape(self.password)
-        body = const.LOGONREQUEST_TEMPLATE % {'userid': self.username,
-                                              'passwd': passwd}
+        body = c.LOGONREQUEST_TEMPLATE % {'userid': self.username,
+                                          'passwd': passwd}
         # Convert it to a string-type from unicode-type encoded with UTF-8
         # Without the socket code will implicitly convert the type with ASCII
         body = body.encode('utf-8')
@@ -368,7 +369,7 @@ class Session(object):
             verify = True
         try:
             # relogin=False to prevent multiple attempts with same credentials
-            resp = self.request('PUT', const.LOGON_PATH, headers=headers,
+            resp = self.request('PUT', c.LOGON_PATH, headers=headers,
                                 body=body, sensitive=True, verify=verify,
                                 relogin=False, login=True)
         except pvmex.Error as e:
@@ -386,7 +387,7 @@ class Session(object):
         root = etree.fromstring(resp.body.encode('utf-8'))
 
         with self._lock:
-            tok = root.findtext('{%s}X-API-Session' % const.WEB_NS)
+            tok = root.findtext('{%s}X-API-Session' % c.WEB_NS)
             if not tok:
                 resp.reqbody = "<sensitive>"
                 msg = "failed to parse session token from PowerVM response"
@@ -403,7 +404,7 @@ class Session(object):
             LOG.info("Session logging off %s" % self.host)
             try:
                 # relogin=False to prevent multiple attempts
-                self.request('DELETE', const.LOGON_PATH, relogin=False)
+                self.request('DELETE', c.LOGON_PATH, relogin=False)
             except Exception:
                 LOG.exception('Problem logging off.  Ignoring.')
 
@@ -513,7 +514,7 @@ class Adapter(object):
                        auditmemento=None, sensitive=False, helpers=None):
         """Create a new resource where the URI path is already known."""
         path = util.dice_href(path)
-        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         if not content_service:
@@ -521,12 +522,12 @@ class Adapter(object):
 
         headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
         if re.search('/do/', path):
-            headers['Content-Type'] = const.TYPE_TEMPLATE % (content_service,
-                                                             'JobRequest')
+            headers['Content-Type'] = c.TYPE_TEMPLATE % (content_service,
+                                                         'JobRequest')
         else:
             # strip off details, if present
             p = urlparse.urlparse(path).path
-            headers['Content-Type'] = const.TYPE_TEMPLATE % (
+            headers['Content-Type'] = c.TYPE_TEMPLATE % (
                 content_service, p.rsplit('/', 1)[1])
 
         resp = self._request('PUT', path, helpers=helpers, headers=headers,
@@ -534,7 +535,7 @@ class Adapter(object):
                              auditmemento=auditmemento, sensitive=sensitive)
         resp_to_cache = None
         is_cacheable = self._cache and not any(p in path for p in
-                                               const.UNCACHEABLE)
+                                               c.UNCACHEABLE)
         if is_cacheable:
             # TODO(IBM): are there cases where PUT response differs from GET?
             # TODO(IBM): only cache this when we don't have event support?
@@ -671,7 +672,7 @@ class Adapter(object):
         # First, test whether we should be pulling from cache, determined
         # by asking a) is there a cache? and b) is this path cacheable?
         is_cacheable = self._cache and not any(p in path for p in
-                                               const.UNCACHEABLE)
+                                               c.UNCACHEABLE)
         resp = None
         cached_resp = None
         etag_from_cache = False
@@ -719,12 +720,12 @@ class Adapter(object):
 
     def _read_by_path(self, path, etag, timeout, auditmemento, sensitive,
                       helpers=None):
-        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {}
         # isrespatom = False
-        json_search_str = (const.UUID_REGEX + '/quick$' +
+        json_search_str = (c.UUID_REGEX + '/quick$' +
                            '|/quick/' +
                            '|.json$')
         if re.search(json_search_str, path):
@@ -763,7 +764,8 @@ class Adapter(object):
                                         auditmemento, sensitive,
                                         helpers=helpers)
         except pvmex.HttpError as e:
-            if self._cache and e.response.status == 412:
+            if self._cache and (e.response.status ==
+                                c.HTTPStatusEnum.ETAG_MISMATCH):
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
@@ -785,7 +787,7 @@ class Adapter(object):
             raise
         resp_to_cache = None
         is_cacheable = self._cache and not any(p in path for p in
-                                               const.UNCACHEABLE)
+                                               c.UNCACHEABLE)
         if is_cacheable:
             # TODO(IBM): are there cases where POST response differs from GET?
             # TODO(IBM): only cache this when we don't have event support?
@@ -808,7 +810,7 @@ class Adapter(object):
 
     def _update_by_path(self, data, etag, path, timeout, auditmemento,
                         sensitive, helpers=None):
-        m = re.match(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
@@ -816,7 +818,7 @@ class Adapter(object):
             headers['Content-Type'] = 'application/xml'
         else:
             t = path.rsplit('/', 2)[1]
-            headers['Content-Type'] = const.TYPE_TEMPLATE % (m.group(1), t)
+            headers['Content-Type'] = c.TYPE_TEMPLATE % (m.group(1), t)
         if etag:
             headers['If-Match'] = etag
         if hasattr(data, 'toxmlstring'):
@@ -861,7 +863,8 @@ class Adapter(object):
             resp = self._delete_by_path(path, etag, timeout, auditmemento,
                                         helpers=helpers)
         except pvmex.HttpError as e:
-            if self._cache and e.response.status == 412:
+            if self._cache and (e.response.status ==
+                                c.HTTPStatusEnum.ETAG_MISMATCH):
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
@@ -893,7 +896,7 @@ class Adapter(object):
         return resp
 
     def _delete_by_path(self, path, etag, timeout, auditmemento, helpers=None):
-        m = re.search(r'%s(\w+)/(\w+)' % const.API_BASE_PATH, path)
+        m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {}
@@ -911,7 +914,7 @@ class Adapter(object):
         except Exception:
             raise ValueError('Invalid file descriptor')
 
-        path = const.API_BASE_PATH + 'web/File/contents/' + fileid
+        path = c.API_BASE_PATH + 'web/File/contents/' + fileid
         headers = {'Accept': 'application/vnd.ibm.powervm.web+xml',
                    'Content-Type': mediatype}
 
@@ -928,7 +931,7 @@ class Adapter(object):
         except Exception:
             raise ValueError('Invalid file descriptor')
 
-        path = const.API_BASE_PATH + 'web/File/contents/' + fileid
+        path = c.API_BASE_PATH + 'web/File/contents/' + fileid
         headers = {'Accept': mediatype}
 
         return self._request('GET', path, helpers=helpers, headers=headers,
@@ -997,16 +1000,16 @@ class Adapter(object):
     @staticmethod
     def build_job_parm(name, value):
         p = ent.Element('JobParameter', attrib={'schemaVersion': 'V1_0'},
-                        ns=const.WEB_NS)
-        p.append(ent.Element('ParameterName', text=name, ns=const.WEB_NS))
-        p.append(ent.Element('ParameterValue', text=value, ns=const.WEB_NS))
+                        ns=c.WEB_NS)
+        p.append(ent.Element('ParameterName', text=name, ns=c.WEB_NS))
+        p.append(ent.Element('ParameterValue', text=value, ns=c.WEB_NS))
         return p
 
     @classmethod
     def build_path(cls, service, root_type, root_id=None, child_type=None,
                    child_id=None, suffix_type=None, suffix_parm=None,
                    detail=None, xag=None):
-        path = const.API_BASE_PATH + service + '/' + root_type
+        path = c.API_BASE_PATH + service + '/' + root_type
         if root_id:
             path += '/' + root_id
             if child_type:
@@ -1198,16 +1201,16 @@ class Response(object):
                 err_reason = ('Error parsing XML response from PowerVM: %s' %
                               str(e))
             if root is not None and root.tag == str(
-                    etree.QName(const.ATOM_NS, 'feed')):
+                    etree.QName(c.ATOM_NS, 'feed')):
                 self.feed = ent.Feed.unmarshal_atom_feed(root)
             elif root is not None and root.tag == str(
-                    etree.QName(const.ATOM_NS, 'entry')):
+                    etree.QName(c.ATOM_NS, 'entry')):
                 self.entry = ent.Entry.unmarshal_atom_entry(root)
             elif err_reason is None:
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
             if self.status == 204:
-                if re.match(const.UUID_REGEX,
+                if re.match(c.UUID_REGEX,
                             self.reqpath.split('?')[0].rsplit('/', 1)[1]):
                     err_reason = 'unexpected HTTP 204 for request'
                 else:
@@ -1383,7 +1386,7 @@ def unmarshal_httperror(resp):
     # Attempt to extract PowerVM API's HttpErrorResponse object
     try:
         root = etree.fromstring(resp.body)
-        if root is not None and root.tag == str(etree.QName(const.ATOM_NS,
+        if root is not None and root.tag == str(etree.QName(c.ATOM_NS,
                                                             'entry')):
             resp.err = ent.Entry.unmarshal_atom_entry(root).element
     except Exception:
@@ -1398,11 +1401,11 @@ def get_entry_from_feed(feedelem, uuid):
     entry = None
     etag = None
     for f_elem in list(feedelem):
-        if f_elem.tag == str(etree.QName(const.ATOM_NS, 'entry')):
+        if f_elem.tag == str(etree.QName(c.ATOM_NS, 'entry')):
             etag = None
             for e_elem in list(f_elem):
                 if not list(e_elem):
-                    pat = '{%s}' % const.ATOM_NS
+                    pat = '{%s}' % c.ATOM_NS
                     if re.match(pat, e_elem.tag):
                         # Strip off atom namespace qualification for easier
                         # access
@@ -1412,7 +1415,7 @@ def get_entry_from_feed(feedelem, uuid):
                         # Leave qualified anything that is not in the atom
                         # namespace
                         param_name = e_elem.tag
-                    if param_name == '{%s}etag' % const.UOM_NS:
+                    if param_name == '{%s}etag' % c.UOM_NS:
                         etag = e_elem.text
                     elif param_name == 'id' and e_elem.text.lower() == uuid:
                         entry = etree.tostring(f_elem)
