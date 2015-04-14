@@ -20,20 +20,23 @@ import logging
 import six
 
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
+
+UDID = 'UniqueDeviceID'
 
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
-_DISK_UDID = c.UDID
+_DISK_UDID = UDID
 
 # Physical Volume Constants
-_PV_UDID = c.UDID
+PVS = 'PhysicalVolumes'
+PHYS_VOL = 'PhysicalVolume'
+_PV_UDID = UDID
 _PV_VOL_SIZE = 'VolumeCapacity'
 _PV_VOL_NAME = 'VolumeName'
 _PV_VOL_STATE = 'VolumeState'
@@ -50,7 +53,7 @@ _VOPT_MOUNT_TYPE = 'MountType'
 
 # Virtual Media Repository Constants
 _VREPO_ROOT = 'VirtualMediaRepository'
-_VREPO_OPTICAL_MEDIA_ROOT = c.OPTICAL_MEDIA
+_VREPO_OPTICAL_MEDIA_ROOT = 'OpticalMedia'
 _VREPO_NAME = 'RepositoryName'
 _VREPO_SIZE = 'RepositorySize'
 
@@ -65,8 +68,8 @@ _VG_STATE = 'GroupState'
 _VG_MAX_LVS = 'MaximumLogicalVolumes'
 _VG_MEDIA_REPOS = 'MediaRepositories'
 _VG_MIN_ALLOC_SIZE = 'MinimumAllocationSize'
-_VG_PHS_VOLS = 'PhysicalVolumes'
-_VG_UDID = c.UDID
+_VG_PHS_VOLS = PVS
+_VG_UDID = UDID
 _VG_VDISKS = 'VirtualDisks'
 _VG_EL_ORDER = (_VG_AVAILABLE_SIZE, _VG_BACKING_DEVICE_COUNT, _VG_FREE_SPACE,
                 _VG_CAPACITY, _VG_NAME, _VG_SERIAL_ID, _VG_STATE, _VG_MAX_LVS,
@@ -75,7 +78,7 @@ _VG_EL_ORDER = (_VG_AVAILABLE_SIZE, _VG_BACKING_DEVICE_COUNT, _VG_FREE_SPACE,
 
 # LogicalUnit Constants
 _LU_THIN = 'ThinDevice'
-_LU_UDID = c.UDID
+_LU_UDID = UDID
 _LU_CAPACITY = 'UnitCapacity'
 _LU_TYPE = 'LogicalUnitType'
 _LU_CLONED_FROM = 'ClonedFrom'
@@ -93,14 +96,14 @@ class LUTypeEnum(object):
 
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
-_SSP_UDID = c.UDID
+_SSP_UDID = UDID
 _SSP_CAPACITY = 'Capacity'
 _SSP_FREE_SPACE = 'FreeSpace'
 _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
 _SSP_LU = 'LogicalUnit'
-_SSP_PVS = c.PVS
-_SSP_PV = c.PV
+_SSP_PVS = PVS
+_SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
 _VADPT_LPAR_ID = 'LocalPartitionID'
@@ -114,6 +117,9 @@ _VADPT_NAME = 'AdapterName'
 _VADPT_TYPE = 'AdapterType'
 _NEXT_SLOT = 'UseNextAvailableSlotID'
 _LOCATION_CODE = 'LocationCode'
+
+CLIENT_ADPT = 'ClientAdapter'
+SERVER_ADPT = 'ServerAdapter'
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -315,7 +321,7 @@ class VOptMedia(ewrap.ElementWrapper):
         self.set_parm_value(_VOPT_MOUNT_TYPE, new_mount_type)
 
 
-@ewrap.ElementWrapper.pvm_type('PhysicalVolume', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True)
 class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
@@ -666,7 +672,7 @@ class VStorageAdapter(ewrap.ElementWrapper):
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type('ClientAdapter', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True)
 class VClientStorageAdapter(VStorageAdapter):
     """Parent class for Client Virtual Storage Adapters."""
 
@@ -681,7 +687,7 @@ class VClientStorageAdapter(VStorageAdapter):
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type('ServerAdapter', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True)
 class VServerStorageAdapter(VStorageAdapter):
     """Parent class for Server Virtual Storage Adapters."""
 

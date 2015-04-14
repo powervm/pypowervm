@@ -19,18 +19,20 @@ import logging
 
 from lxml import etree
 
+from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
-from pypowervm.wrappers import constants as c
 from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 LOG = logging.getLogger(__name__)
 
-LUA_CMD_VERSION = '3'
-LUA_VERSION = '2.0'
-LUA_RECOVERY = 'LUARecovery'
+_LUA_CMD_VERSION = '3'
+_LUA_VERSION = '2.0'
+_LUA_RECOVERY = 'LUARecovery'
+
+_MGT_CONSOLE = 'ManagementConsole'
 
 
 class LUATypeEnum(object):
@@ -131,8 +133,9 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUATypeEnum.IBM):
     lua_xml = _lua_recovery_xml(itls, vendor=vendor)
 
     # Build up the job & invoke
-    resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid,
-                        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=LUA_RECOVERY)
+    resp = adapter.read(
+        pvm_vios.VIOS.schema_type, root_id=vios_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_LUA_RECOVERY)
     job_wrapper = pvm_job.Job.wrap(resp)
     job_parms = [job_wrapper.create_job_parameter('inputXML', lua_xml,
                                                   cdata=True)]
@@ -161,8 +164,8 @@ def _lua_recovery_xml(itls, vendor=LUATypeEnum.IBM):
     # The general attributes
     # TODO(IBM) Need to determine value of making these constants modifiable
     general = ent.Element("general", ns='')
-    general.append(ent.Element("cmd_version", text=LUA_CMD_VERSION, ns=''))
-    general.append(ent.Element("version", text=LUA_VERSION, ns=''))
+    general.append(ent.Element("cmd_version", text=_LUA_CMD_VERSION, ns=''))
+    general.append(ent.Element("version", text=_LUA_VERSION, ns=''))
     root.append(general)
 
     # TODO(IBM) This can be re-evaluated.  Set to true if you know for sure
@@ -267,7 +270,7 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
         LOG.debug('RMDEV Command Input: %s' % rm_cmd)
 
         # Get the response for the CLIRunner command
-        resp = adapter.read(c.MGT_CONSOLE, None,
+        resp = adapter.read(_MGT_CONSOLE, None,
                             suffixType=c.SUFFIX_TYPE_DO,
                             suffixParm='CLIRunner')
 

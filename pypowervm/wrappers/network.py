@@ -17,12 +17,14 @@
 import copy
 import logging
 
+import pypowervm.const as c
 import pypowervm.entities as ent
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
+
+_PVID = 'PortVLANID'
 
 _VSW_NAME = 'SwitchName'
 _VSW_ID = 'SwitchID'
@@ -33,25 +35,28 @@ VSW_DEFAULT_VSWITCH_ID = 0
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
 _VSW_EL_ORDER = (_VSW_ID, _VSW_MODE, _VSW_NAME, _VSW_VIRT_NETS)
 
+SHARED_ETH_ADPT = 'SharedEthernetAdapter'
+
 _NB_FAILOVER = 'FailoverEnabled'
 _NB_LOADBALANCE = 'LoadBalancingEnabled'
 _NB_LGS = 'LoadGroups'
-_NB_PVID = 'PortVLANID'
+_NB_PVID = _PVID
 NB_SEAS = 'SharedEthernetAdapters'
 _NB_DEV_ID = 'UniqueDeviceID'
 _NB_VNETS = 'VirtualNetworks'
 _NB_LG = 'LoadGroup'
-NB_SEA = 'SharedEthernetAdapter'
 _NB_EL_ORDER = (_NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS, _NB_PVID, NB_SEAS,
                 _NB_DEV_ID, _NB_VNETS)
 
+ETH_BACK_DEV = 'EthernetBackingDevice'
+
 _SEA_VIO_HREF = 'AssignedVirtualIOServer'
 _SEA_BACKING_DEV = 'BackingDeviceChoice'
-_SEA_ETH_BACK_DEV = 'EthernetBackingDevice'
+_SEA_ETH_BACK_DEV = ETH_BACK_DEV
 _SEA_HA_MODE = 'HighAvailabilityMode'
 _SEA_DEV_NAME = 'DeviceName'
 _SEA_JUMBO_FRAMES = 'JumboFramesEnabled'
-_SEA_PVID = 'PortVLANID'
+_SEA_PVID = _PVID
 _SEA_QOS_MODE = 'QualityOfServiceMode'
 _SEA_QUEUE_SIZE = 'QueueSize'
 _SEA_THREAD_MODE = 'ThreadModeEnabled'
@@ -87,7 +92,7 @@ _TA_VIRTUAL_SLOT = 'VirtualSlotNumber'
 _TA_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 _TA_ALLOWED_MAC = 'AllowedOperatingSystemMACAddresses'
 _TA_MAC = 'MACAddress'
-_TA_PVID = 'PortVLANID'
+_TA_PVID = _PVID
 _TA_QOS_PRI = 'QualityOfServicePriorityEnabled'
 _TA_VLAN_IDS = 'TaggedVLANIDs'
 _TA_TAG_SUPP = 'TaggedVLANSupported'
@@ -100,7 +105,7 @@ _TA_EL_ORDER = (_TA_CONN_NAME, _TA_LOC_CODE, _TA_REQUIRED, _TA_VARIED_ON,
                 _TA_MAC, _TA_PVID, _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP,
                 _TA_ASSOC_VSWITCH, _TA_VS_ID, _TA_DEV_NAME, _TA_TRUNK_PRI)
 
-_LG_PVID = 'PortVLANID'
+_LG_PVID = _PVID
 _LG_TRUNKS = 'TrunkAdapters'
 _LG_VNETS = 'VirtualNetworks'
 
@@ -115,7 +120,8 @@ _VADPT_MAC_ADDR = 'MACAddress'
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
-_VADPT_PVID = 'PortVLANID'
+_VADPT_PVID = _PVID
+_VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
@@ -398,7 +404,7 @@ class NetBridge(ewrap.EntryWrapper):
         self.set_parm_value(_NB_LOADBALANCE, u.sanitize_bool_for_api(value))
 
 
-@ewrap.ElementWrapper.pvm_type('SharedEthernetAdapter', has_metadata=True,
+@ewrap.ElementWrapper.pvm_type(SHARED_ETH_ADPT, has_metadata=True,
                                child_order=_SEA_EL_ORDER)
 class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
@@ -428,10 +434,10 @@ class SEA(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """Returns the Primary VLAN ID of the Shared Ethernet Adapter."""
-        return self._get_val_int(c.PORT_VLAN_ID)
+        return self._get_val_int(_SEA_PVID)
 
     def _pvid(self, value):
-        self.set_parm_value(c.PORT_VLAN_ID, value)
+        self.set_parm_value(_SEA_PVID, value)
 
     @property
     def dev_name(self):
@@ -835,10 +841,10 @@ class CNA(ewrap.EntryWrapper):
 
     @property
     def slot(self):
-        return self._get_val_int(c.VIR_SLOT_NUM)
+        return self._get_val_int(_VADPT_SLOT_NUM)
 
     def _slot(self, sid):
-        self.set_parm_value(c.VIR_SLOT_NUM, sid)
+        self.set_parm_value(_VADPT_SLOT_NUM, sid)
 
     @property
     def _use_next_avail_slot_id(self):

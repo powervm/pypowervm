@@ -18,10 +18,10 @@ import logging
 
 from oslo.config import cfg
 
+import pypowervm.const as c
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 import pypowervm.log as lgc
-import pypowervm.wrappers.constants as c
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as wlpar
 import pypowervm.wrappers.managed_system as ms

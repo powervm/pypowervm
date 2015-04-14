@@ -16,8 +16,8 @@
 
 import logging
 
+import pypowervm.const as c
 import pypowervm.wrappers.cluster as clust
-import pypowervm.wrappers.constants as c
 from pypowervm.wrappers import job
 import pypowervm.wrappers.storage as stor
 
