@@ -17,7 +17,6 @@
 import logging
 
 import pypowervm.util as u
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.storage as stor
@@ -28,7 +27,7 @@ LOG = logging.getLogger(__name__)
 _CL_NAME = 'ClusterName'
 _CL_ID = 'ClusterID'
 _CL_REPOPVS = 'RepositoryDisk'  # Yes, really
-_CL_PV = c.PV
+_CL_PV = stor.PHYS_VOL
 _CL_SSP_LINK = 'ClusterSharedStoragePool'
 _CL_NODES = 'Node'  # Yes, really
 _CL_NODE = 'Node'

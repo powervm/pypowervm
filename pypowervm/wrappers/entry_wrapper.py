@@ -23,7 +23,6 @@ import pypowervm.const as pc
 import pypowervm.entities as ent
 from pypowervm.i18n import _
 from pypowervm import util
-import pypowervm.wrappers.constants as wc
 
 import six
 
@@ -381,7 +380,7 @@ class Wrapper(object):
             link = links[0]
         else:
             # Not found - create the property
-            l = propname.split(wc.DELIM)
+            l = propname.split(util.XPATH_DELIM)
             append_point = self
             while len(l) > 1:
                 next_prop = l.pop(0)

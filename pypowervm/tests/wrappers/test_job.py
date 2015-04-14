@@ -18,7 +18,6 @@ import unittest
 
 import pypowervm.adapter as adp
 from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.wrappers.constants as c
 import pypowervm.wrappers.job as jwrap
 
 JOB_REQUEST_FILE = "job_request_power_off.txt"
@@ -27,7 +26,7 @@ JOB_RESPONSE_FAILED = "job_response_completed_failed.txt"
 JOB_RESPONSE_EXCEPTION = "job_response_exception.txt"
 
 EXPECTED_ID = '1375391227297'
-EXPECTED_STATUS = c.PVM_JOB_STATUS_COMPLETED_WITH_ERROR
+EXPECTED_STATUS = jwrap.JobStatusEnum.COMPLETED_WITH_ERROR
 EXPECTED_EXCEPTION_MESSAGE = 'This is an exception message'
 EXPECTED_RESULTS_VALUE = 'This is an error message'
 EXPECTED_GROUP_NAME = 'LogicalPartition'
@@ -93,22 +92,22 @@ class TestJobEntryWrapper(unittest.TestCase):
         """Set expected values in entry so test code can work consistently."""
         tc = TestJobEntryWrapper
         self.set_single_value(tc._ok_wrapper.entry,
-                              c.JOB_ID, EXPECTED_ID)
+                              jwrap._JOB_ID, EXPECTED_ID)
         self.set_single_value(tc._request_wrapper.entry,
-                              c.JOB_GROUP_NAME,
+                              jwrap._JOB_GROUP_NAME,
                               EXPECTED_GROUP_NAME)
         self.set_single_value(tc._request_wrapper.entry,
-                              c.JOB_OPERATION_NAME,
+                              jwrap._JOB_OPERATION_NAME,
                               EXPECTED_OPERATION_NAME)
         self.set_single_value(tc._failed_wrapper.entry,
-                              c.JOB_STATUS,
+                              jwrap._JOB_STATUS,
                               EXPECTED_STATUS)
         self.set_single_value(tc._exception_wrapper.entry,
-                              c.JOB_MESSAGE,
+                              jwrap._JOB_MESSAGE,
                               EXPECTED_EXCEPTION_MESSAGE)
         # results value containing the message is the second one in a list
         props = tc._failed_wrapper.entry.element.findall(
-            c.JOB_RESULTS_VALUE)
+            jwrap._JOB_RESULTS_VALUE)
         props[1].text = str(EXPECTED_RESULTS_VALUE)
 
     def verify_equal(self, method_name, returned_value, expected_value):
