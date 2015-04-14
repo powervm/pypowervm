@@ -24,7 +24,7 @@ import pypowervm.const as pc
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
-import pypowervm.wrappers.constants as wc
+import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
@@ -39,6 +39,25 @@ CONF = cfg.CONF
 CONF.register_opts(job_opts)
 
 _JOBS = 'jobs'
+_REQ_OP = 'RequestedOperation'
+_JOB_GROUP_NAME = u.xpath(_REQ_OP, 'GroupName')
+_JOB_OPERATION_NAME = u.xpath(_REQ_OP, 'OperationName')
+_JOB_PARAM = u.xpath('Results', 'JobParameter')
+_JOB_RESULTS_NAME = u.xpath(_JOB_PARAM, 'ParameterName')
+_JOB_RESULTS_VALUE = u.xpath(_JOB_PARAM, 'ParameterValue')
+_RESPONSE_EXCEPTION = 'ResponseException'
+_JOB_MESSAGE = u.xpath(_RESPONSE_EXCEPTION, 'Message')
+_JOB_STACKTRACE = u.xpath(_RESPONSE_EXCEPTION, 'StackTrace')
+_JOB_STATUS = 'Status'
+_JOB_ID = 'JobID'
+
+
+class JobStatusEnum(object):
+    NOT_ACTIVE = 'NOT_STARTED'
+    RUNNING = 'RUNNING'
+    COMPLETED_OK = 'COMPLETED_OK'
+    COMPLETED_WITH_WARNINGS = 'COMPLETED_WITH_WARNINGS'
+    COMPLETED_WITH_ERROR = 'COMPLETED_WITH_ERROR'
 
 
 @ewrap.EntryWrapper.pvm_type('Job', ns=pc.WEB_NS)
@@ -48,7 +67,7 @@ class Job(ewrap.EntryWrapper):
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
         wrap = super(Job, cls).wrap(response_or_entry, etag=etag)
-        wrap.op = wrap._get_val_str(wc.JOB_OPERATION_NAME)
+        wrap.op = wrap._get_val_str(_JOB_OPERATION_NAME)
         return wrap
 
     @staticmethod
@@ -85,7 +104,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job ID
         """
-        return self._get_val_str(wc.JOB_ID)
+        return self._get_val_str(_JOB_ID)
 
     @property
     def job_status(self):
@@ -93,7 +112,7 @@ class Job(ewrap.EntryWrapper):
 
         :returns: String containing the job status
         """
-        return self._get_val_str(wc.JOB_STATUS)
+        return self._get_val_str(_JOB_STATUS)
 
     def get_job_resp_exception_msg(self, default=''):
         """Gets the job message string from the ResponseException.
@@ -101,10 +120,10 @@ class Job(ewrap.EntryWrapper):
         :returns: String containing the job message or
                   default (defaults to empty string) if not found
         """
-        job_message = self._get_val_str(wc.JOB_MESSAGE, default)
+        job_message = self._get_val_str(_JOB_MESSAGE, default)
         if job_message:
             # See if there is a stack trace to log
-            stack_trace = self._get_val_str(wc.JOB_STACKTRACE, default)
+            stack_trace = self._get_val_str(_JOB_STACKTRACE, default)
             if stack_trace:
                 exc = pvmex.JobRequestFailed(
                     operation_name=self.op, error=stack_trace)
@@ -118,8 +137,8 @@ class Job(ewrap.EntryWrapper):
                   default (defaults to empty string) if not found
         """
         message = default
-        parm_names = self._get_vals(wc.JOB_RESULTS_NAME)
-        parm_values = self._get_vals(wc.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(_JOB_RESULTS_NAME)
+        parm_values = self._get_vals(_JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             if parm_names[i] == 'result':
                 message = parm_values[i]
@@ -133,8 +152,8 @@ class Job(ewrap.EntryWrapper):
                   values as key, value pairs.
         """
         results = default if default else {}
-        parm_names = self._get_vals(wc.JOB_RESULTS_NAME)
-        parm_values = self._get_vals(wc.JOB_RESULTS_VALUE)
+        parm_names = self._get_vals(_JOB_RESULTS_NAME)
+        parm_values = self._get_vals(_JOB_RESULTS_VALUE)
         for i in range(len(parm_names)):
             results[parm_names[i]] = parm_values[i]
         return results
@@ -171,7 +190,7 @@ class Job(ewrap.EntryWrapper):
         :raise JobRequestTimedOut: if the job timed out.
         """
         job = self.entry.element
-        entry_type = self._get_val_str(wc.JOB_GROUP_NAME)
+        entry_type = self._get_val_str(_JOB_GROUP_NAME)
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
@@ -193,7 +212,7 @@ class Job(ewrap.EntryWrapper):
                 operation_name=self.op, seconds=str(timeout))
             LOG.exception(exc)
             raise exc
-        if status != wc.PVM_JOB_STATUS_COMPLETED_OK:
+        if status != JobStatusEnum.COMPLETED_OK:
             self.delete_job(adapter)
             exc = pvmex.JobRequestFailed(
                 operation_name=self.op, error=message)
@@ -222,8 +241,8 @@ class Job(ewrap.EntryWrapper):
         status = self.job_status
         start_time = time.time()
         timed_out = False
-        while (status == wc.PVM_JOB_STATUS_RUNNING or
-               status == wc.PVM_JOB_STATUS_NOT_ACTIVE):
+        while (status == JobStatusEnum.RUNNING or
+               status == JobStatusEnum.NOT_ACTIVE):
             if timeout:
                 # wait up to timeout seconds
                 if (time.time() - start_time) > timeout:
@@ -235,7 +254,7 @@ class Job(ewrap.EntryWrapper):
             status = self.job_status
 
         message = ''
-        if not timed_out and status != wc.PVM_JOB_STATUS_COMPLETED_OK:
+        if not timed_out and status != JobStatusEnum.COMPLETED_OK:
             message = self.get_job_message()
         return status, message, timed_out
 
@@ -281,7 +300,7 @@ class Job(ewrap.EntryWrapper):
             job_id = self.job_id
         if not status:
             status = self.job_status
-        if status == wc.PVM_JOB_STATUS_RUNNING:
+        if status == JobStatusEnum.RUNNING:
             error = (_("Job %s not deleted. Job is in running state.")
                      % job_id)
             exc = pvmex.JobRequestFailed(error)

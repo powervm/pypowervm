@@ -24,7 +24,6 @@ import six
 import pypowervm.entities as ent
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
@@ -42,15 +41,28 @@ _VIO_VFC_MAPPINGS = 'VirtualFibreChannelMappings'
 _VIO_SCSI_MAPPINGS = 'VirtualSCSIMappings'
 _VIO_LICENSE = 'VirtualIOServerLicenseAccepted'
 _MOVER_SERVICE_PARTITION = 'MoverServicePartition'
+_VOL_UID = 'VolumeUniqueID'
+_VOL_NAME = 'VolumeName'
+_RESERVE_POLICY = 'ReservePolicy'
+
+_VIRT_MEDIA_REPOSITORY_PATH = u.xpath('MediaRepositories',
+                                      'VirtualMediaRepository')
+_IF_ADDR = u.xpath('IPInterface', 'IPAddress')
+# "FreeEthernetBackingDevicesForSEA" is really misspelled in the schema.
+_ETHERNET_BACKING_DEVICE = u.xpath('FreeEthenetBackingDevicesForSEA',
+                                   'IOAdapterChoice', net.ETH_BACK_DEV)
+_SEA_PATH = u.xpath(net.NB_SEAS, net.SHARED_ETH_ADPT)
 
 # Mapping Constants
-_MAP_CLIENT_ADAPTER = 'ClientAdapter'
-_MAP_SERVER_ADAPTER = 'ServerAdapter'
 _MAP_STORAGE = 'Storage'
 _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
-_MAP_ORDER = (_MAP_CLIENT_LPAR, _MAP_CLIENT_ADAPTER, _MAP_SERVER_ADAPTER,
+_MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
               _MAP_STORAGE)
+
+_WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
+                      stor.CLIENT_ADPT, 'WWPNs')
+_PVS_PATH = u.xpath(stor.PVS, stor.PHYS_VOL)
 
 
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer')
@@ -64,7 +76,7 @@ class VIOS(bp.BasePartition):
 
     @property
     def media_repository(self):
-        return self.element.find(wc.VIRT_MEDIA_REPOSITORY_PATH)
+        return self.element.find(_VIRT_MEDIA_REPOSITORY_PATH)
 
     def get_vfc_wwpns(self):
         """Returns a list of the virtual FC WWPN pairs for the vios.
@@ -74,7 +86,7 @@ class VIOS(bp.BasePartition):
              ('c05076065a8b0060', 'c05076065a8b0061'))
         """
         return set([frozenset(x.split()) for x in
-                    self._get_vals(wc.WWPNS_PATH)])
+                    self._get_vals(_WWPNS_PATH)])
 
     def get_pfc_wwpns(self):
         """Returns a set of the Physical FC Adapter WWPNs on this VIOS."""
@@ -111,13 +123,13 @@ class VIOS(bp.BasePartition):
         policy = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self.element.findall(wc.PVS_PATH)
+        volumes = self.element.findall(_PVS_PATH)
         for volume in volumes:
-            vol_uuid = volume.findtext(wc.VOL_UID)
+            vol_uuid = volume.findtext(_VOL_UID)
             match = re.search(r'^[0-9]{5}([0-9A-F]{32}).+$', vol_uuid)
 
             if match and match.group(1) == disk_uuid:
-                policy = volume.findtext(wc.RESERVE_POLICY)
+                policy = volume.findtext(_RESERVE_POLICY)
                 break
 
         return policy
@@ -131,14 +143,14 @@ class VIOS(bp.BasePartition):
         name = None
 
         # Get all the physical volume elements and look for a diskname match
-        volumes = self.element.findall(wc.PVS_PATH)
+        volumes = self.element.findall(_PVS_PATH)
         for volume in volumes:
-            vol_uuid = volume.findtext(wc.UDID)
+            vol_uuid = volume.findtext(stor.UDID)
             if vol_uuid:
                 LOG.debug('get_hdisk_from_uuid match: %s' % vol_uuid)
                 LOG.debug('get_hdisk_from_uuid disk_uuid: %s' % disk_uuid)
                 if vol_uuid == disk_uuid:
-                    name = volume.findtext(wc.VOL_NAME)
+                    name = volume.findtext(_VOL_NAME)
                     break
 
         return name
@@ -161,10 +173,10 @@ class VIOS(bp.BasePartition):
 
         # Get all the shared ethernet adapters and free
         # ethernet devices and pull the IPs
-        seas = self.element.findall(wc.SHARED_ETHERNET_ADAPTER)
-        free_eths = self.element.findall(wc.ETHERNET_BACKING_DEVICE)
+        seas = self.element.findall(_SEA_PATH)
+        free_eths = self.element.findall(_ETHERNET_BACKING_DEVICE)
         for eth in seas + free_eths:
-            ip = eth.findtext(wc.IF_ADDR)
+            ip = eth.findtext(_IF_ADDR)
             if ip and ip not in ip_list:
                 ip_list.append(ip)
 
@@ -262,23 +274,23 @@ class VStorageMapping(ewrap.ElementWrapper):
 
         If None - then no client is connected.
         """
-        elem = self.element.find(_MAP_CLIENT_ADAPTER)
+        elem = self.element.find(stor.CLIENT_ADPT)
         if elem is not None:
             return self._client_adapter_cls.wrap(elem)
         return None
 
     def _client_adapter(self, ca):
-        elem = self._find_or_seed(_MAP_CLIENT_ADAPTER)
+        elem = self._find_or_seed(stor.CLIENT_ADPT)
         self.element.replace(elem, ca.element)
 
     @property
     def server_adapter(self):
         """Returns the Virtual I/O Server side VSCSIServerAdapter."""
         return self._server_adapter_cls.wrap(
-            self.element.find(_MAP_SERVER_ADAPTER))
+            self.element.find(stor.SERVER_ADPT))
 
     def _server_adapter(self, sa):
-        elem = self._find_or_seed(_MAP_SERVER_ADAPTER)
+        elem = self._find_or_seed(stor.SERVER_ADPT)
         self.element.replace(elem, sa.element)
 
 

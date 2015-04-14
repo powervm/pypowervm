@@ -19,10 +19,10 @@ import math
 
 from oslo_concurrency import lockutils as lock
 
+import pypowervm.const as c
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
 from pypowervm import util
-import pypowervm.wrappers.constants as c
 from pypowervm.wrappers import job
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf

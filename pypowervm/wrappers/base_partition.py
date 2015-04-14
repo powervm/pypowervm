@@ -15,7 +15,6 @@
 #    under the License.
 
 import pypowervm.util as u
-import pypowervm.wrappers.constants as wc
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 # Base Partition (_BP)

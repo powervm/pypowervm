@@ -35,7 +35,7 @@ from pypowervm import const
 # Set up logging
 LOG = logging.getLogger(__name__)
 
-_DELIM = '/'
+XPATH_DELIM = '/'
 
 
 def dice_href(href, include_scheme_netloc=False, include_query=True,
@@ -304,4 +304,4 @@ def find_wrapper(haystack, needle_uuid):
 
 def xpath(*toks):
     """Constructs an XPath out of the passed-in string components."""
-    return _DELIM.join(toks)
+    return XPATH_DELIM.join(toks)
