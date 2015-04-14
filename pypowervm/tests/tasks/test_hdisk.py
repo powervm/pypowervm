@@ -81,23 +81,24 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):
         """This tests the branches of validate_lua_status."""
-        hdisk._validate_lua_status(hdisk.LUA_STATUS_DEVICE_AVAILABLE,
+        hdisk._validate_lua_status(hdisk.LUAStatusEnum.DEVICE_AVAILABLE,
                                    'dev_name', 'udid', 'message')
         self.assertEqual(1, mock_log.info.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUA_STATUS_FOUND_ITL_ERR,
+        hdisk._validate_lua_status(hdisk.LUAStatusEnum.FOUND_ITL_ERR,
                                    'dev_name', 'udid', 'message')
         self.assertEqual(1, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUA_STATUS_DEVICE_IN_USE,
+        hdisk._validate_lua_status(hdisk.LUAStatusEnum.DEVICE_IN_USE,
                                    'dev_name', 'udid', 'message')
         self.assertEqual(2, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUA_STATUS_FOUND_DEVICE_UNKNOWN_UDID,
-                                   'dev_name', 'udid', 'message')
+        hdisk._validate_lua_status(
+            hdisk.LUAStatusEnum.FOUND_DEVICE_UNKNOWN_UDID,
+            'dev_name', 'udid', 'message')
         self.assertEqual(3, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUA_STATUS_INCORRECT_ITL,
+        hdisk._validate_lua_status(hdisk.LUAStatusEnum.INCORRECT_ITL,
                                    'dev_name', 'udid', 'message')
         self.assertEqual(4, mock_log.warn.call_count)
 
