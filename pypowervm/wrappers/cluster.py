@@ -32,6 +32,8 @@ _CL_PV = c.PV
 _CL_SSP_LINK = 'ClusterSharedStoragePool'
 _CL_NODES = 'Node'  # Yes, really
 _CL_NODE = 'Node'
+_CL_EL_ORDER = (_CL_NAME, _CL_ID, _CL_REPOPVS, _CL_SSP_LINK, _CL_NODES,
+                _CL_NODE)
 
 # Node Constants
 _N_HOSTNAME = 'HostName'
@@ -45,7 +47,8 @@ _N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, _N_MTMS, _N_VIOS_LEVEL,
                _N_VIOS_LINK, _N_IPADDR)
 
 
-@ewrap.EntryWrapper.pvm_type('Cluster')
+@ewrap.EntryWrapper.pvm_type('Cluster', has_metadata=True,
+                             child_order=_CL_EL_ORDER)
 class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
