@@ -22,13 +22,6 @@ MGT_CONSOLE = 'ManagementConsole'
 
 SUFFIX_TYPE_DO = 'do'
 
-# HTTP status code
-HTTP_STATUS_INVALID_URL = 400
-HTTP_STATUS_UNAUTHORIZED = 401
-HTTP_STATUS_NOT_FOUND = 404
-HTTP_STATUS_ETAG_MISMATCH = 412
-HTTP_STATUS_CONNECTION_RESET = 104
-
 # TODO(efried): Get rid of all things xag outside of VIOS.xag
 # extended properties
 VIOS_VSCSI_MAP_EXT_PROP = 'ViosSCSIMapping'
@@ -185,11 +178,6 @@ STG_ATTRS = dict(scsi=SCSI_MAP_ATTRS, vfc=FC_MAP_ATTRS)
 
 REQ_RES_API_ERR_PREFIX = 'HSCL294D'
 
-
-# Updates failed indications
-VIOS_UPDATE_FAILED = [HTTP_STATUS_ETAG_MISMATCH,
-                      HTTP_STATUS_CONNECTION_RESET,
-                      HTTP_STATUS_INVALID_URL]
 
 # PCM
 RAW_METRICS_TYPE = 'RawMetrics'

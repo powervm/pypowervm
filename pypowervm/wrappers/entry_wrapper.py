@@ -547,7 +547,7 @@ class EntryWrapper(Wrapper):
                  appropriate type is returned.
         """
         resp = adapter.read_by_href(self.href, etag=self.etag)
-        if resp.status == 304:
+        if resp.status == pc.HTTPStatusEnum.NO_CHANGE:
             return self
         return self.wrap(resp)
 
