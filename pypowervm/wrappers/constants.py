@@ -25,15 +25,6 @@ ZERO = '0'
 
 SUFFIX_TYPE_DO = 'do'
 
-# TODO(efried): Get rid of all things xag outside of VIOS.xag
-# extended properties
-VIOS_VSCSI_MAP_EXT_PROP = 'ViosSCSIMapping'
-VIOS_VFC_MAP_EXT_PROP = 'ViosFCMapping'
-VIOS_STORAGE_EXT_PROP = 'ViosStorage'
-VIOS_NET_EXT_PROP = 'ViosNetwork'
-ALL_VIOS_EXT_PROPS = [VIOS_VFC_MAP_EXT_PROP, VIOS_NET_EXT_PROP,
-                      VIOS_VSCSI_MAP_EXT_PROP, VIOS_STORAGE_EXT_PROP]
-
 # Attributes
 ETAG = 'etag'
 # indicating whether we are dealing VirtualSCSIMappings or
@@ -158,29 +149,6 @@ VDISK_TYPE = 'VIRTUAL_DISK'
 PV_TYPE = 'PHYSICAL_VOLUME'
 LU_TYPE = 'LOGICAL_UNIT'
 VOPT_TYPE = 'VIRTUAL_OPTICAL_MEDIA'
-
-# PowerVM extended properties
-EXT_SCSI_MAP = VIOS_VSCSI_MAP_EXT_PROP
-EXT_FC_MAP = VIOS_VFC_MAP_EXT_PROP
-
-# constants to help initialize variables
-SCSI_MAP_ATTRS = dict(map_type=SCSI_MAPPING_ELEM,
-                      map_collection=SCSI_MAPPINGS,
-                      serv_remote_lpar_path=SERVER_REMOTE_LPAR_REL_PATH,
-                      serv_remote_slot_path=SERVER_REMOTE_SLOT_REL_PATH,
-                      serv_backing_dev_path=SERVER_BACKING_DEV_REL_PATH,
-                      pvm_ext_prop=EXT_SCSI_MAP)
-FC_MAP_ATTRS = dict(map_type=FC_MAPPING_ELEM,
-                    map_collection=FC_MAPPINGS,
-                    serv_remote_lpar_path=SERVER_CONN_LPAR_REL_PATH,
-                    serv_remote_slot_path=SERVER_CONN_SLOT_REL_PATH,
-                    serv_backing_dev_path=SERVER_MAP_PORT_REL_PATH,
-                    pvm_ext_prop=EXT_FC_MAP)
-STG_ATTRS = dict(scsi=SCSI_MAP_ATTRS, vfc=FC_MAP_ATTRS)
-
-
-REQ_RES_API_ERR_PREFIX = 'HSCL294D'
-
 
 # PCM
 RAW_METRICS_TYPE = 'RawMetrics'
