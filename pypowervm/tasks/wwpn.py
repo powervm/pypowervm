@@ -54,7 +54,7 @@ def find_vio_for_wwpn(vios_wraps, p_port_wwpn):
     for vios_w in vios_wraps:
         for port in vios_w.pfc_ports:
             # No need to sanitize the API WWPN, it comes from the API.
-            if port.wwpn == s_p_port_wwpn:
+            if u.sanitize_wwpn_for_api(port.wwpn) == s_p_port_wwpn:
                 return vios_w, port
     return None, None
 
@@ -308,7 +308,8 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
     # Get all the VIOSes
     vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
                              child_type=pvm_vios.VIOS.schema_type,
-                             xag=[pvm_vios.VIOS.xags.FC_MAPPING])
+                             xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                  pvm_vios.VIOS.xags.STORAGE])
     vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
 
     # List of VIOSes that need to be updated.
@@ -330,7 +331,8 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
 
     # Now run the update against the affected VIOSes
     for vios_w in vioses_to_update.values():
-        vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.FC_MAPPING])
+        vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                    pvm_vios.VIOS.xags.STORAGE])
 
 
 def _remove_npiv_port_map(adapter, vios_wraps, npiv_port_map):
@@ -429,7 +431,8 @@ def _find_ports_on_vio(vio_w, p_port_wwpns):
     :return: List of the physical FC Port wrappers that are on the VIOS
              for the WWPNs that exist on this system.
     """
-    return [port for port in vio_w.pfc_ports if port.wwpn in p_port_wwpns]
+    return [port for port in vio_w.pfc_ports
+            if u.sanitize_wwpn_for_api(port.wwpn) in p_port_wwpns]
 
 
 def _fuse_vfc_ports(wwpn_list):
