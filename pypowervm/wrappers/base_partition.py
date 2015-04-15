@@ -35,7 +35,6 @@ _BP_ASSOCIATED_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
-_BP_CNA_LINKS = u.xpath('ClientNetworkAdapters', wc.LINK)
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
 
 BP_EL_ORDER = (
@@ -227,14 +226,6 @@ class BasePartition(ewrap.EntryWrapper):
         """UUID of the associated ManagedSystem."""
         href = self.get_href(_BP_ASSOCIATED_SYSTEM, one_result=True)
         return u.get_req_path_uuid(href, preserve_case=True) if href else None
-
-    @property
-    def cna_uris(self):
-        """List of URI strings to the partition's ClientNetworkAdapters.
-
-        This is a READ ONLY list.
-        """
-        return self.get_href(_BP_CNA_LINKS)
 
     @property
     def rmc_state(self):
