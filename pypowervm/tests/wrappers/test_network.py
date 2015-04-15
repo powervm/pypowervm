@@ -68,12 +68,12 @@ class TestVSwitch(twrap.TestWrapper):
         """Tests that the vSwitch element can be built."""
         vs = net.VSwitch.bld('Test')
         self.assertEqual('Test', vs.name)
-        self.assertEqual(net.VSwitchModeEnum.VEB, vs.mode)
+        self.assertEqual(net.VSwitchMode.VEB, vs.mode)
         self.assertListEqual([], vs.virtual_network_uri_list)
 
-        vs = net.VSwitch.bld('Test', net.VSwitchModeEnum.VEPA)
+        vs = net.VSwitch.bld('Test', net.VSwitchMode.VEPA)
         self.assertEqual('Test', vs.name)
-        self.assertEqual(net.VSwitchModeEnum.VEPA, vs.mode)
+        self.assertEqual(net.VSwitchMode.VEPA, vs.mode)
         self.assertListEqual([], vs.virtual_network_uri_list)
 
     def test_feed(self):

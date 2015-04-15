@@ -125,7 +125,7 @@ _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 
 
-class VSwitchModeEnum(object):
+class VSwitchMode(object):
     VEB = "Veb"
     VEPA = "Vepa"
 
@@ -143,11 +143,11 @@ class VSwitch(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, name, switch_mode=VSwitchModeEnum.VEB):
+    def bld(cls, name, switch_mode=VSwitchMode.VEB):
         """Creates a VSwitch that can be used for a create operation.
 
         :param name: The name for the virtual switch.  Must be unique.
-        :param switch_mode: The mode of virtual switch (see VSwitchModeEnum).
+        :param switch_mode: The mode of virtual switch (see VSwitchMode).
         :returns: The ElementWrapper that represents the new VSwitch.
         """
         vswitch = super(VSwitch, cls)._bld()
@@ -178,7 +178,7 @@ class VSwitch(ewrap.EntryWrapper):
         """The mode that the switch is in (ex. Veb).
 
         This is a string value that represents one of the values in the
-        VSwitchModeEnum enumeration.
+        VSwitchMode enumeration.
         """
         return self._get_val_str(_VSW_MODE)
 

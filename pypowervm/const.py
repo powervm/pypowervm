@@ -52,7 +52,7 @@ SUFFIX_TYPE_DO = 'do'
 LINK = 'link'
 
 
-class HTTPStatusEnum(object):
+class HTTPStatus(object):
     """Small subset of HTTP status codes as used by PowerVM."""
     OK_NO_CONTENT = 204
     NO_CHANGE = 304

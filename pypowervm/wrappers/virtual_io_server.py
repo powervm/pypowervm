@@ -69,10 +69,10 @@ _PVS_PATH = u.xpath(stor.PVS, stor.PHYS_VOL)
 class VIOS(bp.BasePartition):
 
     # Extended Attribute Groups
-    xags = ent.XAGEnum(NETWORK='ViosNetwork',
-                       STORAGE='ViosStorage',
-                       SCSI_MAPPING='ViosSCSIMapping',
-                       FC_MAPPING='ViosFCMapping')
+    xags = ent.XAG(NETWORK='ViosNetwork',
+                   STORAGE='ViosStorage',
+                   SCSI_MAPPING='ViosSCSIMapping',
+                   FC_MAPPING='ViosFCMapping')
 
     @property
     def media_repository(self):

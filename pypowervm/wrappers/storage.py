@@ -88,7 +88,7 @@ _LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
                 _LU_IN_USE, _LU_NAME)
 
 
-class LUTypeEnum(object):
+class LUType(object):
     DISK = "VirtualIO_Disk"
     HIBERNATION = "VirtualIO_Hibernation"
     IMAGE = "VirtualIO_Image"
@@ -460,7 +460,7 @@ class LU(ewrap.ElementWrapper):
         :param name: The name to assign to the new LogicalUnit
         :param capacity: Capacity in GB for the new LogicalUnit
         :param thin: Provision the new LU as thin (True) or thick (False).
-        :param typ: Logical Unit type, one of the LUTypeEnum values.
+        :param typ: Logical Unit type, one of the LUType values.
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """

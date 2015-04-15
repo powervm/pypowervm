@@ -143,7 +143,7 @@ class DefaultStandardize(Standardize):
     def __init__(self, mngd_sys,
                  proc_units_factor=0.5, max_slots=64,
                  uncapped_weight=64, spp=0, avail_priority=127,
-                 srr='false', proc_compat=bp.LPARCompatEnum.DEFAULT):
+                 srr='false', proc_compat=bp.LPARCompat.DEFAULT):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -233,7 +233,7 @@ class DefaultStandardize(Standardize):
         self._validate_general(partial=True)
 
         attr = {NAME: self.attr[NAME]}
-        self._set_val(attr, ENV, bp.LPARTypeEnum.AIXLINUX,
+        self._set_val(attr, ENV, bp.LPARType.AIXLINUX,
                       convert_func=LPARType.convert_value)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
@@ -242,7 +242,7 @@ class DefaultStandardize(Standardize):
         if host_cap['simplified_remote_restart_capable']:
             self._set_val(attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
-        self._set_val(attr, PROC_COMPAT, bp.LPARCompatEnum.DEFAULT,
+        self._set_val(attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
 
         # Validate the attributes
@@ -295,10 +295,10 @@ class DefaultStandardize(Standardize):
         self._set_val(attr, PROC_UNITS, proc_units)
         self._set_val(attr, MIN_PROC_U, proc_units)
         self._set_val(attr, MAX_PROC_U, proc_units)
-        self._set_val(attr, SHARING_MODE, bp.SharingModesEnum.UNCAPPED)
+        self._set_val(attr, SHARING_MODE, bp.SharingMode.UNCAPPED)
 
         # If uncapped sharing mode then set the weight
-        if attr.get(SHARING_MODE) == bp.SharingModesEnum.UNCAPPED:
+        if attr.get(SHARING_MODE) == bp.SharingMode.UNCAPPED:
             self._set_val(attr, UNCAPPED_WEIGHT, self.uncapped_weight)
         self._set_val(attr, SPP, self.spp)
 
@@ -313,7 +313,7 @@ class DefaultStandardize(Standardize):
         self._set_prop(attr, MAX_VCPU, VCPU)
         self._set_prop(attr, MIN_VCPU, VCPU)
         self._set_val(attr, SHARING_MODE,
-                      bp.DedicatedSharingModesEnum.SHARE_IDLE_PROCS,
+                      bp.DedicatedSharingMode.SHARE_IDLE_PROCS,
                       convert_func=DedProcShareMode.convert_value)
         self._validate_lpar_ded_cpu(attrs=attr)
         return attr
@@ -562,7 +562,7 @@ class DedicatedProc(BoolField):
 
 
 class LPARType(ChoiceField):
-    _choices = (bp.LPARTypeEnum.AIXLINUX, bp.LPARTypeEnum.OS400)
+    _choices = (bp.LPARType.AIXLINUX, bp.LPARType.OS400)
     _name = 'Logical Partition Type'
 
     def __init__(self, value, allow_none=False):
@@ -570,12 +570,12 @@ class LPARType(ChoiceField):
 
 
 class ProcCompatMode(ChoiceField):
-    _choices = bp.LPARCompatEnum.ALL_VALUES
+    _choices = bp.LPARCompat.ALL_VALUES
     _name = 'Processor Compatability Mode'
 
 
 class DedProcShareMode(ChoiceField):
-    _choices = bp.DedicatedSharingModesEnum.ALL_VALUES
+    _choices = bp.DedicatedSharingMode.ALL_VALUES
     _name = 'Dedicated Processor Sharing Mode'
 
     def __init__(self, value, allow_none=False):
@@ -651,7 +651,7 @@ class LPARBuilder(object):
         # Check the sharing mode values if any
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in bp.SharingModesEnum.ALL_VALUES):
+                smode in bp.SharingMode.ALL_VALUES):
             return True
 
         return False
@@ -663,7 +663,7 @@ class LPARBuilder(object):
         # Check for dedicated sharing mode
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
-                smode in bp.DedicatedSharingModesEnum.ALL_VALUES):
+                smode in bp.DedicatedSharingMode.ALL_VALUES):
                 return True
 
     def _shared_procs_specified(self):
