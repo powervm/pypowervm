@@ -32,7 +32,7 @@ _FILE_CHKSUM = 'SHA256'
 _DEFAULT_MEDIA_TYPE = 'application/octet-stream'
 
 
-class FTypeEnum(object):
+class FileType(object):
     """Supported file types."""
     BROKERED_MEDIA_ISO = 'BROKERED_MEDIA_ISO'
     BROKERED_DISK_IMAGE = 'BROKERED_DISK_IMAGE'
@@ -52,7 +52,7 @@ class File(ewrap.EntryWrapper):
         """Creates a fresh File wrapper that can be used for a create action.
 
         :param f_name: The name for the file.
-        :param f_type: The type of the file.  One of the FTypeEnum values.
+        :param f_type: The type of the file.  One of the FileType values.
         :param v_uuid: The UUID for the Virtual I/O Server that the file will
                        reside on.
         :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful
@@ -122,7 +122,7 @@ class File(ewrap.EntryWrapper):
 
     @property
     def enum_type(self):
-        """The type of the file.  One of the FTypeEnum values."""
+        """The type of the file.  One of the FileType values."""
         return self._get_val_str(_FILE_ENUM_TYPE)
 
     def _enum_type(self, et):

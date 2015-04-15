@@ -38,8 +38,8 @@ class TestClusterSSP(unittest.TestCase):
         # Load up GET Cluster/do/Create (job template)
         mock_adp.read.return_value = tju.load_file(CREATE_CLUSTER)
         # We'll pretend the job ran and completed successfully
-        mock_monitor_job.return_value = (jwrap.JobStatusEnum.COMPLETED_OK,
-                                         'ok', False)
+        mock_monitor_job.return_value = (jwrap.JobStatus.COMPLETED_OK, 'ok',
+                                         False)
 
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):

@@ -114,15 +114,21 @@ PFC_PORTS_ROOT = 'PhysicalFibreChannelPorts'
 PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
 
 
-class SharingModesEnum(object):
-    """Shared Processor sharing modes."""
+class SharingMode(object):
+    """Shared Processor sharing modes.
+
+    Subset of LogicalPartitionProcessorSharingModeEnum.
+    """
     CAPPED = 'capped'
     UNCAPPED = 'uncapped'
     ALL_VALUES = (CAPPED, UNCAPPED)
 
 
-class DedicatedSharingModesEnum(object):
-    """Dedicated processor sharing modes."""
+class DedicatedSharingMode(object):
+    """Dedicated Processor sharing modes.
+
+    Subset of LogicalPartitionProcessorSharingModeEnum.
+    """
     SHARE_IDLE_PROCS = 'sre idle proces'
     SHARE_IDLE_PROCS_ACTIVE = 'sre idle procs active'
     SHARE_IDLE_PROCS_ALWAYS = 'sre idle procs always'
@@ -131,15 +137,18 @@ class DedicatedSharingModesEnum(object):
                   SHARE_IDLE_PROCS_ALWAYS, KEEP_IDLE_PROCS)
 
 
-class LPARTypeEnum(object):
+class LPARType(object):
     """Subset of LogicalPartitionEnvironmentEnum."""
     OS400 = 'OS400'
     AIXLINUX = 'AIX/Linux'
     VIOS = 'Virtual IO Server'
 
 
-class LPARCompatEnum(object):
-    """LPAR compatibility modes."""
+class LPARCompat(object):
+    """LPAR compatibility modes.
+
+    From LogicalPartitionProcessorCompatibilityModeEnum.
+    """
     DEFAULT = 'default'
     POWER6 = 'POWER6'
     POWER6_PLUS = 'POWER6_Plus'
@@ -166,7 +175,7 @@ class BasePartition(ewrap.EntryWrapper):
         :param name: The name of the partition
         :param mem_cfg: The memory configuration wrapper
         :param proc_cfg: The processor configuration wrapper
-        :param env: The type of partition, taken from LPARTypeEnum
+        :param env: The type of partition, taken from LPARType
         :param io_cfg: The I/O configuration wrapper
 
         :returns: New BasePartition wrapper
@@ -210,10 +219,10 @@ class BasePartition(ewrap.EntryWrapper):
 
     @property
     def env(self):
-        """See LogicalPartitionEnvironmentEnum.
+        """See the LPARType Enumeration.
 
-        Should always be 'AIX/Linux' for LPAREntry.  'Virtual IO Server'
-        should only happen for VIOSEntry.
+        Should usually be 'AIX/Linux' for LPAR.  'Virtual IO Server' should
+        only happen for VIOS.
         """
         return self._get_val_str(_BP_TYPE)
 
@@ -250,7 +259,7 @@ class BasePartition(ewrap.EntryWrapper):
     def proc_compat_mode(self):
         """*Current* processor compatibility mode.
 
-        See LPARCompatEnum.  E.g. 'POWER7',
+        See LPARCompat.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
         return self._get_val_str(_BP_CURRENT_PROC_MODE)
@@ -259,7 +268,7 @@ class BasePartition(ewrap.EntryWrapper):
     def pending_proc_compat_mode(self):
         """Pending processor compatibility mode.
 
-        See LPARCompatEnum.  E.g. 'POWER7',
+        See LPARCompat.  E.g. 'POWER7',
         'POWER7_Plus', 'POWER8', etc.
         """
         return self._get_val_str(_BP_PENDING_PROC_MODE)
@@ -351,9 +360,8 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld_shared(cls, proc_unit, proc,
-                   sharing_mode=SharingModesEnum.UNCAPPED, uncapped_weight=128,
-                   min_proc_unit=None, max_proc_unit=None,
+    def bld_shared(cls, proc_unit, proc, sharing_mode=SharingMode.UNCAPPED,
+                   uncapped_weight=128, min_proc_unit=None, max_proc_unit=None,
                    min_proc=None, max_proc=None, proc_pool=0):
         """Builds a Shared Processor configuration wrapper.
 
@@ -383,7 +391,7 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
 
     @classmethod
     def bld_dedicated(cls, proc, min_proc=None, max_proc=None,
-                      sharing_mode=DedicatedSharingModesEnum.SHARE_IDLE_PROCS):
+                      sharing_mode=DedicatedSharingMode.SHARE_IDLE_PROCS):
 
         """Builds a Dedicated Processor configuration wrapper.
 

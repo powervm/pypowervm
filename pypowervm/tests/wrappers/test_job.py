@@ -26,7 +26,7 @@ JOB_RESPONSE_FAILED = "job_response_completed_failed.txt"
 JOB_RESPONSE_EXCEPTION = "job_response_exception.txt"
 
 EXPECTED_ID = '1375391227297'
-EXPECTED_STATUS = jwrap.JobStatusEnum.COMPLETED_WITH_ERROR
+EXPECTED_STATUS = jwrap.JobStatus.COMPLETED_WITH_ERROR
 EXPECTED_EXCEPTION_MESSAGE = 'This is an exception message'
 EXPECTED_RESULTS_VALUE = 'This is an error message'
 EXPECTED_GROUP_NAME = 'LogicalPartition'

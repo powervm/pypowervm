@@ -85,7 +85,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     vio_file = _create_file(
-        adapter, d_name, vf.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
+        adapter, d_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
         f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
@@ -116,7 +116,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     """
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
-        adapter, f_name, vf.FTypeEnum.BROKERED_MEDIA_ISO, v_uuid,
+        adapter, f_name, vf.FileType.BROKERED_MEDIA_ISO, v_uuid,
         sha_chksum, f_size)
     f_uuid = _upload_stream(adapter, vio_file, d_stream)
 
@@ -161,12 +161,12 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
     gb_size = util.convert_bytes_to_gb(d_size, dp=2)
 
     ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size,
-                         typ=stor.LUTypeEnum.IMAGE)
+                         typ=stor.LUType.IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        adapter, lu_name, vf.FTypeEnum.BROKERED_DISK_IMAGE, v_uuid,
+        adapter, lu_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
         f_size=f_size, tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
@@ -221,7 +221,7 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
 
     :param adapter: The adapter to talk over the API.
     :param f_name: The name for the file.
-    :param f_type: The type of the file, from vios_file.FTypeEnum.
+    :param f_type: The type of the file, from vios_file.FileType.
     :param v_uuid: The UUID for the Virtual I/O Server that the file will
                    reside on.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful
@@ -263,7 +263,7 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
     # Create the LU.  No locking needed on this method, as the crt_lu handles
     # the locking.
     ssp, dst_lu = crt_lu(adapter, ssp, new_lu_name, lu_size_gb, thin=True,
-                         typ=stor.LUTypeEnum.DISK)
+                         typ=stor.LUType.DISK)
 
     # Run the job to link the new LU to the source
     jresp = adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
@@ -340,7 +340,7 @@ def _image_lu_for_clone(ssp, clone_lu):
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = clone_lu.cloned_from_udid[2:]
     for lu in ssp.logical_units:
-        if lu.lu_type != stor.LUTypeEnum.IMAGE:
+        if lu.lu_type != stor.LUType.IMAGE:
             continue
         if lu.udid[2:] == image_udid:
             return lu
@@ -358,7 +358,7 @@ def _image_lu_in_use(ssp, image_lu):
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = image_lu.udid[2:]
     for lu in ssp.logical_units:
-        if lu.lu_type != stor.LUTypeEnum.DISK:
+        if lu.lu_type != stor.LUType.DISK:
             continue
         if lu.cloned_from_udid[2:] == image_udid:
             return True
@@ -416,7 +416,7 @@ def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     :param size: LU size in GB with decimal precision.
     :param thin: Provision the new LU as Thin (True) or Thick (False).  If
                  unspecified, use the server default.
-    :param typ: The type of LU to create, one of the LUTypeEnum values.  If
+    :param typ: The type of LU to create, one of the LUType values.  If
                 unspecified, use the server default.
     :return: The updated SSP wrapper.  (It will contain the new LU and have a
              new etag.)

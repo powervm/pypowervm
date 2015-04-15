@@ -244,8 +244,8 @@ class Session(object):
         LOG.debug('response headers: %s' %
                   (response.headers if not sensitive else "<sensitive>"))
 
-        if response.status_code in [c.HTTPStatusEnum.OK_NO_CONTENT,
-                                    c.HTTPStatusEnum.NO_CHANGE]:
+        if response.status_code in [c.HTTPStatus.OK_NO_CONTENT,
+                                    c.HTTPStatus.NO_CHANGE]:
             return Response(method, path, response.status_code,
                             response.reason, response.headers,
                             reqheaders=headers, reqbody=body)
@@ -254,7 +254,7 @@ class Session(object):
                       (response.text if not sensitive else "<sensitive>"))
 
         # re-login processing
-        if response.status_code == c.HTTPStatusEnum.UNAUTHORIZED:
+        if response.status_code == c.HTTPStatus.UNAUTHORIZED:
             LOG.debug('Processing HTTP Unauthorized')
 
             with self._lock:
@@ -276,7 +276,7 @@ class Session(object):
                         except pvmex.Error as e:
                             if e.response:
                                 if (e.response.status ==
-                                        c.HTTPStatusEnum.UNAUTHORIZED):
+                                        c.HTTPStatus.UNAUTHORIZED):
                                     # can't continue re-login attempts lest we
                                     # lock the account
                                     self._relogin_unsafe = True
@@ -303,7 +303,7 @@ class Session(object):
                                             sensitive=sensitive, verify=verify,
                                             timeout=timeout, relogin=False)
                     except pvmex.HttpError as e:
-                        if e.response.status == c.HTTPStatusEnum.UNAUTHORIZED:
+                        if e.response.status == c.HTTPStatus.UNAUTHORIZED:
                             # This is a special case... normally on a 401 we
                             # would retry login, but we won't here because
                             # we just did that... Handle it specially.
@@ -633,7 +633,7 @@ class Adapter(object):
                     if _etag and _etag == rsp.etag:
                         # ETag matches what caller specified, so return an
                         # HTTP 304 (Not Modified) response
-                        rsp.status = c.HTTPStatusEnum.NO_CHANGE
+                        rsp.status = c.HTTPStatus.NO_CHANGE
                         rsp.body = ''
                     elif 'atom' in rsp.reqheaders['Accept']:
                         rsp._unmarshal_atom()
@@ -647,7 +647,7 @@ class Adapter(object):
                                      sensitive, helpers=helpers)
             resp_to_cache = None
             if is_cacheable:
-                if rsp.status == c.HTTPStatusEnum.NO_CHANGE:
+                if rsp.status == c.HTTPStatus.NO_CHANGE:
                     # don't want to cache the 304, which has no body
                     # instead, just update the cache ordering
                     self._cache.touch(path)
@@ -692,7 +692,7 @@ class Adapter(object):
                 if etag and etag == resp.etag:
                     # ETag matches what caller specified, so return an
                     # HTTP 304 (Not Modified) response
-                    resp.status = c.HTTPStatusEnum.NO_CHANGE
+                    resp.status = c.HTTPStatus.NO_CHANGE
                     resp.body = ''
                 elif 'atom' in resp.reqheaders['Accept']:
                     resp._unmarshal_atom()
@@ -765,8 +765,7 @@ class Adapter(object):
                                         auditmemento, sensitive,
                                         helpers=helpers)
         except pvmex.HttpError as e:
-            if self._cache and (e.response.status ==
-                                c.HTTPStatusEnum.ETAG_MISMATCH):
+            if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
@@ -864,8 +863,7 @@ class Adapter(object):
             resp = self._delete_by_path(path, etag, timeout, auditmemento,
                                         helpers=helpers)
         except pvmex.HttpError as e:
-            if self._cache and (e.response.status ==
-                                c.HTTPStatusEnum.ETAG_MISMATCH):
+            if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
                 # ETag didn't match
                 # see if we need to invalidate entry in cache
                 resp = self._cache.get(path)
@@ -970,7 +968,7 @@ class Adapter(object):
             if entry_etag and etag == entry_etag:
                 resp = Response(feed_resp.reqmethod,
                                 reqpath,
-                                c.HTTPStatusEnum.NO_CHANGE,
+                                c.HTTPStatus.NO_CHANGE,
                                 feed_resp.reason,
                                 feed_resp.headers,
                                 body='',
@@ -1052,7 +1050,7 @@ class Adapter(object):
             return bpath + sep + qparam
 
         if xag is None:
-            xag = [ent.XAGEnum().NONE]
+            xag = [ent.XAG().NONE]
 
         path = basepath
         if suffix_type:
@@ -1210,7 +1208,7 @@ class Response(object):
             elif err_reason is None:
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
-            if self.status == c.HTTPStatusEnum.OK_NO_CONTENT:
+            if self.status == c.HTTPStatus.OK_NO_CONTENT:
                 if re.match(c.UUID_REGEX,
                             self.reqpath.split('?')[0].rsplit('/', 1)[1]):
                     err_reason = 'unexpected HTTP 204 for request'
@@ -1218,7 +1216,7 @@ class Response(object):
                     # PowerVM returns HTTP 204 (No Content) when you
                     # ask for a feed that has no entries.
                     self.feed = ent.Feed({}, [])
-            elif self.status == c.HTTPStatusEnum.NO_CHANGE:
+            elif self.status == c.HTTPStatus.NO_CHANGE:
                 pass
             else:
                 err_reason = 'unexpectedly empty response body'

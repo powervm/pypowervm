@@ -54,7 +54,7 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
 class LPAR(bp.BasePartition):
 
     @classmethod
-    def bld(cls, name, mem_cfg, proc_cfg, env=bp.LPARTypeEnum.AIXLINUX,
+    def bld(cls, name, mem_cfg, proc_cfg, env=bp.LPARType.AIXLINUX,
             io_cfg=None):
         """Creates an LPAR wrapper.
 

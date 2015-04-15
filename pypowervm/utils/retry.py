@@ -21,7 +21,7 @@ from six import moves
 from pypowervm import const
 from pypowervm import exceptions as exc
 
-DFT_RETRY_CODES = frozenset([const.HTTPStatusEnum.ETAG_MISMATCH])
+DFT_RETRY_CODES = frozenset([const.HTTPStatus.ETAG_MISMATCH])
 
 NO_TEST = lambda *args, **kwds: True
 NO_CHECKER = lambda *args, **kwds: False

@@ -43,7 +43,7 @@ def _mock_update_by_path(ssp, etag, path):
         if lu.is_thin is None:
             lu._is_thin(True)
         if lu.lu_type is None:
-            lu._lu_type(stor.LUTypeEnum.DISK)
+            lu._lu_type(stor.LUType.DISK)
     resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'})
     resp.entry = ssp.entry
     return resp
@@ -113,7 +113,7 @@ class TestUploadLV(unittest.TestCase):
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            mock_adpt, 'test2', vf.FTypeEnum.BROKERED_DISK_IMAGE, self.v_uuid,
+            mock_adpt, 'test2', vf.FileType.BROKERED_DISK_IMAGE, self.v_uuid,
             f_size=50, tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
             sha_chksum='abc123')
 
@@ -171,11 +171,11 @@ class TestUploadLV(unittest.TestCase):
         # 1224067890 / 1GB = 1.140002059; round up to 2dp
         self.assertEqual(new_lu.capacity, 1.15)
         self.assertTrue(new_lu.is_thin)
-        self.assertEqual(new_lu.lu_type, stor.LUTypeEnum.IMAGE)
+        self.assertEqual(new_lu.lu_type, stor.LUType.IMAGE)
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            mock_adpt, 'lu1', vf.FTypeEnum.BROKERED_DISK_IMAGE, self.v_uuid,
+            mock_adpt, 'lu1', vf.FileType.BROKERED_DISK_IMAGE, self.v_uuid,
             f_size=size_b, tdev_udid='udid_lu1',
             sha_chksum='abc123')
 
@@ -239,7 +239,7 @@ class TestLU(unittest.TestCase):
         self.assertEqual(lu.name, 'lu5')
         self.assertEqual(lu.udid, 'udid_lu5')
         self.assertTrue(lu.is_thin)
-        self.assertEqual(lu.lu_type, stor.LUTypeEnum.DISK)
+        self.assertEqual(lu.lu_type, stor.LUType.DISK)
         self.assertEqual(ssp.etag, 'after')
         self.assertIn(lu, ssp.logical_units)
 
@@ -253,8 +253,8 @@ class TestLU(unittest.TestCase):
 
     def test_crt_lu_type_image(self):
         ssp, lu = ts.crt_lu(self.adp, self.ssp, 'lu5', 10,
-                            typ=stor.LUTypeEnum.IMAGE)
-        self.assertEqual(lu.lu_type, stor.LUTypeEnum.IMAGE)
+                            typ=stor.LUType.IMAGE)
+        self.assertEqual(lu.lu_type, stor.LUType.IMAGE)
 
     def test_crt_lu_name_conflict(self):
         self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.adp,
@@ -321,12 +321,12 @@ class TestLULinkedClone(unittest.TestCase):
         self.ssp._etag = 'before'
 
     def _mk_img_lu(self, idx):
-        lu = stor.LU.bld('img_lu%d' % idx, 123, typ=stor.LUTypeEnum.IMAGE)
+        lu = stor.LU.bld('img_lu%d' % idx, 123, typ=stor.LUType.IMAGE)
         lu._udid('xxImage-LU-UDID-%d' % idx)
         return lu
 
     def _mk_dsk_lu(self, idx, cloned_from_idx):
-        lu = stor.LU.bld('dsk_lu%d' % idx, 123, typ=stor.LUTypeEnum.DISK)
+        lu = stor.LU.bld('dsk_lu%d' % idx, 123, typ=stor.LUType.DISK)
         lu._udid('xxDisk-LU-UDID-%d' % idx)
         lu._cloned_from_udid('yyImage-LU-UDID-%d' % cloned_from_idx)
         return lu

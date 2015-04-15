@@ -24,13 +24,13 @@ from pypowervm import const
 from pypowervm import util
 
 
-class XAGEnum(object):
+class XAG(object):
     """Extended Attribute Groups enumeration for an EntryWrapper subclass.
 
     Intended use: Within an EntryWrapper subclass, define a class variable xags
-    of type XAGEnum, initialized with the names of the extended attribute
-    groups supported by the corresponding PowerVM REST object.  The keys may be
-    any value convenient for use in the consuming code.
+    of type XAG, initialized with the names of the extended attribute groups
+    supported by the corresponding PowerVM REST object.  The keys may be any
+    value convenient for use in the consuming code.
 
     Extended attribute groups 'All' and 'None' are supplied for you.
     """

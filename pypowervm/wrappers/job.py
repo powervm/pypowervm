@@ -52,7 +52,7 @@ _JOB_STATUS = 'Status'
 _JOB_ID = 'JobID'
 
 
-class JobStatusEnum(object):
+class JobStatus(object):
     NOT_ACTIVE = 'NOT_STARTED'
     RUNNING = 'RUNNING'
     COMPLETED_OK = 'COMPLETED_OK'
@@ -212,7 +212,7 @@ class Job(ewrap.EntryWrapper):
                 operation_name=self.op, seconds=str(timeout))
             LOG.exception(exc)
             raise exc
-        if status != JobStatusEnum.COMPLETED_OK:
+        if status != JobStatus.COMPLETED_OK:
             self.delete_job(adapter)
             exc = pvmex.JobRequestFailed(
                 operation_name=self.op, error=message)
@@ -241,8 +241,7 @@ class Job(ewrap.EntryWrapper):
         status = self.job_status
         start_time = time.time()
         timed_out = False
-        while (status == JobStatusEnum.RUNNING or
-               status == JobStatusEnum.NOT_ACTIVE):
+        while status == JobStatus.RUNNING or status == JobStatus.NOT_ACTIVE:
             if timeout:
                 # wait up to timeout seconds
                 if (time.time() - start_time) > timeout:
@@ -254,7 +253,7 @@ class Job(ewrap.EntryWrapper):
             status = self.job_status
 
         message = ''
-        if not timed_out and status != JobStatusEnum.COMPLETED_OK:
+        if not timed_out and status != JobStatus.COMPLETED_OK:
             message = self.get_job_message()
         return status, message, timed_out
 
@@ -300,7 +299,7 @@ class Job(ewrap.EntryWrapper):
             job_id = self.job_id
         if not status:
             status = self.job_status
-        if status == JobStatusEnum.RUNNING:
+        if status == JobStatus.RUNNING:
             error = (_("Job %s not deleted. Job is in running state.")
                      % job_id)
             exc = pvmex.JobRequestFailed(error)

@@ -57,13 +57,13 @@ class TestRetry(unittest.TestCase):
         self.assertEqual(called_count, 1)
 
         # Test retry with an http code
-        @pvm_retry.retry(tries=4, http_codes=(c.HTTPStatusEnum.ETAG_MISMATCH,))
+        @pvm_retry.retry(tries=4, http_codes=(c.HTTPStatus.ETAG_MISMATCH,))
         def http_except_method(x, y):
             global called_count
             called_count += 1
-            resp = adpt.Response(
-                'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
-                'reason', 'headers')
+            resp = adpt.Response('reqmethod', 'reqpath',
+                                 c.HTTPStatus.ETAG_MISMATCH, 'reason',
+                                 'headers')
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -80,9 +80,9 @@ class TestRetry(unittest.TestCase):
         def func_except_method(x, y):
             global called_count
             called_count += 1
-            resp = adpt.Response(
-                'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
-                'reason', 'headers')
+            resp = adpt.Response('reqmethod', 'reqpath',
+                                 c.HTTPStatus.ETAG_MISMATCH, 'reason',
+                                 'headers')
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -136,9 +136,9 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             if called_count == 1:
                 # etag mismatch
-                resp = adpt.Response(
-                    'reqmethod', 'reqpath', c.HTTPStatusEnum.ETAG_MISMATCH,
-                    'reason', 'headers')
+                resp = adpt.Response('reqmethod', 'reqpath',
+                                     c.HTTPStatus.ETAG_MISMATCH, 'reason',
+                                     'headers')
                 http_exc = pvm_exc.HttpError('msg', resp)
                 raise http_exc
 
