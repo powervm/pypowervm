@@ -125,7 +125,7 @@ class TestWWPN(unittest.TestCase):
 
         # Subset the WWPNs on that VIOS.  These WWPNs don't actually exist,
         # so the VIOSes passed in won't have these as candidate ports.
-        p_wwpns = ['10000090FA45473BA', '10:00:00:90:fa:45:17:58A']
+        p_wwpns = ['10000090FA45473bA', '10:00:00:90:fa:45:17:58A']
 
         # Virtual WWPNs can be faked, and simplified.
         v_port_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -210,7 +210,7 @@ class TestWWPN(unittest.TestCase):
         mock_adapter.update_by_path.side_effect = mock_update
 
         # Subset the WWPNs on that VIOS
-        fabric_A_wwpns = ['10000090FA5371F2', '10000090FA53720A']
+        fabric_A_wwpns = ['10000090FA5371f2', '10000090FA53720A']
         fabric_B_wwpns = ['10000090FA5371F1', '10000090FA537209']
 
         # Fake Virtual WWPNs
