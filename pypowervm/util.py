@@ -168,16 +168,28 @@ def validate_certificate(host, port, certpath, certext):
     return True
 
 
-def get_req_path_uuid(path, preserve_case=False):
-    """Extract request target uuid of sanitized path."""
+def get_req_path_uuid(path, preserve_case=False, root=False):
+    """Extract request target uuid of sanitized path.
+
+    :param path: Path or URI from which to extract the UUID.
+    :param preserve_case: If False, the returned UUID will be lowercased.  If
+                          True, it will be returned as it exists in the path.
+    :param root: If True, and path represents a CHILD entry, the UUID of the
+                 ROOT is returned.  Otherwise, the UUID of the target is
+                 returned.
+    """
+    ret = None
     p = dice_href(path, include_query=False, include_fragment=False)
     if '/' in p:
-        target_id = path.rsplit('/', 1)[1]
-        uuid_match = re.match(const.UUID_REGEX, target_id)
-        if uuid_match:
-            ret = uuid_match.group(0)
-            return ret if preserve_case else ret.lower()
-    return None
+        for maybe_id in p.rsplit('/', 3)[1::2]:
+            uuid_match = re.match(const.UUID_REGEX, maybe_id)
+            if uuid_match:
+                ret = maybe_id if preserve_case else maybe_id.lower()
+                if root:
+                    # Want to return the first one.  (If it's a ROOT path, this
+                    # will also happen to be the last one.)
+                    break
+    return ret
 
 
 # TODO(IBM): Use urlparse.parse_qs()
