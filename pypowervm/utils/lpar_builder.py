@@ -22,6 +22,7 @@ import six
 from pypowervm import i18n
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import virtual_io_server as vios
 
 # Dict keys used for input to the builder
 NAME = 'name'
@@ -562,7 +563,7 @@ class DedicatedProc(BoolField):
 
 
 class LPARType(ChoiceField):
-    _choices = (bp.LPARType.AIXLINUX, bp.LPARType.OS400)
+    _choices = (bp.LPARType.AIXLINUX, bp.LPARType.OS400, bp.LPARType.VIOS)
     _name = 'Logical Partition Type'
 
     def __init__(self, value, allow_none=False):
@@ -691,11 +692,17 @@ class LPARBuilder(object):
         # Build a minimimal LPAR, the real work will be done in _rebuild
         std = self.stdz.general()
 
-        lpar_w = lpar.LPAR.bld(
-            std[NAME], bp.PartitionMemoryConfiguration.bld(0),
-            bp.PartitionProcessorConfiguration.bld_dedicated(0),
-            io_cfg=bp.PartitionIOConfiguration.bld(0),
-            env=std[ENV])
+        if std[ENV] == bp.LPARType.VIOS:
+            lpar_w = vios.VIOS.bld(
+                std[NAME], bp.PartitionMemoryConfiguration.bld(0),
+                bp.PartitionProcessorConfiguration.bld_dedicated(0),
+                io_cfg=bp.PartitionIOConfiguration.bld(0))
+        else:
+            lpar_w = lpar.LPAR._bld_base(
+                std[NAME], bp.PartitionMemoryConfiguration.bld(0),
+                bp.PartitionProcessorConfiguration.bld_dedicated(0),
+                io_cfg=bp.PartitionIOConfiguration.bld(0),
+                env=std[ENV])
         return self.rebuild(lpar_w)
 
     def rebuild(self, lpar_w):

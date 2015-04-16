@@ -58,9 +58,9 @@ class LPAR(bp.BasePartition):
             io_cfg=None):
         """Creates an LPAR wrapper.
 
-        Thin wrapper around BasePartition.bld, defaulting env.
+        Thin wrapper around BasePartition._bld_base, defaulting env.
         """
-        return super(LPAR, cls).bld(name, mem_cfg, proc_cfg, env, io_cfg)
+        return super(LPAR, cls)._bld_base(name, mem_cfg, proc_cfg, env, io_cfg)
 
     @property
     def migration_state(self):

@@ -135,7 +135,7 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(node.hostname, 'a.example.com')
         self.assertEqual(node.schema_type, clust.Node.schema_type)
         self.assertEqual(node.schema_ns, pc.UOM_NS)
-        # Node.bld()
+        # Node._bld_base()
         n2 = clust.Node.bld(hostname='b.example.com', lpar_id=2,
                             mtms='ABCD-XYZ*1234567', vios_uri='https://foo')
         nodes.append(n2)

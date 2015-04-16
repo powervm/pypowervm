@@ -169,7 +169,7 @@ class BasePartition(ewrap.EntryWrapper):
     search_keys = dict(name=_BP_NAME, id=_BP_ID)
 
     @classmethod
-    def bld(cls, name, mem_cfg, proc_cfg, env, io_cfg=None):
+    def _bld_base(cls, name, mem_cfg, proc_cfg, env, io_cfg=None):
         """Creates a BasePartition wrapper.
 
         :param name: The name of the partition
@@ -700,7 +700,7 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
     def max_virtual_slots(self):
         """The maximum number of virtual slots.
 
-        A slot is used for every VirtuScsiServerAdapter, TrunkAdapter, etc...
+        Slots are used for every VirtualScsiServerAdapter, TrunkAdapter, etc...
         """
         return self._get_val_int(_IO_MAX_SLOTS)
 

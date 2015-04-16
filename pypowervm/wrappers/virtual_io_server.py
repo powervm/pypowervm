@@ -74,6 +74,12 @@ class VIOS(bp.BasePartition):
                    SCSI_MAPPING='ViosSCSIMapping',
                    FC_MAPPING='ViosFCMapping')
 
+    @classmethod
+    def bld(cls, name, mem_cfg, proc_cfg, io_cfg=None):
+        """Creates a new VIOS wrapper."""
+        return super(VIOS, cls)._bld_base(
+            name, mem_cfg, proc_cfg, env=bp.LPARType.VIOS, io_cfg=io_cfg)
+
     @property
     def media_repository(self):
         return self.element.find(_VIRT_MEDIA_REPOSITORY_PATH)
