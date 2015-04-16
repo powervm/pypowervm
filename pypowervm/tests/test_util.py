@@ -20,7 +20,8 @@ import unittest
 
 from pypowervm import util
 
-dummyuuid = "abcdef01-2345-2345-2345-67890abcdef0"
+dummyuuid1 = "abcdef01-2345-2345-2345-67890abcdef0"
+dummyuuid2 = "67890abc-5432-5432-5432-def0abcdef01"
 
 
 class TestUtil(unittest.TestCase):
@@ -38,7 +39,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(i, 15, "Bad max age for Cluster")
 
         i = util.get_max_age(
-            "/rest/api/uom/Cluster/" + dummyuuid, False, "V1_0")
+            "/rest/api/uom/Cluster/" + dummyuuid1, False, "V1_0")
         self.assertEqual(i, 15, "Bad max age for Cluster with UUID")
 
         i = util.get_max_age("/rest/api/uom/SharedStoragePool", False, "V1_0")
@@ -61,22 +62,22 @@ class TestUtil(unittest.TestCase):
             i, 90, "Bad max age for VirtualIOServer (no events, V2_0)")
         # ManagedSystem entry
         i = util.get_max_age(
-            "/rest/api/uom/ManagedSystem/" + dummyuuid, False, "V2_0")
+            "/rest/api/uom/ManagedSystem/" + dummyuuid1, False, "V2_0")
         self.assertEqual(
             i, 30, "Bad max age for ManagedSystem/{uuid} (no events, V2_0)")
         # LogicalPartition, but not feed, hits the default
         i = util.get_max_age(
-            "/rest/api/uom/LogicalPartition/" + dummyuuid, False, "V2_0")
+            "/rest/api/uom/LogicalPartition/" + dummyuuid1, False, "V2_0")
         self.assertEqual(
             i, 0, "Bad max age for LogicalPartition/{uuid} (no events, V2_0)")
         # VIOS, but not feed, hits the default
         i = util.get_max_age(
-            "/rest/api/uom/VirtualIOServer/" + dummyuuid, False, "V2_0")
+            "/rest/api/uom/VirtualIOServer/" + dummyuuid1, False, "V2_0")
         self.assertEqual(
             i, 0, "Bad max age for VirtualIOServer/{uuid} (no events, V2_0)")
         # SPP, but not feed, hits the default
         i = util.get_max_age(
-            "/rest/api/uom/SharedProcessorPool/" + dummyuuid, False, "V2_0")
+            "/rest/api/uom/SharedProcessorPool/" + dummyuuid1, False, "V2_0")
         self.assertEqual(
             i, 0,
             "Bad max age for SharedProcessorPool/{uuid} (no events, V2_0)")
@@ -165,35 +166,48 @@ class TestUtil(unittest.TestCase):
 
     def test_get_req_path_uuid(self):
         # Fail: no '/'
-        path = dummyuuid
+        path = dummyuuid1
         self.assertIsNone(util.get_req_path_uuid(path))
-        path = '/' + dummyuuid
-        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid
-        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        path = '/' + dummyuuid1
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
         # Fail: last path element is not a UUID
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid + '/Child'
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1 + '/Child'
         self.assertIsNone(util.get_req_path_uuid(path))
         # Fail: last path element is not quiiiite a UUID
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid[1:]
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1[1:]
         self.assertIsNone(util.get_req_path_uuid(path))
         # Ignore query/fragment
-        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid +
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '?group=One,Two#frag')
-        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
         # Fail: last path element (having removed query/fragment) is not a UUID
-        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid +
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '/Child?group=One,Two#frag')
         self.assertIsNone(util.get_req_path_uuid(path))
         # Default case conversion
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid.upper()
-        self.assertEqual(dummyuuid, util.get_req_path_uuid(path))
-        self.assertEqual(dummyuuid, util.get_req_path_uuid(
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1.upper()
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(
             path, preserve_case=False))
         # Force no case conversion
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid.upper()
-        self.assertEqual(dummyuuid.upper(), util.get_req_path_uuid(
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1.upper()
+        self.assertEqual(dummyuuid1.upper(), util.get_req_path_uuid(
             path, preserve_case=True))
+        # Child URI gets child UUID by default
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
+                '/Child/' + dummyuuid2)
+        self.assertEqual(dummyuuid2, util.get_req_path_uuid(path))
+        # Get root UUID from child URI
+        path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
+                '/Child/' + dummyuuid2)
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
+        # root=True redundant on a root path
+        path = '/' + dummyuuid1
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
+        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
+        self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
 
 if __name__ == "__main__":
     unittest.main()
