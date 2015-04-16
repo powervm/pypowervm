@@ -27,23 +27,62 @@ import pypowervm.tests.lib as testlib
 
 logging.basicConfig()
 
-response_text = testlib.file2b("logon.xml")
+_logon_response_password = testlib.file2b("logon.xml")
+_logon_response_file = testlib.file2b("logon_file.xml")
 
 
 class TestAdapter(unittest.TestCase):
     """Test cases to test the Adapter classes and methods."""
 
-    @mock.patch('pypowervm.adapter.LOG.warn')
-    def test_Session(self, mock_log):
+    def test_Session(self):
         """This test is just meant to ensure Session can be instantiated."""
         # Passing in 0.0.0.0 will raise a ConnectionError, but only if it
         # gets past all the __init__ setup since _logon is the last statement.
         self.assertRaises(pvmex.ConnectionError, adp.Session, '0.0.0.0',
                           'uid', 'pwd')
-        mock_log.assert_called_once_with(mock.ANY)
 
+    @mock.patch('pypowervm.adapter.LOG.warn')
+    @mock.patch('pypowervm.adapter.Session._logon')
+    def test_session_init(self, mock_logon, mock_log_warn):
+        """Ensure proper parameter handling in the Session initializer."""
+        # No params - local, file-based, http.
+        sess = adp.Session()
+        self.assertTrue(sess.use_file_auth)
+        self.assertIsNone(sess.password)
+        self.assertTrue(sess.username.startswith('pypowervm_'))
+        self.assertEqual('localhost', sess.host)
+        self.assertEqual('http', sess.protocol)
+        self.assertEqual(12080, sess.port)
+        self.assertEqual('http://localhost:12080', sess.dest)
+        self.assertEqual(60, sess.timeout)
+        self.assertEqual('/etc/ssl/certs/', sess.certpath)
+        self.assertEqual('.crt', sess.certext)
+        # localhost + http is okay
+        self.assertEqual(0, mock_log_warn.call_count)
+
+        # Ensure proper protocol, port, and certpath defaulting when remote
+        sess = adp.Session(host='host', username='user', password='pass')
+        self.assertFalse(sess.use_file_auth)
+        self.assertIsNotNone(sess.password)
+        self.assertEqual('user', sess.username)
+        self.assertEqual('host', sess.host)
+        self.assertEqual('https', sess.protocol)
+        self.assertEqual(12443, sess.port)
+        self.assertEqual('https://host:12443', sess.dest)
+        self.assertEqual(60, sess.timeout)
+        self.assertEqual('/etc/ssl/certs/', sess.certpath)
+        self.assertEqual('.crt', sess.certext)
+        # non-localhost + (implied) https is okay
+        self.assertEqual(0, mock_log_warn.call_count)
+
+        # Proper port defaulting and warning emitted when remote + http
+        sess = adp.Session(host='host', protocol='http')
+        self.assertEqual(12080, sess.port)
+        self.assertEqual(1, mock_log_warn.call_count)
+
+    @mock.patch('pypowervm.util.validate_certificate')
     @mock.patch('requests.Session')
-    def test_logon(self, mock_session):
+    def test_logon(self, mock_session, mock_validate_cert):
         """Ensure a Session can be created and log on to PowerVM."""
 
         # Init test data
@@ -70,15 +109,31 @@ class TestAdapter(unittest.TestCase):
                         'content-type': 'application/vnd.ibm.powervm' +
                                         '.web+xml; type=LogonResponse'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        my_response._content = response_text
+        my_response._content = _logon_response_password
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
         session.request.return_value = my_response
 
         # Run the actual test
-        result = adp.Session(host, user, pwd, auditmemento=auditmemento,
-                             certpath=None)
+        result = adp.Session(host, user, pwd, auditmemento=auditmemento)
 
         # Verify the result
         self.assertTrue(result._logged_in)
+        self.assertEqual('PUIoR6x0kP6fQqA7qZ8sLZQJ8MLx9JHfLCYzT4oGFSE2WaGIhaFX'
+                         'IyQYvbqdKNS8QagjBpPi9NP7YR_h61SOJ3krS_RvKAp-oCf2p8x8'
+                         'uvQrrDv-dUzc17IT5DkR7_jv2qc8iUD7DJ6Rw53a17rY0p63KqPg'
+                         '9oUGd6Bn3fNDLiEwaBR4WICftVxUFj-tfWMOyZZY2hWEtN2K8ScX'
+                         'vyFMe-w3SleyRbGnlR34jb0A99s=', result._sessToken)
+        self.assertEqual(1, mock_validate_cert.call_count)
+
+        # Now test file-based authentication
+        my_response._content = _logon_response_file
+        result = adp.Session()
+
+        # Verify the result.
+        self.assertTrue(result._logged_in)
+        # Token read from token_file, as indicated by logon_file.xml response.
+        self.assertEqual('file-based-auth-token', result._sessToken)
+        # validate_certificate should not have been called again
+        self.assertEqual(1, mock_validate_cert.call_count)
