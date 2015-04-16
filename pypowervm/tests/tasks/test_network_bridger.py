@@ -97,9 +97,9 @@ class TestNetworkBridger(unittest.TestCase):
             nb = kargs[0]
             self.assertIsNotNone(nb)
             self.assertEqual(1,
-                             len(nb.load_grps[0].virtual_network_uri_list))
+                             len(nb.load_grps[0].vnet_uri_list))
             self.assertEqual(2,
-                             len(nb.load_grps[1].virtual_network_uri_list))
+                             len(nb.load_grps[1].vnet_uri_list))
             self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
 
             return nb.entry
@@ -130,8 +130,8 @@ class TestNetworkBridger(unittest.TestCase):
         def validate_of_update_nb(*kargs, **kwargs):
             # Validate args
             nb = kargs[0]
-            self.assertEqual(1, len(nb.load_grps[0].virtual_network_uri_list))
-            self.assertEqual(2, len(nb.load_grps[1].virtual_network_uri_list))
+            self.assertEqual(1, len(nb.load_grps[0].vnet_uri_list))
+            self.assertEqual(2, len(nb.load_grps[1].vnet_uri_list))
             self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
                              nb.uuid)
             return nb.entry
@@ -170,8 +170,8 @@ class TestNetworkBridger(unittest.TestCase):
             # Validate args
             nb = kargs[0]
             self.assertIsNotNone(nb)
-            self.assertEqual(1, len(nb.load_grps[0].virtual_network_uri_list))
-            self.assertEqual(2, len(nb.load_grps[2].virtual_network_uri_list))
+            self.assertEqual(1, len(nb.load_grps[0].vnet_uri_list))
+            self.assertEqual(2, len(nb.load_grps[2].vnet_uri_list))
             self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
             return nb.entry
 
