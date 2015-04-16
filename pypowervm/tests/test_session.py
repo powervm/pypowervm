@@ -27,20 +27,19 @@ import pypowervm.tests.lib as testlib
 
 logging.basicConfig()
 
-response_text = testlib.file2b("logon.xml")
+_logon_response_password = testlib.file2b("logon.xml")
+_logon_response_file = testlib.file2b("logon_file.xml")
 
 
 class TestAdapter(unittest.TestCase):
     """Test cases to test the Adapter classes and methods."""
 
-    @mock.patch('pypowervm.adapter.LOG.warn')
-    def test_Session(self, mock_log):
+    def test_Session(self):
         """This test is just meant to ensure Session can be instantiated."""
         # Passing in 0.0.0.0 will raise a ConnectionError, but only if it
         # gets past all the __init__ setup since _logon is the last statement.
         self.assertRaises(pvmex.ConnectionError, adp.Session, '0.0.0.0',
                           'uid', 'pwd')
-        mock_log.assert_called_once_with(mock.ANY)
 
     @mock.patch('requests.Session')
     def test_logon(self, mock_session):
@@ -70,7 +69,7 @@ class TestAdapter(unittest.TestCase):
                         'content-type': 'application/vnd.ibm.powervm' +
                                         '.web+xml; type=LogonResponse'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        my_response._content = response_text
+        my_response._content = _logon_response_password
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
@@ -82,3 +81,17 @@ class TestAdapter(unittest.TestCase):
 
         # Verify the result
         self.assertTrue(result._logged_in)
+        self.assertEqual('PUIoR6x0kP6fQqA7qZ8sLZQJ8MLx9JHfLCYzT4oGFSE2WaGIhaFX'
+                         'IyQYvbqdKNS8QagjBpPi9NP7YR_h61SOJ3krS_RvKAp-oCf2p8x8'
+                         'uvQrrDv-dUzc17IT5DkR7_jv2qc8iUD7DJ6Rw53a17rY0p63KqPg'
+                         '9oUGd6Bn3fNDLiEwaBR4WICftVxUFj-tfWMOyZZY2hWEtN2K8ScX'
+                         'vyFMe-w3SleyRbGnlR34jb0A99s=', result._sessToken)
+
+        # Now test file-based authentication
+        my_response._content = _logon_response_file
+        result = adp.Session()
+
+        # Verify the result.
+        self.assertTrue(result._logged_in)
+        # Token read from token_file, as indicated by logon_file.xml response.
+        self.assertEqual('file-based-auth-token', result._sessToken)
