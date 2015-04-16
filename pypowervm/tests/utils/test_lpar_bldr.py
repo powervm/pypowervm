@@ -62,20 +62,20 @@ class TestLPARBuilder(unittest.TestCase):
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
                     vcpu=1)
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
-        self.assertNotEqual(bldr, None)
+        self.assertIsNotNone(bldr)
 
         new_lpar = bldr.build()
-        self.assertNotEqual(new_lpar, None)
+        self.assertIsNotNone(new_lpar)
         self.assert_xml(new_lpar, self.sections['shared_lpar'])
 
         # Build the minimum attributes, Dedicated Procs
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
                     vcpu=1, dedicated_proc=True)
         bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
-        self.assertNotEqual(bldr, None)
+        self.assertIsNotNone(bldr)
 
         new_lpar = bldr.build()
-        self.assertNotEqual(new_lpar, None)
+        self.assertIsNotNone(new_lpar)
         self.assert_xml(new_lpar.entry, self.sections['dedicated_lpar'])
 
         # Build the minimum attributes, Dedicated Procs = 'true'
@@ -247,3 +247,13 @@ class TestLPARBuilder(unittest.TestCase):
             bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
             new_lpar = bldr.build()
             self.assertEqual(new_lpar.pending_proc_compat_mode, pc)
+
+        # Build a VIOS
+        attr = dict(name='TheName', env=bp.LPARType.VIOS, memory=1024,
+                    vcpu=1, dedicated_proc=True)
+        bldr = lpar_bldr.LPARBuilder(attr, self.stdz_sys1)
+        self.assertIsNotNone(bldr)
+
+        new_lpar = bldr.build()
+        self.assertIsNotNone(new_lpar)
+        self.assert_xml(new_lpar.entry, self.sections['vios'])

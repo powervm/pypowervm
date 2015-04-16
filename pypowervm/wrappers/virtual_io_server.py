@@ -32,24 +32,38 @@ import pypowervm.wrappers.storage as stor
 
 LOG = logging.getLogger(__name__)
 
-
-_LOCATION_CODE = 'LocationCode'
-
-
 # VIO Constants
+_VIO_API_CAP = 'APICapable'
+_VIO_SVR_INST_CFG = 'ServerInstallConfiguration'
+_VIO_LNAGGS = 'LinkAggregations'
+_VIO_MGR_PASSTHRU_CAP = 'ManagerPassthroughCapable'
+_VIO_MEDIA_REPOS = 'MediaRepositories'
+_VIO_MVR_SVC_PARTITION = 'MoverServicePartition'
+_VIO_NET_BOOT_DEVS = 'NetworkBootDevices'
+_VIO_PAGING_SVC_PARTITION = 'PagingServicePartition'
+_VIO_PVS = stor.PVS
+_VIO_SEAS = net.NB_SEAS
+_VIO_SSP_CAP = 'SharedStoragePoolCapable'
+_VIO_SSP_VER = 'SharedStoragePoolVersion'
+_VIO_STOR_POOLS = 'StoragePools'
+_VIO_TRUNK_ADPTS = net.SEA_TRUNKS
+_VIO_LICENSE = 'VirtualIOServerLicense'
+_VIO_LICENSE_ACCEPTED = 'VirtualIOServerLicenseAccepted'
 _VIO_VFC_MAPPINGS = 'VirtualFibreChannelMappings'
-_VIO_SCSI_MAPPINGS = 'VirtualSCSIMappings'
-_VIO_LICENSE = 'VirtualIOServerLicenseAccepted'
-_MOVER_SERVICE_PARTITION = 'MoverServicePartition'
+_VIO_VSCSI_MAPPINGS = 'VirtualSCSIMappings'
+_VIO_FREE_IO_ADPTS_FOR_LNAGG = 'FreeIOAdaptersForLinkAggregation'
+# "FreeEthernetBackingDevicesForSEA" is really misspelled in the schema.
+_VIO_FREE_ETH_BACKDEVS_FOR_SEA = 'FreeEthenetBackingDevicesForSEA'
+_VIO_VNIC_BACKDEVS = 'VirtualNICBackingDevices'
+
 _VOL_UID = 'VolumeUniqueID'
 _VOL_NAME = 'VolumeName'
 _RESERVE_POLICY = 'ReservePolicy'
 
-_VIRT_MEDIA_REPOSITORY_PATH = u.xpath('MediaRepositories',
+_VIRT_MEDIA_REPOSITORY_PATH = u.xpath(_VIO_MEDIA_REPOS,
                                       'VirtualMediaRepository')
 _IF_ADDR = u.xpath('IPInterface', 'IPAddress')
-# "FreeEthernetBackingDevicesForSEA" is really misspelled in the schema.
-_ETHERNET_BACKING_DEVICE = u.xpath('FreeEthenetBackingDevicesForSEA',
+_ETHERNET_BACKING_DEVICE = u.xpath(_VIO_FREE_ETH_BACKDEVS_FOR_SEA,
                                    'IOAdapterChoice', net.ETH_BACK_DEV)
 _SEA_PATH = u.xpath(net.NB_SEAS, net.SHARED_ETH_ADPT)
 
@@ -64,8 +78,17 @@ _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
 _PVS_PATH = u.xpath(stor.PVS, stor.PHYS_VOL)
 
+_VIOS_EL_ORDER = bp.BP_EL_ORDER + (
+    _VIO_API_CAP, _VIO_SVR_INST_CFG, _VIO_LNAGGS, _VIO_MGR_PASSTHRU_CAP,
+    _VIO_MEDIA_REPOS, _VIO_MVR_SVC_PARTITION, _VIO_NET_BOOT_DEVS,
+    _VIO_PAGING_SVC_PARTITION, _VIO_PVS, _VIO_SEAS, _VIO_SSP_CAP,
+    _VIO_SSP_VER, _VIO_STOR_POOLS, _VIO_TRUNK_ADPTS, _VIO_LICENSE,
+    _VIO_LICENSE_ACCEPTED, _VIO_VFC_MAPPINGS, _VIO_VSCSI_MAPPINGS,
+    _VIO_FREE_IO_ADPTS_FOR_LNAGG, _VIO_FREE_ETH_BACKDEVS_FOR_SEA,
+    _VIO_VNIC_BACKDEVS)
 
-@ewrap.EntryWrapper.pvm_type('VirtualIOServer')
+
+@ewrap.EntryWrapper.pvm_type('VirtualIOServer', child_order=_VIOS_EL_ORDER)
 class VIOS(bp.BasePartition):
 
     # Extended Attribute Groups
@@ -73,6 +96,12 @@ class VIOS(bp.BasePartition):
                    STORAGE='ViosStorage',
                    SCSI_MAPPING='ViosSCSIMapping',
                    FC_MAPPING='ViosFCMapping')
+
+    @classmethod
+    def bld(cls, name, mem_cfg, proc_cfg, io_cfg=None):
+        """Creates a new VIOS wrapper."""
+        return super(VIOS, cls)._bld_base(
+            name, mem_cfg, proc_cfg, env=bp.LPARType.VIOS, io_cfg=io_cfg)
 
     @property
     def media_repository(self):
@@ -112,7 +141,7 @@ class VIOS(bp.BasePartition):
 
     @property
     def is_license_accepted(self):
-        return self._get_val_bool(_VIO_LICENSE, default=True)
+        return self._get_val_bool(_VIO_LICENSE_ACCEPTED, default=True)
 
     def hdisk_reserve_policy(self, disk_uuid):
         """Get the reserve policy for an hdisk.
@@ -157,7 +186,7 @@ class VIOS(bp.BasePartition):
 
     @property
     def is_mover_service_partition(self):
-        return self._get_val_bool(_MOVER_SERVICE_PARTITION, False)
+        return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
     @property
     def ip_addresses(self):
@@ -201,13 +230,13 @@ class VIOS(bp.BasePartition):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
         def_attrib = self.xags.SCSI_MAPPING.attrs
         es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_SCSI_MAPPINGS, attrib=def_attrib),
+            self._find_or_seed(_VIO_VSCSI_MAPPINGS, attrib=def_attrib),
             VSCSIMapping)
         return es
 
     @scsi_mappings.setter
     def scsi_mappings(self, new_mappings):
-        self.replace_list(_VIO_SCSI_MAPPINGS, new_mappings,
+        self.replace_list(_VIO_VSCSI_MAPPINGS, new_mappings,
                           attrib=self.xags.SCSI_MAPPING.attrs)
 
     @property
