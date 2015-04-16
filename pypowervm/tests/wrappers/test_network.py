@@ -69,12 +69,12 @@ class TestVSwitch(twrap.TestWrapper):
         vs = net.VSwitch.bld('Test')
         self.assertEqual('Test', vs.name)
         self.assertEqual(net.VSwitchModeEnum.VEB, vs.mode)
-        self.assertListEqual([], vs.virtual_network_uri_list)
+        self.assertListEqual([], vs.vnet_uri_list)
 
         vs = net.VSwitch.bld('Test', net.VSwitchModeEnum.VEPA)
         self.assertEqual('Test', vs.name)
         self.assertEqual(net.VSwitchModeEnum.VEPA, vs.mode)
-        self.assertListEqual([], vs.virtual_network_uri_list)
+        self.assertListEqual([], vs.vnet_uri_list)
 
     def test_feed(self):
         """Tests the feed of virtual switches."""
@@ -112,6 +112,7 @@ class TestLoadGroup(unittest.TestCase):
 
 
 class TestTrunkAdapter(unittest.TestCase):
+
     def test_wrapper_class(self):
         self.assertEqual(net.TrunkAdapter.schema_type, 'TrunkAdapter')
         self.assertEqual(net.TrunkAdapter.schema_ns, pc.UOM_NS)
@@ -126,6 +127,7 @@ class TestSEA(unittest.TestCase):
         self.assertEqual(net.SEA.schema_ns, pc.UOM_NS)
         self.assertTrue(net.SEA.has_metadata)
         self.assertEqual(net.SEA.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
+        self.assertTrue(net.SEA.is_primary)
 
 
 class TestNetBridge(unittest.TestCase):
@@ -148,8 +150,8 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(
             '764f3423-04c5-3b96-95a3-4764065400bd', self.dwrap.uuid)
 
-    def test_virtual_network_uri_list(self):
-        uri_list = self.dwrap.virtual_network_uri_list
+    def test_vnet_uri_list(self):
+        uri_list = self.dwrap.vnet_uri_list
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
 
@@ -157,11 +159,7 @@ class TestNetwork(twrap.TestWrapper):
         vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
 
         vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
-
-        if self.resp.feed:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
-        else:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+        vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
         nb = net.NetBridge.bld(pvid=1,
@@ -195,11 +193,7 @@ class TestNetwork(twrap.TestWrapper):
         vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
 
         vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
-
-        if self.resp.feed:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
-        else:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+        vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
         sea = net.SEA.bld(pvid=1, vios_href='127.0.0.1',
@@ -225,11 +219,7 @@ class TestNetwork(twrap.TestWrapper):
         vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
 
         vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
-
-        if self.resp.feed:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
-        else:
-            vsw_wrap = net.VSwitch.wrap(vswitch_resp.entry)
+        vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
         ta = net.TrunkAdapter.bld(pvid=1,
@@ -245,6 +235,10 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(1, ta.trunk_pri)
         self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
 
+        # Try adding a VLAN to the trunk adapter.
+        ta.tagged_vlans.append(4)
+        self.assertEqual([1, 2, 3, 4], ta.tagged_vlans)
+
     def test_crt_load_group(self):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
@@ -254,10 +248,10 @@ class TestNetwork(twrap.TestWrapper):
         # Validate the data back
         self.assertIsNotNone(lg)
         self.assertEqual(1, lg.pvid)
-        self.assertEqual(3, len(lg.virtual_network_uri_list))
-        self.assertEqual('a', lg.virtual_network_uri_list[0])
-        self.assertEqual('b', lg.virtual_network_uri_list[1])
-        self.assertEqual('c', lg.virtual_network_uri_list[2])
+        self.assertEqual(3, len(lg.vnet_uri_list))
+        self.assertEqual('a', lg.vnet_uri_list[0])
+        self.assertEqual('b', lg.vnet_uri_list[1])
+        self.assertEqual('c', lg.vnet_uri_list[2])
 
     def test_load_groups(self):
         prim_ld_grp = self.dwrap.load_grps[0]
@@ -270,13 +264,13 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(1, len(addl_ld_grps))
 
         self.assertEqual(
-            12, len(addl_ld_grps[0].virtual_network_uri_list))
-        addl_ld_grps[0].virtual_network_uri_list.append('fake_uri')
+            12, len(addl_ld_grps[0].vnet_uri_list))
+        addl_ld_grps[0].vnet_uri_list.append('fake_uri')
         self.assertEqual(
-            13, len(addl_ld_grps[0].virtual_network_uri_list))
-        addl_ld_grps[0].virtual_network_uri_list.remove('fake_uri')
+            13, len(addl_ld_grps[0].vnet_uri_list))
+        addl_ld_grps[0].vnet_uri_list.remove('fake_uri')
         self.assertEqual(
-            12, len(addl_ld_grps[0].virtual_network_uri_list))
+            12, len(addl_ld_grps[0].vnet_uri_list))
 
         # Make sure that the reference to the Network Bridge is there.
         self.assertEqual(self.dwrap, prim_ld_grp._nb_root)
@@ -287,14 +281,30 @@ class TestNetwork(twrap.TestWrapper):
         When modifying the Virtual Network list in the Load Group, those
         updates should be reflected back into the Network Bridge.
         """
-        orig_len = len(self.dwrap.virtual_network_uri_list)
+        orig_len = len(self.dwrap.vnet_uri_list)
         ld_grp = self.dwrap.load_grps[0]
-        lg_vnets = ld_grp.virtual_network_uri_list
+        lg_vnets = ld_grp.vnet_uri_list
         first_vnet = lg_vnets[0]
         lg_vnets.remove(first_vnet)
 
         self.assertEqual(orig_len - 1,
-                         len(self.dwrap.virtual_network_uri_list))
+                         len(self.dwrap.vnet_uri_list))
+
+    def test_sea_modification(self):
+        """Verifies that the SEA can have a Trunk Adapter added to it."""
+        vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
+
+        vswitch_resp = pvmhttp.PVMResp(pvmfile=vswitch_file).get_response()
+        vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
+
+        # Create mocked data
+        ta = net.TrunkAdapter.bld(pvid=1, vlan_ids=[1, 2, 3], vswitch=vsw_wrap)
+        self.assertEqual(1, len(self.dwrap.seas[0].addl_adpts))
+        self.dwrap.seas[0].addl_adpts.append(ta)
+        self.assertEqual(2, len(self.dwrap.seas[0].addl_adpts))
+
+        # Check that the total trunks is now three elements
+        self.assertEqual(3, len(self.dwrap.seas[0]._get_trunks()))
 
     def test_supports_vlan(self):
         """Tests the supports_vlan method."""

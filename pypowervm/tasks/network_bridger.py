@@ -125,7 +125,7 @@ def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
             req_nb.load_grps.append(ld_grp)
         else:
             # There was a Load Group.  Just need to append this vnet to it.
-            ld_grp.virtual_network_uri_list.append(vid_vnet.related_href)
+            ld_grp.vnet_uri_list.append(vid_vnet.related_href)
 
     # At this point, the network bridge should just need to be updated.  The
     # Load Groups on the Network Bridge should be correct.
@@ -225,7 +225,7 @@ def _find_available_ld_grp(nb):
 
     ld_grps = nb.load_grps[1:]
     for ld_grp in ld_grps:
-        if len(ld_grp.virtual_network_uri_list) < _MAX_VLANS_PER_VEA:
+        if len(ld_grp.vnet_uri_list) < _MAX_VLANS_PER_VEA:
             return ld_grp
     return None
 
@@ -296,7 +296,7 @@ def _reassign_arbitrary_vid(adapter, host_uuid, old_vid, new_vid, impacted_nb):
                                     vswitch_w, tagged=False)
 
     # Now we need to clone the load group
-    uris = copy.copy(impacted_lg.virtual_network_uri_list)
+    uris = copy.copy(impacted_lg.vnet_uri_list)
     if old_uri is not None:
         uris.remove(old_uri)
     uris.insert(0, new_vnet.related_href)
@@ -397,7 +397,7 @@ def remove_vlan_from_nb(adapter, host_uuid, nb_uuid, vlan_id,
     else:
         # Else just remove that virtual network
         vnet_uri = _find_vnet_uri_from_lg(adapter, matching_lg, vlan_id)
-        matching_lg.virtual_network_uri_list.remove(vnet_uri)
+        matching_lg.vnet_uri_list.remove(vnet_uri)
 
     # Now update the network bridge.
     req_nb.update(adapter)
@@ -412,7 +412,7 @@ def _find_vnet_uri_from_lg(adapter, lg, vlan):
     :return: The Virtual Network URI for the vlan.  If not found within the
              Load Group, None will be returned.
     """
-    for vnet_uri in lg.virtual_network_uri_list:
+    for vnet_uri in lg.vnet_uri_list:
         vnet_resp = adapter.read_by_href(vnet_uri)
         vnet_net = pvm_net.VNet.wrap(vnet_resp)
         if vnet_net.vlan == vlan:

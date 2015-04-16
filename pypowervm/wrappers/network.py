@@ -153,7 +153,7 @@ class VSwitch(ewrap.EntryWrapper):
         vswitch = super(VSwitch, cls)._bld()
         vswitch.name = name
         vswitch._mode(switch_mode)
-        vswitch.virtual_network_uri_list = []
+        vswitch.vnet_uri_list = []
         return vswitch
 
     @property
@@ -186,13 +186,22 @@ class VSwitch(ewrap.EntryWrapper):
         self.set_parm_value(_VSW_MODE, new_mode)
 
     @property
-    def virtual_network_uri_list(self):
-        """Returns a list of the Virtual Network URIs."""
+    def vnet_uri_list(self):
+        """Returns a list of the Virtual Network URIs.
+
+        If the vnet_aware trait (see traits.py) is set to False, the user
+        should not modify this.  Virtual Networks become 'realized' off of
+        the systems VLANs/vSwitches.  However, if set to True, one can add
+        a Virtual Network to the vSwitch before it is used.
+
+        The task classes (cna.py and network_bridger.py) should abstract the
+        user away from these deviations in traits.
+        """
         uri_resp_list = list(self.get_href(u.xpath(_LG_VNETS, c.LINK)))
         return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
 
-    @virtual_network_uri_list.setter
-    def virtual_network_uri_list(self, new_list):
+    @vnet_uri_list.setter
+    def vnet_uri_list(self, new_list):
         self.__update_uri_list(new_list)
 
     def __update_uri_list(self, new_list):
@@ -265,11 +274,11 @@ class NetBridge(ewrap.EntryWrapper):
         self.set_parm_value(_NB_PVID, value)
 
     @property
-    def virtual_network_uri_list(self):
+    def vnet_uri_list(self):
         """Returns a list of the Virtual Network URIs.
 
         This is a READ-ONLY list.  Modification should take place through the
-        LoadGroup virtual_network_uri_list.  As the LoadGroups are modified,
+        LoadGroup vnet_uri_list.  As the LoadGroups are modified,
         this list will be dynamically updated.
         """
         return self.get_href(u.xpath(_NB_VNETS, c.LINK))
@@ -410,15 +419,22 @@ class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
     @classmethod
-    def bld(cls, pvid, vios_href, adpt_name, vlan_ids, vswitch):
+    def bld(cls, pvid, vios_href, adpt_name, vlan_ids, vswitch,
+            primary=True):
         """Create the SEA entry that can be used for NetBridge creation.
 
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vios_href: The Assigned VIOS href.
-        :param adpt_name: Name of the trunk adapter backing the parent VIOS
-                          of this SEA.
+        :param adpt_name: Name of the physical adapter or ether channel backing
+                          that will back the SEA.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
         :param vswitch: The vswitch wrapper to retrieve ID and href.
+        :param primary: Used in a dual Virtual I/O Server environment.  If
+                        set to True, indicates it is running on the I/O Server
+                        that the traffic should run through by default.  False
+                        indicates it is the SEA on the fail over Virtual I/O
+                        Server.  If single Virtual I/O Server environment,
+                        always set this to True.
         :returns: A new SEA ElementWrapper that represents the new SEA.
         """
         sea = super(SEA, cls)._bld()
@@ -452,14 +468,45 @@ class SEA(ewrap.ElementWrapper):
         self.set_href(_SEA_VIO_HREF, value)
 
     @property
+    def is_primary(self):
+        """Returns if this is the primary SEA.
+
+        Only valuable in dual Virtual I/O Server environments where a
+        NetBridge spans multiple I/O Servers.  The primary SEA is the one
+        the traffic runs through by default unless in a fail over scenario.
+        """
+        return self._get_val_bool(_SEA_PRIMARY)
+
+    def _is_primary(self, val):
+        self.set_parm_value(_SEA_PRIMARY, u.sanitize_bool_for_api(val))
+
+    @property
     def addl_adpts(self):
         """Non-primary TrunkAdapters on this Shared Ethernet Adapter.
 
-        READ ONLY - modification is done through the Load Groups.
+        If the vnet_aware trait (see traits.py) is set to True, then the
+        modification of a Network Bridge should be driven via the LoadGroup.
+        If set to False, the LoadGroups simply reflect the state of the
+        system and can't be used for modification.
+
+        In those scenarios, modification should be done directly against the
+        Trunk Adapters.
 
         :return: List of TrunkAdapter wrappers.  May be the empty list.
         """
+        return ewrap.ActionableList(self._get_trunks()[1:],
+                                    self._addl_adpts)
         return tuple(self._get_trunks()[1:])
+
+    @addl_adpts.setter
+    def addl_adpts(self, value):
+        self._addl_adpts(value)
+
+    def _addl_adpts(self, value):
+        """Sets the additional Trunk Adapters on this SEA."""
+        new_list = [self.primary_adpt]
+        new_list.extend(value)
+        self.replace_list(SEA_TRUNKS, new_list)
 
     @property
     def primary_adpt(self):
@@ -643,7 +690,7 @@ class LoadGroup(ewrap.ElementWrapper):
         """
         lg = super(LoadGroup, cls)._bld()
         lg._pvid(pvid)
-        lg.virtual_network_uri_list.extend(vnet_uris)
+        lg.vnet_uri_list.extend(vnet_uris)
         return lg
 
     @classmethod
@@ -680,16 +727,25 @@ class LoadGroup(ewrap.ElementWrapper):
         self.replace_list(_LG_TRUNKS, new_list)
 
     @property
-    def virtual_network_uri_list(self):
+    def vnet_uri_list(self):
         """Returns a list of the Virtual Network URIs.
 
-        If a VLAN/Virtual Network should be added, it should be done here.
+        If the vnet_aware trait (see traits.py) is set, then the addition
+        of VLANs is driven via virtual networks rather than straight VLAN
+        modification.  This uri list is what drives the modification.
+
+        If the trait is set to false, then the modification should be driven
+        via the trunk adapters on the SEA directly.  This list will also
+        be empty.
+
+        The task classes (cna.py and network_bridger.py) should abstract the
+        user away from these deviations in traits.
         """
         uri_resp_list = list(self.get_href(u.xpath(_LG_VNETS, c.LINK)))
         return ewrap.ActionableList(uri_resp_list, self.__update_uri_list)
 
-    @virtual_network_uri_list.setter
-    def virtual_network_uri_list(self, new_list):
+    @vnet_uri_list.setter
+    def vnet_uri_list(self, new_list):
         self.__update_uri_list(new_list)
 
     def __update_uri_list(self, new_list):
