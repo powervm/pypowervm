@@ -24,6 +24,7 @@ import requests.models as req_mod
 import requests.structures as req_struct
 
 import pypowervm.adapter as adp
+import pypowervm.const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
@@ -137,6 +138,64 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('GET', ret_read_value.reqmethod)
         self.assertEqual(200, ret_read_value.status)
         self.assertEqual(reqpath, ret_read_value.reqpath)
+
+    @mock.patch('pypowervm.adapter.Adapter._request')
+    def test_headers(self, mock_request):
+        def validate_hdrs_func(acc=None, inm=None):
+            expected_headers = {}
+            if acc is not None:
+                expected_headers['Accept'] = acc
+            if inm is not None:
+                expected_headers['If-None-Match'] = inm
+
+            def validate_request(meth, path, **kwargs):
+                self.assertEqual(expected_headers, kwargs['headers'])
+
+            return validate_request
+
+        adpt = adp.Adapter(None)
+        basepath = c.API_BASE_PATH + 'uom/SomeRootObject'
+        uuid = "abcdef01-2345-2345-2345-67890abcdef0"
+        hdr_xml = 'application/atom+xml'
+        hdr_json = 'application/json'
+        etag = 'abc123'
+
+        # Root feed
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_xml)
+        adpt._read_by_path(basepath, None, None, None, None)
+
+        # Root instance with etag
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_xml, inm=etag)
+        adpt._read_by_path(basepath + '/' + uuid, etag, None, None, None)
+
+        # Quick root anchor (produces XML report of available quick properties
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_xml)
+        adpt._read_by_path(basepath + '/quick', None, None, None, None)
+
+        # Quick root instance (JSON of all quick properties)
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_json)
+        adpt._read_by_path('/'.join([basepath, uuid, 'quick']), None, None,
+                           None, None)
+
+        # Specific quick property
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_json)
+        adpt._read_by_path('/'.join([basepath, uuid, 'quick', 'property']),
+                           None, None, None, None)
+
+        # Explicit JSON file
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_json)
+        adpt._read_by_path('/'.join([basepath, 'somefile.json']), None, None,
+                           None, None)
+
+        # Object that happens to end in 'json'
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_xml)
+        adpt._read_by_path('/'.join([basepath, 'xml_about_json']), None, None,
+                           None, None)
+
+        # Quick with query params and fragments
+        mock_request.side_effect = validate_hdrs_func(acc=hdr_json)
+        adpt._read_by_path('/'.join([basepath, uuid, 'quick']) +
+                           '?group=None#frag', None, None, None, None)
 
     @mock.patch('requests.Session')
     def test_create(self, mock_session):
