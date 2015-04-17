@@ -1049,8 +1049,12 @@ class Adapter(object):
             sep = '&' if '?' in bpath else '?'
             return bpath + sep + qparam
 
+        # Explicit xag is always honored as-is.  If unspecified, we usually
+        # want to include group=None.  However, there are certain classes of
+        # URI from which we want to omit ?group entirely.
         if xag is None:
-            xag = [ent.XAG().NONE]
+            xagless_suffixes = ('quick', 'do')
+            xag = [] if suffix_type in xagless_suffixes else [ent.XAG().NONE]
 
         path = basepath
         if suffix_type:
