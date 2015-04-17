@@ -286,6 +286,26 @@ class TestAdapter(unittest.TestCase):
         expected_path = 'basepath/suffix/suffix_parm?detail=detail'
         self.assertEqual(expected_path, path)
 
+        # Ensure unspecified XAG defaults to group=None
+        path = adapter.extend_path('basepath', suffix_type='suffix',
+                                   suffix_parm='suffix_parm')
+
+        expected_path = 'basepath/suffix/suffix_parm?group=None'
+        self.assertEqual(expected_path, path)
+
+        # ...except for specific suffix types 'quick' and 'do'
+        path = adapter.extend_path('basepath', suffix_type='quick',
+                                   suffix_parm='suffix_parm')
+
+        expected_path = 'basepath/quick/suffix_parm'
+        self.assertEqual(expected_path, path)
+
+        path = adapter.extend_path('basepath', suffix_type='do',
+                                   suffix_parm='suffix_parm')
+
+        expected_path = 'basepath/do/suffix_parm'
+        self.assertEqual(expected_path, path)
+
     @mock.patch('requests.Session')
     def test_delete(self, mock_session):
         """Test delete() method found in the Adapter class."""
