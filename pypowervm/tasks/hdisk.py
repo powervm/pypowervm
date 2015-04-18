@@ -271,8 +271,8 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
 
         # Get the response for the CLIRunner command
         resp = adapter.read(_MGT_CONSOLE, None,
-                            suffixType=c.SUFFIX_TYPE_DO,
-                            suffixParm='CLIRunner')
+                            suffix_type=c.SUFFIX_TYPE_DO,
+                            suffix_parm='CLIRunner')
 
         # Create the job parameters
         job_wrapper = pvm_job.Job.wrap(resp)
@@ -284,4 +284,4 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
         job_wrapper.run_job(adapter, None, job_parms=job_parms)
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
-        LOG.info(_('CLIRunner Error: %s') % error)
+        LOG.warn(_('CLIRunner Error: %s') % error)
