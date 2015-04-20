@@ -327,18 +327,24 @@ class NetBridge(ewrap.EntryWrapper):
     def vswitch_id(self):
         return self.seas[0].primary_adpt.vswitch_id
 
+    def _is_vnet_path(self):
+        return (self.traits is not None and self.traits.vnet_aware)
+
     @property
     def arbitrary_pvids(self):
         """Lists all of the network bridges' arbitrary PVIDs.
 
         An arbitrary PVID is a 'primary VLAN ID' attached to an additional
-        Load Group.  These typically do not send traffic through them, and
-        are placeholder VLANs required by the backing 'additional' Trunk
-        Adapters.
+        Load Group or Trunk Adapter.  These typically do not send traffic
+        through them, and are placeholder VLANs required by the backing
+        'additional' Trunk Adapters.
 
         :return: List of arbitrary PVIDs
         """
-        return [x.pvid for x in self.load_grps[1:]]
+        if self._is_vnet_path():
+            return [x.pvid for x in self.load_grps[1:]]
+        else:
+            return [x.pvid for x in self.seas[0].addl_adpts]
 
     def list_vlans(self, pvid=True, arbitrary=False):
         """Lists all of the VLANs on the Network Bridge.
@@ -347,24 +353,37 @@ class NetBridge(ewrap.EntryWrapper):
                      response.  Defaults to True.
         :param arbitrary: If True, the arbitrary PVIDs (see arbitrary_pvids
                           property) will be included in the response.
+
         :response: A list of all the VLANs.
         """
         resp = []
+        if self._is_vnet_path():
+            # Loop through all load groups (even primary) and add the VLANs.
+            for ld_grp in self.load_grps:
+                trunk = ld_grp.trunk_adapters[0]
+                if arbitrary:
+                    resp.append(trunk.pvid)
+                resp.extend(trunk.tagged_vlans)
 
-        # Loop through all load groups (even primary) and add the VLANs.
-        for ld_grp in self.load_grps:
-            trunk = ld_grp.trunk_adapters[0]
-            if arbitrary:
-                resp.append(trunk.pvid)
-            resp.extend(trunk.tagged_vlans)
+            # Depending on if the arbitrary flag was set, the primary VLAN may
+            # be in already.  This is odd logic here...but keeps the code
+            # efficient.
+            if not pvid and arbitrary:
+                resp.remove(self.pvid)
+            elif pvid and not arbitrary:
+                resp.append(self.pvid)
+        else:
+            # Loop through the first SEA's trunks
+            sea = self.seas[0]
+            if pvid:
+                resp.append(sea.primary_adpt.pvid)
+            resp.extend(sea.primary_adpt.tagged_vlans)
 
-        # Depending on if the arbitrary flag was set, the primary VLAN may
-        # be in already.  This is odd logic here...but keeps the code
-        # efficient.
-        if not pvid and arbitrary:
-            resp.remove(self.pvid)
-        elif pvid and not arbitrary:
-            resp.append(self.pvid)
+            for trunk in sea.addl_adpts:
+                if arbitrary:
+                    resp.append(trunk.pvid)
+                resp.extend(trunk.tagged_vlans)
+
         return resp
 
     def supports_vlan(self, vlan):
@@ -385,24 +404,7 @@ class NetBridge(ewrap.EntryWrapper):
         # Make sure we're using string
         vlan = int(vlan)
 
-        # Load groups - pull once for speed
-        ld_grps = self.load_grps
-
-        # First load group is the primary
-        if ld_grps[0].pvid == vlan:
-            return True
-
-        # Now walk through all the load groups and check the adapters' vlans
-        for ld_grp in ld_grps:
-            # All load groups have at least one trunk adapter.  Those
-            # are kept in sync, so we only need to look at the first
-            # trunk adapter.
-            trunk = ld_grp.trunk_adapters[0]
-            if vlan in trunk.tagged_vlans:
-                return True
-
-        # Wasn't found,
-        return False
+        return vlan in self.list_vlans()
 
     def _failover(self, value):
         """Private setter for the failover attr.
