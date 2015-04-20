@@ -82,11 +82,16 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
 
     n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
+    # The file type.  If local API server, then we can use the coordinated
+    # file path.  Otherwise standard upload.
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+                 else vf.FileType.DISK_IMAGE)
+
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     vio_file = _create_file(
-        adapter, d_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
-        f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+        adapter, d_name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
     return n_vdisk, maybe_file
@@ -116,8 +121,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     """
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
-        adapter, f_name, vf.FileType.BROKERED_MEDIA_ISO, v_uuid,
-        sha_chksum, f_size)
+        adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
     f_uuid = _upload_stream(adapter, vio_file, d_stream)
 
     # Simply return a reference to this.
@@ -160,14 +164,18 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
         d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size, dp=2)
 
-    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size,
-                         typ=stor.LUType.IMAGE)
+    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
+
+    # The file type.  If local API server, then we can use the coordinated
+    # file path.  Otherwise standard upload.
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+                 else vf.FileType.DISK_IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        adapter, lu_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
-        f_size=f_size, tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
+        adapter, lu_name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
     return new_lu, maybe_file
@@ -201,8 +209,18 @@ def _upload_stream(adapter, vio_file, d_stream):
              used to retry the cleanup.
     """
     try:
-        # Upload the file
-        adapter.upload_file(vio_file.element, d_stream)
+        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
+            # Pipe the output to a stream
+            out_file = vio_file.asset_file
+            with open(out_file, 'w') as f:
+                while True:
+                    d = d_stream.read(65536)
+                    if not d:
+                        break
+                    f.write(d)
+        else:
+            # Upload the file via the REST API server.
+            adapter.upload_file(vio_file.element, d_stream)
     finally:
         try:
             # Cleanup after the upload

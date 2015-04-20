@@ -26,6 +26,7 @@ _FILE_CUR_SIZE = 'CurrentFileSizeInBytes'
 _FILE_ENUM_TYPE = 'FileEnumType'
 _FILE_VIOS = 'TargetVirtualIOServerUUID'
 _FILE_TDEV_UDID = 'TargetDeviceUniqueDeviceID'
+_FILE_ASSET_FILE = 'AssetFile'
 _FILE_CHKSUM = 'SHA256'
 
 
@@ -34,8 +35,9 @@ _DEFAULT_MEDIA_TYPE = 'application/octet-stream'
 
 class FileType(object):
     """Supported file types."""
-    BROKERED_MEDIA_ISO = 'BROKERED_MEDIA_ISO'
-    BROKERED_DISK_IMAGE = 'BROKERED_DISK_IMAGE'
+    MEDIA_ISO = 'BROKERED_MEDIA_ISO'
+    DISK_IMAGE = 'BROKERED_DISK_IMAGE'
+    DISK_IMAGE_COORDINATED = 'BROKERED_DISK_IMAGE_COORDINATED'
 
 
 @ewrap.EntryWrapper.pvm_type('File', ns=pc.WEB_NS)
@@ -144,3 +146,16 @@ class File(ewrap.EntryWrapper):
 
     def _tdev_udid(self, udid):
         self.set_parm_value(_FILE_TDEV_UDID, udid)
+
+    @property
+    def asset_file(self):
+        """Used to identify the asset file on upload.
+
+        Only used in conjunction with DISK_IMAGE_COORDINATED.
+
+        Provides the path to a file on the local system where data can be sent
+        during an upload operation.  This is used for signifcant speed
+        improvements as the REST API server does not need to be involved with
+        the upload.
+        """
+        return self._get_val_str(_FILE_ASSET_FILE)
