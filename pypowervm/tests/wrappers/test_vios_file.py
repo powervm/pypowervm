@@ -43,7 +43,7 @@ class TestVIOSFile(twrap.TestWrapper):
                          vio_file.file_uuid)
         self.assertEqual(25165824, vio_file.expected_file_size)
         self.assertEqual(25165824, vio_file.current_file_size)
-        self.assertEqual(vf.FileType.BROKERED_DISK_IMAGE, vio_file.enum_type)
+        self.assertEqual(vf.FileType.DISK_IMAGE, vio_file.enum_type)
         self.assertEqual('14B854F7-42CE-4FF0-BD57-1D117054E701',
                          vio_file.vios_uuid)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.28',
