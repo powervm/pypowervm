@@ -17,6 +17,8 @@
 import copy
 import unittest
 
+import mock
+
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
@@ -140,6 +142,10 @@ class TestNetwork(twrap.TestWrapper):
 
     file = 'fake_network_bridge.txt'
     wrapper_class_to_test = net.NetBridge
+
+    def set_vnet(self, aware):
+        self.dwrap._is_vnet_path = mock.MagicMock()
+        self.dwrap._is_vnet_path.return_value = aware
 
     def test_pvid(self):
         self.assertEqual(1, self.dwrap.pvid)
@@ -326,47 +332,77 @@ class TestNetwork(twrap.TestWrapper):
 
     def test_supports_vlan(self):
         """Tests the supports_vlan method."""
+        # Both styles should produce similar results.
+        vnet_paths = [False, True]
+        for use_vnet in vnet_paths:
+            self.set_vnet(use_vnet)
+            # PVID of primary adapter
+            self.assertTrue(self.dwrap.supports_vlan(1))
+            self.assertTrue(self.dwrap.supports_vlan("1"))
 
-        # PVID of primary adapter
-        self.assertTrue(self.dwrap.supports_vlan(1))
-        self.assertTrue(self.dwrap.supports_vlan("1"))
+            # PVID of second adapter
+            self.assertFalse(self.dwrap.supports_vlan(4094))
+            self.assertFalse(self.dwrap.supports_vlan("4094"))
 
-        # PVID of second adapter
-        self.assertFalse(self.dwrap.supports_vlan(4094))
-        self.assertFalse(self.dwrap.supports_vlan("4094"))
+            # Additional VLAN of second adapter.
+            self.assertTrue(self.dwrap.supports_vlan(100))
+            self.assertTrue(self.dwrap.supports_vlan("100"))
+            self.assertTrue(self.dwrap.supports_vlan(2228))
+            self.assertTrue(self.dwrap.supports_vlan("2228"))
+            self.assertTrue(self.dwrap.supports_vlan(2227))
+            self.assertTrue(self.dwrap.supports_vlan("2227"))
 
-        # Additional VLAN of second adapter.
-        self.assertTrue(self.dwrap.supports_vlan(100))
-        self.assertTrue(self.dwrap.supports_vlan("100"))
-        self.assertTrue(self.dwrap.supports_vlan(2228))
-        self.assertTrue(self.dwrap.supports_vlan("2228"))
-        self.assertTrue(self.dwrap.supports_vlan(2227))
-        self.assertTrue(self.dwrap.supports_vlan("2227"))
+            # A VLAN that isn't anywhere
+            self.assertFalse(self.dwrap.supports_vlan(123))
 
-        # A VLAN that isn't anywhere
-        self.assertFalse(self.dwrap.supports_vlan(123))
+    def test_supports_vlan_no_vnet(self):
+        """Tests that a VLAN change affects trunks, not vnets."""
+        self.dwrap.seas[0].primary_adpt.tagged_vlans.append(128)
+        self.set_vnet(False)
+        self.assertTrue(self.dwrap.supports_vlan(128))
+        self.set_vnet(True)
+        self.assertFalse(self.dwrap.supports_vlan(128))
 
     def test_vswitch_id(self):
         """Tests that the pass thru of the vswitch id works."""
         self.assertEqual(2, self.dwrap.vswitch_id)
 
     def test_arbitrary_pvids(self):
+        self.set_vnet(False)
+        self.assertEqual([4094], self.dwrap.arbitrary_pvids)
+        self.set_vnet(True)
         self.assertEqual([4094], self.dwrap.arbitrary_pvids)
 
     def test_list_vlans(self):
-        # 1 is the PVID.  4094 is the arbitrary (only one arbitrary)
-        self.assertListEqual([100, 150, 175, 200, 250, 300, 333, 350, 900,
-                              1001, 2227, 2228, 1],
-                             self.dwrap.list_vlans())
-        self.assertListEqual([4094, 100, 150, 175, 200, 250, 300, 333, 350,
-                              900, 1001, 2227, 2228],
-                             self.dwrap.list_vlans(pvid=False, arbitrary=True))
-        self.assertListEqual([100, 150, 175, 200, 250, 300, 333, 350, 900,
-                              1001, 2227, 2228],
-                             self.dwrap.list_vlans(pvid=False))
-        self.assertListEqual([1, 4094, 100, 150, 175, 200, 250, 300, 333, 350,
-                              900, 1001, 2227, 2228],
-                             self.dwrap.list_vlans(arbitrary=True))
+        # Both styles should produce similar results.
+        vnet_paths = [False, True]
+        for use_vnet in vnet_paths:
+            self.set_vnet(use_vnet)
+
+            # 1 is the PVID.  4094 is the arbitrary (only one arbitrary)
+            val = set(self.dwrap.list_vlans())
+            self.assertEqual(set([100, 150, 175, 200, 250, 300, 333, 350, 900,
+                                  1001, 2227, 2228, 1]), val)
+
+            val = set(self.dwrap.list_vlans(pvid=False, arbitrary=True))
+            self.assertEqual(set([4094, 100, 150, 175, 200, 250, 300, 333, 350,
+                                  900, 1001, 2227, 2228]), val)
+
+            val = set(self.dwrap.list_vlans(pvid=False))
+            self.assertEqual(set([100, 150, 175, 200, 250, 300, 333, 350, 900,
+                                  1001, 2227, 2228]), val)
+
+            val = set(self.dwrap.list_vlans(arbitrary=True))
+            self.assertEqual(set([1, 4094, 100, 150, 175, 200, 250, 300, 333,
+                                  350, 900, 1001, 2227, 2228]), val)
+
+    def test_list_vlan_no_vnet(self):
+        """Tests that a VLAN change affects trunks, not vnets."""
+        self.dwrap.seas[0].primary_adpt.tagged_vlans.append(128)
+        self.set_vnet(False)
+        self.assertIn(128, self.dwrap.list_vlans())
+        self.set_vnet(True)
+        self.assertNotIn(128, self.dwrap.list_vlans())
 
     def test_seas(self):
         self.assertEqual(1, len(self.dwrap.seas))
