@@ -16,6 +16,8 @@
 
 import logging
 import math
+import shutil
+import threading
 
 from oslo_concurrency import lockutils as lock
 
@@ -82,11 +84,16 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
 
     n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
+    # The file type.  If local API server, then we can use the coordinated
+    # file path.  Otherwise standard upload.
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+                 else vf.FileType.DISK_IMAGE)
+
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
     vio_file = _create_file(
-        adapter, d_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
-        f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+        adapter, d_name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
     return n_vdisk, maybe_file
@@ -116,8 +123,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     """
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
-        adapter, f_name, vf.FileType.BROKERED_MEDIA_ISO, v_uuid,
-        sha_chksum, f_size)
+        adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
     f_uuid = _upload_stream(adapter, vio_file, d_stream)
 
     # Simply return a reference to this.
@@ -160,14 +166,18 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
         d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size, dp=2)
 
-    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size,
-                         typ=stor.LUType.IMAGE)
+    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
+
+    # The file type.  If local API server, then we can use the coordinated
+    # file path.  Otherwise standard upload.
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+                 else vf.FileType.DISK_IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        adapter, lu_name, vf.FileType.BROKERED_DISK_IMAGE, v_uuid,
-        f_size=f_size, tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
+        adapter, lu_name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
 
     maybe_file = _upload_stream(adapter, vio_file, d_stream)
     return new_lu, maybe_file
@@ -201,8 +211,32 @@ def _upload_stream(adapter, vio_file, d_stream):
              used to retry the cleanup.
     """
     try:
-        # Upload the file
-        adapter.upload_file(vio_file.element, d_stream)
+        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
+            # This path offers low CPU overhead and higher throughput, but
+            # can only be executed if running on the same system as the API.
+            # It works by writing to a file 'pipe'.  This is harder to
+            # coordinate.  But the vio_file's 'asset_file' tells us where
+            # to write the stream to.
+            fw = None
+            try:
+                with open(vio_file.asset_file, 'a') as out_stream:
+                    fw = _StreamWriter(d_stream, out_stream)
+                    fw.start()
+
+                    # A reader to tell the API we have nothing to upload
+                    class EmptyReader(object):
+                        def read(self, size):
+                            return None
+
+                    # Invoke the upload, but the content is empty (as it is
+                    # being written to the file pipe instead).
+                    adapter.upload_file(vio_file.element, EmptyReader())
+            finally:
+                if fw:
+                    fw.check_for_error()
+        else:
+            # Upload the file directly to the REST API server.
+            adapter.upload_file(vio_file.element, d_stream)
     finally:
         try:
             # Cleanup after the upload
@@ -480,3 +514,27 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
         with lock.lock(_LOCK_SSP):
             ssp = ssp.update(adapter)
     return ssp, lu_to_rm
+
+
+class _StreamWriter(threading.Thread):
+    """Used for the Coordinated File Upload.
+
+    This is a thread that will pipe a stream to an out stream.  Will stop
+    when the 'stop' method is called, and will clean its file up.
+    """
+
+    def __init__(self, in_stream, out_stream):
+        super(_StreamWriter, self).__init__()
+        self.in_stream = in_stream
+        self.out_stream = out_stream
+        self.err = None
+
+    def run(self):
+        try:
+            shutil.copyfileobj(self.instream, self.outstream)
+        except Exception as e:
+            self.err = e
+
+    def check_for_error(self):
+        if self.err:
+            raise self.err
