@@ -99,6 +99,9 @@ class TestUploadLV(unittest.TestCase):
     def test_upload_new_vdisk(self, mock_create_file, mock_adpt):
         """Tests the uploads of the virtual disks."""
 
+        # Set the trait to use the REST API upload
+        mock_adpt.traits.local_api = False
+
         # First need to load in the various test responses.
         vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
         vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
@@ -113,8 +116,43 @@ class TestUploadLV(unittest.TestCase):
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            mock_adpt, 'test2', vf.FileType.BROKERED_DISK_IMAGE, self.v_uuid,
+            mock_adpt, 'test2', vf.FileType.DISK_IMAGE, self.v_uuid,
             f_size=50, tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
+            sha_chksum='abc123')
+
+        # Ensure cleanup was called after the upload
+        mock_adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+        self.assertIsNone(f_wrap)
+        self.assertIsNotNone(n_vdisk)
+        self.assertIsInstance(n_vdisk, stor.VDisk)
+
+    @mock.patch('pypowervm.adapter.Adapter')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vdisk_coordinated(self, mock_create_file, mock_adpt):
+        """Tests the uploads of a virtual disk using the coordinated path."""
+
+        # Set the trait to use the coordinated local API
+        mock_adpt.traits.local_api = True
+
+        # First need to load in the various test responses.
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+
+        mock_adpt.read.return_value = vg_orig
+        mock_adpt.update_by_path.return_value = vg_post_crt
+        mock_create_file.return_value = self._fake_meta()
+
+        n_vdisk, f_wrap = ts.upload_new_vdisk(
+            mock_adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
+            d_size=25, sha_chksum='abc123')
+
+        # Ensure the create file was called
+        mock_create_file.assert_called_once_with(
+            mock_adpt, 'test2', vf.FileType.DISK_IMAGE_COORDINATED,
+            self.v_uuid, f_size=50,
+            tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
             sha_chksum='abc123')
 
         # Ensure cleanup was called after the upload
@@ -155,6 +193,9 @@ class TestUploadLV(unittest.TestCase):
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_lu(self, mock_create_file, mock_adpt):
         """Tests create/upload of SSP LU."""
+        # Tell the adapter to upload via REST API
+        mock_adpt.traits.local_api = False
+
         ssp_in = stor.SSP.bld('ssp1', [])
         ssp_in.entry.properties = {'links': {'SELF': [
             '/rest/api/uom/SharedStoragePool/ssp_uuid']}}
@@ -175,7 +216,7 @@ class TestUploadLV(unittest.TestCase):
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            mock_adpt, 'lu1', vf.FileType.BROKERED_DISK_IMAGE, self.v_uuid,
+            mock_adpt, 'lu1', vf.FileType.DISK_IMAGE, self.v_uuid,
             f_size=size_b, tdev_udid='udid_lu1',
             sha_chksum='abc123')
 
