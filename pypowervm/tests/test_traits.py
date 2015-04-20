@@ -28,3 +28,4 @@ class TestTraits(unittest.TestCase):
         t = traits.APITraits(mock_sess)
         self.assertFalse(t.vnet_aware)
         self.assertFalse(t._is_hmc())
+        self.assertTrue(t.local_api)

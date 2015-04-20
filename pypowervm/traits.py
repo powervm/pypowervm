@@ -50,6 +50,22 @@ class APITraits(object):
         """
         return self._is_hmc()
 
+    @property
+    def local_api(self):
+        """Indicates whether or not the PowerVM API Server is running locally.
+
+        The PowerVM API server in some deployments may be running co-located
+        with the pypowervm API.  In those cases, certain optimizations may be
+        available (like uploading from a file instead of a pipe).
+
+        This trait is a coarse check to determine, for certain, if the API
+        is co-located on the same server.
+        """
+        # If the file auth is set to true, we must be colocated.  All other
+        # routes could be error prone and lead to significant branches of
+        # complexity.
+        return self.session.use_file_auth
+
     def _is_hmc(self):
         """Internal attribute to determine if HMC.  Used for trait behavior.
 
