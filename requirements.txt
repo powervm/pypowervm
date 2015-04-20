@@ -7,3 +7,4 @@ pyasn1_modules>=0.0.5
 pyasn1>=0.0.12a
 requests>=2.3.0
 six>=1.7.0
+futures
