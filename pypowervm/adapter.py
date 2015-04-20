@@ -817,8 +817,9 @@ class Adapter(object):
         # isrespatom = False
         json_search_str = (c.UUID_REGEX + '/quick$' +
                            '|/quick/' +
-                           '|.json$')
-        if re.search(json_search_str, path):
+                           '|\.json$')
+        if re.search(json_search_str, util.dice_href(path, include_query=False,
+                                                     include_fragment=False)):
             headers['Accept'] = 'application/json'
         else:
             # isrespatom = True
