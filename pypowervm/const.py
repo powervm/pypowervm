@@ -31,13 +31,25 @@ ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
 API_BASE_PATH = '/rest/api/'
 LOGON_PATH = API_BASE_PATH + 'web/Logon'
 TYPE_TEMPLATE = 'application/vnd.ibm.powervm.%s+xml; type=%s'
-LOGONREQUEST_TEMPLATE = six.u(
+# The following is interpolated *twice*.  The first time, we insert either the
+# Password element or the GenerateX-API-SessionFile element after the UserID.
+# We don't want to interpolate 'userid' until the second interpolation, which
+# happens at runtime in the Session's login routine.
+_LOGONREQUEST_TEMPLATE_TEMPLATE = six.u(
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<LogonRequest xmlns="http://www.ibm.com/xmlns/systems/power/firmware/' +
     'web/mc/2012_10/" schemaVersion="V1_0">\n' +
-    '    <UserID>%(userid)s</UserID>\n' +
-    '    <Password>%(passwd)s</Password>\n' +
+    '    <UserID>%%(userid)s</UserID>\n' +
+    '    %(pass_or_file)s\n' +
     '</LogonRequest>')
+_PASS_TEMPLATE = '<Password>%(passwd)s</Password>'
+_SESS_FILE = '<GenerateX-API-SessionFile>true</GenerateX-API-SessionFile>'
+# LogonRequest template to be used for password-based authentication
+LOGONREQUEST_TEMPLATE_PASS = _LOGONREQUEST_TEMPLATE_TEMPLATE % dict(
+    pass_or_file=_PASS_TEMPLATE)
+# LogonRequest template to be used for file-based authentication
+LOGONREQUEST_TEMPLATE_FILE = _LOGONREQUEST_TEMPLATE_TEMPLATE % dict(
+    pass_or_file=_SESS_FILE)
 
 ATOM_NS = 'http://www.w3.org/2005/Atom'
 XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -50,6 +62,11 @@ UUID_REGEX = ('[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-' +
 
 SUFFIX_TYPE_DO = 'do'
 LINK = 'link'
+
+PORT_DEFAULT_BY_PROTO = {
+    'http': 12080,
+    'https': 12443
+}
 
 
 class HTTPStatus(object):

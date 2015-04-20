@@ -67,33 +67,81 @@ register_namespace('uom', c.UOM_NS)
 class Session(object):
     """Responsible for PowerVM API session management."""
 
-    # TODO(IBM): Pull these defaults into an INI
-    def __init__(self, host, username, password, auditmemento=None,
-                 protocol='https', port=12443, timeout=60,
+    def __init__(self, host='localhost', username=None, password=None,
+                 auditmemento=None, protocol=None, port=None, timeout=60,
                  certpath='/etc/ssl/certs/', certext='.crt'):
-        self.username = username
-        self.password = password
+        """Persistent authenticated session with the REST API server.
 
-        audmem = auditmemento
-        if not audmem:
+        Two authentication modes are supported: password- and file-based.
+
+        :param host: IP or resolvable hostname for the REST API server.
+        :param username: User ID for authentication.  Optional for file-based
+                         authentication.
+        :param password: Authentication password.  If specified, password-based
+                         authentication is used.  If omitted, file-based
+                         authentication is used.
+        :param auditmemento: Tag for log entry identification on the REST API
+                             server.  If omitted, one will be generated.
+        :param protocol: TCP protocol for communication with the REST API
+                         server.  Must be either 'http' or 'https'.  If
+                         unspecified, will default to 'http' for file-based
+                         local authentication and 'https' otherwise.
+        :param port: TCP port on which the REST API server communicates.  If
+                     unspecified, will default based on the protocol parameter:
+                     protocol='http' => port=12080;
+                     protocol='https' => port=12443.
+        :param timeout: See timeout param on requests.Session.request
+        :param certpath: Directory in which the certificate file can be found.
+                         Certificate file path is constructed as
+                         {certpath}{host}{certext}.  For example, given
+                         host='localhost', certpath='/etc/ssl/certs/',
+                         certext='.crt', the certificate file path will be
+                         '/etc/ssl/certs/localhost.crt'.  This is ignored if
+                         protocol is http.
+        :param certext: Certificate file extension.
+        :return: A logged-on session suitable for passing to the Adapter
+                 constructor.
+        """
+        # Key off lack of password to indicate file-based authentication.  In
+        # this case, 'host' is often 'localhost' (or something that resolves to
+        # it), but it's also possible consumers will be using e.g. SSH keys
+        # allowing them to grab the file from a remote host.
+        self.use_file_auth = password is None
+        self.password = password
+        if self.use_file_auth and not username:
+            # Generate a username, which is used by the file auth mechanism
+            # only to name the file.  Username indicates the time (seconds
+            # since the epoch) of the instantiation of this Session instance.
+            username = 'pypowervm_%d' % int(time.mktime(time.gmtime()))
+        self.username = username
+
+        if protocol is None:
+            protocol = 'http' if self.use_file_auth else 'https'
+        if protocol not in c.PORT_DEFAULT_BY_PROTO.keys():
+            raise ValueError('Invalid protocol "%s"' % protocol)
+        self.protocol = protocol
+
+        self.host = host
+
+        if host != 'localhost' and protocol == 'http':
+            LOG.warn('Unencrypted communication with PowerVM! ' +
+                     'Revert configuration to https.')
+
+        if port is None:
+            port = c.PORT_DEFAULT_BY_PROTO[self.protocol]
+        self.port = port
+
+        if not auditmemento:
             # Assume 'default' unless we can calculate the proper default
-            audmem = 'default'
+            auditmemento = 'default'
             if os.name == 'posix':
                 try:
-                    audmem = pwd.getpwuid(os.getuid())[0]
+                    auditmemento = pwd.getpwuid(os.getuid())[0]
                 except Exception:
                     LOG.warn("Calculating default audit memento failed, using "
                              "'default'.")
-        self.auditmemento = audmem
+        self.auditmemento = auditmemento
 
-        self.protocol = protocol
-        if protocol == 'http':
-            LOG.warn('Unencrypted communication with PowerVM! ' +
-                     'Revert configuration to https.')
-        if self.protocol not in ['https', 'http']:
-            raise ValueError('Invalid protocol "%s"' % self.protocol)
-        self.host = host
-        self.port = port
         # Support IPv6 addresses
         if self.host[0] != '[' and ':' in self.host:
             self.dest = '%s://[%s]:%i' % (self.protocol, self.host, self.port)
@@ -350,14 +398,18 @@ class Session(object):
             'Accept': c.TYPE_TEMPLATE % ('web', 'LogonResponse'),
             'Content-Type': c.TYPE_TEMPLATE % ('web', 'LogonRequest')
         }
-        passwd = sax_utils.escape(self.password)
-        body = c.LOGONREQUEST_TEMPLATE % {'userid': self.username,
-                                          'passwd': passwd}
+        if self.use_file_auth:
+            body = c.LOGONREQUEST_TEMPLATE_FILE % {'userid': self.username}
+        else:
+            passwd = sax_utils.escape(self.password)
+            body = c.LOGONREQUEST_TEMPLATE_PASS % {'userid': self.username,
+                                                   'passwd': passwd}
+
         # Convert it to a string-type from unicode-type encoded with UTF-8
         # Without the socket code will implicitly convert the type with ASCII
         body = body.encode('utf-8')
 
-        if not self.certpath:
+        if self.protocol == 'http' or not self.certpath:
             # certificate validation is disabled
             verify = False
         elif util.validate_certificate(self.host, self.port, self.certpath,
@@ -388,15 +440,52 @@ class Session(object):
         root = etree.fromstring(resp.body.encode('utf-8'))
 
         with self._lock:
-            tok = root.findtext('{%s}X-API-Session' % c.WEB_NS)
-            if not tok:
-                resp.reqbody = "<sensitive>"
-                msg = "failed to parse session token from PowerVM response"
-                LOG.error((msg + ' body= %s') % resp.body)
-                raise pvmex.Error(msg, response=resp)
+            tok = (self._get_auth_tok_from_file(root, resp)
+                   if self.use_file_auth
+                   else self._get_auth_tok(root, resp))
             self._sessToken = tok
             self._logged_in = True
             self.schema_version = root.get('schemaVersion')
+
+    @staticmethod
+    def _get_auth_tok(root, resp):
+        """Extract session token from password-based Logon response.
+
+        :param root: etree.fromstring-parsed root of the LogonResponse.
+        :param resp: The entire response payload from the LogonRequest.
+        :return: X-API-Session token for use with subsequent requests.
+        """
+        tok = root.findtext('{%s}X-API-Session' % c.WEB_NS)
+        if not tok:
+            resp.reqbody = "<sensitive>"
+            msg = "Failed to parse a session token from the PowerVM response."
+            LOG.error((msg + ' body= %s') % resp.body)
+            raise pvmex.Error(msg, response=resp)
+        return tok
+
+    @staticmethod
+    def _get_auth_tok_from_file(root, resp):
+        """Extract session token from file-based Logon response.
+
+        :param root: etree.fromstring-parsed root of the LogonResponse.
+        :param resp: The entire response payload from the LogonRequest.
+        :return: X-API-Session token for use with subsequent requests.
+        """
+        tokfile_path = root.findtext('{%s}X-API-SessionFile' % c.WEB_NS)
+        if not tokfile_path:
+            msg = ("Failed to parse a session file path from the PowerVM "
+                   "response.")
+            LOG.error((msg + ' body= %s') % resp.body)
+            raise pvmex.Error(msg, response=resp)
+        with open(tokfile_path, 'r') as tokfile:
+            tok = tokfile.read().strip(' \n')
+        if not tok:
+            # TODO(IBM): T9N
+            msg = ("Token file %s didn't contain a readable session token." %
+                   tokfile_path)
+            LOG.error(msg)
+            raise pvmex.Error(msg, response=resp)
+        return tok
 
     def _logoff(self):
         with self._lock:
