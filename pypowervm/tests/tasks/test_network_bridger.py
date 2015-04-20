@@ -83,6 +83,29 @@ class TestNetworkBridger(testtools.TestCase):
         self.assertEqual(4092, bridger._find_new_arbitrary_vid(nbs,
                                                                others=[4093]))
 
+    def test_find_vswitch(self):
+        self.adpt.read.return_value = self.mgr_vsw_resp
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        v = bridger._find_vswitch('0')
+        self.assertIsNotNone(v)
+        self.assertEqual(0, v.switch_id)
+
+    def test_remove_vlan_from_nb_bad_vid(self):
+        """Attempt to remove a VID that can't be taken off NB."""
+        # Mock Data
+        self.adpt.read.return_value = self.mgr_nbr_resp
+
+        # Should fail if fail_if_pvid set to True
+        self.assertRaises(pvm_exc.PvidOfNetworkBridgeError,
+                          net_br.remove_vlan_from_nb, self.adpt,
+                          self.host_uuid, self.nb_uuid, 2227, True)
+
+        # Should not fail if fail_if_pvid set to False, but shouldn't call
+        # update either.
+        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                   2227)
+        self.assertEqual(0, self.adpt.update.call_count)
+
 
 class TestNetworkBridgerVNet(TestNetworkBridger):
     """General tests for the network bridge super class and the VNet impl."""
@@ -91,7 +114,7 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         super(TestNetworkBridgerVNet, self).setUp()
 
         # Make sure that we run through the vnet aware flow.
-        self.adpt.traits.vnet_aware.return_value = True
+        self.adpt.traits.vnet_aware = True
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_reassign_arbitrary_vid')
@@ -266,29 +289,6 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
                                    1000)
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    def test_remove_vlan_from_nb_bad_vid(self):
-        """Attempt to remove a VID that can't be taken off NB."""
-        # Mock Data
-        self.adpt.read.return_value = self.mgr_nbr_resp
-
-        # Should fail if fail_if_pvid set to True
-        self.assertRaises(pvm_exc.PvidOfNetworkBridgeError,
-                          net_br.remove_vlan_from_nb, self.adpt,
-                          self.host_uuid, self.nb_uuid, 2227, True)
-
-        # Should not fail if fail_if_pvid set to False, but shouldn't call
-        # update either.
-        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
-                                   2227)
-        self.assertEqual(0, self.adpt.update.call_count)
-
-    def test_find_vswitch(self):
-        self.adpt.read.return_value = self.mgr_vsw_resp
-        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
-        v = bridger._find_vswitch('0')
-        self.assertIsNotNone(v)
-        self.assertEqual(0, v.switch_id)
-
     def test_find_or_create_vnet(self):
         """Validates that a vnet is created (and deleted) as part of find."""
         # Load the data
@@ -317,3 +317,171 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
         lg = bridger._find_available_ld_grp(nb[0])
         self.assertIsNotNone(lg)
+
+
+class TestNetworkBridgerTA(TestNetworkBridger):
+    """General tests for the network bridge super class and the VNet impl."""
+
+    def setUp(self):
+        super(TestNetworkBridgerTA, self).setUp()
+
+        # Make sure that we run through the vnet aware flow.
+        self.adpt.traits.vnet_aware = False
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_reassign_arbitrary_vid')
+    @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
+    def test_ensure_vlan_on_nb_reassign(self, mock_support_vlan,
+                                        mock_reassign):
+        """Validates that after update, we support the VLAN."""
+        # Have the response
+        self.adpt.read.return_value = self.mgr_nbr_resp
+
+        # First call, say that we don't support the VLAN (which is true).
+        # Second call, fake out that we now do.
+        mock_support_vlan.side_effect = [False, True]
+
+        # Invoke
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 4094)
+        self.assertEqual(2, self.adpt.read.call_count)
+        self.assertEqual(1, mock_reassign.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid):
+        """Validates new VLAN on existing Trunk Adapter."""
+        # Build the responses
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+                                      self.mgr_vnet_resp]
+        mock_arb_vid.return_value = False
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            nb = kargs[0]
+            self.assertIsNotNone(nb)
+            self.assertEqual(0,
+                             len(nb.seas[0].primary_adpt.tagged_vlans))
+            self.assertEqual(2,
+                             len(nb.seas[0].addl_adpts[0].tagged_vlans))
+            self.assertEqual(self.nb_uuid, nb.uuid)
+
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
+
+        # Invoke
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2000)
+
+        # Validate the calls
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid):
+        """Validates new VLAN on existing Load Group."""
+        # Build the responses
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+                                      self.mgr_vnet_resp]
+        mock_arb_vid.return_value = False
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            nb = kargs[0]
+            self.assertEqual(0, len(nb.seas[0].primary_adpt.tagged_vlans))
+            self.assertEqual(2, len(nb.seas[0].addl_adpts[0].tagged_vlans))
+            self.assertEqual(self.nb_uuid, nb.uuid)
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
+
+        # Invoke.  VLAN 2227 should be on there already.
+        net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid,
+                                  self.nb_uuid, [2227, 2000])
+
+        # Validate the calls
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_find_available_trunks')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlan_on_nb_new_trunk(self, mock_arb_vid,
+                                         mock_avail_trunks):
+        """Validates new VLAN on new Load Group."""
+        # Build the responses
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+                                      self.mgr_vnet_resp]
+        mock_arb_vid.return_value = False
+        mock_avail_trunks.return_value = None
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            nb = kargs[0]
+            self.assertIsNotNone(nb)
+            self.assertEqual(0, len(nb.seas[0].primary_adpt.tagged_vlans))
+            self.assertEqual(2, len(nb.seas[0].addl_adpts))
+            self.assertEqual(self.nb_uuid, nb.uuid)
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
+
+        # Invoke
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2000)
+
+        # Validate the calls
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_find_vswitch')
+    def test_reassign_arbitrary_vid(self, mock_vsw):
+        vnet = pvm_net.VNet._bld().entry
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp1.feed = ent.Feed({}, [vnet])
+        self.adpt.read.return_value = resp1
+        self.adpt.read_by_href.return_value = vnet
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2.entry = nb.entry
+        self.adpt.update.return_value = resp2
+
+        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
+        mock_vsw.return_value = vsw
+
+        # Make this function return itself.
+        def return_self(*kargs, **kwargs):
+            nb_wrap = pvm_net.NetBridge.wrap(kargs[0].entry)
+            self.assertEqual(4093,
+                             nb_wrap.seas[0].addl_adpts[0].pvid)
+
+            return kargs[0].entry
+
+        self.adpt.update_by_path.side_effect = return_self
+
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+        bridger._reassign_arbitrary_vid(4094, 4093, nb)
+
+        # Make sure the mocks were called.  Only one update needed.
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    def test_remove_vlan_from_nb(self):
+        """Happy path testing of the remove VLAN from NB."""
+        # Mock Data
+        self.adpt.read.return_value = self.mgr_nbr_resp
+
+        def validate_update(*kargs, **kwargs):
+            # Make sure the load groups are down to just 1 now.
+            nb = kargs[0]
+            self.assertEqual(0, len(nb.seas[0].addl_adpts))
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                   1000)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    def test_find_available_trunks(self):
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+        trunks = bridger._find_available_trunks(nb[0])
+        self.assertIsNotNone(trunks)

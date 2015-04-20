@@ -123,6 +123,7 @@ class NetworkBridger(object):
         """
         self.adapter = adapter
         self.host_uuid = host_uuid
+        self.vnet_aware = adapter.traits.vnet_aware
 
     @pvm_retry.retry()
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
@@ -167,12 +168,12 @@ class NetworkBridger(object):
         # Need to evaluate the status of each VLAN.
         for vlan_id in vlan_ids:
             # No action required.  The VLAN is already part of the bridge.
-            if req_nb.supports_vlan(vlan_id):
+            if req_nb.supports_vlan(vlan_id, vnet_path=self.vnet_aware):
                 continue
 
             # If its supported by a peer...
             for peer_nb in peer_nbs:
-                if peer_nb.supports_vlan(vlan_id):
+                if peer_nb.supports_vlan(vlan_id, vnet_path=self.vnet_aware):
                     # Remove the VLAN.
                     self.remove_vlan_from_nb(nb_uuid, vlan_id,
                                              fail_if_pvid=True,
@@ -234,7 +235,7 @@ class NetworkBridger(object):
         # VID.
 
         # If the VLAN is not on the bridge, no action
-        if not req_nb.supports_vlan(vlan_id):
+        if not req_nb.supports_vlan(vlan_id, vnet_path=self.vnet_aware):
             return
 
         # Fail if we're the PVID.
@@ -261,7 +262,7 @@ class NetworkBridger(object):
         :return: The network bridge that this is an arbitrary VLAN on.
         """
         for nb in all_nbs:
-            if vlan in nb.arbitrary_pvids:
+            if vlan in nb.list_arbitrary_pvids(vnet_path=self.vnet_aware):
                 return nb
         return None
 
@@ -278,7 +279,8 @@ class NetworkBridger(object):
         all_vlans = []
 
         for i_nb in all_nbs:
-            all_vlans.extend(i_nb.list_vlans(pvid=True, arbitrary=True))
+            all_vlans.extend(i_nb.list_vlans(pvid=True, arbitrary=True,
+                                             vnet_path=self.vnet_aware))
         all_vlans.extend(others)
 
         # Start at 4094, and walk down to find one that isn't already used.
@@ -286,6 +288,21 @@ class NetworkBridger(object):
         for i in range(4094, 1, -1):
             if i not in all_vlans:
                 return i
+        return None
+
+    def _find_vswitch(self, vswitch_id):
+        """Gathers the VSwitch wrapper from the system.
+
+        :param vswitch_id: The identifier (not uuid) for the vswitch.
+        :return: Wrapper for the corresponding VirtualSwitch.
+        """
+        resp_feed = self.adapter.read(
+            pvm_ms.System.schema_type, root_id=self.host_uuid,
+            child_type=pvm_net.VSwitch.schema_type)
+        vswitches = pvm_net.VSwitch.wrap(resp_feed)
+        for vswitch in vswitches:
+            if vswitch.switch_id == int(vswitch_id):
+                return vswitch
         return None
 
     def _find_peer_nbs(self, nb_wraps, nb):
@@ -531,21 +548,6 @@ class NetworkBridgerVNET(NetworkBridger):
                 return vnet_net.related_href
         return None
 
-    def _find_vswitch(self, vswitch_id):
-        """Gathers the VSwitch wrapper from the system.
-
-        :param vswitch_id: The identifier (not uuid) for the vswitch.
-        :return: Wrapper for the corresponding VirtualSwitch.
-        """
-        resp_feed = self.adapter.read(
-            pvm_ms.System.schema_type, root_id=self.host_uuid,
-            child_type=pvm_net.VSwitch.schema_type)
-        vswitches = pvm_net.VSwitch.wrap(resp_feed)
-        for vswitch in vswitches:
-            if vswitch.switch_id == int(vswitch_id):
-                return vswitch
-        return None
-
 
 class NetworkBridgerTA(NetworkBridger):
     """The Trunk Adapter aware NetworkBridger."""
@@ -559,8 +561,19 @@ class NetworkBridgerTA(NetworkBridger):
         :param new_vid: The new arbitrary VLAN ID.
         :param impacted_nb: The network bridge that is impacted.
         """
-        # TODO(thorst) implement
-        pass
+        # Find the Trunk Adapters that has this arbitrary VID
+        impacted_tas = (None, None)
+        for ta in impacted_nb.seas[0].addl_adpts:
+            if ta.pvid == old_vid:
+                impacted_tas = self._trunk_list(impacted_nb, ta)
+                break
+
+        # For each Trunk Adapter, change the VID to the new value.
+        for ta in impacted_tas:
+                ta.pvid = new_vid
+
+        # Call the update
+        impacted_nb = impacted_nb.update(self.adapter)
 
     def _add_vlans_to_nb(self, req_nb, all_nbs_on_vs, new_vlans):
         """Adds the VLANs to the Network Bridge Wrapper.
@@ -573,8 +586,27 @@ class NetworkBridgerTA(NetworkBridger):
                               switch.
         :param new_vlans: List of the new VLANs to put on the network bridge.
         """
-        # TODO(thorst) implement
-        pass
+        # At this point, all of the new VLANs that need to be added are in the
+        # new_vlans list.  Now we need to put them on trunk adapters.
+        vswitch_w = self._find_vswitch(req_nb.vswitch_id)
+        for vlan_id in new_vlans:
+            trunks = self._find_available_trunks(req_nb)
+
+            if trunks is None:
+                # No trunk adapter list means they're all full.  Need to create
+                # a new Trunk Adapter (or pair) for the new VLAN.
+                arb_vid = self._find_new_arbitrary_vid(all_nbs_on_vs,
+                                                       others=[vlan_id])
+
+                for sea in req_nb.seas:
+                    trunk = pvm_net.TrunkAdapter.bld(
+                        arb_vid, [vlan_id], vswitch_w,
+                        sea.primary_adpt.trunk_pri)
+                    sea.addl_adpts.append(trunk)
+            else:
+                # Available trunks were found.  Add the VLAN to each
+                for trunk in trunks:
+                    trunk.tagged_vlans.append(vlan_id)
 
     def _remove_vlan_from_nb(self, req_nb, vlan_id):
         """Removes the VLAN from the Network Bridge wrapper.
@@ -583,5 +615,76 @@ class NetworkBridgerTA(NetworkBridger):
                        not support the VLAN.
         :param vlan_id: The VLAN ID to remove.
         """
-        # TODO(thorst) implement
-        pass
+        # Find the matching trunk adapter.
+        matching_tas = None
+        for trunk in req_nb.seas[0].addl_adpts:
+            if vlan_id in trunk.tagged_vlans:
+                matching_tas = self._trunk_list(req_nb, trunk)
+                break
+
+        for matching_ta in matching_tas:
+            if len(matching_ta.tagged_vlans) == 1:
+                # Last VLAN, so it can be removed from the SEA.
+                for sea in req_nb.seas:
+                    if matching_ta in sea.addl_adpts:
+                        sea.addl_adpts.remove(matching_ta)
+                        break
+            else:
+                # Otherwise, we just remove it from the list.
+                matching_ta.tagged_vlans.remove(vlan_id)
+
+    def _find_peer_trunk(self, nb, ta):
+        """Finds the peer adapter when the network bridge is failover ready.
+
+        When a Network Bridge is set up for failover, there are two SEAs.  Each
+        is essentially a mirror of each other, but are on different Virtual
+        I/O Servers.  This means identical Trunk Adapters - but a different
+        physical adapters.
+
+        This method finds the 'peer' adapter, that happens to be on a different
+        I/O Server.
+
+        :param nb: The network bridge wrapper.
+        :param ta: The Trunk Adapter from the first SEA in the network bridge.
+        :return: The peer adapter per the above criteria.  If the network
+                 bridge is not set up for failover, then None is returned.
+        """
+        if len(nb.seas) <= 1:
+            return None
+
+        sea = nb.seas[1]
+        if ta.is_primary:
+            return sea.primary_adpt
+
+        for addl_adpt in sea.addl_adpts:
+            if addl_adpt.pvid == ta.pvid:
+                return addl_adpt
+
+        return None
+
+    def _trunk_list(self, nb, ta):
+        """For a given trunk adapter, builds the list of trunks to modify.
+
+        :param nb: The network bridge wrapper.
+        :param ta: The Trunk Adapter from the first SEA in the network bridge.
+        :return: List of trunk adapters.  Includes the peer.  If no peer, then
+                 only one element is returned in the list.
+        """
+        peer = self._find_peer_trunk(nb, ta)
+        if peer:
+            return [ta, peer]
+        else:
+            return [ta]
+
+    def _find_available_trunks(self, nb):
+        """Will return a list of Trunk Adapters that can support a new VLAN.
+
+        :param nb: The NetBridge to search through.
+        :returns: A set of trunk adapters that can support the new VLAN.  If
+                  None are found, then None is returned.
+        """
+        # Only provision to the Additional Trunks.
+        for trunk in nb.seas[0].addl_adpts:
+            if len(trunk.tagged_vlans) < _MAX_VLANS_PER_VEA:
+                return self._trunk_list(nb, trunk)
+        return None
