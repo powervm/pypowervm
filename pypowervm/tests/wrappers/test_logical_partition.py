@@ -165,6 +165,17 @@ class TestLogicalPartition(unittest.TestCase):
         self._shared_wrapper.avail_priority = 63
         self.call_simple_getter("avail_priority", 63, 0)
 
+    def test_profile_sync(self):
+        self.call_simple_getter("profile_sync", True, False)
+        self.assertEqual(
+            self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC), "On")
+        self._shared_wrapper.profile_sync = False
+        self.call_simple_getter("profile_sync", False, False)
+        self.assertEqual(
+            self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC), "Off")
+        self._shared_wrapper.profile_sync = "Off"
+        self.call_simple_getter("profile_sync", False, False)
+
     def test_check_dlpar_connectivity(self):
         self.call_simple_getter("check_dlpar_connectivity",
                                 (False, "inactive"), (False, None))
