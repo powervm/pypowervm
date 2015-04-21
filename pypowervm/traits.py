@@ -51,6 +51,14 @@ class APITraits(object):
         return self._is_hmc()
 
     @property
+    def has_lpar_profiles(self):
+        """Indicates whether the platform manager supports LPAR profiles.
+
+        This trait will return True if LPAR profiles are supported.
+        """
+        return self._is_hmc()
+
+    @property
     def local_api(self):
         """Indicates whether or not the PowerVM API Server is running locally.
 

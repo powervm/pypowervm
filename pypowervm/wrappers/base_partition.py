@@ -35,12 +35,13 @@ _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
+_BP_PROFILE_SYNC = 'CurrentProfileSync'
 
 BP_EL_ORDER = (
-    _BP_AVAIL_PRIORITY, _BP_CURRENT_PROC_MODE, _BP_CAPABILITIES, _BP_ID,
-    _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG, _BP_STATE, _BP_TYPE,
-    _BP_PENDING_PROC_MODE, _BP_ASSOCIATED_SYSTEM, _BP_SRIOV_ETH,
-    _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH
+    _BP_AVAIL_PRIORITY, _BP_CURRENT_PROC_MODE, _BP_PROFILE_SYNC,
+    _BP_CAPABILITIES, _BP_ID, _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG,
+    _BP_STATE, _BP_TYPE, _BP_PENDING_PROC_MODE, _BP_ASSOCIATED_SYSTEM,
+    _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH
 )
 
 # Partition Capabilities (_CAP)
@@ -254,6 +255,16 @@ class BasePartition(ewrap.EntryWrapper):
     @avail_priority.setter
     def avail_priority(self, value):
         self.set_parm_value(_BP_AVAIL_PRIORITY, value)
+
+    @property
+    def profile_sync(self):
+        return self._get_val_str(_BP_PROFILE_SYNC, default='Off') == 'On'
+
+    @profile_sync.setter
+    def profile_sync(self, value):
+        if type(value) == bool:
+            value = 'On' if value else 'Off'
+        self.set_parm_value(_BP_PROFILE_SYNC, value)
 
     @property
     def proc_compat_mode(self):
