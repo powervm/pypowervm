@@ -223,7 +223,7 @@ class VIOS(bp.BasePartition):
     @vfc_mappings.setter
     def vfc_mappings(self, new_mappings):
         self.replace_list(_VIO_VFC_MAPPINGS, new_mappings,
-                          attrib=self.xags.SCSI_MAPPING.attrs)
+                          attrib=self.xags.FC_MAPPING.attrs)
 
     @property
     def scsi_mappings(self):
