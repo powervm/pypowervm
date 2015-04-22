@@ -209,5 +209,8 @@ class TestUtil(unittest.TestCase):
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
 
+    # Tests for check_and_apply_xag covered by
+    # test_adapter.TestAdapter.test_extended_path
+
 if __name__ == "__main__":
     unittest.main()
