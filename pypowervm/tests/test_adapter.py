@@ -44,6 +44,9 @@ response_text = testlib.file2b("event.xml")
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestAdapter(unittest.TestCase):
     """Test cases to test the adapter classes and methods."""
@@ -206,11 +209,11 @@ class TestAdapter(unittest.TestCase):
     def test_create(self, mock_session):
         """Test create() method found in the Adapter class."""
         # Init test data
-        children = [ent.Element('AdapterType', text='Client'),
-                    ent.Element('UseNextAvailableSlotID', text='true'),
-                    ent.Element('RemoteLogicalPartitionID', text='1'),
-                    ent.Element('RemoteSlotNumber', text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter',
+        children = [ent.Element('AdapterType', TRAITS, text='Client'),
+                    ent.Element('UseNextAvailableSlotID', TRAITS, text='true'),
+                    ent.Element('RemoteLogicalPartitionID', TRAITS, text='1'),
+                    ent.Element('RemoteSlotNumber', TRAITS, text='12')]
+        new_scsi = ent.Element('VirtualSCSIClientAdapter', TRAITS,
                                attrib={'schemaVersion': 'V1_0'},
                                children=children)
 
@@ -484,11 +487,11 @@ class TestAdapter(unittest.TestCase):
         """401 (unauthorized) calling Adapter.create()."""
 
         # Init test data
-        children = [ent.Element('AdapterType', text='Client'),
-                    ent.Element('UseNextAvailableSlotID', text='true'),
-                    ent.Element('RemoteLogicalPartitionID', text='1'),
-                    ent.Element('RemoteSlotNumber', text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter',
+        children = [ent.Element('AdapterType', TRAITS, text='Client'),
+                    ent.Element('UseNextAvailableSlotID', TRAITS, text='true'),
+                    ent.Element('RemoteLogicalPartitionID', TRAITS, text='1'),
+                    ent.Element('RemoteSlotNumber', TRAITS, text='12')]
+        new_scsi = ent.Element('VirtualSCSIClientAdapter', TRAITS,
                                attrib={'schemaVersion': 'V1_0'},
                                children=children)
 
@@ -531,12 +534,12 @@ class TestAdapter(unittest.TestCase):
         """Test the ETElement iter() method found in the Adapter class."""
 
         # Init test data
-        children = [ent.Element('Type1', text='T1_0'),
-                    ent.Element('Type12', text='T12_0'),
-                    ent.Element('Type1', text='T1_1'),
-                    ent.Element('Type12', text='T12_1'),
-                    ent.Element('Type1', text='T1_2')]
-        top_element = ent.Element('Top',
+        children = [ent.Element('Type1', TRAITS, text='T1_0'),
+                    ent.Element('Type12', TRAITS, text='T12_0'),
+                    ent.Element('Type1', TRAITS, text='T1_1'),
+                    ent.Element('Type12', TRAITS, text='T12_1'),
+                    ent.Element('Type1', TRAITS, text='T1_2')]
+        top_element = ent.Element('Top', TRAITS,
                                   attrib={'schemaVersion': 'V1_0'},
                                   children=children)
 
@@ -575,8 +578,8 @@ class TestAdapter(unittest.TestCase):
 
 class TestElement(unittest.TestCase):
     def test_cdata(self):
-        no_cdata = ent.Element('tag', text='text', cdata=False)
-        with_cdata = ent.Element('tag', text='text', cdata=True)
+        no_cdata = ent.Element('tag', TRAITS, text='text', cdata=False)
+        with_cdata = ent.Element('tag', TRAITS, text='text', cdata=True)
         self.assertEqual(
             no_cdata.toxmlstring(),
             '<uom:tag xmlns:uom="http://www.ibm.com/xmlns/systems/power/'
@@ -587,7 +590,7 @@ class TestElement(unittest.TestCase):
             're/uom/mc/2012_10/"><![CDATA[text]]></uom:tag>'.encode('utf-8'))
 
     def test_tag_namespace(self):
-        el = ent.Element('tag')
+        el = ent.Element('tag', TRAITS)
         self.assertEqual(el.element.tag, '{http://www.ibm.com/xmlns/systems/po'
                                          'wer/firmware/uom/mc/2012_10/}tag')
         # entities.Element.tag strips the namespace
@@ -602,7 +605,7 @@ class TestElement(unittest.TestCase):
         el.namespace = 'foo'
         self.assertEqual(el.namespace, 'foo')
         # Now with no namespace
-        el = ent.Element('tag', ns='')
+        el = ent.Element('tag', TRAITS, ns='')
         self.assertEqual(el.element.tag, 'tag')
         self.assertEqual(el.tag, 'tag')
         self.assertEqual(el.namespace, '')
@@ -619,18 +622,22 @@ class TestElementInject(unittest.TestCase):
         super(TestElementInject, self).setUp()
         self.ordering_list = ('AdapterType', 'UseNextAvailableSlotID',
                               'RemoteLogicalPartitionID', 'RemoteSlotNumber')
-        self.child_at = ent.Element('AdapterType', text='Client')
-        self.child_unasi = ent.Element('UseNextAvailableSlotID', text='true')
-        self.child_rlpi1 = ent.Element('RemoteLogicalPartitionID', text='1')
-        self.child_rlpi2 = ent.Element('RemoteLogicalPartitionID', text='2')
-        self.child_rlpi3 = ent.Element('RemoteLogicalPartitionID', text='3')
-        self.child_rsn = ent.Element('RemoteSlotNumber', text='12')
+        self.child_at = ent.Element('AdapterType', TRAITS, text='Client')
+        self.child_unasi = ent.Element('UseNextAvailableSlotID', TRAITS,
+                                       text='true')
+        self.child_rlpi1 = ent.Element('RemoteLogicalPartitionID', TRAITS,
+                                       text='1')
+        self.child_rlpi2 = ent.Element('RemoteLogicalPartitionID', TRAITS,
+                                       text='2')
+        self.child_rlpi3 = ent.Element('RemoteLogicalPartitionID', TRAITS,
+                                       text='3')
+        self.child_rsn = ent.Element('RemoteSlotNumber', TRAITS, text='12')
         self.all_children = [
             self.child_at, self.child_unasi, self.child_rlpi1, self.child_rsn]
 
     @staticmethod
     def _mk_el(children):
-        return ent.Element('VirtualSCSIClientAdapter',
+        return ent.Element('VirtualSCSIClientAdapter', TRAITS,
                            attrib={'schemaVersion': 'V1_0'},
                            children=children)
 
@@ -693,7 +700,7 @@ class TestElementInject(unittest.TestCase):
     def test_subelement_not_in_ordering_list(self):
         """Subelement not in ordering list - should append."""
         el = self._mk_el(self.all_children)
-        ch = ent.Element('SomeNewElement', text='foo')
+        ch = ent.Element('SomeNewElement', TRAITS, text='foo')
         el.inject(ch, ordering_list=self.ordering_list)
         self.assert_expected_children(el, self.child_at, self.child_unasi,
                                       self.child_rlpi1, self.child_rsn, ch)

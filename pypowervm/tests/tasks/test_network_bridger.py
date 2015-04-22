@@ -31,6 +31,9 @@ MGR_NET_BR_FILE = 'nbbr_network_bridge.txt'
 MGR_VNET_FILE = 'nbbr_virtual_network.txt'
 MGR_VSW_FILE = 'nbbr_virtual_switch.txt'
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestNetworkBridger(testtools.TestCase):
     """General tests for the Network Bridger superclass.
@@ -221,12 +224,14 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
                 '_find_vswitch')
     def test_reassign_arbitrary_vid(self, mock_vsw, mock_find_vnet):
         vnet = pvm_net.VNet._bld().entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                              TRAITS)
         resp1.feed = ent.Feed({}, [vnet])
         self.adpt.read.return_value = resp1
         self.adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                              TRAITS)
         resp2.entry = nb.entry
         self.adpt.update.return_value = resp2
 

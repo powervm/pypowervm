@@ -24,11 +24,14 @@ import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.log_helper as log_hlp
 
+# Default traits for most tests
+TRAITS = None
+
 # Testing by hand it's useful to enable the next line instead of the following
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig()
 
-fake_resp1 = adp.Response('GET', '/some/path', 200, 'OK', ['headers'])
+fake_resp1 = adp.Response('GET', '/some/path', 200, 'OK', ['headers'], TRAITS)
 
 
 class TestLogHelper(unittest.TestCase):

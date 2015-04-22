@@ -301,8 +301,8 @@ class NetBridge(ewrap.EntryWrapper):
         new_vnets = copy.deepcopy(self.element.findall(search))
         # Find and replace the current element.
         cur_vnets = self.element.find(_NB_VNETS)
-        self.element.replace(cur_vnets,
-                             ent.Element(_NB_VNETS, children=new_vnets))
+        self.element.replace(
+            cur_vnets, ent.Element(_NB_VNETS, self.traits, children=new_vnets))
 
     @property
     def seas(self):
@@ -503,6 +503,7 @@ class SEA(ewrap.ElementWrapper):
 
         :return: List of TrunkAdapter wrappers.  May be the empty list.
         """
+        # TODO(thorst): Second return unreachable!  Use self.traits.vnet_aware.
         return ewrap.ActionableList(self._get_trunks()[1:],
                                     self._addl_adpts)
         return tuple(self._get_trunks()[1:])
@@ -513,6 +514,7 @@ class SEA(ewrap.ElementWrapper):
 
     def _addl_adpts(self, value):
         """Sets the additional Trunk Adapters on this SEA."""
+        # TODO(thorst): Condition on self.traits.vnet_aware.
         new_list = [self.primary_adpt]
         new_list.extend(value)
         self.replace_list(SEA_TRUNKS, new_list)
@@ -559,7 +561,8 @@ class SEA(ewrap.ElementWrapper):
         :param eth_back_dev: The EthernetBackingDevice for this
                              BackingDeviceChoice.
         """
-        stor_elem = ent.Element(_SEA_BACKING_DEV, attrib={}, children=[])
+        stor_elem = ent.Element(_SEA_BACKING_DEV, self.traits, attrib={},
+                                children=[])
         stor_elem.inject(eth_back_dev.element)
         self.inject(stor_elem)
 

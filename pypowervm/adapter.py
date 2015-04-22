@@ -155,10 +155,14 @@ class Session(object):
         self._lock = threading.RLock()
         self._logged_in = False
         self._relogin_unsafe = False
+        self._eventlistener = None
+
+        # Will be set by _logon()
         self._sessToken = None
         self.mc_type = None
         self.schema_version = None
-        self._eventlistener = None
+        self.traits = None
+
         self._logon()
 
         # HMC should never use file auth.  This should never happen - if it
@@ -303,7 +307,7 @@ class Session(object):
                                     c.HTTPStatus.NO_CHANGE]:
             return Response(method, path, response.status_code,
                             response.reason, response.headers,
-                            reqheaders=headers, reqbody=body)
+                            self.traits, reqheaders=headers, reqbody=body)
         else:
             LOG.debug('response body:\n%s' %
                       (response.text if not sensitive else "<sensitive>"))
@@ -346,10 +350,10 @@ class Session(object):
                                 LOG.warn('Re-login failed:\n%s' % str(e))
                             e.orig_response = Response(
                                 method, path, response.status_code,
-                                response.reason, response.headers,
+                                response.reason, response.headers, self.traits,
                                 reqheaders=headers, reqbody=body,
                                 body=response.text)
-                            unmarshal_httperror(e.orig_response)
+                            _unmarshal_httperror(e.orig_response)
                             raise e
 
                     # Retry the original request
@@ -372,7 +376,7 @@ class Session(object):
         resp = None
         if not isdownload:
             resp = Response(method, path, response.status_code,
-                            response.reason, response.headers,
+                            response.reason, response.headers, self.traits,
                             reqheaders=headers, reqbody=body,
                             body=response.text)
 
@@ -381,7 +385,7 @@ class Session(object):
                 for chunk in response.iter_content(chunksize):
                     filehandle.write(chunk)
                 resp = Response(method, path, response.status_code,
-                                response.reason, response.headers,
+                                response.reason, response.headers, self.traits,
                                 reqheaders=headers, reqbody=body)
             return resp
         else:
@@ -390,13 +394,13 @@ class Session(object):
                 for chunk in response.iter_content(chunksize):
                     errtext += chunk
                 resp = Response(method, path, response.status_code,
-                                response.reason, response.headers,
+                                response.reason, response.headers, self.traits,
                                 reqheaders=headers, reqbody=body,
                                 body=errtext)
             errmsg = 'HTTP error for %s %s: %s (%s)' % (method, path,
                                                         response.status_code,
                                                         response.reason)
-            unmarshal_httperror(resp)
+            _unmarshal_httperror(resp)
             raise pvmex.HttpError(errmsg, resp)
 
     def _logon(self):
@@ -454,6 +458,7 @@ class Session(object):
             self._logged_in = True
             self.mc_type = resp.headers.get('X-MC-Type', 'HMC')
             self.schema_version = root.get('schemaVersion')
+            self.traits = pvm_traits.APITraits(self)
 
     @staticmethod
     def _get_auth_tok(root, resp):
@@ -1069,6 +1074,7 @@ class Adapter(object):
                                 c.HTTPStatus.NO_CHANGE,
                                 feed_resp.reason,
                                 feed_resp.headers,
+                                self.traits,
                                 body='',
                                 orig_reqpath=feed_resp.reqpath)
                 LOG.debug('Built HTTP 304 resp from cached feed')
@@ -1080,6 +1086,7 @@ class Adapter(object):
                                 feed_resp.reason,
                                 feed_resp.headers,
                                 feed_resp.reqheaders,
+                                self.traits,
                                 body=entry_body,
                                 orig_reqpath=feed_resp.reqpath)
                 # override the etag in the header
@@ -1093,14 +1100,6 @@ class Adapter(object):
                           (entry_etag, entry_body))
 
         return resp
-
-    @staticmethod
-    def build_job_parm(name, value):
-        p = ent.Element('JobParameter', attrib={'schemaVersion': 'V1_0'},
-                        ns=c.WEB_NS)
-        p.append(ent.Element('ParameterName', text=name, ns=c.WEB_NS))
-        p.append(ent.Element('ParameterValue', text=value, ns=c.WEB_NS))
-        return p
 
     @classmethod
     def build_path(cls, service, root_type, root_id=None, child_type=None,
@@ -1256,7 +1255,7 @@ class Adapter(object):
 class Response(object):
     """Response to PowerVM API Adapter method invocation."""
 
-    def __init__(self, reqmethod, reqpath, status, reason, headers,
+    def __init__(self, reqmethod, reqpath, status, reason, headers, traits,
                  reqheaders=None, reqbody='', body='', orig_reqpath=''):
         self.reqmethod = reqmethod
         self.reqpath = reqpath
@@ -1271,6 +1270,7 @@ class Response(object):
         # to keep track of original reqpath
         # if the Response is built from cached feed
         self.orig_reqpath = orig_reqpath
+        self.traits = traits
 
     @property
     def etag(self):
@@ -1287,10 +1287,10 @@ class Response(object):
                               str(e))
             if root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'feed')):
-                self.feed = ent.Feed.unmarshal_atom_feed(root)
+                self.feed = ent.Feed.unmarshal_atom_feed(root, self.traits)
             elif root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'entry')):
-                self.entry = ent.Entry.unmarshal_atom_entry(root)
+                self.entry = ent.Entry.unmarshal_atom_entry(root, self.traits)
             elif err_reason is None:
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
@@ -1467,13 +1467,14 @@ class _EventHandler(EventHandler):
                     self.cache.remove(feed_path)
 
 
-def unmarshal_httperror(resp):
+def _unmarshal_httperror(resp):
     # Attempt to extract PowerVM API's HttpErrorResponse object
     try:
         root = etree.fromstring(resp.body)
         if root is not None and root.tag == str(etree.QName(c.ATOM_NS,
                                                             'entry')):
-            resp.err = ent.Entry.unmarshal_atom_entry(root).element
+            resp.err = ent.Entry.unmarshal_atom_entry(
+                root, resp.traits).element
     except Exception:
         pass
 
