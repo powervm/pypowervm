@@ -21,6 +21,9 @@ from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tests.wrappers.util import pvmhttp
 
+# Default traits for most tests
+TRAITS = None
+
 
 def load_file(file_name):
     """Helper method to load the responses from a given location."""
@@ -33,6 +36,6 @@ def load_file(file_name):
 def raiseRetryException():
     """Used for other tests wishing to raise an exception to a force retry."""
     resp = adpt.Response('reqmethod', 'reqpath', c.HTTPStatus.ETAG_MISMATCH,
-                         'reason', 'headers')
+                         'reason', 'headers', TRAITS)
     http_exc = pvm_exc.HttpError('msg', resp)
     raise http_exc
