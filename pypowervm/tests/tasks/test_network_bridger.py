@@ -15,14 +15,15 @@
 #    under the License.
 
 import os
-import unittest
 
 import mock
+import testtools
 
 from pypowervm import adapter as adpt
 import pypowervm.entities as ent
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import network_bridger as net_br
+from pypowervm.tests import fixtures
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import network as pvm_net
 
@@ -31,7 +32,11 @@ MGR_VNET_FILE = 'nbbr_virtual_network.txt'
 MGR_VSW_FILE = 'nbbr_virtual_switch.txt'
 
 
-class TestNetworkBridger(unittest.TestCase):
+class TestNetworkBridger(testtools.TestCase):
+    """General tests for the Network Bridger superclass.
+
+    Subclasses of Network Bridgers should extend this class.
+    """
 
     def setUp(self):
         super(TestNetworkBridger, self).setUp()
@@ -48,44 +53,72 @@ class TestNetworkBridger(unittest.TestCase):
         self.mgr_vnet_resp = resp(MGR_VNET_FILE)
         self.mgr_vsw_resp = resp(MGR_VSW_FILE)
 
+        self.adpt = self.useFixture(fixtures.AdapterFx()).adpt
+
+        self.host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
+        self.nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
+
     def tearDown(self):
         super(TestNetworkBridger, self).tearDown()
 
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_ensure_vlan_on_nb(self, mock_adpt):
-        """This does a happy path test.  Assumes VLAN on NB already."""
-        mock_adpt.read.return_value = self.mgr_nbr_resp
-        net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
-                                 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2227)
-        self.assertEqual(1, mock_adpt.read.call_count)
+    def test_ensure_vlan_on_nb(self):
+        """This does a happy path test.  Assumes VLAN on NB already.
 
-    @mock.patch('pypowervm.tasks.network_bridger._reassign_arbitrary_vid')
+        No subclass invocation.
+        """
+        self.adpt.read.return_value = self.mgr_nbr_resp
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2227)
+        self.assertEqual(1, self.adpt.read.call_count)
+
+    def test_is_arbitrary_vid(self):
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
+        self.assertTrue(bridger._is_arbitrary_vid(4094, nbs))
+        self.assertFalse(bridger._is_arbitrary_vid(2227, nbs))
+
+    def test_find_new_arbitrary_vid(self):
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
+        self.assertEqual(4093, bridger._find_new_arbitrary_vid(nbs))
+        self.assertEqual(4092, bridger._find_new_arbitrary_vid(nbs,
+                                                               others=[4093]))
+
+
+class TestNetworkBridgerVNet(TestNetworkBridger):
+    """General tests for the network bridge super class and the VNet impl."""
+
+    def setUp(self):
+        super(TestNetworkBridgerVNet, self).setUp()
+
+        # Make sure that we run through the vnet aware flow.
+        self.adpt.traits.vnet_aware.return_value = True
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_reassign_arbitrary_vid')
     @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_ensure_vlan_on_nb_reassign(self, mock_adpt, mock_support_vlan,
+    def test_ensure_vlan_on_nb_reassign(self, mock_support_vlan,
                                         mock_reassign):
-        """This does a happy path test.  Assumes VLAN on NB already."""
+        """Validates that after update, we support the VLAN."""
         # Have the response
-        mock_adpt.read.return_value = self.mgr_nbr_resp
+        self.adpt.read.return_value = self.mgr_nbr_resp
 
         # First call, say that we don't support the VLAN (which is true).
         # Second call, fake out that we now do.
         mock_support_vlan.side_effect = [False, True]
 
         # Invoke
-        net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
-                                 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 4094)
-        self.assertEqual(2, mock_adpt.read.call_count)
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 4094)
+        self.assertEqual(2, self.adpt.read.call_count)
         self.assertEqual(1, mock_reassign.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_ensure_vlan_on_nb_new_vlan(self, mock_adpt, mock_arb_vid,
-                                        mock_find_vnet):
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet):
         """Validates new VLAN on existing Load Group."""
         # Build the responses
-        mock_adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_vnet = mock.MagicMock()
@@ -100,27 +133,26 @@ class TestNetworkBridger(unittest.TestCase):
                              len(nb.load_grps[0].vnet_uri_list))
             self.assertEqual(2,
                              len(nb.load_grps[1].vnet_uri_list))
-            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
+            self.assertEqual(self.nb_uuid, nb.uuid)
 
             return nb.entry
 
-        mock_adpt.update_by_path.side_effect = validate_of_update_nb
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke
-        net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
-                                 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2000)
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2000)
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update_by_path.call_count)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_ensure_vlans_on_nb_new_vlan(self, mock_adpt, mock_arb_vid,
-                                         mock_find_vnet):
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet):
         """Validates new VLAN on existing Load Group."""
         # Build the responses
-        mock_adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_vnet = mock.MagicMock()
@@ -132,29 +164,29 @@ class TestNetworkBridger(unittest.TestCase):
             nb = kargs[0]
             self.assertEqual(1, len(nb.load_grps[0].vnet_uri_list))
             self.assertEqual(2, len(nb.load_grps[1].vnet_uri_list))
-            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
-                             nb.uuid)
+            self.assertEqual(self.nb_uuid, nb.uuid)
             return nb.entry
 
-        mock_adpt.update_by_path.side_effect = validate_of_update_nb
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke.  VLAN 2227 should be on there already.
-        net_br.ensure_vlans_on_nb(mock_adpt, 'host_uuid',
-                                  'b6a027a8-5c0b-3ac0-8547-b516f5ba6151',
-                                  [2227, 2000])
+        net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid,
+                                  self.nb_uuid, [2227, 2000])
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update_by_path.call_count)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.tasks.network_bridger._find_available_ld_grp')
-    @mock.patch('pypowervm.tasks.network_bridger._is_arbitrary_vid')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_ensure_vlan_on_nb_new_lg(self, mock_adpt, mock_arb_vid,
-                                      mock_avail_lg, mock_find_vnet):
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_available_ld_grp')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_is_arbitrary_vid')
+    def test_ensure_vlan_on_nb_new_lg(self, mock_arb_vid, mock_avail_lg,
+                                      mock_find_vnet):
         """Validates new VLAN on new Load Group."""
         # Build the responses
-        mock_adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
+        self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_avail_lg.return_value = None
@@ -172,82 +204,31 @@ class TestNetworkBridger(unittest.TestCase):
             self.assertIsNotNone(nb)
             self.assertEqual(1, len(nb.load_grps[0].vnet_uri_list))
             self.assertEqual(2, len(nb.load_grps[2].vnet_uri_list))
-            self.assertEqual('b6a027a8-5c0b-3ac0-8547-b516f5ba6151', nb.uuid)
+            self.assertEqual(self.nb_uuid, nb.uuid)
             return nb.entry
 
-        mock_adpt.update_by_path.side_effect = validate_of_update_nb
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
 
         # Invoke
-        net_br.ensure_vlan_on_nb(mock_adpt, 'host_uuid',
-                                 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151', 2000)
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2000)
 
         # Validate the calls
-        self.assertEqual(1, mock_adpt.update_by_path.call_count)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_find_vswitch(self, mock_adpt):
-        mock_adpt.read.return_value = self.mgr_vsw_resp
-        v = net_br._find_vswitch(mock_adpt,
-                                 'c5d782c7-44e4-3086-ad15-b16fb039d63b', '0')
-        self.assertIsNotNone(v)
-        self.assertEqual(0, v.switch_id)
-
-    def test_find_available_lb(self):
-        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
-        lg = net_br._find_available_ld_grp(nb[0])
-        self.assertIsNotNone(lg)
-
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_find_or_create_vnet(self, mock_adpt):
-        """Validates that a vnet is created (and deleted) as part of find."""
-        # Load the data
-        vnets = pvm_net.VNet.wrap(self.mgr_vnet_resp)
-        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
-        host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
-
-        # Set up the mock create
-        resp = pvm_net.VNet.bld('FakeName', 4094, vsw.href, True)
-        mock_resp = mock.MagicMock()
-        mock_resp.entry = resp.entry
-        mock_adpt.create.return_value = mock_resp
-
-        # Run the code
-        ret_val = net_br._find_or_create_vnet(mock_adpt, host_uuid, vnets,
-                                              4094, vsw)
-
-        # Equality check
-        self.assertEqual(4094, ret_val.vlan)
-        self.assertTrue(ret_val.tagged)
-
-        # Make sure the delete was called
-        self.assertEqual(1, mock_adpt.delete_by_href.call_count)
-
-    def test_is_arbitrary_vid(self):
-        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
-        self.assertTrue(net_br._is_arbitrary_vid(4094, nbs))
-        self.assertFalse(net_br._is_arbitrary_vid(2227, nbs))
-
-    def test_find_new_arbitrary_vid(self):
-        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
-        self.assertEqual(4093, net_br._find_new_arbitrary_vid(nbs))
-        self.assertEqual(4092, net_br._find_new_arbitrary_vid(nbs,
-                                                              others=[4093]))
-
-    @mock.patch('pypowervm.tasks.network_bridger._find_or_create_vnet')
-    @mock.patch('pypowervm.tasks.network_bridger._find_vswitch')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_reassign_arbitrary_vid(self, mock_adpt, mock_vsw,
-                                    mock_find_vnet):
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_or_create_vnet')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_vswitch')
+    def test_reassign_arbitrary_vid(self, mock_vsw, mock_find_vnet):
         vnet = pvm_net.VNet._bld().entry
         resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp1.feed = ent.Feed({}, [vnet])
-        mock_adpt.read.return_value = resp1
-        mock_adpt.read_by_href.return_value = vnet
+        self.adpt.read.return_value = resp1
+        self.adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
         resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp2.entry = nb.entry
-        mock_adpt.update.return_value = resp2
-        host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
+        self.adpt.update.return_value = resp2
 
         vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
         mock_vsw.return_value = vsw
@@ -259,21 +240,19 @@ class TestNetworkBridger(unittest.TestCase):
         def return_self(*kargs, **kwargs):
             return kargs[0].entry
 
-        mock_adpt.update_by_path.side_effect = return_self
+        self.adpt.update_by_path.side_effect = return_self
 
-        net_br._reassign_arbitrary_vid(mock_adpt, host_uuid, 4094, 4093, nb)
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        bridger._reassign_arbitrary_vid(4094, 4093, nb)
 
         # Make sure the mocks were called
         self.assertEqual(1, mock_find_vnet.call_count)
-        self.assertEqual(2, mock_adpt.update_by_path.call_count)
+        self.assertEqual(2, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_remove_vlan_from_nb(self, mock_adpt):
+    def test_remove_vlan_from_nb(self):
         """Happy path testing of the remove VLAN from NB."""
         # Mock Data
-        mock_adpt.read.return_value = self.mgr_nbr_resp
-        host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
-        nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
+        self.adpt.read.return_value = self.mgr_nbr_resp
 
         def validate_update(*kargs, **kwargs):
             # Make sure the load groups are down to just 1 now.
@@ -281,25 +260,60 @@ class TestNetworkBridger(unittest.TestCase):
             self.assertEqual(1, len(nb.load_grps))
             return nb.entry
 
-        mock_adpt.update_by_path.side_effect = validate_update
+        self.adpt.update_by_path.side_effect = validate_update
 
-        net_br.remove_vlan_from_nb(mock_adpt, host_uuid, nb_uuid, 1000)
-        self.assertEqual(1, mock_adpt.update_by_path.call_count)
+        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                   1000)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_remove_vlan_from_nb_bad_vid(self, mock_adpt):
+    def test_remove_vlan_from_nb_bad_vid(self):
         """Attempt to remove a VID that can't be taken off NB."""
         # Mock Data
-        mock_adpt.read.return_value = self.mgr_nbr_resp
-        host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
-        nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
+        self.adpt.read.return_value = self.mgr_nbr_resp
 
         # Should fail if fail_if_pvid set to True
         self.assertRaises(pvm_exc.PvidOfNetworkBridgeError,
-                          net_br.remove_vlan_from_nb, mock_adpt, host_uuid,
-                          nb_uuid, 2227, True)
+                          net_br.remove_vlan_from_nb, self.adpt,
+                          self.host_uuid, self.nb_uuid, 2227, True)
 
         # Should not fail if fail_if_pvid set to False, but shouldn't call
         # update either.
-        net_br.remove_vlan_from_nb(mock_adpt, host_uuid, nb_uuid, 2227)
-        self.assertEqual(0, mock_adpt.update.call_count)
+        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                   2227)
+        self.assertEqual(0, self.adpt.update.call_count)
+
+    def test_find_vswitch(self):
+        self.adpt.read.return_value = self.mgr_vsw_resp
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        v = bridger._find_vswitch('0')
+        self.assertIsNotNone(v)
+        self.assertEqual(0, v.switch_id)
+
+    def test_find_or_create_vnet(self):
+        """Validates that a vnet is created (and deleted) as part of find."""
+        # Load the data
+        vnets = pvm_net.VNet.wrap(self.mgr_vnet_resp)
+        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
+
+        # Set up the mock create
+        resp = pvm_net.VNet.bld('FakeName', 4094, vsw.href, True)
+        mock_resp = mock.MagicMock()
+        mock_resp.entry = resp.entry
+        self.adpt.create.return_value = mock_resp
+
+        # Run the code
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        ret_val = bridger._find_or_create_vnet(vnets, 4094, vsw)
+
+        # Equality check
+        self.assertEqual(4094, ret_val.vlan)
+        self.assertTrue(ret_val.tagged)
+
+        # Make sure the delete was called
+        self.assertEqual(1, self.adpt.delete_by_href.call_count)
+
+    def test_find_available_lb(self):
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        lg = bridger._find_available_ld_grp(nb[0])
+        self.assertIsNotNone(lg)
