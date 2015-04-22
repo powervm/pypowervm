@@ -1124,28 +1124,6 @@ class Adapter(object):
                     attribute group behavior.
         :return:
         """
-        def append_query_param(bpath, qparam):
-            """Add a query param to a path that may already have one.
-
-            If the path already has a querystring, separate with '&'; else
-            start the querystring with '?'.
-
-            :param bpath: The base path to which to append the query parameter.
-            :param qparam: String query parameter, typically of the form
-                           "key=value".
-            :return: The augmented path.
-            """
-            # If there's already a query string
-            sep = '&' if '?' in bpath else '?'
-            return bpath + sep + qparam
-
-        # Explicit xag is always honored as-is.  If unspecified, we usually
-        # want to include group=None.  However, there are certain classes of
-        # URI from which we want to omit ?group entirely.
-        if xag is None:
-            xagless_suffixes = ('quick', 'do')
-            xag = [] if suffix_type in xagless_suffixes else [ent.XAG().NONE]
-
         path = basepath
         if suffix_type:
             # operations, do, jobs, cancel, quick, search, ${search-string}
@@ -1153,12 +1131,18 @@ class Adapter(object):
             if suffix_parm:
                 path += '/' + suffix_parm
         if detail:
-            path = append_query_param(path, 'detail=' + detail)
-        if xag:
-            # sort xag in order
-            xag.sort()
-            path = append_query_param(path,
-                                      'group=%s' % ','.join(map(str, xag)))
+            sep = '&' if '?' in path else '?'
+            path += sep + 'detail=' + detail
+
+        # Explicit xag is always honored as-is.  If unspecified, we usually
+        # want to include group=None.  However, there are certain classes of
+        # URI from which we want to omit ?group entirely.
+        if xag is None:
+            xagless_suffixes = ('quick', 'do')
+            if suffix_type in xagless_suffixes:
+                xag = []
+        path = util.check_and_apply_xag(path, xag)
+
         return path
 
     @staticmethod

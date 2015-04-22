@@ -19,6 +19,11 @@ from lxml import etree
 import logging
 import unittest
 
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
+
 import mock
 import requests.models as req_mod
 import requests.structures as req_struct
@@ -301,6 +306,29 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual(200, ret_update_value.status)
         self.assertEqual(reqpath, ret_update_value.reqpath)
 
+    def _assert_paths_equivalent(self, exp, act):
+        """Ensures two paths or hrefs are "the same".
+
+        Query parameter keys may be specified in any order, though their values
+        must match exactly.  The rest of the path must be identical.
+
+        :param exp: Expected path
+        :param act: Actual path (produced by test)
+        """
+        p_exp = urlparse.urlparse(exp)
+        p_act = urlparse.urlparse(act)
+        self.assertEqual(p_exp.scheme, p_act.scheme)
+        self.assertEqual(p_exp.netloc, p_act.netloc)
+        self.assertEqual(p_exp.path, p_act.path)
+        self.assertEqual(p_exp.fragment, p_act.fragment)
+        qs_exp = urlparse.parse_qs(p_exp.query)
+        qs_act = urlparse.parse_qs(p_act.query)
+        for vals in qs_exp.values():
+            vals.sort()
+        for vals in qs_act.values():
+            vals.sort()
+        self.assertEqual(qs_exp, qs_act)
+
     @mock.patch('requests.Session')
     def test_extend_path(self, mock_session):
         # Init test data
@@ -313,7 +341,7 @@ class TestAdapter(unittest.TestCase):
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping')
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         # Multiple XAGs
         path = adapter.extend_path('basepath', suffix_type='suffix',
@@ -324,7 +352,7 @@ class TestAdapter(unittest.TestCase):
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         # Verify sorting
         path = adapter.extend_path('basepath', suffix_type='suffix',
@@ -335,7 +363,7 @@ class TestAdapter(unittest.TestCase):
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         # Explicitly no XAG
         path = adapter.extend_path('basepath', suffix_type='suffix',
@@ -343,27 +371,68 @@ class TestAdapter(unittest.TestCase):
                                    xag=[])
 
         expected_path = 'basepath/suffix/suffix_parm?detail=detail'
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         # Ensure unspecified XAG defaults to group=None
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm')
 
         expected_path = 'basepath/suffix/suffix_parm?group=None'
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         # ...except for specific suffix types 'quick' and 'do'
         path = adapter.extend_path('basepath', suffix_type='quick',
                                    suffix_parm='suffix_parm')
 
         expected_path = 'basepath/quick/suffix_parm'
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
 
         path = adapter.extend_path('basepath', suffix_type='do',
                                    suffix_parm='suffix_parm')
 
         expected_path = 'basepath/do/suffix_parm'
-        self.assertEqual(expected_path, path)
+        self._assert_paths_equivalent(expected_path, path)
+
+        # Ensure arg xags and path xags interact correctly
+        # path_xag=None, arg_xag=None => group=None
+        self._assert_paths_equivalent(
+            'basepath?group=None', adapter.extend_path('basepath'))
+        # path_xag='None', arg_xag=None => group=None
+        self._assert_paths_equivalent(
+            'basepath?group=None', adapter.extend_path('basepath?group=None'))
+        # path_xag='a,b,c', arg_xag=None => group=a,b,c
+        self._assert_paths_equivalent(
+            'basepath?group=a,b,c',
+            adapter.extend_path('basepath?group=a,b,c'))
+        # path_xag=None, arg_xag=[] => no group=
+        self._assert_paths_equivalent(
+            'basepath', adapter.extend_path('basepath', xag=[]))
+        # path_xag='None', arg_xag=[] => no group=
+        self._assert_paths_equivalent(
+            'basepath', adapter.extend_path('basepath?group=None', xag=[]))
+        # path_xag='a,b,c', arg_xag=[] => ValueError
+        self.assertRaises(
+            ValueError, adapter.extend_path, 'basepath?group=a,b,c', xag=[])
+        # path_xag=None, arg_xag='a,b,c' => group='a,b,c'
+        self._assert_paths_equivalent(
+            'basepath?group=a,b,c',
+            adapter.extend_path('basepath', xag=['a', 'b', 'c']))
+        # path_xag='None', arg_xag='a,b,c' => group='a,b,c'
+        self._assert_paths_equivalent(
+            'basepath?group=a,b,c',
+            adapter.extend_path('basepath?group=None', xag=['a', 'b', 'c']))
+        # path_xag='a,b,c', arg_xag='a,b,c' => group='a,b,c'
+        self._assert_paths_equivalent(
+            'basepath?group=a,b,c',
+            adapter.extend_path('basepath?group=a,b,c', xag=['a', 'b', 'c']))
+        # path_xag='a,b,c', arg_xag='d,e,f' => ValueError
+        self.assertRaises(ValueError, adapter.extend_path,
+                          'basepath?group=a,b,c', xag=['d', 'e', 'f'])
+        # Multi-instance query params properly reassembled.
+        self._assert_paths_equivalent(
+            'basepath?foo=1,2,3&group=a,b,c&foo=4,5,6',
+            adapter.extend_path('basepath?foo=4,5,6&group=None&foo=1,2,3',
+                                xag=['a', 'b', 'c']))
 
     @mock.patch('requests.Session')
     def test_delete(self, mock_session):
