@@ -23,6 +23,9 @@ import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.storage as stor
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestCluster(twrap.TestWrapper):
 
@@ -51,11 +54,12 @@ class TestCluster(twrap.TestWrapper):
         # Test setter
         newrepos = stor.PV.wrap(
             ent.Element(
-                "PhysicalVolume",
+                "PhysicalVolume", TRAITS,
                 attrib={'schemaVersion': 'V1_2_0'},
                 children=[
-                    ent.Element('Metadata', children=[ent.Element('Atom')]),
-                    ent.Element('VolumeName', text='hdisk99')]))
+                    ent.Element('Metadata', TRAITS,
+                                children=[ent.Element('Atom', TRAITS)]),
+                    ent.Element('VolumeName', TRAITS, text='hdisk99')]))
         self.dwrap.repos_pv = newrepos
         self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
         # Now try the same thing, but using factory constructor to build PV

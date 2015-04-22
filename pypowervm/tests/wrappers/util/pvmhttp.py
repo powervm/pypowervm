@@ -99,7 +99,7 @@ class PVMResp(PVMFile):
 
     """Class to encapsulate the text serialization of a response."""
 
-    def __init__(self, file_name=None, pvmfile=None):
+    def __init__(self, file_name=None, pvmfile=None, traits=None):
         """Initialize this PVMResp by loading a file or pulling a PVMFile.
 
         :param file_name: Name of a file to load.
@@ -131,7 +131,8 @@ class PVMResp(PVMFile):
 
         self.response = adp.Response(reqmethod=None, reqpath=None,
                                      status=self.status, reason=self.reason,
-                                     headers=self.headers, body=self.body)
+                                     headers=self.headers, body=self.body,
+                                     traits=traits)
         self.response._unmarshal_atom()
 
     def get_response(self):

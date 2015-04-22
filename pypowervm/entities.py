@@ -78,17 +78,18 @@ class Feed(object):
         return entries
 
     @classmethod
-    def unmarshal_atom_feed(cls, feedelem):
+    def unmarshal_atom_feed(cls, feedelem, traits):
         """Factory method producing a Feed object from a parsed ElementTree
 
         :param feedelem: Parsed ElementTree object representing an atom feed.
+        :param traits: APITraits from Session.traits.
         :return: a new Feed object representing the feedelem parameter.
         """
         feedprops = {}
         entries = []
         for child in list(feedelem):
             if child.tag == str(etree.QName(const.ATOM_NS, 'entry')):
-                entries.append(Entry.unmarshal_atom_entry(child))
+                entries.append(Entry.unmarshal_atom_entry(child, traits))
             elif not list(child):
                 pat = '{%s}' % const.ATOM_NS
                 if re.match(pat, child.tag):
@@ -105,19 +106,24 @@ class Feed(object):
 
 class Entry(object):
     """Represents an Atom Entry returned by the PowerVM API."""
-    def __init__(self, properties, element):
+    def __init__(self, properties, element, traits):
         self.properties = properties
-        self.element = Element.wrapelement(element)
+        self.element = Element.wrapelement(element, traits)
 
     @property
     def etag(self):
         return self.properties.get('etag', None)
 
+    @property
+    def traits(self):
+        return self.element.traits
+
     @classmethod
-    def unmarshal_atom_entry(cls, entryelem):
+    def unmarshal_atom_entry(cls, entryelem, traits):
         """Factory method producing an Entry object from a parsed ElementTree
 
         :param entryelem: Parsed ElementTree object representing an atom entry.
+        :param traits: APITraits from Session.traits.
         :return: a new Entry object representing the entryelem parameter.
         """
         entryprops = {}
@@ -150,12 +156,12 @@ class Entry(object):
                     entryprops['etag'] = child.text
                 elif child.text:
                     entryprops[param_name] = child.text
-        return cls(entryprops, element)
+        return cls(entryprops, element, traits)
 
 
 class Element(object):
     """Represents an XML element - a utility wrapper around etree.Element."""
-    def __init__(self, tag, ns=const.UOM_NS, attrib=None, text='',
+    def __init__(self, tag, traits, ns=const.UOM_NS, attrib=None, text='',
                  children=(), cdata=False):
         # Defaults shouldn't be mutable
         attrib = attrib if attrib else {}
@@ -168,12 +174,13 @@ class Element(object):
             self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
             self.element.append(c.element)
+        self.traits = traits
 
     def __len__(self):
         return len(self.element)
 
     def __getitem__(self, index):
-        return Element.wrapelement(self.element[index])
+        return Element.wrapelement(self.element[index], self.traits)
 
     def __setitem__(self, index, value):
         if not isinstance(value, Element):
@@ -229,14 +236,15 @@ class Element(object):
 
     def getchildren(self):
         """Returns the children as a list of Elements."""
-        return [Element.wrapelement(i) for i in self.element.getchildren()]
+        return [Element.wrapelement(i, self.traits)
+                for i in self.element.getchildren()]
 
     @classmethod
-    def wrapelement(cls, element):
+    def wrapelement(cls, element, traits):
         if element is None:
             return None
         # create with minimum inputs
-        e = cls('element')
+        e = cls('element', traits)
         # assign element over the one __init__ creates
         e.element = element
         return e
@@ -379,7 +387,7 @@ class Element(object):
         e = self.element.find(qpath)
         if e is not None:
             # must specify "is not None" here to work
-            return Element.wrapelement(e)
+            return Element.wrapelement(e, self.traits)
         else:
             return None
 
@@ -393,7 +401,7 @@ class Element(object):
         e_iter = self.element.findall(qpath)
         elems = []
         for e in e_iter:
-            elems.append(Element.wrapelement(e))
+            elems.append(Element.wrapelement(e, self.traits))
         return elems
 
     def findtext(self, match, default=None):
@@ -440,7 +448,7 @@ class Element(object):
         it = lib_iter(tag=qtag)
 
         for e in it:
-            yield Element.wrapelement(e)
+            yield Element.wrapelement(e, self.traits)
 
     def replace(self, existing, new_element):
         """Replaces the existing child Element with the new one."""
