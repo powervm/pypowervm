@@ -63,7 +63,7 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             resp = adpt.Response('reqmethod', 'reqpath',
                                  c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                 'headers')
+                                 'headers', None)
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -82,7 +82,7 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             resp = adpt.Response('reqmethod', 'reqpath',
                                  c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                 'headers')
+                                 'headers', None)
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -138,7 +138,7 @@ class TestRetry(unittest.TestCase):
                 # etag mismatch
                 resp = adpt.Response('reqmethod', 'reqpath',
                                      c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                     'headers')
+                                     'headers', None)
                 http_exc = pvm_exc.HttpError('msg', resp)
                 raise http_exc
 

@@ -16,31 +16,35 @@
 
 
 import mock
+import testtools
 
 import pypowervm.adapter as adp
 from pypowervm.tasks import cna
+from pypowervm.tests import fixtures
 import pypowervm.tests.tasks.util as tju
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import network as pvm_net
 
-import unittest
-
-
 VSWITCH_FILE = 'cna_vswitches.txt'
 VNET_FILE = 'fake_virtual_network_feed.txt'
 
 
-class TestCNA(unittest.TestCase):
+class TestCNA(testtools.TestCase):
     """Unit Tests for creating Client Network Adapters."""
 
+    def setUp(self):
+        super(TestCNA, self).setUp()
+        self.adpt = self.useFixture(fixtures.AdapterFx()).adpt
+        # HMCish Traits
+        self.adpt.traits = self.useFixture(fixtures.RemoteHMCTraitsFx).traits
+
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_cna(self, mock_adpt, mock_vnet_find):
+    def test_crt_cna(self, mock_vnet_find):
         """Tests the creation of Client Network Adapters."""
         # First need to load in the various test responses.
         vs = tju.load_file(VSWITCH_FILE)
-        mock_adpt.read.return_value = vs
+        self.adpt.read.return_value = vs
 
         # Create a side effect that can validate the input into the create
         # call.
@@ -50,23 +54,23 @@ class TestCNA(unittest.TestCase):
             self.assertEqual('fake_lpar', kwargs.get('root_id'))
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
             return mock.MagicMock()
-        mock_adpt.create.side_effect = validate_of_create
+        self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5)
+        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
         self.assertEqual(1, mock_vnet_find.call_count)
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_cna_no_vnet_crt(self, mock_adpt, mock_vnet_find):
+    def test_crt_cna_no_vnet_crt(self, mock_vnet_find):
         """Tests the creation of Client Network Adapters.
 
         The virtual network creation shouldn't be done in this flow.
         """
         # First need to load in the various test responses.
         vs = tju.load_file(VSWITCH_FILE)
-        mock_adpt.read.return_value = vs
-        mock_adpt.traits.vnet_aware = False
+        self.adpt.read.return_value = vs
+        # PVMish Traits
+        self.adpt.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
         # Create a side effect that can validate the input into the create
         # call.
@@ -76,19 +80,18 @@ class TestCNA(unittest.TestCase):
             self.assertEqual('fake_lpar', kwargs.get('root_id'))
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
             return mock.MagicMock()
-        mock_adpt.create.side_effect = validate_of_create
+        self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5)
+        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
         self.assertEqual(0, mock_vnet_find.call_count)
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_cna_new_vswitch(self, mock_adpt, mock_vnet_find):
+    def test_crt_cna_new_vswitch(self, mock_vnet_find):
         """Validates the create will also create the vSwitch."""
         # First need to load in the various test responses.
         vs = tju.load_file(VSWITCH_FILE)
-        mock_adpt.read.return_value = vs
+        self.adpt.read.return_value = vs
 
         # Create a side effect that can validate the input into the create
         # call.
@@ -106,17 +109,16 @@ class TestCNA(unittest.TestCase):
                 self.assertEqual('VirtualSwitch', kwargs.get('child_type'))
                 # Return a previously created vSwitch...
                 return pvm_net.VSwitch.wrap(vs)[0].entry
-        mock_adpt.create.side_effect = validate_of_create
+        self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(mock_adpt, 'fake_host', 'fake_lpar', 5,
+        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5,
                             vswitch='Temp', crt_vswitch=True)
         self.assertIsNotNone(n_cna)
 
-    @mock.patch('pypowervm.adapter.Adapter')
-    def test_find_or_create_vnet(self, mock_adpt):
+    def test_find_or_create_vnet(self):
         """Tests that the virtual network can be found/created."""
         vn = pvmhttp.load_pvm_resp(VNET_FILE).get_response()
-        mock_adpt.read.return_value = vn
+        self.adpt.read.return_value = vn
 
         fake_vs = mock.Mock()
         fake_vs.switch_id = 0
@@ -130,15 +132,16 @@ class TestCNA(unittest.TestCase):
                                 'ec8aaa54-9837-3c23-a541-a4e4be3ae489')
 
         # This should find a vnet.
-        vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2227',
+        vnet_resp = cna._find_or_create_vnet(self.adpt, host_uuid, '2227',
                                              fake_vs)
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
-        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                            self.adpt.traits)
         resp.entry = ewrap.EntryWrapper._bld(tag='VirtualNetwork').entry
-        mock_adpt.create.return_value = resp
-        vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2228',
+        self.adpt.create.return_value = resp
+        vnet_resp = cna._find_or_create_vnet(self.adpt, host_uuid, '2228',
                                              fake_vs)
         self.assertIsNotNone(vnet_resp)
-        self.assertEqual(1, mock_adpt.create.call_count)
+        self.assertEqual(1, self.adpt.create.call_count)

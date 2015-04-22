@@ -389,7 +389,8 @@ class VSCSIMapping(VStorageMapping):
         # Always replace.  Because while the storage has one element, it can't
         # inject properly if the backing type changes (ex. cloning from vOpt to
         # vDisk).
-        stor_elem = ent.Element(_MAP_STORAGE, attrib={}, children=[])
+        stor_elem = ent.Element(_MAP_STORAGE, self.traits, attrib={},
+                                children=[])
         stor_elem.inject(stg.element)
         self.inject(stor_elem)
 

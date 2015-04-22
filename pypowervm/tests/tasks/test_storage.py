@@ -27,7 +27,6 @@ import pypowervm.wrappers.vios_file as vf
 
 import unittest
 
-
 CLUSTER = "cluster.txt"
 LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
@@ -44,7 +43,8 @@ def _mock_update_by_path(ssp, etag, path):
             lu._is_thin(True)
         if lu.lu_type is None:
             lu._lu_type(stor.LUType.DISK)
-    resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'})
+    resp = adp.Response('meth', 'path', 200, 'reason', {'etag': 'after'},
+                        ssp.traits)
     resp.entry = ssp.entry
     return resp
 
@@ -245,7 +245,8 @@ class TestUploadLV(unittest.TestCase):
                              element.findtext('TargetVirtualIOServerUUID'))
             self.assertEqual('tdev_uuid',
                              element.findtext('TargetDeviceUniqueDeviceID'))
-            ret = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+            ret = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                               element.traits)
             ret.entry = ewrap.EntryWrapper._bld(tag='File').entry
             return ret
         mock_adpt.create.side_effect = validate_in

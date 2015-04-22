@@ -20,19 +20,41 @@ from __future__ import absolute_import
 import fixtures
 import mock
 
+from pypowervm import traits
+
 
 class AdapterFx(fixtures.Fixture):
     """Patch out Session and Adapter."""
 
-    def __init__(self):
-        pass
+    def __init__(self, patch_sess=True, patch_adpt=True):
+        super(AdapterFx, self).__init__()
+        self._sess_patcher = mock.patch('pypowervm.adapter.Session')
+        self._adpt_patcher = mock.patch('pypowervm.adapter.Adapter')
+        self.patch_sess = patch_sess
+        self.patch_adpt = patch_adpt
 
     def setUp(self):
         super(AdapterFx, self).setUp()
-        self._sess_patcher = mock.patch('pypowervm.adapter.Session')
-        self._adpt_patcher = mock.patch('pypowervm.adapter.Adapter')
-        self.sess = self._sess_patcher.start()
-        self.adpt = self._adpt_patcher.start()
+        if self.patch_sess:
+            self.sess = self._sess_patcher.start()
+            self.addCleanup(self._sess_patcher.stop)
+        if self.patch_adpt:
+            self.adpt = self._adpt_patcher.start()
+            self.addCleanup(self._adpt_patcher.stop)
 
-        self.addCleanup(self._sess_patcher.stop)
-        self.addCleanup(self._adpt_patcher.stop)
+
+class _TraitsFx(fixtures.Fixture):
+    def __init__(self, local, hmc):
+        self._sess = mock.patch('pypowervm.adapter.Session')
+        self._sess.use_file_auth = local
+        self._sess.mc_type = 'HMC' if hmc else 'PVM'
+        self.traits = None
+
+    def setUp(self):
+        super(_TraitsFx, self).setUp()
+        self.traits = traits.APITraits(self._sess)
+        self.addCleanup(delattr, self, 'traits')
+
+LocalPVMTraitsFx = _TraitsFx(local=True, hmc=False)
+RemotePVMTraitsFx = _TraitsFx(local=False, hmc=False)
+RemoteHMCTraitsFx = _TraitsFx(local=False, hmc=True)

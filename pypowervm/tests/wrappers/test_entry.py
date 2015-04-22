@@ -19,11 +19,13 @@ import copy
 from lxml import etree
 import mock
 import six
+import testtools
 
 import unittest
 
 import pypowervm.adapter as apt
 import pypowervm.entities as ent
+from pypowervm.tests import fixtures
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -111,10 +113,15 @@ class TestWrapper(unittest.TestCase):
         self.assertTrue(w._get_val_bool('nonexistent', default=True))
 
 
-class TestEntryWrapper(unittest.TestCase):
+class TestEntryWrapper(testtools.TestCase):
+
+    def setUp(self):
+        super(TestEntryWrapper, self).setUp()
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
     def test_etag(self):
-        fake_entry = ent.Entry({}, ent.Element('fake_entry'))
+        fake_entry = ent.Entry({}, ent.Element('fake_entry', self.traits),
+                               self.traits)
         etag = '1234'
         ew = ewrap.EntryWrapper.wrap(fake_entry, etag=etag)
         self.assertEqual(etag, ew.etag)
@@ -125,13 +132,13 @@ class TestEntryWrapper(unittest.TestCase):
     def test_load(self):
         etag = '1234'
         resp = apt.Response('reqmethod', 'reqpath', 'status',
-                            'reason', dict(etag=etag))
+                            'reason', dict(etag=etag), self.traits)
 
         # Entry or Feed is not set, so expect an exception
         self.assertRaises(KeyError, ewrap.EntryWrapper.wrap, resp)
 
         # Set an entry...
-        entry = ent.Entry({}, ent.Element('entry'))
+        entry = ent.Entry({}, ent.Element('entry', self.traits), self.traits)
         resp.entry = entry
 
         # Run
@@ -142,7 +149,8 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertEqual(etag, ew.etag)
 
         # Create a response with no headers
-        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                             self.traits)
         resp2.entry = entry
         # Run
         ew = ewrap.EntryWrapper.wrap(resp2)
@@ -151,8 +159,10 @@ class TestEntryWrapper(unittest.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        e1 = ent.Entry({'etag': '1'}, ent.Element('e1'))
-        e2 = ent.Entry({'etag': '2'}, ent.Element('e2'))
+        e1 = ent.Entry({'etag': '1'}, ent.Element('e1', self.traits),
+                       self.traits)
+        e2 = ent.Entry({'etag': '2'}, ent.Element('e2', self.traits),
+                       self.traits)
         resp.feed = ent.Feed({}, [e1, e2])
 
         # Run
@@ -165,11 +175,12 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertEqual('2', ew[1].etag)
 
 
-class TestElementWrapper(unittest.TestCase):
+class TestElementWrapper(testtools.TestCase):
     """Tests for the ElementWrapper class."""
 
     def setUp(self):
         super(TestElementWrapper, self).setUp()
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         self.resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         self.nb1 = ewrap.EntryWrapper.wrap(self.resp.feed.entries[0])
         self.resp2 = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
@@ -232,7 +243,8 @@ class TestElementWrapper(unittest.TestCase):
 
         # Now 'SomePowerObject' is registered.  Prove that we can use wrap() to
         # instantiate MyElement4 straight from ElementWrapper.
-        el = ent.Element('SomePowerObject', ns='baz', attrib={'foo': 'bar'})
+        el = ent.Element('SomePowerObject', self.traits, ns='baz',
+                         attrib={'foo': 'bar'})
         w = ewrap.ElementWrapper.wrap(el)
         self.assertIsInstance(w, MyElement4)
 
@@ -283,11 +295,12 @@ class TestElementWrapper(unittest.TestCase):
         self.assertEqual(sea.get_href(path, one_result=True), 'baz')
 
 
-class TestWrapperElemList(unittest.TestCase):
+class TestWrapperElemList(testtools.TestCase):
     """Tests for the WrapperElemList class."""
 
     def setUp(self):
         super(TestWrapperElemList, self).setUp()
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         nb = resp.feed.entries[0]
         self.wrapper = ewrap.EntryWrapper.wrap(nb)
@@ -304,7 +317,7 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
-            ent.Element('SharedEthernetAdapter'))
+            ent.Element('SharedEthernetAdapter', self.traits))
         self.assertEqual(1, len(self.elem_set))
 
         # Test Append
@@ -317,8 +330,10 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_extend(self):
         seas = [
-            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter')),
-            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  self.traits)),
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  self.traits))
         ]
         self.assertEqual(1, len(self.elem_set))
         self.elem_set.extend(seas)
@@ -326,7 +341,8 @@ class TestWrapperElemList(unittest.TestCase):
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
-        e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
+        e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  self.traits))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))
@@ -430,18 +446,19 @@ class TestActionableList(unittest.TestCase):
         self.assertEqual(5, function.call_count)
 
 
-class TestSearch(unittest.TestCase):
+class TestSearch(testtools.TestCase):
     """Tests for EntryWrapper.search()."""
 
     def setUp(self):
         super(TestSearch, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
     def _validate_request(self, path, *feedcontents):
         def validate_request(meth, _path, *args, **kwargs):
             self.assertTrue(_path.endswith(path))
             resp = apt.Response('meth', 'path', 'status', 'reason', {},
-                                reqheaders={'Accept': ''})
+                                self.traits, reqheaders={'Accept': ''})
             resp.feed = ent.Feed({}, feedcontents)
             return resp
         return validate_request
@@ -468,15 +485,10 @@ class TestSearch(unittest.TestCase):
         clwraps = clust.Cluster.search(self.adp, negate=True, name='cl1')
         self.assertEqual(clwraps, [])
 
-    def test_no_search_keys(self):
-        """Ensure a wrapper with no search_keys member gives AttributeError."""
-        with self.assertRaises(AttributeError):
-            clust.Node.search(self.adp, foo='bar')
-
     def test_no_such_search_key(self):
         """Ensure an invalid search key gives ValueError."""
-        with self.assertRaises(ValueError):
-            clust.Cluster.search(self.adp, foo='bar')
+        self.assertRaises(ValueError, clust.Cluster.search, self.adp,
+                          foo='bar')
 
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_quote(self, mock_rq):
@@ -561,7 +573,7 @@ class TestSearch(unittest.TestCase):
                           vswitch_id=0, parent_uuid='some_uuid')
 
 
-class TestRefresh(unittest.TestCase):
+class TestRefresh(testtools.TestCase):
     """Tests for Adapter.refresh()."""
 
     clust_uuid = 'cluster_uuid'
@@ -570,6 +582,7 @@ class TestRefresh(unittest.TestCase):
     def setUp(self):
         super(TestRefresh, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.old_etag = '123'
         self.clust_old = clust.Cluster.bld(
@@ -584,12 +597,15 @@ class TestRefresh(unittest.TestCase):
         self.clust_new._etag = self.new_etag
         self.clust_new.entry.properties = props
         self.resp304 = apt.Response(
-            'meth', 'path', 304, 'reason', {'etag': self.old_etag})
+            'meth', 'path', 304, 'reason', {'etag': self.old_etag},
+            self.traits)
         self.resp200old = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.old_etag})
+            'meth', 'path', 200, 'reason', {'etag': self.old_etag},
+            self.traits)
         self.resp200old.entry = self.clust_old.entry
         self.resp200new = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.new_etag})
+            'meth', 'path', 200, 'reason', {'etag': self.new_etag},
+            self.traits)
         self.resp200new.entry = self.clust_new.entry
 
     def _mock_read_by_href(self, in_etag, out_resp):
@@ -626,7 +642,7 @@ class TestRefresh(unittest.TestCase):
         _assert_clusters_equal(self, clust_new_save, clust_refreshed)
 
 
-class TestUpdate(unittest.TestCase):
+class TestUpdate(testtools.TestCase):
     clust_uuid = 'cluster_uuid'
     clust_path = '/rest/api/uom/Cluster' + clust_uuid
     clust_href = 'https://server:12443' + clust_path
@@ -635,6 +651,7 @@ class TestUpdate(unittest.TestCase):
     def setUp(self):
         super(TestUpdate, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.cl = clust.Cluster.bld(
             'mycluster', stor.PV.bld('hdisk1', 'udid1'),
@@ -645,7 +662,8 @@ class TestUpdate(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            self.traits)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp)
@@ -657,7 +675,8 @@ class TestUpdate(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update_xag(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            self.traits)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
@@ -674,7 +693,8 @@ class TestUpdate(unittest.TestCase):
         self.cl.entry.properties = props
 
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            self.traits)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])

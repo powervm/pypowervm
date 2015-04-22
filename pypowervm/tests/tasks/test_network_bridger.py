@@ -54,12 +54,10 @@ class TestNetworkBridger(testtools.TestCase):
         self.mgr_vsw_resp = resp(MGR_VSW_FILE)
 
         self.adpt = self.useFixture(fixtures.AdapterFx()).adpt
+        self.adpt.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
         self.host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
         self.nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
-
-    def tearDown(self):
-        super(TestNetworkBridger, self).tearDown()
 
     def test_ensure_vlan_on_nb(self):
         """This does a happy path test.  Assumes VLAN on NB already.
@@ -91,7 +89,7 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         super(TestNetworkBridgerVNet, self).setUp()
 
         # Make sure that we run through the vnet aware flow.
-        self.adpt.traits.vnet_aware.return_value = True
+        self.adpt.traits = self.useFixture(fixtures.RemoteHMCTraitsFx).traits
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_reassign_arbitrary_vid')
@@ -221,12 +219,14 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
                 '_find_vswitch')
     def test_reassign_arbitrary_vid(self, mock_vsw, mock_find_vnet):
         vnet = pvm_net.VNet._bld().entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                              self.adpt.traits)
         resp1.feed = ent.Feed({}, [vnet])
         self.adpt.read.return_value = resp1
         self.adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                              self.adpt.traits)
         resp2.entry = nb.entry
         self.adpt.update.return_value = resp2
 

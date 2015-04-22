@@ -44,7 +44,7 @@ class TestClusterSSP(unittest.TestCase):
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):
             self.assertEqual(entry_type, clust.Cluster.schema_type)
-            job = jwrap.Job.wrap(ent.Entry({}, job_el))
+            job = jwrap.Job.wrap(ent.Entry({}, job_el, None))
             param_vals = job._get_vals(u.xpath(
                 'JobParameters', 'JobParameter', 'ParameterValue'))
             self.assertEqual(

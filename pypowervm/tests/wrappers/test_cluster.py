@@ -51,11 +51,12 @@ class TestCluster(twrap.TestWrapper):
         # Test setter
         newrepos = stor.PV.wrap(
             ent.Element(
-                "PhysicalVolume",
+                "PhysicalVolume", None,
                 attrib={'schemaVersion': 'V1_2_0'},
                 children=[
-                    ent.Element('Metadata', children=[ent.Element('Atom')]),
-                    ent.Element('VolumeName', text='hdisk99')]))
+                    ent.Element('Metadata', None,
+                                children=[ent.Element('Atom', None)]),
+                    ent.Element('VolumeName', None, text='hdisk99')]))
         self.dwrap.repos_pv = newrepos
         self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
         # Now try the same thing, but using factory constructor to build PV

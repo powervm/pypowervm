@@ -16,31 +16,35 @@
 
 import functools
 import logging
-import unittest
 
 import mock
+import testtools
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.log_helper as log_hlp
+from pypowervm.tests import fixtures
 
 # Testing by hand it's useful to enable the next line instead of the following
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig()
 
-fake_resp1 = adp.Response('GET', '/some/path', 200, 'OK', ['headers'])
 
+class TestLogHelper(testtools.TestCase):
 
-class TestLogHelper(unittest.TestCase):
+    def setUp(self):
+        super(TestLogHelper, self).setUp()
+        self.sess = self.useFixture(fixtures.AdapterFx(patch_adpt=False)).sess
+        self.sess.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
-    @mock.patch('pypowervm.adapter.Session')
     @mock.patch('pypowervm.helpers.log_helper.LOG')
-    def test_log_helper(self, mock_log, mock_sess):
+    def test_log_helper(self, mock_log):
 
         helpers = log_hlp.log_helper
-        response = fake_resp1
-        mock_sess.request.return_value = response
-        adpt = adp.Adapter(mock_sess, use_cache=False, helpers=helpers)
+        response = adp.Response('GET', '/some/path', 200, 'OK', ['headers'],
+                                self.sess.traits)
+        self.sess.request.return_value = response
+        adpt = adp.Adapter(self.sess, use_cache=False, helpers=helpers)
 
         # Test that we get the response we expect passed back unharmed
         self.assertEqual(response,
@@ -69,7 +73,7 @@ class TestLogHelper(unittest.TestCase):
         # and is then raised
         adpt._request('method1', 'path', body='the body')
         adpt._request('method2', 'path', body='the body')
-        mock_sess.request.side_effect = pvmex.Error('yo')
+        self.sess.request.side_effect = pvmex.Error('yo')
         mock_log.reset_mock()
         self.assertRaises(
             pvmex.Error, adpt._request, 'method', 'path', body='the body')
@@ -79,8 +83,8 @@ class TestLogHelper(unittest.TestCase):
         # Ensure the log storage is initialized correctly, and we can change
         # the default value
         hlp_size = functools.partial(log_hlp.log_helper, max_logs=20)
-        adpt1 = adp.Adapter(mock_sess, use_cache=False, helpers=hlp_size)
-        mock_sess.request.side_effect = None
+        adpt1 = adp.Adapter(self.sess, use_cache=False, helpers=hlp_size)
+        self.sess.request.side_effect = None
         with mock.patch('pypowervm.helpers.log_helper._init_thread_stg'
                         ) as mock_init:
             adpt1._request('method1', 'path', body='the body')

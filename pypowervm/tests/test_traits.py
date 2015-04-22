@@ -14,11 +14,25 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-
 import unittest
 
+import mock
+import requests.models as req_mod
+import requests.structures as req_struct
+
+import pypowervm.adapter as adp
+import pypowervm.tests.lib as testlib
+from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm import traits
+import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.network as net
+import pypowervm.wrappers.storage as stor
+
+_logon_response_text = testlib.file2b("logon_file.xml")
+_feed_file = pvmhttp.load_pvm_resp(
+    "fake_network_bridge.txt").response.body.encode('utf-8')
+_entry_file = pvmhttp.load_pvm_resp(
+    "fake_volume_group.txt").response.body.encode('utf-8')
 
 
 class TestTraits(unittest.TestCase):
@@ -54,3 +68,75 @@ class TestTraits(unittest.TestCase):
         self.assertFalse(t.local_api)
         self.assertTrue(t.has_lpar_profiles)
         self.assertFalse(t.dynamic_pvid)
+
+    @mock.patch('requests.Session.request')
+    def test_traits_into_wrappers(self, mock_request):
+        # Note traits param is None, which reflects the real value of
+        # self.traits during _logon's request.
+        httpresp = req_mod.Response()
+        httpresp._content = _logon_response_text
+        httpresp.status_code = 200
+        httpresp.headers = req_struct.CaseInsensitiveDict(
+            {'X-MC-Type': 'PVM',
+             'content-type':
+                 'application/vnd.ibm.powervm.web+xml; type=LogonResponse'})
+        mock_request.return_value = httpresp
+        sess = adp.Session()
+        self.assertEqual('PVM', sess.mc_type)
+        self.assertIsNotNone(sess.traits)
+        self.assertTrue(sess.traits.local_api)
+        self.assertFalse(sess.traits._is_hmc)
+        adapter = adp.Adapter(sess)
+        self.assertEqual(sess.traits, adapter.traits)
+
+        # Response => Feed => Entrys => EntryWrappers => sub-ElementWrappers
+        httpresp._content = _feed_file
+        resp = adapter.read('NetworkBridge')
+        self.assertEqual(sess.traits, resp.traits)
+        nblist = net.NetBridge.wrap(resp)
+        for nb in nblist:
+            self.assertIsInstance(nb, net.NetBridge)
+            self.assertEqual(sess.traits, nb.traits)
+        seas = nblist[0].seas
+        for sea in seas:
+            self.assertIsInstance(sea, net.SEA)
+            self.assertEqual(sess.traits, sea.traits)
+        trunk = seas[0].primary_adpt
+        self.assertIsInstance(trunk, net.TrunkAdapter)
+        self.assertEqual(sess.traits, trunk.traits)
+
+        # Response => Entry => EntryWrapper => sub-EntryWrappers
+        # => sub-sub-ElementWrapper
+        httpresp._content = _entry_file
+        resp = adapter.read('VolumeGroup', root_id='abc123')
+        self.assertEqual(sess.traits, resp.traits)
+        vgent = stor.VG.wrap(resp)
+        self.assertIsInstance(vgent, stor.VG)
+        self.assertEqual(sess.traits, vgent.traits)
+        pvs = vgent.phys_vols
+        for pvent in pvs:
+            self.assertIsInstance(pvent, stor.PV)
+            self.assertEqual(sess.traits, pvent.traits)
+
+        # Building raw wrappers from scratch
+        class MyEntryWrapper(ewrap.EntryWrapper):
+            schema_type = 'SomeObject'
+
+            @classmethod
+            def bld(cls, trts):
+                return super(MyEntryWrapper, cls)._bld(traits=trts)
+
+        mew = MyEntryWrapper.bld(sess.traits)
+        self.assertIsInstance(mew, MyEntryWrapper)
+        self.assertEqual(sess.traits, mew.traits)
+
+        class MyElementWrapper(ewrap.ElementWrapper):
+            schema_type = 'SomeObject'
+
+            @classmethod
+            def bld(cls, trts):
+                return super(MyElementWrapper, cls)._bld(traits=trts)
+
+        mew = MyElementWrapper.bld(sess.traits)
+        self.assertIsInstance(mew, MyElementWrapper)
+        self.assertEqual(sess.traits, mew.traits)

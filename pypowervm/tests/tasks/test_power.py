@@ -29,7 +29,7 @@ class TestPower(unittest.TestCase):
     def setUp(self):
         super(TestPower, self).setUp()
         mock_resp = mock.MagicMock()
-        mock_resp.entry = ent.Entry({}, ent.Element('Dummy'))
+        mock_resp.entry = ent.Entry({}, ent.Element('Dummy', None), None)
         self.mock_adpt = mock.MagicMock()
         self.mock_adpt.read.return_value = mock_resp
 
