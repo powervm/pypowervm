@@ -23,8 +23,11 @@ import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.sample_helper as smpl_hlp
 
+# Default traits for most tests
+TRAITS = None
+
 fake_resp1 = adp.Response(
-    'GET', '/some/path', 200, 'OK', ['headers'],
+    'GET', '/some/path', 200, 'OK', ['headers'], TRAITS,
     body='Some Text HSCL3205 More Text')
 
 
