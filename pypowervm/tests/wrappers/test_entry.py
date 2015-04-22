@@ -34,6 +34,9 @@ import pypowervm.wrappers.storage as stor
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
 
+# Default traits for most tests
+TRAITS = None
+
 
 def _assert_clusters_equal(tc, cl1, cl2):
     tc.assertEqual(cl1.name, cl2.name)
@@ -114,7 +117,7 @@ class TestWrapper(unittest.TestCase):
 class TestEntryWrapper(unittest.TestCase):
 
     def test_etag(self):
-        fake_entry = ent.Entry({}, ent.Element('fake_entry'))
+        fake_entry = ent.Entry({}, ent.Element('fake_entry', TRAITS), TRAITS)
         etag = '1234'
         ew = ewrap.EntryWrapper.wrap(fake_entry, etag=etag)
         self.assertEqual(etag, ew.etag)
@@ -125,13 +128,13 @@ class TestEntryWrapper(unittest.TestCase):
     def test_load(self):
         etag = '1234'
         resp = apt.Response('reqmethod', 'reqpath', 'status',
-                            'reason', dict(etag=etag))
+                            'reason', dict(etag=etag), TRAITS)
 
         # Entry or Feed is not set, so expect an exception
         self.assertRaises(KeyError, ewrap.EntryWrapper.wrap, resp)
 
         # Set an entry...
-        entry = ent.Entry({}, ent.Element('entry'))
+        entry = ent.Entry({}, ent.Element('entry', TRAITS), TRAITS)
         resp.entry = entry
 
         # Run
@@ -142,7 +145,8 @@ class TestEntryWrapper(unittest.TestCase):
         self.assertEqual(etag, ew.etag)
 
         # Create a response with no headers
-        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                             TRAITS)
         resp2.entry = entry
         # Run
         ew = ewrap.EntryWrapper.wrap(resp2)
@@ -151,8 +155,8 @@ class TestEntryWrapper(unittest.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        e1 = ent.Entry({'etag': '1'}, ent.Element('e1'))
-        e2 = ent.Entry({'etag': '2'}, ent.Element('e2'))
+        e1 = ent.Entry({'etag': '1'}, ent.Element('e1', TRAITS), TRAITS)
+        e2 = ent.Entry({'etag': '2'}, ent.Element('e2', TRAITS), TRAITS)
         resp.feed = ent.Feed({}, [e1, e2])
 
         # Run
@@ -182,7 +186,7 @@ class TestElementWrapper(unittest.TestCase):
         self.assertTrue(sea1 == sea2)
 
         # Change the other SEA
-        sea2.element.element.append(etree.Element('Bob'))
+        sea2.element.element.append(etree.Element('Bob', TRAITS))
         self.assertFalse(sea1 == sea2)
 
     def test_inequality_by_subelem_change(self):
@@ -232,7 +236,8 @@ class TestElementWrapper(unittest.TestCase):
 
         # Now 'SomePowerObject' is registered.  Prove that we can use wrap() to
         # instantiate MyElement4 straight from ElementWrapper.
-        el = ent.Element('SomePowerObject', ns='baz', attrib={'foo': 'bar'})
+        el = ent.Element('SomePowerObject', TRAITS, ns='baz',
+                         attrib={'foo': 'bar'})
         w = ewrap.ElementWrapper.wrap(el)
         self.assertIsInstance(w, MyElement4)
 
@@ -304,7 +309,7 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
-            ent.Element('SharedEthernetAdapter'))
+            ent.Element('SharedEthernetAdapter', TRAITS))
         self.assertEqual(1, len(self.elem_set))
 
         # Test Append
@@ -317,8 +322,10 @@ class TestWrapperElemList(unittest.TestCase):
 
     def test_extend(self):
         seas = [
-            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter')),
-            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  TRAITS)),
+            ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  TRAITS))
         ]
         self.assertEqual(1, len(self.elem_set))
         self.elem_set.extend(seas)
@@ -326,7 +333,8 @@ class TestWrapperElemList(unittest.TestCase):
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
-        e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter'))
+        e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
+                                                  TRAITS))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))
@@ -440,7 +448,7 @@ class TestSearch(unittest.TestCase):
     def _validate_request(self, path, *feedcontents):
         def validate_request(meth, _path, *args, **kwargs):
             self.assertTrue(_path.endswith(path))
-            resp = apt.Response('meth', 'path', 'status', 'reason', {},
+            resp = apt.Response('meth', 'path', 'status', 'reason', {}, TRAITS,
                                 reqheaders={'Accept': ''})
             resp.feed = ent.Feed({}, feedcontents)
             return resp
@@ -584,12 +592,12 @@ class TestRefresh(unittest.TestCase):
         self.clust_new._etag = self.new_etag
         self.clust_new.entry.properties = props
         self.resp304 = apt.Response(
-            'meth', 'path', 304, 'reason', {'etag': self.old_etag})
+            'meth', 'path', 304, 'reason', {'etag': self.old_etag}, TRAITS)
         self.resp200old = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.old_etag})
+            'meth', 'path', 200, 'reason', {'etag': self.old_etag}, TRAITS)
         self.resp200old.entry = self.clust_old.entry
         self.resp200new = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.new_etag})
+            'meth', 'path', 200, 'reason', {'etag': self.new_etag}, TRAITS)
         self.resp200new.entry = self.clust_new.entry
 
     def _mock_read_by_href(self, in_etag, out_resp):
@@ -645,7 +653,8 @@ class TestUpdate(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            TRAITS)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp)
@@ -657,7 +666,8 @@ class TestUpdate(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update_xag(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            TRAITS)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
@@ -674,7 +684,8 @@ class TestUpdate(unittest.TestCase):
         self.cl.entry.properties = props
 
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
+                            TRAITS)
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])

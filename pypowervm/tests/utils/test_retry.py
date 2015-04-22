@@ -23,6 +23,9 @@ from pypowervm.utils import retry as pvm_retry
 
 called_count = 0
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestRetry(unittest.TestCase):
     """Unit tests for pypowervm.util."""
@@ -63,7 +66,7 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             resp = adpt.Response('reqmethod', 'reqpath',
                                  c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                 'headers')
+                                 'headers', TRAITS)
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -82,7 +85,7 @@ class TestRetry(unittest.TestCase):
             called_count += 1
             resp = adpt.Response('reqmethod', 'reqpath',
                                  c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                 'headers')
+                                 'headers', TRAITS)
             http_exc = pvm_exc.HttpError('msg', resp)
             raise http_exc
 
@@ -138,7 +141,7 @@ class TestRetry(unittest.TestCase):
                 # etag mismatch
                 resp = adpt.Response('reqmethod', 'reqpath',
                                      c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                     'headers')
+                                     'headers', TRAITS)
                 http_exc = pvm_exc.HttpError('msg', resp)
                 raise http_exc
 

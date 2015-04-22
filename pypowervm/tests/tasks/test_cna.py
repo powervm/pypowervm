@@ -30,6 +30,9 @@ import unittest
 VSWITCH_FILE = 'cna_vswitches.txt'
 VNET_FILE = 'fake_virtual_network_feed.txt'
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestCNA(unittest.TestCase):
     """Unit Tests for creating Client Network Adapters."""
@@ -135,7 +138,8 @@ class TestCNA(unittest.TestCase):
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
-        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {},
+                            TRAITS)
         resp.entry = ewrap.EntryWrapper._bld(tag='VirtualNetwork').entry
         mock_adpt.create.return_value = resp
         vnet_resp = cna._find_or_create_vnet(mock_adpt, host_uuid, '2228',
