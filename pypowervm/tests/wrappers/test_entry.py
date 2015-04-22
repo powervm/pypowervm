@@ -666,5 +666,22 @@ class TestUpdate(unittest.TestCase):
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_update_with_get_xag(self, mock_ubp):
+        # Update the entry with the new properties
+        get_href = self.clust_href + "?group=one,three,two"
+        props = {'id': self.clust_uuid, 'links': {'SELF': [get_href]}}
+        self.cl.entry.properties = props
+
+        new_etag = '456'
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp.entry = self.cl.entry
+        mock_ubp.return_value = resp
+        newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
+        mock_ubp.assert_called_with(self.cl, self.clust_etag,
+                                    self.clust_path + '?group=one,three,two')
+        _assert_clusters_equal(self, self.cl, newcl)
+        self.assertEqual(newcl.etag, new_etag)
+
 if __name__ == '__main__':
     unittest.main()

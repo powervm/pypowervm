@@ -659,7 +659,11 @@ class EntryWrapper(Wrapper):
         # adapter.update_by_path expects the path (e.g.
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
-        # No-op if xag is empty/None
+
+        # If the path already contains a xag, then we need to overwrite the
+        # xags passed in as they're not valid.
+        if 'group=' in path:
+            xag = []
         path = adapter.extend_path(path, xag=xag)
         return self.wrap(adapter.update_by_path(self, self.etag, path))
 
