@@ -22,6 +22,9 @@ from pypowervm.tasks import vterm
 
 import unittest
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestVterm(unittest.TestCase):
     """Unit Tests for Close LPAR vterm."""
@@ -31,7 +34,7 @@ class TestVterm(unittest.TestCase):
     def test_close_vterm(self, mock_adpt, mock_run_job):
         """Performs a close LPAR vterm test."""
         mock_resp = mock.MagicMock()
-        mock_resp.entry = ent.Entry({}, ent.Element('Dummy'))
+        mock_resp.entry = ent.Entry({}, ent.Element('Dummy', TRAITS), TRAITS)
         mock_adpt = mock.MagicMock()
         mock_adpt.read.return_value = mock_resp
         vterm.close_vterm(mock_adpt, '12345')

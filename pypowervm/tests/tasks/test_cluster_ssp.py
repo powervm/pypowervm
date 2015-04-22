@@ -28,6 +28,9 @@ import pypowervm.wrappers.storage as stor
 
 CREATE_CLUSTER = 'cluster_create_job_template.txt'
 
+# Default traits for most tests
+TRAITS = None
+
 
 class TestClusterSSP(unittest.TestCase):
 
@@ -44,7 +47,7 @@ class TestClusterSSP(unittest.TestCase):
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):
             self.assertEqual(entry_type, clust.Cluster.schema_type)
-            job = jwrap.Job.wrap(ent.Entry({}, job_el))
+            job = jwrap.Job.wrap(ent.Entry({}, job_el, TRAITS))
             param_vals = job._get_vals(u.xpath(
                 'JobParameters', 'JobParameter', 'ParameterValue'))
             self.assertEqual(
