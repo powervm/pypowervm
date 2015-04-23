@@ -74,6 +74,11 @@ class APITraits(object):
         # complexity.
         return self.session.use_file_auth
 
+    @property
+    def dynamic_pvid(self):
+        """Indicates whether a CNA can dynamically modify its PVID."""
+        return not self._is_hmc()
+
     def _is_hmc(self):
         """Internal attribute to determine if HMC.  Used for trait behavior.
 

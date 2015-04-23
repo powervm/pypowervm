@@ -30,3 +30,4 @@ class TestTraits(unittest.TestCase):
         self.assertFalse(t._is_hmc())
         self.assertTrue(t.local_api)
         self.assertFalse(t.has_lpar_profiles)
+        self.assertTrue(t.dynamic_pvid)
