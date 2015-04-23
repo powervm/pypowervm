@@ -156,6 +156,7 @@ class Session(object):
         self._logged_in = False
         self._relogin_unsafe = False
         self._sessToken = None
+        self.mc_type = None
         self.schema_version = None
         self._eventlistener = None
         self._logon()
@@ -445,6 +446,7 @@ class Session(object):
                    else self._get_auth_tok(root, resp))
             self._sessToken = tok
             self._logged_in = True
+            self.mc_type = resp.headers.get('X-MC-Type', 'HMC')
             self.schema_version = root.get('schemaVersion')
 
     @staticmethod
