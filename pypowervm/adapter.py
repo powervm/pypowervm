@@ -156,9 +156,16 @@ class Session(object):
         self._logged_in = False
         self._relogin_unsafe = False
         self._sessToken = None
+        self.mc_type = None
         self.schema_version = None
         self._eventlistener = None
         self._logon()
+
+        # HMC should never use file auth.  This should never happen - if it
+        # does, it indicates that we got a bad Logon response, or processed it
+        # incorrectly.
+        if self.use_file_auth and self.mc_type == 'HMC':
+            raise pvmex.Error("Local authentication not supported on HMC.")
 
         # Set the API traits after logon.
         self.traits = pvm_traits.APITraits(self)
@@ -445,6 +452,7 @@ class Session(object):
                    else self._get_auth_tok(root, resp))
             self._sessToken = tok
             self._logged_in = True
+            self.mc_type = resp.headers.get('X-MC-Type', 'HMC')
             self.schema_version = root.get('schemaVersion')
 
     @staticmethod
