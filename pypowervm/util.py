@@ -31,6 +31,7 @@ from pyasn1.codec.der import decoder as der_decoder
 from pyasn1_modules import rfc2459
 
 from pypowervm import const
+from pypowervm.i18n import _
 
 # Set up logging
 LOG = logging.getLogger(__name__)
@@ -68,6 +69,70 @@ def dice_href(href, include_scheme_netloc=False, include_query=True,
     if include_fragment and parsed.fragment:
         ret += '#' + parsed.fragment
     return ret
+
+
+def check_and_apply_xag(path, xag):
+    """Validate extended attribute groups and produce the correct path.
+
+    If the existing path already has a group=* other than None, we use it.
+    However, if there is a proposed xag - including [] - it must match the
+    existing xag, or ValueError is raised.
+
+    Otherwise, we construct the group=* query param according to the
+    proposed xag list, as follows:
+
+    If xag is None, use group=None.
+    If xag is [] (the empty list), omit the group= query param entirely.
+    Otherwise the group= value is a sorted, comma-separated string of the
+    xag list.  E.g. for xag=['b', 'c', 'a'], yield 'group=a,b,c'.
+
+    :param path: Input path or href, which may or may not contain a query
+                 string, which may or may not contain a group=*.  (Multiple
+                 group=* not handled.)  Values in the group=* must be
+                 alpha sorted.
+    :param xag: Proposed list of extended attribute values to be included
+                in the query string of the resulting path.
+    :return: path, with at most one group=* in the query string.  That
+             group= query param's value will be alpha sorted.
+    """
+    parsed = urlparse.urlsplit(path)
+    # parse_qs yields { 'key': ['value'], ... }
+    qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
+    path_xag = qparms.pop('group', ['None'])[0]
+    if xag is None:
+        arg_xag = 'None'
+    else:
+        xag.sort()
+        arg_xag = ','.join(map(str, xag))  # may be ''
+
+    if path_xag == 'None':
+        # No existing xag.  (Treat existing 'group=None' as if not there.)
+        # Use whatever was proposed (which may be implicit group=None or
+        # may be nothing).
+        path_xag = arg_xag
+    elif arg_xag != 'None':
+        # There was xag in the path already, as well as proposed xag (maybe
+        # empty).  Previous xag must match proposed xag if specified
+        # (including empty).
+        if path_xag != arg_xag:
+            raise ValueError(_("Proposed extended attribute group "
+                               "'%(arg_xag)s' doesn't match existing "
+                               "extended attribute group '%(path_xag)s'") %
+                             dict(arg_xag=arg_xag, path_xag=path_xag))
+    # else proposed xag is None, so use whatever was already in the path,
+
+    # Whatever we decided on, add it back to the query params if nonempty.
+    if path_xag != '':
+        qparms['group'] = [path_xag]
+
+    # Rebuild the querystring.  Honor multiples (e.g. foo=bar&foo=baz).
+    # (We didn't expect/handle multiple group=*, but need to support it in
+    # other keys.)
+    qstr = '&'.join(['%s=%s' % (key, val)
+                     for key, vals in qparms.items()
+                     for val in vals])
+    return urlparse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path,
+                                qstr, parsed.fragment))
 
 
 def determine_paths(resp):
