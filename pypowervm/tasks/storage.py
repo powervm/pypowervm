@@ -16,7 +16,6 @@
 
 import logging
 import math
-import os
 import shutil
 
 from concurrent import futures
@@ -219,12 +218,12 @@ def _upload_stream(adapter, vio_file, d_stream):
             # coordinate.  But the vio_file's 'asset_file' tells us where
             # to write the stream to.
 
-            with futures.ThreadPoolExecutor(max_workers=2) as th:
-                # A reader to tell the API we have nothing to upload
-                class EmptyReader(object):
-                    def read(self, size):
-                        return None
+            # A reader to tell the API we have nothing to upload
+            class EmptyReader(object):
+                def read(self, size):
+                    return None
 
+            with futures.ThreadPoolExecutor(max_workers=2) as th:
                 # The upload file is a blocking call (won't return until pipe
                 # is fully written to), which is why we put it in another
                 # thread.
@@ -232,18 +231,25 @@ def _upload_stream(adapter, vio_file, d_stream):
                                      vio_file.element, EmptyReader())
 
                 # Create a function that streams to the FIFO pipe
-                fd = os.open(vio_file.asset_file, os.O_NONBLOCK | os.O_APPEND)
-                out_stream = os.fdopen(fd)
-                copy_f = th.submit(shutil.copyfileobj, d_stream, out_stream)
+                out_stream = open(vio_file.asset_file, 'a+b', 0)
 
-            # Make sure we call the results.  This is just to make sure it
-            # doesn't have exceptions
+                def copy_func(in_stream, out_stream):
+                    shutil.copyfileobj(in_stream, out_stream)
+
+                    # The close indicates to the other side we are done.  Will
+                    # force the upload_file to return.
+                    out_stream.close()
+                copy_f = th.submit(copy_func, d_stream, out_stream)
+
             try:
+                # Make sure we call the results.  This is just to make sure it
+                # doesn't have exceptions
                 for io_future in futures.as_completed([upload_f, copy_f]):
                     io_future.result()
             finally:
                 # If the upload failed, then make sure we close the stream.
                 # This will ensure that if one of the threads fail, both fail.
+                # Note that if it is already closed, this no-ops.
                 out_stream.close()
         else:
             # Upload the file directly to the REST API server.
