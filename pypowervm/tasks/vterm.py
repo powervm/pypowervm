@@ -37,8 +37,8 @@ def close_vterm(adapter, lpar_uuid):
     """
     # Close vterm on the lpar
     resp = adapter.read(lpar.LPAR.schema_type, lpar_uuid,
-                        suffixType=c.SUFFIX_TYPE_DO,
-                        suffixParm=_SUFFIX_PARM_CLOSE_VTERM)
+                        suffix_type=c.SUFFIX_TYPE_DO,
+                        suffix_parm=_SUFFIX_PARM_CLOSE_VTERM)
     job_wrapper = job.Job.wrap(resp.entry)
 
     try:
