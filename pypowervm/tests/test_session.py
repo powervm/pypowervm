@@ -126,9 +126,16 @@ class TestAdapter(unittest.TestCase):
                          '9oUGd6Bn3fNDLiEwaBR4WICftVxUFj-tfWMOyZZY2hWEtN2K8ScX'
                          'vyFMe-w3SleyRbGnlR34jb0A99s=', result._sessToken)
         self.assertEqual(1, mock_validate_cert.call_count)
+        # No X-MC-Type header => 'HMC' is assumed.
+        self.assertEqual('HMC', result.mc_type)
 
-        # Now test file-based authentication
+        # Now test file-based authentication and X-MC-Type
         my_response._content = _logon_response_file
+
+        # Local/HMC is bad
+        self.assertRaises(pvmex.Error, adp.Session)
+
+        my_response.headers['X-MC-Type'] = 'PVM'
         result = adp.Session()
 
         # Verify the result.
@@ -137,3 +144,4 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('file-based-auth-token', result._sessToken)
         # validate_certificate should not have been called again
         self.assertEqual(1, mock_validate_cert.call_count)
+        self.assertEqual('PVM', result.mc_type)

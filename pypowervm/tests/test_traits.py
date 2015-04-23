@@ -25,9 +25,32 @@ class TestTraits(unittest.TestCase):
 
     @mock.patch('pypowervm.adapter.Session')
     def test_traits(self, mock_sess):
+        # PVM MC, local auth
+        mock_sess.mc_type = 'PVM'
+        mock_sess.use_file_auth = True
         t = traits.APITraits(mock_sess)
         self.assertFalse(t.vnet_aware)
-        self.assertFalse(t._is_hmc())
+        self.assertFalse(t._is_hmc)
         self.assertTrue(t.local_api)
         self.assertFalse(t.has_lpar_profiles)
         self.assertTrue(t.dynamic_pvid)
+
+        # PVM MC, remote auth
+        mock_sess.mc_type = 'PVM'
+        mock_sess.use_file_auth = False
+        t = traits.APITraits(mock_sess)
+        self.assertFalse(t.vnet_aware)
+        self.assertFalse(t._is_hmc)
+        self.assertFalse(t.local_api)
+        self.assertFalse(t.has_lpar_profiles)
+        self.assertTrue(t.dynamic_pvid)
+
+        # HMC, remote auth
+        mock_sess.mc_type = 'HMC'
+        mock_sess.use_file_auth = False
+        t = traits.APITraits(mock_sess)
+        self.assertTrue(t.vnet_aware)
+        self.assertTrue(t._is_hmc)
+        self.assertFalse(t.local_api)
+        self.assertTrue(t.has_lpar_profiles)
+        self.assertFalse(t.dynamic_pvid)
