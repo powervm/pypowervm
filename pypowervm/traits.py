@@ -34,6 +34,7 @@ class APITraits(object):
 
     def __init__(self, session):
         self.session = session
+        self._is_hmc = self.session.mc_type == 'HMC'
 
     @property
     def vnet_aware(self):
@@ -48,7 +49,7 @@ class APITraits(object):
         passed in on NetworkBridge or Client Network Adapter creation, or
         False if the API should directly work with VLANs and Virtual Switches.
         """
-        return self._is_hmc()
+        return self._is_hmc
 
     @property
     def has_lpar_profiles(self):
@@ -56,7 +57,7 @@ class APITraits(object):
 
         This trait will return True if LPAR profiles are supported.
         """
-        return self._is_hmc()
+        return self._is_hmc
 
     @property
     def local_api(self):
@@ -77,14 +78,4 @@ class APITraits(object):
     @property
     def dynamic_pvid(self):
         """Indicates whether a CNA can dynamically modify its PVID."""
-        return not self._is_hmc()
-
-    def _is_hmc(self):
-        """Internal attribute to determine if HMC.  Used for trait behavior.
-
-        Not for external use.
-        """
-        if not hasattr(self, 'is_hmc'):
-            # TODO(IBM) Determine this off of future data from the API.
-            self.is_hmc = False
-        return self.is_hmc
+        return not self._is_hmc
