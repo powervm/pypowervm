@@ -79,3 +79,8 @@ class APITraits(object):
     def dynamic_pvid(self):
         """Indicates whether a CNA can dynamically modify its PVID."""
         return not self._is_hmc
+
+    @property
+    def rmdev_job_available(self):
+        """Indicates whether or not the Job API supports RMDev."""
+        return not self._is_hmc
