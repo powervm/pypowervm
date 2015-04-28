@@ -54,6 +54,7 @@ LOGONREQUEST_TEMPLATE_FILE = _LOGONREQUEST_TEMPLATE_TEMPLATE % dict(
 ATOM_NS = 'http://www.w3.org/2005/Atom'
 XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
 WEB_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/'
+PCM_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/'
 UOM_BASE_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/uom/mc'
 UOM_NS = UOM_BASE_NS + '/2012_10/'
 
