@@ -1,0 +1,56 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystemPcmPreference'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '2380', 'x-powered-by': 'Servlet/3.0', 'x-hmc-schema-version': 'V1_2_0', 'last-modified': 'Wed, 29 Apr 2015 04:07:37 GMT', 'etag': '-215935973', 'date': 'Wed, 29 Apr 2015 04:07:36 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>98498bed-c78a-3a4f-b90a-4b715418fcb6</id>
+    <title type="text">Performance and Capacity Monitoring Preferences</title>
+    <subtitle type="text"/>
+    <link rel="self" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/preferences?group=None"/>
+    <generator uri="IBM Power Systems Management Console" version="1"/>
+    <entry>
+        <id>ac7580fa-861d-4ab8-b0d1-351267684aa5</id>
+        <updated>2015-04-29T03:35:07.107Z</updated>
+        <title type="text">Performance and Capacity Monitoring Preferences</title>
+        <published>2015-04-29T03:35:07.107Z</published>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <content type="application/xml">
+            <ManagedSystemPcmPreference:ManagedSystemPcmPreference xmlns:ManagedSystemPcmPreference="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>98498bed-c78a-3a4f-b90a-4b715418fcb6</AtomID>
+            <AtomCreated>1430278507106</AtomCreated>
+        </Atom>
+    </Metadata>
+    <SystemName kb="ROR" kxe="false">dev-system-6</SystemName>
+    <MachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kb="ROR" kxe="false">8247</MachineType>
+        <Model kb="ROR" kxe="false">22L</Model>
+        <SerialNumber kb="ROR" kxe="false">1111111</SerialNumber>
+    </MachineTypeModelSerialNumber>
+    <LongTermMonitorEnabled kb="UOD" kxe="false">false</LongTermMonitorEnabled>
+    <AggregationEnabled kb="UOD" kxe="false">false</AggregationEnabled>
+    <ShortTermMonitorEnabled kb="UOD" kxe="false">false</ShortTermMonitorEnabled>
+    <ComputeLTMEnabled ksv="V1_1_0" kb="UOD" kxe="false">false</ComputeLTMEnabled>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6" rel="related"/>
+</ManagedSystemPcmPreference:ManagedSystemPcmPreference>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
