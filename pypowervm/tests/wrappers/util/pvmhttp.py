@@ -204,8 +204,8 @@ class PVMResp(PVMFile):
         disk_file.close()
 
 
-def load_pvm_resp(file_name):
-    return PVMResp(file_name)
+def load_pvm_resp(file_name, traits=None):
+    return PVMResp(file_name, traits=traits)
 
 
 def _read_section(section, file_name, resp_file):
