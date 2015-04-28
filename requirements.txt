@@ -5,6 +5,7 @@ oslo.utils>=1.1.0
 pbr>0.5.21,<1.0
 pyasn1_modules>=0.0.5
 pyasn1>=0.0.12a
+pytz
 requests>=2.3.0
 six>=1.7.0
 futures
