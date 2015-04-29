@@ -164,50 +164,81 @@ class TestUtil(unittest.TestCase):
                                         include_fragment=False),
                          'https://server:1234/rest/api/uom/Obj/UUID')
 
-    def test_get_req_path_uuid(self):
+    def test_get_req_path_uuid_and_is_instance_path(self):
         # Fail: no '/'
         path = dummyuuid1
         self.assertIsNone(util.get_req_path_uuid(path))
+        self.assertRaises(IndexError, util.is_instance_path, path)
         path = '/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
+        self.assertTrue(util.is_instance_path(path))
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
+        self.assertTrue(util.is_instance_path(path))
         # Fail: last path element is not a UUID
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1 + '/Child'
         self.assertIsNone(util.get_req_path_uuid(path))
+        self.assertFalse(util.is_instance_path(path))
         # Fail: last path element is not quiiiite a UUID
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1[1:]
         self.assertIsNone(util.get_req_path_uuid(path))
+        self.assertFalse(util.is_instance_path(path))
         # Ignore query/fragment
         path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '?group=One,Two#frag')
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
+        self.assertTrue(util.is_instance_path(path))
         # Fail: last path element (having removed query/fragment) is not a UUID
         path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '/Child?group=One,Two#frag')
         self.assertIsNone(util.get_req_path_uuid(path))
+        self.assertFalse(util.is_instance_path(path))
         # Default case conversion
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1.upper()
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path))
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(
             path, preserve_case=False))
+        self.assertTrue(util.is_instance_path(path))
         # Force no case conversion
-        path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1.upper()
         self.assertEqual(dummyuuid1.upper(), util.get_req_path_uuid(
             path, preserve_case=True))
         # Child URI gets child UUID by default
         path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '/Child/' + dummyuuid2)
         self.assertEqual(dummyuuid2, util.get_req_path_uuid(path))
+        self.assertTrue(util.is_instance_path(path))
         # Get root UUID from child URI
         path = ('https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
                 '/Child/' + dummyuuid2)
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
+        self.assertTrue(util.is_instance_path(path))
         # root=True redundant on a root path
         path = '/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
+
+    def test_extend_basepath(self):
+        ext = '/foo'
+        # Various forms without query params or fragments
+        for path in (dummyuuid1, '/' + dummyuuid1,
+                     'https://server:1234/rest/api/uom/Obj/' + dummyuuid1,
+                     'https://server:1234/rest/api/uom/Obj/' + dummyuuid1 +
+                     '/Child'):
+            self.assertEqual(path + ext, util.extend_basepath(path, ext))
+
+        basepath = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
+        qp = '?foo=bar,baz&blah=123'
+        frag = '#frag'
+        # Query params
+        self.assertEqual(basepath + ext + qp,
+                         util.extend_basepath(basepath + qp, ext))
+        # Fragment
+        self.assertEqual(basepath + ext + frag,
+                         util.extend_basepath(basepath + frag, ext))
+        # Query params & fragment
+        self.assertEqual(basepath + ext + qp + frag,
+                         util.extend_basepath(basepath + qp + frag, ext))
 
     # Tests for check_and_apply_xag covered by
     # test_adapter.TestAdapter.test_extended_path

@@ -657,10 +657,8 @@ class Adapter(object):
         resp._unmarshal_atom()
         if resp_to_cache:
             paths = util.determine_paths(resp)
-            # we're creating, so what we send is the full entity
-            # so it should be safe to strip off xag (no xag = all)
-            new_path = (resp.reqpath.split('?', 1)[0] + '/' +
-                        resp.entry.properties['id'])
+            new_path = util.extend_basepath(
+                resp.reqpath, '/' + resp.entry.uuid)
             self._cache.set(new_path, paths, resp_to_cache)
             # need to invalidate the feeds containing this entry
             feed_paths = self._cache.get_feed_paths(new_path)
@@ -1137,9 +1135,9 @@ class Adapter(object):
         path = basepath
         if suffix_type:
             # operations, do, jobs, cancel, quick, search, ${search-string}
-            path += '/' + suffix_type
+            path = util.extend_basepath(path, '/' + suffix_type)
             if suffix_parm:
-                path += '/' + suffix_parm
+                path = util.extend_basepath(path, '/' + suffix_parm)
         if detail:
             sep = '&' if '?' in path else '?'
             path += sep + 'detail=' + detail
@@ -1308,6 +1306,10 @@ class Response(object):
     def etag(self):
         return self.headers.get('etag', None)
 
+    @property
+    def atom(self):
+        return self.feed if self.feed else self.entry
+
     def _unmarshal_atom(self):
         err_reason = None
         if self.body:
@@ -1327,8 +1329,7 @@ class Response(object):
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
             if self.status == c.HTTPStatus.OK_NO_CONTENT:
-                if re.match(c.UUID_REGEX,
-                            self.reqpath.split('?')[0].rsplit('/', 1)[1]):
+                if util.is_instance_path(self.reqpath):
                     err_reason = 'unexpected HTTP 204 for request'
                 else:
                     # PowerVM returns HTTP 204 (No Content) when you

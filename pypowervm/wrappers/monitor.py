@@ -39,11 +39,9 @@ _AGG_ENABLED = 'AggregationEnabled'
 _STM_ENABLED = 'ShortTermMonitorEnabled'
 _COMP_LTM_ENABLED = 'ComputeLTMEnabled'
 
-_ID = 'id'
 _UPDATED = 'updated'
 _TITLE = 'title'
 _PUBLISHED = 'published'
-_LINK = 'link'
 _CATEGORY = 'category'
 
 _DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -125,7 +123,7 @@ class MonitorMetrics(object):
 
     @property
     def id(self):
-        return self.entry.properties.get(_ID)
+        return self.entry.uuid
 
     @property
     def published(self):
@@ -153,7 +151,7 @@ class MonitorMetrics(object):
 
     @property
     def link(self):
-        return self.entry.properties.get(_LINK)
+        return self.entry.links[None][0]
 
 
 class LongTermMonitorMetrics(MonitorMetrics):

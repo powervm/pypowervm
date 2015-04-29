@@ -135,22 +135,48 @@ def check_and_apply_xag(path, xag):
                                 qstr, parsed.fragment))
 
 
+def extend_basepath(href, add):
+    """Extends the base path of an href, accounting for querystring/fragment.
+
+    For example, extend_basepath('http://server:1234/foo?a=b&c=d#frag', '/bar')
+    => 'http://server:1234/foo/bar?a=b&c=d#frag'
+
+    :param href: Path or href to augment.  Scheme, netloc, query string, and
+                 fragment are allowed but not required.
+    :param add: String to add onto the base path of the href.  Must not contain
+                unescaped special characters such as '?', '&', '#'.
+    :return: The augmented href.
+    """
+    parsed = urlparse.urlsplit(href)
+    basepath = parsed.path + add
+    return urlparse.urlunsplit((parsed.scheme, parsed.netloc, basepath,
+                                parsed.query, parsed.fragment))
+
+
+def is_instance_path(href):
+    """Does the path or href represent an instance (end with UUID)?
+
+    :param href: Path or href to check.  Scheme, netloc, query string, and
+                 fragment are allowed but not required.
+    :return: True if href's path ends with a UUID, indicating that it
+             represents an instance (as opposed to a Feed or some special URI
+             such as quick or search).
+    """
+    path = dice_href(href, include_scheme_netloc=False, include_query=False,
+                     include_fragment=False)
+
+    return re.match(const.UUID_REGEX, path.rsplit('/', 1)[1])
+
+
 def determine_paths(resp):
     paths = []
-    if resp.feed:
-        links = resp.feed.properties.get('links')
-    else:
-        links = resp.entry.properties.get('links')
-    if links:
-        self_links = links.get('SELF')
-        if self_links:
-            for lnk in self_links:
-                paths.append(urlparse.urlparse(lnk).path)
+    for lnk in resp.atom.links.get('SELF', []):
+        paths.append(urlparse.urlparse(lnk).path)
     if not paths:
         if resp.reqmethod == 'PUT':
             # a PUT's reqpath will be the feed, to which we need to add
             # the new entry id (which didn't exist before the PUT)
-            paths = [resp.reqpath + '/' + resp.entry.properties['id']]
+            paths = [extend_basepath(resp.reqpath, '/' + resp.entry.uuid)]
         else:
             paths = [resp.reqpath]
     return paths
@@ -257,23 +283,12 @@ def get_req_path_uuid(path, preserve_case=False, root=False):
     return ret
 
 
-# TODO(IBM): Use urlparse.parse_qs()
 def get_uuid_xag_from_path(path):
-    if '/' in path:
-        (feed_path, uuid) = path.rsplit('/', 1)
-        match_str = '(' + const.UUID_REGEX + ')' + '(.*)'
-        matched_uuid = re.match(match_str, uuid)
-        if matched_uuid:
-            (uuid, parms) = matched_uuid.group(1, 2)
-            xag_search = re.search('([&?]group=)(.*)', parms)
-            if xag_search:
-                xag_str = xag_search.group(2)
-                if '&' in xag_str:
-                    xag_str = xag_str.split('&')[0]
-            else:
-                xag_str = ''
-            return uuid.lower(), xag_str
-    return None, None
+    uuid = get_req_path_uuid(path)
+    parsed = urlparse.urlsplit(path)
+    # parse_qs yields { 'key': ['value'], ... }
+    qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
+    return uuid.lower(), qparms.get('group', [None])[0]
 
 
 def convert_bytes_to_gb(bytes_, low_value=.0001, dp=None):

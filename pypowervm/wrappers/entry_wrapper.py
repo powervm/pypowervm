@@ -28,8 +28,6 @@ import six
 
 LOG = logging.getLogger(__name__)
 
-_UUID = 'id'
-
 
 @six.add_metaclass(abc.ABCMeta)
 class Wrapper(object):
@@ -695,11 +693,7 @@ class EntryWrapper(Wrapper):
         Assumes that the entity has a link element that references self.  If
         it does not, returns None.
         """
-        val = self.entry.properties.get('links', {}).get('SELF', None)
-        if val is not None and len(val) > 0:
-            return val[0]
-        else:
-            return None
+        return self.entry.self_link
 
     @property
     def related_href(self):
@@ -719,11 +713,7 @@ class EntryWrapper(Wrapper):
         if self.entry is None:
             return None
 
-        try:
-            uuid = self.entry.properties[_UUID]
-            return uuid
-        except KeyError:
-            return None
+        return self.entry.uuid
 
     @property
     def _type_and_uuid(self):

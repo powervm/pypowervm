@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 import functools
 import re
@@ -61,10 +62,59 @@ class XAG(object):
             setattr(self, key, self._Handler(val))
 
 
-class Feed(object):
+class Atom(object):
+    def __init__(self, properties):
+        self.properties = properties
+
+    @property
+    def uuid(self):
+        try:
+            return self.properties['id']
+        except KeyError:
+            return None
+
+    @property
+    def links(self):
+        """Get the rel-keyed dict of <link/>s for this Atom, or {} if none."""
+        return self.properties.get('links', {})
+
+    @property
+    def self_link(self):
+        """Get the *first* SELF link, or None if none exists."""
+        return self.links.get('SELF', [None])[0]
+
+    @classmethod
+    def _process_props(cls, el, props):
+        pat = '{%s}' % const.ATOM_NS
+        if re.match(pat, el.tag):
+            # strip off atom namespace qualification for easier access
+            param_name = el.tag[el.tag.index('}') + 1:]
+        else:
+            # leave qualified anything that is not in the atom
+            # namespace
+            param_name = el.tag
+        if param_name == 'link':
+            # properties['links'][REL] = [href, ...]
+            # Note that rel may (legally) be None
+            rel = el.get('rel')
+            if rel:
+                rel = rel.upper()
+            href = el.get('href')
+            if 'links' not in props:
+                props['links'] = collections.defaultdict(list)
+            props['links'][rel].append(href)
+        elif param_name == 'category':
+            props[param_name] = el.get('term')
+        elif param_name == '{%s}etag' % const.UOM_NS:
+            props['etag'] = el.text
+        elif el.text:
+            props[param_name] = el.text
+
+
+class Feed(Atom):
     """Represents an Atom Feed returned from PowerVM."""
     def __init__(self, properties, entries):
-        self.properties = properties
+        super(Feed, self).__init__(properties)
         self.entries = entries
 
     def findentries(self, subelem, text):
@@ -85,26 +135,18 @@ class Feed(object):
         :param resp: The Response from which this Feed was parsed.
         :return: a new Feed object representing the feedelem parameter.
         """
-        feedprops = {}
-        entries = []
+        ret = cls({}, [])
         for child in list(feedelem):
             if child.tag == str(etree.QName(const.ATOM_NS, 'entry')):
-                entries.append(Entry.unmarshal_atom_entry(child, resp))
+                # NB: The use of ret.self_link here relies on <entry>s being
+                # AFTER the self link in the <feed>.  (They are in fact last.)
+                ret.entries.append(Entry.unmarshal_atom_entry(child, resp))
             elif not list(child):
-                pat = '{%s}' % const.ATOM_NS
-                if re.match(pat, child.tag):
-                    # strip off atom namespace qualification for easier access
-                    param_name = child.tag[child.tag.index('}') + 1:]
-                else:
-                    # leave qualified anything that is not in the atom
-                    # namespace
-                    param_name = child.tag
-                # TODO(IBM): handle links?
-                feedprops[param_name] = child.text
-        return cls(feedprops, entries)
+                cls._process_props(child, ret.properties)
+        return ret
 
 
-class Entry(object):
+class Entry(Atom):
     """Represents an Atom Entry returned by the PowerVM API."""
     def __init__(self, properties, element, adapter):
         """Create an Entry from an etree.Element representing a PowerVM object.
@@ -116,7 +158,7 @@ class Entry(object):
         :param adapter: pypowervm.adapter.Adapter through which the element was
                         fetched, and/or through which it should be updated.
         """
-        self.properties = properties
+        super(Entry, self).__init__(properties)
         self.element = Element.wrapelement(element, adapter)
 
     def __deepcopy__(self, memo=None):
@@ -148,29 +190,7 @@ class Entry(object):
                 # PowerVM API only has one element per entry
                 element = child[0]
             elif not list(child):
-                pat = '{%s}' % const.ATOM_NS
-                if re.match(pat, child.tag):
-                    # strip off atom namespace qualification for easier access
-                    param_name = child.tag[child.tag.index('}') + 1:]
-                else:
-                    # leave qualified anything that is not in the atom
-                    # namespace
-                    param_name = child.tag
-                if param_name == 'link':
-                    entryprops[param_name] = child.get('href')
-                    rel = child.get('rel')
-                    if rel:
-                        if 'links' not in entryprops:
-                            entryprops['links'] = {}
-                        if rel not in entryprops['links']:
-                            entryprops['links'][rel] = []
-                        entryprops['links'][rel].append(child.get('href'))
-                elif param_name == 'category':
-                    entryprops[param_name] = child.get('term')
-                elif param_name == '{%s}etag' % const.UOM_NS:
-                    entryprops['etag'] = child.text
-                elif child.text:
-                    entryprops[param_name] = child.text
+                cls._process_props(child, entryprops)
         return cls(entryprops, element, resp.adapter)
 
 
