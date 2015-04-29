@@ -1137,6 +1137,7 @@ class Adapter(object):
         path = basepath
         if suffix_type:
             # operations, do, jobs, cancel, quick, search, ${search-string}
+            # TODO(IBM): This will happily append after querystring/fragment
             path += '/' + suffix_type
             if suffix_parm:
                 path += '/' + suffix_parm
@@ -1327,8 +1328,7 @@ class Response(object):
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
             if self.status == c.HTTPStatus.OK_NO_CONTENT:
-                if re.match(c.UUID_REGEX,
-                            self.reqpath.split('?')[0].rsplit('/', 1)[1]):
+                if util.is_instance_path(self.reqpath):
                     err_reason = 'unexpected HTTP 204 for request'
                 else:
                     # PowerVM returns HTTP 204 (No Content) when you
