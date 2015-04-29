@@ -19,6 +19,7 @@ import mock
 import pypowervm.entities as ent
 from pypowervm import exceptions as pexc
 from pypowervm.tasks import power
+from pypowervm.wrappers import base_partition as pvm_bp
 
 import unittest
 
@@ -54,7 +55,8 @@ class TestPower(unittest.TestCase):
         mock_job_p.reset_mock()
 
         # Try a power off when the RMC state is active
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
+        rmc_active = pvm_bp.RMCState.ACTIVE
+        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
         power._power_on_off(self.mock_adpt, mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
@@ -83,7 +85,8 @@ class TestPower(unittest.TestCase):
     def test_power_off_timeout_retry(self, mock_lpar, mock_job_p,
                                      mock_run_job):
         """Validate that when first power off times out, re-run."""
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
+        rmc_active = pvm_bp.RMCState.ACTIVE
+        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
         mock_run_job.side_effect = pexc.JobRequestTimedOut(
             operation_name='PowerOff', seconds=60)
 
@@ -102,7 +105,8 @@ class TestPower(unittest.TestCase):
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_off_job_failure(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job request failure."""
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
+        rmc_active = pvm_bp.RMCState.ACTIVE
+        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOff', operation_name='HSCL0DB4')
 
@@ -120,7 +124,8 @@ class TestPower(unittest.TestCase):
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_off_sysoff(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job when system is already off."""
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
+        rmc_active = pvm_bp.RMCState.ACTIVE
+        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOff', operation_name='HSCL1558')
 
@@ -135,7 +140,8 @@ class TestPower(unittest.TestCase):
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_on_syson(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power on job when system is already on."""
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', 'active']
+        rmc_active = pvm_bp.RMCState.ACTIVE
+        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOn', operation_name='HSCL3681')
 

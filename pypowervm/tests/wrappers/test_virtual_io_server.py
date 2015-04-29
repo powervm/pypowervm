@@ -39,12 +39,6 @@ class TestVIOSWrapper(twrap.TestWrapper):
     def test_license_accept(self):
         self.assertTrue(self.dwrap.is_license_accepted)
 
-    def test_is_running(self):
-        self.assertTrue(self.dwrap.is_running)
-
-    def test_is_rmc_active(self):
-        self.assertTrue(self.dwrap.is_rmc_active)
-
     def test_hdisk_reserve_policy_found(self):
         # Most are NoReserve; look for the only one that's SinglePath to make
         # sure we're actually searching rather than picking first/last/random

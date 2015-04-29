@@ -143,10 +143,9 @@ class TestLogicalPartition(unittest.TestCase):
             "_get_val_str for BogusName ", value, expected_value)
 
     def test_get_state(self):
-        self.call_simple_getter("state", "not activated", None)
-        self.call_simple_getter("is_running", False, False)
-        self._shared_wrapper.set_parm_value(bp._BP_STATE, "running")
-        self.call_simple_getter("is_running", True, False)
+        self.call_simple_getter("state", bp.LPARState.NOT_ACTIVATED, None)
+        self._shared_wrapper.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        self.call_simple_getter("state", bp.LPARState.RUNNING, None)
 
     def test_get_name(self):
         self.call_simple_getter("name", SHARED_LPAR_NAME, None)
@@ -155,10 +154,10 @@ class TestLogicalPartition(unittest.TestCase):
         self.call_simple_getter("id", 9, None)
 
     def test_rmc_state(self):
-        self.call_simple_getter("rmc_state", "inactive", None)
-        self.call_simple_getter("is_rmc_active", False, False)
-        self._shared_wrapper.set_parm_value(bp._BP_RMC_STATE, "active")
-        self.call_simple_getter("is_rmc_active", True, False)
+        self.call_simple_getter("rmc_state", bp.RMCState.INACTIVE, None)
+        self._shared_wrapper.set_parm_value(bp._BP_RMC_STATE,
+                                            bp.RMCState.ACTIVE)
+        self.call_simple_getter("rmc_state", bp.RMCState.ACTIVE, None)
 
     def test_avail_priority(self):
         self.call_simple_getter("avail_priority", 127, 0)
@@ -178,11 +177,11 @@ class TestLogicalPartition(unittest.TestCase):
 
     def test_check_dlpar_connectivity(self):
         self.call_simple_getter("check_dlpar_connectivity",
-                                (False, "inactive"), (False, None))
+                                (False, bp.RMCState.INACTIVE), (False, None))
         self._shared_wrapper.capabilities.set_parm_value(
             bp._CAP_DLPAR_MEM_CAPABLE, 'true')
         self.call_simple_getter("check_dlpar_connectivity",
-                                (True, "inactive"), (False, None))
+                                (True, bp.RMCState.INACTIVE), (False, None))
 
     def test_get_operating_system(self):
         self.call_simple_getter(
