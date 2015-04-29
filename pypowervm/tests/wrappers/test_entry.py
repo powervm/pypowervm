@@ -35,6 +35,8 @@ import pypowervm.wrappers.storage as stor
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
+VIOS_FILE = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
+VNETS_FILE = 'pypowervm/tests/tasks/data/nbbr_virtual_network.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -548,7 +550,7 @@ class TestSearch(testtools.TestCase):
 
     def setUp(self):
         super(TestSearch, self).setUp()
-        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.adp = apt.Adapter(self.useFixture(fx.SessionFx()).sess)
 
     def _validate_request(self, path, *feedcontents):
         def validate_request(meth, _path, *args, **kwargs):
@@ -639,36 +641,75 @@ class TestSearch(testtools.TestCase):
         self.assertIsInstance(linux1, lpar.LPAR)
         self.assertEqual('9068B0FB-1CF0-4D23-8A23-31AC87D5F5D2', linux1.uuid)
 
-    @mock.patch('pypowervm.adapter.Adapter._request')
-    def test_child_with_search_key(self, mock_rq):
-        """CHILD search on a class with a search key (uses search API)."""
-        mock_rq.side_effect = self._validate_request(
-            "/rest/api/uom/SomeParent/some_uuid/Cluster/search/"
-            "(ClusterName=='mycluster')?group=None")
-        clust.Cluster.search(self.adp, name='mycluster',
-                             parent_type='SomeParent', parent_uuid='some_uuid')
-
     @mock.patch('pypowervm.adapter.Adapter.read')
     def test_child_no_search_key(self, mock_read):
-        """CHILD search on a class without search key (uses GET-feed-loop)."""
+        """CHILD search with or without a search key (uses GET-feed-loop)."""
         def validate_read(root_type, root_id, child_type, xag):
             # This should be called by _search_by_feed, not by search.
             # Otherwise, we'll get an exception on the arg list.
             self.assertEqual('SomeParent', root_type)
             self.assertEqual('some_uuid', root_id)
-            self.assertEqual('NetworkBridge', child_type)
+            self.assertEqual('Cluster', child_type)
             self.assertIsNone(xag)
             return pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         mock_read.side_effect = validate_read
-        net.NetBridge.search(self.adp, vswitch_id=0, parent_type='SomeParent',
+        clust.Cluster.search(self.adp, id=0, parent_type='SomeParent',
                              parent_uuid='some_uuid')
+        clust.Cluster.search(self.adp, name='mycluster',
+                             parent_type='SomeParent', parent_uuid='some_uuid')
 
     def test_child_bad_args(self):
-        """Specifying parent_type xor parent_uuid is an error."""
-        self.assertRaises(ValueError, net.NetBridge.search, self.adp,
-                          vswitch_id=0, parent_type='SomeParent')
+        """Specifying parent_uuid without parent_type is an error."""
         self.assertRaises(ValueError, net.NetBridge.search, self.adp,
                           vswitch_id=0, parent_uuid='some_uuid')
+
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_search_all_parents(self, mock_read):
+        """Anonymous ROOT for CHILD search."""
+        # We're going to pretend that VSwitch is a CHILD of VirtualIOServer.
+        parent_type = 'VirtualIOServer'
+        child_schema_type = 'VirtualNetwork'
+
+        # Anonymous CHILD search should call GET(ROOT feed), followed by one
+        # GET(CHILD feed) for each ROOT parent.  Choosing a feed file with two
+        # entries.  The following mock_reads are chained in order.
+        def validate_feed_get(root):
+            # Chain to the first entry GET
+            mock_read.side_effect = validate_entry_get1
+            self.assertEqual(parent_type, root)
+            # VIOS_FILE has two <entry>s.
+            return pvmhttp.load_pvm_resp(VIOS_FILE).get_response()
+
+        def validate_entry_get1(root, root_id, child_type, **kwargs):
+            # Chain to the second entry GET
+            mock_read.side_effect = validate_entry_get2
+            self.assertEqual(parent_type, root)
+            self.assertEqual('1300C76F-9814-4A4D-B1F0-5B69352A7DEA', root_id)
+            self.assertEqual(child_schema_type, child_type)
+            entry_resp = pvmhttp.load_pvm_resp(VNETS_FILE).get_response()
+            # Use the first half of the feed, which contains two tagged vlans
+            entry_resp.feed.entries = entry_resp.feed.entries[:4]
+            return entry_resp
+
+        def validate_entry_get2(root, root_id, child_type, **kwargs):
+            self.assertEqual(parent_type, root)
+            self.assertEqual('7DBBE705-E4C4-4458-8223-3EBE07015CA9', root_id)
+            self.assertEqual(child_schema_type, child_type)
+            entry_resp = pvmhttp.load_pvm_resp(VNETS_FILE).get_response()
+            # Use the second half of the feed, which contains two tagged vlans
+            entry_resp.feed.entries = entry_resp.feed.entries[4:]
+            return entry_resp
+
+        # Set up the first mock_read in the chain
+        mock_read.side_effect = validate_feed_get
+
+        # Do the search
+        wraps = net.VNet.search(self.adp, parent_type=parent_type, tagged=True)
+        # Make sure we got the right networks
+        for wrap, expected_vlanid in zip(wraps, (1234, 2, 1001, 1000)):
+            self.assertIsInstance(wrap, net.VNet)
+            self.assertTrue(wrap.tagged)
+            self.assertEqual(expected_vlanid, wrap.vlan)
 
 
 class TestRefresh(testtools.TestCase):

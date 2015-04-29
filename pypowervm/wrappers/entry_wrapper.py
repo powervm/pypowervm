@@ -577,7 +577,8 @@ class EntryWrapper(Wrapper):
         Searches for object(s) of the type indicated by cls having (or not
         having) the key/value indicated by the (single) kwarg.
 
-        Regular expressions and comparators are not supported.
+        Regular expressions, comparators, and logical operators are not
+        supported.
 
         :param cls: A subclass of EntryWrapper.  The wrapper class may define
                     a search_keys member, which is a dictionary mapping a
@@ -599,30 +600,33 @@ class EntryWrapper(Wrapper):
         :param parent_type: If searching for CHILD objects, this parameter must
                             specify the REST schema type of the parent ROOT
                             object.
-        :param parent_uuid: If searching for CHILD objects, this parameter must
-                            specify the UUID of the parent ROOT object.
+        :param parent_uuid: If searching for CHILD objects, this parameter may
+                            specify the UUID of the parent ROOT object.  If
+                            parent_type is specified, but parent_uuid is None,
+                            all parents of the ROOT type will be searched.
+                            This may result in a slow response time.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
                        in cls.search_keys and/or the name of a getter @property
-                       on the EntryWrapper subclass.  The value is the value to
-                       search for.
+                       on the EntryWrapper subclass.  Due to limitations of
+                       the REST API, if specifying xags or searching for a
+                       CHILD, the key must be the name of a getter @property.
+                       The value is the value to match.
         :return: A list of instances of the cls.  The list may be empty
                  (no results were found).  It may contain more than one
                  instance (e.g. for a negated search, or for one where the key
                  does not represent a unique property of the object).
         """
-        # CHILD search is all or nothing.  Both must be str or NoneType.
-        if type(parent_type) != type(parent_uuid):
-            raise ValueError(
-                _('When searching for ROOT types, neither parent_type nor '
-                  'parent_uuid may be specified.  When searching for CHILD '
-                  'types, both must be specified.'))
+        # parent_uuid makes no sense without parent_type
+        if parent_type is None and parent_uuid is not None:
+            raise ValueError(_('Parent UUID specified without parent type.'))
 
         if len(kwargs) != 1:
             raise ValueError(_('The search() method requires exactly one '
                                'key=value argument.'))
         key, val = kwargs.popitem()
         try:
-            if xag is not None:
+            # search API does not support xag or CHILD
+            if xag is not None or parent_type is not None:
                 # Cheater's way to cause _search_by_feed to be invoked
                 raise AttributeError()
             search_key = cls.search_keys[key]
@@ -634,7 +638,8 @@ class EntryWrapper(Wrapper):
         op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
         search_parm = "(%s%s'%s')" % (search_key, op, quote(str(val), safe=''))
-        # Let this throw HttpError if the caller got it wrong
+        # Let this throw HttpError if the caller got it wrong.
+        # Note that this path will only be hit for ROOTs.
         resp = cls._read_parent_or_child(adapter, cls.schema_type, parent_type,
                                          parent_uuid, suffix_type='search',
                                          suffix_parm=search_parm)
@@ -661,11 +666,32 @@ class EntryWrapper(Wrapper):
     @staticmethod
     def _read_parent_or_child(adapter, target_type, parent_type, parent_uuid,
                               **kwargs):
-        if parent_type is not None:
+        if parent_type is None:
+            # ROOT feed search
+            return adapter.read(target_type, **kwargs)
+        if parent_uuid is not None:
+            # CHILD of a specific ROOT
             return adapter.read(parent_type, root_id=parent_uuid,
                                 child_type=target_type, **kwargs)
-        else:
-            return adapter.read(target_type, **kwargs)
+        # Search all ROOTs of the specified type.
+        ret = None
+        # Wishing there was a quick URI to get all UUIDs.
+        # Let EntryWrapper.wrap figure out the wrapper type.  Whatever it
+        # is, the uuid @property is available.
+        for parent in EntryWrapper.wrap(adapter.read(parent_type)):
+            resp = adapter.read(
+                parent_type, root_id=parent.uuid, child_type=target_type,
+                **kwargs)
+            # This is a bit of a cheat.  Technically extending the feed of
+            # a Response doesn't result in a legal Response (the rest of
+            # the metadata won't accurately reflect the feed).  However
+            # this is guaranteed only to be used immediately by wrap() to
+            # extract the Entrys.
+            if ret is None:
+                ret = resp
+            else:
+                ret.feed.entries.extend(resp.feed.entries)
+            return ret
 
     def update(self, xag=None):
         """Performs adapter.update of this wrapper.
