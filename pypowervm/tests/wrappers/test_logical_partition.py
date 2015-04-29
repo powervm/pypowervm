@@ -143,9 +143,9 @@ class TestLogicalPartition(unittest.TestCase):
             "_get_val_str for BogusName ", value, expected_value)
 
     def test_get_state(self):
-        self.call_simple_getter("state", "not activated", None)
+        self.call_simple_getter("state", bp.LPARState.NOT_ACTIVATED, None)
         self.call_simple_getter("is_running", False, False)
-        self._shared_wrapper.set_parm_value(bp._BP_STATE, "running")
+        self._shared_wrapper.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
         self.call_simple_getter("is_running", True, False)
 
     def test_get_name(self):
@@ -155,9 +155,10 @@ class TestLogicalPartition(unittest.TestCase):
         self.call_simple_getter("id", 9, None)
 
     def test_rmc_state(self):
-        self.call_simple_getter("rmc_state", "inactive", None)
+        self.call_simple_getter("rmc_state", bp.RMCState.INACTIVE, None)
         self.call_simple_getter("is_rmc_active", False, False)
-        self._shared_wrapper.set_parm_value(bp._BP_RMC_STATE, "active")
+        self._shared_wrapper.set_parm_value(bp._BP_RMC_STATE,
+                                            bp.RMCState.ACTIVE)
         self.call_simple_getter("is_rmc_active", True, False)
 
     def test_avail_priority(self):

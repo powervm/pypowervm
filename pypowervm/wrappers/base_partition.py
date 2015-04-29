@@ -138,6 +138,27 @@ class DedicatedSharingMode(object):
                   SHARE_IDLE_PROCS_ALWAYS, KEEP_IDLE_PROCS)
 
 
+class LPARState(object):
+    """State of a given LPAR.
+
+    From LogicalPartitionStateEnum.
+    """
+    ERROR = 'error'
+    NOT_ACTIVATED = 'not activated'
+    NOT_AVAILBLE = 'not available'
+    OPEN_FIRMWARE = 'open firmware'
+    RUNNING = 'running'
+    SHUTTING_DOWN = 'shutting down'
+    STARTING = 'starting'
+    MIGRATING_NOT_ACTIVE = 'migrating not active'
+    MIGRATING_RUNNING = 'migrating running'
+    HARDWARE_DISCOVERY = 'hardware discovery'
+    SUSPENDED = 'suspended'
+    SUSPENDING = 'suspending'
+    RESUMING = 'resuming'
+    UNKNOWN = 'Unknown'
+
+
 class LPARType(object):
     """Subset of LogicalPartitionEnvironmentEnum."""
     OS400 = 'OS400'
@@ -158,6 +179,18 @@ class LPARCompat(object):
     POWER8 = 'POWER8'
     ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER7, POWER7_PLUS,
                   POWER8)
+
+
+class RMCState(object):
+    """Various RMC States.
+
+    From ResourceMonitoringControlStateEnum.
+    """
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    NONE = 'none'
+    UNKNOWN = 'unknown'
+    BUSY = 'busy'
 
 
 class BasePartition(ewrap.EntryWrapper):
@@ -194,7 +227,7 @@ class BasePartition(ewrap.EntryWrapper):
 
     @property
     def state(self):
-        """See LogicalPartitionStateEnum.
+        """See LPARState.
 
         e.g. 'not activated', 'running', 'migrating running', etc.
         """
@@ -238,7 +271,7 @@ class BasePartition(ewrap.EntryWrapper):
 
     @property
     def rmc_state(self):
-        """See ResourceMonitoringControlStateEnum.
+        """See RMCState.
 
         e.g. 'active', 'inactive', 'busy', etc.
         """
@@ -246,7 +279,7 @@ class BasePartition(ewrap.EntryWrapper):
 
     @property
     def is_rmc_active(self):
-        return self.rmc_state == 'active'
+        return self.rmc_state == RMCState.ACTIVE
 
     @property
     def avail_priority(self):
