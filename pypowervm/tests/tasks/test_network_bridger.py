@@ -102,7 +102,7 @@ class TestNetworkBridger(testtools.TestCase):
         # Should not fail if fail_if_pvid set to False, but shouldn't call
         # update either.
         net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
-                                   2227)
+                                   '2227')
         self.assertEqual(0, self.adpt.update.call_count)
 
 
@@ -124,12 +124,18 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
 
         # First call, say that we don't support the VLAN (which is true).
         # Second call, fake out that we now do.
-        mock_support_vlan.side_effect = [False, True]
+        # Works in pairs, as there are two VLANs we're working through.
+        mock_support_vlan.side_effect = [False, False, True, True]
 
         # Invoke
-        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 4094)
+        net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                  [4093, 4094])
         self.assertEqual(2, self.adpt.read.call_count)
         self.assertEqual(1, mock_reassign.call_count)
+
+        # Should be called re-assigning 4094 (old) to 4092.  Shouldn't be
+        # 4093 as that is also an additional VLAN.
+        mock_reassign.assert_called_once_with(4094, 4092, mock.ANY)
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_or_create_vnet')
@@ -336,12 +342,18 @@ class TestNetworkBridgerTA(TestNetworkBridger):
 
         # First call, say that we don't support the VLAN (which is true).
         # Second call, fake out that we now do.
-        mock_support_vlan.side_effect = [False, True]
+        # Need pairs, as there are two VLANs we are passing in.
+        mock_support_vlan.side_effect = [False, False, True, True]
 
         # Invoke
-        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 4094)
+        net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                  ['4093', 4094])
         self.assertEqual(2, self.adpt.read.call_count)
         self.assertEqual(1, mock_reassign.call_count)
+
+        # Should be called re-assigning 4094 (old) to 4092.  Shouldn't be
+        # 4093 as that is also an additional VLAN.
+        mock_reassign.assert_called_once_with(4094, 4092, mock.ANY)
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_is_arbitrary_vid')

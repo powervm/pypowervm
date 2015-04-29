@@ -149,6 +149,9 @@ class NetworkBridger(object):
         :param nb_uuid: The Network Bridge UUID.
         :param vlan_ids: The list of VLANs to ensure are on the Network Bridge.
         """
+        # Ensure the VLANs are ints, not strings.
+        vlan_ids = [int(x) for x in vlan_ids]
+
         # Get the updated feed of NetworkBridges
         nb_feed = self.adapter.read(pvm_ms.System.schema_type,
                                     root_id=self.host_uuid,
@@ -218,6 +221,9 @@ class NetworkBridger(object):
                              bridge wrappers.  If not provided, will gather
                              from the system directly.
         """
+        # Ensure we're working with an integer
+        vlan_id = int(vlan_id)
+
         if existing_nbs is not None:
             nb_wraps = existing_nbs
         else:
@@ -392,7 +398,7 @@ class NetworkBridgerVNET(NetworkBridger):
                 #
                 # First, create a new 'non-tagging' virtual network
                 arb_vid = self._find_new_arbitrary_vid(all_nbs_on_vs,
-                                                       others=[vlan_id])
+                                                       others=new_vlans)
                 arb_vnet = self._find_or_create_vnet(vnets, arb_vid, vswitch_w,
                                                      tagged=False)
 
@@ -594,7 +600,7 @@ class NetworkBridgerTA(NetworkBridger):
                 # No trunk adapter list means they're all full.  Need to create
                 # a new Trunk Adapter (or pair) for the new VLAN.
                 arb_vid = self._find_new_arbitrary_vid(all_nbs_on_vs,
-                                                       others=[vlan_id])
+                                                       others=new_vlans)
 
                 for sea in req_nb.seas:
                     trunk = pvm_net.TrunkAdapter.bld(
