@@ -22,6 +22,7 @@ import pypowervm.const as c
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 import pypowervm.log as lgc
+import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as wlpar
 import pypowervm.wrappers.managed_system as ms
@@ -115,7 +116,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                     add_immediate = True
                 elif lpar is not None:
                     rmc_state = lpar.check_dlpar_connectivity()[1]
-                    if rmc_state == 'active':
+                    if rmc_state == bp.RMCState.ACTIVE:
                         operation = 'osshutdown'
                     else:
                         add_immediate = True
