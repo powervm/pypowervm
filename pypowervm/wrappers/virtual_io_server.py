@@ -98,10 +98,10 @@ class VIOS(bp.BasePartition):
                    FC_MAPPING='ViosFCMapping')
 
     @classmethod
-    def bld(cls, name, mem_cfg, proc_cfg, io_cfg=None):
+    def bld(cls, adapter, name, mem_cfg, proc_cfg, io_cfg=None):
         """Creates a new VIOS wrapper."""
-        return super(VIOS, cls)._bld_base(
-            name, mem_cfg, proc_cfg, env=bp.LPARType.VIOS, io_cfg=io_cfg)
+        return super(VIOS, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
+                                          env=bp.LPARType.VIOS, io_cfg=io_cfg)
 
     @property
     def media_repository(self):
@@ -354,12 +354,12 @@ class VSCSIMapping(VStorageMapping):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
-        s_map = super(VSCSIMapping, cls)._bld()
+        s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapter.bld())
-        s_map._server_adapter(stor.VServerStorageAdapter.bld())
+        s_map._client_adapter(stor.VClientStorageAdapter.bld(adapter))
+        s_map._server_adapter(stor.VServerStorageAdapter.bld(adapter))
         s_map._backing_storage(stg_ref)
         return s_map
 
@@ -398,7 +398,7 @@ class VSCSIMapping(VStorageMapping):
         # Always replace.  Because while the storage has one element, it can't
         # inject properly if the backing type changes (ex. cloning from vOpt to
         # vDisk).
-        stor_elem = ent.Element(_MAP_STORAGE, self.traits, attrib={},
+        stor_elem = ent.Element(_MAP_STORAGE, self.adapter, attrib={},
                                 children=[])
         stor_elem.inject(stg.element)
         self.inject(stor_elem)
@@ -450,19 +450,20 @@ class VFCMapping(VStorageMapping):
                              system will dynamically generate them.
         :returns: The new VFCMapping Wrapper.
         """
-        s_map = super(VFCMapping, cls)._bld()
+        s_map = super(VFCMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VFCClientAdapter.bld(wwpns=client_wwpns))
+        s_map._client_adapter(stor.VFCClientAdapter.bld(
+            adapter, wwpns=client_wwpns))
 
         # Create the backing port and change label.  API requires it be
         # Port, even though it is a Physical FC Port
-        backing_port = bp.PhysFCPort.bld_ref(backing_phy_port)
+        backing_port = bp.PhysFCPort.bld_ref(adapter, backing_phy_port)
         backing_port.element.tag = 'Port'
         s_map._backing_port(backing_port)
 
-        s_map._server_adapter(stor.VFCServerAdapter.bld())
+        s_map._server_adapter(stor.VFCServerAdapter.bld(adapter))
         return s_map
 
     def _backing_port(self, value):

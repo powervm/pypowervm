@@ -60,7 +60,7 @@ class TestCluster(twrap.TestWrapper):
         self.dwrap.repos_pv = newrepos
         self.assertEqual(self.dwrap.repos_pv.name, 'hdisk99')
         # Now try the same thing, but using factory constructor to build PV
-        newrepos = stor.PV.bld(name='hdisk123')
+        newrepos = stor.PV.bld(None, name='hdisk123')
         self.dwrap.repos_pv = newrepos
         self.assertAlmostEqual(self.dwrap.repos_pv.name, 'hdisk123')
 
@@ -104,7 +104,7 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')
         # Now try with a MTMS ElementWrapper
-        node._mtms(ms.MTMS.bld('4321-765*0FEDCBA'))
+        node._mtms(ms.MTMS.bld(None, '4321-765*0FEDCBA'))
         mtms = node.mtms
         self.assertEqual(mtms.machine_type, '4321')
         self.assertEqual(mtms.model, '765')
@@ -123,9 +123,9 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(clust.Node.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
     def test_bld_cluster(self):
-        n1 = clust.Node.bld(hostname='a.example.com')
-        repos = stor.PV.bld(name='hdisk123')
-        cl = clust.Cluster.bld('foo', repos, n1)
+        n1 = clust.Node.bld(None, hostname='a.example.com')
+        repos = stor.PV.bld(None, name='hdisk123')
+        cl = clust.Cluster.bld(None, 'foo', repos, n1)
         self.assertEqual(cl.name, 'foo')
         self.assertEqual(cl.repos_pv.name, 'hdisk123')
         self.assertEqual(cl.schema_type, 'Cluster')
@@ -137,7 +137,7 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(node.schema_type, clust.Node.schema_type)
         self.assertEqual(node.schema_ns, pc.UOM_NS)
         # Node.bld()
-        n2 = clust.Node.bld(hostname='b.example.com', lpar_id=2,
+        n2 = clust.Node.bld(None, hostname='b.example.com', lpar_id=2,
                             mtms='ABCD-XYZ*1234567', vios_uri='https://foo')
         nodes.append(n2)
         self.assertEqual(len(nodes), 2)

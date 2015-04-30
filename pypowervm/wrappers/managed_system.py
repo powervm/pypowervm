@@ -100,7 +100,7 @@ def find_entry_by_mtms(resp, mtms):
     :return: The System wrapper from the response that matches that
              value.  None otherwise.
     """
-    mtms_w = MTMS.bld(mtms)
+    mtms_w = MTMS.bld(resp.adapter, mtms)
     entries = resp.feed.findentries(u.xpath(_MTMS_ROOT, _MTMS_SERIAL),
                                     mtms_w.serial)
     if entries is None:
@@ -276,7 +276,7 @@ class MTMS(ewrap.ElementWrapper):
     """The Machine Type, Model and Serial Number wrapper."""
 
     @classmethod
-    def bld(cls, mtms_str):
+    def bld(cls, adapter, mtms_str):
         """Creates a new MTMS ElementWrapper.
 
         If mtms_str is specified, it is parsed first.
@@ -284,13 +284,14 @@ class MTMS(ewrap.ElementWrapper):
         If machine_type, model, and/or serial is specified, their values are
         used, overriding any parsed values from mtms_str.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param mtms_str: String representation of Machine Type, Model,
         and Serial
                      Number.  The format is
                      Machine Type - Model Number * Serial
                      Example: 8247-22L*1234567
         """
-        mtms = super(MTMS, cls)._bld()
+        mtms = super(MTMS, cls)._bld(adapter)
         mtm, sn = mtms_str.split('*', 1)
         mt, md = mtm.split('-', 1)
 

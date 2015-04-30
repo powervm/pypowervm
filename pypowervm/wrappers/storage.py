@@ -127,8 +127,8 @@ class VG(ewrap.EntryWrapper):
     """Represents a Volume Group that resides on the Virtual I/O Server."""
 
     @classmethod
-    def bld(cls, name, pv_list):
-        vg = super(VG, cls)._bld()
+    def bld(cls, adapter, name, pv_list):
+        vg = super(VG, cls)._bld(adapter)
         vg.name = name
         vg.phys_vols = pv_list
         return vg
@@ -215,7 +215,7 @@ class VMediaRepos(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld(cls, name, size):
+    def bld(cls, adapter, name, size):
         """Creates a fresh VMediaRepos wrapper.
 
         This should be used when adding a new Virtual Media Repository to a
@@ -225,11 +225,12 @@ class VMediaRepos(ewrap.ElementWrapper):
         Additionally, once created, specific VirtualOpticalMedia can be added
         onto the object.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the Virtual Media Repository.
         :param size: The size of the repository in GB (float).
         :returns: A VMediaRepos wrapper that can be used for create.
         """
-        vmr = super(VMediaRepos, cls)._bld()
+        vmr = super(VMediaRepos, cls)._bld(adapter)
         vmr._name(name)
         vmr._size(size)
         return vmr
@@ -269,18 +270,19 @@ class VOptMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
 
     @classmethod
-    def bld(cls, name, size=None, mount_type='rw'):
+    def bld(cls, adapter, name, size=None, mount_type='rw'):
         """Creates a fresh VOptMedia wrapper.
 
         This should be used when adding a new VirtualOpticalMedia device to a
         VirtualMediaRepository.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The device name.
         :param size: The device size in GB, decimal precision.
         :param mount_type: The type of mount.  Defaults to RW.  Can be set to R
         :returns: A VOptMedia wrapper that can be used for create.
         """
-        vom = super(VOptMedia, cls)._bld()
+        vom = super(VOptMedia, cls)._bld(adapter)
         vom._media_name(name)
         if size is not None:
             vom._size(size)
@@ -288,9 +290,9 @@ class VOptMedia(ewrap.ElementWrapper):
         return vom
 
     @classmethod
-    def bld_ref(cls, name):
+    def bld_ref(cls, adapter, name):
         """Creates a VOptMedia wrapper for referencing an existing VOpt."""
-        vom = super(VOptMedia, cls)._bld()
+        vom = super(VOptMedia, cls)._bld(adapter)
         vom._media_name(name)
         return vom
 
@@ -326,7 +328,7 @@ class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
     @classmethod
-    def bld(cls, name, udid=None):
+    def bld(cls, adapter, name, udid=None):
         """Creates the a fresh PV wrapper.
 
         This should be used when wishing to add physical volumes to a Volume
@@ -335,12 +337,13 @@ class PV(ewrap.ElementWrapper):
 
         The name matches the device name on the system.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the physical volume on the Virtual I/O Server
                      to add to the Volume Group.  Ex. 'hdisk1'.
         :param udid: Universal Disk Identifier.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
-        pv = super(PV, cls)._bld()
+        pv = super(PV, cls)._bld(adapter)
         # Assignment order is significant
         if udid:
             pv.udid = udid
@@ -391,7 +394,7 @@ class VDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
 
     @classmethod
-    def bld(cls, name, capacity, label=None):
+    def bld(cls, adapter, name, capacity, label=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -400,12 +403,13 @@ class VDisk(ewrap.ElementWrapper):
         virtual disks. Then perform an update of the Volume Group.  The disk
         should be created by the update operation.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the virtual disk
         :param capacity: A float number that defines the GB of the disk.
         :param label: The generic label for the disk.  Not required.
         :returns: An Element that can be used for a VirtualDisk create.
         """
-        vd = super(VDisk, cls)._bld()
+        vd = super(VDisk, cls)._bld(adapter)
         vd.capacity = capacity
         # Label must be specified; str will make None 'None'.
         vd._label(str(label))
@@ -413,9 +417,9 @@ class VDisk(ewrap.ElementWrapper):
         return vd
 
     @classmethod
-    def bld_ref(cls, name):
+    def bld_ref(cls, adapter, name):
         """Creates a VDisk Wrapper for referring to an existing VDisk."""
-        vd = super(VDisk, cls)._bld()
+        vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
         return vd
 
@@ -454,9 +458,10 @@ class LU(ewrap.ElementWrapper):
     """A Logical Unit (usually part of a SharedStoragePool)."""
 
     @classmethod
-    def bld(cls, name, capacity, thin=None, typ=None):
+    def bld(cls, adapter, name, capacity, thin=None, typ=None):
         """Build a fresh wrapper for LU creation within an SSP.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name to assign to the new LogicalUnit
         :param capacity: Capacity in GB for the new LogicalUnit
         :param thin: Provision the new LU as thin (True) or thick (False).
@@ -464,7 +469,7 @@ class LU(ewrap.ElementWrapper):
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
-        lu = super(LU, cls)._bld()
+        lu = super(LU, cls)._bld(adapter)
         lu._name(name)
         lu._capacity(capacity)
         if thin is not None:
@@ -474,16 +479,17 @@ class LU(ewrap.ElementWrapper):
         return lu
 
     @classmethod
-    def bld_ref(cls, name, udid):
+    def bld_ref(cls, adapter, name, udid):
         """Creates the a fresh LU wrapper.
 
         The name matches the device name on the system.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the logical unit on the Virtual I/O Server.
         :param udid: Universal Disk Identifier.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
-        lu = super(LU, cls)._bld()
+        lu = super(LU, cls)._bld(adapter)
         lu._name(name)
         lu._udid(udid)
         return lu
@@ -560,15 +566,16 @@ class SSP(ewrap.EntryWrapper):
     search_keys = dict(name='StoragePoolName')
 
     @classmethod
-    def bld(cls, name, data_pv_list):
+    def bld(cls, adapter, name, data_pv_list):
         """Create a fresh SSP EntryWrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: String name for the SharedStoragePool.
         :param data_pv_list: Iterable of storage.PV instances
                              representing the data volumes for the
                              SharedStoragePool.
         """
-        ssp = super(SSP, cls)._bld()
+        ssp = super(SSP, cls)._bld(adapter)
         # Assignment order matters.
         ssp.physical_volumes = data_pv_list
         ssp.name = name
@@ -626,14 +633,15 @@ class VStorageAdapter(ewrap.ElementWrapper):
     has_metadata = True
 
     @classmethod
-    def _bld_new(cls, side):
+    def _bld_new(cls, adapter, side):
         """Build a {Client|Server}Adapter requesting a new virtual adapter.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param side: Either 'Client' or 'Server'.
         :returns: A fresh ClientAdapter or ServerAdapter wrapper with
                   UseNextAvailableSlotID=true
         """
-        adp = super(VStorageAdapter, cls)._bld()
+        adp = super(VStorageAdapter, cls)._bld(adapter)
         adp._side(side)
         adp._use_next_slot(True)
         return adp
@@ -677,8 +685,8 @@ class VClientStorageAdapter(VStorageAdapter):
     """Parent class for Client Virtual Storage Adapters."""
 
     @classmethod
-    def bld(cls):
-        return super(VClientStorageAdapter, cls)._bld_new('Client')
+    def bld(cls, adapter):
+        return super(VClientStorageAdapter, cls)._bld_new(adapter, 'Client')
 
     @property
     def lpar_id(self):
@@ -692,8 +700,8 @@ class VServerStorageAdapter(VStorageAdapter):
     """Parent class for Server Virtual Storage Adapters."""
 
     @classmethod
-    def bld(cls):
-        return super(VServerStorageAdapter, cls)._bld_new('Server')
+    def bld(cls, adapter):
+        return super(VServerStorageAdapter, cls)._bld_new(adapter, 'Server')
 
     @property
     def name(self):
@@ -736,13 +744,14 @@ class VFCClientAdapter(VClientStorageAdapter):
     """
 
     @classmethod
-    def bld(cls, wwpns=None):
+    def bld(cls, adapter, wwpns=None):
         """Create a fresh Virtual Fibre Channel Client Adapter.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param wwpns: An optional set of two client WWPNs to set on the
                       adapter.
         """
-        adpt = super(VFCClientAdapter, cls).bld()
+        adpt = super(VFCClientAdapter, cls).bld(adapter)
 
         if wwpns is not None:
             adpt._wwpns(wwpns)

@@ -17,9 +17,8 @@
 import copy
 import unittest
 
-import mock
-
 import pypowervm.const as pc
+import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net
@@ -49,7 +48,7 @@ class TestVNetwork(twrap.TestWrapper):
 
     def test_vnet_new(self):
         """Tests the method that returns a VNet ElementWrapper."""
-        vn_w = net.VNet.bld('name', 10, 'vswitch_uri', True)
+        vn_w = net.VNet.bld(None, 'name', 10, 'vswitch_uri', True)
         self.assertEqual('name', vn_w.name)
         self.assertEqual(10, vn_w.vlan)
         self.assertTrue(vn_w.tagged)
@@ -68,12 +67,12 @@ class TestVSwitch(twrap.TestWrapper):
 
     def test_bld(self):
         """Tests that the vSwitch element can be built."""
-        vs = net.VSwitch.bld('Test')
+        vs = net.VSwitch.bld(None, 'Test')
         self.assertEqual('Test', vs.name)
         self.assertEqual(net.VSwitchMode.VEB, vs.mode)
         self.assertListEqual([], vs.vnet_uri_list)
 
-        vs = net.VSwitch.bld('Test', net.VSwitchMode.VEPA)
+        vs = net.VSwitch.bld(None, 'Test', net.VSwitchMode.VEPA)
         self.assertEqual('Test', vs.name)
         self.assertEqual(net.VSwitchMode.VEPA, vs.mode)
         self.assertListEqual([], vs.vnet_uri_list)
@@ -142,10 +141,13 @@ class TestNetwork(twrap.TestWrapper):
 
     file = 'fake_network_bridge.txt'
     wrapper_class_to_test = net.NetBridge
+    mock_adapter_fx_args = dict(traits=fx.LocalPVMTraits)
 
     def set_vnet(self, aware):
-        self.dwrap.entry.element.traits = mock.MagicMock()
-        self.dwrap.entry.element.traits.vnet_aware = aware
+        # Since they're all references through the same adapter, setting traits
+        # on dwrap's element's adapter ought to affect all sub-elements, etc.
+        self.adptfx.set_traits(fx.RemoteHMCTraits if aware
+                               else fx.RemotePVMTraits)
 
     def test_pvid(self):
         self.assertEqual(1, self.dwrap.pvid)
@@ -166,7 +168,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        nb = net.NetBridge.bld(pvid=1,
+        nb = net.NetBridge.bld(None, pvid=1,
                                vios_to_backing_adpts=[('vio_href1', 'ent0'),
                                                       ('vio_href2', 'ent2')],
                                vlan_ids=[1, 2, 3],
@@ -220,7 +222,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        sea = net.SEA.bld(pvid=1, vios_href='127.0.0.1',
+        sea = net.SEA.bld(None, pvid=1, vios_href='127.0.0.1',
                           adpt_name='ent0', vlan_ids=[1, 2, 3],
                           vswitch=vsw_wrap)
 
@@ -246,8 +248,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        ta = net.TrunkAdapter.bld(pvid=1,
-                                  vlan_ids=[1, 2, 3],
+        ta = net.TrunkAdapter.bld(None, pvid=1, vlan_ids=[1, 2, 3],
                                   vswitch=vsw_wrap)
 
         self.assertIsNotNone(ta)
@@ -267,7 +268,7 @@ class TestNetwork(twrap.TestWrapper):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
         pvid = 1
-        lg = net.LoadGroup.bld(pvid, uri_list)
+        lg = net.LoadGroup.bld(None, pvid, uri_list)
 
         # Validate the data back
         self.assertIsNotNone(lg)
@@ -322,7 +323,8 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        ta = net.TrunkAdapter.bld(pvid=1, vlan_ids=[1, 2, 3], vswitch=vsw_wrap)
+        ta = net.TrunkAdapter.bld(
+            None, pvid=1, vlan_ids=[1, 2, 3], vswitch=vsw_wrap)
         self.assertEqual(1, len(self.dwrap.seas[0].addl_adpts))
         self.dwrap.seas[0].addl_adpts.append(ta)
         self.assertEqual(2, len(self.dwrap.seas[0].addl_adpts))
@@ -381,20 +383,20 @@ class TestNetwork(twrap.TestWrapper):
 
             # 1 is the PVID.  4094 is the arbitrary (only one arbitrary)
             val = set(self.dwrap.list_vlans())
-            self.assertEqual(set([100, 150, 175, 200, 250, 300, 333, 350, 900,
-                                  1001, 2227, 2228, 1]), val)
+            self.assertEqual({100, 150, 175, 200, 250, 300, 333, 350, 900,
+                              1001, 2227, 2228, 1}, val)
 
             val = set(self.dwrap.list_vlans(pvid=False, arbitrary=True))
-            self.assertEqual(set([4094, 100, 150, 175, 200, 250, 300, 333, 350,
-                                  900, 1001, 2227, 2228]), val)
+            self.assertEqual({4094, 100, 150, 175, 200, 250, 300, 333, 350,
+                              900, 1001, 2227, 2228}, val)
 
             val = set(self.dwrap.list_vlans(pvid=False))
-            self.assertEqual(set([100, 150, 175, 200, 250, 300, 333, 350, 900,
-                                  1001, 2227, 2228]), val)
+            self.assertEqual({100, 150, 175, 200, 250, 300, 333, 350, 900,
+                              1001, 2227, 2228}, val)
 
             val = set(self.dwrap.list_vlans(arbitrary=True))
-            self.assertEqual(set([1, 4094, 100, 150, 175, 200, 250, 300, 333,
-                                  350, 900, 1001, 2227, 2228]), val)
+            self.assertEqual({1, 4094, 100, 150, 175, 200, 250, 300, 333, 350,
+                              900, 1001, 2227, 2228}, val)
 
     def test_list_vlan_no_vnet(self):
         """Tests that a VLAN change affects trunks, not vnets."""
@@ -480,7 +482,7 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = net.CNA.bld(1, "fake_vs")
+        test = net.CNA.bld(None, 1, "fake_vs")
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertFalse(test.is_tagged_vlan_supported)
         self.assertEqual([], test.tagged_vlans)
@@ -491,7 +493,7 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = net.CNA.bld(5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
+        test = net.CNA.bld(None, 5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
                            slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertTrue(test.is_tagged_vlan_supported)

@@ -143,14 +143,15 @@ class VSwitch(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, name, switch_mode=VSwitchMode.VEB):
+    def bld(cls, adapter, name, switch_mode=VSwitchMode.VEB):
         """Creates a VSwitch that can be used for a create operation.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name for the virtual switch.  Must be unique.
         :param switch_mode: The mode of virtual switch (see VSwitchMode).
         :returns: The ElementWrapper that represents the new VSwitch.
         """
-        vswitch = super(VSwitch, cls)._bld()
+        vswitch = super(VSwitch, cls)._bld(adapter)
         vswitch.name = name
         vswitch._mode(switch_mode)
         vswitch.vnet_uri_list = []
@@ -220,11 +221,12 @@ class NetBridge(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, pvid, vios_to_backing_adpts, vlan_ids, vswitch):
+    def bld(cls, adapter, pvid, vios_to_backing_adpts, vlan_ids, vswitch):
         """Create the NetBridge entry that can be used for a create operation.
 
         This is used when creating a NetBridge.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vios_to_backing_adpts: An argument containing a list of tuples
                                       between VIOS href and the VIOS backing
@@ -237,7 +239,7 @@ class NetBridge(ewrap.EntryWrapper):
         :returns: A new NetBridge EntryWrapper that represents the new
                   NetBridge.
         """
-        nb = super(NetBridge, cls)._bld()
+        nb = super(NetBridge, cls)._bld(adapter)
 
         if not vios_to_backing_adpts:
             raise ValueError()
@@ -264,8 +266,8 @@ class NetBridge(ewrap.EntryWrapper):
         primary = True
         nb.seas = []
         for vio_tuple in vios_to_backing_adpts:
-            nb.seas.append(SEA.bld(pvid, vio_tuple[0], vio_tuple[1], vlan_ids,
-                                   vswitch, primary=primary))
+            nb.seas.append(SEA.bld(adapter, pvid, vio_tuple[0], vio_tuple[1],
+                                   vlan_ids, vswitch, primary=primary))
             primary = False
 
         return nb
@@ -302,7 +304,8 @@ class NetBridge(ewrap.EntryWrapper):
         # Find and replace the current element.
         cur_vnets = self.element.find(_NB_VNETS)
         self.element.replace(
-            cur_vnets, ent.Element(_NB_VNETS, self.traits, children=new_vnets))
+            cur_vnets, ent.Element(_NB_VNETS, self.adapter,
+                                   children=new_vnets))
 
     @property
     def seas(self):
@@ -424,10 +427,11 @@ class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
     @classmethod
-    def bld(cls, pvid, vios_href, adpt_name, vlan_ids, vswitch,
+    def bld(cls, adapter, pvid, vios_href, adpt_name, vlan_ids, vswitch,
             primary=True):
         """Create the SEA entry that can be used for NetBridge creation.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vios_href: The Assigned VIOS href.
         :param adpt_name: Name of the physical adapter or ether channel that
@@ -442,14 +446,14 @@ class SEA(ewrap.ElementWrapper):
                         always set this to True.
         :returns: A new SEA ElementWrapper that represents the new SEA.
         """
-        sea = super(SEA, cls)._bld()
+        sea = super(SEA, cls)._bld(adapter)
         sea._pvid(pvid)
 
         sea._vio_uri(vios_href)
-        sea._backing_device(EthernetBackingDevice.bld(adpt_name))
+        sea._backing_device(EthernetBackingDevice.bld(adapter, adpt_name))
 
         trunk_pri = 1 if primary else 2
-        sea._primary_adpt(TrunkAdapter.bld(pvid, vlan_ids, vswitch,
+        sea._primary_adpt(TrunkAdapter.bld(adapter, pvid, vlan_ids, vswitch,
                                            trunk_pri=trunk_pri))
         sea._is_primary(primary)
 
@@ -560,7 +564,7 @@ class SEA(ewrap.ElementWrapper):
         :param eth_back_dev: The EthernetBackingDevice for this
                              BackingDeviceChoice.
         """
-        stor_elem = ent.Element(_SEA_BACKING_DEV, self.traits, attrib={},
+        stor_elem = ent.Element(_SEA_BACKING_DEV, self.adapter, attrib={},
                                 children=[])
         stor_elem.inject(eth_back_dev.element)
         self.inject(stor_elem)
@@ -571,9 +575,10 @@ class TrunkAdapter(ewrap.ElementWrapper):
     """Represents a Trunk Adapter, either within a LoadGroup or a SEA."""
 
     @classmethod
-    def bld(cls, pvid, vlan_ids, vswitch, trunk_pri=1):
+    def bld(cls, adapter, pvid, vlan_ids, vswitch, trunk_pri=1):
         """Create the TrunkAdapter element that can be used for SEA creation.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
         :param vswitch: The vswitch wrapper to retrieve ID and href.
@@ -581,7 +586,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
         :returns: A new TrunkAdapter ElementWrapper that represents the new
                   TrunkAdapter.
         """
-        ta = super(TrunkAdapter, cls)._bld()
+        ta = super(TrunkAdapter, cls)._bld(adapter)
 
         ta._required(True)
         ta.pvid = pvid
@@ -688,18 +693,19 @@ class LoadGroup(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld(cls, pvid, vnet_uris):
+    def bld(cls, adapter, pvid, vnet_uris):
         """Create the LoadGroup element that can be used for a create operation.
 
         This is used when adding a Load Group to a NetBridge.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The primary VLAN ID (ex. 1) for the Load Group.
         :param vnet_uris: The virtual network URI list (mapping to each
                           additional VLAN/vswitch combo).
         :returns: A new LoadGroup ElementWrapper that represents the new
                   LoadGroup.
         """
-        lg = super(LoadGroup, cls)._bld()
+        lg = super(LoadGroup, cls)._bld(adapter)
         lg._pvid(pvid)
         lg.vnet_uri_list.extend(vnet_uris)
         return lg
@@ -788,11 +794,12 @@ class VNet(ewrap.EntryWrapper):
     """The overall definition of a VLAN network within the hypervisor."""
 
     @classmethod
-    def bld(cls, name, vlan_id, vswitch_uri, tagged):
+    def bld(cls, adapter, name, vlan_id, vswitch_uri, tagged):
         """Creates a VirtualNetwork that can be used for a create operation.
 
         This is used when creating a new Virtual Network within the system
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name for the virtual network.
         :param vlan_id: The VLAN identifier (1 to 4094) for the network.
         :param vswitch_uri: The URI that points to the appropriate vSwitch.
@@ -802,7 +809,7 @@ class VNet(ewrap.EntryWrapper):
                        network).
         :returns: The ElementWrapper that represents the new VirtualNetwork.
         """
-        vnet = super(VNet, cls)._bld()
+        vnet = super(VNet, cls)._bld(adapter)
         # Assignment order matters
         vnet.associated_switch_uri = vswitch_uri
         vnet.name = name
@@ -857,13 +864,14 @@ class CNA(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 
     @classmethod
-    def bld(cls, pvid, vswitch_href, slot_num=None, mac_addr=None,
+    def bld(cls, adapter, pvid, vswitch_href, slot_num=None, mac_addr=None,
             addl_tagged_vlans=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a client partition.  This
         can be PUT to LogicalPartition/<UUID>/ClientNetworkAdapter.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The Primary VLAN ID to use.
         :param vswitch_href: The URI that points to the Virtual Switch that
                              will support this adapter.
@@ -881,7 +889,7 @@ class CNA(ewrap.EntryWrapper):
                                   Note: The limit is ~18 additional VLANs
         :returns: A CNA EntryWrapper that can be used for create.
         """
-        cna = super(CNA, cls)._bld()
+        cna = super(CNA, cls)._bld(adapter)
         # Assignment order matters
         if slot_num is not None:
             cna._slot(slot_num)
@@ -1000,13 +1008,14 @@ class EthernetBackingDevice(ewrap.ElementWrapper):
     """Represents the SEA EthernetBackingDevice."""
 
     @classmethod
-    def bld(cls, dev_name):
+    def bld(cls, adapter, dev_name):
         """Creates the EthernetBackingDevice element.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param dev_name: The device name (e.g. eth0).
         :returns: The EthernetBackingDevice element for SEAs.
         """
-        cfg = super(EthernetBackingDevice, cls)._bld()
+        cfg = super(EthernetBackingDevice, cls)._bld(adapter)
         cfg._dev_name(dev_name)
 
         # This is required by the schema, setting it to 1

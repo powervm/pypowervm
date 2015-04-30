@@ -67,7 +67,7 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
 
     if vswitch_w is None:
         if crt_vswitch:
-            vswitch_w = network.VSwitch.bld(vswitch)
+            vswitch_w = network.VSwitch.bld(adapter, vswitch)
             resp = adapter.create(vswitch_w, ms.System.schema_type,
                                   root_id=host_uuid,
                                   child_type=network.VSwitch.schema_type)
@@ -82,8 +82,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
 
     # Build and create the CNA
     net_adpt = network.CNA.bld(
-        pvid, vswitch_w.related_href, slot_num=slot_num, mac_addr=mac_addr,
-        addl_tagged_vlans=addl_tagged_vlans)
+        adapter, pvid, vswitch_w.related_href, slot_num=slot_num,
+        mac_addr=mac_addr, addl_tagged_vlans=addl_tagged_vlans)
     resp = adapter.create(net_adpt, lpar.LPAR.schema_type, root_id=lpar_uuid,
                           child_type=network.CNA.schema_type)
     return resp.entry
@@ -104,7 +104,7 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
     # VLAN 1 is not allowed to be tagged.  All others are.  VLAN 1 would be
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
-    vnet = network.VNet.bld(name, vlan, vswitch.related_href, tagged)
+    vnet = network.VNet.bld(adapter, name, vlan, vswitch.related_href, tagged)
     crt_resp = adapter.create(vnet, ms.System.schema_type, root_id=host_uuid,
                               child_type=network.VNet.schema_type)
     return network.VNet.wrap(crt_resp)

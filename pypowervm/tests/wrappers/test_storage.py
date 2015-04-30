@@ -90,7 +90,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(vdisks))
 
-        disk = stor.VDisk.bld('disk_name', 10.9876543, 'label')
+        disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, 'label')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -115,7 +115,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(phys_vols))
 
-        phys_vol = stor.PV.bld('disk1')
+        phys_vol = stor.PV.bld(None, 'disk1')
         self.assertIsNotNone(phys_vol)
 
         phys_vols.append(phys_vol)
@@ -133,7 +133,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(media_repos))
 
-        vmedia_repo = stor.VMediaRepos.bld('repo', 10.12345)
+        vmedia_repo = stor.VMediaRepos.bld(None, 'repo', 10.12345)
         self.assertIsNotNone(vmedia_repo)
 
         media_repos.append(vmedia_repo)
@@ -154,7 +154,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         vopt_medias = media_repos[0].optical_media
         self.assertEqual(2, len(vopt_medias))
 
-        new_media = stor.VOptMedia.bld('name', 0.123, 'r')
+        new_media = stor.VOptMedia.bld(None, 'name', 0.123, 'r')
         self.assertIsNotNone(new_media)
 
         vopt_medias.append(new_media)
@@ -169,7 +169,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
     def test_ordering(self):
         """Set fields out of order; ensure they end up in the right order."""
-        vg = stor.VG._bld()
+        vg = stor.VG._bld(None)
         vg.virtual_disks = []
         vg.name = 'vgname'
         vg.vmedia_repos = []
@@ -186,7 +186,7 @@ class TestVolumeGroup(twrap.TestWrapper):
             encode('utf-8'))
 
     def test_bld(self):
-        vg = stor.VG.bld('myvg', [stor.PV.bld('hdisk1')])
+        vg = stor.VG.bld(None, 'myvg', [stor.PV.bld(None, 'hdisk1')])
         self.assertEqual(
             vg.toxmlstring(),
             '<uom:VolumeGroup xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
@@ -242,8 +242,8 @@ class TestSharedStoragePool(twrap.TestWrapper):
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):
-        ssp = stor.SSP.bld('myssp', [
-            stor.PV.bld(name=n) for n in (
+        ssp = stor.SSP.bld(None, 'myssp', [
+            stor.PV.bld(None, name=n) for n in (
                 'hdisk123', 'hdisk132', 'hdisk213', 'hdisk231', 'hdisk312',
                 'hdisk321')])
         self.assertEqual(ssp.name, 'myssp')
@@ -257,7 +257,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(pv.name, 'hdisk231')
 
     def test_lu_bld(self):
-        lu = stor.LU.bld('lu_name', 123)
+        lu = stor.LU.bld(None, 'lu_name', 123)
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
@@ -265,7 +265,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
             'om:Atom/></uom:Metadata><uom:UnitCapacity>123.000000</uom:UnitCap'
             'acity><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
             encode('utf-8'))
-        lu = stor.LU.bld('lu_name', 1.2345678, thin=True)
+        lu = stor.LU.bld(None, 'lu_name', 1.2345678, thin=True)
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
@@ -273,7 +273,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
             'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
             ':UnitCapacity>1.234568</uom:UnitCapacity><uom:UnitName>lu_name</u'
             'om:UnitName></uom:LogicalUnit>'.encode('utf-8'))
-        lu = stor.LU.bld('lu_name', .12300019999, thin=False)
+        lu = stor.LU.bld(None, 'lu_name', .12300019999, thin=False)
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
@@ -283,7 +283,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
             'uom:UnitName></uom:LogicalUnit>'.encode('utf-8'))
 
     def test_lu_ordering(self):
-        lu = stor.LU._bld()
+        lu = stor.LU._bld(None)
         lu._name('lu_name')
         lu._udid('lu_udid')
         lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
@@ -300,8 +300,8 @@ class TestSharedStoragePool(twrap.TestWrapper):
             encode('utf-8'))
 
     def test_lu_equality(self):
-        lu1 = stor.LU.bld('mylu', 1)
-        lu2 = stor.LU.bld('mylu', 2)
+        lu1 = stor.LU.bld(None, 'mylu', 1)
+        lu2 = stor.LU.bld(None, 'mylu', 2)
         self.assertEqual(lu1, lu2)
         lu1._udid('lu_udid')
         lu2._udid('lu_udid')
@@ -324,8 +324,8 @@ class TestSharedStoragePool(twrap.TestWrapper):
         # First bit differs
         udid4 = ('274fc907d2abf511e4b2d540f2e95daf3'
                  '01a02b0904778d755df5a46fe25e500d8')
-        lu1 = stor.LU.bld('mylu', 1)
-        lu2 = stor.LU.bld('mylu', 2)
+        lu1 = stor.LU.bld(None, 'mylu', 1)
+        lu2 = stor.LU.bld(None, 'mylu', 2)
         lu1._udid(udid1)
         lu2._udid(udid1)
         self.assertEqual({lu1}, {lu2})

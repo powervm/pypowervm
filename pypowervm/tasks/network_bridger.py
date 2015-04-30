@@ -404,7 +404,8 @@ class NetworkBridgerVNET(NetworkBridger):
 
                 # Now create the new load group...
                 vnet_uris = [arb_vnet.related_href, vid_vnet.related_href]
-                ld_grp = pvm_net.LoadGroup.bld(arb_vid, vnet_uris)
+                ld_grp = pvm_net.LoadGroup.bld(self.adapter, arb_vid,
+                                               vnet_uris)
 
                 # Append to network bridge...
                 req_nb.load_grps.append(ld_grp)
@@ -469,7 +470,7 @@ class NetworkBridgerVNET(NetworkBridger):
         if old_uri is not None:
             uris.remove(old_uri)
         uris.insert(0, new_vnet.related_href)
-        new_lg_w = pvm_net.LoadGroup.bld(new_vid, uris)
+        new_lg_w = pvm_net.LoadGroup.bld(self.adapter, new_vid, uris)
 
         impacted_nb.load_grps.remove(impacted_lg)
 
@@ -513,7 +514,8 @@ class NetworkBridgerVNET(NetworkBridger):
         # Could not find one.  Time to create it.
         name = 'VLAN%(vid)s-%(vswitch)s' % {'vid': str(vlan),
                                             'vswitch': vswitch.name}
-        vnet_elem = pvm_net.VNet.bld(name, vlan, vswitch.related_href, tagged)
+        vnet_elem = pvm_net.VNet.bld(
+            self.adapter, name, vlan, vswitch.related_href, tagged)
         resp = self.adapter.create(
             vnet_elem, pvm_ms.System.schema_type, root_id=self.host_uuid,
             child_type=pvm_net.VNet.schema_type)
@@ -604,8 +606,8 @@ class NetworkBridgerTA(NetworkBridger):
 
                 for sea in req_nb.seas:
                     trunk = pvm_net.TrunkAdapter.bld(
-                        arb_vid, [vlan_id], vswitch_w,
-                        sea.primary_adpt.trunk_pri)
+                        self.adapter, arb_vid, [vlan_id], vswitch_w,
+                        trunk_pri=sea.primary_adpt.trunk_pri)
                     sea.addl_adpts.append(trunk)
             else:
                 # Available trunks were found.  Add the VLAN to each

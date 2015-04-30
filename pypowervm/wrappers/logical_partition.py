@@ -54,13 +54,14 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
 class LPAR(bp.BasePartition):
 
     @classmethod
-    def bld(cls, name, mem_cfg, proc_cfg, env=bp.LPARType.AIXLINUX,
+    def bld(cls, adapter, name, mem_cfg, proc_cfg, env=bp.LPARType.AIXLINUX,
             io_cfg=None):
         """Creates an LPAR wrapper.
 
         Thin wrapper around BasePartition._bld_base, defaulting env.
         """
-        return super(LPAR, cls)._bld_base(name, mem_cfg, proc_cfg, env, io_cfg)
+        return super(LPAR, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
+                                          env, io_cfg)
 
     @property
     def migration_state(self):

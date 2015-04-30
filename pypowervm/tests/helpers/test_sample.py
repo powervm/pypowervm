@@ -22,22 +22,21 @@ import testtools
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.sample_helper as smpl_hlp
-from pypowervm.tests import fixtures
+import pypowervm.tests.test_fixtures as fx
 
 
 class TestSampleHelper(testtools.TestCase):
 
     def setUp(self):
         super(TestSampleHelper, self).setUp()
-        self.sess = self.useFixture(fixtures.AdapterFx(patch_adpt=False)).sess
-        self.sess.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.sess = self.useFixture(fx.SessionFx()).sess
 
     @mock.patch('time.sleep')
     def test_sample_helper(self, mock_sleep):
 
         helpers = smpl_hlp.sample_retry_helper
         fake_resp1 = adp.Response(
-            'GET', '/some/path', 200, 'OK', ['headers'], self.sess.traits,
+            'GET', '/some/path', 200, 'OK', ['headers'],
             body='Some Text HSCL3205 More Text')
         self.sess.request.side_effect = pvmex.Error('yo', response=fake_resp1)
         adpt = adp.Adapter(self.sess, use_cache=False, helpers=helpers)

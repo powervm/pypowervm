@@ -138,7 +138,7 @@ class TestRetry(unittest.TestCase):
                 # etag mismatch
                 resp = adpt.Response('reqmethod', 'reqpath',
                                      c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                     'headers', None)
+                                     'headers')
                 http_exc = pvm_exc.HttpError('msg', resp)
                 raise http_exc
 

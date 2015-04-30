@@ -76,7 +76,7 @@ class TestHDisk(unittest.TestCase):
                    '<lua>ee000000000000</lua></itl></itlList></device>'
                    '</deviceList></XML_LIST>')
 
-        self.assertEqual(LUA_XML, hdisk._lua_recovery_xml(all_itls))
+        self.assertEqual(LUA_XML, hdisk._lua_recovery_xml(all_itls, None))
 
     @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):

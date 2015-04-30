@@ -33,8 +33,8 @@ import pypowervm.adapter as adp
 import pypowervm.const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
-from pypowervm.tests import fixtures
 import pypowervm.tests.lib as testlib
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -91,8 +91,6 @@ class TestAdapter(testtools.TestCase):
             # Mock out the logoff, which gets called when the session
             # goes out of scope during tearDown()
             self.sess._logoff = mock.Mock()
-
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
     def tearDown(self):
         """Tear down the Session instance."""
@@ -210,13 +208,14 @@ class TestAdapter(testtools.TestCase):
     def test_create(self, mock_session):
         """Test create() method found in the Adapter class."""
         # Init test data
-        children = [ent.Element('AdapterType', self.traits, text='Client'),
-                    ent.Element('UseNextAvailableSlotID', self.traits,
+        adapter = adp.Adapter(self.sess, use_cache=False)
+        children = [ent.Element('AdapterType', adapter, text='Client'),
+                    ent.Element('UseNextAvailableSlotID', adapter,
                                 text='true'),
-                    ent.Element('RemoteLogicalPartitionID', self.traits,
+                    ent.Element('RemoteLogicalPartitionID', adapter,
                                 text='1'),
-                    ent.Element('RemoteSlotNumber', self.traits, text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter', self.traits,
+                    ent.Element('RemoteSlotNumber', adapter, text='12')]
+        new_scsi = ent.Element('VirtualSCSIClientAdapter', adapter,
                                attrib={'schemaVersion': 'V1_0'},
                                children=children)
 
@@ -224,7 +223,6 @@ class TestAdapter(testtools.TestCase):
         root_type = 'ManagedSystem'
         root_id = 'id'
         child_type = 'LogicalPartition'
-        adapter = adp.Adapter(self.sess, use_cache=False)
 
         # Create a Response object, that will serve as a mock return value
         create_response = req_mod.Response()
@@ -490,13 +488,14 @@ class TestAdapter(testtools.TestCase):
         """401 (unauthorized) calling Adapter.create()."""
 
         # Init test data
-        children = [ent.Element('AdapterType', self.traits, text='Client'),
-                    ent.Element('UseNextAvailableSlotID', self.traits,
+        adapter = adp.Adapter(self.sess, use_cache=False)
+        children = [ent.Element('AdapterType', adapter, text='Client'),
+                    ent.Element('UseNextAvailableSlotID', adapter,
                                 text='true'),
-                    ent.Element('RemoteLogicalPartitionID', self.traits,
+                    ent.Element('RemoteLogicalPartitionID', adapter,
                                 text='1'),
-                    ent.Element('RemoteSlotNumber', self.traits, text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter', self.traits,
+                    ent.Element('RemoteSlotNumber', adapter, text='12')]
+        new_scsi = ent.Element('VirtualSCSIClientAdapter', adapter,
                                attrib={'schemaVersion': 'V1_0'},
                                children=children)
 
@@ -504,7 +503,6 @@ class TestAdapter(testtools.TestCase):
         root_type = 'ManagedSystem'
         root_id = 'id'
         child_type = 'LogicalPartition'
-        adapter = adp.Adapter(self.sess, use_cache=False)
 
         # Create a Response object, that will serve as a mock return value
         create_response = req_mod.Response()
@@ -539,12 +537,12 @@ class TestAdapter(testtools.TestCase):
         """Test the ETElement iter() method found in the Adapter class."""
 
         # Init test data
-        children = [ent.Element('Type1', self.traits, text='T1_0'),
-                    ent.Element('Type12', self.traits, text='T12_0'),
-                    ent.Element('Type1', self.traits, text='T1_1'),
-                    ent.Element('Type12', self.traits, text='T12_1'),
-                    ent.Element('Type1', self.traits, text='T1_2')]
-        top_element = ent.Element('Top', self.traits,
+        children = [ent.Element('Type1', None, text='T1_0'),
+                    ent.Element('Type12', None, text='T12_0'),
+                    ent.Element('Type1', None, text='T1_1'),
+                    ent.Element('Type12', None, text='T12_1'),
+                    ent.Element('Type1', None, text='T1_2')]
+        top_element = ent.Element('Top', None,
                                   attrib={'schemaVersion': 'V1_0'},
                                   children=children)
 
@@ -584,11 +582,11 @@ class TestAdapter(testtools.TestCase):
 class TestElement(testtools.TestCase):
     def setUp(self):
         super(TestElement, self).setUp()
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
     def test_cdata(self):
-        no_cdata = ent.Element('tag', self.traits, text='text', cdata=False)
-        with_cdata = ent.Element('tag', self.traits, text='text', cdata=True)
+        no_cdata = ent.Element('tag', self.adpt, text='text', cdata=False)
+        with_cdata = ent.Element('tag', self.adpt, text='text', cdata=True)
         self.assertEqual(
             no_cdata.toxmlstring(),
             '<uom:tag xmlns:uom="http://www.ibm.com/xmlns/systems/power/'
@@ -599,7 +597,7 @@ class TestElement(testtools.TestCase):
             're/uom/mc/2012_10/"><![CDATA[text]]></uom:tag>'.encode('utf-8'))
 
     def test_tag_namespace(self):
-        el = ent.Element('tag', self.traits)
+        el = ent.Element('tag', self.adpt)
         self.assertEqual(el.element.tag, '{http://www.ibm.com/xmlns/systems/po'
                                          'wer/firmware/uom/mc/2012_10/}tag')
         # entities.Element.tag strips the namespace
@@ -614,7 +612,7 @@ class TestElement(testtools.TestCase):
         el.namespace = 'foo'
         self.assertEqual(el.namespace, 'foo')
         # Now with no namespace
-        el = ent.Element('tag', self.traits, ns='')
+        el = ent.Element('tag', self.adpt, ns='')
         self.assertEqual(el.element.tag, 'tag')
         self.assertEqual(el.tag, 'tag')
         self.assertEqual(el.namespace, '')
@@ -629,25 +627,25 @@ class TestElementInject(testtools.TestCase):
 
     def setUp(self):
         super(TestElementInject, self).setUp()
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
         self.ordering_list = ('AdapterType', 'UseNextAvailableSlotID',
                               'RemoteLogicalPartitionID', 'RemoteSlotNumber')
-        self.child_at = ent.Element('AdapterType', self.traits, text='Client')
-        self.child_unasi = ent.Element('UseNextAvailableSlotID', self.traits,
+        self.child_at = ent.Element('AdapterType', self.adpt, text='Client')
+        self.child_unasi = ent.Element('UseNextAvailableSlotID', self.adpt,
                                        text='true')
-        self.child_rlpi1 = ent.Element('RemoteLogicalPartitionID', self.traits,
+        self.child_rlpi1 = ent.Element('RemoteLogicalPartitionID', self.adpt,
                                        text='1')
-        self.child_rlpi2 = ent.Element('RemoteLogicalPartitionID', self.traits,
+        self.child_rlpi2 = ent.Element('RemoteLogicalPartitionID', self.adpt,
                                        text='2')
-        self.child_rlpi3 = ent.Element('RemoteLogicalPartitionID', self.traits,
+        self.child_rlpi3 = ent.Element('RemoteLogicalPartitionID', self.adpt,
                                        text='3')
-        self.child_rsn = ent.Element('RemoteSlotNumber', self.traits,
+        self.child_rsn = ent.Element('RemoteSlotNumber', self.adpt,
                                      text='12')
         self.all_children = [
             self.child_at, self.child_unasi, self.child_rlpi1, self.child_rsn]
 
     def _mk_el(self, children):
-        return ent.Element('VirtualSCSIClientAdapter', self.traits,
+        return ent.Element('VirtualSCSIClientAdapter', self.adpt,
                            attrib={'schemaVersion': 'V1_0'},
                            children=children)
 
@@ -710,7 +708,7 @@ class TestElementInject(testtools.TestCase):
     def test_subelement_not_in_ordering_list(self):
         """Subelement not in ordering list - should append."""
         el = self._mk_el(self.all_children)
-        ch = ent.Element('SomeNewElement', self.traits, text='foo')
+        ch = ent.Element('SomeNewElement', self.adpt, text='foo')
         el.inject(ch, ordering_list=self.ordering_list)
         self.assert_expected_children(el, self.child_at, self.child_unasi,
                                       self.child_rlpi1, self.child_rsn, ch)
@@ -792,7 +790,6 @@ class TestElementWrapper(testtools.TestCase):
         """Wrapper for the SEAs."""
         return entry.element.findall('SharedEthernetAdapters/'
                                      'SharedEthernetAdapter')
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -174,7 +174,7 @@ class TestMSEntryWrapper(unittest.TestCase):
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
-        mtms = ms.MTMS.bld('1234-567*ABCDEF0')
+        mtms = ms.MTMS.bld(None, '1234-567*ABCDEF0')
         self.assertEqual(mtms.machine_type, '1234')
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')

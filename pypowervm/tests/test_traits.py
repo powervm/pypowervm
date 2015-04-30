@@ -95,7 +95,7 @@ class TestTraits(unittest.TestCase):
         # Response => Feed => Entrys => EntryWrappers => sub-ElementWrappers
         httpresp._content = _feed_file
         resp = adapter.read('NetworkBridge')
-        self.assertEqual(sess.traits, resp.traits)
+        self.assertEqual(sess.traits, resp.adapter.traits)
         nblist = net.NetBridge.wrap(resp)
         for nb in nblist:
             self.assertIsInstance(nb, net.NetBridge)
@@ -112,7 +112,7 @@ class TestTraits(unittest.TestCase):
         # => sub-sub-ElementWrapper
         httpresp._content = _entry_file
         resp = adapter.read('VolumeGroup', root_id='abc123')
-        self.assertEqual(sess.traits, resp.traits)
+        self.assertEqual(sess.traits, resp.adapter.traits)
         vgent = stor.VG.wrap(resp)
         self.assertIsInstance(vgent, stor.VG)
         self.assertEqual(sess.traits, vgent.traits)
@@ -126,10 +126,10 @@ class TestTraits(unittest.TestCase):
             schema_type = 'SomeObject'
 
             @classmethod
-            def bld(cls, trts):
-                return super(MyEntryWrapper, cls)._bld(traits=trts)
+            def bld(cls, adpt):
+                return super(MyEntryWrapper, cls)._bld(adpt)
 
-        mew = MyEntryWrapper.bld(sess.traits)
+        mew = MyEntryWrapper.bld(adapter)
         self.assertIsInstance(mew, MyEntryWrapper)
         self.assertEqual(sess.traits, mew.traits)
 
@@ -137,9 +137,12 @@ class TestTraits(unittest.TestCase):
             schema_type = 'SomeObject'
 
             @classmethod
-            def bld(cls, trts):
-                return super(MyElementWrapper, cls)._bld(traits=trts)
+            def bld(cls, adpt):
+                return super(MyElementWrapper, cls)._bld(adpt)
 
-        mew = MyElementWrapper.bld(sess.traits)
+        mew = MyElementWrapper.bld(adapter)
         self.assertIsInstance(mew, MyElementWrapper)
         self.assertEqual(sess.traits, mew.traits)
+
+if __name__ == '__main__':
+    unittest.main()

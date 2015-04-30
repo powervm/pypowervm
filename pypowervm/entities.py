@@ -78,18 +78,18 @@ class Feed(object):
         return entries
 
     @classmethod
-    def unmarshal_atom_feed(cls, feedelem, traits):
+    def unmarshal_atom_feed(cls, feedelem, resp):
         """Factory method producing a Feed object from a parsed ElementTree
 
         :param feedelem: Parsed ElementTree object representing an atom feed.
-        :param traits: APITraits from Session.traits.
+        :param resp: The Response from which this Feed was parsed.
         :return: a new Feed object representing the feedelem parameter.
         """
         feedprops = {}
         entries = []
         for child in list(feedelem):
             if child.tag == str(etree.QName(const.ATOM_NS, 'entry')):
-                entries.append(Entry.unmarshal_atom_entry(child, traits))
+                entries.append(Entry.unmarshal_atom_entry(child, resp))
             elif not list(child):
                 pat = '{%s}' % const.ATOM_NS
                 if re.match(pat, child.tag):
@@ -106,24 +106,39 @@ class Feed(object):
 
 class Entry(object):
     """Represents an Atom Entry returned by the PowerVM API."""
-    def __init__(self, properties, element, traits):
+    def __init__(self, properties, element, adapter):
+        """Create an Entry from an etree.Element representing a PowerVM object.
+
+        :param properties: Dict of <entry>-level properties as produced by
+                           unmarshal_atom_entry.
+        :param element: etree.Element (not entities.Element) - the root of the
+                        PowerVM object (not the <feed>, <entry>, or <content>).
+        :param adapter: pypowervm.adapter.Adapter through which the element was
+                        fetched, and/or through which it should be updated.
+        """
         self.properties = properties
-        self.element = Element.wrapelement(element, traits)
+        self.element = Element.wrapelement(element, adapter)
+
+    def __deepcopy__(self, memo=None):
+        """Produce a deep (except for adapter) copy of this Entry."""
+        return self.__class__(copy.deepcopy(self.properties, memo=memo),
+                              copy.deepcopy(self.element, memo=memo).element,
+                              self.adapter)
 
     @property
     def etag(self):
         return self.properties.get('etag', None)
 
     @property
-    def traits(self):
-        return self.element.traits
+    def adapter(self):
+        return self.element.adapter
 
     @classmethod
-    def unmarshal_atom_entry(cls, entryelem, traits):
+    def unmarshal_atom_entry(cls, entryelem, resp):
         """Factory method producing an Entry object from a parsed ElementTree
 
         :param entryelem: Parsed ElementTree object representing an atom entry.
-        :param traits: APITraits from Session.traits.
+        :param resp: The Response containing (the feed containing) the entry.
         :return: a new Entry object representing the entryelem parameter.
         """
         entryprops = {}
@@ -156,15 +171,16 @@ class Entry(object):
                     entryprops['etag'] = child.text
                 elif child.text:
                     entryprops[param_name] = child.text
-        return cls(entryprops, element, traits)
+        return cls(entryprops, element, resp.adapter)
 
 
 class Element(object):
     """Represents an XML element - a utility wrapper around etree.Element."""
-    def __init__(self, tag, traits, ns=const.UOM_NS, attrib=None, text='',
+    def __init__(self, tag, adapter, ns=const.UOM_NS, attrib=None, text='',
                  children=(), cdata=False):
         # Defaults shouldn't be mutable
         attrib = attrib if attrib else {}
+        self.element = None
         if ns:
             self.element = etree.Element(str(etree.QName(ns, tag)),
                                          attrib=attrib)
@@ -174,13 +190,13 @@ class Element(object):
             self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
             self.element.append(c.element)
-        self.traits = traits
+        self.adapter = adapter
 
     def __len__(self):
         return len(self.element)
 
     def __getitem__(self, index):
-        return Element.wrapelement(self.element[index], self.traits)
+        return Element.wrapelement(self.element[index], self.adapter)
 
     def __setitem__(self, index, value):
         if not isinstance(value, Element):
@@ -194,6 +210,11 @@ class Element(object):
         if other is None:
             return False
         return self._element_equality(self, other)
+
+    def __deepcopy__(self, memo=None):
+        """Produce a deep (except for adapter) copy of this Element."""
+        return self.wrapelement(etree.fromstring(self.toxmlstring()),
+                                self.adapter)
 
     @staticmethod
     def _element_equality(one, two):
@@ -236,15 +257,15 @@ class Element(object):
 
     def getchildren(self):
         """Returns the children as a list of Elements."""
-        return [Element.wrapelement(i, self.traits)
+        return [Element.wrapelement(i, self.adapter)
                 for i in self.element.getchildren()]
 
     @classmethod
-    def wrapelement(cls, element, traits):
+    def wrapelement(cls, element, adapter):
         if element is None:
             return None
         # create with minimum inputs
-        e = cls('element', traits)
+        e = cls('element', adapter)
         # assign element over the one __init__ creates
         e.element = element
         return e
@@ -387,7 +408,7 @@ class Element(object):
         e = self.element.find(qpath)
         if e is not None:
             # must specify "is not None" here to work
-            return Element.wrapelement(e, self.traits)
+            return Element.wrapelement(e, self.adapter)
         else:
             return None
 
@@ -401,7 +422,7 @@ class Element(object):
         e_iter = self.element.findall(qpath)
         elems = []
         for e in e_iter:
-            elems.append(Element.wrapelement(e, self.traits))
+            elems.append(Element.wrapelement(e, self.adapter))
         return elems
 
     def findtext(self, match, default=None):
@@ -448,7 +469,7 @@ class Element(object):
         it = lib_iter(tag=qtag)
 
         for e in it:
-            yield Element.wrapelement(e, self.traits)
+            yield Element.wrapelement(e, self.adapter)
 
     def replace(self, existing, new_element):
         """Replaces the existing child Element with the new one."""

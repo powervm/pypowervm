@@ -307,7 +307,7 @@ class Session(object):
                                     c.HTTPStatus.NO_CHANGE]:
             return Response(method, path, response.status_code,
                             response.reason, response.headers,
-                            self.traits, reqheaders=headers, reqbody=body)
+                            reqheaders=headers, reqbody=body)
         else:
             LOG.debug('response body:\n%s' %
                       (response.text if not sensitive else "<sensitive>"))
@@ -350,7 +350,7 @@ class Session(object):
                                 LOG.warn('Re-login failed:\n%s' % str(e))
                             e.orig_response = Response(
                                 method, path, response.status_code,
-                                response.reason, response.headers, self.traits,
+                                response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=response.text)
                             _unmarshal_httperror(e.orig_response)
@@ -376,7 +376,7 @@ class Session(object):
         resp = None
         if not isdownload:
             resp = Response(method, path, response.status_code,
-                            response.reason, response.headers, self.traits,
+                            response.reason, response.headers,
                             reqheaders=headers, reqbody=body,
                             body=response.text)
 
@@ -385,7 +385,7 @@ class Session(object):
                 for chunk in response.iter_content(chunksize):
                     filehandle.write(chunk)
                 resp = Response(method, path, response.status_code,
-                                response.reason, response.headers, self.traits,
+                                response.reason, response.headers,
                                 reqheaders=headers, reqbody=body)
             return resp
         else:
@@ -394,7 +394,7 @@ class Session(object):
                 for chunk in response.iter_content(chunksize):
                     errtext += chunk
                 resp = Response(method, path, response.status_code,
-                                response.reason, response.headers, self.traits,
+                                response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=errtext)
             errmsg = 'HTTP error for %s %s: %s (%s)' % (method, path,
@@ -578,7 +578,12 @@ class Adapter(object):
                 func = helper(func)
 
         # Now just call the function
-        return func(method, path, **kwds)
+        resp = func(method, path, **kwds)
+
+        # Assuming the response is a Response, attach this adapter to it.
+        if isinstance(resp, Response):
+            resp.adapter = self
+        return resp
 
     def create(self, element, root_type, root_id=None, child_type=None,
                child_id=None, suffix_type=None, suffix_parm=None, detail=None,
@@ -1074,7 +1079,6 @@ class Adapter(object):
                                 c.HTTPStatus.NO_CHANGE,
                                 feed_resp.reason,
                                 feed_resp.headers,
-                                self.traits,
                                 body='',
                                 orig_reqpath=feed_resp.reqpath)
                 LOG.debug('Built HTTP 304 resp from cached feed')
@@ -1086,7 +1090,6 @@ class Adapter(object):
                                 feed_resp.reason,
                                 feed_resp.headers,
                                 feed_resp.reqheaders,
-                                self.traits,
                                 body=entry_body,
                                 orig_reqpath=feed_resp.reqpath)
                 # override the etag in the header
@@ -1255,8 +1258,22 @@ class Adapter(object):
 class Response(object):
     """Response to PowerVM API Adapter method invocation."""
 
-    def __init__(self, reqmethod, reqpath, status, reason, headers, traits,
+    def __init__(self, reqmethod, reqpath, status, reason, headers,
                  reqheaders=None, reqbody='', body='', orig_reqpath=''):
+        """Represents an HTTP request/response from Adapter.request().
+
+        :param reqmethod: The HTTP method of the request (e.g. 'GET', 'PUT')
+        :param reqpath: The path (not URI) of the request.  Construct the URI
+                        by prepending Response.adapter.session.dest.
+        :param status: Integer HTTP status code (e.g. 200)
+        :param reason: String HTTP Reason code (e.g. 'No Content')
+        :param headers: Dict of headers from the HTTP response.
+        :param reqheaders: Dict of headers from the HTTP request.
+        :param reqbody: String payload of the HTTP request.
+        :param body: String payload of the HTTP response.
+        :param orig_reqpath: The original reqpath if the Response is built from
+                             a cached feed.
+        """
         self.reqmethod = reqmethod
         self.reqpath = reqpath
         self.reqheaders = reqheaders if reqheaders else {}
@@ -1267,10 +1284,25 @@ class Response(object):
         self.body = body
         self.feed = None
         self.entry = None
-        # to keep track of original reqpath
-        # if the Response is built from cached feed
         self.orig_reqpath = orig_reqpath
-        self.traits = traits
+        # Set by _request()
+        self.adapter = None
+
+    def __deepcopy__(self, memo=None):
+        """Produce a deep (except for adapter) copy of this Response."""
+        ret = self.__class__(
+            self.reqmethod, self.reqpath, self.status, self.reason,
+            copy.deepcopy(self.headers, memo=memo),
+            reqheaders=copy.deepcopy(self.reqheaders, memo=memo),
+            reqbody=self.reqbody, body=self.body,
+            orig_reqpath=self.orig_reqpath)
+        if self.feed is not None:
+            ret.feed = copy.deepcopy(self.feed, memo=memo)
+        if self.entry is not None:
+            ret.entry = copy.deepcopy(self.entry, memo=memo)
+        # Adapter is the one thing not deep-copied
+        ret.adapter = self.adapter
+        return ret
 
     @property
     def etag(self):
@@ -1287,10 +1319,10 @@ class Response(object):
                               str(e))
             if root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'feed')):
-                self.feed = ent.Feed.unmarshal_atom_feed(root, self.traits)
+                self.feed = ent.Feed.unmarshal_atom_feed(root, self)
             elif root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'entry')):
-                self.entry = ent.Entry.unmarshal_atom_entry(root, self.traits)
+                self.entry = ent.Entry.unmarshal_atom_entry(root, self)
             elif err_reason is None:
                 err_reason = 'response is not an Atom feed/entry'
         elif self.reqmethod == 'GET':
@@ -1473,8 +1505,7 @@ def _unmarshal_httperror(resp):
         root = etree.fromstring(resp.body)
         if root is not None and root.tag == str(etree.QName(c.ATOM_NS,
                                                             'entry')):
-            resp.err = ent.Entry.unmarshal_atom_entry(
-                root, resp.traits).element
+            resp.err = ent.Entry.unmarshal_atom_entry(root, resp).element
     except Exception:
         pass
 

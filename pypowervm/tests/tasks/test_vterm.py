@@ -20,7 +20,7 @@ import testtools
 import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
 from pypowervm.tasks import vterm
-from pypowervm.tests import fixtures
+import pypowervm.tests.test_fixtures as fx
 
 
 class TestVterm(testtools.TestCase):
@@ -28,15 +28,14 @@ class TestVterm(testtools.TestCase):
 
     def setUp(self):
         super(TestVterm, self).setUp()
-        self.useFixture(fixtures.AdapterFx())
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_close_vterm(self, mock_run_job):
         """Performs a close LPAR vterm test."""
         mock_resp = mock.MagicMock()
         mock_resp.entry = ent.Entry(
-            {}, ent.Element('Dummy', self.traits), self.traits)
+            {}, ent.Element('Dummy', self.adpt), self.adpt)
         mock_adpt = mock.MagicMock()
         mock_adpt.read.return_value = mock_resp
         vterm.close_vterm(mock_adpt, '12345')

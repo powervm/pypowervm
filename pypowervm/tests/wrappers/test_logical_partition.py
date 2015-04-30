@@ -343,7 +343,7 @@ class TestMemCfg(unittest.TestCase):
 
     def test_mem(self):
         mem_wrap = bp.PartitionMemoryConfiguration.bld(
-            1024, min_mem=512, max_mem=2048)
+            None, 1024, min_mem=512, max_mem=2048)
         self.assertIsNotNone(mem_wrap)
         self.assertEqual(512, mem_wrap.min)
         self.assertEqual(1024, mem_wrap.desired)
@@ -353,7 +353,7 @@ class TestMemCfg(unittest.TestCase):
 class TestPhysFCPort(unittest.TestCase):
 
     def test_bld(self):
-        port = bp.PhysFCPort.bld_ref('fcs0')
+        port = bp.PhysFCPort.bld_ref(None, 'fcs0')
         self.assertIsNotNone(port)
         self.assertEqual('fcs0', port.name)
 

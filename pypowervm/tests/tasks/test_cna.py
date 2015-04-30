@@ -20,8 +20,8 @@ import testtools
 
 import pypowervm.adapter as adp
 from pypowervm.tasks import cna
-from pypowervm.tests import fixtures
 import pypowervm.tests.tasks.util as tju
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import network as pvm_net
@@ -35,9 +35,9 @@ class TestCNA(testtools.TestCase):
 
     def setUp(self):
         super(TestCNA, self).setUp()
-        self.adpt = self.useFixture(fixtures.AdapterFx()).adpt
-        # HMCish Traits
-        self.adpt.traits = self.useFixture(fixtures.RemoteHMCTraitsFx).traits
+        # Adapter with HMCish Traits
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
+        self.adpt = self.adptfx.adpt
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
     def test_crt_cna(self, mock_vnet_find):
@@ -70,7 +70,7 @@ class TestCNA(testtools.TestCase):
         vs = tju.load_file(VSWITCH_FILE)
         self.adpt.read.return_value = vs
         # PVMish Traits
-        self.adpt.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adptfx.set_traits(fx.LocalPVMTraits)
 
         # Create a side effect that can validate the input into the create
         # call.
@@ -137,9 +137,9 @@ class TestCNA(testtools.TestCase):
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
-        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                            self.adpt.traits)
-        resp.entry = ewrap.EntryWrapper._bld(tag='VirtualNetwork').entry
+        resp = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp.entry = ewrap.EntryWrapper._bld(
+            self.adpt, tag='VirtualNetwork').entry
         self.adpt.create.return_value = resp
         vnet_resp = cna._find_or_create_vnet(self.adpt, host_uuid, '2228',
                                              fake_vs)

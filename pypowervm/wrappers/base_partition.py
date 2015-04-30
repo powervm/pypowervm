@@ -203,9 +203,10 @@ class BasePartition(ewrap.EntryWrapper):
     search_keys = dict(name=_BP_NAME, id=_BP_ID)
 
     @classmethod
-    def _bld_base(cls, name, mem_cfg, proc_cfg, env, io_cfg=None):
+    def _bld_base(cls, adapter, name, mem_cfg, proc_cfg, env, io_cfg=None):
         """Creates a BasePartition wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the partition
         :param mem_cfg: The memory configuration wrapper
         :param proc_cfg: The processor configuration wrapper
@@ -215,7 +216,7 @@ class BasePartition(ewrap.EntryWrapper):
         :returns: New BasePartition wrapper
         """
 
-        partition = super(BasePartition, cls)._bld()
+        partition = super(BasePartition, cls)._bld(adapter)
         if io_cfg:
             partition.io_config = io_cfg
         partition.mem_config = mem_cfg
@@ -396,11 +397,13 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld_shared(cls, proc_unit, proc, sharing_mode=SharingMode.UNCAPPED,
-                   uncapped_weight=128, min_proc_unit=None, max_proc_unit=None,
-                   min_proc=None, max_proc=None, proc_pool=0):
+    def bld_shared(cls, adapter, proc_unit, proc,
+                   sharing_mode=SharingMode.UNCAPPED, uncapped_weight=128,
+                   min_proc_unit=None, max_proc_unit=None, min_proc=None,
+                   max_proc=None, proc_pool=0):
         """Builds a Shared Processor configuration wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param proc_unit: Amount of desired proc units (float)
         :param proc: Number of virtual processors (int)
         :param sharing_mode: Sharing mode of the processors (uncapped)
@@ -413,11 +416,11 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
         :returns: Processor Config with shared processors
 
         """
-        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld()
+        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld(adapter)
         proc_cfg._has_dedicated(False)
 
         sproc = SharedProcessorConfiguration.bld(
-            proc_unit, proc, uncapped_weight=uncapped_weight,
+            adapter, proc_unit, proc, uncapped_weight=uncapped_weight,
             min_proc_unit=min_proc_unit, max_proc_unit=max_proc_unit,
             min_proc=min_proc, max_proc=max_proc, proc_pool=proc_pool)
 
@@ -426,11 +429,12 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
         return proc_cfg
 
     @classmethod
-    def bld_dedicated(cls, proc, min_proc=None, max_proc=None,
+    def bld_dedicated(cls, adapter, proc, min_proc=None, max_proc=None,
                       sharing_mode=DedicatedSharingMode.SHARE_IDLE_PROCS):
 
         """Builds a Dedicated Processor configuration wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param proc: Number of virtual processors (int)
         :param min_proc: Minimum processors, default to proc value
         :param max_proc: Maximum processors, default to proc value
@@ -439,10 +443,10 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
 
         """
 
-        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld()
+        proc_cfg = super(PartitionProcessorConfiguration, cls)._bld(adapter)
 
         dproc = DedicatedProcessorConfiguration.bld(
-            proc, min_proc=min_proc, max_proc=max_proc)
+            adapter, proc, min_proc=min_proc, max_proc=max_proc)
 
         proc_cfg._dedicated_proc_cfg(dproc)
         proc_cfg._has_dedicated(True)
@@ -492,9 +496,10 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
     """Represents the partitions Memory Configuration."""
 
     @classmethod
-    def bld(cls, mem, min_mem=None, max_mem=None):
+    def bld(cls, adapter, mem, min_mem=None, max_mem=None):
         """Creates the ParitionMemoryConfiguration.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param mem: The amount of memory for the partition in MB
         :param min_mem: The minimum amount of memory in MB. Defaults to
             the mem param
@@ -507,7 +512,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         if max_mem is None:
             max_mem = mem
 
-        cfg = super(PartitionMemoryConfiguration, cls)._bld()
+        cfg = super(PartitionMemoryConfiguration, cls)._bld(adapter)
         cfg.desired = mem
         cfg.max = max_mem
         cfg.min = min_mem
@@ -550,11 +555,12 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
     """Represents the partition's Shared Processor Configuration."""
 
     @classmethod
-    def bld(cls, proc_unit, proc, uncapped_weight=None,
+    def bld(cls, adapter, proc_unit, proc, uncapped_weight=None,
             min_proc_unit=None, max_proc_unit=None,
             min_proc=None, max_proc=None, proc_pool=0):
         """Builds a Shared Processor configuration wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param proc_unit: Amount of desired proc units (float)
         :param proc: Number of virtual processors (int)
         :param uncapped_weight: Uncapped weight of the processors, 0-255
@@ -577,7 +583,7 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
         if max_proc is None:
             max_proc = proc
 
-        sproc = super(SharedProcessorConfiguration, cls)._bld()
+        sproc = super(SharedProcessorConfiguration, cls)._bld(adapter)
 
         sproc.desired_units = proc_unit
         sproc.desired_virtual = proc
@@ -661,9 +667,10 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
     """Represents the partition's Dedicated Processor Configuration."""
 
     @classmethod
-    def bld(cls, proc, min_proc=None, max_proc=None):
+    def bld(cls, adapter, proc, min_proc=None, max_proc=None):
         """Builds a Dedicated Processor configuration wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param proc: Number of virtual processors (int)
         :param min_proc: Minimum processors, default to proc value
         :param max_proc: Maximum processors, default to proc value
@@ -677,7 +684,7 @@ class DedicatedProcessorConfiguration(ewrap.ElementWrapper):
         if max_proc is None:
             max_proc = proc
 
-        dproc = super(DedicatedProcessorConfiguration, cls)._bld()
+        dproc = super(DedicatedProcessorConfiguration, cls)._bld(adapter)
 
         dproc.desired = proc
         dproc.max = max_proc
@@ -720,14 +727,15 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld(cls, max_virt_slots):
+    def bld(cls, adapter, max_virt_slots):
         """Builds a Partition IO configuration wrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param max_virt_slots: Number of virtual slots (int)
         :returns: Partition IO configuration wrapper
 
         """
-        cfg = super(PartitionIOConfiguration, cls)._bld()
+        cfg = super(PartitionIOConfiguration, cls)._bld(adapter)
         cfg.max_virtual_slots = max_virt_slots
 
         return cfg
@@ -960,17 +968,18 @@ class PhysFCPort(ewrap.ElementWrapper):
     """A Physical Fibre Channel Port."""
 
     @classmethod
-    def bld_ref(cls, name):
+    def bld_ref(cls, adapter, name):
         """Create a wrapper that serves as a reference to a port.
 
         This is typically used when another element (ex. Virtual FC Mapping)
         requires a port to be specified in it.  Rather than query to find
         the port, one can simply be built and referenced as a child element.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the physical FC port.  End users need to
                      verify the port name.  Typically starts with 'fcs'.
         """
-        port = super(PhysFCPort, cls)._bld()
+        port = super(PhysFCPort, cls)._bld(adapter)
         port._name(name)
         return port
 

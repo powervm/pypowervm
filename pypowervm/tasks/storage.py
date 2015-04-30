@@ -127,7 +127,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     f_uuid = _upload_stream(adapter, vio_file, d_stream)
 
     # Simply return a reference to this.
-    reference = stor.VOptMedia.bld_ref(f_name)
+    reference = stor.VOptMedia.bld_ref(adapter, f_name)
 
     return reference, f_uuid
 
@@ -282,7 +282,7 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     :param tdev_udid: The device UDID that the file will back into.
     :returns: The File Wrapper
     """
-    fd = vf.File.bld(f_name, f_type, v_uuid, sha_chksum=sha_chksum,
+    fd = vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
                      f_size=f_size, tdev_udid=tdev_udid)
 
     # Create the file.
@@ -437,7 +437,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
                                 stor.VG.schema_type, vol_grp_uuid)
     vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
-    new_vdisk = stor.VDisk.bld(d_name, d_size_gb)
+    new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb)
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)
@@ -477,7 +477,7 @@ def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     if name in [lu.name for lu in ssp.logical_units]:
         raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
 
-    lu = stor.LU.bld(name, size, thin, typ)
+    lu = stor.LU.bld(adapter, name, size, thin=thin, typ=typ)
     ssp.logical_units.append(lu)
     ssp = ssp.update(adapter)
     newlu = None

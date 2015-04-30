@@ -83,11 +83,11 @@ class TestClusterSSP(unittest.TestCase):
             return mock.MagicMock()
         mock_adp.create_job.side_effect = create_job
         node = clust.Node.bld(
-            hostname='vios1', lpar_id=5, mtms='XXXX-YYY*ZZZZZZZ',
+            mock_adp, hostname='vios1', lpar_id=5, mtms='XXXX-YYY*ZZZZZZZ',
             vios_uri='https://a.example.com:12443/rest/api/uom/VirtualIOServe'
             'r/12345678-1234-1234-1234-123456789012')
-        repos = stor.PV.bld(name='repos_pv_name')
-        data = [stor.PV.bld(name=n) for n in (
+        repos = stor.PV.bld(mock_adp, name='repos_pv_name')
+        data = [stor.PV.bld(mock_adp, name=n) for n in (
             'hdisk1', 'hdisk2', 'hdisk3')]
         cs.crt_cluster_ssp(mock_adp, 'clust_name', 'ssp_name', repos,
                            node, data)

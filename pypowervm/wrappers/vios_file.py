@@ -49,10 +49,11 @@ class File(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
+    def bld(cls, adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
             tdev_udid=None):
         """Creates a fresh File wrapper that can be used for a create action.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param f_name: The name for the file.
         :param f_type: The type of the file.  One of the FileType values.
         :param v_uuid: The UUID for the Virtual I/O Server that the file will
@@ -66,7 +67,7 @@ class File(ewrap.EntryWrapper):
         :returns: The newly created File wrapper.
         """
         # Metadata needs to be in a specific order.  These are required
-        f = super(File, cls)._bld()
+        f = super(File, cls)._bld(adapter)
         f._file_name(f_name)
         f._internet_media_type(_DEFAULT_MEDIA_TYPE)
 

@@ -51,9 +51,10 @@ class Cluster(ewrap.EntryWrapper):
     search_keys = dict(name='ClusterName')
 
     @classmethod
-    def bld(cls, name, repos_pv, first_node):
+    def bld(cls, adapter, name, repos_pv, first_node):
         """Create a fresh Cluster EntryWrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: String name for the Cluster.
         :param repos_pv: storage.PV representing the repository disk.
         :param first_node: Node wrapper representing the first VIOS
@@ -61,7 +62,7 @@ class Cluster(ewrap.EntryWrapper):
         node; others must be added later.)  The VIOS must be able to see each
         disk.
         """
-        clust = cls._bld()
+        clust = cls._bld(adapter)
         # The order of these assignments IS significant.
         clust._name(name)
         clust.repos_pv = repos_pv
@@ -146,9 +147,11 @@ class Node(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld(cls, hostname=None, lpar_id=None, mtms=None, vios_uri=None):
+    def bld(cls, adapter, hostname=None, lpar_id=None, mtms=None,
+            vios_uri=None):
         """Create a fresh Node ElementWrapper.
 
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param hostname: String hostname (or IP) of the Node.
         :param lpar_id: Integer LPAR ID of the Node.
         :param mtms: String OR managed_system.MTMS wrapper representing the
@@ -157,7 +160,7 @@ class Node(ewrap.ElementWrapper):
                      e.g. '8247-22L*1234A0B'.
         :param vios_uri: String URI representing this Node.
         """
-        node = cls._bld()
+        node = cls._bld(adapter)
         if vios_uri:
             node._vios_uri(vios_uri)
         if lpar_id:
@@ -195,7 +198,7 @@ class Node(ewrap.ElementWrapper):
                          managed_system.MTMS ElementWrapper.
         """
         if not isinstance(new_mtms, ms.MTMS):
-            new_mtms = ms.MTMS.bld(new_mtms)
+            new_mtms = ms.MTMS.bld(self.adapter, new_mtms)
         self.inject(new_mtms.element)
 
     @property

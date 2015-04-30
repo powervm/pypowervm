@@ -79,15 +79,15 @@ class Job(ewrap.EntryWrapper):
            :param cdata: If True, the value text will be wrapped in CDATA tags
            :returns: JobParameter Element
         """
-        # JobParameter not affected by traits today
-        traits = None
+        # JobParameter doesn't need adapter today
+        adapter = None
 
-        job_parm = ent.Element('JobParameter', traits,
+        job_parm = ent.Element('JobParameter', adapter,
                                attrib={'schemaVersion': 'V1_0'},
                                ns=pc.WEB_NS)
-        job_parm.append(ent.Element('ParameterName', traits,
+        job_parm.append(ent.Element('ParameterName', adapter,
                                     text=name, ns=pc.WEB_NS))
-        job_parm.append(ent.Element('ParameterValue', traits,
+        job_parm.append(ent.Element('ParameterValue', adapter,
                                     text=value, ns=pc.WEB_NS, cdata=cdata))
         return job_parm
 

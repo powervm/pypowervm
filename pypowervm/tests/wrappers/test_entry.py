@@ -25,7 +25,7 @@ import unittest
 
 import pypowervm.adapter as apt
 import pypowervm.entities as ent
-from pypowervm.tests import fixtures
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -117,11 +117,11 @@ class TestEntryWrapper(testtools.TestCase):
 
     def setUp(self):
         super(TestEntryWrapper, self).setUp()
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
     def test_etag(self):
-        fake_entry = ent.Entry({}, ent.Element('fake_entry', self.traits),
-                               self.traits)
+        fake_entry = ent.Entry({}, ent.Element('fake_entry', self.adpt),
+                               self.adpt)
         etag = '1234'
         ew = ewrap.EntryWrapper.wrap(fake_entry, etag=etag)
         self.assertEqual(etag, ew.etag)
@@ -131,14 +131,14 @@ class TestEntryWrapper(testtools.TestCase):
 
     def test_load(self):
         etag = '1234'
-        resp = apt.Response('reqmethod', 'reqpath', 'status',
-                            'reason', dict(etag=etag), self.traits)
+        resp = apt.Response('reqmethod', 'reqpath', 'status', 'reason',
+                            dict(etag=etag))
 
         # Entry or Feed is not set, so expect an exception
         self.assertRaises(KeyError, ewrap.EntryWrapper.wrap, resp)
 
         # Set an entry...
-        entry = ent.Entry({}, ent.Element('entry', self.traits), self.traits)
+        entry = ent.Entry({}, ent.Element('entry', self.adpt), self.adpt)
         resp.entry = entry
 
         # Run
@@ -149,8 +149,7 @@ class TestEntryWrapper(testtools.TestCase):
         self.assertEqual(etag, ew.etag)
 
         # Create a response with no headers
-        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                             self.traits)
+        resp2 = apt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp2.entry = entry
         # Run
         ew = ewrap.EntryWrapper.wrap(resp2)
@@ -159,10 +158,10 @@ class TestEntryWrapper(testtools.TestCase):
 
         # Wipe our entry, add feed.
         resp.entry = None
-        e1 = ent.Entry({'etag': '1'}, ent.Element('e1', self.traits),
-                       self.traits)
-        e2 = ent.Entry({'etag': '2'}, ent.Element('e2', self.traits),
-                       self.traits)
+        e1 = ent.Entry({'etag': '1'}, ent.Element('e1', self.adpt),
+                       self.adpt)
+        e2 = ent.Entry({'etag': '2'}, ent.Element('e2', self.adpt),
+                       self.adpt)
         resp.feed = ent.Feed({}, [e1, e2])
 
         # Run
@@ -180,7 +179,7 @@ class TestElementWrapper(testtools.TestCase):
 
     def setUp(self):
         super(TestElementWrapper, self).setUp()
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
         self.resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         self.nb1 = ewrap.EntryWrapper.wrap(self.resp.feed.entries[0])
         self.resp2 = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
@@ -213,7 +212,7 @@ class TestElementWrapper(testtools.TestCase):
         # Default: UOM namespace, no <Metadata/>
         class MyElement(ewrap.ElementWrapper):
             schema_type = 'SomePowerObject'
-        myel = MyElement._bld()
+        myel = MyElement._bld(self.adpt)
         self.assertEqual(myel.schema_type, 'SomePowerObject')
         self.assertEqual(myel.element.toxmlstring(),
                          '<SomePowerObject/>'.encode("utf-8"))
@@ -224,7 +223,7 @@ class TestElementWrapper(testtools.TestCase):
             default_attrib = {'foo': 'bar'}
             schema_ns = 'baz'
             has_metadata = True
-        myel = MyElement3._bld()
+        myel = MyElement3._bld(self.adpt)
         self.assertEqual(
             myel.element.toxmlstring(),
             '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
@@ -235,7 +234,7 @@ class TestElementWrapper(testtools.TestCase):
                                        ns='baz', attrib={'foo': 'bar'})
         class MyElement4(ewrap.ElementWrapper):
             pass
-        myel = MyElement4._bld()
+        myel = MyElement4._bld(self.adpt)
         self.assertEqual(
             myel.element.toxmlstring(),
             '<ns0:SomePowerObject xmlns:ns0="baz" foo="bar"><ns0:Metadata>'
@@ -243,7 +242,7 @@ class TestElementWrapper(testtools.TestCase):
 
         # Now 'SomePowerObject' is registered.  Prove that we can use wrap() to
         # instantiate MyElement4 straight from ElementWrapper.
-        el = ent.Element('SomePowerObject', self.traits, ns='baz',
+        el = ent.Element('SomePowerObject', self.adpt, ns='baz',
                          attrib={'foo': 'bar'})
         w = ewrap.ElementWrapper.wrap(el)
         self.assertIsInstance(w, MyElement4)
@@ -294,13 +293,111 @@ class TestElementWrapper(testtools.TestCase):
         sea.set_href(path, 'baz')
         self.assertEqual(sea.get_href(path, one_result=True), 'baz')
 
+    def _verify_element_clone(self, el1, el2):
+        # Equal according to _element_equality
+        self.assertEqual(el1, el2)
+        # Not the same reference
+        self.assertIsNot(el1, el2)
+        # Adapter references are the same
+        self.assertIs(el1.adapter, el2.adapter)
+        # etree.Elements are not the same reference
+        self.assertIsNot(el1.element, el2.element)
+        # But they marshal identically
+        self.assertEqual(el1.toxmlstring().strip(),
+                         el2.toxmlstring().strip())
+
+    def test_element_clone(self):
+        el1 = self.nb1.element
+        el2 = copy.deepcopy(el1)
+        self._verify_element_clone(el1, el2)
+
+    def _verify_properties_clone(self, props1, props2):
+        # Properties should be deeply equal
+        self.assertEqual(props1, props2)
+        # But not the same reference
+        self.assertIsNot(props1, props2)
+        # Strings are shared copy-on-write.  Ensure changing one does not
+        # change the other
+        props1['id'] = 'abc'
+        self.assertNotEqual(props1['id'], props2['id'])
+
+    def _verify_entry_clone(self, ent1, ent2):
+        # Elements should be cloned to the same spec as Element.__deepcopy__()
+        self._verify_element_clone(ent1.element, ent2.element)
+        self._verify_properties_clone(ent1.properties, ent2.properties)
+        # Ensure deep copy - sub-properties also not the same reference.
+        links1 = ent1.properties['links']
+        links2 = ent2.properties['links']
+        self.assertIsNot(links1, links2)
+        # And one more layer down
+        self.assertIsNot(links1['SELF'], links2['SELF'])
+
+    def test_entry_clone(self):
+        ent1 = self.nb1.entry
+        ent2 = copy.deepcopy(ent1)
+        self._verify_entry_clone(ent1, ent2)
+
+    def _verify_feed_clone(self, feed1, feed2):
+        self._verify_properties_clone(feed1.properties, feed2.properties)
+        self.assertEqual(len(feed1.entries), len(feed2.entries))
+        for ent1, ent2 in zip(feed1.entries, feed2.entries):
+            self._verify_entry_clone(ent1, ent2)
+
+    def test_feed_clone(self):
+        feed1 = self.resp.feed
+        feed2 = copy.deepcopy(feed1)
+        self._verify_feed_clone(feed1, feed2)
+
+    def _verify_response_clone(self, resp1, resp2):
+        for attr in ('reqmethod', 'reqpath', 'reqheaders', 'reqbody', 'status',
+                     'reason', 'headers', 'body', 'orig_reqpath', 'adapter'):
+            self.assertEqual(getattr(resp1, attr), getattr(resp2, attr))
+        self.assertIsNot(resp1.headers, resp2.headers)
+        self.assertIs(resp1.adapter, resp2.adapter)
+        if resp1.feed is None:
+            self.assertIsNone(resp2.feed)
+        else:
+            self._verify_feed_clone(resp1.feed, resp2.feed)
+        if resp1.entry is None:
+            self.assertIsNone(resp2.entry)
+        else:
+            self._verify_entry_clone(resp1.entry, resp2.entry)
+
+    def test_response_clone(self):
+        # Network Bridge Response has a feed
+        resp1 = self.resp
+        resp2 = copy.deepcopy(resp1)
+        self._verify_response_clone(resp1, resp2)
+        # This one has entry
+        resp3 = pvmhttp.load_pvm_resp(
+            'get_volume_group_no_rep.txt').get_response()
+        resp4 = copy.deepcopy(resp3)
+        self._verify_response_clone(resp3, resp4)
+
+    def test_entrywrapper_clone(self):
+        ew1 = self.nb1
+        ew2 = copy.deepcopy(ew1)
+        # Entrys should be cloned to the same spec as Entry.__deepcopy__()
+        self._verify_entry_clone(ew1.entry, ew2.entry)
+        # Etags should match
+        self.assertEqual(ew1.etag, ew2.etag)
+        # But changing one should not change the other
+        ew1._etag = 'abc'
+        self.assertNotEqual(ew1.etag, ew2.etag)
+
+    def test_elementwrapper_clone(self):
+        ew1 = self.nb1.seas[0]
+        ew2 = copy.deepcopy(ew1)
+        # Elements should be cloned to the same spec as Element.__deepcopy__()
+        self._verify_element_clone(ew1.element, ew2.element)
+
 
 class TestWrapperElemList(testtools.TestCase):
     """Tests for the WrapperElemList class."""
 
     def setUp(self):
         super(TestWrapperElemList, self).setUp()
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
         resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         nb = resp.feed.entries[0]
         self.wrapper = ewrap.EntryWrapper.wrap(nb)
@@ -317,7 +414,7 @@ class TestWrapperElemList(testtools.TestCase):
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
-            ent.Element('SharedEthernetAdapter', self.traits))
+            ent.Element('SharedEthernetAdapter', self.adpt))
         self.assertEqual(1, len(self.elem_set))
 
         # Test Append
@@ -331,9 +428,9 @@ class TestWrapperElemList(testtools.TestCase):
     def test_extend(self):
         seas = [
             ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
-                                                  self.traits)),
+                                                  self.adpt)),
             ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
-                                                  self.traits))
+                                                  self.adpt))
         ]
         self.assertEqual(1, len(self.elem_set))
         self.elem_set.extend(seas)
@@ -342,7 +439,7 @@ class TestWrapperElemList(testtools.TestCase):
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
         e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
-                                                  self.traits))
+                                                  self.adpt))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
         self.assertEqual(1, len(self.elem_set))
@@ -452,13 +549,12 @@ class TestSearch(testtools.TestCase):
     def setUp(self):
         super(TestSearch, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
 
     def _validate_request(self, path, *feedcontents):
         def validate_request(meth, _path, *args, **kwargs):
             self.assertTrue(_path.endswith(path))
             resp = apt.Response('meth', 'path', 'status', 'reason', {},
-                                self.traits, reqheaders={'Accept': ''})
+                                reqheaders={'Accept': ''})
             resp.feed = ent.Feed({}, feedcontents)
             return resp
         return validate_request
@@ -467,8 +563,10 @@ class TestSearch(testtools.TestCase):
     def test_good(self, mock_rq):
         mock_rq.side_effect = self._validate_request(
             "/rest/api/uom/Cluster/search/(ClusterName=='cl1')?group=None",
-            clust.Cluster.bld('cl1', stor.PV.bld('hdisk1', 'udid1'),
-                              clust.Node.bld(hostname='vios1')).entry)
+            clust.Cluster.bld(self.adp, 'cl1', stor.PV.bld(self.adp, 'hdisk1',
+                                                           'udid1'),
+                              clust.Node.bld(
+                                  self.adp, hostname='vios1')).entry)
 
         clwraps = clust.Cluster.search(self.adp, name='cl1')
         self.assertEqual(len(clwraps), 1)
@@ -582,30 +680,26 @@ class TestRefresh(testtools.TestCase):
     def setUp(self):
         super(TestRefresh, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.old_etag = '123'
         self.clust_old = clust.Cluster.bld(
-            'mycluster', stor.PV.bld('hdisk1', 'udid1'),
-            clust.Node.bld('hostname1'))
+            self.adp, 'mycluster', stor.PV.bld(self.adp, 'hdisk1', 'udid1'),
+            clust.Node.bld(self.adp, 'hostname1'))
         self.clust_old._etag = None
         self.clust_old.entry.properties = props
         self.new_etag = '456'
         self.clust_new = clust.Cluster.bld(
-            'mycluster', stor.PV.bld('hdisk2', 'udid2'),
-            clust.Node.bld('hostname2'))
+            self.adp, 'mycluster', stor.PV.bld(self.adp, 'hdisk2', 'udid2'),
+            clust.Node.bld(self.adp, 'hostname2'))
         self.clust_new._etag = self.new_etag
         self.clust_new.entry.properties = props
         self.resp304 = apt.Response(
-            'meth', 'path', 304, 'reason', {'etag': self.old_etag},
-            self.traits)
+            'meth', 'path', 304, 'reason', {'etag': self.old_etag})
         self.resp200old = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.old_etag},
-            self.traits)
+            'meth', 'path', 200, 'reason', {'etag': self.old_etag})
         self.resp200old.entry = self.clust_old.entry
         self.resp200new = apt.Response(
-            'meth', 'path', 200, 'reason', {'etag': self.new_etag},
-            self.traits)
+            'meth', 'path', 200, 'reason', {'etag': self.new_etag})
         self.resp200new.entry = self.clust_new.entry
 
     def _mock_read_by_href(self, in_etag, out_resp):
@@ -651,19 +745,18 @@ class TestUpdate(testtools.TestCase):
     def setUp(self):
         super(TestUpdate, self).setUp()
         self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
-        self.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.cl = clust.Cluster.bld(
-            'mycluster', stor.PV.bld('hdisk1', 'udid1'),
-            clust.Node.bld('hostname1'))
+            self.adp, 'mycluster', stor.PV.bld(
+                self.adp, 'hdisk1', udid='udid1'),
+            clust.Node.bld(self.adp, 'hostname1'))
         self.cl._etag = self.clust_etag
         self.cl.entry.properties = props
 
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
-                            self.traits)
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp)
@@ -675,8 +768,7 @@ class TestUpdate(testtools.TestCase):
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_update_xag(self, mock_ubp):
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
-                            self.traits)
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
@@ -693,8 +785,7 @@ class TestUpdate(testtools.TestCase):
         self.cl.entry.properties = props
 
         new_etag = '456'
-        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag},
-                            self.traits)
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])

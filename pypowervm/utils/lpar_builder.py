@@ -603,7 +603,8 @@ class SimplifiedRemoteRestart(BoolField):
 
 
 class LPARBuilder(object):
-    def __init__(self, attr, stdz):
+    def __init__(self, adapter, attr, stdz):
+        self.adapter = adapter
         self.attr = attr
         self.stdz = stdz
         for val in MINIMUM_ATTRS:
@@ -618,8 +619,8 @@ class LPARBuilder(object):
 
         std = self.stdz.ded_proc()
         dproc = bp.PartitionProcessorConfiguration.bld_dedicated(
-            std[VCPU], min_proc=std[MIN_VCPU], max_proc=std[MAX_VCPU],
-            sharing_mode=std[SHARING_MODE])
+            self.adapter, std[VCPU], min_proc=std[MIN_VCPU],
+            max_proc=std[MAX_VCPU], sharing_mode=std[SHARING_MODE])
         return dproc
 
     def build_shr_proc(self):
@@ -631,8 +632,8 @@ class LPARBuilder(object):
         uncapped_weight = std.get(UNCAPPED_WEIGHT)
         # Build the shared procs
         shr_proc = bp.PartitionProcessorConfiguration.bld_shared(
-            std[PROC_UNITS], std[VCPU], sharing_mode=std[SHARING_MODE],
-            uncapped_weight=uncapped_weight,
+            self.adapter, std[PROC_UNITS], std[VCPU],
+            sharing_mode=std[SHARING_MODE], uncapped_weight=uncapped_weight,
             min_proc_unit=std[MIN_PROC_U], max_proc_unit=std[MAX_PROC_U],
             min_proc=std[MIN_VCPU], max_proc=std[MAX_VCPU], proc_pool=std[SPP])
         return shr_proc
@@ -640,7 +641,7 @@ class LPARBuilder(object):
     def build_mem(self):
         std = self.stdz.memory()
         mem_wrap = bp.PartitionMemoryConfiguration.bld(
-            std[MEM], min_mem=std[MIN_MEM], max_mem=std[MAX_MEM])
+            self.adapter, std[MEM], min_mem=std[MIN_MEM], max_mem=std[MAX_MEM])
         return mem_wrap
 
     def _shared_proc_keys_specified(self):
@@ -694,14 +695,18 @@ class LPARBuilder(object):
 
         if std[ENV] == bp.LPARType.VIOS:
             lpar_w = vios.VIOS.bld(
-                std[NAME], bp.PartitionMemoryConfiguration.bld(0),
-                bp.PartitionProcessorConfiguration.bld_dedicated(0),
-                io_cfg=bp.PartitionIOConfiguration.bld(0))
+                self.adapter, std[NAME],
+                bp.PartitionMemoryConfiguration.bld(self.adapter, 0),
+                bp.PartitionProcessorConfiguration.bld_dedicated(
+                    self.adapter, 0),
+                io_cfg=bp.PartitionIOConfiguration.bld(self.adapter, 0))
         else:
             lpar_w = lpar.LPAR.bld(
-                std[NAME], bp.PartitionMemoryConfiguration.bld(0),
-                bp.PartitionProcessorConfiguration.bld_dedicated(0),
-                io_cfg=bp.PartitionIOConfiguration.bld(0),
+                self.adapter, std[NAME],
+                bp.PartitionMemoryConfiguration.bld(self.adapter, 0),
+                bp.PartitionProcessorConfiguration.bld_dedicated(
+                    self.adapter, 0),
+                io_cfg=bp.PartitionIOConfiguration.bld(self.adapter, 0),
                 env=std[ENV])
         return self.rebuild(lpar_w)
 
@@ -724,7 +729,8 @@ class LPARBuilder(object):
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
             lpar_w.srr_enabled = std[SRR_CAPABLE]
-        io_cfg = bp.PartitionIOConfiguration.bld(std[MAX_IO_SLOTS])
+        io_cfg = bp.PartitionIOConfiguration.bld(self.adapter,
+                                                 std[MAX_IO_SLOTS])
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg

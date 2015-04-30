@@ -131,7 +131,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
     """
 
     # Build the LUA recovery XML
-    lua_xml = _lua_recovery_xml(itls, vendor=vendor)
+    lua_xml = _lua_recovery_xml(itls, adapter, vendor=vendor)
 
     # Build up the job & invoke
     resp = adapter.read(
@@ -148,7 +148,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
     return status, devname, udid
 
 
-def _lua_recovery_xml(itls, vendor=LUAType.IBM):
+def _lua_recovery_xml(itls, adapter, vendor=LUAType.IBM):
     """Builds the XML that is used as input for the lua_recovery job.
 
     The lua_recovery provides a very quick way for the system to discover
@@ -160,42 +160,39 @@ def _lua_recovery_xml(itls, vendor=LUAType.IBM):
     :param vendor: The LUA vendor.  See the LUAType.* Constants.
     :return: The CDATA XML that is used for the lua_recovery job.
     """
-    # Used for building the internal XML.  At this time, no traits are used.
-    # If they are used in the future, they will need to be passed into this
-    # method.
-    traits = None
+    # Used for building the internal XML.
 
-    root = ent.Element("XML_LIST", traits, ns='')
+    root = ent.Element("XML_LIST", adapter, ns='')
 
     # The general attributes
     # TODO(IBM) Need to determine value of making these constants modifiable
-    general = ent.Element("general", traits, ns='')
-    general.append(ent.Element("cmd_version", traits, text=_LUA_CMD_VERSION,
+    general = ent.Element("general", adapter, ns='')
+    general.append(ent.Element("cmd_version", adapter, text=_LUA_CMD_VERSION,
                                ns=''))
-    general.append(ent.Element("version", traits, text=_LUA_VERSION, ns=''))
+    general.append(ent.Element("version", adapter, text=_LUA_VERSION, ns=''))
     root.append(general)
 
     # TODO(IBM) This can be re-evaluated.  Set to true if you know for sure
     # the ITLs are alive.  If there are any bad ITLs, this should be false.
-    root.append(ent.Element("reliableITL", traits, text="false", ns=''))
+    root.append(ent.Element("reliableITL", adapter, text="false", ns=''))
 
     # There is only one device in the device list.
-    device_list = ent.Element("deviceList", traits, ns='')
-    device = ent.Element("device", traits, ns='')
-    device.append(ent.Element("vendor", traits, text=vendor, ns=''))
-    device.append(ent.Element("deviceTag", traits, text="1", ns=''))
+    device_list = ent.Element("deviceList", adapter, ns='')
+    device = ent.Element("device", adapter, ns='')
+    device.append(ent.Element("vendor", adapter, text=vendor, ns=''))
+    device.append(ent.Element("deviceTag", adapter, text="1", ns=''))
 
-    itl_list = ent.Element("itlList", traits, ns='')
-    itl_list.append(ent.Element("number", traits, text="%d" % (len(itls)),
+    itl_list = ent.Element("itlList", adapter, ns='')
+    itl_list.append(ent.Element("number", adapter, text="%d" % (len(itls)),
                                 ns=''))
 
     for itl in itls:
-        itl_elem = ent.Element("itl", traits, ns='')
+        itl_elem = ent.Element("itl", adapter, ns='')
 
-        itl_elem.append(ent.Element("Iwwpn", traits, text=itl.initiator,
+        itl_elem.append(ent.Element("Iwwpn", adapter, text=itl.initiator,
                                     ns=''))
-        itl_elem.append(ent.Element("Twwpn", traits, text=itl.target, ns=''))
-        itl_elem.append(ent.Element("lua", traits, text=itl.lun, ns=''))
+        itl_elem.append(ent.Element("Twwpn", adapter, text=itl.target, ns=''))
+        itl_elem.append(ent.Element("lua", adapter, text=itl.lun, ns=''))
 
         itl_list.append(itl_elem)
 

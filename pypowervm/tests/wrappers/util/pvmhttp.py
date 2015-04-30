@@ -99,7 +99,7 @@ class PVMResp(PVMFile):
 
     """Class to encapsulate the text serialization of a response."""
 
-    def __init__(self, file_name=None, pvmfile=None, traits=None):
+    def __init__(self, file_name=None, pvmfile=None, adapter=None):
         """Initialize this PVMResp by loading a file or pulling a PVMFile.
 
         :param file_name: Name of a file to load.
@@ -107,6 +107,7 @@ class PVMResp(PVMFile):
                         its attributes.  If both file_name and pvmfile are
                         specified, the file will be reloaded into the passed-in
                         PVMFile.  This is probably not what you intended.
+        :param adapter: A pypowervm.adapter.Adapter, used for traits, etc.
         """
         super(PVMResp, self).__init__()
         # Legacy no-arg constructor - allow caller to set fields manually
@@ -131,8 +132,8 @@ class PVMResp(PVMFile):
 
         self.response = adp.Response(reqmethod=None, reqpath=None,
                                      status=self.status, reason=self.reason,
-                                     headers=self.headers, body=self.body,
-                                     traits=traits)
+                                     headers=self.headers, body=self.body)
+        self.response.adapter = adapter
         self.response._unmarshal_atom()
 
     def get_response(self):
@@ -204,8 +205,8 @@ class PVMResp(PVMFile):
         disk_file.close()
 
 
-def load_pvm_resp(file_name, traits=None):
-    return PVMResp(file_name, traits=traits)
+def load_pvm_resp(file_name, adapter=None):
+    return PVMResp(file_name, adapter=adapter)
 
 
 def _read_section(section, file_name, resp_file):

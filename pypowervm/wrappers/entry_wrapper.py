@@ -95,8 +95,12 @@ class Wrapper(object):
         return getattr(self, '_child_order', ())
 
     @property
+    def adapter(self):
+        return self.element.adapter
+
+    @property
     def traits(self):
-        return self.element.traits
+        return self.adapter.traits
 
     def inject(self, subelement, replace=True):
         """Injects subelement as a child element, possibly replacing it.
@@ -140,7 +144,7 @@ class Wrapper(object):
         if existing:
             return existing
         else:
-            new_elem = ent.Element(prop_name, self.traits, attrib=attrib,
+            new_elem = ent.Element(prop_name, self.adapter, attrib=attrib,
                                    children=[])
             self.inject(new_elem)
             return new_elem
@@ -160,7 +164,7 @@ class Wrapper(object):
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
         """
-        new_elem = ent.Element(prop_name, self.traits,
+        new_elem = ent.Element(prop_name, self.adapter,
                                attrib=attrib,
                                children=[x.element for
                                          x in prop_children])
@@ -190,7 +194,7 @@ class Wrapper(object):
             self.log_missing_value(property_name)
             if create:
                 element_value = ent.Element(
-                    property_name, self.traits, ns=self.schema_ns,
+                    property_name, self.adapter, ns=self.schema_ns,
                     attrib=attrib, text=str(value))
                 self.inject(element_value)
 
@@ -391,11 +395,11 @@ class Wrapper(object):
                 next_prop = pathtoks.pop(0)
                 new_el = append_point._find(next_prop)
                 if new_el is None:
-                    new_el = ent.Element(next_prop, self.traits)
+                    new_el = ent.Element(next_prop, self.adapter)
                     append_point.element.inject(
                         new_el, ordering_list=self.child_order)
                 append_point = ElementWrapper.wrap(new_el)
-            link = ent.Element(pathtoks[-1], self.traits)
+            link = ent.Element(pathtoks[-1], self.adapter)
             append_point.element.inject(link, ordering_list=self.child_order)
         # At this point we have found or created the propname element.  Its
         # handle is in the link var.
@@ -406,17 +410,18 @@ class Wrapper(object):
         return self.element.toxmlstring()
 
     @classmethod
-    def _bld_element(cls, tag=None, has_metadata=has_metadata, ns=schema_ns,
-                     attrib=default_attrib, traits=None):
+    def _bld_element(cls, adapter, tag=None, has_metadata=has_metadata,
+                     ns=schema_ns, attrib=default_attrib):
         """Create a fresh entities.Element, usually for immediate wrapping.
 
+        :param adapter: The entities.Adapter to be consulted for traits, etc.
         :param tag: Property name of the new Element.
         :param has_metadata: If True, a <Metadata/> child will be created.
         :param ns: Namespace to use.
         :param attrib: XML attributes to use in the outer Element.
-        :param traits: APITraits from Session.traits.
         :return: A fresh adapter.Element.
         """
+        # TODO(efried): Get rid of this method - fold it into Element._bld()
         tag = cls.schema_type if tag is None else tag
         # Make sure the call was either through a legal wrapper or explicitly
         # specified a tag name
@@ -431,9 +436,9 @@ class Wrapper(object):
         children = []
         if has_metadata:
             children.append(
-                ent.Element('Metadata', traits, ns=ns, children=[
-                    ent.Element('Atom', traits, ns=ns)]))
-        return ent.Element(tag, traits, ns=ns, attrib=attrib,
+                ent.Element('Metadata', adapter, ns=ns, children=[
+                    ent.Element('Atom', adapter, ns=ns)]))
+        return ent.Element(tag, adapter, ns=ns, attrib=attrib,
                            children=children)
 
     @classmethod
@@ -462,9 +467,9 @@ class Wrapper(object):
         """
         new_elems = []
         for item in links:
-            new_elems.append(ent.Element('link', self.traits, attrib={
+            new_elems.append(ent.Element('link', self.adapter, attrib={
                 'href': item, 'rel': 'related'}))
-        return ent.Element(container_type, self.traits, children=new_elems)
+        return ent.Element(container_type, self.adapter, children=new_elems)
 
 
 class EntryWrapper(Wrapper):
@@ -477,11 +482,19 @@ class EntryWrapper(Wrapper):
         self._etag = etag
 
     @classmethod
-    def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None,
-             traits=None):
+    def _bld(cls, adapter, tag=None, has_metadata=None, ns=None, attrib=None):
+        """Create a fresh EntryWrapper.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param tag: XML tag for the EntryWrapper's Entry's root Element.
+        :param has_metadata: If True, a basic <Metadata/> child is created
+                             under the root element.
+        :param ns: XML namespace for the contents.
+        :param attrib: XML attributes for the root element.
+        """
         element = cls._bld_element(
-            tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
-        return cls(ent.Entry({'title': element.tag}, element.element, traits))
+            adapter, tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
+        return cls(ent.Entry({'title': element.tag}, element.element, adapter))
 
     @classmethod
     def wrap(cls, response_or_entry, etag=None):
@@ -741,11 +754,19 @@ class ElementWrapper(Wrapper):
     has_metadata = False
 
     @classmethod
-    def _bld(cls, tag=None, has_metadata=None, ns=None, attrib=None,
-             traits=None):
+    def _bld(cls, adapter, tag=None, has_metadata=None, ns=None, attrib=None):
+        """Create a fresh ElementWrapper.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param tag: XML tag for the ElementWrapper's root Element.
+        :param has_metadata: If True, a basic <Metadata/> child is created
+                             under the root element.
+        :param ns: XML namespace for the contents.
+        :param attrib: XML attributes for the root element.
+        """
         ret = cls()
-        ret.element = cls._bld_element(tag, has_metadata=has_metadata, ns=ns,
-                                       attrib=attrib, traits=traits)
+        ret.element = cls._bld_element(
+            adapter, tag=tag, has_metadata=has_metadata, ns=ns, attrib=attrib)
         return ret
 
     @classmethod

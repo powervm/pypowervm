@@ -15,15 +15,16 @@
 #    under the License.
 
 import abc
-import unittest
 
 import six
+import testtools
 
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 
 
 @six.add_metaclass(abc.ABCMeta)
-class TestWrapper(unittest.TestCase):
+class TestWrapper(testtools.TestCase):
     """Superclass for wrapper test cases; provides loading of data files.
 
     A single subclass tests a single wrapper class on a single file.
@@ -34,6 +35,10 @@ class TestWrapper(unittest.TestCase):
         file = 'ssp.txt'
     o Indicate the wrapper class to be tested, e.g.
         wrapper_class_to_test = clust.SSP
+    o If your tests will make use of traits, you must provide
+      mock_adapter_fx_args, resulting in AdapterFx being constructed with those
+      args and used via useFixture.  Your tests may access the adapter via
+      self.adpt and the fixture itself via self.adptfx.
     o No __init__ or setUp is necessary.
     o In your test cases, make use of the following variables:
         - self.resp: The raw Response object from
@@ -52,20 +57,37 @@ class TestWrapper(unittest.TestCase):
 
     @abc.abstractproperty
     def file(self):
+        """Data file name, relative to pypowervm/tests/wrappers/data/."""
         return None
 
     @abc.abstractproperty
     def wrapper_class_to_test(self):
+        """Indicates the type (Wrapper subclass) yielded by self.dwrap."""
         return None
+
+    # Arguments to test_fixtures.AdapterFx(), used to create a mock adapter.
+    # Must be represented as a dict.  For example:
+    #     mock_adapter_fx_args = {}
+    # or:
+    #     mock_adapter_fx_args = dict(session=mock_session,
+    #                                 traits=test_fixtures.LocalPVMTraits)
+    mock_adapter_fx_args = None
 
     def setUp(self):
         super(TestWrapper, self).setUp()
+        self.adptfx = None
+        self.adpt = None
+        if self.mock_adapter_fx_args is not None:
+            self.adptfx = self.useFixture(
+                fx.AdapterFx(**self.mock_adapter_fx_args))
+            self.adpt = self.adptfx.adpt
+
         # Load the file just once...
         if self.__class__._pvmfile is None:
             self.__class__._pvmfile = pvmhttp.PVMFile(self.file)
         # ...but reconstruct the PVMResp every time
-        self.resp = pvmhttp.PVMResp(
-            pvmfile=self.__class__._pvmfile).get_response()
+        self.resp = pvmhttp.PVMResp(pvmfile=self.__class__._pvmfile,
+                                    adapter=self.adpt).get_response()
         # Some wrappers don't support etag.  Subclasses testing those wrappers
         # should not be using self.entries, so ignore.
         try:

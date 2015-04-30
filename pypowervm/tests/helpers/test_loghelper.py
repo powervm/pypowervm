@@ -23,7 +23,7 @@ import testtools
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.log_helper as log_hlp
-from pypowervm.tests import fixtures
+import pypowervm.tests.test_fixtures as fx
 
 # Testing by hand it's useful to enable the next line instead of the following
 # logging.basicConfig(level=logging.INFO)
@@ -34,15 +34,13 @@ class TestLogHelper(testtools.TestCase):
 
     def setUp(self):
         super(TestLogHelper, self).setUp()
-        self.sess = self.useFixture(fixtures.AdapterFx(patch_adpt=False)).sess
-        self.sess.traits = self.useFixture(fixtures.LocalPVMTraitsFx).traits
+        self.sess = self.useFixture(fx.SessionFx()).sess
 
     @mock.patch('pypowervm.helpers.log_helper.LOG')
     def test_log_helper(self, mock_log):
 
         helpers = log_hlp.log_helper
-        response = adp.Response('GET', '/some/path', 200, 'OK', ['headers'],
-                                self.sess.traits)
+        response = adp.Response('GET', '/some/path', 200, 'OK', ['headers'])
         self.sess.request.return_value = response
         adpt = adp.Adapter(self.sess, use_cache=False, helpers=helpers)
 

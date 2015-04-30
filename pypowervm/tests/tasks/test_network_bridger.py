@@ -23,7 +23,7 @@ from pypowervm import adapter as adpt
 import pypowervm.entities as ent
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import network_bridger as net_br
-from pypowervm.tests import fixtures
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import network as pvm_net
 
@@ -38,20 +38,21 @@ class TestNetworkBridger(testtools.TestCase):
     Subclasses of Network Bridgers should extend this class.
     """
 
-    def setUp(self, fx_traits=fixtures.LocalPVMTraitsFx):
+    def setUp(self):
         super(TestNetworkBridger, self).setUp()
 
         # Find directory for response files
         data_dir = os.path.dirname(os.path.abspath(__file__))
         data_dir = os.path.join(data_dir, 'data')
 
-        self.adpt = self.useFixture(fixtures.AdapterFx()).adpt
-        self.adpt.traits = self.useFixture(fx_traits).traits
+        self.adptfx = self.useFixture(fx.AdapterFx(
+            traits=fx.LocalPVMTraits))
+        self.adpt = self.adptfx.adpt
 
         def resp(file_name):
             file_path = os.path.join(data_dir, file_name)
             return pvmhttp.load_pvm_resp(
-                file_path, traits=self.adpt.traits).get_response()
+                file_path, adapter=self.adpt).get_response()
 
         self.mgr_nbr_resp = resp(MGR_NET_BR_FILE)
         self.mgr_vnet_resp = resp(MGR_VNET_FILE)
@@ -110,8 +111,8 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
     """General tests for the network bridge super class and the VNet impl."""
 
     def setUp(self):
-        super(TestNetworkBridgerVNet, self).setUp(
-            fx_traits=fixtures.RemoteHMCTraitsFx)
+        super(TestNetworkBridgerVNet, self).setUp()
+        self.adptfx.set_traits(fx.RemoteHMCTraits)
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_reassign_arbitrary_vid')
@@ -246,15 +247,13 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_vswitch')
     def test_reassign_arbitrary_vid(self, mock_vsw, mock_find_vnet):
-        vnet = pvm_net.VNet._bld().entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                              self.adpt.traits)
+        vnet = pvm_net.VNet._bld(self.adpt).entry
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp1.feed = ent.Feed({}, [vnet])
         self.adpt.read.return_value = resp1
         self.adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                              self.adpt.traits)
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp2.entry = nb.entry
         self.adpt.update.return_value = resp2
 
@@ -301,7 +300,7 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
 
         # Set up the mock create
-        resp = pvm_net.VNet.bld('FakeName', 4094, vsw.href, True)
+        resp = pvm_net.VNet.bld(self.adpt, 'FakeName', 4094, vsw.href, True)
         mock_resp = mock.MagicMock()
         mock_resp.entry = resp.entry
         self.adpt.create.return_value = mock_resp
@@ -328,8 +327,8 @@ class TestNetworkBridgerTA(TestNetworkBridger):
     """General tests for the network bridge super class and the VNet impl."""
 
     def setUp(self):
-        super(TestNetworkBridgerTA, self).setUp(
-            fx_traits=fixtures.LocalPVMTraitsFx)
+        super(TestNetworkBridgerTA, self).setUp()
+        self.adptfx.set_traits(fx.LocalPVMTraits)
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_reassign_arbitrary_vid')
@@ -443,15 +442,13 @@ class TestNetworkBridgerTA(TestNetworkBridger):
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_find_vswitch')
     def test_reassign_arbitrary_vid(self, mock_vsw):
-        vnet = pvm_net.VNet._bld().entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                              self.adpt.traits)
+        vnet = pvm_net.VNet._bld(self.adpt).entry
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp1.feed = ent.Feed({}, [vnet])
         self.adpt.read.return_value = resp1
         self.adpt.read_by_href.return_value = vnet
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {},
-                              self.adpt.traits)
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
         resp2.entry = nb.entry
         self.adpt.update.return_value = resp2
 
