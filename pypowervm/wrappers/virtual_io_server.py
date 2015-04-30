@@ -126,6 +126,15 @@ class VIOS(bp.BasePartition):
                        bp.PFC_PORT_WWPN)
         return set(self._get_vals(path))
 
+    def get_active_pfc_wwpns(self):
+        """Returns a set of Physical FC Adapter WWPNs of 'active' ports."""
+        # The logic to check for active ports is poor.  Right now it only
+        # checks if the port has NPIV connections available.  If there is a
+        # FC, non-NPIV card...then this logic fails.
+        #
+        # This will suffice until the backing API adds more granular logic.
+        return [pfc for pfc in self.pfc_ports if pfc.npiv_total_ports > 0]
+
     @property
     def pfc_ports(self):
         """The physical Fibre Channel ports assigned to the VIOS."""
