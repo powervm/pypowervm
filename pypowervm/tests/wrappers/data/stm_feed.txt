@@ -1,0 +1,57 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'RawMetrics/ShortTermMonitor'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '2518', 'x-powered-by': 'Servlet/3.0', 'last-modified': 'Thu, 30 Apr 2015 06:11:42 GMT', 'etag': '1430374302041', 'date': 'Thu, 30 Apr 2015 06:11:40 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>98498bed-c78a-3a4f-b90a-4b715418fcb6</id>
+    <updated>2015-04-30T06:11:40.000Z</updated>
+    <title type="text">ShortTermMetrics</title>
+    <subtitle type="text">ManagedSystem 98498bed-c78a-3a4f-b90a-4b715418fcb6</subtitle>
+    <link rel="self" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/ShortTermMonitor"/>
+    <generator uri="IBM Power Systems Management Console" version="1"/>
+    <entry>
+        <id>28cb2328-ca14-48ef-a3bd-691debef53dd</id>
+        <updated>2015-04-30T06:11:35.002Z</updated>
+        <title type="text">STM_8247-22L*1111111_phyp_20150430T061135+0000.json</title>
+        <published>2015-04-30T06:11:35.000Z</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/ShortTermMonitor/STM_8247-22L*1111111_phyp_20150430T061135+0000.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="phyp"/>
+    </entry>
+    <entry>
+        <id>aa4c491b-d2e7-490c-b034-3d84c5999d52</id>
+        <updated>2015-04-30T06:11:30.000Z</updated>
+        <title type="text">STM_8247-22L*1111111_phyp_20150430T061130+0000.json</title>
+        <published>2015-04-30T06:11:30.000Z</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/ShortTermMonitor/STM_8247-22L*1111111_phyp_20150430T061130+0000.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="phyp"/>
+    </entry>
+    <entry>
+        <id>da3094bc-ddde-4ef5-8055-733a90e1efa8</id>
+        <updated>2015-04-30T06:11:40.000Z</updated>
+        <title type="text">STM_8247-22L*1111111_phyp_20150430T061140+0000.json</title>
+        <published>2015-04-30T06:11:40.000Z</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/ShortTermMonitor/STM_8247-22L*1111111_phyp_20150430T061140+0000.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="phyp"/>
+    </entry>
+</feed>
+
+END OF SECTION}
