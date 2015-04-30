@@ -90,6 +90,10 @@ class TestVIOSWrapper(twrap.TestWrapper):
         for virt_path in virt_paths:
             self.assertEqual(2, len(virt_path))
 
+        self.assertEqual(1, len(self.dwrap.get_active_pfc_wwpns()))
+        self.assertEqual('10000090FA1B6302',
+                         self.dwrap.get_active_pfc_wwpns()[0])
+
     def test_pfc_ports(self):
         """Tests that the physical FC ports can be gathered."""
         ports = self.dwrap.pfc_ports
