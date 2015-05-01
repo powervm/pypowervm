@@ -31,6 +31,7 @@ LOG = logging.getLogger(__name__)
 _LUA_CMD_VERSION = '3'
 _LUA_VERSION = '2.0'
 _LUA_RECOVERY = 'LUARecovery'
+_RM_HDISK = 'RemoveDevice'
 
 _MGT_CONSOLE = 'ManagementConsole'
 
@@ -266,8 +267,42 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
     :param dev_name: The name of the device to remove.
     :param vios_uuid: The Virtual I/O Server UUID.
     """
-    # TODO(IBM): The implementation will be replaced when
-    # new API available.
+    if adapter.traits.rmdev_job_available:
+        _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid)
+    else:
+        _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid)
+
+
+def _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid):
+    """Runs the PowerVM Job to remove a hdisk.
+
+    :param adapter: The pypowervm adapter.
+    :param host_name: The name of the host.
+    :param dev_name: The name of the device to remove.
+    :param vios_uuid: The Virtual I/O Server UUID.
+    """
+    # Build up the job & invoke
+    resp = adapter.read(
+        pvm_vios.VIOS.schema_type, root_id=vios_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_RM_HDISK)
+    job_wrapper = pvm_job.Job.wrap(resp)
+    job_parms = [job_wrapper.create_job_parameter('devName', dev_name)]
+
+    # Run the job.  If the hdisk removal failed, the job will raise an
+    # exception.  No output otherwise.
+    job_wrapper.run_job(adapter, vios_uuid, job_parms=job_parms)
+
+
+def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
+    """Command to remove the device from the VIOS.
+
+    Runs a remote command to perform the action.
+
+    :param adapter: The pypowervm adapter.
+    :param host_name: The name of the host.
+    :param dev_name: The name of the device to remove.
+    :param vios_uuid: The Virtual I/O Server UUID.
+    """
     try:
         # Execute a read on the vios to get the vios name
         resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid)
