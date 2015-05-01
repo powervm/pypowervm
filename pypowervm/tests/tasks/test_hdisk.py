@@ -124,11 +124,36 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_remove_hdisk(self, mock_adapter, mock_run_job, mock_job_status):
+    def test_remove_hdisk_classic(self, mock_adapter, mock_run_job,
+                                  mock_job_status):
         mock_adapter.read.return_value = (tju.load_file(VIOS_FEED)
                                           .feed.entries[0])
 
-        hdisk.remove_hdisk(mock_adapter, 'host_name', 'dev_name', 'vios_uuid')
+        hdisk._remove_hdisk_classic(mock_adapter, 'host_name', 'dev_name',
+                                    'vios_uuid')
         # Validate method invocations
         self.assertEqual(2, mock_adapter.read.call_count)
+        self.assertEqual(1, mock_run_job.call_count)
+
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_remove_hdisk_job(self, mock_adapter, mock_run_job):
+        mock_adapter.read.return_value = (tju.load_file(VIOS_FEED)
+                                          .feed.entries[0])
+
+        def verify_run_job(adapter, vios_uuid, job_parms=None):
+            self.assertEqual(1, len(job_parms))
+            job_parm = ('<web:JobParameter xmlns:web="http://www.ibm.com/xmlns'
+                        '/systems/power/firmware/web/mc/2012_10/" '
+                        'schemaVersion="V1_0"><web:ParameterName>devName'
+                        '</web:ParameterName><web:ParameterValue>dev_name'
+                        '</web:ParameterValue></web:JobParameter>')
+            self.assertEqual(job_parm, job_parms[0].toxmlstring())
+
+        mock_run_job.side_effect = verify_run_job
+
+        hdisk._remove_hdisk_job(mock_adapter, 'host_name', 'dev_name',
+                                'vios_uuid')
+        # Validate method invocations
+        self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
