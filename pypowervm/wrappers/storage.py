@@ -31,18 +31,36 @@ DISK_ROOT = 'VirtualDisk'
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
+_DISK_MAX_LOGICAL_VOLS = 'MaxLogicalVolumes'
+_DISK_PART_SIZE = 'PartitionSize'
+_DISK_VG = 'VolumeGroup'
 _DISK_UDID = UDID
+_VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
+                   _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
+                   _DISK_UDID]
 
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
 PHYS_VOL = 'PhysicalVolume'
+_PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
+_PV_VOL_DESC = 'Description'
+_PV_LOC_CODE = 'LocationCode'
+_PV_PERSISTENT_RESERVE = 'PersistentReserveKeyValue'
+_PV_RES_POLICY = 'ReservePolicy'
+_PV_RES_POLICY_ALGO = 'ReservePolicyAlgorithm'
+_PV_TOTAL_PHYS_PARTS = 'TotalPhysicalPartitions'
 _PV_UDID = UDID
+_PV_AVAIL_FOR_USE = 'AvailableForUsage'
 _PV_VOL_SIZE = 'VolumeCapacity'
 _PV_VOL_NAME = 'VolumeName'
 _PV_VOL_STATE = 'VolumeState'
+_PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
-_PV_VOL_DESC = 'Description'
-_PV_LOC_CODE = 'LocationCode'
+_PV_EL_ORDER = [_PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
+                _PV_PERSISTENT_RESERVE, _PV_RES_POLICY, _PV_RES_POLICY_ALGO,
+                _PV_TOTAL_PHYS_PARTS, _PV_UDID, _PV_AVAIL_FOR_USE,
+                _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
+                _PV_FC_BACKED]
 
 # Virtual Optical Media Constants
 VOPT_ROOT = 'VirtualOpticalMedia'
@@ -50,12 +68,14 @@ VOPT_NAME = 'MediaName'
 _VOPT_SIZE = 'Size'
 _VOPT_UDID = 'MediaUDID'
 _VOPT_MOUNT_TYPE = 'MountType'
+_VOPT_EL_ORDER = [VOPT_NAME, _VOPT_UDID, _VOPT_MOUNT_TYPE, _VOPT_SIZE]
 
 # Virtual Media Repository Constants
 _VREPO_ROOT = 'VirtualMediaRepository'
 _VREPO_OPTICAL_MEDIA_ROOT = 'OpticalMedia'
 _VREPO_NAME = 'RepositoryName'
 _VREPO_SIZE = 'RepositorySize'
+_VREPO_EL_ORDER = [_VREPO_OPTICAL_MEDIA_ROOT, _VREPO_NAME, _VREPO_SIZE]
 
 # Volume Group Constants
 _VG_AVAILABLE_SIZE = 'AvailableSize'
@@ -207,7 +227,8 @@ class VG(ewrap.EntryWrapper):
         self.replace_list(_VG_VDISKS, virt_disks)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualMediaRepository', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_VREPO_ROOT, has_metadata=True,
+                               child_order=_VREPO_EL_ORDER)
 class VMediaRepos(ewrap.ElementWrapper):
     """A Virtual Media Repository for a VIOS.
 
@@ -265,7 +286,8 @@ class VMediaRepos(ewrap.ElementWrapper):
         self.set_float_gb_value(_VREPO_SIZE, new_size)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualOpticalMedia', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(VOPT_ROOT, has_metadata=True,
+                               child_order=_VOPT_EL_ORDER)
 class VOptMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
 
@@ -323,7 +345,8 @@ class VOptMedia(ewrap.ElementWrapper):
         self.set_parm_value(_VOPT_MOUNT_TYPE, new_mount_type)
 
 
-@ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True,
+                               child_order=_PV_EL_ORDER)
 class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
@@ -389,7 +412,8 @@ class PV(ewrap.ElementWrapper):
         return self._get_val_str(_PV_LOC_CODE)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualDisk', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
+                               child_order=_VDISK_EL_ORDER)
 class VDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
 
