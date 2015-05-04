@@ -140,7 +140,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
     job_wrapper = pvm_job.Job.wrap(resp)
     job_parms = [job_wrapper.create_job_parameter('inputXML', lua_xml,
                                                   cdata=True)]
-    job_wrapper.run_job(adapter, vios_uuid, job_parms=job_parms)
+    job_wrapper.run_job(vios_uuid, job_parms=job_parms)
 
     # Get the job result, and parse the output.
     job_result = job_wrapper.get_job_results_as_dict()
@@ -270,6 +270,7 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
         _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid)
 
 
+# TODO(IBM): Unused param host_name
 def _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid):
     """Runs the PowerVM Job to remove a hdisk.
 
@@ -287,7 +288,7 @@ def _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid):
 
     # Run the job.  If the hdisk removal failed, the job will raise an
     # exception.  No output otherwise.
-    job_wrapper.run_job(adapter, vios_uuid, job_parms=job_parms)
+    job_wrapper.run_job(vios_uuid, job_parms=job_parms)
 
 
 def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
@@ -321,7 +322,7 @@ def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
                      job_wrapper.create_job_parameter(ack_parm,
                                                       'true')]
 
-        job_wrapper.run_job(adapter, None, job_parms=job_parms)
+        job_wrapper.run_job(None, job_parms=job_parms)
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
         LOG.warn(_('CLIRunner Error: %s') % error)

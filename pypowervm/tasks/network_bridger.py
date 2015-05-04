@@ -206,7 +206,7 @@ class NetworkBridger(object):
 
         # At this point, the network bridge should just need to be updated.
         # The Load Groups on the Network Bridge should be correct.
-        req_nb.update(self.adapter)
+        req_nb.update()
 
     @pvm_retry.retry()
     def remove_vlan_from_nb(self, nb_uuid, vlan_id, fail_if_pvid=False,
@@ -257,7 +257,7 @@ class NetworkBridger(object):
         self._remove_vlan_from_nb(req_nb, vlan_id)
 
         # Now update the network bridge.
-        req_nb.update(self.adapter)
+        req_nb.update()
 
     def _is_arbitrary_vid(self, vlan, all_nbs):
         """Returns if the VLAN is an arbitrary PVID on any passed in network.
@@ -475,11 +475,11 @@ class NetworkBridgerVNET(NetworkBridger):
         impacted_nb.load_grps.remove(impacted_lg)
 
         # Need two updates.  One to remove the load group.
-        impacted_nb = impacted_nb.update(self.adapter)
+        impacted_nb = impacted_nb.update()
 
         # A second to add the new load group in
         impacted_nb.load_grps.append(new_lg_w)
-        impacted_nb = impacted_nb.update(self.adapter)
+        impacted_nb = impacted_nb.update()
 
         # Now that the old vid is detached from the load group, need to delete
         # the Virtual Network (because it was 'tagged' = False).
@@ -579,7 +579,7 @@ class NetworkBridgerTA(NetworkBridger):
                 ta.pvid = new_vid
 
         # Call the update
-        impacted_nb = impacted_nb.update(self.adapter)
+        impacted_nb = impacted_nb.update()
 
     def _add_vlans_to_nb(self, req_nb, all_nbs_on_vs, new_vlans):
         """Adds the VLANs to the Network Bridge Wrapper.

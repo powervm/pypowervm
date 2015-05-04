@@ -55,7 +55,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
@@ -73,8 +74,8 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.adpt, 'host_uuid', 'vios_uuid',
-                                      'lpar_uuid', pv)
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+                                      pv)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -83,9 +84,10 @@ class TestSCSIMapper(testtools.TestCase):
         """Tests that a mapping function will be retried."""
         # Mock Data.  Need to load this once per retry, or else the mappings
         # get appended with each other.
-        self.adpt.read.side_effect = [tju.load_file(VIO_MULTI_MAP_FILE),
-                                      tju.load_file(VIO_MULTI_MAP_FILE),
-                                      tju.load_file(VIO_MULTI_MAP_FILE)]
+        self.adpt.read.side_effect = [
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt),
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt),
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)]
 
         global attempt_count
         attempt_count = 0
@@ -109,8 +111,8 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.adpt, 'host_uuid', 'vios_uuid',
-                                      'lpar_uuid', pv)
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+                                      pv)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(3, self.adpt.update_by_path.call_count)
@@ -118,7 +120,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_mapping_new_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
@@ -139,15 +142,16 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping(self.adpt, 'host_uuid', 'vios_uuid',
-                                      'lpar_uuid', pv, fuse_limit=4)
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+                                      pv, fuse_limit=4)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
     def test_remove_storage_vopt(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -170,7 +174,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_vopt_no_name_specified(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -195,9 +200,10 @@ class TestSCSIMapper(testtools.TestCase):
         # Mock Data.  The retry will call this three times.  They have to
         # be indepdent loads, otherwise the data gets re-used and the remove
         # will not be properly invoked.
-        self.adpt.read.side_effect = [tju.load_file(VIO_MULTI_MAP_FILE),
-                                      tju.load_file(VIO_MULTI_MAP_FILE),
-                                      tju.load_file(VIO_MULTI_MAP_FILE)]
+        self.adpt.read.side_effect = [
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt),
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt),
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)]
 
         global attempt_count
         attempt_count = 0
@@ -231,7 +237,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_vdisk(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -253,7 +260,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_lu(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -274,7 +282,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_pv_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE)
+        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
+                                                    self.adpt)
 
         # Validate that the mapping was removed to existing
         def validate_update(*kargs, **kwargs):

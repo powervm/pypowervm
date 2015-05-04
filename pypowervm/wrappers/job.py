@@ -176,7 +176,7 @@ class Job(ewrap.EntryWrapper):
             message = self.get_job_resp_exception_msg(default=default)
         return message
 
-    def run_job(self, adapter, uuid, job_parms=None,
+    def run_job(self, uuid, job_parms=None,
                 timeout=CONF.pypowervm_job_request_timeout,
                 sensitive=False):
         """Invokes and polls a job.
@@ -185,7 +185,6 @@ class Job(ewrap.EntryWrapper):
         create_job method. It then monitors the job for completion and sends a
         JobRequestFailed exception if it did not complete successfully.
 
-        :param adapter: pypowervm.adapter instance
         :param uuid: uuid of the target
         :param job_parms: list of JobParamters to add
         :param timeout: maximum number of seconds for job to complete
@@ -197,18 +196,18 @@ class Job(ewrap.EntryWrapper):
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
-            pvmresp = adapter.create_job(job, entry_type, uuid,
-                                         sensitive=sensitive)
+            pvmresp = self.adapter.create_job(job, entry_type, uuid,
+                                              sensitive=sensitive)
             self.entry = pvmresp.entry
         except pvmex.Error as exc:
             LOG.exception(exc)
             raise pvmex.JobRequestFailed(
                 operation_name=self.op, error=exc)
-        status, message, timed_out = self.monitor_job(adapter, timeout=timeout,
+        status, message, timed_out = self.monitor_job(timeout=timeout,
                                                       sensitive=sensitive)
         if timed_out:
             try:
-                self.cancel_job(adapter)
+                self.cancel_job()
             except pvmex.JobRequestFailed as e:
                 LOG.warn(six.text_type(e))
             exc = pvmex.JobRequestTimedOut(
@@ -216,14 +215,14 @@ class Job(ewrap.EntryWrapper):
             LOG.exception(exc)
             raise exc
         if status != JobStatus.COMPLETED_OK:
-            self.delete_job(adapter)
+            self.delete_job()
             exc = pvmex.JobRequestFailed(
                 operation_name=self.op, error=message)
             LOG.exception(exc)
             raise exc
-        self.delete_job(adapter)
+        self.delete_job()
 
-    def monitor_job(self, adapter, job_id=None,
+    def monitor_job(self, job_id=None,
                     timeout=CONF.pypowervm_job_request_timeout,
                     sensitive=False):
         """Polls a job.
@@ -231,7 +230,6 @@ class Job(ewrap.EntryWrapper):
         Waits on a job until it is no longer running.  If a timeout is given,
         it times out in the given amount of time.
 
-        :param adapter: pypowervm.adapter to use
         :param job_id: job id
         :param timeout: maximum number of seconds to keep checking job status
         :returns status: String containing the job status
@@ -251,7 +249,7 @@ class Job(ewrap.EntryWrapper):
                     timed_out = True
                     break
             time.sleep(1)
-            pvmresp = adapter.read_job(job_id, sensitive=sensitive)
+            pvmresp = self.adapter.read_job(job_id, sensitive=sensitive)
             self.entry = pvmresp.entry
             status = self.job_status
 
@@ -260,12 +258,10 @@ class Job(ewrap.EntryWrapper):
             message = self.get_job_message()
         return status, message, timed_out
 
-    def cancel_job(self, adapter,
-                   timeout=CONF.pypowervm_job_request_timeout,
+    def cancel_job(self, timeout=CONF.pypowervm_job_request_timeout,
                    sensitive=False):
         """Cancels and deletes incomplete/running jobs.
 
-        :param adapter: pypowervm.adapter to use
         :param timeout: maximum number of seconds to keep checking job status
         :param sensitive: If True, payload will be hidden in the logs
         :raise JobRequestFailed: if the job did not cancel within the
@@ -274,11 +270,11 @@ class Job(ewrap.EntryWrapper):
 
         job_id = self.job_id
         try:
-            adapter.update(None, None, root_type=_JOBS, root_id=job_id,
-                           suffix_type='cancel')
+            self.adapter.update(None, None, root_type=_JOBS, root_id=job_id,
+                                suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
-        status, message, timed_out = self.monitor_job(adapter, timeout=timeout,
+        status, message, timed_out = self.monitor_job(timeout=timeout,
                                                       sensitive=sensitive)
         if timed_out:
             error = (_("Job %(job_id)s failed to cancel after %(timeout)s "
@@ -286,14 +282,13 @@ class Job(ewrap.EntryWrapper):
                                           timeout=six.text_type(timeout)))
             exc = pvmex.JobRequestFailed(error)
             raise exc
-        self.delete_job(adapter, job_id, status)
+        self.delete_job(job_id, status)
 
-    def delete_job(self, adapter, job_id=None, status=None):
+    def delete_job(self, job_id=None, status=None):
         """Cleans up completed jobs.
 
         JobRequestFailed exception sent if job is in running status.
 
-        :param adapter: pypowervm.adapter to use
         :param job_id: job id
         :param status: job status
         :raise JobRequestFailed: if the Job is detected to be running.
@@ -309,6 +304,6 @@ class Job(ewrap.EntryWrapper):
             LOG.exception(exc)
             raise exc
         try:
-            adapter.delete(_JOBS, job_id)
+            self.adapter.delete(_JOBS, job_id)
         except pvmex.Error as exc:
             LOG.exception(exc)

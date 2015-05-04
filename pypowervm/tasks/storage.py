@@ -95,7 +95,7 @@ def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
         adapter, d_name, file_type, v_uuid, f_size=f_size,
         tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
-    maybe_file = _upload_stream(adapter, vio_file, d_stream)
+    maybe_file = _upload_stream(vio_file, d_stream)
     return n_vdisk, maybe_file
 
 
@@ -124,7 +124,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
-    f_uuid = _upload_stream(adapter, vio_file, d_stream)
+    f_uuid = _upload_stream(vio_file, d_stream)
 
     # Simply return a reference to this.
     reference = stor.VOptMedia.bld_ref(adapter, f_name)
@@ -132,12 +132,10 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return reference, f_uuid
 
 
-def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
-                  d_size=None, sha_chksum=None):
+def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
+                  sha_chksum=None):
     """Creates a new SSP Logical Unit and uploads a data stream to it.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                    change.
     :param v_uuid: The UUID of the Virtual I/O Server through which to perform
                    the upload.  (Note that the new LU will be visible from any
                    VIOS in the Shared Storage Pool's Cluster.)
@@ -166,24 +164,25 @@ def upload_new_lu(adapter, v_uuid,  ssp, d_stream, lu_name, f_size,
         d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size, dp=2)
 
-    ssp, new_lu = crt_lu(adapter, ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
+    ssp, new_lu = crt_lu(ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
 
     # The file type.  If local API server, then we can use the coordinated
     # file path.  Otherwise standard upload.
-    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED
+                 if ssp.adapter.traits.local_api
                  else vf.FileType.DISK_IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        adapter, lu_name, file_type, v_uuid, f_size=f_size,
+        ssp.adapter, lu_name, file_type, v_uuid, f_size=f_size,
         tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
 
-    maybe_file = _upload_stream(adapter, vio_file, d_stream)
+    maybe_file = _upload_stream(vio_file, d_stream)
     return new_lu, maybe_file
 
 
-def _upload_stream(adapter, vio_file, d_stream):
+def _upload_stream(vio_file, d_stream):
     """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
@@ -200,8 +199,6 @@ def _upload_stream(adapter, vio_file, d_stream):
     It's safe to cleanup VIOS file artifacts directly after uploading, as it
     will not affect the VIOS entity.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                    change.
     :param vio_file: The File EntryWrapper representing the metadata for the
                      file.
     :return: Normally this method will return None, indicating that the disk
@@ -227,7 +224,7 @@ def _upload_stream(adapter, vio_file, d_stream):
                 # The upload file is a blocking call (won't return until pipe
                 # is fully written to), which is why we put it in another
                 # thread.
-                upload_f = th.submit(adapter.upload_file,
+                upload_f = th.submit(vio_file.adapter.upload_file,
                                      vio_file.element, EmptyReader())
 
                 # Create a function that streams to the FIFO pipe
@@ -253,12 +250,12 @@ def _upload_stream(adapter, vio_file, d_stream):
                 out_stream.close()
         else:
             # Upload the file directly to the REST API server.
-            adapter.upload_file(vio_file.element, d_stream)
+            vio_file.adapter.upload_file(vio_file.element, d_stream)
     finally:
         try:
             # Cleanup after the upload
-            adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
-                           service='web')
+            vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
+                                    service='web')
         except Exception:
             LOG.exception(_('Unable to cleanup after file upload. '
                             'File uuid: %s') % vio_file.uuid)
@@ -290,12 +287,9 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     return vf.File.wrap(resp)
 
 
-def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
-                        lu_size_gb=0):
+def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     """Create a new LU as a linked clone to a backing image LU.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change.
     :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
                 which to create the new LU.
     :param cluster: The Cluster EntryWrapper representing the Cluster against
@@ -313,12 +307,12 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
 
     # Create the LU.  No locking needed on this method, as the crt_lu handles
     # the locking.
-    ssp, dst_lu = crt_lu(adapter, ssp, new_lu_name, lu_size_gb, thin=True,
+    ssp, dst_lu = crt_lu(ssp, new_lu_name, lu_size_gb, thin=True,
                          typ=stor.LUType.DISK)
 
     # Run the job to link the new LU to the source
-    jresp = adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
-                         suffix_parm='LULinkedClone')
+    jresp = ssp.adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
+                             suffix_parm='LULinkedClone')
     jwrap = job.Job.wrap(jresp)
 
     jparams = [
@@ -326,18 +320,16 @@ def crt_lu_linked_clone(adapter, ssp, cluster, src_lu, new_lu_name,
             'SourceUDID', src_lu.udid),
         jwrap.create_job_parameter(
             'DestinationUDID', dst_lu.udid)]
-    jwrap.run_job(adapter, cluster.uuid, job_parms=jparams)
+    jwrap.run_job(cluster.uuid, job_parms=jparams)
 
     return ssp, dst_lu
 
 
 @lock.synchronized(_LOCK_SSP)
-def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False,
+def remove_lu_linked_clone(ssp, disk_lu, del_unused_image=False,
                            update=True):
     """Remove a linked clone LU and maybe its backing Image LU.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change(s).
     :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
                 which to operate.
     :param disk_lu: The LU EntryWrapper representing the Disk LU linked clone
@@ -359,7 +351,7 @@ def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False,
     # Remove the disk_lu.  Don't flush the update yet.
     LOG.debug("Removing Disk LU %(lu_name)s from SSP %(ssp_name)s"
               % dict(lu_name=disk_lu.name, ssp_name=ssp.name))
-    ssp, removed_lu = rm_lu(None, ssp, lu=disk_lu, update=False)
+    ssp, removed_lu = rm_lu(ssp, lu=disk_lu, update=False)
 
     # Remove the image LU if requested and it's no longer in use
     if del_unused_image:
@@ -375,7 +367,7 @@ def remove_lu_linked_clone(adapter, ssp, disk_lu, del_unused_image=False,
 
     # Finally, push the update back to PowerVM if requested.
     if update:
-        ssp = ssp.update(adapter)
+        ssp = ssp.update()
     return ssp
 
 
@@ -443,7 +435,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     vol_grp.virtual_disks.append(new_vdisk)
 
     # Now perform an update on the adapter.
-    vol_grp = vol_grp.update(adapter)
+    vol_grp = vol_grp.update()
 
     # The new Virtual Disk should be created.  Find the one we created.
     for vdisk in vol_grp.virtual_disks:
@@ -456,11 +448,9 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
 
 
 @lock.synchronized(_LOCK_SSP)
-def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
+def crt_lu(ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change.
     :param ssp: SSP EntryWrapper denoting the Shared Storage Pool on which to
                 create the LU.
     :param name: Name for the new Logical Unit.
@@ -477,9 +467,9 @@ def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     if name in [lu.name for lu in ssp.logical_units]:
         raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
 
-    lu = stor.LU.bld(adapter, name, size, thin=thin, typ=typ)
+    lu = stor.LU.bld(ssp.adapter, name, size, thin=thin, typ=typ)
     ssp.logical_units.append(lu)
-    ssp = ssp.update(adapter)
+    ssp = ssp.update()
     newlu = None
     for lu in ssp.logical_units:
         if lu.name == name:
@@ -488,13 +478,11 @@ def crt_lu(adapter, ssp, name, size, thin=None, typ=None):
     return ssp, newlu
 
 
-def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
+def rm_lu(ssp, lu=None, udid=None, name=None, update=True):
     """Remove a LogicalUnit from a SharedStoragePool.
 
     This method allows the LU to be specified by wrapper, name, or UDID.
 
-    :param adapter: The pypowervm.adapter.Adapter through which to request the
-                    change.
     :param ssp: SSP EntryWrapper denoting the Shared Storage Pool from which to
                 remove the LU.
     :param lu: LU ElementWrapper indicating the LU to remove.  If specified,
@@ -529,5 +517,5 @@ def rm_lu(adapter, ssp, lu=None, udid=None, name=None, update=True):
 
     if update:
         with lock.lock(_LOCK_SSP):
-            ssp = ssp.update(adapter)
+            ssp = ssp.update()
     return ssp, lu_to_rm
