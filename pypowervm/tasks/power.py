@@ -48,26 +48,23 @@ _SUFFIX_PARM_POWER_OFF = 'PowerOff'
 
 
 @lgc.logcall
-def power_on(adapter, lpar, host_uuid, add_parms=None):
+def power_on(lpar, host_uuid, add_parms=None):
     """Will Power On a Logical Partition.
 
-    :param adapter: The pypowervm adapter object.
     :param lpar: The LPAR wrapper of the instance to power on.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param add_parms: dict of parameters to pass directly to the job template
     """
-    return _power_on_off(
-        adapter, lpar, _SUFFIX_PARM_POWER_ON, host_uuid, add_parms=add_parms)
+    return _power_on_off(lpar, _SUFFIX_PARM_POWER_ON, host_uuid,
+                         add_parms=add_parms)
 
 
 @lgc.logcall
-def power_off(adapter, lpar, host_uuid, force_immediate=False,
-              restart=False, timeout=CONF.powervm_job_request_timeout,
-              add_parms=None):
+def power_off(lpar, host_uuid, force_immediate=False, restart=False,
+              timeout=CONF.powervm_job_request_timeout, add_parms=None):
     """Will Power Off a LPAR.
 
-    :param adapter: The pypowervm adapter object.
     :param lpar: The LPAR wrapper of the instance to power off.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
@@ -77,17 +74,16 @@ def power_off(adapter, lpar, host_uuid, force_immediate=False,
                     instance to stop.
     :param add_parms: dict of parameters to pass directly to the job template
     """
-    return _power_on_off(adapter, lpar, _SUFFIX_PARM_POWER_OFF, host_uuid,
+    return _power_on_off(lpar, _SUFFIX_PARM_POWER_OFF, host_uuid,
                          force_immediate, restart, timeout,
                          add_parms=add_parms)
 
 
-def _power_on_off(adapter, lpar, suffix, host_uuid,
-                  force_immediate=False, restart=False,
-                  timeout=CONF.powervm_job_request_timeout, add_parms=None):
+def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
+                  restart=False, timeout=CONF.powervm_job_request_timeout,
+                  add_parms=None):
     """Internal function to power on or off an instance.
 
-    :param adapter: The pypowervm adapter.
     :param lpar: The LPAR wrapper of the instance to act on.
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
     :param host_uuid: TEMPORARY - The host system UUID that the LPAR resides on
@@ -102,6 +98,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
     """
     complete = False
     uuid = lpar.uuid
+    adapter = lpar.adapter
     try:
         while not complete:
             resp = adapter.read(wlpar.LPAR.schema_type, uuid,
@@ -138,8 +135,7 @@ def _power_on_off(adapter, lpar, suffix, host_uuid,
                             job_wrapper.create_job_parameter(
                                 kw, str(add_parms[kw])))
             try:
-                job_wrapper.run_job(adapter, uuid, job_parms=job_parms,
-                                    timeout=timeout)
+                job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout)
                 complete = True
             except pexc.JobRequestTimedOut as error:
                 if (suffix == _SUFFIX_PARM_POWER_OFF and

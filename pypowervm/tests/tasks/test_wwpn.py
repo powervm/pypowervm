@@ -66,17 +66,17 @@ class TestWWPN(unittest.TestCase):
 
     def test_intersect_wwpns(self):
         list1 = ['AA:BB:CC:DD:EE:FF']
-        list2 = set(['aabbccddeeff', '1234567890'])
+        list2 = {'aabbccddeeff', '1234567890'}
         self.assertEqual(list1, wwpn.intersect_wwpns(list1, list2))
 
         # Full match
-        list1 = set(['aabbccddeeff', '1234567890'])
+        list1 = {'aabbccddeeff', '1234567890'}
         list2 = ['AA:BB:CC:DD:EE:FF', '12:34:56:78:90']
         self.assertEqual(list1, set(wwpn.intersect_wwpns(list1, list2)))
 
         # Second set as the limiter
         list1 = ['AA:BB:CC:DD:EE:FF', '12:34:56:78:90']
-        list2 = set(['aabbccddeeff'])
+        list2 = {'aabbccddeeff'}
         self.assertEqual(['AA:BB:CC:DD:EE:FF'],
                          wwpn.intersect_wwpns(list1, list2))
 
@@ -97,8 +97,7 @@ class TestWWPN(unittest.TestCase):
 
         # Make sure we only get two unique keys back.
         unique_keys = set([i[0] for i in resp])
-        self.assertEqual(set(['10000090FA45473B', '10000090FA451758']),
-                         unique_keys)
+        self.assertEqual({'10000090FA45473B', '10000090FA451758'}, unique_keys)
 
     def test_derive_npiv_map_multi_vio(self):
         vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
@@ -179,14 +178,14 @@ class TestWWPN(unittest.TestCase):
                                          mock_client_lpar_href):
         """Validates that the port mappings are added cross VIOSes."""
         # Determine the vios original values
-        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED, mock_adapter))
         vios1_name = vios_wraps[0].name
         vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
         vios2_name = vios_wraps[1].name
         vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
 
         # Mock data/functions
-        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED, mock_adapter)
         mock_client_lpar_href.return_value = 'fake_href'
 
         def mock_update(*kargs, **kwargs):
@@ -243,12 +242,12 @@ class TestWWPN(unittest.TestCase):
         VIOS.  No unnecessary VIOS updates...
         """
         # Determine the vios original values
-        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED, mock_adapter))
         vios1_name = vios_wraps[0].name
         vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
 
         # Mock data/functions
-        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED, mock_adapter)
         mock_client_lpar_href.return_value = 'fake_href'
 
         def mock_update(*kargs, **kwargs):
@@ -295,14 +294,14 @@ class TestWWPN(unittest.TestCase):
                                             mock_client_lpar_href):
         """Validates that the port mappings are removed cross VIOSes."""
         # Determine the vios original values
-        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED, mock_adapter))
         vios1_name = vios_wraps[0].name
         vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
         vios2_name = vios_wraps[1].name
         vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
 
         # Mock data/functions
-        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED, mock_adapter)
         mock_client_lpar_href.return_value = 'fake_href'
 
         def mock_update(*kargs, **kwargs):
@@ -340,12 +339,12 @@ class TestWWPN(unittest.TestCase):
                                              mock_client_lpar_href):
         """Validates that the port mappings are removed on single VIOS."""
         # Determine the vios original values
-        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED, mock_adapter))
         vios1_name = vios_wraps[0].name
         vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
 
         # Mock data/functions
-        mock_adapter.read.return_value = tju.load_file(VIOS_FEED)
+        mock_adapter.read.return_value = tju.load_file(VIOS_FEED, mock_adapter)
         mock_client_lpar_href.return_value = 'fake_href'
 
         def mock_update(*kargs, **kwargs):

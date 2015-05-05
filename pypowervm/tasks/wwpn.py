@@ -259,8 +259,7 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
                            pypowervm wwpn derive_npiv_map method.
     """
     def add_action(vios_wraps, p_map):
-        return _add_npiv_port_map(adapter, host_uuid, lpar_uuid, vios_wraps,
-                                  p_map)
+        return _add_npiv_port_map(host_uuid, lpar_uuid, vios_wraps, p_map)
 
     _mapping_actions(adapter, host_uuid, npiv_port_maps, add_action)
 
@@ -277,7 +276,7 @@ def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
                            pypowervm wwpn derive_npiv_map method.
     """
     def remove_action(vios_wraps, p_map):
-        return _remove_npiv_port_map(adapter, vios_wraps, p_map)
+        return _remove_npiv_port_map(vios_wraps, p_map)
 
     _mapping_actions(adapter, host_uuid, npiv_port_maps, remove_action)
 
@@ -331,11 +330,11 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
 
     # Now run the update against the affected VIOSes
     for vios_w in vioses_to_update.values():
-        vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                    pvm_vios.VIOS.xags.STORAGE])
+        vios_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                           pvm_vios.VIOS.xags.STORAGE])
 
 
-def _remove_npiv_port_map(adapter, vios_wraps, npiv_port_map):
+def _remove_npiv_port_map(vios_wraps, npiv_port_map):
     """Ensures that the mapping is removed from the VIOS wrapper.
 
     This method takes in a port mapping (see the derive_npiv_map method), which
@@ -379,7 +378,7 @@ def _remove_npiv_port_map(adapter, vios_wraps, npiv_port_map):
     return vios_w
 
 
-def _add_npiv_port_map(adapter, host_uuid, vm_uuid, vios_wraps, npiv_port_map):
+def _add_npiv_port_map(host_uuid, vm_uuid, vios_wraps, npiv_port_map):
     """Ensures that the mapping is on the VIOS wrapper.
 
     This method takes in a port mapping (see the derive_npiv_map method), which
@@ -416,7 +415,7 @@ def _add_npiv_port_map(adapter, host_uuid, vm_uuid, vios_wraps, npiv_port_map):
 
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
-    vfc_map = pvm_vios.VFCMapping.bld(adapter, host_uuid, vm_uuid,
+    vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, vm_uuid,
                                       p_port.name, v_wwpns)
     vios_w.vfc_mappings.append(vfc_map)
     return vios_w

@@ -36,7 +36,7 @@ class TestClusterSSP(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Adapter')
     def test_crt_cluster_ssp(self, mock_adp, mock_monitor_job, mock_del_job):
         # Load up GET Cluster/do/Create (job template)
-        mock_adp.read.return_value = tju.load_file(CREATE_CLUSTER)
+        mock_adp.read.return_value = tju.load_file(CREATE_CLUSTER, mock_adp)
         # We'll pretend the job ran and completed successfully
         mock_monitor_job.return_value = (jwrap.JobStatus.COMPLETED_OK, 'ok',
                                          False)
@@ -89,8 +89,7 @@ class TestClusterSSP(unittest.TestCase):
         repos = stor.PV.bld(mock_adp, name='repos_pv_name')
         data = [stor.PV.bld(mock_adp, name=n) for n in (
             'hdisk1', 'hdisk2', 'hdisk3')]
-        cs.crt_cluster_ssp(mock_adp, 'clust_name', 'ssp_name', repos,
-                           node, data)
+        cs.crt_cluster_ssp('clust_name', 'ssp_name', repos, node, data)
         # run_job() should run delete_job() at the end
         self.assertEqual(mock_del_job.call_count, 1)
 

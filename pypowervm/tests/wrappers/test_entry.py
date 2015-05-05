@@ -714,7 +714,7 @@ class TestRefresh(testtools.TestCase):
         mock_read.side_effect = self._mock_read_by_href(
             None, self.resp200old)
         clust_old_save = copy.deepcopy(self.clust_old)
-        clust_refreshed = self.clust_old.refresh(self.adp)
+        clust_refreshed = self.clust_old.refresh()
         _assert_clusters_equal(self, clust_old_save, clust_refreshed)
 
     @mock.patch('pypowervm.adapter.Adapter.read_by_href')
@@ -722,7 +722,7 @@ class TestRefresh(testtools.TestCase):
         mock_read.side_effect = self._mock_read_by_href(
             self.old_etag, self.resp304)
         self.clust_old._etag = self.old_etag
-        clust_refreshed = self.clust_old.refresh(self.adp)
+        clust_refreshed = self.clust_old.refresh()
         # On an etag match, refresh should return the same instance
         self.assertEqual(self.clust_old, clust_refreshed)
 
@@ -732,7 +732,7 @@ class TestRefresh(testtools.TestCase):
             self.old_etag, self.resp200new)
         self.clust_old._etag = self.old_etag
         clust_new_save = copy.deepcopy(self.clust_new)
-        clust_refreshed = self.clust_old.refresh(self.adp)
+        clust_refreshed = self.clust_old.refresh()
         _assert_clusters_equal(self, clust_new_save, clust_refreshed)
 
 
@@ -759,7 +759,7 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(self.adp)
+        newcl = self.cl.update()
         mock_ubp.assert_called_with(self.cl, self.clust_etag,
                                     self.clust_path + '?group=None')
         _assert_clusters_equal(self, self.cl, newcl)
@@ -771,7 +771,7 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
+        newcl = self.cl.update(xag=['one', 'two', 'three'])
         mock_ubp.assert_called_with(self.cl, self.clust_etag,
                                     self.clust_path + '?group=one,three,two')
         _assert_clusters_equal(self, self.cl, newcl)
@@ -788,7 +788,7 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(self.adp, xag=['one', 'two', 'three'])
+        newcl = self.cl.update(xag=['one', 'two', 'three'])
         mock_ubp.assert_called_with(self.cl, self.clust_etag,
                                     self.clust_path + '?group=one,three,two')
         _assert_clusters_equal(self, self.cl, newcl)

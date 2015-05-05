@@ -62,7 +62,7 @@ data_pvs = [
         (DATA2_UDID, DATA2_NAME),
         (DATA3_UDID, DATA3_NAME))]
 try:
-    cs.crt_cluster_ssp(adap, 'clust1', 'ssp1', repos, node1, data_pvs)
+    cs.crt_cluster_ssp('clust1', 'ssp1', repos, node1, data_pvs)
 except ex.JobRequestFailed as e:
     print(unicode(e))
 

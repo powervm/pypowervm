@@ -35,7 +35,7 @@ def _delay(attempt, max_attempts, *args, **kwds):
 
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(delay_func=_delay)
-def add_vscsi_mapping(adapter, host_uuid, vios_uuid, lpar_uuid, storage_elem,
+def add_vscsi_mapping(host_uuid, vios_uuid, lpar_uuid, storage_elem,
                       fuse_limit=32):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
@@ -50,7 +50,6 @@ def add_vscsi_mapping(adapter, host_uuid, vios_uuid, lpar_uuid, storage_elem,
     of devices on a given vSCSI bus.  The throttle should be lower if the
     storage elements are high I/O, and higher otherwise.
 
-    :param adapter: The pypowervm adapter for API communication.
     :param host_uuid: The UUID of the host system.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       added to.
@@ -61,6 +60,7 @@ def add_vscsi_mapping(adapter, host_uuid, vios_uuid, lpar_uuid, storage_elem,
     :param fuse_limit: (Optional) The max number of devices to allow on one
                        scsi bus before creating a second SCSI bus.
     """
+    adapter = storage_elem.adapter
     vios_resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid,
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
@@ -99,7 +99,7 @@ def add_vscsi_mapping(adapter, host_uuid, vios_uuid, lpar_uuid, storage_elem,
     # and server adapter.  It may be the original (which creates a new client
     # and server pair).
     vios_w.scsi_mappings.append(scsi_map)
-    vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    vios_w.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
 
 def _separate_mappings(vios_w, client_href):
@@ -181,7 +181,7 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
         resp_list.append(matching_map.backing_storage)
 
     # Update the VIOS
-    vios_w.update(adapter, xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    vios_w.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
     # return the list of removed elements
     return resp_list

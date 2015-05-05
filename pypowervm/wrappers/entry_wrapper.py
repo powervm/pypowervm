@@ -549,24 +549,22 @@ class EntryWrapper(Wrapper):
         fmt = _("Must supply a Response or Entry to wrap.  Got %s")
         raise TypeError(fmt % str(type(response_or_entry)))
 
-    def refresh(self, adapter):
+    def refresh(self):
         """Fetch the latest version of the entry from the REST API server.
 
         If the entry has not been updated on the server, self is returned
         unchanged.  Otherwise a new, fresh wrapper instance is returned.
         Generally, this should be used as:
 
-        wrapper_instance = wrapper_instance.refresh(adapter)
+        wrapper_instance = wrapper_instance.refresh()
 
-        :param adapter: The pypowervm.adapter.Adapter instance through which to
-                        perform the refresh.
         :return: EntryWrapper representing the latest data from the REST API
                  server.  If the input wrapper contains etag information and
                  the server responds 304 (Not Modified), the original wrapper
                  is returned.  Otherwise, a fresh EntryWrapper of the
                  appropriate type is returned.
         """
-        resp = adapter.read_by_href(self.href, etag=self.etag)
+        resp = self.adapter.read_by_href(self.href, etag=self.etag)
         if resp.status == pc.HTTPStatus.NO_CHANGE:
             return self
         return self.wrap(resp)
@@ -669,11 +667,9 @@ class EntryWrapper(Wrapper):
         else:
             return adapter.read(target_type, **kwargs)
 
-    def update(self, adapter, xag=None):
+    def update(self, xag=None):
         """Performs adapter.update of this wrapper.
 
-        :param adapter: The pypowervm.adapter.Adapter through which to perform
-                        the update.
         :param xag: List of extended attribute group names.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
@@ -681,8 +677,8 @@ class EntryWrapper(Wrapper):
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
         # No-op if xag is empty/None
-        path = adapter.extend_path(path, xag=xag)
-        return self.wrap(adapter.update_by_path(self, self.etag, path))
+        path = self.adapter.extend_path(path, xag=xag)
+        return self.wrap(self.adapter.update_by_path(self, self.etag, path))
 
     @property
     def element(self):

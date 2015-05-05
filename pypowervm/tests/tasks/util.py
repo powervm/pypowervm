@@ -22,12 +22,12 @@ from pypowervm import exceptions as pvm_exc
 from pypowervm.tests.wrappers.util import pvmhttp
 
 
-def load_file(file_name):
+def load_file(file_name, adapter=None):
     """Helper method to load the responses from a given location."""
     data_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(data_dir, 'data')
     file_path = os.path.join(data_dir, file_name)
-    return pvmhttp.load_pvm_resp(file_path).get_response()
+    return pvmhttp.load_pvm_resp(file_path, adapter).get_response()
 
 
 def raiseRetryException():

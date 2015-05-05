@@ -141,7 +141,7 @@ class TestHDisk(unittest.TestCase):
         mock_adapter.read.return_value = (tju.load_file(VIOS_FEED)
                                           .feed.entries[0])
 
-        def verify_run_job(adapter, vios_uuid, job_parms=None):
+        def verify_run_job(vios_uuid, job_parms=None):
             self.assertEqual(1, len(job_parms))
             job_parm = (b'<web:JobParameter xmlns:web="http://www.ibm.com/'
                         b'xmlns/systems/power/firmware/web/mc/2012_10/" '

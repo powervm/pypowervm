@@ -24,13 +24,11 @@ import pypowervm.wrappers.storage as stor
 LOG = logging.getLogger(__name__)
 
 
-def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
-                    data_pv_list):
+def crt_cluster_ssp(clust_name, ssp_name, repos_pv, first_node, data_pv_list):
     """Creates a Cluster/SharedStoragePool via the ClusterCreate Job.
 
     The Job takes two parameters: clusterXml and sspXml.
 
-    :param adapter: The pypowervm.adapter.Adapter for REST communication.
     :param clust_name: String name for the Cluster.
     :param ssp_name: String name for the SharedStoragePool.
     :param repos_pv: storage.PV representing the repository hdisk. The name and
@@ -45,6 +43,7 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
     :param data_pv_list: Iterable of storage.PV instances to use as the data
                          volume(s) for the SharedStoragePool.
     """
+    adapter = repos_pv.adapter
     # Pull down the ClusterCreate Job template
     jresp = adapter.read(clust.Cluster.schema_type,
                          suffix_type=c.SUFFIX_TYPE_DO, suffix_parm='Create')
@@ -60,5 +59,5 @@ def crt_cluster_ssp(adapter, clust_name, ssp_name, repos_pv, first_node,
             'clusterXml', cluster.toxmlstring(), cdata=True),
         jwrap.create_job_parameter(
             'sspXml', ssp.toxmlstring(), cdata=True)]
-    jwrap.run_job(adapter, None, job_parms=jparams)
+    jwrap.run_job(None, job_parms=jparams)
     return jwrap

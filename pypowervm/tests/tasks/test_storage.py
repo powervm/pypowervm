@@ -103,8 +103,8 @@ class TestUploadLV(testtools.TestCase):
         # traits are already set to use the REST API upload
 
         # First need to load in the various test responses.
-        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG, self.adpt)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
 
         self.adpt.read.return_value = vg_orig
         self.adpt.update_by_path.return_value = vg_post_crt
@@ -136,8 +136,8 @@ class TestUploadLV(testtools.TestCase):
         self.adptfx.set_traits(fx.LocalPVMTraits)
 
         # First need to load in the various test responses.
-        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG, self.adpt)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
 
         self.adpt.read.return_value = vg_orig
         self.adpt.update_by_path.return_value = vg_post_crt
@@ -167,8 +167,8 @@ class TestUploadLV(testtools.TestCase):
         """Tests the failure path for uploading of the virtual disks."""
 
         # First need to load in the various test responses.
-        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG)
-        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK)
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG, self.adpt)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
 
         self.adpt.read.return_value = vg_orig
         self.adpt.update_by_path.return_value = vg_post_crt
@@ -201,8 +201,8 @@ class TestUploadLV(testtools.TestCase):
         size_b = 1224067890
 
         new_lu, f_wrap = ts.upload_new_lu(
-            self.adpt, self.v_uuid, ssp_in, None, 'lu1', size_b,
-            d_size=25, sha_chksum='abc123')
+            self.v_uuid, ssp_in, None, 'lu1', size_b, d_size=25,
+            sha_chksum='abc123')
 
         # Check the new LU's properties
         self.assertEqual(new_lu.name, 'lu1')
@@ -252,7 +252,7 @@ class TestUploadLV(testtools.TestCase):
 
     def _fake_meta(self):
         """Returns a fake meta class for the _create_file mock."""
-        resp = tju.load_file(UPLOADED_FILE)
+        resp = tju.load_file(UPLOADED_FILE, self.adpt)
         return vf.File.wrap(resp)
 
 
@@ -273,7 +273,7 @@ class TestLU(testtools.TestCase):
         self.ssp._etag = 'before'
 
     def test_crt_lu(self):
-        ssp, lu = ts.crt_lu(self.adpt, self.ssp, 'lu5', 10)
+        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10)
         self.assertEqual(lu.name, 'lu5')
         self.assertEqual(lu.udid, 'udid_lu5')
         self.assertTrue(lu.is_thin)
@@ -282,39 +282,38 @@ class TestLU(testtools.TestCase):
         self.assertIn(lu, ssp.logical_units)
 
     def test_crt_lu_thin(self):
-        ssp, lu = ts.crt_lu(self.adpt, self.ssp, 'lu5', 10, thin=True)
+        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=True)
         self.assertTrue(lu.is_thin)
 
     def test_crt_lu_thick(self):
-        ssp, lu = ts.crt_lu(self.adpt, self.ssp, 'lu5', 10, thin=False)
+        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=False)
         self.assertFalse(lu.is_thin)
 
     def test_crt_lu_type_image(self):
-        ssp, lu = ts.crt_lu(self.adpt, self.ssp, 'lu5', 10,
-                            typ=stor.LUType.IMAGE)
+        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, typ=stor.LUType.IMAGE)
         self.assertEqual(lu.lu_type, stor.LUType.IMAGE)
 
     def test_crt_lu_name_conflict(self):
-        self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.adpt,
-                          self.ssp, 'lu1', 5)
+        self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.ssp, 'lu1',
+                          5)
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.adpt, self.ssp, lu=lu)
+        ssp, lurm = ts.rm_lu(self.ssp, lu=lu)
         self.assertEqual(lu, lurm)
         self.assertEqual(ssp.etag, 'after')
         self.assertEqual(len(ssp.logical_units), 4)
 
     def test_rm_lu_by_name(self):
         lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.adpt, self.ssp, name='lu2')
+        ssp, lurm = ts.rm_lu(self.ssp, name='lu2')
         self.assertEqual(lu, lurm)
         self.assertEqual(ssp.etag, 'after')
         self.assertEqual(len(ssp.logical_units), 4)
 
     def test_rm_lu_by_udid(self):
         lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.adpt, self.ssp, udid='udid_lu2')
+        ssp, lurm = ts.rm_lu(self.ssp, udid='udid_lu2')
         self.assertEqual(lu, lurm)
         self.assertEqual(ssp.etag, 'after')
         self.assertEqual(len(ssp.logical_units), 4)
@@ -322,13 +321,13 @@ class TestLU(testtools.TestCase):
     def test_rm_lu_not_found(self):
         # By LU
         lu = stor.LU.bld(self.adpt, 'lu5', 6)
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adpt, self.ssp,
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
                           lu=lu)
         # By name
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adpt, self.ssp,
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
                           name='lu5')
         # By UDID
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.adpt, self.ssp,
+        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
                           udid='lu5_udid')
 
 
@@ -374,10 +373,11 @@ class TestLULinkedClone(testtools.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_crt_lu_linked_clone(self, mock_run_job):
-        clust1 = clust.Cluster.wrap(tju.load_file(CLUSTER))
-        self.adpt.read.return_value = tju.load_file(LU_LINKED_CLONE_JOB)
+        clust1 = clust.Cluster.wrap(tju.load_file(CLUSTER, self.adpt))
+        self.adpt.read.return_value = tju.load_file(LU_LINKED_CLONE_JOB,
+                                                    self.adpt)
 
-        def verify_run_job(adapter, uuid, job_parms):
+        def verify_run_job(uuid, job_parms):
             self.assertEqual(clust1.uuid, uuid)
             self.assertEqual(
                 '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
@@ -394,8 +394,8 @@ class TestLULinkedClone(testtools.TestCase):
                 encode('utf-8'),
                 job_parms[1].toxmlstring())
         mock_run_job.side_effect = verify_run_job
-        ts.crt_lu_linked_clone(self.adpt, self.ssp, clust1,
-                               self.ssp.logical_units[0], 'linked_lu')
+        ts.crt_lu_linked_clone(self.ssp, clust1, self.ssp.logical_units[0],
+                               'linked_lu')
 
     def test_image_lu_in_use(self):
         self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
@@ -408,11 +408,11 @@ class TestLULinkedClone(testtools.TestCase):
     def test_remove_lu_linked_clone(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)
         # This one should remove the disk LU but *not* the image LU
-        ssp = ts.remove_lu_linked_clone(self.adpt, self.ssp, self.dsk_lu3)
+        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3)
         lu_names.remove(self.dsk_lu3.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove *both* the disk LU and the image LU
-        ssp = ts.remove_lu_linked_clone(self.adpt, self.ssp, self.dsk_lu4,
+        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu4,
                                         del_unused_image=True)
         lu_names.remove(self.dsk_lu4.name)
         lu_names.remove(self.img_lu2.name)
@@ -420,7 +420,7 @@ class TestLULinkedClone(testtools.TestCase):
         # This one should remove the disk LU but *not* the image LU, even
         # though it's now unused.
         self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu5))
-        ssp = ts.remove_lu_linked_clone(self.adpt, self.ssp, self.dsk_lu6)
+        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu6)
         lu_names.remove(self.dsk_lu6.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
@@ -429,8 +429,7 @@ class TestLULinkedClone(testtools.TestCase):
         def trap_update(*a, **k):
             self.fail()
         self.adpt.update_by_path = trap_update
-        ts.remove_lu_linked_clone(self.adpt, self.ssp, self.dsk_lu3,
-                                  update=False)
+        ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3, update=False)
 
 if __name__ == '__main__':
     unittest.main()

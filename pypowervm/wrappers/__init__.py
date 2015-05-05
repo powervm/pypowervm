@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# TODO(efried): Remove these (unused)
+
 
 def msg_in_pvm_err(pvmerr, msg):
     """Check whether the Error contains the specified msg.

@@ -42,7 +42,7 @@ def close_vterm(adapter, lpar_uuid):
     job_wrapper = job.Job.wrap(resp.entry)
 
     try:
-        job_wrapper.run_job(adapter, lpar_uuid)
+        job_wrapper.run_job(lpar_uuid)
     except Exception as e:
         # just log the error.
         emsg = six.text_type(e)
