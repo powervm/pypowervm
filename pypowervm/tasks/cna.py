@@ -68,10 +68,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     if vswitch_w is None:
         if crt_vswitch:
             vswitch_w = network.VSwitch.bld(adapter, vswitch)
-            resp = adapter.create(vswitch_w, ms.System.schema_type,
-                                  root_id=host_uuid,
-                                  child_type=network.VSwitch.schema_type)
-            vswitch_w = network.VSwitch.wrap(resp)
+            vswitch_w = vswitch_w.create(parent_type=ms.System,
+                                         parent_uuid=host_uuid)
         else:
             raise exc.Error(_('Unable to find the Virtual Switch %s on the '
                               'system.') % vswitch)
@@ -84,9 +82,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     net_adpt = network.CNA.bld(
         adapter, pvid, vswitch_w.related_href, slot_num=slot_num,
         mac_addr=mac_addr, addl_tagged_vlans=addl_tagged_vlans)
-    resp = adapter.create(net_adpt, lpar.LPAR.schema_type, root_id=lpar_uuid,
-                          child_type=network.CNA.schema_type)
-    return resp.entry
+    wrap = net_adpt.create(parent_type=lpar.LPAR, parent_uuid=lpar_uuid)
+    return wrap.entry
 
 
 def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
@@ -105,6 +102,4 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
     vnet = network.VNet.bld(adapter, name, vlan, vswitch.related_href, tagged)
-    crt_resp = adapter.create(vnet, ms.System.schema_type, root_id=host_uuid,
-                              child_type=network.VNet.schema_type)
-    return network.VNet.wrap(crt_resp)
+    return vnet.create(parent_type=ms.System, parent_uuid=host_uuid)

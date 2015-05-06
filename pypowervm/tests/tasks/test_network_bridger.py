@@ -301,7 +301,7 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
 
         # Set up the mock create
         resp = pvm_net.VNet.bld(self.adpt, 'FakeName', 4094, vsw.href, True)
-        mock_resp = mock.MagicMock()
+        mock_resp = adpt.Response('rm', 'rp', 200, 'reason', {})
         mock_resp.entry = resp.entry
         self.adpt.create.return_value = mock_resp
 

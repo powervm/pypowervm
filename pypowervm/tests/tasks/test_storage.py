@@ -227,20 +227,16 @@ class TestUploadLV(testtools.TestCase):
         """Validates that the _create_file builds the Element properly."""
         def validate_in(*args, **kwargs):
             # Validate that the element is built properly
-            element = args[0]
+            wrap = args[0]
 
-            self.assertEqual('chk', element.findtext('SHA256'))
-            self.assertEqual('50',
-                             element.findtext('ExpectedFileSizeInBytes'))
-            self.assertEqual('f_name', element.findtext('Filename'))
+            self.assertEqual('chk', wrap._get_val_str(vf._FILE_CHKSUM))
+            self.assertEqual(50, wrap.expected_file_size)
+            self.assertEqual('f_name', wrap.file_name)
             self.assertEqual('application/octet-stream',
-                             element.findtext('InternetMediaType'))
-            self.assertEqual('f_type',
-                             element.findtext('FileEnumType'))
-            self.assertEqual('v_uuid',
-                             element.findtext('TargetVirtualIOServerUUID'))
-            self.assertEqual('tdev_uuid',
-                             element.findtext('TargetDeviceUniqueDeviceID'))
+                             wrap.internet_media_type)
+            self.assertEqual('f_type', wrap.enum_type)
+            self.assertEqual('v_uuid', wrap.vios_uuid)
+            self.assertEqual('tdev_uuid', wrap.tdev_udid)
             ret = adp.Response('reqmethod', 'reqpath', 'status', 'reason', {})
             ret.entry = ewrap.EntryWrapper._bld(self.adpt, tag='File').entry
             return ret

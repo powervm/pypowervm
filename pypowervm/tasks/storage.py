@@ -279,12 +279,8 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     :param tdev_udid: The device UDID that the file will back into.
     :returns: The File Wrapper
     """
-    fd = vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
-                     f_size=f_size, tdev_udid=tdev_udid)
-
-    # Create the file.
-    resp = adapter.create(fd.element, vf.File.schema_type, service='web')
-    return vf.File.wrap(resp)
+    return vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
+                       f_size=f_size, tdev_udid=tdev_udid).create()
 
 
 def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
