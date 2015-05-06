@@ -77,7 +77,7 @@ class TestLongTermMonitorMetrics(twrap.TestWrapper):
 class TestShortTermMonitorMetrics(twrap.TestWrapper):
 
     file = 'stm_feed.txt'
-    wrapper_class_to_test = monitor.LongTermMonitorMetrics
+    wrapper_class_to_test = monitor.ShortTermMonitorMetrics
 
     def test_stm_metrics(self):
         link = ('https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed'
