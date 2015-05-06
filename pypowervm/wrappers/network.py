@@ -65,11 +65,14 @@ _SEA_PRIMARY = 'IsPrimary'
 _SEA_IP_INTERFACE = 'IPInterface'
 _SEA_DEV_ID = 'UniqueDeviceID'
 _SEA_LARGE_SEND = 'LargeSend'
+_SEA_ADDRESS_TO_PING = 'AddressToPing'
+_SEA_IIDP_SERVICE = 'IIDPService'
 _SEA_EL_ORDER = (_SEA_VIO_HREF, _SEA_BACKING_DEV, _SEA_HA_MODE,
                  _SEA_DEV_NAME, _SEA_JUMBO_FRAMES, _SEA_PVID,
                  _SEA_QOS_MODE, _SEA_QUEUE_SIZE, _SEA_THREAD_MODE,
-                 _SEA_PRIMARY, _SEA_IP_INTERFACE, _SEA_DEV_ID,
-                 _SEA_LARGE_SEND)
+                 _SEA_IP_INTERFACE, _SEA_DEV_ID, _SEA_LARGE_SEND,
+                 _SEA_ADDRESS_TO_PING, _SEA_IIDP_SERVICE, SEA_TRUNKS,
+                 _SEA_PRIMARY)
 
 _SEA_EBD_ADAPTER_ID = 'AdapterID'
 _SEA_EBD_DESCRIPTION = 'Description'
