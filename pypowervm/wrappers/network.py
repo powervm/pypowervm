@@ -51,6 +51,7 @@ _NB_EL_ORDER = (_NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS, _NB_PVID, NB_SEAS,
 ETH_BACK_DEV = 'EthernetBackingDevice'
 
 _SEA_VIO_HREF = 'AssignedVirtualIOServer'
+_SEA_CONTROL_CHANNEL = 'ControlChannelInterfaceName'
 _SEA_BACKING_DEV = 'BackingDeviceChoice'
 _SEA_ETH_BACK_DEV = ETH_BACK_DEV
 _SEA_HA_MODE = 'HighAvailabilityMode'
@@ -65,11 +66,14 @@ _SEA_PRIMARY = 'IsPrimary'
 _SEA_IP_INTERFACE = 'IPInterface'
 _SEA_DEV_ID = 'UniqueDeviceID'
 _SEA_LARGE_SEND = 'LargeSend'
-_SEA_EL_ORDER = (_SEA_VIO_HREF, _SEA_BACKING_DEV, _SEA_HA_MODE,
-                 _SEA_DEV_NAME, _SEA_JUMBO_FRAMES, _SEA_PVID,
+_SEA_ADDRESS_TO_PING = 'AddressToPing'
+_SEA_IIDP_SERVICE = 'IIDPService'
+_SEA_EL_ORDER = (_SEA_VIO_HREF, _SEA_CONTROL_CHANNEL, _SEA_BACKING_DEV,
+                 _SEA_HA_MODE, _SEA_DEV_NAME, _SEA_JUMBO_FRAMES, _SEA_PVID,
                  _SEA_QOS_MODE, _SEA_QUEUE_SIZE, _SEA_THREAD_MODE,
-                 _SEA_PRIMARY, _SEA_IP_INTERFACE, _SEA_DEV_ID,
-                 _SEA_LARGE_SEND)
+                 _SEA_IP_INTERFACE, _SEA_DEV_ID, _SEA_LARGE_SEND,
+                 _SEA_ADDRESS_TO_PING, _SEA_IIDP_SERVICE, SEA_TRUNKS,
+                 _SEA_PRIMARY)
 
 _SEA_EBD_ADAPTER_ID = 'AdapterID'
 _SEA_EBD_DESCRIPTION = 'Description'
