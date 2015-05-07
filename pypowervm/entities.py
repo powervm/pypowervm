@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""High-level pythonic abstractions of XML entities returned by PowerVM."""
+
 import collections
 import copy
 import functools

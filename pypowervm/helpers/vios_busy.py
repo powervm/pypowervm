@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""This Adapter helper retries a request when 'VIOS busy' error is detected."""
+
 import time
 
 import pypowervm.exceptions as pvmex

@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Utilities around Universally-Unique Identifiers (UUIDs)."""
+
 PVM_BYTE_MAPPING = {'8': '0', '9': '1', 'a': '2', 'b': '3',
                     'c': '4', 'd': '5', 'e': '6', 'f': '7'}
 

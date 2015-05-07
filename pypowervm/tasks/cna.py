@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Tasks around ClientNetworkAdapter."""
+
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
 import pypowervm.wrappers.logical_partition as lpar

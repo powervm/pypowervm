@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""HttpError, the EntryWrapper for HttpErrorResponse ('web' namespace)."""
+
 import pypowervm.const as pc
 import pypowervm.wrappers.entry_wrapper as ewrap
 

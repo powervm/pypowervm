@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Tasks to start, stop, and reboot partitions."""
+
 import logging
 
 from oslo.config import cfg

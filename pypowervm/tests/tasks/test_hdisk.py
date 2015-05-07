@@ -152,8 +152,7 @@ class TestHDisk(unittest.TestCase):
 
         mock_run_job.side_effect = verify_run_job
 
-        hdisk._remove_hdisk_job(mock_adapter, 'host_name', 'dev_name',
-                                'vios_uuid')
+        hdisk._remove_hdisk_job(mock_adapter, 'dev_name', 'vios_uuid')
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)

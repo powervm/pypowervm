@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Internationalization helpers."""
+
 from oslo.config import cfg
 import oslo_i18n._message as _msg
 

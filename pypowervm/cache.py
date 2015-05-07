@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Caching of PowerVM objects."""
+
 import copy
 import datetime as dt
 import logging
