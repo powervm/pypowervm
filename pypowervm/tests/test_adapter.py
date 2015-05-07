@@ -36,6 +36,7 @@ import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 logging.basicConfig()
@@ -50,20 +51,16 @@ NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 class TestAdapter(testtools.TestCase):
     """Test cases to test the adapter classes and methods."""
 
-    def setUp(self):
-        super(TestAdapter, self).setUp()
-        """Set up a mocked Session instance."""
-        # Init test data
-        host = '0.0.0.0'
-        user = 'user'
-        pwd = 'pwd'
-        auditmemento = 'audit'
-
+    def _mk_response(self, status, content=None):
+        reasons = {200: 'OK', 204: 'No Content', 401: 'Unauthorized'}
         # Create a Response object, that will serve as a mock return value
         my_response = req_mod.Response()
-        my_response.status_code = 200
-        my_response.reason = 'OK'
-        dict_headers = {'content-length': '576',
+        my_response.status_code = status
+        my_response.reason = reasons[status]
+        clen = '0'
+        if status == 200 and content:
+            clen = str(len(content))
+        dict_headers = {'content-length': clen,
                         'x-powered-by': 'Servlet/3.0',
                         'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA' +
                         '3wR1nj:759878cb-4f9a-4b05-a09a-3357abfea3b4; ' +
@@ -74,10 +71,22 @@ class TestAdapter(testtools.TestCase):
                         'cache-control': 'no-cache="set-cookie, ' +
                                          'set-cookie2"',
                         'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
-                        'content-type': 'application/vnd.ibm.powervm' +
-                                        '.web+xml; type=LogonResponse'}
+                        'content-type': 'application/vnd.ibm.powervm'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        my_response._content = logon_text
+        my_response._content = content
+        return my_response
+
+    def setUp(self):
+        super(TestAdapter, self).setUp()
+        """Set up a mocked Session instance."""
+        # Init test data
+        host = '0.0.0.0'
+        user = 'user'
+        pwd = 'pwd'
+        auditmemento = 'audit'
+
+        # Create a Response object, that will serve as a mock return value
+        my_response = self._mk_response(200, logon_text)
 
         # Mock out the method and class we are not currently testing
         with mock.patch('requests.Session') as mock_session:
@@ -109,25 +118,7 @@ class TestAdapter(testtools.TestCase):
         adapter = adp.Adapter(self.sess, use_cache=False)
 
         # Create a Response object, that will serve as a mock return value
-        read_response = req_mod.Response()
-        read_response.status_code = 200
-        read_response.reason = 'OK'
-        dict_headers = {'content-length': '576',
-                        'content-language': 'en-US',
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000Q6SoAlyICbmJA0bSiQV' +
-                        'l69q:759878cb-4f9a-4b05-a09a-3357abfea3b4' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'x-hmc-schema-version': 'V1_1_0',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000058',
-                        'cache-control': 'no-transform, must-revalidate, ' +
-                        'proxy-revalidate, no-cache=set-cookie',
-                        'date': 'Wed, 23 Jul 2014 04:29:09 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
-        read_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        read_response._content = response_text
+        read_response = self._mk_response(200, response_text)
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
@@ -209,41 +200,14 @@ class TestAdapter(testtools.TestCase):
         """Test create() method found in the Adapter class."""
         # Init test data
         adapter = adp.Adapter(self.sess, use_cache=False)
-        children = [ent.Element('AdapterType', adapter, text='Client'),
-                    ent.Element('UseNextAvailableSlotID', adapter,
-                                text='true'),
-                    ent.Element('RemoteLogicalPartitionID', adapter,
-                                text='1'),
-                    ent.Element('RemoteSlotNumber', adapter, text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter', adapter,
-                               attrib={'schemaVersion': 'V1_0'},
-                               children=children)
+        new_scsi = pvm_stor.VSCSIClientAdapter.bld(adapter)
 
         element = new_scsi
         root_type = 'ManagedSystem'
         root_id = 'id'
         child_type = 'LogicalPartition'
 
-        # Create a Response object, that will serve as a mock return value
-        create_response = req_mod.Response()
-        create_response.status_code = 200
-        create_response.reason = 'OK'
-        dict_headers = {'content-length': '576',
-                        'content-language': 'en-US',
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000Q6SoAlyICbmJA0bSiQV' +
-                        'l69q:759878cb-4f9a-4b05-a09a-3357abfea3b4' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'x-hmc-schema-version': 'V1_1_0',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000058',
-                        'cache-control': 'no-transform, must-revalidate, ' +
-                        'proxy-revalidate, no-cache=set-cookie',
-                        'date': 'Wed, 23 Jul 2014 04:29:09 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
-        create_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        create_response._content = response_text
+        create_response = self._mk_response(200, response_text)
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
@@ -273,26 +237,7 @@ class TestAdapter(testtools.TestCase):
         root_id = 'root id'
         adapter = adp.Adapter(self.sess, use_cache=False)
 
-        # Create a Response object, that will serve as a mock return value
-        update_response = req_mod.Response()
-        update_response.status_code = 200
-        update_response.reason = 'OK'
-        dict_headers = {'content-length': '576',
-                        'content-language': 'en-US',
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000Q6SoAlyICbmJA0bSiQV' +
-                        'l69q:759878cb-4f9a-4b05-a09a-3357abfea3b4' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'x-hmc-schema-version': 'V1_1_0',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000058',
-                        'cache-control': 'no-transform, must-revalidate, ' +
-                        'proxy-revalidate, no-cache=set-cookie',
-                        'date': 'Wed, 23 Jul 2014 04:29:09 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
-        update_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
-        update_response._content = response_text
+        update_response = self._mk_response(200, response_text)
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
@@ -446,25 +391,7 @@ class TestAdapter(testtools.TestCase):
         root_id = 'id'
         adapter = adp.Adapter(self.sess, use_cache=False)
 
-        # Create a Response object, that will serve as a mock return value
-        delete_response = req_mod.Response()
-        delete_response.status_code = 204
-        delete_response.reason = 'No Content'
-        dict_headers = {'content-length': '0',
-                        'content-language': 'en-US',
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000Q6SoAlyICbmJA0bSiQV' +
-                        'l69q:759878cb-4f9a-4b05-a09a-3357abfea3b4' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'x-hmc-schema-version': 'V1_1_0',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000058',
-                        'cache-control': 'no-transform, must-revalidate, ' +
-                        'proxy-revalidate, no-cache=set-cookie',
-                        'date': 'Wed, 23 Jul 2014 04:29:09 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
-        delete_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
+        delete_response = self._mk_response(204)
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value
@@ -489,40 +416,14 @@ class TestAdapter(testtools.TestCase):
 
         # Init test data
         adapter = adp.Adapter(self.sess, use_cache=False)
-        children = [ent.Element('AdapterType', adapter, text='Client'),
-                    ent.Element('UseNextAvailableSlotID', adapter,
-                                text='true'),
-                    ent.Element('RemoteLogicalPartitionID', adapter,
-                                text='1'),
-                    ent.Element('RemoteSlotNumber', adapter, text='12')]
-        new_scsi = ent.Element('VirtualSCSIClientAdapter', adapter,
-                               attrib={'schemaVersion': 'V1_0'},
-                               children=children)
+        new_scsi = pvm_stor.VSCSIClientAdapter.bld(adapter)
 
         element = new_scsi
         root_type = 'ManagedSystem'
         root_id = 'id'
         child_type = 'LogicalPartition'
 
-        # Create a Response object, that will serve as a mock return value
-        create_response = req_mod.Response()
-        create_response.status_code = 401
-        create_response.reason = 'Unauthorized'
-        dict_headers = {'content-length': '0',
-                        'content-language': 'en-US',
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000Q6SoAlyICbmJA0bSiQV' +
-                        'l69q:759878cb-4f9a-4b05-a09a-3357abfea3b4' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'x-hmc-schema-version': 'V1_1_0',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000058',
-                        'cache-control': 'no-transform, must-revalidate, ' +
-                        'proxy-revalidate, no-cache=set-cookie',
-                        'date': 'Wed, 23 Jul 2014 04:29:09 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
-        create_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
+        create_response = self._mk_response(401)
 
         # Mock out the method and class we are not currently testing
         session = mock_session.return_value

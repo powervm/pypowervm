@@ -106,6 +106,25 @@ class TestNetworkBridger(testtools.TestCase):
                                    '2227')
         self.assertEqual(0, self.adpt.update.call_count)
 
+    def _setup_reassign_arbitrary_vid(self):
+        vsw_p = mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                           '_find_vswitch')
+        mock_vsw = vsw_p.start()
+        self.addCleanup(vsw_p.stop)
+        vnet = pvm_net.VNet._bld(self.adpt).entry
+        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp1.feed = ent.Feed({}, [vnet])
+        self.adpt.read.return_value = resp1
+        self.adpt.read_by_href.return_value = vnet
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
+        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
+        resp2.entry = nb.entry
+        self.adpt.update.return_value = resp2
+
+        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
+        mock_vsw.return_value = vsw
+        return nb
+
 
 class TestNetworkBridgerVNet(TestNetworkBridger):
     """General tests for the network bridge super class and the VNet impl."""
@@ -244,21 +263,8 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_or_create_vnet')
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
-                '_find_vswitch')
-    def test_reassign_arbitrary_vid(self, mock_vsw, mock_find_vnet):
-        vnet = pvm_net.VNet._bld(self.adpt).entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp1.feed = ent.Feed({}, [vnet])
-        self.adpt.read.return_value = resp1
-        self.adpt.read_by_href.return_value = vnet
-        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp2.entry = nb.entry
-        self.adpt.update.return_value = resp2
-
-        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
-        mock_vsw.return_value = vsw
+    def test_reassign_arbitrary_vid(self, mock_find_vnet):
+        nb = self._setup_reassign_arbitrary_vid()
 
         mock_find_vnet.return_value = mock.MagicMock()
         mock_find_vnet.return_value.related_href = 'other'
@@ -439,21 +445,8 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         # Validate the calls
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
-                '_find_vswitch')
-    def test_reassign_arbitrary_vid(self, mock_vsw):
-        vnet = pvm_net.VNet._bld(self.adpt).entry
-        resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp1.feed = ent.Feed({}, [vnet])
-        self.adpt.read.return_value = resp1
-        self.adpt.read_by_href.return_value = vnet
-        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
-        resp2 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
-        resp2.entry = nb.entry
-        self.adpt.update.return_value = resp2
-
-        vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
-        mock_vsw.return_value = vsw
+    def test_reassign_arbitrary_vid(self):
+        nb = self._setup_reassign_arbitrary_vid()
 
         # Make this function return itself.
         def return_self(*kargs, **kwargs):
