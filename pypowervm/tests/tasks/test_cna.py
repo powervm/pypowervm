@@ -53,7 +53,7 @@ class TestCNA(testtools.TestCase):
             self.assertEqual('LogicalPartition', kargs[1])
             self.assertEqual('fake_lpar', kwargs.get('root_id'))
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
-            return mock.MagicMock()
+            return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
         self.adpt.create.side_effect = validate_of_create
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
@@ -79,7 +79,7 @@ class TestCNA(testtools.TestCase):
             self.assertEqual('LogicalPartition', kargs[1])
             self.assertEqual('fake_lpar', kwargs.get('root_id'))
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
-            return mock.MagicMock()
+            return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
         self.adpt.create.side_effect = validate_of_create
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
@@ -102,7 +102,7 @@ class TestCNA(testtools.TestCase):
                 self.assertEqual('fake_lpar', kwargs.get('root_id'))
                 self.assertEqual('ClientNetworkAdapter',
                                  kwargs.get('child_type'))
-                return mock.MagicMock()
+                return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
             else:
                 # Is the vSwitch create
                 self.assertEqual('ManagedSystem', kargs[1])

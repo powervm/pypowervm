@@ -32,6 +32,7 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
+import pypowervm.wrappers.vios_file as vf
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
@@ -834,6 +835,58 @@ class TestUpdate(testtools.TestCase):
                                     self.clust_path + '?group=one,three,two')
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
+
+
+class TestCreate(testtools.TestCase):
+    def setUp(self):
+        super(TestCreate, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+
+    def test_create_root(self):
+        vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
+
+        def validate_create(element, root_type, service):
+            self.assertIsInstance(element, net.VSwitch)
+            self.assertEqual(net.VSwitch.schema_type, root_type)
+            self.assertEqual('uom', service)
+            return vswitch.entry
+        self.adpt.create.side_effect = validate_create
+        vswitch.create()
+
+    def test_create_child(self):
+        # We can safely pretend VSwitch is a child for purposes of this test.
+        vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
+
+        def validate_create(element, root_type, root_id, child_type, service):
+            self.assertIsInstance(element, net.VSwitch)
+            self.assertEqual(net.VSwitch.schema_type, child_type)
+            self.assertEqual('NetworkBridge', root_type)
+            self.assertEqual('SomeUUID', root_id)
+            self.assertEqual('uom', service)
+            return vswitch.entry
+        self.adpt.create.side_effect = validate_create
+        # Make sure it works when parent_type is a class...
+        vswitch.create(parent_type=net.NetBridge, parent_uuid='SomeUUID')
+        # ...or a string
+        vswitch.create(parent_type='NetworkBridge', parent_uuid='SomeUUID')
+
+    def test_create_other_service(self):
+        """Ensure non-UOM service goes through."""
+        vfile = vf.File.bld(self.adpt, "filename", "filetype", "vios_uuid")
+
+        def validate_create(element, root_type, service):
+            self.assertIsInstance(element, vf.File)
+            self.assertEqual(vf.File.schema_type, root_type)
+            self.assertEqual('web', service)
+            return vfile.entry
+        self.adpt.create.side_effect = validate_create
+        vfile.create()
+
+    def test_create_raises(self):
+        """Verify invalid inputs raise exceptions."""
+        vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
+        self.assertRaises(ValueError, vswitch.create, parent_type='Foo')
+        self.assertRaises(ValueError, vswitch.create, parent_uuid='Foo')
 
 if __name__ == '__main__':
     unittest.main()

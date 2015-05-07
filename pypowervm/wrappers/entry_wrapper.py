@@ -691,6 +691,36 @@ class EntryWrapper(Wrapper):
                 ret.feed.entries.extend(resp.feed.entries)
             return ret
 
+    def create(self, parent_type=None, parent_uuid=None):
+        """Performs an adapter.create (REST API PUT) with this wrapper.
+
+        :param parent_type: If creating a CHILD, both parent_type and
+                            parent_uuid must be specified.  This parameter
+                            may be either the schema_type or the EntryWrapper
+                            subclass of the parent ROOT object.
+        :param parent_uuid: If creating a CHILD, both parent_type and
+                            parent_uuid must be specified.  This parameter
+                            indicates the UUID of the parent ROOT object.
+        :return: New EntryWrapper of the invoking class representing the PUT
+                 response.
+        """
+        service = pc.SERVICE_BY_NS[self.schema_ns]
+        if parent_type is None and parent_uuid is None:
+            resp = self.adapter.create(self, self.schema_type, service=service)
+        elif parent_type is not None and parent_uuid is not None:
+            # parent_type and parent_uuid specified.
+            # Allow either string or class.
+            if type(parent_type) is not str:
+                parent_type = parent_type.schema_type
+            resp = self.adapter.create(
+                self, parent_type, root_id=parent_uuid,
+                child_type=self.schema_type, service=service)
+        else:
+            # parent_type xor parent_uuid specified
+            raise ValueError(
+                _("Must specify both parent type and UUID, or neither."))
+        return self.wrap(resp)
+
     def update(self, xag=None):
         """Performs adapter.update of this wrapper.
 

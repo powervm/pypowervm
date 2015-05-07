@@ -69,6 +69,12 @@ PORT_DEFAULT_BY_PROTO = {
     'https': 12443
 }
 
+SERVICE_BY_NS = {
+    WEB_NS: 'web',
+    UOM_NS: 'uom',
+    PCM_NS: 'pcm'
+}
+
 
 class HTTPStatus(object):
     """Small subset of HTTP status codes as used by PowerVM."""

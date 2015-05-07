@@ -516,10 +516,8 @@ class NetworkBridgerVNET(NetworkBridger):
                                             'vswitch': vswitch.name}
         vnet_elem = pvm_net.VNet.bld(
             self.adapter, name, vlan, vswitch.related_href, tagged)
-        resp = self.adapter.create(
-            vnet_elem, pvm_ms.System.schema_type, root_id=self.host_uuid,
-            child_type=pvm_net.VNet.schema_type)
-        return pvm_net.VNet.wrap(resp.entry)
+        return vnet_elem.create(parent_type=pvm_ms.System,
+                                parent_uuid=self.host_uuid)
 
     def _find_available_ld_grp(self, nb):
         """Will return the Load Group that can support a new VLAN.
