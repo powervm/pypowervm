@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Pervasive/commonly-used utilities."""
+
 import datetime as dt
 import hashlib
 import logging

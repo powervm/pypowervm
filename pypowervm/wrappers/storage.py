@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Wrappers for virtual storage elements and adapters."""
+
 import abc
 import logging
 

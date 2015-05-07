@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Pervasive, widely-used constants."""
+
 import six
 
 # TODO(IBM): is anything else not cacheable?

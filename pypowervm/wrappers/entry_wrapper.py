@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Base classes for all wrapper classes in the pypowervm.wrappers package."""
+
 import abc
 import logging
 import urllib

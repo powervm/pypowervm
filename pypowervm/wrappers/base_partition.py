@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
+
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 

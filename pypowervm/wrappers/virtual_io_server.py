@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Wrappers for VirtualIOServer and virtual storage mapping elements."""
+
 import abc
 import copy
 import logging

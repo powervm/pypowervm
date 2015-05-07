@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Example of an Adapter helper
+"""Example of an Adapter helper.
 
 Helpers can be associated with an Adapter or on an individual request.
 They take as their first parameter the next helper or request method to

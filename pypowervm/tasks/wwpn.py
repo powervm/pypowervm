@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
+
 import random
 
 from pypowervm import exceptions as e

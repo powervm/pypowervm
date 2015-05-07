@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Manage mappings of virtual storage devices from VIOS to LPAR."""
+
 import logging
 
 from oslo_concurrency import lockutils as lock

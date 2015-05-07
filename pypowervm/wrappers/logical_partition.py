@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""LPAR, the EntryWrapper for LogicalPartition."""
+
 import pypowervm.const as pc
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
@@ -22,10 +24,6 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 import logging
 
 LOG = logging.getLogger(__name__)
-
-T = 'true'
-F = 'false'
-
 
 _LPAR_ASSOCIATED_GROUPS = 'AssociatedGroups'
 _LPAR_ASSOCIATED_TASKS = 'AssociatedTasks'
