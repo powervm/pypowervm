@@ -830,15 +830,11 @@ class Adapter(object):
         if not m:
             raise ValueError('path=%s is not a PowerVM API reference' % path)
         headers = {}
-        # isrespatom = False
-        json_search_str = (c.UUID_REGEX + '/quick$' +
-                           '|/quick/' +
-                           '|\.json$')
+        json_search_str = (c.UUID_REGEX + '/quick$' + '|/quick/' + r'|\.json$')
         if re.search(json_search_str, util.dice_href(path, include_query=False,
                                                      include_fragment=False)):
             headers['Accept'] = 'application/json'
         else:
-            # isrespatom = True
             headers['Accept'] = 'application/atom+xml'
         if etag:
             headers['If-None-Match'] = etag
@@ -862,34 +858,57 @@ class Adapter(object):
                                    auditmemento=auditmemento,
                                    sensitive=sensitive, helpers=helpers)
 
+    def _check_cache_etag_mismatch(self, path, etag):
+        """ETag didn't match - see if we need to invalidate entry in cache.
+
+        :param path: The path (not URI) of the request that failed 304.
+        :param etag: The etag of the payload sent with the request
+        """
+        resp = self._cache.get(path)
+        if resp and etag == resp.etag:
+            # need to invalidate this in the cache
+            self._cache.remove(path)
+        # see if we need to invalidate feed in cache
+        # extract entry uuid
+        uuid = util.get_req_path_uuid(path)
+        # extract feed paths pertaining to the entry
+        feed_paths = self._cache.get_feed_paths(path)
+        for feed_path in feed_paths:
+            resp = self._build_entry_resp(feed_path, uuid)
+            if not resp or etag == resp.etag:
+                # need to invalidate this in the cache
+                self._cache.remove(feed_path)
+                LOG.debug('Invalidate feed %s for uuid %s' %
+                          (feed_path, uuid))
+
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
                        sensitive=False, helpers=None):
         """Update an existing resource where the URI path is already known."""
         path = util.dice_href(path)
         try:
-            resp = self._update_by_path(data, etag, path, timeout,
-                                        auditmemento, sensitive,
-                                        helpers=helpers)
+            m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
+            if not m:
+                raise ValueError('path=%s is not a PowerVM API reference' %
+                                 path)
+            headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
+            if m.group(1) == 'pcm':
+                headers['Content-Type'] = 'application/xml'
+            else:
+                t = path.rsplit('/', 2)[1]
+                headers['Content-Type'] = c.TYPE_TEMPLATE % (m.group(1), t)
+            if etag:
+                headers['If-Match'] = etag
+            if hasattr(data, 'toxmlstring'):
+                body = data.toxmlstring()
+            else:
+                body = data
+            resp = self._request(
+                'POST', path, helpers=helpers, headers=headers, body=body,
+                timeout=timeout, auditmemento=auditmemento,
+                sensitive=sensitive)
         except pvmex.HttpError as e:
             if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
-                # ETag didn't match
-                # see if we need to invalidate entry in cache
-                resp = self._cache.get(path)
-                if resp and etag == resp.etag:
-                    # need to invalidate this in the cache
-                    self._cache.remove(path)
-                # see if we need to invalidate feed in cache
-                # extract the entry uuid
-                uuid = util.get_req_path_uuid(path)
-                # extract feed paths pertaining to the entry
-                feed_paths = self._cache.get_feed_paths(path)
-                for feed_path in feed_paths:
-                    resp = self._build_entry_resp(feed_path, uuid)
-                    if not resp or etag == resp.etag:
-                        # need to invalidate this in the cache
-                        self._cache.remove(feed_path)
-                        LOG.debug('Invalidate feed %s for uuid %s' %
-                                  (feed_path, uuid))
+                self._check_cache_etag_mismatch(path, etag)
             raise
         resp_to_cache = None
         is_cacheable = self._cache and not any(p in path for p in
@@ -913,27 +932,6 @@ class Adapter(object):
             for feed_path in feed_paths:
                 self._cache.remove(feed_path)
         return resp
-
-    def _update_by_path(self, data, etag, path, timeout, auditmemento,
-                        sensitive, helpers=None):
-        m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
-        if not m:
-            raise ValueError('path=%s is not a PowerVM API reference' % path)
-        headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
-        if m.group(1) == 'pcm':
-            headers['Content-Type'] = 'application/xml'
-        else:
-            t = path.rsplit('/', 2)[1]
-            headers['Content-Type'] = c.TYPE_TEMPLATE % (m.group(1), t)
-        if etag:
-            headers['If-Match'] = etag
-        if hasattr(data, 'toxmlstring'):
-            body = data.toxmlstring()
-        else:
-            body = data
-        return self._request('POST', path, helpers=helpers, headers=headers,
-                             body=body, timeout=timeout,
-                             auditmemento=auditmemento, sensitive=sensitive)
 
     def delete(self, root_type, root_id=None, child_type=None, child_id=None,
                suffix_type=None, suffix_parm=None, service='uom', etag=None,
@@ -970,24 +968,7 @@ class Adapter(object):
                                         helpers=helpers)
         except pvmex.HttpError as e:
             if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
-                # ETag didn't match
-                # see if we need to invalidate entry in cache
-                resp = self._cache.get(path)
-                if resp and etag == resp.etag:
-                    # need to invalidate this in the cache
-                    self._cache.remove(path)
-                # see if we need to invalidate feed in cache
-                # extract entry uuid
-                uuid = util.get_req_path_uuid(path)
-                # extract feed paths pertaining to the entry
-                feed_paths = self._cache.get_feed_paths(path)
-                for feed_path in feed_paths:
-                    resp = self._build_entry_resp(feed_path, uuid)
-                    if not resp or etag == resp.etag:
-                        # need to invalidate this in the cache
-                        self._cache.remove(feed_path)
-                        LOG.debug('Invalidate feed %s for uuid %s' %
-                                  (feed_path, uuid))
+                self._check_cache_etag_mismatch(path, etag)
             raise
         if self._cache is not None:
             # get feed_paths before removing the entry (won't work after)
