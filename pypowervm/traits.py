@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Identify behavioral traits specific to a PowerVM server type/version."""
+
 
 class APITraits(object):
     """Represents capabilities inherent to the backing API server.

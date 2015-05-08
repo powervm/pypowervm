@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Module-specific error/exception subclasses."""
+
 import abc
 
 import six

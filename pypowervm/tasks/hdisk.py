@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Tasks around VIOS-backed 'physical' disks."""
+
 import itertools
 import logging
 
@@ -265,13 +267,12 @@ def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
     :param vios_uuid: The Virtual I/O Server UUID.
     """
     if adapter.traits.rmdev_job_available:
-        _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid)
+        _remove_hdisk_job(adapter, dev_name, vios_uuid)
     else:
         _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid)
 
 
-# TODO(IBM): Unused param host_name
-def _remove_hdisk_job(adapter, host_name, dev_name, vios_uuid):
+def _remove_hdisk_job(adapter, dev_name, vios_uuid):
     """Runs the PowerVM Job to remove a hdisk.
 
     :param adapter: The pypowervm adapter.

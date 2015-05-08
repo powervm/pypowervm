@@ -14,6 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""This Adapter helper retries a request when 'VIOS busy' error is detected.
+
+A 'VIOS busy' error usually means the VIOS is processing another operation
+which is mutually exclusive with the submitted request.  If this state
+persists, it may mean the VIOS is in need of manual intervention.
+"""
+
 import time
 
 import pypowervm.exceptions as pvmex

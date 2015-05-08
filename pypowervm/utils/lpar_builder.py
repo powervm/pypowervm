@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Construction and basic validation of an LPAR or VIOS EntryWrapper."""
+
 import abc
 import logging
 

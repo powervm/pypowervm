@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Low-level communication with the PowerVM REST API."""
+
 import abc
 import copy
 import datetime as dt

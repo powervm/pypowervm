@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""SharedProcPool, the EntryWrapper for SharedProcessorPool."""
+
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 import logging

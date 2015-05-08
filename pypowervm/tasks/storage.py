@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Create, remove, map, unmap, and populate virtual storage objects."""
+
 import logging
 import math
 import shutil

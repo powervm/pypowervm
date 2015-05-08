@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""EntryWrapper for File ('web' namespace)."""
+
 import pypowervm.const as pc
 import pypowervm.wrappers.entry_wrapper as ewrap
 

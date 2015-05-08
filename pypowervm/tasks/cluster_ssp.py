@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Tasks around Cluster/SharedStoragePool."""
+
 import logging
 
 import pypowervm.const as c

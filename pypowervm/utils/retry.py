@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Utility decorator to retry the decorated method."""
+
 import functools
 
 from six import moves
@@ -31,7 +33,7 @@ NO_DELAY = lambda *args, **kwds: None
 def retry(tries=3, delay_func=NO_DELAY,
           retry_except=None, http_codes=DFT_RETRY_CODES, test_func=None,
           resp_checker=NO_CHECKER, limit_except=None):
-    '''Retry method decorator
+    """Retry method decorator.
 
     :param tries: The max number of calls to the wrapped method.
     :param delay_func: A method to delay before retrying.
@@ -70,8 +72,7 @@ def retry(tries=3, delay_func=NO_DELAY,
     :param limit_except: An exception to raise if the number of tries is
         exhausted.
     :returns: The return value of the wrapped method.
-
-    '''
+    """
     def _retry(func):
         @functools.wraps(func)
         def __retry(*args, **kwds):
