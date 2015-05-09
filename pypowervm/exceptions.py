@@ -593,3 +593,10 @@ class UnableToFindFCPortMap(AbstractMsgFmtError):
                 "Channel port to.  This is due to either a Virtual I/O "
                 "Server being unavailable, or improper port specification "
                 "for the physical Fibre Channel ports.")
+
+
+class ConsoleNotLocal(AbstractMsgFmtError):
+    msg_fmt = _("Unable to start the console to the Virtual Machine.  The "
+                "pypowervm API is running in a non-local mode.  The console "
+                "can only be deployed when pypowervm is co-located with "
+                "the PowerVM API.")
