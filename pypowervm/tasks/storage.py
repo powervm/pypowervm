@@ -18,7 +18,7 @@
 
 import logging
 import math
-import shutil
+import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
@@ -233,7 +233,14 @@ def _upload_stream(vio_file, d_stream):
                 out_stream = open(vio_file.asset_file, 'a+b', 0)
 
                 def copy_func(in_stream, out_stream):
-                    shutil.copyfileobj(in_stream, out_stream)
+                    while True:
+                        chunk = d_stream.read(65536)
+                        if not chunk:
+                            break
+                        out_stream.write(chunk)
+
+                        # Yield to other threads
+                        time.sleep(0)
 
                     # The close indicates to the other side we are done.  Will
                     # force the upload_file to return.
