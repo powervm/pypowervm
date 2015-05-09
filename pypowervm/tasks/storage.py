@@ -18,7 +18,7 @@
 
 import logging
 import math
-import shutil
+import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
@@ -232,8 +232,18 @@ def _upload_stream(vio_file, d_stream):
                 # Create a function that streams to the FIFO pipe
                 out_stream = open(vio_file.asset_file, 'a+b', 0)
 
+                def chunkreader():
+                    while True:
+                        d = d_stream.read(65536)
+                        if not d:
+                            break
+                        yield d
+
                 def copy_func(in_stream, out_stream):
-                    shutil.copyfileobj(in_stream, out_stream)
+                    for chunk in chunkreader():
+                        out_stream.write(chunk)
+                        # Yield to other threads
+                        time.sleep(0)
 
                     # The close indicates to the other side we are done.  Will
                     # force the upload_file to return.
