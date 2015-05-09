@@ -84,7 +84,9 @@ def _close_vterm_local(adapter, lpar_uuid):
     # Find the VNC processes (if any) and remove them.
     vnc_processes = _has_vnc_running(tty, port)
     for vnc_process in vnc_processes:
-        vnc_process.kill()
+        # TODO(thorst) enable once sudo is no longer required
+        # vnc_process.kill()
+        pass
 
     # Lastly, always can run the rmvterm
     # TODO(thorst) remove sudo when rmvtermutil no longer requires it.
