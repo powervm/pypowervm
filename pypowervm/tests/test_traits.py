@@ -49,6 +49,7 @@ class TestTraits(unittest.TestCase):
         self.assertFalse(t.has_lpar_profiles)
         self.assertTrue(t.dynamic_pvid)
         self.assertTrue(t.rmdev_job_available)
+        self.assertTrue(t.has_mgmt_partition)
 
         # PVM MC, remote auth
         mock_sess.mc_type = 'PVM'
@@ -60,6 +61,7 @@ class TestTraits(unittest.TestCase):
         self.assertFalse(t.has_lpar_profiles)
         self.assertTrue(t.dynamic_pvid)
         self.assertTrue(t.rmdev_job_available)
+        self.assertTrue(t.has_mgmt_partition)
 
         # HMC, remote auth
         mock_sess.mc_type = 'HMC'
@@ -71,6 +73,7 @@ class TestTraits(unittest.TestCase):
         self.assertTrue(t.has_lpar_profiles)
         self.assertFalse(t.dynamic_pvid)
         self.assertFalse(t.rmdev_job_available)
+        self.assertFalse(t.has_mgmt_partition)
 
     @mock.patch('requests.Session.request')
     def test_traits_into_wrappers(self, mock_request):

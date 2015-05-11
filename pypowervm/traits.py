@@ -86,3 +86,8 @@ class APITraits(object):
     def rmdev_job_available(self):
         """Indicates whether or not the Job API supports RMDev."""
         return not self._is_hmc
+
+    @property
+    def has_mgmt_partition(self):
+        """True if the REST server supports a management partition."""
+        return not self._is_hmc
