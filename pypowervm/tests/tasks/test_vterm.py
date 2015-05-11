@@ -125,6 +125,25 @@ class TestVterm(testtools.TestCase):
         # self.assertEqual(1, proc.kill.call_count)
         mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
 
+    def close_vt_local_no_tty_test(self, func, mock_check_tty, mock_run_proc,
+                                   mock_vnc_running, mock_get_lpar_id):
+        # Mock
+        mock_get_lpar_id.return_value = '5'
+        mock_check_tty.return_value = None
+
+        proc = mock.MagicMock()
+        mock_vnc_running.return_value = [proc]
+
+        # Execute
+        func(self.adpt, "lpar_uuid")
+
+        # Validate
+        mock_check_tty.assert_called_with('5')
+        self.assertEqual(0, mock_vnc_running.call_count)
+        # TODO(thorst) re-enable once sudo requirement is removed.
+        # self.assertEqual(0, proc.kill.call_count)
+        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+
     @mock.patch('psutil.process_iter')
     def test_check_for_tty(self, mock_proc_iter):
         # Mock
