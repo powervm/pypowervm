@@ -79,12 +79,13 @@ def _close_vterm_local(adapter, lpar_uuid):
 
     # Input data for the commands.
     tty = _check_for_tty(lpar_id)
-    port = 5900 + int(tty)
+    if tty:
+        port = 5900 + int(tty)
 
-    # Find the VNC processes (if any) and remove them.
-    vnc_processes = _has_vnc_running(tty, port)
-    for vnc_process in vnc_processes:
-        _kill_proc(vnc_process)
+        # Find the VNC processes (if any) and remove them.
+        vnc_processes = _has_vnc_running(tty, port)
+        for vnc_process in vnc_processes:
+            _kill_proc(vnc_process)
 
     # Lastly, always can run the rmvterm
     # TODO(thorst) remove sudo when rmvtermutil no longer requires it.
