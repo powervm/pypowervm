@@ -78,6 +78,25 @@ class TestHDisk(unittest.TestCase):
 
         self.assertEqual(LUA_XML, hdisk._lua_recovery_xml(all_itls, None))
 
+    def test_process_lua_result_no_resp(self):
+        result = {}
+        status, dev_name, udid = hdisk._process_lua_result(result)
+        self.assertIsNone(status)
+        self.assertIsNone(dev_name)
+        self.assertIsNone(udid)
+
+    def test_process_lua_result(self):
+        stdOut = ('<luaResult><version>2.0</version><deviceList><device>'
+                  '<deviceTag>21</deviceTag><status>8</status><msg><msgLen>9'
+                  '</msgLen><msgText>test text</msgText></msg><pvName>hdisk10'
+                  '</pvName><uniqueID>fake_uid</uniqueID><udid>fake_udid'
+                  '</udid></device></deviceList></luaResult>')
+        result = {'StdOut': stdOut}
+        status, dev_name, udid = hdisk._process_lua_result(result)
+        self.assertEqual('8', status)
+        self.assertEqual('hdisk10', dev_name)
+        self.assertEqual('fake_udid', udid)
+
     @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):
         """This tests the branches of validate_lua_status."""
