@@ -20,30 +20,63 @@ import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 # Base Partition (_BP)
+_BP_ALLOW_PERF_DATA_COLL = 'AllowPerformanceDataCollection'
+_BP_ASSOC_PROF = 'AssociatedPartitionProfile'
 _BP_AVAIL_PRIORITY = 'AvailabilityPriority'
+_BP_CURR_BSR_ARRAYS = 'CurrentAllocatedBarrierSynchronizationRegisterArrays'
 _BP_CURRENT_PROC_MODE = 'CurrentProcessorCompatibilityMode'
 _BP_PROFILE_SYNC = 'CurrentProfileSync'
+_BP_HOSTNAME = 'Hostname'
+_BP_CALL_HOME = 'IsCallHomeEnabled'
+_BP_CONN_MONITORING = 'IsConnectionMonitoringEnabled'
+_BP_OP_IN_PROGRESS = 'IsOperationInProgress'
+_BP_REDUNDANT_ERR_PATH_REP = 'IsRedundantErrorPathReportingEnabled'
+_BP_TIME_REF = 'IsTimeReferencePartition'
+_BP_ATTN_LED = 'IsVirtualServiceAttentionLEDOn'
+_BP_TRUSTED_PLATFORM = 'IsVirtualTrustedPlatformModuleEnabled'
+_BP_KEYLOCK_POS = 'KeylockPosition'
+_BP_LOGICAL_SERIAL_NUM = 'LogicalSerialNumber'
+_BP_OS_VER = 'OperatingSystemVersion'
 _BP_CAPABILITIES = 'PartitionCapabilities'
 _BP_ID = 'PartitionID'
 _BP_IO_CFG = 'PartitionIOConfiguration'
 _BP_MEM_CFG = 'PartitionMemoryConfiguration'
 _BP_NAME = 'PartitionName'
 _BP_PROC_CFG = 'PartitionProcessorConfiguration'
+_BP_PROFS = 'PartitionProfiles'
 _BP_STATE = 'PartitionState'
 _BP_TYPE = 'PartitionType'
+_BP_UUID = 'PartitionUUID'
 _BP_PENDING_PROC_MODE = 'PendingProcessorCompatibilityMode'
+_BP_PROC_POOL = 'ProcessorPool'
+_BP_PROG_DATA_REMAIN = 'ProgressPartitionDataRemaining'
+_BP_PROG_DATA_TOTAL = 'ProgressPartitionDataTotal'
+_BP_PROG_STATE = 'ProgressState'
 _BP_RMC_STATE = 'ResourceMonitoringControlState'
+_BP_RMC_IP = 'ResourceMonitoringIPAddress'
+_BP_VAL_INT_PERF = 'ValidInteractivePerformance'
 _BP_ASSOCIATED_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
+_BP_MAC_PREF = 'MACAddressPrefix'
+_BP_SVC_PARTITION = 'IsServicePartition'
+_BP_REF_CODE = 'ReferenceCode'
+_BP_MGT_PARTITION = 'IsManagementPartition'
 
 BP_EL_ORDER = (
-    _BP_AVAIL_PRIORITY, _BP_CURRENT_PROC_MODE, _BP_PROFILE_SYNC,
+    _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
+    _BP_CURR_BSR_ARRAYS, _BP_CURRENT_PROC_MODE, _BP_PROFILE_SYNC, _BP_HOSTNAME,
+    _BP_CALL_HOME, _BP_CONN_MONITORING, _BP_OP_IN_PROGRESS,
+    _BP_REDUNDANT_ERR_PATH_REP, _BP_TIME_REF, _BP_ATTN_LED,
+    _BP_TRUSTED_PLATFORM, _BP_KEYLOCK_POS, _BP_LOGICAL_SERIAL_NUM, _BP_OS_VER,
     _BP_CAPABILITIES, _BP_ID, _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG,
-    _BP_STATE, _BP_TYPE, _BP_PENDING_PROC_MODE, _BP_ASSOCIATED_SYSTEM,
-    _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH
+    _BP_PROFS, _BP_STATE, _BP_TYPE, _BP_UUID, _BP_PENDING_PROC_MODE,
+    _BP_PROC_POOL, _BP_PROG_DATA_REMAIN, _BP_PROG_DATA_TOTAL, _BP_PROG_STATE,
+    _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOCIATED_SYSTEM,
+    _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
+    _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION
 )
 
 # Partition Capabilities (_CAP)
@@ -330,6 +363,11 @@ class BasePartition(ewrap.EntryWrapper):
         dlpar = self.capabilities.mem_dlpar and self.capabilities.proc_dlpar
 
         return dlpar, self.rmc_state
+
+    @property
+    def is_mgmt_partition(self):
+        """Is this the management partition?  Default False if field absent."""
+        return self._get_val_bool(_BP_MGT_PARTITION)
 
     @property
     def capabilities(self):

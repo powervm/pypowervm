@@ -16,6 +16,9 @@
 
 import unittest
 
+import testtools
+
+import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.base_partition as bp
@@ -30,7 +33,7 @@ EXPECTED_OPERATING_SYSTEM_VER = 'Linux/Red Hat 2.6.32-358.el6.ppc64 6.4'
 EXPECTED_ASSOC_SYSTEM_UUID = 'a168a3ec-bb3e-3ead-86c1-7d98b9d50239'
 
 
-class TestLogicalPartition(unittest.TestCase):
+class TestLogicalPartition(testtools.TestCase):
 
     _skip_setup = False
     _shared_wrapper = None
@@ -41,9 +44,14 @@ class TestLogicalPartition(unittest.TestCase):
 
     def setUp(self):
         super(TestLogicalPartition, self).setUp()
+
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.LocalPVMTraits))
+        self.adpt = self.adptfx.adpt
+
         self.TC = TestLogicalPartition
 
-        lpar_http = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE)
+        lpar_http = pvmhttp.load_pvm_resp(LPAR_HTTPRESP_FILE,
+                                          adapter=self.adpt)
         self.assertIsNotNone(lpar_http,
                              "Could not load %s " %
                              LPAR_HTTPRESP_FILE)
@@ -72,7 +80,7 @@ class TestLogicalPartition(unittest.TestCase):
         TestLogicalPartition._dedicated_wrapper = lpar.LPAR.wrap(
             self.TC._dedicated_entry)
 
-        mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE)
+        mc_http = pvmhttp.load_pvm_resp(MC_HTTPRESP_FILE, adapter=self.adpt)
         self.assertIsNotNone(mc_http,
                              "Could not load %s" %
                              MC_HTTPRESP_FILE)
@@ -202,6 +210,9 @@ class TestLogicalPartition(unittest.TestCase):
     def test_associated_managed_system_uuid(self):
         self.call_simple_getter("assoc_sys_uuid", EXPECTED_ASSOC_SYSTEM_UUID,
                                 None)
+
+    def test_is_mgmt_partition(self):
+        self.call_simple_getter("is_mgmt_partition", True, False)
 
     def test_subwrapper_getters(self):
         wrap = self._shared_wrapper
