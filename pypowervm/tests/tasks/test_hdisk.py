@@ -140,6 +140,30 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
 
+    @mock.patch('pypowervm.tasks.hdisk._lua_recovery_xml')
+    @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
+    @mock.patch('pypowervm.wrappers.job.Job')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_discover_hdisk_dupe_itls(self, mock_adapter, mock_job,
+                                      mock_lua_result, mock_lua_xml):
+        itls = [hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238),
+                hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
+
+        mock_lua_result.return_value = ('OK', 'hdisk1', 'udid')
+
+        status, devname, udid = hdisk.discover_hdisk(mock_adapter,
+                                                     'vios_uuid', itls)
+
+        # Validate value unpack
+        self.assertEqual('OK', status)
+        self.assertEqual('hdisk1', devname)
+        self.assertEqual('udid', udid)
+
+        # Validate method invocations
+        self.assertEqual(1, mock_adapter.read.call_count)
+        self.assertEqual(1, mock_lua_result.call_count)
+        mock_lua_xml.assert_called_with({itls[0]}, mock_adapter, vendor='IBM')
+
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.adapter.Adapter')
