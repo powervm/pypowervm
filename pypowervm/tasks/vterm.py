@@ -90,21 +90,19 @@ def _close_vterm_local(adapter, lpar_uuid):
             _kill_proc(vnc_process)
 
     # Lastly, always can run the rmvterm
-    # TODO(thorst) remove sudo when rmvtermutil no longer requires it.
-    cmd = ['sudo', 'rmvtermutil', '--id', lpar_id]
+    cmd = ['rmvterm', '--id', lpar_id]
     _run_proc(cmd)
 
 
 def _kill_proc(process):
     """Kills a process."""
-    # TODO(thorst) remove when sudo is no longer needed.  Revert to
-    # process.kill
-    cmd = ['sudo', 'kill', str(process.pid)]
-    # The wait is so that we don't get the error if we kill the sudo process
-    # first.  If we wait, then the children process kills will throw an error
-    # because they were killed with the parent...so it errors trying to kill
-    # something that isn't there.  This is temporary until the sudo is removed.
-    _run_proc(cmd, wait=False)
+    try:
+        process.kill()
+    except Exception:
+        # The process may have been a child of one already killed.  Therefore
+        # it may already be gone by the time we reach this code.  This is
+        # why we do not throw an error.
+        pass
 
 
 def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
@@ -129,16 +127,14 @@ def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
     if not tty:
         # While the TTY may not be open, we should just close it just in
         # case an improperly closed LPAR was hanging around.
-        # TODO(thorst) remove sudo when rmvtermutil is updated.
-        cmd = ['sudo', 'rmvtermutil', '--id', lpar_id]
+        cmd = ['rmvterm', '--id', lpar_id]
         _run_proc(cmd)
 
         # Open a new terminal via the TTY.  This is done with the openvt
         # command.  The response is:
         #     openvt: Using VT /dev/ttyXXX
         # We need to parse out the tty.  It goes to stderr.
-        # TODO(thorst) sudo to be removed when mkvtermutil is updated
-        cmd = ['sudo', 'openvt', '-v', '--', 'mkvtermutil', '--id', lpar_id]
+        cmd = ['openvt', '-v', '--', 'mkvterm', '--id', lpar_id]
         stdout, stderr = _run_proc(cmd)
         tty = stderr[stderr.rfind('tty') + 3:]
 
@@ -153,9 +149,8 @@ def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
     # Do a simple check to see if the VNC appears to already be running.
     if not _has_vnc_running(tty, port, listen_ip=bind_ip):
         # Kick off a VNC if it is not already running.
-        # TODO(thorst) sudo to be removed when mkvtermutil is updated
-        cmd = ['sudo', '-S', 'linuxvnc', tty, '-rfbport', str(port),
-               '-listen', bind_ip]
+        cmd = ['-S', 'linuxvnc', tty, '-rfbport', str(port), '-listen',
+               bind_ip]
         _run_proc(cmd, wait=False)
     return port
 
@@ -163,8 +158,7 @@ def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
 def _clear_tty(tty):
     # Example clear screen command (from command line):
     #   sh -c "echo 'printf \033c' > /dev/tty2"
-    # TODO(thorst) remove the sudo
-    cmd = ['sudo', 'sh', '-c', 'echo \'printf \\033c\' > /dev/tty%s' % tty]
+    cmd = ['sh', '-c', 'echo \'printf \\033c\' > /dev/tty%s' % tty]
     _run_proc(cmd, shell=True)
 
 
@@ -174,9 +168,9 @@ def _check_for_tty(lpar_id):
     :param lpar_id: The ID of the LPAR to query for the TTY.
     """
     # The process typically shows as:
-    #    /bin/bash /sbin/mkvtermutil --id X
+    #    /bin/bash /sbin/mkvterm --id X
     # There are some variations, so we key off the base name.
-    search_str = 'mkvtermutil --id ' + str(lpar_id)
+    search_str = 'mkvterm --id ' + str(lpar_id)
     for process in psutil.process_iter():
         cmd = ' '.join(process.cmdline)
         if search_str not in cmd:

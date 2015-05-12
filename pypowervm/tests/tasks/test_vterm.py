@@ -131,9 +131,8 @@ class TestVterm(testtools.TestCase):
         # Validate
         mock_check_tty.assert_called_with('5')
         mock_vnc_running.assert_called_with('2', 5902)
-        # TODO(thorst) re-enable once sudo requirement is removed.
-        # self.assertEqual(1, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+        self.assertEqual(1, proc.kill.call_count)
+        mock_run_proc.assert_called_with(['rmvterm', '--id', '5'])
         mock_clear_tty.assert_called_with('2')
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
@@ -157,14 +156,14 @@ class TestVterm(testtools.TestCase):
         self.assertEqual(0, mock_vnc_running.call_count)
         # TODO(thorst) re-enable once sudo requirement is removed.
         # self.assertEqual(0, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+        mock_run_proc.assert_called_with(['rmvterm', '--id', '5'])
 
     @mock.patch('psutil.process_iter')
     def test_check_for_tty(self, mock_proc_iter):
         # Mock
         bad_proc = self.proc(['notmvt', '--id', '5'], terminal='/proc/tty5')
-        bad_proc2 = self.proc(['/sbin/mkvtermutil', '--id', '5'])
-        good_proc = self.proc(['/sbin/mkvtermutil', '--id', '5'],
+        bad_proc2 = self.proc(['/sbin/mkvterm', '--id', '5'])
+        good_proc = self.proc(['/sbin/mkvterm', '--id', '5'],
                               terminal='/proc/tty6')
         mock_proc_iter.return_value = [bad_proc, bad_proc2, good_proc]
 
