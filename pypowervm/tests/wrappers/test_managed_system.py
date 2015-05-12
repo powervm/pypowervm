@@ -162,15 +162,6 @@ class TestMSEntryWrapper(unittest.TestCase):
              '35cd-a71a-ed55c03f294d/VirtualIOServer/32F3530F-ECA0-4EAA-A37E-'
              '4B792C21AF70',), ())
 
-    def test_find_entry_by_mtm_serial(self):
-        value = ms.find_entry_by_mtms(self.ms_http.get_response(),
-                                      "8203-E4A*ACE0001")
-        self.assertIsNotNone(value)
-
-        value = ms.find_entry_by_mtms(self.ms_http.get_response(),
-                                      "8203-E4A*ACE0011")
-        self.assertIsNone(value)
-
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
