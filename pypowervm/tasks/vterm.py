@@ -80,9 +80,11 @@ def _close_vterm_local(adapter, lpar_uuid):
     # Input data for the commands.
     tty = _check_for_tty(lpar_id)
     if tty:
-        port = 5900 + int(tty)
+        # Clear out the TTY upon lpar deletion.
+        _clear_tty(tty)
 
         # Find the VNC processes (if any) and remove them.
+        port = 5900 + int(tty)
         vnc_processes = _has_vnc_running(tty, port)
         for vnc_process in vnc_processes:
             _kill_proc(vnc_process)
@@ -144,6 +146,10 @@ def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
     # overlap.
     port = 5900 + int(tty)
 
+    # When this is invoked, we always clear out the TTY screen.  This is
+    # for security reasons (old LPAR or what not).
+    _clear_tty(tty)
+
     # Do a simple check to see if the VNC appears to already be running.
     if not _has_vnc_running(tty, port, listen_ip=bind_ip):
         # Kick off a VNC if it is not already running.
@@ -152,6 +158,14 @@ def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):
                '-listen', bind_ip]
         _run_proc(cmd, wait=False)
     return port
+
+
+def _clear_tty(tty):
+    # Example clear screen command (from command line):
+    #   sh -c "echo 'printf \033c' > /dev/tty2"
+    # TODO(thorst) remove the sudo
+    cmd = ['sudo', 'sh', '-c', 'echo \'printf \\033c\' > /dev/tty%s' % tty]
+    _run_proc(cmd, shell=True)
 
 
 def _check_for_tty(lpar_id):
