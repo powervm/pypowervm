@@ -79,17 +79,30 @@ def _close_vterm_local(adapter, lpar_uuid):
 
     # Input data for the commands.
     tty = _check_for_tty(lpar_id)
-    port = 5900 + int(tty)
+    if tty:
+        port = 5900 + int(tty)
 
-    # Find the VNC processes (if any) and remove them.
-    vnc_processes = _has_vnc_running(tty, port)
-    for vnc_process in vnc_processes:
-        vnc_process.kill()
+        # Find the VNC processes (if any) and remove them.
+        vnc_processes = _has_vnc_running(tty, port)
+        for vnc_process in vnc_processes:
+            _kill_proc(vnc_process)
 
     # Lastly, always can run the rmvterm
     # TODO(thorst) remove sudo when rmvtermutil no longer requires it.
     cmd = ['sudo', 'rmvtermutil', '--id', lpar_id]
     _run_proc(cmd)
+
+
+def _kill_proc(process):
+    """Kills a process."""
+    # TODO(thorst) remove when sudo is no longer needed.  Revert to
+    # process.kill
+    cmd = ['sudo', 'kill', str(process.pid)]
+    # The wait is so that we don't get the error if we kill the sudo process
+    # first.  If we wait, then the children process kills will throw an error
+    # because they were killed with the parent...so it errors trying to kill
+    # something that isn't there.  This is temporary until the sudo is removed.
+    _run_proc(cmd, wait=False)
 
 
 def open_vnc_vterm(adapter, lpar_uuid, bind_ip='127.0.0.1'):

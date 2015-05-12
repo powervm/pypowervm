@@ -18,7 +18,8 @@
 
 import logging
 import math
-import shutil
+import threading
+import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
@@ -39,6 +40,9 @@ LOG = logging.getLogger(__name__)
 
 _LOCK_SSP = 'ssp_op_lock'
 _LOCK_VOL_GRP = 'vol_grp_lock'
+
+# Concurrent uploads
+_UPLOAD_SEM = threading.Semaphore(3)
 
 
 def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
@@ -210,6 +214,9 @@ def _upload_stream(vio_file, d_stream):
              used to retry the cleanup.
     """
     try:
+        # Acquire the upload semaphore
+        _UPLOAD_SEM.acquire()
+
         if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
@@ -233,7 +240,14 @@ def _upload_stream(vio_file, d_stream):
                 out_stream = open(vio_file.asset_file, 'a+b', 0)
 
                 def copy_func(in_stream, out_stream):
-                    shutil.copyfileobj(in_stream, out_stream)
+                    while True:
+                        chunk = d_stream.read(65536)
+                        if not chunk:
+                            break
+                        out_stream.write(chunk)
+
+                        # Yield to other threads
+                        time.sleep(0)
 
                     # The close indicates to the other side we are done.  Will
                     # force the upload_file to return.
@@ -254,6 +268,9 @@ def _upload_stream(vio_file, d_stream):
             # Upload the file directly to the REST API server.
             vio_file.adapter.upload_file(vio_file.element, d_stream)
     finally:
+        # Must release the semaphore
+        _UPLOAD_SEM.release()
+
         try:
             # Cleanup after the upload
             vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,

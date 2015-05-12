@@ -255,6 +255,30 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(200, ret_update_value.status)
         self.assertEqual(reqpath, ret_update_value.reqpath)
 
+    @mock.patch('requests.Session')
+    def test_upload(self, mock_session):
+        # Build the adapter
+        adapter = adp.Adapter(self.sess, use_cache=False)
+
+        # Mock data
+        filedesc_mock = mock.MagicMock()
+        filedesc_mock.findtext.side_effect = ['uuid', 'mime']
+
+        mock_request = mock.MagicMock()
+        adapter._request = mock_request
+
+        # Invoke
+        adapter.upload_file(filedesc_mock, None)
+
+        # Validate
+        expected_headers = {'Accept': 'application/vnd.ibm.powervm.web+xml',
+                            'Content-Type': 'mime'}
+        expected_path = '/rest/api/web/File/contents/uuid'
+        mock_request.assert_called_with('PUT', expected_path, helpers=None,
+                                        headers=expected_headers,
+                                        timeout=-1, auditmemento=None,
+                                        filehandle=None, chunksize=65536)
+
     def _assert_paths_equivalent(self, exp, act):
         """Ensures two paths or hrefs are "the same".
 

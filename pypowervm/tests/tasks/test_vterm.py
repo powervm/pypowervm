@@ -121,7 +121,31 @@ class TestVterm(testtools.TestCase):
         # Validate
         mock_check_tty.assert_called_with('5')
         mock_vnc_running.assert_called_with('2', 5902)
-        self.assertEqual(1, proc.kill.call_count)
+        # TODO(thorst) re-enable once sudo requirement is removed.
+        # self.assertEqual(1, proc.kill.call_count)
+        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
+    def test_close_vt_local_no_tty(self, mock_check_tty, mock_run_proc,
+                                   mock_vnc_running, mock_get_lpar_id):
+        # Mock
+        mock_get_lpar_id.return_value = '5'
+        mock_check_tty.return_value = None
+
+        proc = mock.MagicMock()
+        mock_vnc_running.return_value = [proc]
+
+        # Execute
+        vterm.close_vterm(self.adpt, "lpar_uuid")
+
+        # Validate
+        mock_check_tty.assert_called_with('5')
+        self.assertEqual(0, mock_vnc_running.call_count)
+        # TODO(thorst) re-enable once sudo requirement is removed.
+        # self.assertEqual(0, proc.kill.call_count)
         mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
 
     @mock.patch('psutil.process_iter')

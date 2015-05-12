@@ -214,7 +214,7 @@ def _process_lua_result(result):
     :return udid: The UDID of the device.
     """
 
-    if result is not None:
+    if result is not None and result.get('StdOut') is not None:
         root = etree.fromstring(result['StdOut'])
         for child in root:
             if child.tag == "deviceList":
