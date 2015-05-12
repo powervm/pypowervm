@@ -91,6 +91,9 @@ class ITL(object):
                 self.target == other.target and
                 self.lun == other.lun)
 
+    def __hash__(self):
+        return hash(self.initiator) ^ hash(self.target) ^ hash(self.lun)
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -131,6 +134,8 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
     :return dev_name: The name of the discovered hdisk.
     :return udid: The UDID of the device.
     """
+    # Reduce the ITLs to ensure no duplicates
+    itls = set(itls)
 
     # Build the LUA recovery XML
     lua_xml = _lua_recovery_xml(itls, adapter, vendor=vendor)
