@@ -127,6 +127,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNone(f_wrap)
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
+        self.assertEqual(3, ts._UPLOAD_SEM._Semaphore__value)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_coordinated(self, mock_create_file):
@@ -161,6 +162,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNone(f_wrap)
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
+        self.assertEqual(3, ts._UPLOAD_SEM._Semaphore__value)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
@@ -186,6 +188,7 @@ class TestUploadLV(testtools.TestCase):
             'File', service='web',
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNotNone(f_wrap)
+        self.assertEqual(3, ts._UPLOAD_SEM._Semaphore__value)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_lu(self, mock_create_file):
