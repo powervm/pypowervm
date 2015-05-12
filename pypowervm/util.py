@@ -364,6 +364,25 @@ def sanitize_wwpn_for_api(wwpn):
     return wwpn.upper().replace(':', '')
 
 
+def sanitize_file_name_for_api(name, prefix='', suffix=''):
+    """Generate a sanitized file name based on PowerVM's FileName.Pattern."""
+    def _scrub(in_name):
+        """Returns in_name with illegal characters replaced with '_'."""
+        return re.sub(r'[^.0-9A-Z_a-z]', '_', in_name)
+
+    max_len = 79
+    name, prefix, suffix = (_scrub(val) for val in (name, prefix, suffix))
+    base_len = max_len - len(prefix) - len(suffix)
+    if base_len <= 0:
+        raise ValueError(_("Prefix and suffix together may not be more than "
+                           "%d characters."), max_len - 1)
+    name = name[:base_len]
+    ret = prefix + name + suffix
+    if not len(ret):
+        raise ValueError(_("Total length must be at least 1 character."))
+    return ret
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 

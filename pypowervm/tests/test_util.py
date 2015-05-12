@@ -240,6 +240,36 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(basepath + ext + qp + frag,
                          util.extend_basepath(basepath + qp + frag, ext))
 
+    def test_sanitize_file_name_for_api(self):
+        allc = ''.join(map(chr, range(256)))
+        self.assertEqual('foo', util.sanitize_file_name_for_api('foo'))
+        self.assertEqual(
+            'config_foo.iso', util.sanitize_file_name_for_api(
+                'foo', prefix='config_', suffix='.iso'))
+        self.assertEqual(
+            '______________________________________________._0123456789_______'
+            'ABCDEFGHIJKLMN',
+            util.sanitize_file_name_for_api(allc))
+        self.assertEqual(
+            'OPQRSTUVWXYZ______abcdefghijklmnopqrstuvwxyz_____________________'
+            '______________',
+            util.sanitize_file_name_for_api(allc[79:])
+        )
+        self.assertEqual(
+            '_________________________________________________________________'
+            '______________',
+            util.sanitize_file_name_for_api(allc[158:])
+        )
+        self.assertEqual('___________________',
+                         util.sanitize_file_name_for_api(allc[237:]))
+        self.assertEqual(
+            (dummyuuid1 + dummyuuid2[:7] + dummyuuid1).replace('-', '_'),
+            util.sanitize_file_name_for_api(
+                dummyuuid2, prefix=dummyuuid1, suffix=dummyuuid1))
+        self.assertRaises(ValueError, util.sanitize_file_name_for_api, allc,
+                          prefix=allc, suffix=allc)
+        self.assertRaises(ValueError, util.sanitize_file_name_for_api, '')
+
     # Tests for check_and_apply_xag covered by
     # test_adapter.TestAdapter.test_extended_path
 
