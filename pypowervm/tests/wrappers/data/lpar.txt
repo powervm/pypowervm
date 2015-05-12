@@ -166,6 +166,7 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable kb="COD" kxe="false">true</SimplifiedRemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
