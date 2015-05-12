@@ -131,9 +131,8 @@ class TestVterm(testtools.TestCase):
         # Validate
         mock_check_tty.assert_called_with('5')
         mock_vnc_running.assert_called_with('2', 5902)
-        # TODO(thorst) re-enable once sudo requirement is removed.
-        # self.assertEqual(1, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+        self.assertEqual(1, proc.kill.call_count)
+        mock_run_proc.assert_called_with(['rmvtermutil', '--id', '5'])
         mock_clear_tty.assert_called_with('2')
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
@@ -157,7 +156,7 @@ class TestVterm(testtools.TestCase):
         self.assertEqual(0, mock_vnc_running.call_count)
         # TODO(thorst) re-enable once sudo requirement is removed.
         # self.assertEqual(0, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
+        mock_run_proc.assert_called_with(['rmvtermutil', '--id', '5'])
 
     @mock.patch('psutil.process_iter')
     def test_check_for_tty(self, mock_proc_iter):
