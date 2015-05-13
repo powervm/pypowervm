@@ -229,27 +229,15 @@ def _process_lua_result(result):
     # The response is an XML block.  Put into an XML structure and get
     # the data out of it.
     root = etree.fromstring(xml_resp)
-    for child in root:
-        if child.tag == "deviceList":
-            for gchild in child:
-                status = None
-                dev_name = None
-                udid = None
-                message = None
-                for ggchild in gchild:
-                    if ggchild.tag == "status":
-                        status = ggchild.text
-                    elif ggchild.tag == "pvName":
-                        dev_name = ggchild.text
-                    elif ggchild.tag == "udid":
-                        udid = ggchild.text
-                    elif ggchild.tag == "msg":
-                        for mchild in ggchild:
-                            if mchild.tag == "msgText":
-                                message = mchild.text
-                _validate_lua_status(status, dev_name, udid, message)
-                return status, dev_name, udid
-    return None, None, None
+    base = 'deviceList/*/'
+    estatus, edev_name, eudid, emessage = (
+        root.find(base + x)
+        for x in ('status', 'pvName', 'udid', 'msg/msgText'))
+    status, dev_name, udid, message = (
+        y.text if y is not None else None
+        for y in (estatus, edev_name, eudid, emessage))
+    _validate_lua_status(status, dev_name, udid, message)
+    return status, dev_name, udid
 
 
 def _validate_lua_status(status, dev_name, udid, message):
