@@ -33,7 +33,7 @@ _CL_PV = stor.PHYS_VOL
 _CL_SSP_LINK = 'ClusterSharedStoragePool'
 _CL_NODES = 'Node'  # Yes, really
 _CL_NODE = 'Node'
-
+_CL_EL_ORDER = (_CL_NAME, _CL_ID, _CL_REPOPVS, _CL_SSP_LINK, _CL_NODE)
 # Node Constants
 _N_HOSTNAME = 'HostName'
 _N_LPARID = 'PartitionID'
@@ -46,7 +46,7 @@ _N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, _N_MTMS, _N_VIOS_LEVEL,
                _N_VIOS_LINK, _N_IPADDR)
 
 
-@ewrap.EntryWrapper.pvm_type('Cluster')
+@ewrap.EntryWrapper.pvm_type('Cluster', child_order=_CL_EL_ORDER)
 class Cluster(ewrap.EntryWrapper):
     """A Cluster behind a SharedStoragePool."""
 
@@ -65,10 +65,11 @@ class Cluster(ewrap.EntryWrapper):
         disk.
         """
         clust = cls._bld(adapter)
-        # The order of these assignments IS significant.
-        clust._name(name)
+        # The order of these assignments IS not significant
+        # since we are using child_order.
         clust.repos_pv = repos_pv
         clust.nodes = [first_node]
+        clust._name(name)
         return clust
 
     @property
