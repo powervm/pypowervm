@@ -83,22 +83,57 @@ BP_EL_ORDER = (
 _CAP_DLPAR_IO_CAPABLE = 'DynamicLogicalPartitionIOCapable'
 _CAP_DLPAR_MEM_CAPABLE = 'DynamicLogicalPartitionMemoryCapable'
 _CAP_DLPAR_PROC_CAPABLE = 'DynamicLogicalPartitionProcessorCapable'
+_CAP_INTRUSION_DETECT_CAPABLE = 'InternalAndExternalIntrusionDetectionCapable'
+_CAP_RMC_OS_SHUTDOWN_CAPABLE = ('ResourceMonitoringControlOperatingSystem'
+                                'ShutdownCapable')
+_CAP_EL_ORDER = (_CAP_DLPAR_IO_CAPABLE, _CAP_DLPAR_MEM_CAPABLE,
+                 _CAP_DLPAR_PROC_CAPABLE, _CAP_INTRUSION_DETECT_CAPABLE,
+                 _CAP_RMC_OS_SHUTDOWN_CAPABLE,)
 
 # Processor Configuration (_PC)
-_PC_HAS_DED_PROCS = 'HasDedicatedProcessors'
 _PC_DED_PROC_CFG = 'DedicatedProcessorConfiguration'
+_PC_HAS_DED_PROCS = 'HasDedicatedProcessors'
 _PC_SHR_PROC_CFG = 'SharedProcessorConfiguration'
 _PC_SHARING_MODE = 'SharingMode'
+_PC_CURR_HAS_DED_PROCS = 'CurrentHasDedicatedProcessors'
+_PC_CURR_SHARING_MODE = 'CurrentSharingMode'
+_PC_CURR_DED_PROC_CFG = 'CurrentDedicatedProcessorConfiguration'
+_PC_RUN_HAS_DED_PROCS = 'RuntimeHasDedicatedProcessors'
+_PC_RUN_SHARING_MODE = 'RuntimeSharingMode'
+_PC_CURR_SHR_PROC_CFG = 'CurrentSharedProcessorConfiguration'
+_PC_EL_ORDER = (_PC_DED_PROC_CFG, _PC_HAS_DED_PROCS, _PC_SHR_PROC_CFG,
+                _PC_SHARING_MODE, _PC_CURR_HAS_DED_PROCS,
+                _PC_CURR_SHARING_MODE, _PC_CURR_DED_PROC_CFG,
+                _PC_RUN_HAS_DED_PROCS, _PC_RUN_SHARING_MODE,
+                _PC_CURR_SHR_PROC_CFG)
 
 # Shared Processor Configuration (_SPC)
 _SPC_DES_PROC_UNIT = 'DesiredProcessingUnits'
-_SPC_MIN_PROC_UNIT = 'MinimumProcessingUnits'
-_SPC_MAX_PROC_UNIT = 'MaximumProcessingUnits'
 _SPC_DES_VIRT_PROC = 'DesiredVirtualProcessors'
-_SPC_MIN_VIRT_PROC = 'MinimumVirtualProcessors'
+_SPC_MAX_PROC_UNIT = 'MaximumProcessingUnits'
 _SPC_MAX_VIRT_PROC = 'MaximumVirtualProcessors'
+_SPC_MIN_PROC_UNIT = 'MinimumProcessingUnits'
+_SPC_MIN_VIRT_PROC = 'MinimumVirtualProcessors'
 _SPC_SHARED_PROC_POOL_ID = 'SharedProcessorPoolID'
 _SPC_UNCAPPED_WEIGHT = 'UncappedWeight'
+_SPC_ALLOC_VIRT_PROC = 'AllocatedVirtualProcessors'
+_SPC_CURR_MAX_PROC_UNIT = 'CurrentMaximumProcessingUnits'
+_SPC_CURR_MIN_PROC_UNIT = 'CurrentMinimumProcessingUnits'
+_SPC_CURR_PROC_UNIT = 'CurrentProcessingUnits'
+_SPC_CURR_SHARED_PROC_POOL_ID = 'CurrentSharedProcessorPoolID'
+_SPC_CURR_UNCAPPED_WEIGHT = 'CurrentUncappedWeight'
+_SPC_CURR_MIN_VIRT_PROC = 'CurrentMinimumVirtualProcessors'
+_SPC_CURR_MAX_VIRT_PROC = 'CurrentMaximumVirtualProcessors'
+_SPC_RUN_PROC_UNIT = 'RuntimeProcessingUnits'
+_SPC_RUN_UNCAPPED_WEIGHT = 'RuntimeUncappedWeight'
+_SPC_EL_ORDER = (_SPC_DES_PROC_UNIT, _SPC_DES_VIRT_PROC, _SPC_MAX_PROC_UNIT,
+                 _SPC_MAX_VIRT_PROC, _SPC_MIN_PROC_UNIT, _SPC_MIN_VIRT_PROC,
+                 _SPC_SHARED_PROC_POOL_ID, _SPC_UNCAPPED_WEIGHT,
+                 _SPC_ALLOC_VIRT_PROC, _SPC_CURR_MAX_PROC_UNIT,
+                 _SPC_CURR_MIN_PROC_UNIT, _SPC_CURR_PROC_UNIT,
+                 _SPC_CURR_SHARED_PROC_POOL_ID, _SPC_CURR_UNCAPPED_WEIGHT,
+                 _SPC_CURR_MIN_VIRT_PROC, _SPC_CURR_MAX_VIRT_PROC,
+                 _SPC_RUN_PROC_UNIT, _SPC_RUN_UNCAPPED_WEIGHT)
 
 # Dedicated Processor Configuration (_DPC)
 _DPC_DES_PROCS = 'DesiredProcessors'
@@ -413,7 +448,8 @@ class BasePartition(ewrap.EntryWrapper):
         self.element.replace(elem, proc_config.element)
 
 
-@ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
+                               child_order=_CAP_EL_ORDER)
 class PartitionCapabilities(ewrap.ElementWrapper):
     """See LogicalPartitionCapabilities."""
     @property
@@ -429,7 +465,8 @@ class PartitionCapabilities(ewrap.ElementWrapper):
         return self._get_val_bool(_CAP_DLPAR_PROC_CAPABLE)
 
 
-@ewrap.ElementWrapper.pvm_type(_BP_PROC_CFG, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_BP_PROC_CFG, has_metadata=True,
+                               child_order=_PC_EL_ORDER)
 class PartitionProcessorConfiguration(ewrap.ElementWrapper):
     """Represents the partitions Processor Configuration.
 
@@ -590,7 +627,8 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         return self._get_val_bool(_MEM_SHARED_MEM_ENABLED, None)
 
 
-@ewrap.ElementWrapper.pvm_type(_PC_SHR_PROC_CFG, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_PC_SHR_PROC_CFG, has_metadata=True,
+                               child_order=_SPC_EL_ORDER)
 class SharedProcessorConfiguration(ewrap.ElementWrapper):
     """Represents the partition's Shared Processor Configuration."""
 
