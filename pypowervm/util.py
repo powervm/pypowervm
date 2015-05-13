@@ -383,6 +383,33 @@ def sanitize_file_name_for_api(name, prefix='', suffix=''):
     return ret
 
 
+def sanitize_partition_name_for_api(name, trunc_ok=True):
+    """Sanitize a string to be suitable for use as a partition name.
+
+    PowerVM's partition name restrictions are:
+    o Between 1 and 31 characters, inclusive;
+    o Containing ASCII characters between 0x20 (space) and 0x7E (~), inclusive,
+      except ()\<>*$&?|[]'"`
+
+    :param name: The name to scrub.  Invalid characters will be replaced with
+                 '_'.
+    :param trunc_ok: If True, and name exceeds 31 characters, it is truncated.
+                     If False, and name exceeds 31 characters, ValueError is
+                     raised.
+    :return: The scrubbed string.
+    :raise ValueError: If name is None or zero length; or if it exceeds length
+                       31 and trunk_ok=False.
+    """
+    max_len = 31
+    if not name:
+        raise ValueError(_("The name parameter must be at least one character "
+                           "long."))
+    if not trunc_ok and len(name) > max_len:
+        raise ValueError(_("The name parameter must not exceed %d characters "
+                           "when trunk_ok is False."), max_len)
+    return re.sub(r'[^- !#%+,./0-9:;=@A-Z^_a-z{}]', '_', name)[:max_len]
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 

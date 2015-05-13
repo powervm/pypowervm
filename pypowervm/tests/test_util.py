@@ -266,9 +266,43 @@ class TestUtil(unittest.TestCase):
             (dummyuuid1 + dummyuuid2[:7] + dummyuuid1).replace('-', '_'),
             util.sanitize_file_name_for_api(
                 dummyuuid2, prefix=dummyuuid1, suffix=dummyuuid1))
+        self.assertEqual('I____________',
+                         util.sanitize_file_name_for_api(
+                             u'I \u611B \u01A4\u0177\u03C1\uFF4F\u05E9\u5DF3'
+                             u'\u5C3A\uFF56\uFF4D'))
         self.assertRaises(ValueError, util.sanitize_file_name_for_api, allc,
                           prefix=allc, suffix=allc)
         self.assertRaises(ValueError, util.sanitize_file_name_for_api, '')
+
+    def test_sanitize_partition_name_for_api(self):
+        allc = ''.join(map(chr, range(256)))
+        self.assertEqual('foo', util.sanitize_partition_name_for_api('foo'))
+        self.assertEqual('_______________________________',
+                         util.sanitize_partition_name_for_api(allc))
+        self.assertEqual('_ !_#_%_____+,-./0123456789:;_=',
+                         util.sanitize_partition_name_for_api(allc[31:]))
+        self.assertEqual('__@ABCDEFGHIJKLMNOPQRSTUVWXYZ__',
+                         util.sanitize_partition_name_for_api(allc[62:]))
+        self.assertEqual('_^__abcdefghijklmnopqrstuvwxyz{',
+                         util.sanitize_partition_name_for_api(allc[93:]))
+        self.assertEqual('_}_____________________________',
+                         util.sanitize_partition_name_for_api(allc[124:]))
+        for start in (155, 186, 217):
+            self.assertEqual(
+                '_______________________________',
+                util.sanitize_partition_name_for_api(allc[start:]))
+        self.assertEqual('________',
+                         util.sanitize_partition_name_for_api(allc[248:]))
+        self.assertEqual('I _ _________',
+                         util.sanitize_partition_name_for_api(
+                             u'I \u611B \u01A4\u0177\u03C1\uFF4F\u05E9\u5DF3'
+                             u'\u5C3A\uFF56\uFF4D'))
+
+        self.assertRaises(ValueError, util.sanitize_partition_name_for_api,
+                          allc, trunc_ok=False)
+        self.assertRaises(ValueError, util.sanitize_partition_name_for_api, '')
+        self.assertRaises(ValueError, util.sanitize_partition_name_for_api,
+                          None)
 
     # Tests for check_and_apply_xag covered by
     # test_adapter.TestAdapter.test_extended_path
