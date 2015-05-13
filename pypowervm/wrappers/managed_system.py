@@ -94,30 +94,6 @@ _MTMS_MODEL = 'Model'
 _MTMS_SERIAL = 'SerialNumber'
 
 
-def find_entry_by_mtms(resp, mtms):
-    """Loops through a Response feed of ManagedSystems to find a match.
-
-    :param mtms: The Machine Type Model & Serial Number string.
-                 Example format: "8247-22L*1234567"
-    :return: The System wrapper from the response that matches that
-             value.  None otherwise.
-    """
-    mtms_w = MTMS.bld(resp.adapter, mtms)
-    entries = resp.feed.findentries(u.xpath(_MTMS_ROOT, _MTMS_SERIAL),
-                                    mtms_w.serial)
-    if entries is None:
-        return None
-
-    # Confirm same model and type
-    wrappers = [System.wrap(x) for x in entries]
-    for wrapper in wrappers:
-        if wrapper.mtms == mtms_w:
-            return wrapper
-
-    # No matching MTM Serial was found
-    return None
-
-
 @ewrap.EntryWrapper.pvm_type('ManagedSystem')
 class System(ewrap.EntryWrapper):
 
