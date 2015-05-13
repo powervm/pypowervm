@@ -96,6 +96,11 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual('8', status)
         self.assertEqual('hdisk10', dev_name)
         self.assertEqual('fake_udid', udid)
+        status, dev_name, udid = hdisk._process_lua_result(
+            {'StdOut': '<luaResult/>'})
+        self.assertIsNone(status)
+        self.assertIsNone(dev_name)
+        self.assertIsNone(udid)
 
     @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):
