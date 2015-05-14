@@ -1,0 +1,21 @@
+The Debian Package pypowervm
+----------------------------
+
+NOTE
+----
+pypowervm is under active development and is currently unstable.  The API is
+being developed openly and a 1.0 version will be declared when it is mature.
+Any versions under 1.0 are not supported in any form and should not be used
+in production or development environments.
+
+Overview
+--------
+pypowervm provides a Python based API wrapper for interaction with IBM
+PowerVM based systems.
+
+License
+-------
+The library's license can be found under the LICENSE file.  It must be
+reviewed prior to use.
+
+ -- Eric P. Fried <efried@us.ibm.com>  Tue, 31 Mar 2015 15:53:15 -0500

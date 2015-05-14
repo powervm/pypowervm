@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+PACKAGE=pypowervm
+
+%:
+	dh $@ --with python2
+
+override_dh_auto_install:
+	python setup.py install --root=debian/pypowervm --install-layout=deb --install-lib=/usr/lib/`pyversions -d`/dist-packages/ --install-scripts=/usr/lib/`pyversions -d`/dist-packages/
+
+override_dh_clean:
+	dh_clean
+
+override_dh_install:
+	dh_install
