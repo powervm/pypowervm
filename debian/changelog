@@ -1,0 +1,5 @@
+pypowervm (0.0.1-beta) unstable; urgency=low
+
+  * Initial Debian package creation.
+
+ -- Minh Nguyen <minhn@us.ibm.com>  Wed, 13 May 2015 15:53:15 -0500
