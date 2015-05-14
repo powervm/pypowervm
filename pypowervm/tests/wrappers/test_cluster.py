@@ -23,6 +23,20 @@ import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.storage as stor
 
+CLUSTER_RESP = ('<uom:Cluster xmlns:uom='
+                '"http://www.ibm.com/xmlns/systems/power/'
+                'firmware/uom/mc/2012_10/"'
+                ' schemaVersion="V1_0"><uom:Metadata><uom:Atom/>'
+                '</uom:Metadata><uom:ClusterName>neotest</uom:ClusterName>'
+                '<uom:RepositoryDisk schemaVersion="V1_0"><uom:PhysicalVolume '
+                'schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>'
+                '<uom:VolumeName>hdisk123</uom:VolumeName>'
+                '</uom:PhysicalVolume></uom:RepositoryDisk><uom:Node '
+                'schemaVersion="V1_0"><uom:Node schemaVersion="V1_0">'
+                '<uom:Metadata><uom:Atom/></uom:Metadata><uom:HostName>'
+                'a.example.com</uom:HostName></uom:Node></uom:Node>'
+                '</uom:Cluster>')
+
 
 class TestCluster(twrap.TestWrapper):
 
@@ -153,20 +167,7 @@ class TestCluster(twrap.TestWrapper):
         node = clust.Node.bld(None, hostname='a.example.com')
         repos = stor.PV.bld(None, name='hdisk123')
         cl = clust.Cluster.bld(None, 'neotest', repos, node)
-        self.assertEqual(cl.toxmlstring(),
-                         '<uom:Cluster xmlns:uom="http://www.ibm.'
-                         'com/xmlns/systems/power/firmware/uom/mc/2012_10/"'
-                         ' schemaVersion="V1_0"><uom:Metadata><uom:Atom/>'
-                         '</uom:Metadata><uom:ClusterName>neotest</uom:'
-                         'ClusterName><uom:RepositoryDisk schemaVersion="V1_0'
-                         '"><uom:PhysicalVolume schemaVersion="V1_0"><uom:'
-                         'Metadata><uom:Atom/></uom:Metadata><uom:VolumeName>'
-                         'hdisk123</uom:VolumeName></uom:PhysicalVolume></uom'
-                         ':RepositoryDisk><uom:Node schemaVersion="V1_0">'
-                         '<uom:Node schemaVersion="V1_0"><uom:Metadata>'
-                         '<uom:Atom/></uom:Metadata><uom:HostName>a.example.'
-                         'com</uom:HostName></uom:Node></uom:Node></uom:'
-                         'Cluster>'.encode('utf-8'))
+        self.assertEqual(cl.toxmlstring(), CLUSTER_RESP.encode('utf-8'))
 
 if __name__ == "__main__":
     unittest.main()

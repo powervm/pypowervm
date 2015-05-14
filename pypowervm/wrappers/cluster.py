@@ -33,7 +33,9 @@ _CL_PV = stor.PHYS_VOL
 _CL_SSP_LINK = 'ClusterSharedStoragePool'
 _CL_NODES = 'Node'  # Yes, really
 _CL_NODE = 'Node'
-_CL_EL_ORDER = (_CL_NAME, _CL_ID, _CL_REPOPVS, _CL_SSP_LINK, _CL_NODE)
+_CL_CAPABILITY = 'ClusterCapabilities'
+_CL_EL_ORDER = (_CL_NAME, _CL_ID, _CL_REPOPVS, _CL_SSP_LINK, _CL_NODE,
+                _CL_CAPABILITY)
 # Node Constants
 _N_HOSTNAME = 'HostName'
 _N_LPARID = 'PartitionID'
@@ -65,8 +67,6 @@ class Cluster(ewrap.EntryWrapper):
         disk.
         """
         clust = cls._bld(adapter)
-        # The order of these assignments IS not significant
-        # since we are using child_order.
         clust.repos_pv = repos_pv
         clust.nodes = [first_node]
         clust._name(name)
