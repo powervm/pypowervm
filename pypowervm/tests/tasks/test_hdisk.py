@@ -85,13 +85,30 @@ class TestHDisk(unittest.TestCase):
         self.assertIsNone(dev_name)
         self.assertIsNone(udid)
 
+    def test_process_lua_result_terse_resp(self):
+        """Tests where valid XML is returned, but no device."""
+        xml = ('<luaResult><version>2.0</version><deviceList></deviceList>'
+               '</luaResult>')
+        result = {'StdOut': xml}
+        status, dev_name, udid = hdisk._process_lua_result(result)
+        self.assertIsNone(status)
+        self.assertIsNone(dev_name)
+        self.assertIsNone(udid)
+
     def test_process_lua_result(self):
-        stdOut = ('<luaResult><version>2.0</version><deviceList><device>'
-                  '<deviceTag>21</deviceTag><status>8</status><msg><msgLen>9'
-                  '</msgLen><msgText>test text</msgText></msg><pvName>hdisk10'
-                  '</pvName><uniqueID>fake_uid</uniqueID><udid>fake_udid'
-                  '</udid></device></deviceList></luaResult>')
-        result = {'StdOut': stdOut}
+        xml = ('<luaResult><version>2.0</version><deviceList><device>'
+               '<deviceTag>21</deviceTag><status>8</status><msg><msgLen>9'
+               '</msgLen><msgText>test text</msgText></msg><pvName>hdisk10'
+               '</pvName><uniqueID>fake_uid</uniqueID><udid>fake_udid'
+               '</udid></device></deviceList></luaResult>')
+        result = {'StdOut': xml}
+        status, dev_name, udid = hdisk._process_lua_result(result)
+        self.assertEqual('8', status)
+        self.assertEqual('hdisk10', dev_name)
+        self.assertEqual('fake_udid', udid)
+
+        # Repeat with the input as the resultXML
+        result = {'OutputXML': xml}
         status, dev_name, udid = hdisk._process_lua_result(result)
         self.assertEqual('8', status)
         self.assertEqual('hdisk10', dev_name)

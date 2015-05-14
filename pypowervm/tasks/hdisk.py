@@ -218,29 +218,42 @@ def _process_lua_result(result):
     :return dev_name: The name of the discovered hdisk.
     :return udid: The UDID of the device.
     """
+    if result is None:
+        return None, None, None
 
-    if result is not None and result.get('StdOut') is not None:
-        root = etree.fromstring(result['StdOut'])
-        for child in root:
-            if child.tag == "deviceList":
-                for gchild in child:
-                    status = None
-                    dev_name = None
-                    udid = None
-                    message = None
-                    for ggchild in gchild:
-                        if ggchild.tag == "status":
-                            status = ggchild.text
-                        elif ggchild.tag == "pvName":
-                            dev_name = ggchild.text
-                        elif ggchild.tag == "udid":
-                            udid = ggchild.text
-                        elif ggchild.tag == "msg":
-                            for mchild in ggchild:
-                                if mchild.tag == "msgText":
-                                    message = mchild.text
-                    _validate_lua_status(status, dev_name, udid, message)
-                    return status, dev_name, udid
+    # The result may push to StdOut or to OutputXML (different versions push
+    # to different locations).
+    xml_resp = result.get('OutputXML')
+    if xml_resp is None:
+        xml_resp = result.get('StdOut')
+
+    # If still none, nothing to do.
+    if xml_resp is None:
+        return None, None, None
+
+    # The response is an XML block.  Put into an XML structure and get
+    # the data out of it.
+    root = etree.fromstring(xml_resp)
+    for child in root:
+        if child.tag == "deviceList":
+            for gchild in child:
+                status = None
+                dev_name = None
+                udid = None
+                message = None
+                for ggchild in gchild:
+                    if ggchild.tag == "status":
+                        status = ggchild.text
+                    elif ggchild.tag == "pvName":
+                        dev_name = ggchild.text
+                    elif ggchild.tag == "udid":
+                        udid = ggchild.text
+                    elif ggchild.tag == "msg":
+                        for mchild in ggchild:
+                            if mchild.tag == "msgText":
+                                message = mchild.text
+                _validate_lua_status(status, dev_name, udid, message)
+                return status, dev_name, udid
     return None, None, None
 
 
