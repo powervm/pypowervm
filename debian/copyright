@@ -1,0 +1,11 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: pypowervm
+Source: http://github.com/pypowervm/pypowervm
+
+Files: *
+Copyright: 2015 IBM Corporation
+License: Apache-2.0
+
+Files: debian/*
+Copyright: 2015 IBM Corporation
+License: Apache-2.0
