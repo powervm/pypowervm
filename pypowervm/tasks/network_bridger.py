@@ -659,7 +659,7 @@ class NetworkBridgerTA(NetworkBridger):
             return None
 
         sea = nb.seas[1]
-        if ta.is_primary:
+        if sea.primary_adpt.pvid == ta.pvid:
             return sea.primary_adpt
 
         for addl_adpt in sea.addl_adpts:
