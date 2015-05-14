@@ -27,6 +27,7 @@ import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import network as pvm_net
 
+MGR_NET_BR_FAILOVER_FILE = 'nbbr_network_bridge_failover.txt'
 MGR_NET_BR_FILE = 'nbbr_network_bridge.txt'
 MGR_VNET_FILE = 'nbbr_virtual_network.txt'
 MGR_VSW_FILE = 'nbbr_virtual_switch.txt'
@@ -55,6 +56,7 @@ class TestNetworkBridger(testtools.TestCase):
                 file_path, adapter=self.adpt).get_response()
 
         self.mgr_nbr_resp = resp(MGR_NET_BR_FILE)
+        self.mgr_nbr_fo_resp = resp(MGR_NET_BR_FAILOVER_FILE)
         self.mgr_vnet_resp = resp(MGR_VNET_FILE)
         self.mgr_vsw_resp = resp(MGR_VSW_FILE)
 
@@ -486,3 +488,16 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
         trunks = bridger._find_available_trunks(nb[0])
         self.assertIsNotNone(trunks)
+
+    def test_find_peer_trunk(self):
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+
+        # No failover, shouldn't have a peer
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        resp = bridger._find_peer_trunk(nbs[0], nbs[0].seas[0].primary_adpt)
+        self.assertIsNone(resp)
+
+        # Failover, should have a peer
+        nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_fo_resp)
+        resp = bridger._find_peer_trunk(nbs[0], nbs[0].seas[0].primary_adpt)
+        self.assertEqual(nbs[0].seas[1].primary_adpt, resp)

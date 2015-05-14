@@ -2,7 +2,7 @@
 # THIS IS AN AUTOMATICALLY GENERATED FILE
 # DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
 #
-# To update file, run: k2http.py -refresh sea_mgr_virtual_switch.txt
+# To update file, run: create_httpresp.py -refresh nbbr_virtual_switch.txt
 #
 ####################################################
 INFO{
