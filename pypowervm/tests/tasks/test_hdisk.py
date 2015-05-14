@@ -58,7 +58,7 @@ class TestHDisk(unittest.TestCase):
         t_wwpns = ['1111223344556677', '1111223344556678', '1111223344556679']
         all_itls = hdisk.build_itls(i_wwpns, t_wwpns, 238)
 
-        LUA_XML = ('<XML_LIST><general><cmd_version>3</cmd_version><version>'
+        lua_xml = ('<XML_LIST><general><cmd_version>3</cmd_version><version>'
                    '2.0</version></general><reliableITL>false</reliableITL>'
                    '<deviceList><device><vendor>IBM</vendor><deviceTag>'
                    '1</deviceTag><itlList><number>6</number><itl>'
@@ -76,7 +76,7 @@ class TestHDisk(unittest.TestCase):
                    '<lua>ee000000000000</lua></itl></itlList></device>'
                    '</deviceList></XML_LIST>')
 
-        self.assertEqual(LUA_XML, hdisk._lua_recovery_xml(all_itls, None))
+        self.assertEqual(lua_xml, hdisk._lua_recovery_xml(all_itls, None))
 
     def test_process_lua_result_no_resp(self):
         result = {}
@@ -117,24 +117,24 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.tasks.hdisk.LOG')
     def test_validate_lua_status(self, mock_log):
         """This tests the branches of validate_lua_status."""
-        hdisk._validate_lua_status(hdisk.LUAStatus.DEVICE_AVAILABLE,
-                                   'dev_name', 'udid', 'message')
+        hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_AVAILABLE,
+                              'dev_name', 'message')
         self.assertEqual(1, mock_log.info.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUAStatus.FOUND_ITL_ERR,
-                                   'dev_name', 'udid', 'message')
+        hdisk._log_lua_status(hdisk.LUAStatus.FOUND_ITL_ERR,
+                              'dev_name', 'message')
         self.assertEqual(1, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUAStatus.DEVICE_IN_USE,
-                                   'dev_name', 'udid', 'message')
+        hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_IN_USE,
+                              'dev_name', 'message')
         self.assertEqual(2, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
-                                   'dev_name', 'udid', 'message')
+        hdisk._log_lua_status(hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
+                              'dev_name', 'message')
         self.assertEqual(3, mock_log.warn.call_count)
 
-        hdisk._validate_lua_status(hdisk.LUAStatus.INCORRECT_ITL,
-                                   'dev_name', 'udid', 'message')
+        hdisk._log_lua_status(hdisk.LUAStatus.INCORRECT_ITL,
+                              'dev_name', 'message')
         self.assertEqual(4, mock_log.warn.call_count)
 
     @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
