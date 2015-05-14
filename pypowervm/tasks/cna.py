@@ -48,6 +48,7 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
                      auto generated.
     :param addl_vlans: Optional list of (up to 18) additional VLANs.  Can be
                        a list of Ints or Strings (that parse down to ints).
+    :return: The CNA Wrapper that was created.
     """
     # Join the additional VLANs
     addl_tagged_vlans = None
@@ -84,8 +85,7 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     net_adpt = network.CNA.bld(
         adapter, pvid, vswitch_w.related_href, slot_num=slot_num,
         mac_addr=mac_addr, addl_tagged_vlans=addl_tagged_vlans)
-    wrap = net_adpt.create(parent_type=lpar.LPAR, parent_uuid=lpar_uuid)
-    return wrap.entry
+    return net_adpt.create(parent_type=lpar.LPAR, parent_uuid=lpar_uuid)
 
 
 def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):

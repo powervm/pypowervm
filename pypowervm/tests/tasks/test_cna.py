@@ -58,6 +58,7 @@ class TestCNA(testtools.TestCase):
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
+        self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(1, mock_vnet_find.call_count)
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
@@ -84,6 +85,7 @@ class TestCNA(testtools.TestCase):
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
+        self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(0, mock_vnet_find.call_count)
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
