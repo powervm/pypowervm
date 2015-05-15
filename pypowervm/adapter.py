@@ -708,7 +708,8 @@ class Adapter(object):
         if hostname_mismatch or o.port != self.session.port:
             LOG.debug('href=%s will be modified to use %s:%s' %
                       (href, self.session.host, self.session.port))
-        path = self.extend_path(o.path, suffix_type, suffix_parm, detail)
+        path = self.extend_path(util.dice_href(href), suffix_type, suffix_parm,
+                                detail)
         return self.read_by_path(path, etag=etag, timeout=timeout,
                                  auditmemento=auditmemento, age=age,
                                  sensitive=sensitive, helpers=helpers)

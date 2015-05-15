@@ -407,6 +407,40 @@ class TestAdapter(testtools.TestCase):
             adapter.extend_path('basepath?foo=4,5,6&group=None&foo=1,2,3',
                                 xag=['a', 'b', 'c']))
 
+    @mock.patch('pypowervm.adapter.LOG.debug')
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_read_by_href(self, mock_read_by_path, mock_log_debug):
+        """Ensure read_by_href correctly extends, preserves query strings."""
+        def validate_read_by_path(expected):
+            def _read_by_path(path, etag, timeout, auditmemento, age,
+                              sensitive, helpers):
+                self._assert_paths_equivalent(expected, path)
+                for param in (etag, auditmemento, helpers):
+                    self.assertIsNone(param)
+                for param2 in (age, timeout):
+                    self.assertEqual(-1, param2)
+                self.assertFalse(sensitive)
+            return _read_by_path
+
+        self.sess.host = 'foo'
+        self.sess.port = 123
+        adapter = adp.Adapter(self.sess)
+        mock_read_by_path.side_effect = validate_read_by_path(
+            '/rest/api/uom/Bar?k=v&group=None#frag')
+        adapter.read_by_href('http://foo:123/rest/api/uom/Bar?k=v#frag')
+        self.assertFalse(mock_log_debug.called)
+
+        self.sess.host = 'bar'
+        mock_read_by_path.side_effect = validate_read_by_path(
+            '/rest/api/uom/Bar?k=v&group=None#frag')
+        adapter.read_by_href('http://foo:123/rest/api/uom/Bar?k=v#frag')
+        self.assertTrue(mock_log_debug.called)
+
+        mock_read_by_path.side_effect = validate_read_by_path(
+            '/rest/api/uom/Bar?k=v&group=RealGroup#frag')
+        adapter.read_by_href(
+            'http://foo:123/rest/api/uom/Bar?k=v&group=RealGroup#frag')
+
     @mock.patch('requests.Session')
     def test_delete(self, mock_session):
         """Test delete() method found in the Adapter class."""
