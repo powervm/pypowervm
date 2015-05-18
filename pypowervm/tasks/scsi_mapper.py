@@ -131,48 +131,29 @@ def _separate_mappings(vios_w, client_href):
 
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(delay_func=_delay)
-def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
+def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, match_func):
     """Removes the storage element from a SCSI bus and clears out bus.
 
-    Will remove the vSCSI Mappings from the VIOS if the search_func indicates
-    that the mapping is a match.  The search_func is only invoked if the
+    Will remove the vSCSI Mappings from the VIOS if the match_func indicates
+    that the mapping is a match.  The match_func is only invoked if the
     client_lpar_id matches.
 
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       added to.
-    :param client_lpar_id: The LPAR identifier of the client VM.
-    :param search_func: The search function to use to query for the mapping.
-                        One parameter for input.  Will be a storage element
-                        (but the type could be anything - VDisk, VOpt, etc...)
-                        If that element matches to your seed, then return True.
-                        Otherwise return False.
+    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param match_func: Matching function suitable for passing to find_maps.
+                       See that method's match_func parameter.
     :return: The list of the storage elements that were removed from the maps.
     """
     vios_resp = adapter.read(pvm_vios.VIOS.schema_type, root_id=vios_uuid,
                              xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
     vios_w = pvm_vios.VIOS.wrap(vios_resp)
 
-    # The maps that match that need to be removed
-    matching_maps = []
-    client_lpar_id = str(client_lpar_id)
-
-    # Loop through the existing SCSI Mappings.  Try to find the matching map.
+    # Find the maps that need to be removed
     existing_scsi_mappings = vios_w.scsi_mappings
-    for existing_scsi_map in existing_scsi_mappings:
-        # No client, continue on.
-        if existing_scsi_map.client_adapter is None:
-            continue
-
-        # If to a different VM, continue on.  client_lpar_id was converted
-        # to a str above.
-        if str(existing_scsi_map.client_adapter.lpar_id) != client_lpar_id:
-            continue
-
-        if search_func(existing_scsi_map.backing_storage):
-            # Found a match!
-            matching_maps.append(existing_scsi_map)
-
+    matching_maps = find_maps(
+        existing_scsi_mappings, client_lpar_id, match_func)
     if len(matching_maps) == 0:
         return []
 
@@ -189,8 +170,8 @@ def _remove_storage_elem(adapter, vios_uuid, client_lpar_id, search_func):
     return resp_list
 
 
-def _remove_search_func(wcls, name_prop='name', names=None, prefixes=None):
-    """Generate a search function for _remove_storage_elem's search_func param.
+def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
+    """Generate a matching function for find_maps' match_func param.
 
     :param wcls: The Wrapper class of the object being matched.
     :param name_prop: The property of the Wrapper class on which to match.
@@ -202,10 +183,10 @@ def _remove_search_func(wcls, name_prop='name', names=None, prefixes=None):
                      if names is specified.  If names and prefixes are both
                      None or empty, all inputs of the specified wcls will be
                      matched.
-    :return: A callable search function suitable for passing to the search_func
-             parameter of the _remove_storage_elem method.
+    :return: A callable matching function suitable for passing to the
+             match_func parameter of the find_maps method.
     """
-    def search_func(existing_elem):
+    def match_func(existing_elem):
         if not isinstance(existing_elem, wcls):
             return False
         if names:
@@ -216,7 +197,40 @@ def _remove_search_func(wcls, name_prop='name', names=None, prefixes=None):
                     return True
         # Neither names nor prefixes specified - hit everything
         return True
-    return search_func
+    return match_func
+
+
+def find_maps(mapping_list, client_lpar_id, match_func):
+    """Filter a list of scsi mappings by LPAR ID and a matching function.
+
+    :param mapping_list: The mappings to filter.  Iterable of VSCSIMapping.
+    :param client_lpar_id: Integer short ID (not UUID) of the LPAR on the
+                           client side of the mapping.
+    :param match_func: Callable with the following specification:
+        def match_func(storage_elem)
+            param storage_elem: A backing storage element wrapper (VOpt, VDisk,
+                                PV, or LU) to be analyzed.
+            return: True if the storage_elem's mapping should be included;
+                    False otherwise.
+    :return: A list comprising the subset of the input mapping_list whose
+             client LPAR IDs match client_lpar_id and whose backing storage
+             elements satisfy match_func.
+    """
+    matching_maps = []
+    for existing_scsi_map in mapping_list:
+        # No client, continue on.
+        if existing_scsi_map.client_adapter is None:
+            continue
+
+        # If to a different VM, continue on.  client_lpar_id was converted
+        # to a str above.
+        if existing_scsi_map.client_adapter.lpar_id != int(client_lpar_id):
+            continue
+
+        if match_func(existing_scsi_map.backing_storage):
+            # Found a match!
+            matching_maps.append(existing_scsi_map)
+    return matching_maps
 
 
 def remove_vopt_mapping(adapter, vios_uuid, client_lpar_id, media_name=None):
@@ -229,17 +243,16 @@ def remove_vopt_mapping(adapter, vios_uuid, client_lpar_id, media_name=None):
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       removed from.
-    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
     :param media_name: (Optional) The name of the virtual optical media to
                        remove from the SCSI bus.  If None, will remove all
                        virtual optical media from this client lpar.
     :return: A list of the backing VOpt media that was removed.
     """
     names = [media_name] if media_name else None
-    return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
-                                _remove_search_func(pvm_stor.VOptMedia,
-                                                    name_prop='media_name',
-                                                    names=names))
+    return _remove_storage_elem(
+        adapter, vios_uuid, client_lpar_id, gen_match_func(
+            pvm_stor.VOptMedia, name_prop='media_name', names=names))
 
 
 def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
@@ -253,7 +266,7 @@ def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       removed from.
-    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
     :param disk_names: (Optional) A list of names of the virtual disk to remove
                        from the SCSI bus.  If None, all virtual disks will be
                        removed from the LPAR.
@@ -264,7 +277,7 @@ def remove_vdisk_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     """
 
     return _remove_storage_elem(
-        adapter, vios_uuid, client_lpar_id, _remove_search_func(
+        adapter, vios_uuid, client_lpar_id, gen_match_func(
             pvm_stor.VDisk, names=disk_names, prefixes=disk_prefixes))
 
 
@@ -279,7 +292,7 @@ def remove_lu_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       removed from.
-    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
     :param disk_names: (Optional) A list of names of the LUs to remove from
                        the SCSI bus.  If None, all LUs asssociated with the
                        LPAR will be removed.
@@ -291,7 +304,7 @@ def remove_lu_mapping(adapter, vios_uuid, client_lpar_id, disk_names=None,
     """
 
     return _remove_storage_elem(
-        adapter, vios_uuid, client_lpar_id, _remove_search_func(
+        adapter, vios_uuid, client_lpar_id, gen_match_func(
             pvm_stor.LU, names=disk_names, prefixes=disk_prefixes))
 
 
@@ -304,11 +317,11 @@ def remove_pv_mapping(adapter, vios_uuid, client_lpar_id, backing_dev):
     :param adapter: The pypowervm adapter for API communication.
     :param vios_uuid: The virtual I/O server UUID that the mapping should be
                       removed from.
-    :param client_lpar_id: The LPAR identifier of the client VM.
+    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
     :param backing_dev: The physical volume name to be removed.
     :return: A list of the backing physical device objects that were removed.
     """
 
-    return _remove_storage_elem(adapter, vios_uuid, client_lpar_id,
-                                _remove_search_func(pvm_stor.PV,
-                                                    names=[backing_dev]))
+    return _remove_storage_elem(
+        adapter, vios_uuid, client_lpar_id, gen_match_func(
+            pvm_stor.PV, names=[backing_dev]))

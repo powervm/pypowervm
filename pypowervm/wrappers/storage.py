@@ -717,7 +717,7 @@ class VClientStorageAdapter(VStorageAdapter):
     @property
     def lpar_id(self):
         """The LPAR ID the contains this client adapter."""
-        return self._get_val_str(_VADPT_LPAR_ID)
+        return self._get_val_int(_VADPT_LPAR_ID)
 
 
 @six.add_metaclass(abc.ABCMeta)
