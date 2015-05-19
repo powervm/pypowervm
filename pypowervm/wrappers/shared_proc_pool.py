@@ -22,11 +22,21 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+# Shared Processor Pool Constants
 _POOL_ID = 'PoolID'
 _CURR_RSRV_PROC_UNITS = 'CurrentReservedProcessingUnits'
+_ASSIGNED_PARTITIONS = 'AssignedPartitions'
+_MAX_PROC_UNITS = 'MaximumProcessingUnits'
+_PEND_RSRV_PROC_UNITS = 'PendingReservedProcessingUnits'
+_AVAL_PROC_UNITS = 'AvailableProcUnits'
+_POOL_NAME = 'PoolName'
+_SHARED_EL_ORDER = (_ASSIGNED_PARTITIONS, _CURR_RSRV_PROC_UNITS,
+                    _MAX_PROC_UNITS, _PEND_RSRV_PROC_UNITS,
+                    _POOL_ID, _AVAL_PROC_UNITS, _POOL_NAME)
 
 
-@ewrap.EntryWrapper.pvm_type('SharedProcessorPool')
+@ewrap.EntryWrapper.pvm_type('SharedProcessorPool',
+                             child_order=_SHARED_EL_ORDER)
 class SharedProcPool(ewrap.EntryWrapper):
 
     @property
