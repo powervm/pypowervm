@@ -428,14 +428,17 @@ BODY{
                 </Metadata>
                 <BusGroupingRequired kb="CUD" kxe="false">false</BusGroupingRequired>
                 <Description kb="CUD" kxe="false">I/O Processor</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <IOUnitPhysicalLocation kb="ROR" kxe="false">U5294.001.CEC1234</IOUnitPhysicalLocation>
                 <ParentSlotDynamicReconfigurationConnectorIndex kb="ROO" kxe="false">553713681</ParentSlotDynamicReconfigurationConnectorIndex>
                 <PCAdapterID kb="ROO" kxe="false">4660</PCAdapterID>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
                 <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
+                <PCISubsystemDeviceID kxe="false" kb="ROO">1202</PCISubsystemDeviceID>
                 <PCIManufacturerID kb="ROO" kxe="false">4116</PCIManufacturerID>
                 <PCIRevisionID kb="ROO" kxe="false">0</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">4116</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
                 <RelatedIBMiIOSlot kb="CUD" kxe="false" schemaVersion="V1_0">
                     <Metadata>
                         <Atom/>

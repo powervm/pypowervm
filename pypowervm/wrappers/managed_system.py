@@ -93,6 +93,29 @@ _MTMS_MT = 'MachineType'
 _MTMS_MODEL = 'Model'
 _MTMS_SERIAL = 'SerialNumber'
 
+# AssociatedSystemIOConfig constants
+_ASIO_ROOT = 'AssociatedSystemIOConfiguration'
+_ASIO_AVAIL_WWPNS = 'AvailableWWPNs'
+_ASIO_HCA = 'HostChannelAdapters'
+_ASIO_HEA = 'HostEthernetAdapters'
+_ASIO_IOBUSES = 'IOBuses'
+_ASIO_IOSLOTS = 'IOSlots'
+_ASIO_SRIOV = 'SRIOVAdapters'
+_ASIO_ASVNET = 'AssociatedSystemVirtualNetwork'
+_ASIO_WWPN_PREFIX = 'WWPNPrefix'
+
+_IOSLOT_ROOT = 'IOSlot'
+_IOSLOT_BUS_GRP_REQ = 'BusGroupingRequired'
+_IOSLOT_DESC = 'Description'
+_IOSLOT_FEAT_CODES = 'FeatureCodes'
+_IOSLOT_PCI_CLASS = 'PCIClass'
+_IOSLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
+_IOSLOT_PCI_REV_ID = 'PCIRevisionID'
+_IOSLOT_PCI_VEND_ID = 'PCIVendorID'
+_IOSLOT_PCI_SUB_VEND_ID = 'PCISubsystemVendorID'
+_IOSLOT_DYN_REC_CON_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
+_IOSLOT_DYN_REC_CON_NAME = 'SlotDynamicReconfigurationConnectorName'
+
 
 @ewrap.EntryWrapper.pvm_type('ManagedSystem')
 class System(ewrap.EntryWrapper):
@@ -104,6 +127,10 @@ class System(ewrap.EntryWrapper):
     @property
     def mtms(self):
         return MTMS.wrap(self.element.find(_MTMS_ROOT))
+
+    @property
+    def asio_config(self):
+        return ASIOConfig.wrap(self.element.find(_ASIO_ROOT))
 
     @property
     def system_state(self):
@@ -248,8 +275,7 @@ class System(ewrap.EntryWrapper):
         return self.get_href(_VIOS_LINK)
 
 
-@ewrap.ElementWrapper.pvm_type('MachineTypeModelAndSerialNumber',
-                               has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_MTMS_ROOT, has_metadata=True)
 class MTMS(ewrap.ElementWrapper):
     """The Machine Type, Model and Serial Number wrapper."""
 
@@ -311,3 +337,69 @@ class MTMS(ewrap.ElementWrapper):
         purposes.
         """
         return self.machine_type + '-' + self.model + '*' + self.serial
+
+
+@ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)
+class ASIOConfig(ewrap.ElementWrapper):
+    """The associated system IO configuration for this system."""
+
+    @property
+    def avail_wwpns(self):
+        return self._get_val_int(_ASIO_AVAIL_WWPNS)
+
+    @property
+    def io_slots(self):
+        es = ewrap.WrapperElemList(self._find_or_seed(_ASIO_IOSLOTS), IOSlot)
+        return es
+
+    @property
+    def wwpn_prefix(self):
+        return self._get_val_str(_ASIO_WWPN_PREFIX)
+
+
+@ewrap.ElementWrapper.pvm_type(_IOSLOT_ROOT, has_metadata=True)
+class IOSlot(ewrap.ElementWrapper):
+    """An I/O Slot represents a device bus on the system.
+
+    It may contain a piece of hardware within it.
+    """
+
+    @property
+    def bus_grp_required(self):
+        return self._get_val_bool(_IOSLOT_BUS_GRP_REQ)
+
+    @property
+    def description(self):
+        return self._get_val_str(_IOSLOT_DESC)
+
+    @property
+    def feat_codes(self):
+        return self._get_val_int(_IOSLOT_FEAT_CODES)
+
+    @property
+    def pci_class(self):
+        return self._get_val_int(_IOSLOT_PCI_CLASS)
+
+    @property
+    def pci_sub_dev_id(self):
+        return self._get_val_int(_IOSLOT_PCI_SUB_DEV_ID)
+
+    @property
+    def pci_revision_id(self):
+        return self._get_val_int(_IOSLOT_PCI_REV_ID)
+
+    @property
+    def pci_vendor_id(self):
+        return self._get_val_int(_IOSLOT_PCI_VEND_ID)
+
+    @property
+    def pci_sub_vendor_id(self):
+        return self._get_val_int(_IOSLOT_PCI_SUB_VEND_ID)
+
+    @property
+    def dyn_reconfig_conn_index(self):
+        return self._get_val_int(_IOSLOT_DYN_REC_CON_INDEX)
+
+    @property
+    def dyn_reconfig_conn_name(self):
+        return self._get_val_str(_IOSLOT_DYN_REC_CON_NAME)

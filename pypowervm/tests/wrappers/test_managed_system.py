@@ -57,6 +57,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                             "Could not load %s" %
                             _MC_HTTPRESP_FILE)
 
+        self.test_ioslot = self.wrapper.asio_config.io_slots[0]
+
         """ Create a bad wrapper to use when
             retrieving properties which don't exist """
         self.bad_wrapper = ms.System.wrap(mc_http.response.feed.entries[0])
@@ -161,6 +163,45 @@ class TestMSEntryWrapper(unittest.TestCase):
             ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/caae9209-25e5-'
              '35cd-a71a-ed55c03f294d/VirtualIOServer/32F3530F-ECA0-4EAA-A37E-'
              '4B792C21AF70',), ())
+
+    def test_asio_wwpns(self):
+        self.assertEqual(self.wrapper.asio_config.avail_wwpns, 65536)
+
+    def test_asio_wwpn_prefix(self):
+        self.assertEqual(self.wrapper.asio_config.wwpn_prefix,
+                         '12379814471884843981')
+
+    def test_ioslot_bus_grp_required(self):
+        self.assertEqual(self.test_ioslot.bus_grp_required, False)
+
+    def test_ioslot_description(self):
+        self.assertEqual(self.test_ioslot.description, 'I/O Processor')
+
+    def test_ioslot_feat_codes(self):
+        self.assertEqual(self.test_ioslot.feat_codes, 0)
+
+    def test_ioslot_pci_class(self):
+        self.assertEqual(self.test_ioslot.pci_class, 512)
+
+    def test_ioslot_pci_sub_dev_id(self):
+        self.assertEqual(self.test_ioslot.pci_sub_dev_id, 1202)
+
+    def test_ioslot_pci_revision_id(self):
+        self.assertEqual(self.test_ioslot.pci_revision_id, 0)
+
+    def test_ioslot_pci_vendor_id(self):
+        self.assertEqual(self.test_ioslot.pci_vendor_id, 4116)
+
+    def test_ioslot_pci_sub_vendor_id(self):
+        self.assertEqual(self.test_ioslot.pci_sub_vendor_id, 4116)
+
+    def test_ioslot_dyn_reconfig_conn_index(self):
+        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_index,
+                         553713681)
+
+    def test_ioslot_dyn_reconfig_conn_name(self):
+        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_name,
+                         'U5294.001.CEC1234-P01-C011')
 
 
 class TestMTMS(unittest.TestCase):
