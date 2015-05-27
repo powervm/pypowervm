@@ -86,7 +86,11 @@ class PcmPref(ewrap.EntryWrapper):
 
     @stm_enabled.setter
     def stm_enabled(self, value):
-        """Short Term Monitoring."""
+        """Short Term Monitoring.
+
+        Short Term metrics can affect the performance of workloads.  Not
+        recommended for production workload.
+        """
         self.set_parm_value(_STM_ENABLED, u.sanitize_bool_for_api(value))
 
     @property
@@ -156,7 +160,8 @@ class MonitorMetrics(object):
         return self.entry.links[None][0]
 
 
-class LongTermMonitorMetrics(MonitorMetrics):
+@ewrap.EntryWrapper.pvm_type('LongTermMonitor', ns=pc.PCM_NS)
+class LTMMetrics(MonitorMetrics):
     """A pseudo wrapper for Long Term Monitor metrics.
 
     The standard pattern of wrapping a response or entry and accessing
@@ -166,7 +171,8 @@ class LongTermMonitorMetrics(MonitorMetrics):
     pass
 
 
-class ShortTermMonitorMetrics(MonitorMetrics):
+@ewrap.EntryWrapper.pvm_type('ShortTermMonitor', ns=pc.PCM_NS)
+class STMMetrics(MonitorMetrics):
     """A pseudo wrapper for Short Term Monitor metrics.
 
     The standard pattern of wrapping a response or entry and accessing

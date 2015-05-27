@@ -1,0 +1,71 @@
+# Copyright 2015 IBM Corp.
+#
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import testtools
+
+from pypowervm import entities as pvm_e
+from pypowervm.tasks import monitor as pvm_t_mon
+from pypowervm.tests.tasks import util as tju
+from pypowervm.tests import test_fixtures as fx
+from pypowervm.wrappers import monitor as pvm_mon
+
+
+class TestMonitors(testtools.TestCase):
+
+    def setUp(self):
+        super(TestMonitors, self).setUp()
+
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
+        self.adpt = self.adptfx.adpt
+
+    def test_query_ltm_feed(self):
+        self.adpt.read_by_href.return_value = tju.load_file('ltm_feed.txt')
+        feed = pvm_t_mon.query_ltm_feed(self.adpt, 'host_uuid')
+
+        # Make sure the feed is correct.
+        self.assertEqual(130, len(feed))
+
+        # Make sure each element is a LTMMetric
+        for mon in feed:
+            self.assertIsInstance(mon, pvm_mon.LTMMetrics)
+
+    def test_ensure_ltm_monitors(self):
+        resp = tju.load_file('pcm_pref_feed.txt')
+        self.adpt.read_by_href.return_value = resp
+
+        # Create a side effect that can validate the input to the update
+        def validate_of_update(*kargs, **kwargs):
+            element = kargs[0]
+            etag = kargs[1]
+            self.assertIsNotNone(element)
+            self.assertEqual('1430365985674', etag)
+
+            # Wrap the element so we can validate it.
+            pref = pvm_mon.PcmPref.wrap(pvm_e.Entry({'etag': etag},
+                                                    element, self.adpt))
+
+            self.assertEqual(True, pref.compute_ltm_enabled)
+            self.assertEqual(True, pref.ltm_enabled)
+            self.assertEqual(False, pref.stm_enabled)
+            self.assertEqual(True, pref.aggregation_enabled)
+            return element
+        self.adpt.update.side_effect = validate_of_update
+
+        # This will invoke the validate_of_update
+        pvm_t_mon.ensure_ltm_monitors(self.adpt, 'host_uuid')
+
+        # Make sure the update was in face invoked though
+        self.assertEqual(1, self.adpt.update.call_count)
