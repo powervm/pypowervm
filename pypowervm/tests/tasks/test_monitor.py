@@ -14,12 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
+import mock
 import testtools
 
 from pypowervm import entities as pvm_e
 from pypowervm.tasks import monitor as pvm_t_mon
 from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
+from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import monitor as pvm_mon
 
 
@@ -71,3 +75,20 @@ class TestMonitors(testtools.TestCase):
 
         # Make sure the update was in fact invoked though
         self.assertEqual(1, self.adpt.update.call_count)
+
+    def _load(self, path):
+        dirname = os.path.dirname(__file__)
+        file_name = os.path.join(dirname, path)
+        return pvmhttp.PVMFile(file_name).body
+
+    def test_parse_to_vm_metrics(self):
+        vios_resp = self._load('../wrappers/pcm/data/vios_data.txt')
+        phyp_resp = self._load('../wrappers/pcm/data/phyp_data.txt')
+
+        mock_phyp = mock.MagicMock()
+        mock_vioses = [mock.MagicMock()]
+
+        self.adpt.read_by_href.side_effect = [phyp_resp, vios_resp]
+
+        pvm_t_mon.LparMetricParser(self.adpt, mock_phyp, mock_vioses)
+        pass
