@@ -58,7 +58,8 @@ class ViosSample(object):
 
         # TODO(thorst) Evaluate with multi VIOS.
         vios = utilSample.get('viosUtil')[0]
-        self.id = vios.get('id')
+        # Convert the ID to keep consistent with phyp.
+        self.id = int(vios.get('id'))
         self.name = vios.get('name')
 
         # Complex types
