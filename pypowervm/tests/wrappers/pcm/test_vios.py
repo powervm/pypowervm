@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Tests for the raw VIOS long term metrics."""
+
 import os
 
 import testtools
@@ -22,10 +24,10 @@ from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers.pcm import vios as pcm_vios
 
 
-class TestPhypLTM(testtools.TestCase):
+class TestViosLTM(testtools.TestCase):
 
     def setUp(self):
-        super(TestPhypLTM, self).setUp()
+        super(TestViosLTM, self).setUp()
 
         dirname = os.path.dirname(__file__)
         file_name = os.path.join(dirname, 'data', 'vios_data.txt')
@@ -44,7 +46,7 @@ class TestPhypLTM(testtools.TestCase):
         # Validate some samples
         sample = info.sample
         self.assertEqual(u'2015-05-27T00:22:00+0000', sample.time_stamp)
-        self.assertEqual('1', sample.id)
+        self.assertEqual(1, sample.id)
         self.assertEqual('IOServer - SN2125D4A', sample.name)
 
         # Validate Memory
@@ -55,7 +57,7 @@ class TestPhypLTM(testtools.TestCase):
         self.assertEqual(1, len(sample.network.seas))
 
         phys_dev = sample.network.adpts[1]
-        self.assertEqual('ent0', phys_dev.id)
+        self.assertEqual('ent0', phys_dev.name)
         self.assertEqual('physical', phys_dev.type)
         self.assertEqual('U78CB.001.WZS007Y-P1-C10-T1',
                          phys_dev.physical_location)
@@ -67,7 +69,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # SEA validation
         sea = sample.network.seas[0]
-        self.assertEqual('ent6', sea.id)
+        self.assertEqual('ent6', sea.name)
         self.assertEqual('sea', sea.type)
         self.assertEqual('U8247.22L.2125D4A-V1-C12-T1', sea.physical_location)
         self.assertEqual(0, sea.received_packets)
@@ -79,7 +81,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # Storage - FC Validation
         fc = sample.storage.fc_adpts[0]
-        self.assertEqual('fcs0', fc.id)
+        self.assertEqual('fcs0', fc.name)
         self.assertEqual('21000024ff649104', fc.wwpn)
         self.assertEqual('U78CB.001.WZS007Y-P1-C3-T1', fc.physical_location)
         self.assertEqual(0, fc.num_reads)
@@ -90,7 +92,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # VFC Validation
         vfc = sample.storage.fc_adpts[1].ports[0]
-        self.assertEqual("vfc1", vfc.id)
+        self.assertEqual("vfc1", vfc.name)
         self.assertEqual("21000024ff649159", vfc.wwpn)
         self.assertEqual(1234, vfc.num_reads)
         self.assertEqual(1235, vfc.num_writes)
@@ -102,7 +104,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # Physical Adpt Validation
         padpt = sample.storage.phys_adpts[0]
-        self.assertEqual('sissas0', padpt.id)
+        self.assertEqual('sissas0', padpt.name)
         self.assertEqual('U78CB.001.WZS007Y-P1-C14-T1',
                          padpt.physical_location)
         self.assertEqual(1089692, padpt.num_reads)
@@ -113,7 +115,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # Storage Virtual Adapter Validation
         vadpt = sample.storage.virt_adpts[0]
-        self.assertEqual('vhost5', vadpt.id)
+        self.assertEqual('vhost5', vadpt.name)
         self.assertEqual('U8247.22L.2125D4A-V1-C7', vadpt.physical_location)
         self.assertEqual(0, vadpt.num_reads)
         self.assertEqual(1, vadpt.num_writes)
@@ -123,7 +125,7 @@ class TestPhypLTM(testtools.TestCase):
 
         # SSP Validation
         ssp = sample.storage.ssps[0]
-        self.assertEqual('ssp1', ssp.id)
+        self.assertEqual('ssp1', ssp.name)
         self.assertEqual(["sissas0"], ssp.pool_disks)
         self.assertEqual(12346, ssp.num_reads)
         self.assertEqual(17542, ssp.num_writes)

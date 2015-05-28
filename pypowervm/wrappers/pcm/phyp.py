@@ -58,37 +58,37 @@ class PhypInfo(object):
 class PhypSample(object):
     """A Power Hypervisor Sample."""
 
-    def __init__(self, utilSample):
-        self.time_stamp = utilSample.get('timeStamp')
-        self.status = utilSample.get('status')
-        self.time_based_cycles = utilSample.get('timeBasedCycles')
+    def __init__(self, util_sample):
+        self.time_stamp = util_sample.get('timeStamp')
+        self.status = util_sample.get('status')
+        self.time_based_cycles = util_sample.get('timeBasedCycles')
 
         # Complex objects
-        sys_f = utilSample.get('systemFirmware')
+        sys_f = util_sample.get('systemFirmware')
         self.system_firmware = (None if sys_f is None
                                 else PhypSystemFirmware(sys_f))
 
-        proc = utilSample.get('processor')
+        proc = util_sample.get('processor')
         self.processor = None if proc is None else PhypSystemProcessor(proc)
 
-        mem = utilSample.get('memory')
+        mem = util_sample.get('memory')
         self.memory = None if mem is None else PhypSystemMemory(mem)
 
         # List of LPARs
-        lpars = utilSample.get('lparsUtil')
+        lpars = util_sample.get('lparsUtil')
         self.lpars = [PhypVMSample(x) for x in lpars]
 
         # List of Virtual I/O Servers
-        vioses = utilSample.get('viosUtil')
+        vioses = util_sample.get('viosUtil')
         self.vioses = [PhypViosSample(x) for x in vioses]
 
 
 class PhypSystemFirmware(object):
     """Firmware information from PHYP."""
 
-    def __init__(self, systemFirmware):
-        self.utilized_proc_cycles = systemFirmware.get('utilizedProcCycles')
-        self.assigned_mem = systemFirmware.get('assignedMem')
+    def __init__(self, system_firmware):
+        self.utilized_proc_cycles = system_firmware.get('utilizedProcCycles')
+        self.assigned_mem = system_firmware.get('assignedMem')
 
 
 class PhypSystemProcessor(object):
@@ -171,8 +171,8 @@ class PhypLparProc(object):
     def __init__(self, proc):
         self.pool_id = proc.get('poolId')
         self.mode = proc.get('mode')
-        self.max_virt_procs = proc.get('maxVirtualProcessors')
-        self.max_proc_units = proc.get('maxProcUnits')
+        self.virt_procs = proc.get('maxVirtualProcessors')
+        self.proc_units = proc.get('maxProcUnits')
         self.weight = proc.get('weight')
         self.entitled_proc_cycles = proc.get('entitledProcCycles')
         self.util_cap_proc_cycles = proc.get('utilizedCappedProcCycles')
