@@ -44,7 +44,7 @@ class TestPhypLTM(testtools.TestCase):
         # Validate some samples
         sample = info.sample
         self.assertEqual(u'2015-05-27T00:22:00+0000', sample.time_stamp)
-        self.assertEqual('1', sample.id)
+        self.assertEqual(1, sample.id)
         self.assertEqual('IOServer - SN2125D4A', sample.name)
 
         # Validate Memory
