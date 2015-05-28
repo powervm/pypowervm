@@ -58,7 +58,8 @@ class ViosSample(object):
 
         # TODO(thorst) Evaluate with multi VIOS.
         vios = utilSample.get('viosUtil')[0]
-        self.id = vios.get('id')
+        # Convert the ID to keep consistent with phyp.
+        self.id = int(vios.get('id'))
         self.name = vios.get('name')
 
         # Complex types
@@ -91,7 +92,7 @@ class ViosNetworkAdpt(object):
     """Represents a Network Adapter on the system."""
 
     def __init__(self, adpt):
-        self.id = adpt.get('id')
+        self.name = adpt.get('id')
         # Type: 'virtual' or 'physical' or 'sea' (if NetworkBridge)
         self.type = adpt.get('type')
         self.physical_location = adpt.get('physicalLocation')
@@ -132,7 +133,7 @@ class ViosStorageAdpt(object):
     """Base class for storage adapters."""
 
     def __init__(self, adpt):
-        self.id = adpt.get('id')
+        self.name = adpt.get('id')
         self.physical_location = adpt.get('physicalLocation')
         self.num_reads = adpt.get('numOfReads')
         self.num_writes = adpt.get('numOfWrites')
@@ -186,7 +187,7 @@ class ViosSSP(object):
     """Represents a Shared Storage Pool (entire element)."""
 
     def __init__(self, ssp):
-        self.id = ssp.get('id')
+        self.name = ssp.get('id')
         self.pool_disks = ssp.get('poolDisks')
         self.num_reads = ssp.get('numOfReads')
         self.num_writes = ssp.get('numOfWrites')
