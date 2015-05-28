@@ -16,9 +16,6 @@
 
 """Utilities around Universally-Unique Identifiers (UUIDs)."""
 
-PVM_BYTE_MAPPING = {'8': '0', '9': '1', 'a': '2', 'b': '3',
-                    'c': '4', 'd': '5', 'e': '6', 'f': '7'}
-
 
 def convert_uuid_to_pvm(uuid):
     """Converts a standard UUID to PowerVM format
@@ -28,10 +25,4 @@ def convert_uuid_to_pvm(uuid):
     :param uuid: A standard format uuid string
     :returns: A PowerVM compliant uuid
     """
-    try:
-        pvm1 = PVM_BYTE_MAPPING[uuid[:1]].lower()
-    except KeyError:
-        pvm1 = uuid[:1]
-
-    pvm_uuid = pvm1 + uuid[1:]
-    return pvm_uuid
+    return "%x%s" % (int(uuid[0], 16) & 7, uuid[1:])
