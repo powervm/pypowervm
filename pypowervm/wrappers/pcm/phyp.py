@@ -171,8 +171,8 @@ class PhypLparProc(object):
     def __init__(self, proc):
         self.pool_id = proc.get('poolId')
         self.mode = proc.get('mode')
-        self.max_virt_procs = proc.get('maxVirtualProcessors')
-        self.max_proc_units = proc.get('maxProcUnits')
+        self.virt_procs = proc.get('maxVirtualProcessors')
+        self.proc_units = proc.get('maxProcUnits')
         self.weight = proc.get('weight')
         self.entitled_proc_cycles = proc.get('entitledProcCycles')
         self.util_cap_proc_cycles = proc.get('utilizedCappedProcCycles')
