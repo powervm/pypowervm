@@ -155,6 +155,39 @@ class TestRetry(unittest.TestCase):
         self.assertEqual(_powervm_update('Req'), 'Req')
         self.assertEqual(called_count, 3)
 
+    def test_retry_argmod(self):
+        global called_count
+        called_count = 0
+
+        def argmod_func(args, kwargs):
+            argl = list(args)
+            argl[0] += 1
+            kwargs['five'] += ' bar'
+            kwargs['seven'] = 7
+            return argl, kwargs
+
+        @pvm_retry.retry(argmod_func=argmod_func,
+                         resp_checker=lambda *a, **kwa: True)
+        def _func(one, two, three='four', five='six', seven=None):
+            global called_count
+            called_count += 1
+            self.assertEqual(20, two)
+            self.assertEqual('four', three)
+            if called_count == 1:
+                self.assertEqual(10, one)
+                self.assertEqual('foo', five)
+                self.assertIsNone(seven)
+            else:
+                self.assertEqual(7, seven)
+                if called_count == 2:
+                    self.assertEqual(11, one)
+                    self.assertEqual('foo bar', five)
+                elif called_count == 3:
+                    self.assertEqual(12, one)
+                    self.assertEqual('foo bar bar', five)
+
+        _func(10, 20, five='foo')
+        self.assertEqual(3, called_count)
 
 if __name__ == "__main__":
     unittest.main()
