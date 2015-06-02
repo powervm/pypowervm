@@ -22,6 +22,7 @@ from pypowervm.tasks import scsi_mapper
 from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
 from pypowervm.wrappers import storage as pvm_stor
+from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
 
@@ -79,6 +80,19 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+
+        # Now do it again, but passing the vios wrapper
+        vios_wrap = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
+        self.adpt.update_by_path.reset_mock()
+        self.adpt.read.reset_mock()
+        scsi_mapper.add_vscsi_mapping('host_uuid', vios_wrap, 'lpar_uuid', pv)
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        # But the VIOS was not "looked up"
+        self.assertEqual(0, self.adpt.read.call_count)
 
     def test_mapping_retry(self):
         """Tests that a mapping function will be retried."""
@@ -163,14 +177,28 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Run the code
         media_name = 'bldr1_dfe05349_kyleh_config.iso'
-        resp = scsi_mapper.remove_vopt_mapping(self.adpt,
-                                               'fake_vios_uuid', 2,
-                                               media_name=media_name)
+        vios, remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.VOptMedia)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+
+        # Now do it again, but passing the vios wrapper
+        vios_wrap = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
+        self.adpt.update_by_path.reset_mock()
+        self.adpt.read.reset_mock()
+        vios, remel = scsi_mapper.remove_vopt_mapping(self.adpt, vios_wrap, 2,
+                                                      media_name=media_name)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
+        # But the VIOS was not "looked up"
+        self.assertEqual(0, self.adpt.read.call_count)
 
     def test_remove_storage_vopt_no_name_specified(self):
         # Mock Data
@@ -186,14 +214,13 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        resp = scsi_mapper.remove_vopt_mapping(self.adpt,
-                                               'fake_vios_uuid', 2,
-                                               media_name=None)
+        vios, remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=None)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.VOptMedia)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
 
     def test_remove_storage_vopt_retry(self):
         """Tests removing the storage vOpt with multiple retries."""
@@ -225,15 +252,14 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Run the code
         media_name = 'bldr1_dfe05349_kyleh_config.iso'
-        resp = scsi_mapper.remove_vopt_mapping(self.adpt,
-                                               'fake_vios_uuid', 2,
-                                               media_name=media_name)
+        vios, remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(3, self.adpt.update_by_path.call_count)
         self.assertEqual(3, attempt_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.VOptMedia)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
 
     def test_remove_storage_vdisk(self):
         # Mock Data
@@ -249,14 +275,13 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        resp = scsi_mapper.remove_vdisk_mapping(self.adpt,
-                                                'fake_vios_uuid', 2,
-                                                disk_names=['Ubuntu1410'])
+        vios, remel = scsi_mapper.remove_vdisk_mapping(
+            self.adpt, 'fake_vios_uuid', 2, disk_names=['Ubuntu1410'])
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.VDisk)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.VDisk)
 
     def test_remove_storage_lu(self):
         # Mock Data
@@ -272,13 +297,13 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        resp = scsi_mapper.remove_lu_mapping(
+        vios, remel = scsi_mapper.remove_lu_mapping(
             self.adpt, 'fake_vios_uuid', 2)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.LU)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.LU)
 
     def test_remove_pv_mapping(self):
         # Mock Data
@@ -294,11 +319,10 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        resp = scsi_mapper.remove_pv_mapping(self.adpt,
-                                             'fake_vios_uuid', 2,
-                                             'hdisk10')
+        vios, remel = scsi_mapper.remove_pv_mapping(
+            self.adpt, 'fake_vios_uuid', 2, 'hdisk10')
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
-        self.assertEqual(1, len(resp))
-        self.assertIsInstance(resp[0], pvm_stor.PV)
+        self.assertEqual(1, len(remel))
+        self.assertIsInstance(remel[0], pvm_stor.PV)
