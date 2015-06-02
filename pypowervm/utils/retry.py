@@ -28,11 +28,12 @@ DFT_RETRY_CODES = frozenset([const.HTTPStatus.ETAG_MISMATCH])
 NO_TEST = lambda *args, **kwds: True
 NO_CHECKER = lambda *args, **kwds: False
 NO_DELAY = lambda *args, **kwds: None
+NO_ARGMOD = lambda this_try, max_tries, *args, **kwds: (args, kwds)
 
 
 def retry(tries=3, delay_func=NO_DELAY,
           retry_except=None, http_codes=DFT_RETRY_CODES, test_func=None,
-          resp_checker=NO_CHECKER, limit_except=None):
+          resp_checker=NO_CHECKER, limit_except=None, argmod_func=NO_ARGMOD):
     """Retry method decorator.
 
     :param tries: The max number of calls to the wrapped method.
@@ -71,6 +72,21 @@ def retry(tries=3, delay_func=NO_DELAY,
             True means to retry the decorated method.
     :param limit_except: An exception to raise if the number of tries is
         exhausted.
+    :param argmod_func: A method to call after delay_func, before retrying, to
+                        modify the arguments to the main method.  The input
+                        parameters are:
+                            - the number of the current try
+                            - the maximum number of tries
+                            - the non-keyword arguments to the decorated method
+                            - the keyword arguments to the decorated method
+                        The return is expected to a list and a dict of the
+                        new arguments to the decorated method.
+                        Example:
+                        def argmod(t, m, *a, **k):
+                            l = list(a)
+                            l[0] += 1
+                            k['foo'] = bar
+                            return l, k
     :returns: The return value of the wrapped method.
     """
     def _retry(func):
@@ -99,6 +115,7 @@ def retry(tries=3, delay_func=NO_DELAY,
             _test_func = test_func
             _resp_checker = resp_checker
             _limit_except = limit_except
+            _argmod_func = argmod_func
 
             if _retry_except is None:
                 _retry_except = ()
@@ -129,5 +146,7 @@ def retry(tries=3, delay_func=NO_DELAY,
                         _test_retry(e)
                 # If we get here then we're going to retry
                 delay_func(try_, _tries, *args, **kwds)
+                # Adjust arguments if necessary
+                args, kwds = _argmod_func(try_, _tries, *args, **kwds)
         return __retry
     return _retry
