@@ -49,10 +49,10 @@ class TestPCM(twrap.TestWrapper):
         self.assertTrue(pcm_wrap.compute_ltm_enabled)
 
 
-class TestLongTermMonitorMetrics(twrap.TestWrapper):
+class TestLTMMetrics(twrap.TestWrapper):
 
     file = 'ltm_feed.txt'
-    wrapper_class_to_test = monitor.LongTermMonitorMetrics
+    wrapper_class_to_test = monitor.LTMMetrics
 
     def test_ltm_metrics(self):
         link = ('https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed'
@@ -70,14 +70,14 @@ class TestLongTermMonitorMetrics(twrap.TestWrapper):
         self.assertEqual(link, wrap.link)
 
         # Test wrapping just one entry and we should get the same data
-        wrap = monitor.LongTermMonitorMetrics.wrap(self.entries[0].entry)
+        wrap = monitor.LTMMetrics.wrap(self.entries[0].entry)
         self.assertEqual(link, wrap.link)
 
 
-class TestShortTermMonitorMetrics(twrap.TestWrapper):
+class TestSTMMetrics(twrap.TestWrapper):
 
     file = 'stm_feed.txt'
-    wrapper_class_to_test = monitor.ShortTermMonitorMetrics
+    wrapper_class_to_test = monitor.STMMetrics
 
     def test_stm_metrics(self):
         link = ('https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed'
@@ -99,5 +99,5 @@ class TestShortTermMonitorMetrics(twrap.TestWrapper):
         self.assertEqual(link, wrap.link)
 
         # Test wrapping just one entry and we should get the same data
-        wrap = monitor.ShortTermMonitorMetrics.wrap(self.entries[0].entry)
+        wrap = monitor.STMMetrics.wrap(self.entries[0].entry)
         self.assertEqual(link, wrap.link)
