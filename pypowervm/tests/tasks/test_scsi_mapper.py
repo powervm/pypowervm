@@ -25,6 +25,7 @@ from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
+LPAR_UUID = '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC'
 
 
 class TestSCSIMapper(testtools.TestCase):
@@ -40,8 +41,8 @@ class TestSCSIMapper(testtools.TestCase):
                                           'VSCSIMapping.crt_related_href')
         self.mock_crt_href = self.mock_crt_href_p.start()
         href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
-                'c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/'
-                '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC')
+                'c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/' +
+                LPAR_UUID)
         self.mock_crt_href.return_value = href
 
         # Mock the delay function, by overriding the sleep
@@ -56,8 +57,8 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        vio_resp = tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)
+        self.adpt.read.return_value = vio_resp
 
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
@@ -75,7 +76,7 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
                                       pv)
 
         # Make sure that our validation code above was invoked
@@ -84,14 +85,13 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.read.call_count)
 
         # Now do it again, but passing the vios wrapper
-        vios_wrap = pvm_vios.VIOS.wrap(
-            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
+        vios_wrap = pvm_vios.VIOS.wrap(vio_resp)
         self.adpt.update_by_path.reset_mock()
         self.adpt.read.reset_mock()
-        scsi_mapper.add_vscsi_mapping('host_uuid', vios_wrap, 'lpar_uuid', pv)
-        # Make sure that our validation code above was invoked
-        self.assertEqual(1, self.adpt.update_by_path.call_count)
-        # But the VIOS was not "looked up"
+        scsi_mapper.add_vscsi_mapping('host_uuid', vios_wrap, LPAR_UUID, pv)
+        # Since the mapping already existed, our update mock was not called
+        self.assertEqual(0, self.adpt.update_by_path.call_count)
+        # And the VIOS was not "looked up"
         self.assertEqual(0, self.adpt.read.call_count)
 
     def test_mapping_retry(self):
@@ -125,7 +125,7 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
                                       pv)
 
         # Make sure that our validation code above was invoked
@@ -156,7 +156,7 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', 'lpar_uuid',
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
                                       pv, fuse_limit=4)
 
         # Make sure that our validation code above was invoked
@@ -193,8 +193,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.reset_mock()
         self.adpt.read.reset_mock()
         vios, remel = scsi_mapper.remove_vopt_mapping(
-            self.adpt, vios_wrap, '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC',
-            media_name=media_name)
+            self.adpt, vios_wrap, LPAR_UUID, media_name=media_name)
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)

@@ -81,6 +81,20 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
                          xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
 
+    def match_func(stg_el):
+        return (stg_el.schema_type == storage_elem.schema_type and
+                stg_el.name == storage_elem.name)
+
+    if find_maps(vios.scsi_mappings, lpar_uuid, match_func):
+        LOG.info(_("Found existing mapping of %(stg_type)s storage element "
+                   "%(stg_name)s from Virtual I/O Server %(vios_name)s to "
+                   "client LPAR %(lpar_uuid)s."),
+                 {'stg_type': storage_elem.schema_type,
+                  'stg_name': storage_elem.name,
+                  'vios_name': vios.name,
+                  'lpar_uuid': lpar_uuid})
+        return vios
+
     # Get the client lpar href
     lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
                                                        lpar_uuid)
@@ -115,6 +129,13 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     # and server adapter.  It may be the original (which creates a new client
     # and server pair).
     vios.scsi_mappings.append(scsi_map)
+    LOG.info(_("Creating mapping of %(stg_type)s storage element %(stg_name)s "
+               "from Virtual I/O Server %(vios_name)s to client LPAR "
+               "%(lpar_uuid)s."),
+             {'stg_type': storage_elem.schema_type,
+              'stg_name': storage_elem.name,
+              'vios_name': vios.name,
+              'lpar_uuid': lpar_uuid})
     return vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
 
