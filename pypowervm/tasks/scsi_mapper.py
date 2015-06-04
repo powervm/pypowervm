@@ -17,10 +17,13 @@
 """Manage mappings of virtual storage devices from VIOS to LPAR."""
 
 import logging
+import re
 
 from oslo_concurrency import lockutils as lock
 
+from pypowervm import const
 from pypowervm.i18n import _
+from pypowervm import util
 from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
@@ -43,8 +46,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(argmod_func=_argmod)
-def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem,
-                      fuse_limit=32):
+def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -141,6 +143,27 @@ def _separate_mappings(vios_w, client_href):
     return resp
 
 
+def _id_or_uuid(lpar_id):
+    """Sanitizes an LPAR short ID or string UUID, and indicates which was used.
+
+    Use as:
+        is_uuid, lpar_id = _id_or_uuid(lpar_id)
+        if is_uuid:  # lpar_id is a string UUID
+        else:  # lpar_id is LPAR short ID of type int
+
+    :param lpar_id: LPAR short ID (may be string or int) or string UUID.
+    :return: Boolean.  If True, the other return is a UUID string.  If False,
+                       it is an integer.
+    """
+    if isinstance(lpar_id, str) and re.match(const.UUID_REGEX, lpar_id):
+        is_uuid = True
+        ret_id = lpar_id
+    else:
+        is_uuid = False
+        ret_id = int(lpar_id)
+    return is_uuid, ret_id
+
+
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(argmod_func=_argmod)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
@@ -155,7 +178,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the SCSI_MAPPING extended attribute group.
-    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param match_func: Matching function suitable for passing to find_maps.
                        See that method's match_func parameter.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
@@ -173,7 +196,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     matching_maps = find_maps(
         existing_scsi_mappings, client_lpar_id, match_func)
     if len(matching_maps) == 0:
-        return []
+        return vios, []
 
     # Remove each invalid map.
     resp_list = []
@@ -181,10 +204,11 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
         existing_scsi_mappings.remove(matching_map)
         resp_list.append(matching_map.backing_storage)
 
-    # Update the VIOS
-    vios = vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    # Update the VIOS, but only if we actually removed mappings
+    if resp_list:
+        vios = vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
-    # return the list of removed elements
+    # return the (possibly updated) VIOS and the list of removed elements.
     return vios, resp_list
 
 
@@ -219,10 +243,10 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
 
 
 def find_maps(mapping_list, client_lpar_id, match_func):
-    """Filter a list of scsi mappings by LPAR ID and a matching function.
+    """Filter a list of scsi mappings by LPAR ID/UUID and a matching function.
 
     :param mapping_list: The mappings to filter.  Iterable of VSCSIMapping.
-    :param client_lpar_id: Integer short ID (not UUID) of the LPAR on the
+    :param client_lpar_id: Integer short ID or string UUID of the LPAR on the
                            client side of the mapping.
     :param match_func: Callable with the following specification:
         def match_func(storage_elem)
@@ -234,15 +258,20 @@ def find_maps(mapping_list, client_lpar_id, match_func):
              client LPAR IDs match client_lpar_id and whose backing storage
              elements satisfy match_func.
     """
+    is_uuid, client_id = _id_or_uuid(client_lpar_id)
     matching_maps = []
     for existing_scsi_map in mapping_list:
         # No client, continue on.
         if existing_scsi_map.client_adapter is None:
             continue
 
-        # If to a different VM, continue on.  client_lpar_id was converted
-        # to a str above.
-        if existing_scsi_map.client_adapter.lpar_id != int(client_lpar_id):
+        # If to a different VM, continue on.
+        if (is_uuid and
+                client_id != util.get_req_path_uuid(
+                    existing_scsi_map.client_lpar_href, preserve_case=True)):
+                continue
+        elif (not is_uuid and
+                existing_scsi_map.client_adapter.lpar_id != client_id):
             continue
 
         if match_func(existing_scsi_map.backing_storage):
@@ -263,7 +292,7 @@ def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the SCSI_MAPPING extended attribute group.
-    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param media_name: (Optional) The name of the virtual optical media to
                        remove from the SCSI bus.  If None, will remove all
                        virtual optical media from this client lpar.
@@ -290,7 +319,7 @@ def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the SCSI_MAPPING extended attribute group.
-    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the virtual disk to remove
                        from the SCSI bus.  If None, all virtual disks will be
                        removed from the LPAR.
@@ -320,7 +349,7 @@ def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the SCSI_MAPPING extended attribute group.
-    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the LUs to remove from
                        the SCSI bus.  If None, all LUs asssociated with the
                        LPAR will be removed.
@@ -349,7 +378,7 @@ def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev):
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the SCSI_MAPPING extended attribute group.
-    :param client_lpar_id: The integer short ID (not UUID) of the client VM.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param backing_dev: The physical volume name to be removed.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.

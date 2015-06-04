@@ -187,13 +187,14 @@ class TestSCSIMapper(testtools.TestCase):
         # And the VIOS was "looked up"
         self.assertEqual(1, self.adpt.read.call_count)
 
-        # Now do it again, but passing the vios wrapper
+        # Now do it again, but passing the vios wrapper and the client UUID
         vios_wrap = pvm_vios.VIOS.wrap(
             tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
         self.adpt.update_by_path.reset_mock()
         self.adpt.read.reset_mock()
-        vios, remel = scsi_mapper.remove_vopt_mapping(self.adpt, vios_wrap, 2,
-                                                      media_name=media_name)
+        vios, remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, vios_wrap, '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC',
+            media_name=media_name)
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
