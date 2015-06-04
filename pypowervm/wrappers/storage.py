@@ -324,6 +324,11 @@ class VOptMedia(ewrap.ElementWrapper):
     def media_name(self):
         return self._get_val_str(VOPT_NAME)
 
+    @property
+    def name(self):
+        """Same as media_name - for consistency with other storage types."""
+        return self.media_name
+
     def _media_name(self, new_name):
         self.set_parm_value(VOPT_NAME, new_name)
 
