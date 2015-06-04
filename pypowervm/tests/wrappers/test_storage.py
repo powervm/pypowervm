@@ -47,6 +47,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(2, len(vopts))
 
         self.assertEqual('blank_media1', vopts[0].media_name)
+        self.assertEqual('blank_media1', vopts[0].name)
         self.assertEqual(0.0977, vopts[0].size)
         self.assertEqual('0eblank_media1', vopts[0].udid)
         self.assertEqual('rw', vopts[0].mount_type)
@@ -164,6 +165,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         # Check the attributes
         media = media_repos[0].optical_media[2]
         self.assertEqual('name', media.media_name)
+        self.assertEqual('name', media.name)
         self.assertEqual(0.123, media.size)
         self.assertEqual('r', media.mount_type)
 
