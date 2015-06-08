@@ -48,7 +48,7 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
                 resp = e.response
                 # See if the system was busy
 
-                if resp.body and resp.entry:
+                if resp and resp.body and resp.entry:
                     wrap = ew.EntryWrapper.wrap(resp.entry)
                     if (isinstance(wrap, he.HttpError) and
                             wrap.is_vios_busy()):

@@ -62,3 +62,14 @@ class TestVIOSBusyHelper(unittest.TestCase):
                           body='the body', helpers=hlp)
         # Should have tried 'retries' times plus the initial one
         self.assertEqual(mock_sess.request.call_count, retries+1)
+
+        # Test with None response
+        mock_sess.reset_mock()
+        error = pvmex.Error('yo', response=None)
+        mock_sess.request.side_effect = error
+        hlp = functools.partial(vios_busy.vios_busy_retry_helper,
+                                max_retries=1, delay=15)
+        self.assertRaises(pvmex.Error, adpt._request, 'method', 'path',
+                          body='the body', helpers=hlp)
+        # There should be no retries since the response was None
+        self.assertEqual(mock_sess.request.call_count, 1)
