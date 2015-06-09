@@ -16,6 +16,7 @@
 
 """Test for the monitoring functions."""
 
+import datetime
 import os
 
 import mock
@@ -155,3 +156,148 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNotNone(metric.memory)
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
+
+
+class TestMetricsCache(testtools.TestCase):
+    """Validates the LparMetricCache."""
+
+    def setUp(self):
+        super(TestMetricsCache, self).setUp()
+
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
+        self.adpt = self.adptfx.adpt
+
+    @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
+    @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
+    @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
+    def test_parse_current_feed(self, mock_ensure_monitor, mock_ltm_feed,
+                                mock_vm_metrics):
+        # Build cache with original mock
+        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
+                                                 refresh_delta=.25)
+
+        # Set up the return data.
+        mock_phyp_metric = mock.MagicMock()
+        mock_phyp_metric.category = 'phyp'
+        mock_phyp_metric.updated_datetime = 1
+
+        mock_phyp2_metric = mock.MagicMock()
+        mock_phyp2_metric.category = 'phyp'
+        mock_phyp2_metric.updated_datetime = 2
+
+        mock_vio1_metric = mock.MagicMock()
+        mock_vio1_metric.category = 'vios_1'
+        mock_vio1_metric.updated_datetime = 1
+
+        mock_vio2_metric = mock.MagicMock()
+        mock_vio2_metric.category = 'vios_1'
+        mock_vio2_metric.updated_datetime = 2
+
+        mock_vio3_metric = mock.MagicMock()
+        mock_vio3_metric.category = 'vios_3'
+        mock_vio3_metric.updated_datetime = 2
+
+        # Reset as this was invoked once up front.
+        mock_ltm_feed.reset_mock()
+        mock_ltm_feed.return_value = [mock_phyp_metric, mock_phyp2_metric,
+                                      mock_vio1_metric, mock_vio2_metric,
+                                      mock_vio3_metric]
+
+        # Set up a validate
+        def validate_read(adpt, latest_phyp, vios_metrics):
+            self.assertEqual(2, len(vios_metrics))
+            self.assertEqual([mock_vio2_metric, mock_vio3_metric],
+                             vios_metrics)
+            self.assertEqual(mock_phyp2_metric, latest_phyp)
+        mock_vm_metrics.side_effect = validate_read
+
+        resp_date, resp_response = metric_cache._parse_current_feed()
+        self.assertIsNotNone(resp_date)
+
+    @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
+    @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
+    @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
+    def test_parse_current_feed_no_data(self, mock_ensure_monitor,
+                                        mock_ltm_feed, mock_vm_metrics):
+        # Build cache with original mock
+        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
+                                                 refresh_delta=.25)
+
+        # Set up the return data.
+        mock_vio3_metric = mock.MagicMock()
+        mock_vio3_metric.category = 'vios_3'
+        mock_vio3_metric.updated_datetime = 2
+
+        # Reset as this was invoked once up front.
+        mock_ltm_feed.reset_mock()
+        mock_ltm_feed.return_value = [mock_vio3_metric]
+
+        # Call the system.
+        resp_date, resp_response = metric_cache._parse_current_feed()
+        self.assertIsNotNone(resp_date)
+        self.assertIsNone(resp_response)
+
+    @mock.patch('pypowervm.tasks.monitor.util.LparMetricCache.'
+                '_parse_current_feed')
+    @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
+    def test_refresh(self, mock_ensure_monitor, mock_parse):
+        ret1 = None
+        ret2 = {'lpar_uuid': 2}
+        ret3 = {'lpar_uuid': 3}
+
+        date_ret1 = datetime.datetime.now()
+        date_ret2 = date_ret1 + datetime.timedelta(milliseconds=250)
+        date_ret3 = date_ret2 + datetime.timedelta(milliseconds=250)
+
+        mock_parse.side_effect = [(date_ret1, ret1), (date_ret2, ret2),
+                                  (date_ret3, ret3)]
+
+        # Creation invokes the refresh once automatically.
+        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
+                                                 refresh_delta=.25)
+
+        # Make sure the current and prev are none.
+        self.assertEqual(date_ret1, metric_cache.cur_date)
+        self.assertIsNone(metric_cache.cur_metric)
+        self.assertIsNone(metric_cache.prev_date)
+        self.assertIsNone(metric_cache.prev_metric)
+
+        # The current metric should detect that it hasn't been enough time
+        # and pass us none.
+        cur_date, cur_metric = metric_cache.get_latest_metric('lpar_uuid')
+        self.assertEqual(date_ret1, cur_date)
+        self.assertIsNone(cur_metric)
+        prev_date, prev_metric = metric_cache.get_previous_metric('lpar_uuid')
+        self.assertIsNone(prev_date)
+        self.assertIsNone(prev_metric)
+
+        # Force the update by stating we're older than we are.
+        pre_date = metric_cache.cur_date - datetime.timedelta(milliseconds=250)
+        metric_cache.cur_date = pre_date
+
+        # Verify that we've incremented
+        cur_date, cur_metric = metric_cache.get_latest_metric('lpar_uuid')
+        self.assertEqual(date_ret2, cur_date)
+        self.assertEqual(2, cur_metric)
+        prev_date, prev_metric = metric_cache.get_previous_metric('lpar_uuid')
+        self.assertEqual(pre_date, prev_date)
+        self.assertIsNone(prev_metric)
+
+        # Verify that if we set the date to now, we don't increment
+        metric_cache.cur_date = datetime.datetime.now()
+        cur_date, cur_metric = metric_cache.get_latest_metric('lpar_uuid')
+        self.assertEqual(2, cur_metric)
+        prev_date, prev_metric = metric_cache.get_previous_metric('lpar_uuid')
+        self.assertEqual(pre_date, prev_date)
+        self.assertIsNone(prev_metric)
+
+        # Delay one more time.  Make sure the previous values are now set.
+        pre_date = metric_cache.cur_date - datetime.timedelta(milliseconds=250)
+        metric_cache.cur_date = pre_date
+
+        cur_date, cur_metric = metric_cache.get_latest_metric('lpar_uuid')
+        self.assertEqual(date_ret3, cur_date)
+        self.assertEqual(3, cur_metric)
+        prev_date, prev_metric = metric_cache.get_previous_metric('lpar_uuid')
+        self.assertEqual(pre_date, prev_date)
+        self.assertEqual(2, prev_metric)

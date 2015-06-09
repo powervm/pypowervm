@@ -30,6 +30,7 @@ class LparMetric(object):
     def __init__(self, uuid):
         """Creates a LPAR Metric.  Data will be set by invoker.
 
+         - uuid - The LPAR's UUID.
          - memory - The LPAR's memory statistics.
          - processor - The LPAR's processor statistics.
          - network - The LparNetwork aggregation of network statistics.
