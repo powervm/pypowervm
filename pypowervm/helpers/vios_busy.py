@@ -45,19 +45,21 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
                 # Call the request()
                 resp = func(*args, **kwds)
             except pvmex.Error as e:
-                resp = e.response
-                # See if the system was busy
+                # See if there are any retries left.
+                if retries >= max_retries:
+                    raise
 
-                if resp.body and resp.entry:
+                # See if the system was busy
+                resp = e.response
+                if resp and resp.body and resp.entry:
                     wrap = ew.EntryWrapper.wrap(resp.entry)
                     if (isinstance(wrap, he.HttpError) and
                             wrap.is_vios_busy()):
                         retries += 1
-                        if retries <= max_retries:
-                            # Wait a few seconds before trying again, scaling
-                            # out the delay based on the retry count.
-                            SLEEP(delay * retries)
-                            continue
+                        # Wait a few seconds before trying again, scaling
+                        # out the delay based on the retry count.
+                        SLEEP(delay * retries)
+                        continue
                 # Doesn't look like a VIOS busy error, so just raise it.
                 raise
             else:
