@@ -39,7 +39,7 @@ class TestMonitors(testtools.TestCase):
         self.adpt = self.adptfx.adpt
 
     def test_query_ltm_feed(self):
-        self.adpt.read_by_href.return_value = tju.load_file('ltm_feed.txt')
+        self.adpt.read_by_path.return_value = tju.load_file('ltm_feed.txt')
         feed = pvm_t_mon.query_ltm_feed(self.adpt, 'host_uuid')
 
         # Make sure the feed is correct.  Our sample data has 130 elements
@@ -50,7 +50,7 @@ class TestMonitors(testtools.TestCase):
         for mon in feed:
             self.assertIsInstance(mon, pvm_mon.LTMMetrics)
 
-        self.assertEqual(1, self.adpt.read_by_href.call_count)
+        self.assertEqual(1, self.adpt.read_by_path.call_count)
 
     def test_ensure_ltm_monitors(self):
         """Verifies that the LTM monitors can be turned on."""
@@ -93,11 +93,14 @@ class TestMonitors(testtools.TestCase):
         phyp_resp = self._load('../../wrappers/pcm/data/phyp_data.txt')
 
         mock_phyp = mock.MagicMock()
-        mock_vioses = [mock.MagicMock()]
+        mock_phyp.body = phyp_resp
+        mock_vios = mock.MagicMock()
+        mock_vios.body = vios_resp
 
-        self.adpt.read_by_href.side_effect = [phyp_resp, vios_resp]
+        self.adpt.read_by_href.side_effect = [mock_phyp, mock_vios]
 
-        metrics = pvm_t_mon.vm_metrics(self.adpt, mock_phyp, mock_vioses)
+        metrics = pvm_t_mon.vm_metrics(self.adpt, mock.MagicMock(),
+                                       [mock.MagicMock()])
         self.assertIsNotNone(metrics)
 
         # In the test data, there are 5 LPARs total.
