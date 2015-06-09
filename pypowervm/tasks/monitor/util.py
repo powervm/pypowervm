@@ -19,6 +19,7 @@
 
 import datetime
 
+from pypowervm import adapter as pvm_adpt
 from pypowervm.tasks.monitor import lpar as lpar_mon
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import monitor as pvm_mon
@@ -210,11 +211,10 @@ def query_ltm_feed(adapter, host_uuid):
     :return: A list of the LTMMetrics.  Note that both PHYP and VIOS entries
              are returned (assuming both are enabled).
     """
-    href = adapter.build_href(pvm_ms.System.schema_type, root_id=host_uuid,
-                              child_type=RAW_METRICS,
-                              child_id=pvm_mon.LONG_TERM_MONITOR,
-                              service=pvm_mon.PCM_SERVICE)
-    resp = adapter.read_by_href(href)
+    path = pvm_adpt.Adapter.build_path(
+        pvm_mon.PCM_SERVICE, pvm_ms.System.schema_type, root_id=host_uuid,
+        child_type=RAW_METRICS, child_id=pvm_mon.LONG_TERM_MONITOR, xag=[])
+    resp = adapter.read_by_path(path)
     return pvm_mon.LTMMetrics.wrap(resp)
 
 
