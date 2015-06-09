@@ -229,11 +229,10 @@ def query_ltm_feed(adapter, host_uuid):
     :return: A list of the LTMMetrics.  Note that both PHYP and VIOS entries
              are returned (assuming both are enabled).
     """
-    href = adapter.build_href(pvm_ms.System.schema_type, root_id=host_uuid,
-                              child_type=RAW_METRICS,
-                              child_id=pvm_mon.LONG_TERM_MONITOR,
-                              service=pvm_mon.PCM_SERVICE)
-    resp = adapter.read_by_href(href)
+    path = pvm_adpt.Adapter.build_path(
+        pvm_mon.PCM_SERVICE, pvm_ms.System.schema_type, root_id=host_uuid,
+        child_type=RAW_METRICS, child_id=pvm_mon.LONG_TERM_MONITOR, xag=[])
+    resp = adapter.read_by_path(path)
     return pvm_mon.LTMMetrics.wrap(resp)
 
 
@@ -297,8 +296,9 @@ def vm_metrics(adapter, phyp_ltm, vios_ltms):
                      between gathers).  Always validate that data is 'not
                      None' before use.
     """
-    phyp = phyp_mon.PhypInfo(adapter.read_by_href(phyp_ltm.link))
-    vioses = [vios_mon.ViosInfo(adapter.read_by_href(x.link))
+    phyp_json = adapter.read_by_href(phyp_ltm.link, xag=[]).body
+    phyp = phyp_mon.PhypInfo(phyp_json)
+    vioses = [vios_mon.ViosInfo(adapter.read_by_href(x.link).body)
               for x in vios_ltms]
 
     vm_data = {}
