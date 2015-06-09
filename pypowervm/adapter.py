@@ -701,7 +701,7 @@ class Adapter(object):
 
     def read_by_href(self, href, suffix_type=None, suffix_parm=None,
                      detail=None, etag=None, timeout=-1, auditmemento=None,
-                     age=-1, sensitive=False, helpers=None):
+                     age=-1, sensitive=False, helpers=None, xag=None):
         """Retrieve an existing resource based on a link's href."""
         o = urlparse.urlparse(href)
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
@@ -709,7 +709,7 @@ class Adapter(object):
             LOG.debug('href=%s will be modified to use %s:%s' %
                       (href, self.session.host, self.session.port))
         path = self.extend_path(util.dice_href(href), suffix_type, suffix_parm,
-                                detail)
+                                detail, xag=xag)
         return self.read_by_path(path, etag=etag, timeout=timeout,
                                  auditmemento=auditmemento, age=age,
                                  sensitive=sensitive, helpers=helpers)
