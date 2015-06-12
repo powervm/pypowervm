@@ -369,7 +369,7 @@ class VSCSIMapping(VStorageMapping):
     def bld_from_existing(cls, existing_map, stg_ref):
         """Clones the existing mapping, but swaps in the new storage elem."""
         new_map = copy.deepcopy(existing_map)
-        new_map._backing_storage(stg_ref)
+        new_map._backing_storage(copy.deepcopy(stg_ref))
         return new_map
 
     @property
