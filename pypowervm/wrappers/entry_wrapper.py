@@ -723,6 +723,10 @@ class EntryWrapper(Wrapper):
                 _("Must specify both parent type and UUID, or neither."))
         return self.wrap(resp)
 
+    def delete(self):
+        """Performs an adapter.delete (REST API PUT) with this wrapper."""
+        self.adapter.delete_by_href(self.href, etag=self.etag)
+
     def update(self, xag=None):
         """Performs adapter.update of this wrapper.
 

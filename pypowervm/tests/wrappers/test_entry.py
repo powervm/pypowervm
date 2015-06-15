@@ -837,6 +837,26 @@ class TestUpdate(testtools.TestCase):
         self.assertEqual(newcl.etag, new_etag)
 
 
+class TestDelete(testtools.TestCase):
+    def setUp(self):
+        super(TestDelete, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+
+    def test_delete(self):
+        vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
+        vswitch.entry = mock.MagicMock()
+        vswitch.entry.href = 'test'
+        vswitch.entry.etag = 5
+
+        def validate_delete(uri, etag):
+            self.assertEqual('test', uri)
+            self.assertEqual(5, etag)
+            return
+
+        self.adpt.delete_by_href.side_effect = validate_delete
+        vswitch.delete()
+
+
 class TestCreate(testtools.TestCase):
     def setUp(self):
         super(TestCreate, self).setUp()
