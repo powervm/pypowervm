@@ -724,7 +724,11 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     def delete(self):
-        """Performs an adapter.delete (REST API PUT) with this wrapper."""
+        """Performs an adapter.delete (REST API PUT) with this wrapper.
+
+        After this method is run, the wrapper will no longer be valid.
+        """
+        # TODO(thorst/clbush) Return something here?  Wrapper or...?
         self.adapter.delete_by_href(self.href, etag=self.etag)
 
     def update(self, xag=None):
