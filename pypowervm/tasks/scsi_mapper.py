@@ -81,11 +81,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
                          xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
 
-    def match_func(stg_el):
-        return (stg_el.schema_type == storage_elem.schema_type and
-                stg_el.name == storage_elem.name)
-
-    if find_maps(vios.scsi_mappings, lpar_uuid, match_func):
+    if find_maps(vios.scsi_mappings, lpar_uuid, stg_elem=storage_elem):
         LOG.info(_("Found existing mapping of %(stg_type)s storage element "
                    "%(stg_name)s from Virtual I/O Server %(vios_name)s to "
                    "client LPAR %(lpar_uuid)s."),
@@ -215,7 +211,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     # Find and remove each matching map.
     resp_list = []
     for matching_map in find_maps(
-            vios.scsi_mappings, client_lpar_id, match_func):
+            vios.scsi_mappings, client_lpar_id, match_func=match_func):
         vios.scsi_mappings.remove(matching_map)
         resp_list.append(matching_map.backing_storage)
 
@@ -257,22 +253,46 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
     return match_func
 
 
-def find_maps(mapping_list, client_lpar_id, match_func):
+def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
     """Filter a list of scsi mappings by LPAR ID/UUID and a matching function.
 
     :param mapping_list: The mappings to filter.  Iterable of VSCSIMapping.
     :param client_lpar_id: Integer short ID or string UUID of the LPAR on the
                            client side of the mapping.
     :param match_func: Callable with the following specification:
+
         def match_func(storage_elem)
             param storage_elem: A backing storage element wrapper (VOpt, VDisk,
                                 PV, or LU) to be analyzed.
             return: True if the storage_elem's mapping should be included;
                     False otherwise.
+
+                       If neither match_func nor stg_elem is specified, the
+                       default is to match everything - that is, find_maps will
+                       return all mappings for the specified client_lpar_id.
+                       It is illegal to specify both match_func and stg_elem.
+    :param stg_elem: Match mappings associated with a specific storage element.
+                     Effectively, this generates a default match_func which
+                     matches on the type and name of the storage element.
+                     If neither match_func nor stg_elem is specified, the
+                     default is to match everything - that is, find_maps will
+                     return all mappings for the specified client_lpar_id.
+                     It is illegal to specify both match_func and stg_elem.
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id and whose backing storage
              elements satisfy match_func.
+    :raise ValueError: If both match_func and stg_elem are specified.
     """
+    if match_func and stg_elem:
+        raise ValueError(_("Must not specify both match_func and stg_elem."))
+    if not match_func:
+        # Default no filter
+        match_func = lambda x: True
+    if stg_elem:
+        # Match storage element on type and name
+        match_func = lambda stg_el: (stg_el.schema_type == stg_elem.schema_type
+                                     and stg_el.name == stg_elem.name)
+
     is_uuid, client_id = _id_or_uuid(client_lpar_id)
     matching_maps = []
     for existing_scsi_map in mapping_list:

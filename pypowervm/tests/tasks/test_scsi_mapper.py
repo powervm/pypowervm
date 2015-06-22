@@ -36,24 +36,19 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
         # Fake URI
-        self.mock_crt_href_p = mock.patch('pypowervm.wrappers.'
-                                          'virtual_io_server.'
-                                          'VSCSIMapping.crt_related_href')
-        self.mock_crt_href = self.mock_crt_href_p.start()
+        mock_crt_href_p = mock.patch('pypowervm.wrappers.virtual_io_server.'
+                                     'VSCSIMapping.crt_related_href')
+        self.mock_crt_href = mock_crt_href_p.start()
+        self.addCleanup(mock_crt_href_p.stop)
         href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                 'c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/' +
                 LPAR_UUID)
         self.mock_crt_href.return_value = href
 
         # Mock the delay function, by overriding the sleep
-        self.mock_delay_p = mock.patch('time.sleep')
-        self.mock_delay = self.mock_delay_p.start()
-
-    def tearDown(self):
-        # End patching
-        self.mock_crt_href_p.stop()
-        self.mock_delay_p.stop()
-        super(TestSCSIMapper, self).tearDown()
+        mock_delay_p = mock.patch('time.sleep')
+        self.mock_delay = mock_delay_p.start()
+        self.addCleanup(mock_delay_p.stop)
 
     def test_mapping(self):
         # Mock Data
@@ -326,3 +321,34 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.PV)
+
+    def test_find_maps(self):
+        """find_maps() tests not covered elsewhere."""
+        maps = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)).scsi_mappings
+        # Specifying both match_func and stg_elem raises ValueError
+        self.assertRaises(ValueError, scsi_mapper.find_maps, maps, 1,
+                          match_func=isinstance, stg_elem='foo')
+        # Omitting match_func and stg_elem matches all entries with specified
+        # LPAR ID.
+        # For LPAR ID 2, that should be all of 'em.
+        matches = scsi_mapper.find_maps(maps, 2)
+        self.assertEqual(len(maps), len(matches))
+        for exp, act in zip(maps, matches):
+            self.assertEqual(exp, act)
+        # For the right LPAR UUID, that should be all of 'em.
+        matches = scsi_mapper.find_maps(maps, LPAR_UUID)
+        self.assertEqual(len(maps), len(matches))
+        for exp, act in zip(maps, matches):
+            self.assertEqual(exp, act)
+        # For the wrong LPAR ID, it should be none of 'em.
+        matches = scsi_mapper.find_maps(maps, 1)
+        self.assertEqual(0, len(matches))
+        # For the wrong LPAR UUID, it should be none of 'em.
+        matches = scsi_mapper.find_maps(maps, LPAR_UUID[:36] + '0')
+        self.assertEqual(0, len(matches))
+        # Specific storage element generates match func for that element.
+        matches = scsi_mapper.find_maps(maps, 2,
+                                        stg_elem=maps[2].backing_storage)
+        self.assertEqual(1, len(matches))
+        self.assertEqual(maps[2], matches[0])
