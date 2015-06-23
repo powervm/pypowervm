@@ -10,3 +10,4 @@ cover/
 *.sw[pon]
 *.*~
 .gitreview
+.sonar/
