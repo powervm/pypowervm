@@ -9,6 +9,12 @@ being developed openly and a 1.0 version will be declared when it is mature.
 Any versions under 1.0 are not supported in any form and should not be used
 in production or development environments.
 
+See the VERSION.rst for detailed information about current version.
+
+Current versions should utilize the local authentication mechanism.  The remote
+authentication mechanism is intended only for development and test purposes for
+the time being.
+
 Overview
 --------
 pypowervm provides a Python based API wrapper for interaction with IBM
