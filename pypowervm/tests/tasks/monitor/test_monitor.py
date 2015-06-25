@@ -160,25 +160,9 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
 
-
-class TestMetricsCache(testtools.TestCase):
-    """Validates the LparMetricCache."""
-
-    def setUp(self):
-        super(TestMetricsCache, self).setUp()
-
-        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
-        self.adpt = self.adptfx.adpt
-
     @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
-    @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
-    def test_parse_current_feed(self, mock_ensure_monitor, mock_ltm_feed,
-                                mock_vm_metrics):
-        # Build cache with original mock
-        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
-                                                 refresh_delta=.25)
-
+    def test_latest_stats(self, mock_ltm_feed, mock_vm_metrics):
         # Set up the return data.
         mock_phyp_metric = mock.MagicMock()
         mock_phyp_metric.category = 'phyp'
@@ -214,18 +198,14 @@ class TestMetricsCache(testtools.TestCase):
             self.assertEqual(mock_phyp2_metric, latest_phyp)
         mock_vm_metrics.side_effect = validate_read
 
-        resp_date, resp_response = metric_cache._parse_current_feed()
-        self.assertIsNotNone(resp_date)
+        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(mock.Mock(),
+                                                                   mock.Mock())
+        self.assertEqual(mock_phyp2_metric, resp_phyp)
+        self.assertEqual([mock_vio2_metric, mock_vio3_metric], resp_vioses)
 
     @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
-    @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
-    def test_parse_current_feed_no_data(self, mock_ensure_monitor,
-                                        mock_ltm_feed, mock_vm_metrics):
-        # Build cache with original mock
-        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
-                                                 refresh_delta=.25)
-
+    def test_latest_stats_no_data(self, mock_ltm_feed, mock_vm_metrics):
         # Set up the return data.
         mock_vio3_metric = mock.MagicMock()
         mock_vio3_metric.category = 'vios_3'
@@ -236,14 +216,26 @@ class TestMetricsCache(testtools.TestCase):
         mock_ltm_feed.return_value = [mock_vio3_metric]
 
         # Call the system.
-        resp_date, resp_response = metric_cache._parse_current_feed()
+        resp_date, resp_response = pvm_t_mon.latest_stats(mock.Mock(),
+                                                          mock.Mock())
         self.assertIsNotNone(resp_date)
         self.assertIsNone(resp_response)
 
-    @mock.patch('pypowervm.tasks.monitor.util.LparMetricCache.'
-                '_parse_current_feed')
+
+class TestMetricsCache(testtools.TestCase):
+    """Validates the LparMetricCache."""
+
+    def setUp(self):
+        super(TestMetricsCache, self).setUp()
+
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
+        self.adpt = self.adptfx.adpt
+
+    @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
+    @mock.patch('pypowervm.tasks.monitor.util.latest_stats')
     @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
-    def test_refresh(self, mock_ensure_monitor, mock_parse):
+    def test_refresh(self, mock_ensure_monitor, mock_stats,
+                     mock_vm_metrics):
         ret1 = None
         ret2 = {'lpar_uuid': 2}
         ret3 = {'lpar_uuid': 3}
@@ -252,8 +244,10 @@ class TestMetricsCache(testtools.TestCase):
         date_ret2 = date_ret1 + datetime.timedelta(milliseconds=250)
         date_ret3 = date_ret2 + datetime.timedelta(milliseconds=250)
 
-        mock_parse.side_effect = [(date_ret1, ret1), (date_ret2, ret2),
-                                  (date_ret3, ret3)]
+        mock_stats.side_effect = [(date_ret1, mock.Mock(), mock.Mock()),
+                                  (date_ret2, mock.Mock(), mock.Mock()),
+                                  (date_ret3, mock.Mock(), mock.Mock())]
+        mock_vm_metrics.side_effect = [ret1, ret2, ret3]
 
         # Creation invokes the refresh once automatically.
         metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',

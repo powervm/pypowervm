@@ -172,46 +172,49 @@ class LparMetricCache(object):
 
         # Refresh is needed...get the next metric.
         self.prev_date, self.prev_metric = self.cur_date, self.cur_metric
-        self.cur_date, self.cur_metric = self._parse_current_feed()
+        self.cur_date, phyp, vioses = latest_stats(self.adapter,
+                                                   self.host_uuid)
+        self.cur_metric = vm_metrics(phyp, vioses)
 
-    def _parse_current_feed(self):
-        """Returns the current feed data.
 
-        :return: Two elements.
-                 - The datetime when this method was invoked.
-                 - The results from the 'vm_metrics' method using the latest
-                   available from the PowerVM PCM API at that time.  If no
-                   metrics were available, then None is returned.
-        """
-        ltm_metrics = query_ltm_feed(self.adapter, self.host_uuid)
+def latest_stats(adapter, host_uuid):
+    """Returns the current feed data.
 
-        latest_phyp = None
+    :param adapter: The pypowervm adapter.
+    :param host_uuid: The host system's UUID.
+    :return: Three elements.
+             - The datetime when this method was invoked.
+             - PHYP Data (if available, may be None)
+             - List of VIOS Data (if available, may be an empty list)
+    """
+    ltm_metrics = query_ltm_feed(adapter, host_uuid)
 
-        # Get the latest PHYP metric
-        for metric in ltm_metrics:
-            if metric.category != 'phyp':
-                continue
+    latest_phyp = None
 
-            if (latest_phyp is None or
-                    latest_phyp.updated_datetime < metric.updated_datetime):
-                latest_phyp = metric
+    # Get the latest PHYP metric
+    for metric in ltm_metrics:
+        if metric.category != 'phyp':
+            continue
 
-        # If there is no current metric, return None.
-        if latest_phyp is None:
-            return datetime.datetime.now(), None
+        if (latest_phyp is None or
+                latest_phyp.updated_datetime < metric.updated_datetime):
+            latest_phyp = metric
 
-        # Now find the corresponding VIOS metrics for this.
-        vios_metrics = []
-        for metric in ltm_metrics:
-            # The VIOS metrics start with the key 'vios_'
-            if not metric.category.startswith('vios_'):
-                continue
+    # If there is no current metric, return None.
+    if latest_phyp is None:
+        return datetime.datetime.now(), None
 
-            if metric.updated_datetime == latest_phyp.updated_datetime:
-                vios_metrics.append(metric)
+    # Now find the corresponding VIOS metrics for this.
+    vios_metrics = []
+    for metric in ltm_metrics:
+        # The VIOS metrics start with the key 'vios_'
+        if not metric.category.startswith('vios_'):
+            continue
 
-        return (datetime.datetime.now(),
-                vm_metrics(self.adapter, latest_phyp, vios_metrics))
+        if metric.updated_datetime == latest_phyp.updated_datetime:
+            vios_metrics.append(metric)
+
+    return datetime.datetime.now(), latest_phyp, vios_metrics
 
 
 def query_ltm_feed(adapter, host_uuid):
