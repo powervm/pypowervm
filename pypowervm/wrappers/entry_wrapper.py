@@ -171,6 +171,38 @@ class Wrapper(object):
 
         self.inject(new_elem)
 
+    def _set_uuid(self, new_uuid):
+        """Set the UUID of the XML entity represented by this Wrapper.
+
+        USE WITH CAUTION.  Caveats:
+        This will only work on Wrappers with has_metadata=True.
+        Not all elements accept a consumer-set UUID.  Of those that do, some
+        only accept it at creation, not on update.
+
+        :param new_uuid: The UUID to set.  Must be a string, properly formatted
+                         for the entity (e.g. 8-4-4-4-12; LPAR UUID should be
+                         uppercase; etc.)  No additional formatting will be
+                         done.
+        """
+        if not self.has_metadata:
+            raise AttributeError('Cannot set UUID on Wrapper with no Metadata')
+
+        # Step 1: (vivify and) set Metadata/Atom/AtomID
+        atom = self._find('Metadata/Atom')
+        atomid = atom.find('AtomID')
+        if atomid is None:
+            atomid = ent.Element('AtomID', self.adapter)
+        atomid.text = new_uuid
+
+        # Step 2: if an Atom, update the properties['id'] to match
+        try:
+            self.entry.properties['id'] = new_uuid
+        except AttributeError:
+            # No entry (this is an ElementWrapper) - nothing to do.
+            # Note: we don't trap KeyError: if entry.properties is there, but
+            # doesn't have an 'id' key, something is wrong.
+            pass
+
     @property
     @abc.abstractmethod
     def _type_and_uuid(self):
