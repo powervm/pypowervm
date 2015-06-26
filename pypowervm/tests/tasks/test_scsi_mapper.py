@@ -58,7 +58,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(5, len(vios_w.scsi_mappings))
+            self.assertEqual(6, len(vios_w.scsi_mappings))
             self.assertEqual(vios_w.scsi_mappings[0].client_adapter,
                              vios_w.scsi_mappings[4].client_adapter)
             self.assertEqual(vios_w.scsi_mappings[0].server_adapter,
@@ -109,7 +109,7 @@ class TestSCSIMapper(testtools.TestCase):
 
             if attempt_count == 3:
                 vios_w = kargs[0]
-                self.assertEqual(5, len(vios_w.scsi_mappings))
+                self.assertEqual(6, len(vios_w.scsi_mappings))
                 return vios_w.entry
             else:
                 tju.raiseRetryException()
@@ -135,13 +135,13 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(5, len(vios_w.scsi_mappings))
+            self.assertEqual(6, len(vios_w.scsi_mappings))
 
             # Make sure that the adapters do not match
             self.assertNotEqual(vios_w.scsi_mappings[0].client_adapter,
-                                vios_w.scsi_mappings[4].client_adapter)
+                                vios_w.scsi_mappings[5].client_adapter)
             self.assertNotEqual(vios_w.scsi_mappings[0].server_adapter,
-                                vios_w.scsi_mappings[4].server_adapter)
+                                vios_w.scsi_mappings[5].server_adapter)
 
             return vios_w.entry
 
@@ -152,7 +152,7 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Run the code
         scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
-                                      pv, fuse_limit=4)
+                                      pv, fuse_limit=5)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -165,7 +165,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(3, len(vios_w.scsi_mappings))
+            self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -203,7 +203,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(3, len(vios_w.scsi_mappings))
+            self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -238,7 +238,7 @@ class TestSCSIMapper(testtools.TestCase):
 
             if attempt_count == 3:
                 vios_w = kargs[0]
-                self.assertEqual(3, len(vios_w.scsi_mappings))
+                self.assertEqual(4, len(vios_w.scsi_mappings))
                 return vios_w.entry
             else:
                 tju.raiseRetryException()
@@ -264,7 +264,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(3, len(vios_w.scsi_mappings))
+            self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -286,7 +286,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(3, len(vios_w.scsi_mappings))
+            self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -308,7 +308,7 @@ class TestSCSIMapper(testtools.TestCase):
         # Validate that the mapping was removed to existing
         def validate_update(*kargs, **kwargs):
             vios_w = kargs[0]
-            self.assertEqual(3, len(vios_w.scsi_mappings))
+            self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update

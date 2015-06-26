@@ -959,6 +959,44 @@ BODY{
                     <UniqueDeviceID kb="ROR" kxe="false">09b4fdf7bdec405d57</UniqueDeviceID>
                 </LogicalVolumeVirtualTargetDevice>
             </TargetDevice>
+        </VirtualSCSIMapping>        <VirtualSCSIMapping schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/LogicalPartition/42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V2-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V2-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">1</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">1000</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V1-C1000</ServerLocationCode>
+            </ClientAdapter>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C1000</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C1000</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">1000</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vhost0</AdapterName>
+                <BackingDeviceName kb="CUR" kxe="false">Ubuntu1410</BackingDeviceName>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">3</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8247.22L.2125D4A-V2-C3</ServerLocationCode>
+                <UniqueDeviceID kb="ROR" kxe="false">1eU8247.22L.2125D4A-V1-C1000</UniqueDeviceID>
+            </ServerAdapter>
         </VirtualSCSIMapping>
     </VirtualSCSIMappings>
     <FreeIOAdaptersForLinkAggregation group="ViosNetwork" kb="ROR" kxe="false" schemaVersion="V1_2_0">

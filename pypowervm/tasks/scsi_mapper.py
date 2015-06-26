@@ -263,7 +263,8 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
 
         def match_func(storage_elem)
             param storage_elem: A backing storage element wrapper (VOpt, VDisk,
-                                PV, or LU) to be analyzed.
+                                PV, or LU) to be analyzed.  May be None (some
+                                mappings have no backing storage).
             return: True if the storage_elem's mapping should be included;
                     False otherwise.
 
@@ -290,8 +291,10 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
         match_func = lambda x: True
     if stg_elem:
         # Match storage element on type and name
-        match_func = lambda stg_el: (stg_el.schema_type == stg_elem.schema_type
-                                     and stg_el.name == stg_elem.name)
+        match_func = lambda stg_el: (
+            stg_el is not None and
+            stg_el.schema_type == stg_elem.schema_type and
+            stg_el.name == stg_elem.name)
 
     is_uuid, client_id = _id_or_uuid(client_lpar_id)
     matching_maps = []
