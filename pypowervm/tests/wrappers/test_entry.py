@@ -188,6 +188,25 @@ class TestElementWrapper(testtools.TestCase):
         self.resp2 = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
         self.nb2 = ewrap.EntryWrapper.wrap(self.resp2.feed.entries[0])
 
+    def test_set_uuid(self):
+        # Entry has uuid in two places
+        self.nb1._set_uuid('new uuid')
+        self.assertEqual('new uuid', self.nb1.uuid)
+        # Same as above
+        self.assertEqual('new uuid', self.nb1.entry.properties['id'])
+        self.assertEqual('new uuid', self.nb1._get_val_str(
+            'Metadata/Atom/AtomID'))
+
+        # Element has it in one place.  Also testing vivification of AtomID.
+        lg = self.nb1.load_grps[0]
+        lg._set_uuid('new uuid')
+        self.assertEqual('new uuid', lg._get_val_str('Metadata/Atom/AtomID'))
+        self.assertFalse(hasattr(lg, 'entry'))
+
+        # Exception attempting to set on an element with no metadata
+        pvid = ewrap.ElementWrapper.wrap(lg._find('PortVLANID'))
+        self.assertRaises(AttributeError, pvid._set_uuid, 'new uuid')
+
     def test_equality(self):
         """Validates that two elements loaded from the same data is equal."""
         sea1 = self._find_seas(self.nb1.entry)[0]
