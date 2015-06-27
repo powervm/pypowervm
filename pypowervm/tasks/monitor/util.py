@@ -14,12 +14,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Utilities to query and parse the metrics data to a per LPAR basis."""
+"""Utilities to query and parse the metrics data for LPARs or a Host."""
 
 
+import abc
 import datetime
 
 from oslo_concurrency import lockutils
+import six
 
 from pypowervm import adapter as pvm_adpt
 from pypowervm.tasks.monitor import lpar as lpar_mon
@@ -31,7 +33,86 @@ from pypowervm.wrappers.pcm import vios as vios_mon
 RAW_METRICS = 'RawMetrics'
 
 
-class LparMetricCache(object):
+@six.add_metaclass(abc.ABCMeta)
+class MetricCache(object):
+    """Provides a cache of the metrics data.
+
+    The core LongTermMetrics API only refreshes its internal metric data once
+    (generally) every 30 seconds.  This class provides a generalized cache
+    of the metrics.  It stores both the raw phyp and vios metrics (if
+    available) and will only refresh them after a specified time period has
+    elapsed (30 seconds usually).
+    """
+
+    def __init__(self, adapter, host_uuid, refresh_delta=30, include_vio=True):
+        """Creates an instance of the cache.
+
+        :param adapter: The pypowervm Adapter.
+        :param host_uuid: The UUID of the host CEC to maintain a metrics
+                          cache for.
+        :param refresh_delta: (Optional) The interval at which the metrics
+                              should be updated.  Will only update if the
+                              interval has been passed and the user invokes a
+                              cache query.  Will not update in the background,
+                              only if the cache is used.
+        :param include_vio: (Optional) Defaults to True.  If set to false, the
+                            cur_vioses and prev_vioses will always be
+                            unavailble.  This increases the speed for refresh.
+        """
+        # Ensure that the metric monitoring is enabled.
+        ensure_ltm_monitors(adapter, host_uuid)
+
+        # Save the data
+        self.adapter = adapter
+        self.host_uuid = host_uuid
+        self.refresh_delta = datetime.timedelta(seconds=refresh_delta)
+        self.include_vio = include_vio
+
+        # Ensure these elements are defined up front.
+        self.cur_date, self.cur_phyp, self.cur_vioses = None, None, None
+        self.prev_date, self.prev_phyp, self.prev_vioses = None, None, None
+
+        # Run a refresh up front.
+        self._refresh_if_needed()
+
+    def _refresh_if_needed(self):
+        """Refreshes the cache if needed."""
+        # The refresh is needed is the current date is none, or if the refresh
+        # time delta has been crossed.
+        refresh_needed = self.cur_date is None
+
+        # This is put into an if block so that we don't run the logic if
+        # cur_date is in fact None...
+        if not refresh_needed:
+            diff_date = datetime.datetime.now() - self.cur_date
+            refresh_needed = diff_date > self.refresh_delta
+
+        # At this point, if a refresh isn't needed, then exit.
+        if not refresh_needed:
+            return
+
+        # Refresh is needed...get the next metric.
+        self.prev_date, self.prev_phyp, self.prev_vioses = (
+            self.cur_date, self.cur_phyp, self.cur_vioses)
+
+        self.cur_date, self.cur_phyp, self.cur_vioses = (
+            latest_stats(self.adapter, self.host_uuid,
+                         include_vio=self.include_vio))
+
+        # Have the class that is implementing the cache update its simplified
+        # representation of the data.  Ex. LparMetricCache
+        self._update_internal_metric()
+
+    def _update_internal_metric(self):
+        """Save the raw metric to the transformed values.
+
+        Implemented by the child class.  Should transform the phyp and
+        vios data into the format required by the implementor.
+        """
+        pass
+
+
+class LparMetricCache(MetricCache):
     """Provides a cache of metrics on a per LPAR level.
 
     Metrics are expensive to gather and to parse.  It is expensive because
@@ -76,20 +157,14 @@ class LparMetricCache(object):
                               cache query.  Will not update in the background,
                               only if the cache is used.
         """
-        # Ensure that the metric monitoring is enabled.
-        ensure_ltm_monitors(adapter, host_uuid)
+        # Ensure these elements are defined up front.  These represent
+        # the metrics that should be pulled to saturate the data.  Not the
+        # actual data.
+        self.cur_metric, self.prev_metric = None, None
 
-        # Save the data
-        self.adapter = adapter
-        self.host_uuid = host_uuid
-        self.refresh_delta = datetime.timedelta(seconds=refresh_delta)
-
-        # Ensure these elements are defined up front.
-        self.cur_date, self.cur_metric = None, None
-        self.prev_date, self.prev_metric = None, None
-
-        # Run a refresh up front.
-        self._refresh_if_needed()
+        # Invoke the parent to seed the metrics.
+        super(LparMetricCache, self).__init__(adapter, host_uuid,
+                                              refresh_delta=refresh_delta)
 
     @lockutils.synchronized('pvm_lpar_metrics_get')
     def get_latest_metric(self, lpar_uuid):
@@ -154,38 +229,23 @@ class LparMetricCache(object):
 
         return self.prev_date, self.prev_metric.get(lpar_uuid)
 
-    def _refresh_if_needed(self):
-        """Refreshes the cache if needed."""
-        # The refresh is needed is the current date is none, or if the refresh
-        # time delta has been crossed.
-        refresh_needed = self.cur_date is None
-
-        # This is put into an if block so that we don't run the logic if
-        # cur_date is in fact None...
-        if not refresh_needed:
-            diff_date = datetime.datetime.now() - self.cur_date
-            refresh_needed = diff_date > self.refresh_delta
-
-        # At this point, if a refresh isn't needed, then exit.
-        if not refresh_needed:
-            return
-
-        # Refresh is needed...get the next metric.
-        self.prev_date, self.prev_metric = self.cur_date, self.cur_metric
-        self.cur_date, phyp, vioses = latest_stats(self.adapter,
-                                                   self.host_uuid)
-        self.cur_metric = vm_metrics(phyp, vioses)
+    def _update_internal_metric(self):
+        self.prev_metric = self.cur_metric
+        self.cur_metric = vm_metrics(self.cur_phyp, self.cur_vioses)
 
 
-def latest_stats(adapter, host_uuid):
-    """Returns the current feed data.
+def latest_stats(adapter, host_uuid, include_vio=True):
+    """Returns the latest PHYP and (optionally) VIOS statistics.
 
     :param adapter: The pypowervm adapter.
     :param host_uuid: The host system's UUID.
+    :param include_vio: (Optional) Defaults to True.  If set to false, the
+                        VIO metrics will always be returned by an empty list.
     :return: Three elements.
              - The datetime when this method was invoked.
-             - PHYP Data (if available, may be None)
-             - List of VIOS Data (if available, may be an empty list)
+             - PHYP Metric (if available, may be None)
+             - List of VIOS Metrics (if available, may be an empty list).
+               Will be an empty list if include_vio is set to False.
     """
     ltm_metrics = query_ltm_feed(adapter, host_uuid)
 
@@ -204,17 +264,26 @@ def latest_stats(adapter, host_uuid):
     if latest_phyp is None:
         return datetime.datetime.now(), None
 
+    phyp_json = adapter.read_by_href(latest_phyp.link, xag=[]).body
+    phyp_metric = phyp_mon.PhypInfo(phyp_json)
+
     # Now find the corresponding VIOS metrics for this.
-    vios_metrics = []
+    vios_ltms = []
     for metric in ltm_metrics:
         # The VIOS metrics start with the key 'vios_'
         if not metric.category.startswith('vios_'):
             continue
 
         if metric.updated_datetime == latest_phyp.updated_datetime:
-            vios_metrics.append(metric)
+            vios_ltms.append(metric)
 
-    return datetime.datetime.now(), latest_phyp, vios_metrics
+    if include_vio:
+        vios_metrics = [vios_mon.ViosInfo(adapter.read_by_href(x.link).body)
+                        for x in vios_ltms]
+    else:
+        vios_metrics = []
+
+    return datetime.datetime.now(), phyp_metric, vios_metrics
 
 
 def query_ltm_feed(adapter, host_uuid):
@@ -274,7 +343,7 @@ def ensure_ltm_monitors(adapter, host_uuid, override_defaults=False):
                    child_type=pvm_mon.PREFERENCES, service=pvm_mon.PCM_SERVICE)
 
 
-def vm_metrics(adapter, phyp_ltm, vios_ltms):
+def vm_metrics(phyp, vioses):
     """Reduces the metrics to a per VM basis.
 
     The metrics returned by PCM are on a global level.  The anchor points are
@@ -285,10 +354,9 @@ def vm_metrics(adapter, phyp_ltm, vios_ltms):
     object breaks down the PHYP and VIOS statistics to be approached on a LPAR
     level.
 
-    :param adapter: The pypowervm adapter.
-    :param phyp_ltm: The LTMMetrics for the phyp component.
-    :param vios_ltms: A list of the LTMMetrics for the Virtual I/O Server
-                      components.
+    :param phyp: The PhypInfo for the metrics.
+    :param vioses: A list of the ViosInfo's for the Virtual I/O Server
+                   components.
     :return vm_data: A dictionary where the UUID is the client LPAR UUID, but
                      the data is a LparMetric for that VM.
 
@@ -297,11 +365,6 @@ def vm_metrics(adapter, phyp_ltm, vios_ltms):
                      between gathers).  Always validate that data is 'not
                      None' before use.
     """
-    phyp_json = adapter.read_by_href(phyp_ltm.link, xag=[]).body
-    phyp = phyp_mon.PhypInfo(phyp_json)
-    vioses = [vios_mon.ViosInfo(adapter.read_by_href(x.link).body)
-              for x in vios_ltms]
-
     vm_data = {}
     for lpar_sample in phyp.sample.lpars:
         lpar_metric = lpar_mon.LparMetric(lpar_sample.uuid)
