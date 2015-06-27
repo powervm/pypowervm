@@ -28,6 +28,8 @@ from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import monitor as pvm_mon
+from pypowervm.wrappers.pcm import phyp as pvm_mon_phyp
+from pypowervm.wrappers.pcm import vios as pvm_mon_vios
 
 
 class TestMonitors(testtools.TestCase):
@@ -89,18 +91,13 @@ class TestMonitors(testtools.TestCase):
 
     def test_parse_to_vm_metrics(self):
         """Verifies the parsing to LPAR metrics."""
-        vios_resp = self._load('../../wrappers/pcm/data/vios_data.txt')
         phyp_resp = self._load('../../wrappers/pcm/data/phyp_data.txt')
+        phyp_data = pvm_mon_phyp.PhypInfo(phyp_resp)
 
-        mock_phyp = mock.MagicMock()
-        mock_phyp.body = phyp_resp
-        mock_vios = mock.MagicMock()
-        mock_vios.body = vios_resp
+        vios_resp = self._load('../../wrappers/pcm/data/vios_data.txt')
+        vios_data = pvm_mon_vios.ViosInfo(vios_resp)
 
-        self.adpt.read_by_href.side_effect = [mock_phyp, mock_vios]
-
-        metrics = pvm_t_mon.vm_metrics(self.adpt, mock.MagicMock(),
-                                       [mock.MagicMock()])
+        metrics = pvm_t_mon.vm_metrics(phyp_data, [vios_data])
         self.assertIsNotNone(metrics)
 
         # In the test data, there are 5 LPARs total.
@@ -160,29 +157,33 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
 
-    @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
-    def test_latest_stats(self, mock_ltm_feed, mock_vm_metrics):
+    def test_latest_stats(self, mock_ltm_feed):
         # Set up the return data.
         mock_phyp_metric = mock.MagicMock()
         mock_phyp_metric.category = 'phyp'
         mock_phyp_metric.updated_datetime = 1
+        mock_phyp_metric.link = 'bad'
 
         mock_phyp2_metric = mock.MagicMock()
         mock_phyp2_metric.category = 'phyp'
         mock_phyp2_metric.updated_datetime = 2
+        mock_phyp2_metric.link = 'phyp'
 
         mock_vio1_metric = mock.MagicMock()
         mock_vio1_metric.category = 'vios_1'
         mock_vio1_metric.updated_datetime = 1
+        mock_vio1_metric.link = 'bad'
 
         mock_vio2_metric = mock.MagicMock()
         mock_vio2_metric.category = 'vios_1'
         mock_vio2_metric.updated_datetime = 2
+        mock_vio2_metric.link = 'vio'
 
         mock_vio3_metric = mock.MagicMock()
         mock_vio3_metric.category = 'vios_3'
         mock_vio3_metric.updated_datetime = 2
+        mock_vio3_metric.link = 'vio'
 
         # Reset as this was invoked once up front.
         mock_ltm_feed.reset_mock()
@@ -190,18 +191,37 @@ class TestMonitors(testtools.TestCase):
                                       mock_vio1_metric, mock_vio2_metric,
                                       mock_vio3_metric]
 
-        # Set up a validate
-        def validate_read(adpt, latest_phyp, vios_metrics):
-            self.assertEqual(2, len(vios_metrics))
-            self.assertEqual([mock_vio2_metric, mock_vio3_metric],
-                             vios_metrics)
-            self.assertEqual(mock_phyp2_metric, latest_phyp)
-        mock_vm_metrics.side_effect = validate_read
+        # Data for the responses.
+        phyp_resp = self._load('../../wrappers/pcm/data/phyp_data.txt')
+        vios_resp = self._load('../../wrappers/pcm/data/vios_data.txt')
 
-        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(mock.Mock(),
+        def validate_read(link, xag=None):
+            resp = mock.MagicMock()
+            if link == 'phyp':
+                resp.body = phyp_resp
+                return resp
+            elif link == 'vio':
+                resp.body = vios_resp
+                return resp
+            else:
+                self.fail()
+
+        self.adpt.read_by_href.side_effect = validate_read
+
+        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(self.adpt,
                                                                    mock.Mock())
-        self.assertEqual(mock_phyp2_metric, resp_phyp)
-        self.assertEqual([mock_vio2_metric, mock_vio3_metric], resp_vioses)
+        self.assertIsNotNone(resp_phyp)
+        self.assertIsInstance(resp_phyp, pvm_mon_phyp.PhypInfo)
+        self.assertEqual(2, len(resp_vioses))
+        self.assertIsInstance(resp_vioses[0], pvm_mon_vios.ViosInfo)
+        self.assertIsInstance(resp_vioses[1], pvm_mon_vios.ViosInfo)
+
+        # Invoke again, but set to ignore vioses
+        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(
+            self.adpt, mock.Mock(), include_vio=False)
+        self.assertIsNotNone(resp_phyp)
+        self.assertIsInstance(resp_phyp, pvm_mon_phyp.PhypInfo)
+        self.assertEqual(0, len(resp_vioses))
 
     @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
