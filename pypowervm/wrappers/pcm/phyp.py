@@ -35,6 +35,7 @@ class PhypInfo(object):
         - PhypSystemFirmware
         - PhypSystemProcessor
         - PhypSystemMemory
+        - PhypSharedProcPool
         - PhypVMSample (list - client virtual machines)
           - PhypLparProc
           - PhypLparMemory
@@ -74,6 +75,9 @@ class PhypSample(object):
         mem = util_sample.get('memory')
         self.memory = None if mem is None else PhypSystemMemory(mem)
 
+        spp_list = util_sample.get('sharedProcessorPool')
+        self.shared_proc_pools = [PhypSharedProcPool(x) for x in spp_list]
+
         # List of LPARs
         lpars = util_sample.get('lparsUtil')
         self.lpars = [PhypVMSample(x) for x in lpars]
@@ -89,6 +93,18 @@ class PhypSystemFirmware(object):
     def __init__(self, system_firmware):
         self.utilized_proc_cycles = system_firmware.get('utilizedProcCycles')
         self.assigned_mem = system_firmware.get('assignedMem')
+
+
+class PhypSharedProcPool(object):
+    """Information of the Shared Processor Pool."""
+
+    def __init__(self, spp):
+        self.id = spp.get('id')
+        self.name = spp.get('name')
+        self.assigned_proc_cycles = spp.get('assignedProcCycles')
+        self.utilized_pool_cycles = spp.get('utilizedPoolCycles')
+        self.max_proc_units = spp.get('maxProcUnits')
+        self.borrowed_pool_proc_units = spp.get('borrowedPoolProcUnits')
 
 
 class PhypSystemProcessor(object):

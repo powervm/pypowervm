@@ -55,6 +55,16 @@ class TestPhypLTM(testtools.TestCase):
                          sample.system_firmware.utilized_proc_cycles)
         self.assertEqual(4096, sample.system_firmware.assigned_mem)
 
+        # Shared Proc Pool
+        spp_list = sample.shared_proc_pools
+        self.assertEqual(1, len(spp_list))
+        self.assertEqual(0, spp_list[0].id)
+        self.assertEqual('DefaultPool', spp_list[0].name)
+        self.assertEqual(1.6125945162342e+16, spp_list[0].assigned_proc_cycles)
+        self.assertEqual(683011326288, spp_list[0].utilized_pool_cycles)
+        self.assertEqual(20, spp_list[0].max_proc_units)
+        self.assertEqual(18, spp_list[0].borrowed_pool_proc_units)
+
         # Processor
         self.assertEqual(20, sample.processor.total_proc_units)
         self.assertEqual(20, sample.processor.configurable_proc_units)
