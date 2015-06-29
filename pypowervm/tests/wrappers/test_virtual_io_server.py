@@ -392,6 +392,9 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual('1', self.io_slot.pci_rev_id)
         self.assertEqual('4116', self.io_slot.pci_vendor_id)
         self.assertEqual('4116', self.io_slot.pci_subsys_vendor_id)
+        self.assertEqual(553713674, self.io_slot.pci_subsys_drc_index)
+        self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
+                         self.io_slot.pci_subsys_drc_name)
 
     def test_io_adpt(self):
         self.assertIsNotNone(self.io_slot.adapter)
