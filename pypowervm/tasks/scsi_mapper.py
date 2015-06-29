@@ -150,7 +150,9 @@ def _separate_mappings(vios_w, client_href):
 
     existing_mappings = vios_w.scsi_mappings
     for existing_map in existing_mappings:
-        if existing_map.client_lpar_href == client_href:
+        if (existing_map.client_lpar_href == client_href and
+                # ignore orphaned mappings
+                existing_map.client_adapter is not None):
             # Valid map to consider
             key = existing_map.server_adapter.udid
             if resp.get(key) is None:
