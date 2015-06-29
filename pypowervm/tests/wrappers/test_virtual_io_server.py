@@ -341,6 +341,58 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(mapping.client_adapter)
         self.assertEqual({'AA', 'BB'}, mapping.client_adapter.wwpns)
 
+    def test_bld_scsi_mapping_from_existing(self):
+        def map_has_pieces(smap, lpar_href=True, client_adapter=True,
+                           server_adapter=True, storage=True,
+                           target_device=True):
+            def has_piece(piece, has_it):
+                if has_it:
+                    self.assertIsNotNone(piece)
+                else:
+                    self.assertIsNone(piece)
+            has_piece(smap.client_lpar_href, lpar_href)
+            has_piece(smap.client_adapter, client_adapter)
+            has_piece(smap.server_adapter, server_adapter)
+            has_piece(smap.backing_storage, storage)
+            has_piece(smap.element.find('TargetDevice'), target_device)
+        stg = pvm_stor.VDisk.bld_ref(self.adpt, 'disk_name')
+        smaps = self.dwrap.scsi_mappings
+        # 0 has only ServerAdapter
+        sm = smaps[0]
+        map_has_pieces(sm, lpar_href=False, client_adapter=False,
+                       storage=False, target_device=False)
+        smclone = vios.VSCSIMapping.bld_from_existing(sm, stg)
+        map_has_pieces(smclone, lpar_href=False, client_adapter=False,
+                       target_device=False)
+        self.assertEqual(stg, smclone.backing_storage)
+        # 1 has ServerAdapter, Storage, and TargetDevice
+        sm = smaps[1]
+        map_has_pieces(sm, lpar_href=False, client_adapter=False)
+        self.assertNotEqual(stg, sm.backing_storage)
+        smclone = vios.VSCSIMapping.bld_from_existing(sm, stg)
+        # Target device *disappears*
+        map_has_pieces(smclone, lpar_href=False, client_adapter=False,
+                       target_device=False)
+        self.assertEqual(stg, smclone.backing_storage)
+        # 3 has AssociatedLogicalPartition, ClientAdapter, ServerAdapter.
+        sm = smaps[3]
+        map_has_pieces(sm, storage=False, target_device=False)
+        smclone = vios.VSCSIMapping.bld_from_existing(sm, stg)
+        map_has_pieces(smclone, target_device=False)
+        self.assertEqual(stg, smclone.backing_storage)
+        # 12 has everything
+        sm = smaps[12]
+        map_has_pieces(sm)
+        self.assertNotEqual(stg, sm.backing_storage)
+        smclone = vios.VSCSIMapping.bld_from_existing(sm, stg)
+        # Target device *disappears*
+        map_has_pieces(smclone, target_device=False)
+        self.assertEqual(stg, smclone.backing_storage)
+        # Everything else cloned okay
+        self.assertEqual(sm.client_lpar_href, smclone.client_lpar_href)
+        self.assertEqual(sm.client_adapter, smclone.client_adapter)
+        self.assertEqual(sm.server_adapter, smclone.server_adapter)
+
 
 class TestCrtRelatedHref(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Session')

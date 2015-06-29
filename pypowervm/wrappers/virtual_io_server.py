@@ -368,7 +368,15 @@ class VSCSIMapping(VStorageMapping):
     @classmethod
     def bld_from_existing(cls, existing_map, stg_ref):
         """Clones the existing mapping, but swaps in the new storage elem."""
-        new_map = copy.deepcopy(existing_map)
+        # We do NOT want the TargetDevice element, so we explicitly copy the
+        # pieces we want from the original mapping.
+        new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
+        if existing_map.client_lpar_href is not None:
+            new_map._client_lpar_href(existing_map.client_lpar_href)
+        if existing_map.client_adapter is not None:
+            new_map._client_adapter(copy.deepcopy(existing_map.client_adapter))
+        if existing_map.server_adapter is not None:
+            new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
         new_map._backing_storage(copy.deepcopy(stg_ref))
         return new_map
 
