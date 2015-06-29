@@ -165,6 +165,8 @@ _ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
 _ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
 _ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
 _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID = 'PCISubsystemVendorID'
+_ASSOC_IO_SLOT_DYN_RE_CONN_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
+_ASSOC_IO_SLOT_DYN_RE_CONN_NAME = 'SlotDynamicReconfigurationConnectorName'
 
 # Constants for generic I/O Adapter
 RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
@@ -905,6 +907,14 @@ class IOSlot(ewrap.ElementWrapper):
             return self._get_val_str(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
 
         @property
+        def pci_subsys_dyn_re_conn_index(self):
+            return self._get_val_int(_ASSOC_IO_SLOT_DYN_RE_CONN_INDEX)
+
+        @property
+        def pci_subsys_dyn_re_conn_name(self):
+            return self._get_val_str(_ASSOC_IO_SLOT_DYN_RE_CONN_NAME)
+
+        @property
         def io_adapter(self):
             """Jumps over the 'Related IO Adapter' element direct to the I/O.
 
@@ -979,6 +989,14 @@ class IOSlot(ewrap.ElementWrapper):
     @property
     def pci_subsys_vendor_id(self):
         return self.__get_prop('pci_subsys_vendor_id')
+
+    @property
+    def pci_subsys_dyn_re_conn_index(self):
+        return self.__get_prop('pci_subsys_dyn_re_conn_index')
+
+    @property
+    def pci_subsys_dyn_re_conn_name(self):
+        return self.__get_prop('pci_subsys_dyn_re_conn_name')
 
     @property
     def adapter(self):
