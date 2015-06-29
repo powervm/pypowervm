@@ -352,3 +352,17 @@ class TestSCSIMapper(testtools.TestCase):
                                         stg_elem=maps[2].backing_storage)
         self.assertEqual(1, len(matches))
         self.assertEqual(maps[2], matches[0])
+
+    def test_separate_mappings(self):
+        vios_wrap = pvm_vios.VIOS.wrap(tju.load_file(
+            '../../wrappers/data/fake_vios_mappings.txt', self.adpt))
+        client_href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+                       '726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/'
+                       '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
+        sep = scsi_mapper._separate_mappings(vios_wrap, client_href)
+        self.assertEqual(2, len(sep))
+        self.assertEqual(
+            {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
+            set(sep.keys()))
+        self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
+                         vios_wrap.scsi_mappings[-1])
