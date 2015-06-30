@@ -1,5 +1,4 @@
-# Copyright 2015 IBM Corp.
-#
+# Copyright 2015 IBM Corp.  #
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -166,3 +165,78 @@ def migrate_abort(lpar, timeout=CONF.powervm_job_request_timeout):
                              suffix_parm=_SUFFIX_PARM_MIGRATE_ABORT)
     job_wrapper = job.Job.wrap(resp.entry)
     job_wrapper.run_job(lpar.uuid, job_parms=None, timeout=timeout)
+
+
+def generate_mappings_to_migrate(lpar, vios_wraps):
+
+    """Generates the required VFC/SCSI Mapping strings for migration.
+
+    This method finds the matching virtual_fc_mappings or virtual_scsi_mappings
+    for the lpar and generates the mappings strings in the required format as
+    explained below to perform  migration. It collects the mappings from
+    all the vioses available.
+    :param lpar: LPAR wrapper for which the mappings needs to be created.
+    :param vios_wraps: List of pypowervm vios wrappers.
+
+    For virtual_fc_mappings the format is:
+    Comma separated list of virtual fibre channel adapter
+    mappings, with each mapping having the following format:
+
+    virtual-slot-number/vios-lpar-name/vios-lpar-ID
+    [/[vios-virtual-slot-number][/[vios-fc-port-name]]]
+
+    The first two '/' characters must be present. The third '/' character is
+    optional, but it must be present if vios-virtual-slot-number or
+    vios-fc-port-name is specified.  The last '/' character is optional but it
+    must be present if vios-fc-port-name is specified.
+
+    Optional values may be omitted. Optional values are vios-lpar-name
+    or vios-lpar-ID (one of those values is required, but not both),
+    vios-virtual-slot-number, and vios-fc-port-name.
+
+    For example:
+    4//1/14/fcs0 specifies a mapping of the virtual fibre channel client
+    adapter with slot number 4 to the virtual fibre channel server adapter with
+    slot number 14 in the VIOS partition with ID 1 on the destination managed
+    system. In addition, the mapping specifies to use physical fibre channel
+    port fcs0.
+
+    virtual_scsi_mappings:
+    Comma separated list of virtual SCSI adapter mappings, with each mapping
+    having the following format:
+
+    virtual-slot-number/vios-lpar-name/vios-lpar-ID
+    [/vios-virtual-slot-number]
+
+    The first two '/' characters must be present.  The last '/' character is
+    optional, but it must be present if vios-virtual-slot-number is specified.
+    Optional values may be omitted. Optional values are vios-lpar-name or
+    vios-lpar-ID (one of those values is required, but not both), and
+    vios-virtual-slot-number.
+
+    For example:
+    12/vios1//16 specifies a mapping of the virtual SCSI adapter with slot
+    number 12 to slot number 16 on the VIOS partition vios1 on the destination
+    managed system.
+    """
+    mapping_list = []
+    for vios_w in vios_wraps:
+        mapping = None
+        for vfc_map in vios_w.vfc_mappings:
+            if (vfc_map.client_adapter and
+                    vfc_map.client_adapter.lpar_id == lpar.id):
+                mapping = (str(lpar.id) + "//" + lpar.name + "//" +
+                           str(vfc_map.server_adapter.slot_number) + "//" +
+                           vfc_map.server_adapter.map_port)
+                mapping_list.append(mapping)
+
+        for scsi_map in vios_w.scsi_mappings:
+            if (scsi_map.client_adapter and
+                    scsi_map.client_adapter.lpar_id == lpar.id):
+                mapping = (str(lpar.id) + "//" + lpar.name + "//" +
+                           str(scsi_map.server_adapter.vios_id) + "//" +
+                           str(scsi_map.server_adapter.slot_number))
+                mapping_list.append(mapping)
+    LOG.info(("LPAR id=%(id)s migration mapping list=%(map)s") %
+             {'id': lpar.id, 'map': mapping_list})
+    return mapping_list

@@ -19,8 +19,12 @@ import testtools
 
 import pypowervm.entities as ent
 from pypowervm.tasks import migration as mig
+import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.wrappers import job
+from pypowervm.wrappers import virtual_io_server as pvm_vios
+
+MIGRATION_VIOS_FEED = 'fakemigration.txt'
 
 
 class TestMigration(testtools.TestCase):
@@ -36,6 +40,8 @@ class TestMigration(testtools.TestCase):
         self.lpar_w = mock.MagicMock()
         self.lpar_w.adapter = self.adpt
         self.lpar_w.uuid = '1234'
+        self.lpar_w.id = 63
+        self.lpar_w.name = 'test-lp1'
 
     def _get_parm_checker(self, exp_uuid, exp_job_parms, exp_timeout=None):
         # Utility method to return a dynamic parameter checker for tests
@@ -128,3 +134,21 @@ class TestMigration(testtools.TestCase):
                                                suffix_type='do')
         mock_run_job.assert_called_once_with(
             '1234', job_parms=None, timeout=1800)
+
+    def test_generate_mappings_to_migrate(self):
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(MIGRATION_VIOS_FEED))
+        # Test VFC Mapping strings
+        vfc_mapping = mig.generate_mappings_to_migrate(self.lpar_w, vios_wraps)
+        vfc_out = ['63//test-lp1//94//fcs1', '63//test-lp1//93//fcs1',
+                   '63//test-lp1//92//fcs1', '63//test-lp1//85//fcs0',
+                   '63//test-lp1//94//fcs0', '63//test-lp1//1//86']
+        scsi_out = ['19//test-lp1//43//fcs1', '19//test-lp1//2//41',
+                    '19//test-lp1//23//fcs0']
+        self.assertEqual(vfc_out, vfc_mapping)
+        # Test VSCSI Mappings
+        self.lpar_w.id = 19
+        scsi_map = mig.generate_mappings_to_migrate(self.lpar_w, vios_wraps)
+        self.assertEqual(scsi_out, scsi_map)
+        self.lpar_w.id = 99
+        no_map = mig.generate_mappings_to_migrate(self.lpar_w, vios_wraps)
+        self.assertEqual(0, len(no_map))
