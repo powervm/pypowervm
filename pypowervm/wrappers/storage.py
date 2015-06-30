@@ -744,6 +744,11 @@ class VServerStorageAdapter(VStorageAdapter):
         """The device's Unique Device Identifier."""
         return self._get_val_str(_VADPT_UDID)
 
+    @property
+    def vios_id(self):
+        """The LPAR ID for the Virtual I/O Server that contains adapter."""
+        return self._get_val_int(_VADPT_LPAR_ID)
+
 
 # pvm_type decorator by superclass (it is not unique)
 class VSCSIClientAdapter(VClientStorageAdapter):

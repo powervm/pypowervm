@@ -19,6 +19,7 @@ import unittest
 import pypowervm.const as pc
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
+import pypowervm.wrappers.virtual_io_server as vios
 
 
 class TestVolumeGroup(twrap.TestWrapper):
@@ -338,6 +339,19 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertNotEqual({lu1}, {lu2})
         lu2._udid(udid4)
         self.assertNotEqual({lu1}, {lu2})
+
+
+class TestStorageAdapter(twrap.TestWrapper):
+
+    file = 'fake_vios_mappings.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def test_vios_id(self):
+        "tests Storage adapter vios id property retrieval."
+        vfc_maps = self.dwrap.vfc_mappings
+        self.assertEqual(1, vfc_maps[0].server_adapter.vios_id)
+        scsi_maps = self.dwrap.scsi_mappings
+        self.assertEqual(1, scsi_maps[0].server_adapter.vios_id)
 
 
 if __name__ == '__main__':
