@@ -1,5 +1,5 @@
 # Copyright 2015 IBM Corp.
-#
+
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -166,3 +166,90 @@ def migrate_abort(lpar, timeout=CONF.powervm_job_request_timeout):
                              suffix_parm=_SUFFIX_PARM_MIGRATE_ABORT)
     job_wrapper = job.Job.wrap(resp.entry)
     job_wrapper.run_job(lpar.uuid, job_parms=None, timeout=timeout)
+
+
+def generate_lpm_mappings(lpar, vios_wraps):
+
+    """Generates the required VFC/SCSI Mapping strings for migration.
+
+    To perform migration of a LPAR, the VFC/SCSI mapping command data input
+    has to be sent to the calling API in the specific format. This method is
+    used to generate the properly formatted mapping strings of 
+    virtual_fc_mappings and virtual_scsi_mappings for a given lpar. 
+    This method will iterate through all the available  VIOS's and find the
+    matching mappings for the lpar and return a comma separated list of 
+    VFC and VSCSI Mappings which can be fed to migrate_lpar calling function
+    command input.
+    Details of the format can be found in migrated_lpar function description.
+    :param lpar: LPAR wrapper for which the mappings needs to be created.
+    :param vios_wraps: List of pypowervm vios wrappers called with XAGs for
+                       ViosSCSIMapping and ViosFCMapping. If the VIOS wrapper does not
+                       have xags then no mappings will be returned.
+    :returns: Comma separated list of Virtual Fibre-Channel and Virtual SCSI
+              mapping strings.
+    """
+    vfc_maps = []
+    scsi_maps = []
+    for vios_w in vios_wraps:
+        vfc_mapping = _generate_vfc_mappings(lpar, vios_w.vfc_mappings,
+                                             vios_w.name)
+        scsi_mapping = _generate_scsi_mappings(lpar, vios_w.scsi_mappings,
+                                               vios_w.name)
+        if len(vfc_mapping):
+            vfc_maps.extend(vfc_mapping)
+        if len(scsi_mapping):
+            scsi_maps.extend(scsi_mapping)
+    return ','.join(vfc_maps), ','.join(scsi_maps)
+
+
+def _generate_vfc_mappings(lpar, vfc_mappings, vios_name):
+    """Generates the VFC mappings strings for LPAR migration per vios.
+
+    :param lpar: LPAR wrapper for which the mappings need to be created.
+    :vfc_mappings: Virtual Fibre Channel Mapping list of a single vios.
+    :vios_name: Vios name which contain the VFC mappings.
+    :return: formatted vfc mapping list.
+     """
+    mapping_list = []
+    for vfc_map in vfc_mappings:
+        if (vfc_map.client_adapter and
+                vfc_map.client_adapter.lpar_id == lpar.id):
+            # For virtual_fc_mappings the format is:
+            # Comma separated list of virtual fibre channel adapter
+            # mappings, with each mapping having the following format:
+            # virtual-slot-number/vios-lpar-name/vios-lpar-ID
+            # [/[vios-virtual-slot-number][/[vios-fc-port-name]]]
+            mapping = (str(vfc_map.client_adapter.slot_number) + "/" +
+                       vios_name + "/" + str(vfc_map.server_adapter.vios_id) +
+                       "/" + str(vfc_map.server_adapter.slot_number) + "/" +
+                       vfc_map.server_adapter.map_port)
+            mapping_list.append(mapping)
+    LOG.debug("VIOS = %(v)s VFC Mappings=%(map)s" % {'v': vios_name,
+                                                     'map': mapping_list})
+    return mapping_list
+
+
+def _generate_scsi_mappings(lpar, scsi_mappings, vios_name):
+    """Generates the SCSI mappings strings for LPAR migration per vios.
+
+    :param lpar: LPAR wrapper for which the mappings need to be created.
+    :param vfc_mappings: Virtual SCSI Mapping list of a single vios.
+    :param vios_name: Vios name which contain the SCSI mappings.
+    :return: formatted scsi mapping list.
+    """
+    mapping_list = []
+    for scsi_map in scsi_mappings:
+        if (scsi_map.client_adapter and
+                scsi_map.client_adapter.lpar_id == lpar.id):
+            # For virtual_scsi_mappings the format is:
+            # Comma separated list of virtual SCSI adapter mappings,
+            # with each mapping having the following format:
+            # virtual-slot-number/vios-lpar-name/vios-lpar-ID
+            # [/vios-virtual-slot-number]
+            mapping = (str(scsi_map.client_adapter.slot_number) + "/" +
+                       vios_name + "/" + str(scsi_map.server_adapter.vios_id) +
+                       "/" + str(scsi_map.server_adapter.slot_number))
+            mapping_list.append(mapping)
+    LOG.debug("VIOS = %(v)s SCSI Mappings=%(map)s" % {'v': vios_name,
+                                                      'map': mapping_list})
+    return mapping_list
