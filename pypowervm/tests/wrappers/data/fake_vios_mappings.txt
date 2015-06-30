@@ -3125,6 +3125,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/0C0A6EBE-7BF4-4707-8780-A140F349E42E" rel="related"/>
             <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
                 <Metadata>
                     <Atom/>
@@ -3168,6 +3169,22 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/0C0A6EBE-7BF4-4707-8780-A140F349E42E" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kxe="false" kb="ROR">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V5-C2</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V5-C2</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">5</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">false</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                <RemoteLogicalPartitionID kb="CUR" kxe="false">1</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">4</RemoteSlotNumber>
+                <ServerLocationCode kb="CUR" kxe="false">U8246.L2C.0604C7A-V1-C4</ServerLocationCode>
+            </ClientAdapter>
             <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
                 <Metadata>
                     <Atom/>
