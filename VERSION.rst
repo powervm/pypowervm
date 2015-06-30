@@ -2,6 +2,11 @@
 pypowervm - Version Reference
 =============================
 
+Version 0.0.2
+-------------
+ - Enhanced metrics gathering
+ - Python 3.4 support
+
 Version 0.0.1
 -------------
 Note this is not a full release.  It is used for testing and development
