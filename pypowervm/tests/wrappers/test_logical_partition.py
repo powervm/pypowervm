@@ -15,12 +15,14 @@
 #    under the License.
 
 import unittest
+import uuid
 
 import testtools
 
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 
@@ -160,6 +162,18 @@ class TestLogicalPartition(testtools.TestCase):
 
     def test_get_id(self):
         self.call_simple_getter("id", 9, None)
+
+    def test_uuid(self):
+        wrapper = self._dedicated_wrapper
+        self.assertEqual('42DF39A2-3A4A-4748-998F-25B15352E8A7', wrapper.uuid)
+        # Test set and retrieve
+        uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4())).upper()
+        wrapper.set_uuid(uuid1)
+        self.assertEqual(uuid1, wrapper.uuid)
+
+        uuid2 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4())).upper()
+        wrapper.uuid = uuid2
+        self.assertEqual(uuid2, wrapper.uuid)
 
     def test_rmc_state(self):
         self.call_simple_getter("rmc_state", bp.RMCState.INACTIVE, None)
