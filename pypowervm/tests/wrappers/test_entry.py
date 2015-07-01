@@ -15,18 +15,19 @@
 #    under the License.
 
 import copy
+import unittest
+import uuid
 
 from lxml import etree
 import mock
 import six
 import testtools
 
-import unittest
-
 import pypowervm.adapter as apt
 import pypowervm.entities as ent
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
@@ -131,6 +132,22 @@ class TestEntryWrapper(testtools.TestCase):
 
         ew = ewrap.EntryWrapper.wrap(fake_entry)
         self.assertEqual(None, ew.etag)
+
+    def test_set_uuid(self):
+
+        # Test that an AttributeError is raised
+        def try_to_set_it():
+            ewrap.EntryWrapper(None).uuid = 'fake-uuid-value'
+        self.assertRaises(AttributeError, try_to_set_it)
+
+        # Test that we call the mixin set_uuid method for valid cases.
+        class ValidEntryWrap(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
+            pass
+        with mock.patch('pypowervm.wrappers.entry_wrapper.WrapperSetUUIDMixin'
+                        '.set_uuid') as mock_setup:
+            uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4())).upper()
+            ValidEntryWrap(None).uuid = uuid1
+            mock_setup.assert_called_with(uuid1)
 
     def test_load(self):
         etag = '1234'

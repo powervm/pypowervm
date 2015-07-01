@@ -777,6 +777,14 @@ class EntryWrapper(Wrapper):
 
         return self.entry.uuid
 
+    @uuid.setter
+    def uuid(self, value):
+        """Sets the UUID (if supported)."""
+        if isinstance(self, WrapperSetUUIDMixin):
+            self.set_uuid(value)
+        else:
+            raise AttributeError('Cannot set uuid.')
+
     @property
     def _type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
