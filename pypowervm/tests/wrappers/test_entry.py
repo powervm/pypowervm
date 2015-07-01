@@ -908,5 +908,82 @@ class TestCreate(testtools.TestCase):
         self.assertRaises(ValueError, vswitch.create, parent_type='Foo')
         self.assertRaises(ValueError, vswitch.create, parent_uuid='Foo')
 
+
+class TestSetUUIDMixin(testtools.TestCase):
+    """Generic tests for WrapperSetUUIDMixin."""
+    def test_set_uuid(self):
+        """Test mixins of Element (with/without Metadata) and Entry."""
+        old_uuid = 'old uuid'
+        new_uuid = 'new uuid'
+
+        def assert_uuid(wrap, uuid, has_entry=True):
+            if has_entry:
+                self.assertEqual(uuid, wrap.uuid)
+                # Same as above
+                if uuid is None:
+                    self.assertTrue('id' not in wrap.entry.properties or
+                                    wrap.entry.properties['id'] is None)
+                else:
+                    self.assertEqual(uuid, wrap.entry.properties['id'])
+            else:
+                self.assertFalse(hasattr(wrap, 'entry'))
+            self.assertEqual(uuid, wrap._get_val_str('Metadata/Atom/AtomID'))
+
+        @ewrap.EntryWrapper.pvm_type('SomeEntry')
+        class SomeEntry(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
+            """EntryWrapper with set-uuid mixin."""
+            pass
+
+        # Entry has both Metadata and properties['id']
+        some_ent = SomeEntry._bld(None)
+        # Starts off empty
+        assert_uuid(some_ent, None)
+        # Can set from empty
+        some_ent.set_uuid(old_uuid)
+        assert_uuid(some_ent, old_uuid)
+        # Can change from already-set
+        some_ent.set_uuid(new_uuid)
+        assert_uuid(some_ent, new_uuid)
+
+        @ewrap.ElementWrapper.pvm_type('SomeObject', has_metadata=True)
+        class SomeElementWithMetadata(ewrap.ElementWrapper,
+                                      ewrap.WrapperSetUUIDMixin):
+            """ElementWrapper with set-uuid mixin - WITH Metadata."""
+            pass
+
+        # Element has it in one place.  Also testing vivification of AtomID.
+        sewm = SomeElementWithMetadata._bld(None)
+        # Starts with no AtomID
+        self.assertEqual(
+            '<uom:SomeObject xmlns:uom="http://www.ibm.com/xmlns/systems/power'
+            '/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata>'
+            '<uom:Atom/></uom:Metadata></uom:SomeObject>'.encode('utf-8'),
+            sewm.toxmlstring())
+        assert_uuid(sewm, None, has_entry=False)
+        # Can set
+        sewm.set_uuid(old_uuid)
+        assert_uuid(sewm, old_uuid, has_entry=False)
+        # Can change
+        sewm.set_uuid(new_uuid)
+        assert_uuid(sewm, new_uuid, has_entry=False)
+
+        @ewrap.ElementWrapper.pvm_type('SomeOtherObject')
+        class SomeElementWithoutMetadata(ewrap.ElementWrapper,
+                                         ewrap.WrapperSetUUIDMixin):
+            """ElementWrapper with set-uuid mixin - WITHOUT Metadata."""
+            pass
+
+        sewom = SomeElementWithoutMetadata._bld(None)
+        # No Metadata
+        self.assertEqual(
+            '<uom:SomeOtherObject xmlns:uom="http://www.ibm.com/xmlns/systems'
+            '/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"/>'.
+            encode('utf-8'),
+            sewom.toxmlstring())
+        assert_uuid(sewom, None, has_entry=False)
+        # Exception attempting to set on an element with no metadata
+        self.assertRaises(AttributeError, sewom.set_uuid, new_uuid)
+
+
 if __name__ == '__main__':
     unittest.main()
