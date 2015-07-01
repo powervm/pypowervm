@@ -161,6 +161,16 @@ class TestLogicalPartition(testtools.TestCase):
     def test_get_id(self):
         self.call_simple_getter("id", 9, None)
 
+    def test_uuid(self):
+        wrapper = self._dedicated_wrapper
+        self.assertEqual('42DF39A2-3A4A-4748-998F-25B15352E8A7', wrapper.uuid)
+        # Test set and retrieve
+        wrapper.set_uuid('99999999-3A4A-4748-998F-25B153529999')
+        self.assertEqual('99999999-3A4A-4748-998F-25B153529999', wrapper.uuid)
+
+        wrapper.uuid = '89999999-3A4A-4748-998F-25B153529998'
+        self.assertEqual('89999999-3A4A-4748-998F-25B153529998', wrapper.uuid)
+
     def test_rmc_state(self):
         self.call_simple_getter("rmc_state", bp.RMCState.INACTIVE, None)
         self._shared_wrapper.set_parm_value(bp._BP_RMC_STATE,

@@ -132,6 +132,21 @@ class TestEntryWrapper(testtools.TestCase):
         ew = ewrap.EntryWrapper.wrap(fake_entry)
         self.assertEqual(None, ew.etag)
 
+    def test_set_uuid(self):
+
+        # Test that an Attribute error is raised
+        def try_to_set_it():
+            ewrap.EntryWrapper(None).uuid = 'fake-uuid-value'
+        self.assertRaises(AttributeError, try_to_set_it)
+
+        # Test that we call the mixin set_uuid method for valid cases.
+        class ValidEntryWrap(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
+            pass
+        with mock.patch('pypowervm.wrappers.entry_wrapper.WrapperSetUUIDMixin'
+                        '.set_uuid') as mock_setup:
+            ValidEntryWrap(None).uuid = '1'
+            mock_setup.assert_called_with('1')
+
     def test_load(self):
         etag = '1234'
         resp = apt.Response('reqmethod', 'reqpath', 'status', 'reason',
