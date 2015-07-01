@@ -15,18 +15,19 @@
 #    under the License.
 
 import copy
+import unittest
+import uuid
 
 from lxml import etree
 import mock
 import six
 import testtools
 
-import unittest
-
 import pypowervm.adapter as apt
 import pypowervm.entities as ent
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
@@ -131,6 +132,23 @@ class TestEntryWrapper(testtools.TestCase):
 
         ew = ewrap.EntryWrapper.wrap(fake_entry)
         self.assertEqual(None, ew.etag)
+
+    def test_set_uuid(self):
+
+        # Test that an AttributeError is raised
+        def set_wrap_uuid(wrap, value):
+            wrap.uuid = value
+        self.assertRaises(AttributeError, set_wrap_uuid,
+                          ewrap.EntryWrapper(None), 'fake-uuid-value')
+
+        # Test that we call the mixin set_uuid method for valid cases.
+        class ValidEntryWrap(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
+            pass
+        with mock.patch('pypowervm.wrappers.entry_wrapper.WrapperSetUUIDMixin'
+                        '.set_uuid') as mock_setup:
+            uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
+            ValidEntryWrap(None).uuid = uuid1
+            mock_setup.assert_called_with(uuid1)
 
     def test_load(self):
         etag = '1234'
@@ -913,8 +931,11 @@ class TestSetUUIDMixin(testtools.TestCase):
     """Generic tests for WrapperSetUUIDMixin."""
     def test_set_uuid(self):
         """Test mixins of Element (with/without Metadata) and Entry."""
-        old_uuid = 'old uuid'
-        new_uuid = 'new uuid'
+        old_uuid = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
+        new_uuid = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
+
+        def set_wrap_uuid(wrap, value):
+            wrap.uuid = value
 
         def assert_uuid(wrap, uuid, has_entry=True):
             if has_entry:
@@ -933,6 +954,11 @@ class TestSetUUIDMixin(testtools.TestCase):
         class SomeEntry(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
             """EntryWrapper with set-uuid mixin."""
             pass
+
+        # Set bad uuid value
+        bad_uuid = 'F' + new_uuid[1:]
+        self.assertRaises(ValueError, set_wrap_uuid,
+                          SomeEntry(None), bad_uuid)
 
         # Entry has both Metadata and properties['id']
         some_ent = SomeEntry._bld(None)
