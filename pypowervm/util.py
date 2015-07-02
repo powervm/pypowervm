@@ -364,13 +364,25 @@ def sanitize_wwpn_for_api(wwpn):
     return wwpn.upper().replace(':', '')
 
 
-def sanitize_file_name_for_api(name, prefix='', suffix=''):
-    """Generate a sanitized file name based on PowerVM's FileName.Pattern."""
+def sanitize_file_name_for_api(name, prefix='', suffix='',
+                               max_len=const.MaxLen.FILENAME_DEFAULT):
+    """Generate a sanitized file name based on PowerVM's FileName.Pattern.
+
+    :param name: The base name to sanitize.
+    :param prefix: (Optional) A prefix to prepend to the 'name'.  No delimiter
+                   is added.
+    :param suffix: (Optional) A suffix to append to the 'name'.  No delimiter
+                   is added.
+    :param max_len: (Optional) The maximum allowable length of the final
+                    sanitized string.  Defaults to the API's defined length for
+                    FileName.Pattern.
+    :return: A string scrubbed of all forbidden characters and trimmed for
+             length as necessary.
+    """
     def _scrub(in_name):
         """Returns in_name with illegal characters replaced with '_'."""
         return re.sub(r'[^.0-9A-Z_a-z]', '_', in_name)
 
-    max_len = 79
     name, prefix, suffix = (_scrub(val) for val in (name, prefix, suffix))
     base_len = max_len - len(prefix) - len(suffix)
     if base_len <= 0:

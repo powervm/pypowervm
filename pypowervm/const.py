@@ -84,3 +84,11 @@ class HTTPStatus(object):
     NO_CHANGE = 304
     UNAUTHORIZED = 401
     ETAG_MISMATCH = 412
+
+
+class MaxLen(object):
+    """Maximum lengths for various PowerVM entities."""
+    # FileName.Pattern
+    FILENAME_DEFAULT = 79
+    VOPT_NAME = 37
+    VDISK_NAME = 15

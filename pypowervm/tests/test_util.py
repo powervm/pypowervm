@@ -18,6 +18,7 @@ import mock
 
 import unittest
 
+from pypowervm import const
 from pypowervm import util
 
 dummyuuid1 = "abcdef01-2345-2345-2345-67890abcdef0"
@@ -273,6 +274,14 @@ class TestUtil(unittest.TestCase):
         self.assertRaises(ValueError, util.sanitize_file_name_for_api, allc,
                           prefix=allc, suffix=allc)
         self.assertRaises(ValueError, util.sanitize_file_name_for_api, '')
+        # Non-default max_len values
+        self.assertEqual('abcdefghijklmno', util.sanitize_file_name_for_api(
+            'abcdefghijklmnopqrstuvwxyz', max_len=const.MaxLen.VDISK_NAME))
+        self.assertEqual(
+            'abcdefghijklmnopqrstuvwxyz0123456789A',
+            util.sanitize_file_name_for_api(
+                'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNO',
+                max_len=const.MaxLen.VOPT_NAME))
 
     def test_sanitize_partition_name_for_api(self):
         allc = ''.join(map(chr, range(256)))
