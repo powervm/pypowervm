@@ -49,7 +49,7 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
 
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
                              child_order=_LPAR_EL_ORDER)
-class LPAR(bp.BasePartition):
+class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
     @classmethod
     def bld(cls, adapter, name, mem_cfg, proc_cfg, env=bp.LPARType.AIXLINUX,
@@ -95,3 +95,7 @@ class LPAR(bp.BasePartition):
     @property
     def restrictedio(self):
         return self._get_val_bool(_RESTRICTED_IO, False)
+
+    def set_uuid(self, value):
+        # LPAR uuid's must be uppercase.
+        super(LPAR, self).set_uuid(str(value).upper())
