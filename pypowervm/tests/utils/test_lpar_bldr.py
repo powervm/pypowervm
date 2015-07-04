@@ -15,6 +15,7 @@
 #    under the License.
 
 import os
+import uuid
 
 import mock
 import six
@@ -23,6 +24,7 @@ import testtools
 from pypowervm.tests import test_fixtures as fx
 from pypowervm.tests.wrappers.util import xml_sections
 from pypowervm.utils import lpar_builder as lpar_bldr
+import pypowervm.utils.uuid as pvm_uuid
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
 
@@ -110,6 +112,13 @@ class TestLPARBuilder(testtools.TestCase):
                     memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(lpar_bldr.LPARBuilderException, bldr.build)
+
+        # Test setting uuid
+        uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
+        attr = dict(name='lpar', memory=1024, uuid=uuid1, vcpu=1)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        lpar_w = bldr.build()
+        self.assertEqual(uuid1.upper(), lpar_w.uuid)
 
         # Bad LPAR type
         attr = dict(name='lpar', memory=1024, env='BADLPARType', vcpu=1)
