@@ -263,7 +263,7 @@ def latest_stats(adapter, host_uuid, include_vio=True):
 
     # If there is no current metric, return None.
     if latest_phyp is None:
-        return datetime.datetime.now(), None
+        return datetime.datetime.now(), None, None
 
     phyp_json = adapter.read_by_href(latest_phyp.link, xag=[]).body
     phyp_metric = phyp_mon.PhypInfo(phyp_json)

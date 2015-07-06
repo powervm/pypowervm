@@ -236,10 +236,11 @@ class TestMonitors(testtools.TestCase):
         mock_ltm_feed.return_value = [mock_vio3_metric]
 
         # Call the system.
-        resp_date, resp_response = pvm_t_mon.latest_stats(mock.Mock(),
-                                                          mock.Mock())
+        resp_date, resp_phyp, resp_vios = pvm_t_mon.latest_stats(mock.Mock(),
+                                                                 mock.Mock())
         self.assertIsNotNone(resp_date)
-        self.assertIsNone(resp_response)
+        self.assertIsNone(resp_phyp)
+        self.assertIsNone(resp_vios)
 
 
 class TestMetricsCache(testtools.TestCase):
