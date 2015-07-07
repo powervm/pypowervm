@@ -149,6 +149,16 @@ _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
 # Partition I/O Configuration (_IO)
 IO_CFG_ROOT = _BP_IO_CFG
 _IO_MAX_SLOTS = 'MaximumVirtualIOSlots'
+_IO_TIO = 'TaggedIO'
+
+# Tagged I/O (_TIO)
+_TIO_ALT_CONSOLE = 'AlternateConsole'
+_TIO_ALT_LOAD_SRC = 'AlternateLoadSource'
+_TIO_CONSOLE = 'Console'
+_TIO_LOAD_SRC = 'LoadSource'
+_TIO_OP_CONSOLE = 'OperationsConsole'
+_TIO_EL_ORDER = (_TIO_ALT_CONSOLE, _TIO_ALT_LOAD_SRC, _TIO_CONSOLE,
+                 _TIO_LOAD_SRC, _TIO_OP_CONSOLE)
 
 # Constants for the I/O Slot Configuration
 IO_SLOTS_ROOT = 'ProfileIOSlots'
@@ -405,6 +415,16 @@ class BasePartition(ewrap.EntryWrapper):
     def is_mgmt_partition(self):
         """Is this the management partition?  Default False if field absent."""
         return self._get_val_bool(_BP_MGT_PARTITION)
+
+    @property
+    def keylock_pos(self):
+        """One of 'manual', 'normal', 'unknown' - see KeylockPosition.Enum."""
+        return self._get_val_str(_BP_KEYLOCK_POS)
+
+    @keylock_pos.setter
+    def keylock_pos(self, value):
+        """One of 'manual', 'normal', 'unknown' - see KeylockPosition.Enum."""
+        self.set_parm_value(_BP_KEYLOCK_POS, value)
 
     @property
     def capabilities(self):
@@ -840,6 +860,49 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
         """
         es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT), IOSlot)
         return es
+
+    @property
+    def tagged_io(self):
+        """IBMi only - tagged I/O attributes of the I/O configuration."""
+        tio = self._find(_IO_TIO)
+        return TaggedIO.wrap(tio) if tio else None
+
+    @tagged_io.setter
+    def tagged_io(self, tio):
+        self.inject(tio.element)
+
+
+@ewrap.ElementWrapper.pvm_type('TaggedIO', has_metadata=True,
+                               child_order=_TIO_EL_ORDER)
+class TaggedIO(ewrap.ElementWrapper):
+    """IBMi only - tagged I/O attributes of the I/O configuration."""
+
+    @property
+    def alt_load_src(self):
+        """Value may or may not be an integer - always returned as string."""
+        return self._get_val_str(_TIO_ALT_LOAD_SRC)
+
+    @alt_load_src.setter
+    def alt_load_src(self, value):
+        self.set_parm_value(_TIO_ALT_LOAD_SRC, value)
+
+    @property
+    def console(self):
+        """Value may or may not be an integer - always returned as string."""
+        return self._get_val_str(_TIO_CONSOLE)
+
+    @console.setter
+    def console(self, value):
+        self.set_parm_value(_TIO_CONSOLE, value)
+
+    @property
+    def load_src(self):
+        """Value may or may not be an integer - always returned as string."""
+        return self._get_val_str(_TIO_LOAD_SRC)
+
+    @load_src.setter
+    def load_src(self, value):
+        self.set_parm_value(_TIO_LOAD_SRC, value)
 
 
 @ewrap.ElementWrapper.pvm_type('ProfileIOSlot', has_metadata=True)
