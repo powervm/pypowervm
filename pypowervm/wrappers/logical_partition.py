@@ -36,6 +36,7 @@ _HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
 
 _RESTRICTED_IO = 'IsRestrictedIOPartition'
 _SRR = 'SimplifiedRemoteRestartCapable'
+_DESIGNATED_IPL_SRC = 'DesignatedIPLSource'
 
 _OPERATING_SYSTEM_VER = 'OperatingSystemVersion'
 
@@ -44,7 +45,7 @@ _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_ASSOCIATED_GROUPS, _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
-    _LPAR_DED_NICS, _SRR, _RESTRICTED_IO)
+    _LPAR_DED_NICS, _SRR, _RESTRICTED_IO, _DESIGNATED_IPL_SRC)
 
 
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
@@ -95,6 +96,16 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @property
     def restrictedio(self):
         return self._get_val_bool(_RESTRICTED_IO, False)
+
+    @property
+    def desig_ipl_src(self):
+        """May be one of 'a', 'b', 'c', 'd', 'Unknown' - see IPLSource.Enum."""
+        return self._get_val_str(_DESIGNATED_IPL_SRC)
+
+    @desig_ipl_src.setter
+    def desig_ipl_src(self, value):
+        """May be one of 'a', 'b', 'c', 'd', 'Unknown' - see IPLSource.Enum."""
+        self.set_parm_value(_DESIGNATED_IPL_SRC, value)
 
     def set_uuid(self, value):
         # LPAR uuid's must be uppercase.

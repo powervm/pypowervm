@@ -27,6 +27,7 @@ import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 
 LPAR_HTTPRESP_FILE = "lpar.txt"
+IBMI_HTTPRESP_FILE = "lpar_ibmi.txt"
 MC_HTTPRESP_FILE = "managementconsole.txt"
 DEDICATED_LPAR_NAME = 'z3-9-5-126-168-00000002'
 SHARED_LPAR_NAME = 'z3-9-5-126-127-00000001'
@@ -228,6 +229,11 @@ class TestLogicalPartition(testtools.TestCase):
     def test_is_mgmt_partition(self):
         self.call_simple_getter("is_mgmt_partition", True, False)
 
+    def test_keylock_pos(self):
+        self.call_simple_getter("keylock_pos", "normal", None)
+        self._shared_wrapper.keylock_pos = "manual"
+        self.call_simple_getter("keylock_pos", "manual", None)
+
     def test_subwrapper_getters(self):
         wrap = self._shared_wrapper
         self.assertIsInstance(wrap.capabilities, bp.PartitionCapabilities)
@@ -342,6 +348,48 @@ class TestLogicalPartition(testtools.TestCase):
         self._dedicated_wrapper.proc_config.dedicated_proc_cfg.min = 3
         self.call_simple_getter("proc_config.dedicated_proc_cfg.min",
                                 3, 0, use_dedicated=True)
+
+
+class TestIBMiSpecific(twrap.TestWrapper):
+    """IBMi-specific tests, requiring a test file from an IBMi partition."""
+    file = IBMI_HTTPRESP_FILE
+    wrapper_class_to_test = lpar.LPAR
+
+    def test_desig_ipl_src(self):
+        self.assertEqual('b', self.dwrap.desig_ipl_src)
+        self.dwrap.desig_ipl_src = 'c'
+        self.assertEqual('c', self.dwrap.desig_ipl_src)
+
+    def test_tagged_io(self):
+        # Getter
+        tio = self.dwrap.io_config.tagged_io
+        self.assertIsInstance(tio, bp.TaggedIO)
+        # Field getters & setters
+        self.assertEqual('NONE', tio.alt_load_src)
+        tio.alt_load_src = 34
+        self.assertEqual('34', tio.alt_load_src)
+        self.assertEqual('0', tio.console)
+        tio.console = 'NONE'
+        self.assertEqual('NONE', tio.console)
+        self.assertEqual('NONE', tio.load_src)
+        tio.load_src = '56'
+        self.assertEqual('56', tio.load_src)
+
+        # _bld honors child ordering
+        new_tio = bp.TaggedIO._bld(self.adpt)
+        new_tio.load_src = 1
+        new_tio.alt_load_src = 2
+        new_tio.console = 3
+        self.assertEqual(
+            '<uom:TaggedIO xmlns:uom="http://www.ibm.com/xmlns/systems/power/f'
+            'irmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:'
+            'Atom/></uom:Metadata><uom:AlternateLoadSource>2</uom:AlternateLoa'
+            'dSource><uom:Console>3</uom:Console><uom:LoadSource>1</uom:LoadSo'
+            'urce></uom:TaggedIO>'.encode('utf-8'), new_tio.toxmlstring())
+
+        # Setter
+        self.dwrap.io_config.tagged_io = new_tio
+        self.assertEqual('3', self.dwrap.io_config.tagged_io.console)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):
