@@ -29,6 +29,7 @@ from pypowervm.wrappers import virtual_io_server as vios
 # Dict keys used for input to the builder
 NAME = 'name'
 ENV = 'env'
+UUID = 'uuid'
 
 MEM = 'memory'
 MAX_MEM = 'max_mem'
@@ -98,7 +99,7 @@ class Standardize(object):
         :returns: dict of attributes.
             Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
                       PROC_COMPAT
-            Optional: SRR_CAPABLE
+            Optional: SRR_CAPABLE, UUID
         """
         pass
 
@@ -160,6 +161,8 @@ class DefaultStandardize(Standardize):
         :param spp: shared processor pool to assign if the processors are
             shared and the pool is not specified
         :param avail_priority: availability priority of the LPAR
+        :param srr: simplified remote restart capable
+        :param proc_compat: processor compatibility mode value
         """
 
         super(DefaultStandardize, self).__init__()
@@ -180,9 +183,11 @@ class DefaultStandardize(Standardize):
         """Copies a property if present or copies the base property."""
         attr[prop] = convert_func(self.attr.get(prop, self.attr[base_prop]))
 
-    def _set_val(self, attr, prop, value, convert_func=str):
+    def _set_val(self, attr, prop, value=None, convert_func=str):
         """Copies a property if present or uses the supplied value."""
-        attr[prop] = convert_func(self.attr.get(prop, value))
+        val = self.attr.get(prop, value)
+        if val is not None:
+            attr[prop] = convert_func(val)
 
     def _validate_general(self, attrs=None, partial=False):
         if attrs is None:
@@ -236,6 +241,7 @@ class DefaultStandardize(Standardize):
         self._validate_general(partial=True)
 
         attr = {NAME: self.attr[NAME]}
+        self._set_val(attr, UUID)
         self._set_val(attr, ENV, bp.LPARType.AIXLINUX,
                       convert_func=LPARType.convert_value)
         self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
@@ -692,7 +698,7 @@ class LPARBuilder(object):
         return True
 
     def build(self):
-        # Build a minimimal LPAR, the real work will be done in _rebuild
+        # Build a minimimal LPAR, the real work will be done in rebuild
         std = self.stdz.general()
 
         if std[ENV] == bp.LPARType.VIOS:
@@ -710,6 +716,12 @@ class LPARBuilder(object):
                     self.adapter, 0),
                 io_cfg=bp.PartitionIOConfiguration.bld(self.adapter, 0),
                 env=std[ENV])
+
+        # Only set the uuid if one is sent in, otherwise it will be set
+        # by PowerVM
+        if std.get(UUID) is not None:
+            lpar_w.uuid = std[UUID]
+
         return self.rebuild(lpar_w)
 
     def rebuild(self, lpar_w):
