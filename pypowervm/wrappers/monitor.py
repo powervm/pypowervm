@@ -46,7 +46,7 @@ _TITLE = 'title'
 _PUBLISHED = 'published'
 _CATEGORY = 'category'
 
-_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 
 LOG = logging.getLogger(__name__)
 
@@ -117,8 +117,25 @@ class MonitorMetrics(object):
 
     @staticmethod
     def _str_to_datetime(str_date):
-        return (datetime.datetime.strptime(str_date, _DATETIME_FORMAT)
-                .replace(tzinfo=pytz.utc))
+        # The format of the string is one of two ways.
+        # Current: 2015-04-30T06:11:35.000-05:00
+        # Legacy: 2015-04-30T06:11:35.000Z (the Z was meant to be timezone).
+        #
+        # The formatter will strip any Z's that may be in the string out.
+        str_date = str_date.replace('Z', '')
+
+        # Next, if there are three -'s, then it is the current format.  The
+        # datetime library doesn't like timezones that way, and given that
+        # the date is used mostly for ordering the metrics, we can remove that.
+        if str_date.count('-') == 3:
+            str_date = str_date.rsplit('-', 1)[0]
+
+        # At this point, no matter if current or legacy style, the date string
+        # should be the same format.
+        # Ex: 2015-04-30T06:11:35.000
+        return (datetime.datetime.strptime(str_date,
+                                           _DATETIME_FORMAT)
+                    .replace(tzinfo=pytz.utc))
 
     @classmethod
     def wrap(cls, response_or_entry):
