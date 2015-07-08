@@ -36,10 +36,11 @@ class TestAdapter(unittest.TestCase):
 
     def test_Session(self):
         """This test is just meant to ensure Session can be instantiated."""
-        # Passing in 0.0.0.0 will raise a ConnectionError, but only if it
-        # gets past all the __init__ setup since _logon is the last statement.
-        self.assertRaises(pvmex.ConnectionError, adp.Session, '0.0.0.0',
-                          'uid', 'pwd')
+        # Passing in 0.0.0.0 will raise a ConnectionError or SSLError, but only
+        # if it gets past all the __init__ setup since _logon is the last
+        # statement.
+        self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
+                          '0.0.0.0', 'uid', 'pwd')
 
     @mock.patch('pypowervm.adapter.LOG.warn')
     @mock.patch('pypowervm.adapter.Session._logon')
