@@ -24,7 +24,7 @@ BODY{
         <id>5362f2b2-2b33-4bdb-9ee4-67fb926e76a3</id>
         <updated>2015-05-27T08:13:00.000Z</updated>
         <title type="text">LTM_8247-22L*2125D4A_vios_1_20150527T081300+0000.json</title>
-        <published>2015-05-27T08:13:00.000Z</published>
+        <published>2015-05-27T08:13:00.000-05:00</published>
         <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/RawMetrics/LongTermMonitor/LTM_8247-22L*2125D4A_vios_1_20150527T081300+0000.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>
@@ -739,7 +739,7 @@ BODY{
         <id>2d4072f8-bfc3-46b0-8e54-e9f3c44b2088</id>
         <updated>2015-05-27T08:07:30.000Z</updated>
         <title type="text">LTM_8247-22L*2125D4A_phyp_20150527T080730+0000.json</title>
-        <published>2015-05-27T08:07:30.000Z</published>
+        <published>2015-05-27T08:07:30.000-05:00</published>
         <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/RawMetrics/LongTermMonitor/LTM_8247-22L*2125D4A_phyp_20150527T080730+0000.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>

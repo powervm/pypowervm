@@ -23,7 +23,7 @@ BODY{
         <id>28cb2328-ca14-48ef-a3bd-691debef53dd</id>
         <updated>2015-04-30T06:11:35.002Z</updated>
         <title type="text">STM_8247-22L*1111111_phyp_20150430T061135+0000.json</title>
-        <published>2015-04-30T06:11:35.000Z</published>
+        <published>2015-04-30T06:11:35.000-05:00</published>
         <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/ShortTermMonitor/STM_8247-22L*1111111_phyp_20150430T061135+0000.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>

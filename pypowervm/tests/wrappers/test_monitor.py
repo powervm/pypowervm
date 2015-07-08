@@ -14,6 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+
+import pytz
+
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 from pypowervm.wrappers import monitor
 
@@ -47,6 +51,17 @@ class TestPCM(twrap.TestWrapper):
 
         pcm_wrap.compute_ltm_enabled = True
         self.assertTrue(pcm_wrap.compute_ltm_enabled)
+
+    def test_str_to_datetime(self):
+        expected = datetime.datetime(
+            year=2015, month=4, day=30, hour=6, minute=11,
+            second=35).replace(tzinfo=pytz.utc)
+        func = monitor.MonitorMetrics._str_to_datetime
+
+        self.assertEqual(expected, func('2015-04-30T11:11:35.000-05:00'))
+        self.assertEqual(expected, func('2015-04-30T01:11:35.000+05:00'))
+        self.assertEqual(expected, func('2015-04-30T06:11:35.000-00:00'))
+        self.assertEqual(expected, func('2015-04-30T06:11:35.000Z'))
 
 
 class TestLTMMetrics(twrap.TestWrapper):
@@ -86,8 +101,8 @@ class TestSTMMetrics(twrap.TestWrapper):
 
         wrap = self.entries[0]
         self.assertEqual('28cb2328-ca14-48ef-a3bd-691debef53dd', wrap.id)
-        self.assertEqual('2015-04-30T06:11:35.000Z', wrap.published)
-        self.assertEqual('2015-04-30T06:11:35.000000UTC',
+        self.assertEqual('2015-04-30T06:11:35.000-05:00', wrap.published)
+        self.assertEqual('2015-04-30T01:11:35.000000UTC',
                          wrap.published_datetime.strftime(_DATETIME_FORMAT))
         self.assertEqual(
             'STM_8247-22L*1111111_phyp_20150430T061135+0000.json',

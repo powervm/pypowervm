@@ -46,7 +46,7 @@ _TITLE = 'title'
 _PUBLISHED = 'published'
 _CATEGORY = 'category'
 
-_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 
 LOG = logging.getLogger(__name__)
 
@@ -117,8 +117,29 @@ class MonitorMetrics(object):
 
     @staticmethod
     def _str_to_datetime(str_date):
-        return (datetime.datetime.strptime(str_date, _DATETIME_FORMAT)
-                .replace(tzinfo=pytz.utc))
+        # The format of the string is one of two ways.
+        # Current: 2015-04-30T06:11:35.000-05:00
+        # Legacy: 2015-04-30T06:11:35.000Z (the Z was meant to be timezone).
+        #
+        # The formatter will strip any Z's that may be in the string out.
+        str_date = str_date.replace('Z', '-00:00')
+
+        # Separate out the timezone.  Datetime doesn't like formatting time
+        # zones, so we pull it out for manual parsing.  It is the 6th digit
+        # from the right.
+        str_date, str_tz = str_date[:-6], str_date[-6:]
+
+        # We now have the date, without the timezone.
+        date = (datetime.datetime.strptime(str_date, _DATETIME_FORMAT).
+                replace(tzinfo=pytz.utc))
+
+        # Parse out the timezone.
+        tz_oper = str_tz[0]
+        tz_hr, tz_min = int(str_tz[1:3]), int(str_tz[4:6])
+        tz_delta = datetime.timedelta(hours=tz_hr, minutes=tz_min)
+
+        # Return the date plus/minus the timezone delta.
+        return (date + tz_delta) if (tz_oper == '+') else (date - tz_delta)
 
     @classmethod
     def wrap(cls, response_or_entry):
