@@ -34,7 +34,7 @@ BODY{
         <id>cf8bf632-b702-4f4f-9029-5ffc8934e886</id>
         <updated>2015-04-30T03:53:00.000Z</updated>
         <title type="text">LTM_8247-22L*1111111_phyp_20150430T035300+0000.json</title>
-        <published>2015-04-30T03:53:00.000Z</published>
+        <published>2015-04-30T03:53:00.000-05:00</published>
         <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_phyp_20150430T035300+0000.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>
