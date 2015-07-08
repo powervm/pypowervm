@@ -46,7 +46,7 @@ _TITLE = 'title'
 _PUBLISHED = 'published'
 _CATEGORY = 'category'
 
-_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 
 LOG = logging.getLogger(__name__)
 
@@ -117,7 +117,25 @@ class MonitorMetrics(object):
 
     @staticmethod
     def _str_to_datetime(str_date):
-        return (datetime.datetime.strptime(str_date, _DATETIME_FORMAT)
+        # The format of the string is one of two ways.
+        # Current: 2015-04-30T06:11:35.000-05:00
+        # Legacy: 2015-04-30T06:11:35.000Z (the Z was meant to be timezone).
+        #
+        # The formatter will strip any Z's that may be in the string out.
+        str_date = str_date.replace('Z', '-00:00')
+
+        # Remove the time zone.  datetime doesn't like formatting it, and it
+        # isn't relevant to the metrics (as they're used mostly for ordering).
+        #
+        # Could have used the %z directive for the timezone, but that doesn't
+        # work on py27.
+        str_date = str_date[:-6]
+
+        # At this point, no matter if current or legacy style, the date string
+        # should be the same format.
+        # Ex: 2015-04-30T06:11:35.000
+        return (datetime.datetime.strptime(str_date,
+                                           _DATETIME_FORMAT)
                 .replace(tzinfo=pytz.utc))
 
     @classmethod
