@@ -46,7 +46,8 @@ _TITLE = 'title'
 _PUBLISHED = 'published'
 _CATEGORY = 'category'
 
-_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
+_DATETIME_FORMAT_LEGACY = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 LOG = logging.getLogger(__name__)
 
@@ -117,8 +118,19 @@ class MonitorMetrics(object):
 
     @staticmethod
     def _str_to_datetime(str_date):
-        return (datetime.datetime.strptime(str_date, _DATETIME_FORMAT)
-                .replace(tzinfo=pytz.utc))
+        try:
+            # Assume format includes the timezone
+            # Ex. 2015-04-30-T06:11:35.000-05:00
+            # datetime doesn't like parsing the timezone.  Cut it out.
+            new_ds = str_date.rsplit('-', 1)[0]
+            return (datetime.datetime.strptime(new_ds, _DATETIME_FORMAT)
+                    .replace(tzinfo=pytz.utc))
+        except ValueError:
+            # 830 versions have older string.  That format is:
+            # 2015-04-30-T06:11:35.000Z (the Z was meant to be timezone).
+            return (datetime.datetime.strptime(str_date,
+                                               _DATETIME_FORMAT_LEGACY)
+                    .replace(tzinfo=pytz.utc))
 
     @classmethod
     def wrap(cls, response_or_entry):

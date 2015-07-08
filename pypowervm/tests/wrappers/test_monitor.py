@@ -86,7 +86,7 @@ class TestSTMMetrics(twrap.TestWrapper):
 
         wrap = self.entries[0]
         self.assertEqual('28cb2328-ca14-48ef-a3bd-691debef53dd', wrap.id)
-        self.assertEqual('2015-04-30T06:11:35.000Z', wrap.published)
+        self.assertEqual('2015-04-30T06:11:35.000-05:00', wrap.published)
         self.assertEqual('2015-04-30T06:11:35.000000UTC',
                          wrap.published_datetime.strftime(_DATETIME_FORMAT))
         self.assertEqual(
