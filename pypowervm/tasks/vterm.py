@@ -19,11 +19,10 @@
 import logging
 import subprocess
 
-import psutil
-
 import pypowervm.const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm.i18n import _
+from pypowervm.utils import psutil_compat as psutil
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as pvm_lpar
 
