@@ -126,7 +126,7 @@ class Session(object):
         self.host = host
 
         if host != 'localhost' and protocol == 'http':
-            LOG.warn('Unencrypted communication with PowerVM! ' +
+            LOG.warn('Unencrypted communication with PowerVM! '
                      'Revert configuration to https.')
 
         if port is None:
