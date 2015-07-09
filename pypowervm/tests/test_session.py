@@ -46,6 +46,7 @@ class TestAdapter(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init(self, mock_logon, mock_log_warn):
         """Ensure proper parameter handling in the Session initializer."""
+        mock_log_warn.side_effect = lambda msg, *a, **kwa: self.fail(msg)
         # No params - local, file-based, http.
         sess = adp.Session()
         self.assertTrue(sess.use_file_auth)
@@ -58,8 +59,7 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual(60, sess.timeout)
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
-        # localhost + http is okay
-        self.assertEqual(0, mock_log_warn.call_count)
+        # localhost + http is okay - no warning
 
         # Ensure proper protocol, port, and certpath defaulting when remote
         sess = adp.Session(host='host', username='user', password='pass')
@@ -73,13 +73,20 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual(60, sess.timeout)
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
-        # non-localhost + (implied) https is okay
-        self.assertEqual(0, mock_log_warn.call_count)
+        # non-localhost + (implied) https is okay - no warning
 
+        mock_log_warn.side_effect = lambda msg, *a, **kwa: self.assertEqual('Unencrypted communication with PowerVM! '
+                     'Revert configuration to https.', msg)
         # Proper port defaulting and warning emitted when remote + http
         sess = adp.Session(host='host', protocol='http')
         self.assertEqual(12080, sess.port)
-        self.assertEqual(1, mock_log_warn.call_count)
+        if 1 != mock_log_warn.call_count:
+            s = 'KYLE:'
+            for call in mock_log_warn.call_args_list:
+                ca, ck = call
+                ck = {}
+                s += '\n' + ', '.join(ca) + '; ' + ', '.join(["%s=%s" % (k, ck[k]) for k in ck])
+            self.fail(s)
 
     @mock.patch('pypowervm.util.validate_certificate')
     @mock.patch('requests.Session')
