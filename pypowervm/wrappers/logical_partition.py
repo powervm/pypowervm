@@ -97,5 +97,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return self._get_val_bool(_RESTRICTED_IO, False)
 
     def set_uuid(self, value):
-        # LPAR uuid's must be uppercase.
-        super(LPAR, self).set_uuid(str(value).upper())
+        # LPAR uuids must be uppercase.
+        up_uuid = str(value).upper()
+        super(LPAR, self).set_uuid(up_uuid)
+        self.set_parm_value(bp._BP_UUID, up_uuid)
