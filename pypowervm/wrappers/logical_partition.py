@@ -17,6 +17,7 @@
 """LPAR, the EntryWrapper for LogicalPartition."""
 
 import pypowervm.const as pc
+from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -36,6 +37,7 @@ _HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
 
 _RESTRICTED_IO = 'IsRestrictedIOPartition'
 _SRR = 'SimplifiedRemoteRestartCapable'
+_DESIGNATED_IPL_SRC = 'DesignatedIPLSource'
 
 _OPERATING_SYSTEM_VER = 'OperatingSystemVersion'
 
@@ -44,7 +46,17 @@ _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_ASSOCIATED_GROUPS, _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
-    _LPAR_DED_NICS, _SRR, _RESTRICTED_IO)
+    _LPAR_DED_NICS, _SRR, _RESTRICTED_IO, _DESIGNATED_IPL_SRC)
+
+
+class IPLSrc(object):
+    """Mirror of IPLSource.Enum."""
+    A = 'a'
+    B = 'b'
+    C = 'c'
+    D = 'd'
+    UNKNOWN = 'Unknown'
+    ALL_VALUES = (A, B, C, D, UNKNOWN)
 
 
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
@@ -95,6 +107,18 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @property
     def restrictedio(self):
         return self._get_val_bool(_RESTRICTED_IO, False)
+
+    @property
+    def desig_ipl_src(self):
+        """Designated IPL Source - see IPLSrc enumeration."""
+        return self._get_val_str(_DESIGNATED_IPL_SRC)
+
+    @desig_ipl_src.setter
+    def desig_ipl_src(self, value):
+        """Designated IPL Source - see IPLSrc enumeration."""
+        if value not in IPLSrc.ALL_VALUES:
+            raise ValueError(_("Invalid IPLSrc '%s'.") % value)
+        self.set_parm_value(_DESIGNATED_IPL_SRC, value)
 
     def set_uuid(self, value):
         # LPAR uuid's must be uppercase.
