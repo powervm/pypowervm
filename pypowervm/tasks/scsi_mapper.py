@@ -255,12 +255,16 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
     return match_func
 
 
-def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
+def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
+              include_orphans=False):
     """Filter a list of scsi mappings by LPAR ID/UUID and a matching function.
 
     :param mapping_list: The mappings to filter.  Iterable of VSCSIMapping.
     :param client_lpar_id: Integer short ID or string UUID of the LPAR on the
-                           client side of the mapping.
+                           client side of the mapping.  Note that the UUID form
+                           relies on the presence of the client_lpar_href
+                           field.  Some mappings lack this field, and would
+                           therefore be ignored.
     :param match_func: Callable with the following specification:
 
         def match_func(storage_elem)
@@ -281,6 +285,12 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
                      default is to match everything - that is, find_maps will
                      return all mappings for the specified client_lpar_id.
                      It is illegal to specify both match_func and stg_elem.
+    :param include_orphans: An "orphan" contains a server adapter but no client
+                            adapter.  If this parameter is True, mappings with
+                            no client adapter will still be considered for
+                            inclusion.  If False, mappings with no client
+                            adapter will be skipped entirely, regardless of any
+                            other criteria.
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id and whose backing storage
              elements satisfy match_func.
@@ -301,17 +311,18 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None):
     is_uuid, client_id = _id_or_uuid(client_lpar_id)
     matching_maps = []
     for existing_scsi_map in mapping_list:
-        # No client, continue on.
-        if existing_scsi_map.client_adapter is None:
+        # No client, continue on unless including orphans.
+        if not include_orphans and existing_scsi_map.client_adapter is None:
             continue
 
         # If to a different VM, continue on.
-        if (is_uuid and
-                client_id != util.get_req_path_uuid(
-                    existing_scsi_map.client_lpar_href, preserve_case=True)):
-                continue
+        href = existing_scsi_map.client_lpar_href
+        if is_uuid and (not href or client_id != util.get_req_path_uuid(
+                href, preserve_case=True)):
+            continue
         elif (not is_uuid and
-                existing_scsi_map.client_adapter.lpar_id != client_id):
+                # Use the server adapter in case this is an orphan.
+                existing_scsi_map.server_adapter.lpar_id != client_id):
             continue
 
         if match_func(existing_scsi_map.backing_storage):
