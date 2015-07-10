@@ -169,8 +169,10 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertEqual('42DF39A2-3A4A-4748-998F-25B15352E8A7', wrapper.uuid)
         # Test set and retrieve
         uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
+        up_uuid1 = uuid1.upper()
         wrapper.set_uuid(uuid1)
-        self.assertEqual(uuid1.upper(), wrapper.uuid)
+        self.assertEqual(up_uuid1, wrapper.uuid)
+        self.assertEqual(up_uuid1, wrapper.partition_uuid)
 
         uuid2 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
         wrapper.uuid = uuid2

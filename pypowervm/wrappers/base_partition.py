@@ -352,6 +352,10 @@ class BasePartition(ewrap.EntryWrapper):
         self.set_parm_value(_BP_TYPE, val)
 
     @property
+    def partition_uuid(self):
+        return self._get_val_str(_BP_UUID)
+
+    @property
     def assoc_sys_uuid(self):
         """UUID of the associated ManagedSystem."""
         href = self.get_href(_BP_ASSOCIATED_SYSTEM, one_result=True)
