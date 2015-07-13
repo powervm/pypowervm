@@ -550,10 +550,23 @@ class SEA(ewrap.ElementWrapper):
         The first is the primary adapter.  All others are the additional
         adapters.
         """
+        # It is not expected that the API will return the adapters such that
+        # the first is the primary.  Yet to reduce complexity in the other
+        # methods that work with the trunks, the returned value from here
+        # will order it as such.
+
+        primary_vlan = self.pvid
+
         trunk_elem_list = self.element.findall(u.xpath(SEA_TRUNKS, TA_ROOT))
         trunks = []
         for trunk_elem in trunk_elem_list:
-            trunks.append(TrunkAdapter.wrap(trunk_elem))
+            trunk_wrap = TrunkAdapter.wrap(trunk_elem)
+            if trunk_wrap.pvid == primary_vlan:
+                # It is the primary, insert it to front of the trunk list.
+                trunks.insert(0, trunk_wrap)
+            else:
+                # Add to the end.
+                trunks.append(trunk_wrap)
         return trunks
 
     @property

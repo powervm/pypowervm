@@ -219,7 +219,7 @@ class TestElementWrapper(testtools.TestCase):
     def test_inequality_by_subelem_change(self):
         sea1 = self._find_seas(self.nb1.entry)[0]
         sea2 = self._find_seas(self.nb2.entry)[0]
-        sea_trunk = sea2.element.findall('TrunkAdapters/TrunkAdapter')[1]
+        sea_trunk = sea2.element.findall('TrunkAdapters/TrunkAdapter')[0]
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
