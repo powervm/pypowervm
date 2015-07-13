@@ -184,6 +184,7 @@ RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
 _IO_ADPT_DESC = 'Description'
+_IO_ADPT_DEV_NAME = 'DeviceName'
 _IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
 _IO_ADPT_PHYS_LOC = 'PhysicalLocation'
 
@@ -1105,7 +1106,7 @@ class IOAdapter(ewrap.ElementWrapper):
 
     @property
     def dev_name(self):
-        return self._get_val_str(_IO_ADPT_DESC)
+        return self._get_val_str(_IO_ADPT_DEV_NAME)
 
     @property
     def dyn_reconfig_conn_name(self):
