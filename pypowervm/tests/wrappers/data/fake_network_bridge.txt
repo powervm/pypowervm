@@ -158,24 +158,6 @@ BODY{
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
-                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
-                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
-                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
-                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
-                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
-                    <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
-                    <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
-                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
-                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
-                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
-                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
-                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
-                </TrunkAdapter>
-                <TrunkAdapter schemaVersion="V1_2_0">
-                    <Metadata>
-                        <Atom/>
-                    </Metadata>
                     <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C3</DynamicReconfigurationConnectorName>
                     <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C3</LocationCode>
                     <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
@@ -189,6 +171,24 @@ BODY{
                     <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
                     <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
                     <DeviceName kb="ROR" kxe="false">ent5</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
                     <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
                 </TrunkAdapter>
             </TrunkAdapters>
