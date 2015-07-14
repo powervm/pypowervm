@@ -464,7 +464,8 @@ class TestGenericIOAdapter(twrap.TestWrapper):
     def test_attrs(self):
         self.assertEqual('553713674', self.io_adpt.id)
         self.assertEqual('PCI-E SAS Controller', self.io_adpt.description)
-        self.assertEqual('PCI-E SAS Controller', self.io_adpt.dev_name)
+        self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
+                         self.io_adpt.dev_name)
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
                          self.io_adpt.dyn_reconfig_conn_name)
         self.assertEqual('T9', self.io_adpt.phys_loc_code)
@@ -485,7 +486,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
 
         self.assertEqual('553714177', self.io_adpt.id)
         self.assertEqual(desc, self.io_adpt.description)
-        self.assertEqual(desc, self.io_adpt.dev_name)
+        self.assertEqual('U78AB.001.WZSJBM3-P1-C2', self.io_adpt.dev_name)
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
                          self.io_adpt.dyn_reconfig_conn_name)
         self.assertEqual('C2', self.io_adpt.phys_loc_code)
