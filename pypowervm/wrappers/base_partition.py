@@ -142,6 +142,7 @@ _DPC_MAX_PROCS = 'MaximumProcessors'
 _DPC_MIN_PROCS = 'MinimumProcessors'
 
 # Partition Memory Configuration (_MEM)
+_MEM_CUR = 'CurrentMemory'
 _MEM_DES = 'DesiredMemory'
 _MEM_MAX = 'MaximumMemory'
 _MEM_MIN = 'MinimumMemory'
@@ -633,6 +634,10 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         cfg.min = min_mem
 
         return cfg
+
+    @property
+    def current(self):
+        return self._get_val_int(_MEM_CUR)
 
     @property
     def desired(self):
