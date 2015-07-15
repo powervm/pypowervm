@@ -127,10 +127,14 @@ _SSP_LU = 'LogicalUnit'
 _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
+# Virtual Target Device Constants
+_VTD_TGT_NAME = 'TargetName'
+_VTD_UDID = UDID
+
 # Virtual Adapter Constants
 _VADPT_LPAR_ID = 'LocalPartitionID'
 _VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
-_VADPT_UDID = 'UniqueDeviceID'
+_VADPT_UDID = UDID
 _VADPT_MAP_PORT = 'MapPort'
 _VADPT_WWPNS = 'WWPNs'
 _VADPT_BACK_DEV_NAME = 'BackingDeviceName'
@@ -657,6 +661,53 @@ class SSP(ewrap.EntryWrapper):
     @physical_volumes.setter
     def physical_volumes(self, pvs):
         self.replace_list(_SSP_PVS, pvs)
+
+
+@six.add_metaclass(abc.ABCMeta)
+class VTargetDev(ewrap.ElementWrapper):
+    """Parent class for the various VirtualTargetDevice types.
+
+    These are always created by the VIOS, so we don't supply bld methods or
+    need child ordering.
+    """
+    has_metadata = True
+
+    @property
+    def name(self):
+        """Virtual Target Device name, e.g. 'vtscsi0'."""
+        return self._get_val_str(_VTD_TGT_NAME)
+
+    @property
+    def udid(self):
+        """Unique Device ID (UDID) of the VTD, as a string."""
+        return self._get_val_str(_VTD_UDID)
+
+
+@ewrap.ElementWrapper.pvm_type('LogicalVolumeVirtualTargetDevice',
+                               has_metadata=True)
+class LVVTargetDev(VTargetDev):
+    """Logical Volume Virtual Target Device."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type('PhysicalVolumeVirtualTargetDevice',
+                               has_metadata=True)
+class PVVTargetDev(VTargetDev):
+    """Physical Volume Virtual Target Device."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(
+    'SharedStoragePoolLogicalUnitVirtualTargetDevice', has_metadata=True)
+class LUVTargetDev(VTargetDev):
+    """SSP Logical Unit Virtual Target Device."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type('VirtualOpticalTargetDevice', has_metadata=True)
+class VOptVTargetDev(VTargetDev):
+    """Virtual Optical Media Virtual Target Device."""
+    pass
 
 
 @six.add_metaclass(abc.ABCMeta)

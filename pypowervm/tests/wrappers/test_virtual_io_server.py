@@ -107,6 +107,28 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.assertEqual(0, ports[0].npiv_available_ports)
         self.assertEqual(0, ports[0].npiv_total_ports)
 
+    def test_vtd(self):
+        """Test virtual target device component of a SCSI mapping.
+
+        To get full coverage, this test has a sibling in TestViosMappings,
+        which uses a different input file with different VTD types.
+        """
+        mappings = self.dwrap.scsi_mappings
+        # Mapping 0 has an SSP LU VTD
+        vtd = mappings[0].target_device
+        self.assertIsInstance(vtd, pvm_stor.LUVTargetDev)
+        self.assertEqual('vtscsi0', vtd.name)
+        self.assertEqual('0aee832d1c28727ffU8246.L1C.0604CAA-V1-C7', vtd.udid)
+
+        # Mapping 1 has no VTD
+        self.assertIsNone(mappings[1].target_device)
+
+        # Mapping 7 has a PV VTD
+        vtd = mappings[7].target_device
+        self.assertIsInstance(vtd, pvm_stor.PVVTargetDev)
+        self.assertEqual('vtscsi55', vtd.name)
+        self.assertEqual('085fc2b9488a5ff9f8', vtd.udid)
+
 
 class TestViosMappings(twrap.TestWrapper):
 
@@ -273,6 +295,28 @@ class TestViosMappings(twrap.TestWrapper):
         self.dwrap.scsi_mappings = mappings
         self.assertEqual(len(self.dwrap.scsi_mappings), orig_size)
 
+    def test_vtd(self):
+        """Test virtual target device component of a SCSI mapping.
+
+        To get full coverage, this test has a sibling in TestVIOSWrapper, which
+        uses a different input file with different VTD types.
+        """
+        mappings = self.dwrap.scsi_mappings
+        # Mapping 0 has no VTD
+        self.assertIsNone(mappings[0].target_device)
+
+        # Mapping 1 has a VOpt VTD
+        vtd = mappings[1].target_device
+        self.assertIsInstance(vtd, pvm_stor.VOptVTargetDev)
+        self.assertEqual('vtopt1', vtd.name)
+        self.assertEqual('19e1c8c2b323a0afb6', vtd.udid)
+
+        # Mapping 12 has an LV VTD
+        vtd = mappings[12].target_device
+        self.assertIsInstance(vtd, pvm_stor.LVVTargetDev)
+        self.assertEqual('vtscsi0', vtd.name)
+        self.assertEqual('09c2a3212da4d24568', vtd.udid)
+
     def test_vfc_mappings(self):
         mappings = self.dwrap.vfc_mappings
 
@@ -355,7 +399,7 @@ class TestViosMappings(twrap.TestWrapper):
             has_piece(smap.client_adapter, client_adapter)
             has_piece(smap.server_adapter, server_adapter)
             has_piece(smap.backing_storage, storage)
-            has_piece(smap.element.find('TargetDevice'), target_device)
+            has_piece(smap.target_device, target_device)
         stg = pvm_stor.VDisk.bld_ref(self.adpt, 'disk_name')
         smaps = self.dwrap.scsi_mappings
         # 0 has only ServerAdapter

@@ -71,6 +71,7 @@ _SEA_PATH = u.xpath(net.NB_SEAS, net.SHARED_ETH_ADPT)
 
 # Mapping Constants
 _MAP_STORAGE = 'Storage'
+_MAP_TARGET = 'TargetDevice'
 _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
@@ -402,8 +403,8 @@ class VSCSIMapping(VStorageMapping):
     def _backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
 
-        :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
-                    backing storage to assign.
+        :param stg: Either a VDisk, VOptMedia, LU or PV wrapper representing
+                    the backing storage to assign.
         """
         # Always replace.  Because while the storage has one element, it can't
         # inject properly if the backing type changes (ex. cloning from vOpt to
@@ -412,6 +413,25 @@ class VSCSIMapping(VStorageMapping):
                                 children=[])
         stor_elem.inject(stg.element)
         self.inject(stor_elem)
+
+    @property
+    def target_device(self):
+        """The virtual Target Device of the mapping, if present."""
+        elem = self.element.find(_MAP_TARGET)
+        if elem is None:
+            return None
+        # If target device exists, it comprises a single child of elem.  But
+        # type is unknown immediately, so call all children and then wrap.
+        stor_elems = elem.getchildren()
+        if len(stor_elems) != 1:
+            return None
+        # The TargetDevice may be any one of:
+        #    LogicalVolumeVirtualTargetDevice
+        #    PhysicalVolumeVirtualTargetDevice
+        #    SharedStoragePoolLogicalUnitVirtualTargetDevice
+        #    VirtualOpticalTargetDevice
+        # Allow ElementWrapper to detect (from the registry) and wrap correctly
+        return ewrap.ElementWrapper.wrap(stor_elems[0])
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
