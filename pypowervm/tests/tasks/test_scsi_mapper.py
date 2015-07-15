@@ -392,3 +392,49 @@ class TestSCSIMapper(testtools.TestCase):
             set(sep.keys()))
         self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
                          vios_wrap.scsi_mappings[-1])
+
+    def test_index_mappings(self):
+        vwrap = pvm_vios.VIOS.wrap(tju.load_file(VIO_MULTI_MAP_FILE2,
+                                                 self.adpt))
+        idx = scsi_mapper.index_mappings(vwrap.scsi_mappings)
+
+        self.assertEqual({
+            'by-lpar-id', 'by-lpar-uuid', 'by-storage-udid'}, set(idx.keys()))
+
+        exp_lpar_ids = ('2', '5', '6', '7', '10', '11', '12', '13', '14', '15',
+                        '16', '17', '18', '19', '20', '21', '22', '23', '24',
+                        '27', '28', '29', '33', '35', '36', '39', '40')
+        self.assertEqual(set(exp_lpar_ids), set(idx['by-lpar-id'].keys()))
+        # Each mapping has a different LPAR ID, so each LPAR ID only has one
+        # mapping
+        for lpar_id in exp_lpar_ids:
+            maplist = idx['by-lpar-id'][lpar_id]
+            self.assertEqual(1, len(maplist))
+            self.assertIsInstance(maplist[0], pvm_vios.VSCSIMapping)
+            self.assertEqual(lpar_id, str(maplist[0].server_adapter.lpar_id))
+
+        # Not all mappings have client_lpar_href, so this list is shorter.
+        exp_lpar_uuids = ('0C0A6EBE-7BF4-4707-8780-A140F349E42E',
+                          '0FB69DD7-4B93-4C09-8916-8BC9821ABAAC',
+                          '263EE77B-AD6E-4920-981A-4B7D245B8571',
+                          '292ACAF5-C96B-447A-8C7E-7503D80AA33E',
+                          '32AA6AA5-CCE6-4523-860C-0852455036BE',
+                          '3CE30EC6-C98A-4A58-A764-09DAC7C324BC',
+                          '615C9134-243D-4A11-93EB-C0556664B761',
+                          '7CFDD55B-E0D7-4B8C-8254-9305E31BB1DC')
+        self.assertEqual(set(exp_lpar_uuids), set(idx['by-lpar-uuid'].keys()))
+        # Of ten mappings with client_lpar_href, three have the same UUID.
+        for lpar_uuid in exp_lpar_uuids:
+            maplist = idx['by-lpar-uuid'][lpar_uuid]
+            for smap in maplist:
+                self.assertIsInstance(smap, pvm_vios.VSCSIMapping)
+                self.assertTrue(smap.client_lpar_href.endswith(lpar_uuid))
+            if lpar_uuid == '0C0A6EBE-7BF4-4707-8780-A140F349E42E':
+                self.assertEqual(3, len(maplist))
+            else:
+                self.assertEqual(1, len(maplist))
+
+        # Only five mappings have storage, and all are different
+        self.assertEqual(5, len(idx['by-storage-udid'].keys()))
+        for sudid in idx['by-storage-udid']:
+            self.assertEqual(1, len(idx['by-storage-udid'][sudid]))
