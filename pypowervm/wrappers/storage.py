@@ -129,6 +129,7 @@ _SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
 _VADPT_LPAR_ID = 'LocalPartitionID'
+_VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
 _VADPT_UDID = 'UniqueDeviceID'
 _VADPT_MAP_PORT = 'MapPort'
 _VADPT_WWPNS = 'WWPNs'
@@ -721,7 +722,11 @@ class VClientStorageAdapter(VStorageAdapter):
 
     @property
     def lpar_id(self):
-        """The LPAR ID the contains this client adapter."""
+        """The short ID (not UUID) of the LPAR side of this adapter.
+
+        Note that the LPAR ID is LocalPartitionID on the client side, and
+        RemoteLogicalPartitionID on the server side.
+        """
         return self._get_val_int(_VADPT_LPAR_ID)
 
 
@@ -743,6 +748,15 @@ class VServerStorageAdapter(VStorageAdapter):
     def udid(self):
         """The device's Unique Device Identifier."""
         return self._get_val_str(_VADPT_UDID)
+
+    @property
+    def lpar_id(self):
+        """The short ID (not UUID) of the LPAR side of this adapter.
+
+        Note that the LPAR ID is LocalPartitionID on the client side, and
+        RemoteLogicalPartitionID on the server side.
+        """
+        return self._get_val_int(_VADPT_REM_LPAR_ID)
 
 
 # pvm_type decorator by superclass (it is not unique)

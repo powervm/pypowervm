@@ -25,6 +25,7 @@ from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
+VIO_MULTI_MAP_FILE2 = '../../wrappers/data/fake_vios_mappings.txt'
 LPAR_UUID = '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC'
 
 
@@ -353,9 +354,34 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, len(matches))
         self.assertEqual(maps[2], matches[0])
 
+        # All the mappings in VIO_MULTI_MAP_FILE are "complete".  Now play with
+        # some that aren't.
+        maps = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE2, self.adpt)).scsi_mappings
+        # Map 0 has only a server adapter.  We should find it if we specify the
+        # LPAR ID...
+        matches = scsi_mapper.find_maps(maps, 27, include_orphans=True)
+        self.assertEqual(maps[0], matches[0])
+        # ...but only if allowing orphans
+        matches = scsi_mapper.find_maps(maps, 27, include_orphans=False)
+        self.assertEqual(0, len(matches))
+        # Matching by LPAR UUID.  Maps 12, 25, and 26 have this UUID...
+        uuid = '0C0A6EBE-7BF4-4707-8780-A140F349E42E'
+        matches = scsi_mapper.find_maps(maps, uuid, include_orphans=True)
+        self.assertEqual(3, len(matches))
+        self.assertEqual(maps[12], matches[0])
+        self.assertEqual(maps[25], matches[1])
+        self.assertEqual(maps[26], matches[2])
+        # ...but 25 is an orphan (no client adapter).
+        uuid = '0C0A6EBE-7BF4-4707-8780-A140F349E42E'
+        matches = scsi_mapper.find_maps(maps, uuid)
+        self.assertEqual(2, len(matches))
+        self.assertEqual(maps[12], matches[0])
+        self.assertEqual(maps[26], matches[1])
+
     def test_separate_mappings(self):
-        vios_wrap = pvm_vios.VIOS.wrap(tju.load_file(
-            '../../wrappers/data/fake_vios_mappings.txt', self.adpt))
+        vios_wrap = pvm_vios.VIOS.wrap(tju.load_file(VIO_MULTI_MAP_FILE2,
+                                                     self.adpt))
         client_href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                        '726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/'
                        '0C0A6EBE-7BF4-4707-8780-A140F349E42E')

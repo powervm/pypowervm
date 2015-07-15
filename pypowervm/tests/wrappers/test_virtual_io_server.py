@@ -246,13 +246,14 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Deeper check on each of these.
         ca = static_map.client_adapter
-        self.assertIsNotNone(ca.lpar_id)
+        self.assertEqual(5, ca.lpar_id)
         self.assertTrue(ca.is_varied_on)
         self.assertIsNotNone(ca.slot_number)
         self.assertIsNotNone(ca.loc_code)
         self.assertEqual(ca.side, 'Client')
 
         sa = static_map.server_adapter
+        self.assertEqual(10, sa.lpar_id)
         self.assertIsNotNone(sa.name)
         self.assertIsNotNone(sa.backing_dev_name)
         self.assertIsNotNone(sa.udid)
