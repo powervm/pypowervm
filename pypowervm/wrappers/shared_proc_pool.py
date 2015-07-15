@@ -17,10 +17,13 @@
 """SharedProcPool, the EntryWrapper for SharedProcessorPool."""
 
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.util as u
 
 import logging
 
 LOG = logging.getLogger(__name__)
+
+DEFAULT_POOL_DISPLAY_NAME = 'DefaultPool'
 
 # Shared Processor Pool Constants
 _POOL_ID = 'PoolID'
@@ -48,3 +51,44 @@ class SharedProcPool(ewrap.EntryWrapper):
     def curr_rsrv_proc_units(self):
         """Floating point number of reserved processing units."""
         return self._get_val_float(_CURR_RSRV_PROC_UNITS, 0)
+
+    @property
+    def is_default(self):
+        """If true, is the default processor pool."""
+        return self.id == 0
+
+    @property
+    def name(self):
+        """The name of the processor pool."""
+        return self._get_val_str(_POOL_NAME)
+
+    @name.setter
+    def name(self, value):
+        self.set_parm_value(_POOL_NAME, value)
+
+    @property
+    def max_proc_units(self):
+        """Floating point number of the max processing units."""
+        return self._get_val_float(_MAX_PROC_UNITS, 0)
+
+    @max_proc_units.setter
+    def max_proc_units(self, value):
+        self.set_parm_value(_MAX_PROC_UNITS, u.sanitize_float_for_api(value))
+
+    @property
+    def pend_rsrv_proc_units(self):
+        """Floating point number of pending reserved proc units."""
+        return self._get_val_float(_PEND_RSRV_PROC_UNITS, 0)
+
+    @pend_rsrv_proc_units.setter
+    def pend_rsrv_proc_units(self, value):
+        self.set_parm_value(_PEND_RSRV_PROC_UNITS,
+                            u.sanitize_float_for_api(value))
+
+    @property
+    def avail_proc_units(self):
+        """Returns the available proc units in the pool.
+
+        If the default pool, will return 0.
+        """
+        return self._get_val_float(_AVAL_PROC_UNITS, 0)
