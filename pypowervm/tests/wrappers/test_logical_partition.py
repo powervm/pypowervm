@@ -425,8 +425,15 @@ class TestPartitionIOConfiguration(twrap.TestWrapper):
         self.assertEqual(0, len(self.io_config.io_slots))
 
 
-class TestMemCfg(unittest.TestCase):
+class TestMemCfg(twrap.TestWrapper):
     """Test cases to test the lpar mem operations."""
+
+    file = LPAR_HTTPRESP_FILE
+    wrapper_class_to_test = lpar.LPAR
+
+    def setUp(self):
+        super(TestMemCfg, self).setUp()
+        self.mem_config = self.entries[0].mem_config
 
     def test_mem(self):
         mem_wrap = bp.PartitionMemoryConfiguration.bld(
@@ -435,6 +442,9 @@ class TestMemCfg(unittest.TestCase):
         self.assertEqual(512, mem_wrap.min)
         self.assertEqual(1024, mem_wrap.desired)
         self.assertEqual(2048, mem_wrap.max)
+
+    def test_current_mem(self):
+        self.assertEqual(512, self.mem_config.current)
 
 
 class TestPhysFCPort(unittest.TestCase):
