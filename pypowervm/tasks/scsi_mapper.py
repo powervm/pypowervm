@@ -331,6 +331,71 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
     return matching_maps
 
 
+def index_mappings(maps):
+    """Create an index dict of SCSI mappings to facilitate reverse lookups.
+
+    :param maps: Iterable of VSCSIMapping to index.
+    :return: A dict of the form:
+        { 'by-lpar-id': { str(lpar_id): [VSCSIMapping, ...], ... },
+          'by-lpar-uuid': { lpar_uuid: [VSCSIMapping, ...], ... },
+          'by-storage-udid': { storage_udid: [VSCSIMapping, ...], ... },
+          'by-target-udid': { target_udid: [VSCSIMapping, ...], ... }
+        }
+        ...where:
+        - lpar_id is the short integer ID (not UUID) of the LPAR, stringified.
+        - lpar_uuid is the UUID of the LPAR.
+        - storage_udid is the Unique Device Identifier (UDID) of the backing
+            Storage element associated with the mapping.
+        - target_udid is the Unique Device Identifier (UDID) of the
+            TargetDevice element associated with the mapping.
+
+        While the outermost dict is guaranteed to have all keys, the inner
+        dicts may be empty.  However, if an inner dict has a member, its list
+        of mappings is guaranteed to be nonempty.
+    """
+    ret = {'by-lpar-id': {}, 'by-lpar-uuid': {},
+           'by-storage-udid': {}, 'by-target-udid': {}}
+
+    def add(key, ident, smap):
+        """Add a mapping to an index.
+
+        :param key: The top-level key name ('by-lpar-uuid', etc.)
+        :param ident: The lower-level key name (e.g. the lpar_uuid)
+        :param smap: The mapping to add to the index.
+        """
+        ident = str(ident)
+        if not ident:
+            return
+        if ident not in ret[key]:
+            ret[key][ident] = []
+        ret[key][ident].append(smap)
+
+    for smap in maps:
+        clhref = smap.client_lpar_href
+        if clhref:
+            add('by-lpar-uuid',
+                util.get_req_path_uuid(clhref, preserve_case=True), smap)
+
+        clid = None
+        # Mapping should always have a server adapter, but just in case, the
+        # LPAR ID is also available from the client adapter.
+        if smap.server_adapter:
+            clid = smap.server_adapter.lpar_id
+        elif smap.client_adapter:
+            clid = smap.client_adapter.lpar_id
+        add('by-lpar-id', clid, smap)
+
+        stg = smap.backing_storage
+        if stg:
+            add('by-storage-udid', stg.udid, smap)
+
+        tdev = smap.target_device
+        if tdev:
+            add('by-target-udid', tdev.udid, smap)
+
+    return ret
+
+
 def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
     """Will remove the mapping for VOpt media.
 
