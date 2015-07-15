@@ -331,6 +331,59 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
     return matching_maps
 
 
+def index_mappings(maps):
+    """Create an index dict of SCSI mappings to facilitate reverse lookups.
+
+    :param maps: Iterable of VSCSIMapping to index.
+    :return: A dict of the form:
+        { 'by-lpar-id': { str(lpar_id): [VSCSIMapping, ...], ... },
+          'by-lpar-uuid': { lpar_uuid: [VSCSIMapping, ...], ... },
+          'by-storage-udid': { storage_udid: [VSCSIMapping, ...], ... },
+          'by-target-udid': { target_udid: [VSCSIMapping, ...], ... }
+        }
+        Not all keys are guaranteed
+    """
+    ret = {'by-lpar-id': {}, 'by-lpar-uuid': {},
+           'by-storage-udid': {}, 'by-target-udid': {}}
+
+    def add(key, ident, smap):
+        """Add a mapping to an index.
+
+        :param key: The top-level key name ('by-lpar-uuid', etc.)
+        :param ident: The lower-level key name (e.g. the lpar_uuid)
+        :param smap: The mapping to add to the index.
+        """
+        ident = str(ident)
+        if not ident:
+            return
+        if ident not in ret[key]:
+            ret[key][ident] = []
+        ret[key][ident].append(smap)
+
+    for smap in maps:
+        clhref = smap.client_lpar_href
+        if clhref:
+            add('by-lpar-uuid',
+                util.get_req_path_uuid(clhref, preserve_case=True), smap)
+
+        clid = None
+        if smap.server_adapter:
+            clid = smap.server_adapter.lpar_id
+        elif smap.client_adapter:
+            clid = smap.client_adapter.lpar_id
+        add('by-lpar-id', clid, smap)
+
+        stg = smap.backing_storage
+        if stg:
+            add('by-storage-udid', stg.udid, smap)
+
+        tdev = smap.target_device
+        if tdev:
+            add('by-target-udid', tdev.udid, smap)
+
+    return ret
+
+
 def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
     """Will remove the mapping for VOpt media.
 
