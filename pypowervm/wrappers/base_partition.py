@@ -882,6 +882,10 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
         es = ewrap.WrapperElemList(self._find_or_seed(IO_SLOTS_ROOT), IOSlot)
         return es
 
+    @io_slots.setter
+    def io_slots(self, val):
+        self.replace_list(IO_SLOTS_ROOT, val)
+
     @property
     def tagged_io(self):
         """IBMi only - tagged I/O attributes of the I/O configuration."""
