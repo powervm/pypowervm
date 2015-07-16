@@ -142,6 +142,26 @@ class HAMode(object):
     DISABLED = 'disabled'
 
 
+def _order_by_pvid(adapters, pvid):
+    """Orders a list of adapters.
+
+    Takes in a set of adapter wrappers (either TrunkAdapter or LoadGroups) and
+    returns a list where the adapter that matches the PVID is the first.
+    :param adapters: The list of adapter wrappers (either TrunkAdapter or
+                     LoadGroups).  Must have a pvid attribute.
+    :param pvid: The pvid to match on.
+    """
+    resp_list = []
+    for adapter in adapters:
+        if adapter.pvid == pvid:
+            # If the PVIDs match, put it to the front of the list
+            resp_list.insert(0, adapter)
+        else:
+            # Otherwise, throw it on the back
+            resp_list.append(adapter)
+    return resp_list
+
+
 @ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True,
                              child_order=_VSW_EL_ORDER)
 class VSwitch(ewrap.EntryWrapper):
@@ -346,11 +366,16 @@ class NetBridge(ewrap.EntryWrapper):
     @property
     def load_grps(self):
         """Returns the load groups.  The first in the list is the primary."""
-        return ewrap.WrapperElemList(self.entry.element.find(_NB_LGS),
-                                     LoadGroup, nb_root=self)
+        lg_list = [LoadGroup.wrap(x, nb_root=self) for x in
+                   self.element.findall(u.xpath(_NB_LGS, _NB_LG))]
+        temp_list = _order_by_pvid(lg_list, self.pvid)
+        return ewrap.ActionableList(temp_list, self._load_grps)
 
     @load_grps.setter
     def load_grps(self, new_list):
+        self._load_grps(new_list)
+
+    def _load_grps(self, new_list):
         self.replace_list(_NB_LGS, new_list)
 
     @property
@@ -580,20 +605,9 @@ class SEA(ewrap.ElementWrapper):
         # the first is the primary.  Yet to reduce complexity in the other
         # methods that work with the trunks, the returned value from here
         # will order it as such.
-
-        primary_vlan = self.pvid
-
-        trunk_elem_list = self.element.findall(u.xpath(SEA_TRUNKS, TA_ROOT))
-        trunks = []
-        for trunk_elem in trunk_elem_list:
-            trunk_wrap = TrunkAdapter.wrap(trunk_elem)
-            if trunk_wrap.pvid == primary_vlan:
-                # It is the primary, insert it to front of the trunk list.
-                trunks.insert(0, trunk_wrap)
-            else:
-                # Add to the end.
-                trunks.append(trunk_wrap)
-        return trunks
+        trunk_elem_list = [TrunkAdapter.wrap(x) for x in
+                           self.element.findall(u.xpath(SEA_TRUNKS, TA_ROOT))]
+        return _order_by_pvid(trunk_elem_list, self.pvid)
 
     @property
     def backing_device(self):
