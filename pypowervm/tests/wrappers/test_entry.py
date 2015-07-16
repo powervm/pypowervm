@@ -276,8 +276,8 @@ class TestElementWrapper(testtools.TestCase):
         self.assertEqual(
             hrefs[2],
             'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3d'
-            'f5-ab60-40893d51d074/VirtualNetwork/f417df1f-ff3a-35e5-a428-ab3b8'
-            '2be7717')
+            'f5-ab60-40893d51d074/VirtualNetwork/2b4ab8ea-4b15-3430-b2cd-45954'
+            'cfaba0d')
         # Request one - should return None
         hrefs = self.nb1.get_href(path, one_result=True)
         self.assertIsNone(hrefs)

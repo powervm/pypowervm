@@ -46,38 +46,6 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
-            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
-                <Metadata>
-                    <Atom/>
-                </Metadata>
-                <TrunkAdapter schemaVersion="V1_2_0">
-                    <Metadata>
-                        <Atom/>
-                    </Metadata>
-                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
-                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
-                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
-                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
-                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
-                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
-                    <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
-                    <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
-                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
-                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
-                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
-                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
-                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
-                </TrunkAdapter>
-            </TrunkAdapters>
-            <VirtualNetworks kb="CUD" kxe="false">
-                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/a692c1ab-0262-33c7-b1f6-19dcec7b5e8c" rel="related"/>
-            </VirtualNetworks>
-        </LoadGroup>
-        <LoadGroup schemaVersion="V1_2_0">
-            <Metadata>
-                <Atom/>
-            </Metadata>
             <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
             <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
                 <Metadata>
@@ -116,6 +84,38 @@ BODY{
                 <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/fa269302-97d1-365f-842b-0e0be001e4af" rel="related"/>
                 <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/0f2ee159-ddc4-3bd6-8bb3-82989c22ebba" rel="related"/>
                 <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/18eee6d2-5a49-37f6-8341-400ba4331390" rel="related"/>
+            </VirtualNetworks>
+        </LoadGroup>
+        <LoadGroup schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <VirtualNetworks kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/a692c1ab-0262-33c7-b1f6-19dcec7b5e8c" rel="related"/>
             </VirtualNetworks>
         </LoadGroup>
     </LoadGroups>
