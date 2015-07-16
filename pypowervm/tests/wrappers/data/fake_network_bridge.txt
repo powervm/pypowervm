@@ -37,7 +37,7 @@ BODY{
         </Atom>
     </Metadata>
     <FailoverEnabled kb="CUD" kxe="false">false</FailoverEnabled>
-    <LoadBalancingEnabled kb="CUD" kxe="false">false</LoadBalancingEnabled>
+    <LoadBalancingEnabled kb="CUD" kxe="false">true</LoadBalancingEnabled>
     <LoadGroups kxe="false" kb="CUD" schemaVersion="V1_2_0">
         <Metadata>
             <Atom/>

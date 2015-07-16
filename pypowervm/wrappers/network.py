@@ -136,6 +136,12 @@ class VSwitchMode(object):
     VEPA = "Vepa"
 
 
+class HAMode(object):
+    FAILOVER = 'auto'
+    LOAD_SHARING = 'sharing'
+    DISABLED = 'disabled'
+
+
 @ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True,
                              child_order=_VSW_EL_ORDER)
 class VSwitch(ewrap.EntryWrapper):
@@ -227,7 +233,8 @@ class NetBridge(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, adapter, pvid, vios_to_backing_adpts, vlan_ids, vswitch):
+    def bld(cls, adapter, pvid, vios_to_backing_adpts, vlan_ids, vswitch,
+            load_balance=False):
         """Create the NetBridge entry that can be used for a create operation.
 
         This is used when creating a NetBridge.
@@ -242,6 +249,9 @@ class NetBridge(ewrap.EntryWrapper):
         :param vlan_ids: List of Additional VLAN ids for the trunk adapters.
                          Maximum of 20.
         :param vswitch: The vswitch wrapper to retrieve ID and href.
+        :param load_balance: (Optional) If set to True, the load balancing will
+                             be enabled across the two SEAs.  This does
+                             require multiple backing adapters (two SEAs).
         :returns: A new NetBridge EntryWrapper that represents the new
                   NetBridge.
         """
@@ -256,9 +266,8 @@ class NetBridge(ewrap.EntryWrapper):
         # 1 VIOS, 2 or more means we are defaulting to failover.
         nb._failover(len(vios_to_backing_adpts) != 1)
 
-        # Set required load balancing flag to false as default. Based on
-        # Load Group configuration.
-        nb._load_balanced(False)
+        # Set required load balancing flag.
+        nb.load_balance = load_balance
 
         # Collection must be set based on schema requirements.
         nb.replace_list(_NB_LGS, [])
@@ -321,6 +330,18 @@ class NetBridge(ewrap.EntryWrapper):
     @seas.setter
     def seas(self, new_list):
         self.replace_list(NB_SEAS, new_list)
+
+    @property
+    def load_balance(self):
+        """If set to True, the Load Balancing is enabled on the bridge.
+
+        Requires two SEAs (sharing is done across the SEAs).
+        """
+        return self._get_val_bool(_NB_LOADBALANCE, False)
+
+    @load_balance.setter
+    def load_balance(self, value):
+        self.set_parm_value(_NB_LOADBALANCE, u.sanitize_bool_for_api(value))
 
     @property
     def load_grps(self):
@@ -419,13 +440,6 @@ class NetBridge(ewrap.EntryWrapper):
         """
         self.set_parm_value(_NB_FAILOVER, u.sanitize_bool_for_api(value))
 
-    def _load_balanced(self, value):
-        """Private setter for the failover attr.
-
-        False by default on Network Bridge creation.
-        """
-        self.set_parm_value(_NB_LOADBALANCE, u.sanitize_bool_for_api(value))
-
 
 @ewrap.ElementWrapper.pvm_type(SHARED_ETH_ADPT, has_metadata=True,
                                child_order=_SEA_EL_ORDER)
@@ -484,6 +498,18 @@ class SEA(ewrap.ElementWrapper):
 
     def _vio_uri(self, value):
         self.set_href(_SEA_VIO_HREF, value)
+
+    @property
+    def ha_mode(self):
+        """Returns the high availability mode of the SEA.
+
+        See the HAMode Enumeration.
+        """
+        # This is a read only attribute.  We default to None in the
+        # event this payload was created by a bld method (indicating
+        # that we do not know).  All subsequent reads will have this
+        # attribute.
+        return self._get_val_str(_SEA_HA_MODE, None)
 
     @property
     def is_primary(self):
