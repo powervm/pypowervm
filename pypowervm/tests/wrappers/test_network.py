@@ -152,6 +152,9 @@ class TestNetwork(twrap.TestWrapper):
     def test_pvid(self):
         self.assertEqual(1, self.dwrap.pvid)
 
+    def test_load_balance(self):
+        self.assertFalse(self.dwrap.load_balance)
+
     def test_uuid(self):
         self.assertEqual(
             '764f3423-04c5-3b96-95a3-4764065400bd', self.dwrap.uuid)
@@ -172,12 +175,13 @@ class TestNetwork(twrap.TestWrapper):
                                vios_to_backing_adpts=[('vio_href1', 'ent0'),
                                                       ('vio_href2', 'ent2')],
                                vlan_ids=[1, 2, 3],
-                               vswitch=vsw_wrap)
+                               vswitch=vsw_wrap, load_balance=True)
 
         self.assertIsNotNone(nb)
         self.assertEqual(1, nb.pvid)
         self.assertEqual(2, len(nb.seas))
         self.assertEqual(0, len(nb.load_grps))
+        self.assertTrue(nb.load_balance)
 
         # First SEA.  Should be the primary
         sea1 = nb.seas[0]
@@ -204,6 +208,7 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual('vio_href2', sea2.vio_uri)
         self.assertEqual('ent2', sea2.backing_device.dev_name)
         self.assertFalse(sea2.is_primary)
+        self.assertIsNone(sea2.ha_mode)
 
         # Validate the second SEA trunk.
         ta = sea2.primary_adpt
@@ -418,6 +423,7 @@ class TestNetwork(twrap.TestWrapper):
                          '/691019AF-506A-4896-AADE-607E21FA93EE',
                          sea.vio_uri)
         self.assertEqual('ent8', sea.dev_name)
+        self.assertEqual(net.HAMode.DISABLED, sea.ha_mode)
 
         new_sea = copy.deepcopy(sea)
         self.dwrap.seas.append(new_sea)
