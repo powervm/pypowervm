@@ -89,13 +89,17 @@ _SEA_EBD_ORDER = (_SEA_EBD_ADAPTER_ID, _SEA_EBD_DESCRIPTION,
                   _SEA_EBD_DYN_CONN_NAME, _SEA_EBD_PHYS_LOC,
                   _SEA_EBD_UDID)
 
+_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
+_USE_NEXT_AVAIL_HIGH_SLOT = 'UseNextAvailableHighSlotID'
+
 TA_ROOT = 'TrunkAdapter'
 _TA_CONN_NAME = 'DynamicReconfigurationConnectorName'
 _TA_LOC_CODE = 'LocationCode'
 _TA_REQUIRED = 'RequiredAdapter'
 _TA_VARIED_ON = 'VariedOn'
 _TA_VIRTUAL_SLOT = 'VirtualSlotNumber'
-_TA_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
+_TA_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
+_TA_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
 _TA_ALLOWED_MAC = 'AllowedOperatingSystemMACAddresses'
 _TA_MAC = 'MACAddress'
 _TA_PVID = _PVID
@@ -107,9 +111,10 @@ _TA_DEV_NAME = 'DeviceName'
 _TA_TRUNK_PRI = 'TrunkPriority'
 _TA_ASSOC_VSWITCH = 'AssociatedVirtualSwitch'
 _TA_EL_ORDER = (_TA_CONN_NAME, _TA_LOC_CODE, _TA_REQUIRED, _TA_VARIED_ON,
-                _TA_USE_NEXT_AVAIL_SLOT, _TA_VIRTUAL_SLOT, _TA_ALLOWED_MAC,
-                _TA_MAC, _TA_PVID, _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP,
-                _TA_ASSOC_VSWITCH, _TA_VS_ID, _TA_DEV_NAME, _TA_TRUNK_PRI)
+                _TA_USE_NEXT_AVAIL_SLOT, _TA_USE_NEXT_AVAIL_HIGH_SLOT,
+                _TA_VIRTUAL_SLOT, _TA_ALLOWED_MAC, _TA_MAC, _TA_PVID,
+                _TA_QOS_PRI, _TA_VLAN_IDS, _TA_TAG_SUPP, _TA_ASSOC_VSWITCH,
+                _TA_VS_ID, _TA_DEV_NAME, _TA_TRUNK_PRI)
 
 _LG_PVID = _PVID
 _LG_TRUNKS = 'TrunkAdapters'
@@ -128,7 +133,8 @@ _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
 _VADPT_PVID = _PVID
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
-_VADPT_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
+_VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
+_VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
 
 
 class VSwitchMode(object):
@@ -597,6 +603,10 @@ class TrunkAdapter(ewrap.ElementWrapper):
     def bld(cls, adapter, pvid, vlan_ids, vswitch, trunk_pri=1):
         """Create the TrunkAdapter element that can be used for SEA creation.
 
+        The returned adapter uses the "next available high slot" option,
+        meaning that the API will attempt to assign the next available slot
+        number that's higher than all the existing assigned slot numbers.
+
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The primary VLAN ID (ex. 1) for the Network Bridge.
         :param vlan_ids: Additional VLAN ids for the trunk adapters.
@@ -614,8 +624,11 @@ class TrunkAdapter(ewrap.ElementWrapper):
         ta._vswitch_id(vswitch.switch_id)
         ta._trunk_pri(trunk_pri)
 
-        ta.set_parm_value(_TA_USE_NEXT_AVAIL_SLOT,
-                          u.sanitize_bool_for_api(True))
+        # UseNextAvailableSlotID field - High only if available
+        unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
+                       if adapter.traits.has_high_slot
+                       else _TA_USE_NEXT_AVAIL_SLOT)
+        ta.set_parm_value(unasi_field, u.sanitize_bool_for_api(True))
         ta._associated_vswitch_uri(vswitch.related_href)
 
         return ta
@@ -896,7 +909,9 @@ class CNA(ewrap.EntryWrapper):
                              will support this adapter.
         :param slot_num: The Slot on the Client LPAR that should be used.  This
                          defaults to 'None', which means the next available
-                         slot will be used.
+                         high slot will be used (the API will attempt to assign
+                         the next available slot number that's higher than all
+                         the existing assigned slot numbers.
         :param mac_addr: Optional user specified mac address to use.  If left
                          as None, the system will generate one.
         :param addl_tagged_vlans: A set of additional tagged VLANs that can be
@@ -942,13 +957,22 @@ class CNA(ewrap.EntryWrapper):
 
     @property
     def _use_next_avail_slot_id(self):
-        return self._get_val_bool(_VADPT_USE_NEXT_AVAIL_SLOT)
+        """Use next available (high) slot ID, true or false."""
+        unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _TA_USE_NEXT_AVAIL_SLOT)
+        return self._get_val_bool(unasi_field)
 
     @_use_next_avail_slot_id.setter
     def _use_next_avail_slot_id(self, unasi):
-        """Param unasi is bool (True or False)."""
-        self.set_parm_value(_VADPT_USE_NEXT_AVAIL_SLOT,
-                            u.sanitize_bool_for_api(unasi))
+        """Use next available (high) slot ID.
+
+        :param unasi: Boolean value to set (True or False)
+        """
+        unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _TA_USE_NEXT_AVAIL_SLOT)
+        self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
 
     @property
     def mac(self):

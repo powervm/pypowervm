@@ -703,6 +703,7 @@ class VStorageAdapter(ewrap.ElementWrapper):
         return self._get_val_int(_VADPT_SLOT_NUM)
 
     def _use_next_slot(self, use):
+        """Use next available (not high) slot."""
         self.set_parm_value(_NEXT_SLOT, u.sanitize_bool_for_api(use))
 
     @property

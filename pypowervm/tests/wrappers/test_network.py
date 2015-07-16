@@ -17,6 +17,8 @@
 import copy
 import unittest
 
+import mock
+
 import pypowervm.const as pc
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
@@ -168,7 +170,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        nb = net.NetBridge.bld(None, pvid=1,
+        nb = net.NetBridge.bld(self.adpt, pvid=1,
                                vios_to_backing_adpts=[('vio_href1', 'ent0'),
                                                       ('vio_href2', 'ent2')],
                                vlan_ids=[1, 2, 3],
@@ -222,7 +224,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        sea = net.SEA.bld(None, pvid=1, vios_href='127.0.0.1',
+        sea = net.SEA.bld(self.adpt, pvid=1, vios_href='127.0.0.1',
                           adpt_name='ent0', vlan_ids=[1, 2, 3],
                           vswitch=vsw_wrap)
 
@@ -248,7 +250,7 @@ class TestNetwork(twrap.TestWrapper):
         vsw_wrap = net.VSwitch.wrap(vswitch_resp.feed.entries[0])
 
         # Create mocked data
-        ta = net.TrunkAdapter.bld(None, pvid=1, vlan_ids=[1, 2, 3],
+        ta = net.TrunkAdapter.bld(self.adpt, pvid=1, vlan_ids=[1, 2, 3],
                                   vswitch=vsw_wrap)
 
         self.assertIsNotNone(ta)
@@ -268,7 +270,7 @@ class TestNetwork(twrap.TestWrapper):
         # Create my mocked data
         uri_list = ['a', 'b', 'c']
         pvid = 1
-        lg = net.LoadGroup.bld(None, pvid, uri_list)
+        lg = net.LoadGroup.bld(self.adpt, pvid, uri_list)
 
         # Validate the data back
         self.assertIsNotNone(lg)
@@ -324,7 +326,7 @@ class TestNetwork(twrap.TestWrapper):
 
         # Create mocked data
         ta = net.TrunkAdapter.bld(
-            None, pvid=1, vlan_ids=[1, 2, 3], vswitch=vsw_wrap)
+            self.adpt, pvid=1, vlan_ids=[1, 2, 3], vswitch=vsw_wrap)
         self.assertEqual(1, len(self.dwrap.seas[0].addl_adpts))
         self.dwrap.seas[0].addl_adpts.append(ta)
         self.assertEqual(2, len(self.dwrap.seas[0].addl_adpts))
@@ -475,6 +477,7 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     file = 'fake_cna.txt'
     wrapper_class_to_test = net.CNA
+    mock_adapter_fx_args = dict(traits=fx.LocalPVMTraits)
 
     def setUp(self):
         super(TestCNAWrapper, self).setUp()
@@ -482,7 +485,7 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_standard_crt(self):
         """Tests a standard create of the CNA."""
-        test = net.CNA.bld(None, 1, "fake_vs")
+        test = net.CNA.bld(self.adpt, 1, "fake_vs")
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertFalse(test.is_tagged_vlan_supported)
         self.assertEqual([], test.tagged_vlans)
@@ -493,8 +496,9 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
-        test = net.CNA.bld(None, 5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
-                           slot_num=5, addl_tagged_vlans=[6, 7, 8, 9])
+        test = net.CNA.bld(
+            self.adpt, 5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff", slot_num=5,
+            addl_tagged_vlans=[6, 7, 8, 9])
         self.assertEqual('fake_vs', test.vswitch_uri)
         self.assertTrue(test.is_tagged_vlan_supported)
         self.assertEqual([6, 7, 8, 9], test.tagged_vlans)
@@ -503,6 +507,28 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNotNone(test.mac)
         self.assertEqual("AABBCCDDEEFF", test.mac)
         self.assertEqual(5, test.pvid)
+
+    def test_unasi_field(self):
+        """UseNextAvailable(High)SlotID field is used, as appropriate."""
+        mock_vswitch = mock.Mock()
+        mock_vswitch.related_href = 'href'
+        # Do TrunkAdapter as well as CNA here
+        # Traits fixture starts off "PVM" - should use High
+        cna = net.CNA.bld(self.adpt, 1, "fake_vs")
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
+        self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+
+        # Swap to HMC - should *not* use High
+        self.adptfx.set_traits(fx.RemoteHMCTraits)
+        cna = net.CNA.bld(self.adpt, 1, "fake_vs")
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
+        self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
 
     def test_attrs(self):
         """Test getting the attributes."""
