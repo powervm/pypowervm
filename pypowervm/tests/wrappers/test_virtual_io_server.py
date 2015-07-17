@@ -449,6 +449,15 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
                          self.io_slot.pci_subsys_drc_name)
 
+    def test_io_slots_setter(self):
+        old_len = len(self.dwrap.io_config.io_slots)
+        new_io_slots = self.dwrap.io_config.io_slots[:]
+        deleted_slot = new_io_slots[1]
+        del new_io_slots[1]
+        self.dwrap.io_config.io_slots = new_io_slots
+        self.assertEqual(old_len - 1, len(self.dwrap.io_config.io_slots))
+        self.assertNotIn(deleted_slot, self.dwrap.io_config.io_slots)
+
     def test_io_adpt(self):
         self.assertIsNotNone(self.io_slot.adapter)
 
