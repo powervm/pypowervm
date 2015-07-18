@@ -84,6 +84,7 @@ class HTTPStatus(object):
     NO_CHANGE = 304
     UNAUTHORIZED = 401
     ETAG_MISMATCH = 412
+    PARENT_VIOS_BUSY = 503
 
 
 class MaxLen(object):
