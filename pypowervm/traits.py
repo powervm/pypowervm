@@ -86,3 +86,8 @@ class APITraits(object):
     def rmdev_job_available(self):
         """Indicates whether or not the Job API supports RMDev."""
         return not self._is_hmc
+
+    @property
+    def has_high_slot(self):
+        """Does the API support UseNextAvailableHighSlotID?"""
+        return not self._is_hmc
