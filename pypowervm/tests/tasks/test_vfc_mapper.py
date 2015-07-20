@@ -27,6 +27,8 @@ from pypowervm.wrappers import virtual_io_server as pvm_vios
 VIOS_FILE = 'fake_vios.txt'
 VIOS_FEED = 'fake_vios_feed.txt'
 
+FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
+
 
 class TestVFCMapper(unittest.TestCase):
 
@@ -99,6 +101,27 @@ class TestVFCMapper(unittest.TestCase):
         # Make sure we only get two unique keys back.
         unique_keys = set([i[0] for i in resp])
         self.assertEqual({'10000090FA45473B', '10000090FA451758'}, unique_keys)
+
+    def test_derive_base_npiv_map(self):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA45473B', '10:00:00:90:fa:45:17:58']
+
+        # Run the derivation now
+        resp = vfc_mapper.derive_base_npiv_map(vios_wraps, p_wwpns, 5)
+        self.assertIsNotNone(resp)
+        self.assertEqual(5, len(resp))
+
+        # Make sure we only get two unique keys back.
+        unique_keys = set([i[0] for i in resp])
+        self.assertEqual({'10000090FA45473B', '10000090FA451758'}, unique_keys)
+
+        # Make sure we get the 'marker' back for the values.  Should now be
+        # fused.
+        values = set(i[1] for i in resp)
+        self.assertEqual({vfc_mapper._FUSED_ANY_WWPN}, values)
 
     def test_derive_npiv_map_multi_vio(self):
         vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
@@ -233,7 +256,7 @@ class TestPortMappings(twrap.TestWrapper):
         full_map = fabric_A_maps + fabric_B_maps
 
         # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', 'vm_uuid',
+        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
                                           full_map)
 
         # The update should have been called twice.  Once for each VIOS.
@@ -281,7 +304,44 @@ class TestPortMappings(twrap.TestWrapper):
         full_map = fabric_A_maps + fabric_B_maps
 
         # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', 'vm_uuid',
+        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
+                                          full_map)
+
+        # The update should have been called once.
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    def test_add_port_mapping_generated_wwpns(self):
+        """Validates that the port mappings with generated wwpns works."""
+        # Determine the vios original values
+        vios_wraps = self.entries
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count + 8,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            return vios_w.entry
+        self.adpt.update_by_path.side_effect = mock_update
+
+        # Subset the WWPNs on that VIOS
+        fabric_A_wwpns = ['10000090FA5371F2']
+        fabric_B_wwpns = ['10000090FA5371F1']
+
+        # Get the mappings
+        fabric_A_maps = vfc_mapper.derive_base_npiv_map(
+            vios_wraps, fabric_A_wwpns, 4)
+        vios_wraps.reverse()
+        fabric_B_maps = vfc_mapper.derive_base_npiv_map(
+            vios_wraps, fabric_B_wwpns, 4)
+        full_map = fabric_A_maps + fabric_B_maps
+
+        # Now call the add action
+        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
                                           full_map)
 
         # The update should have been called once.
