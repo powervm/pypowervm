@@ -27,6 +27,8 @@ from pypowervm.wrappers import virtual_io_server as pvm_vios
 VIOS_FILE = 'fake_vios.txt'
 VIOS_FEED = 'fake_vios_feed.txt'
 
+FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
+
 
 class TestVFCMapper(unittest.TestCase):
 
@@ -233,7 +235,7 @@ class TestPortMappings(twrap.TestWrapper):
         full_map = fabric_A_maps + fabric_B_maps
 
         # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', 'vm_uuid',
+        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
                                           full_map)
 
         # The update should have been called twice.  Once for each VIOS.
@@ -281,7 +283,7 @@ class TestPortMappings(twrap.TestWrapper):
         full_map = fabric_A_maps + fabric_B_maps
 
         # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', 'vm_uuid',
+        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
                                           full_map)
 
         # The update should have been called once.
