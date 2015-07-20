@@ -24,6 +24,10 @@ from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 
+_ANY_WWPN = '-1'
+_FUSED_ANY_WWPN = '-1 -1'
+
+
 def build_wwpn_pair(adapter, host_uuid):
     """Builds a WWPN pair that can be used for a VirtualFCAdapter.
 
@@ -72,6 +76,32 @@ def intersect_wwpns(wwpn_set1, wwpn_set2):
     """
     wwpn_set2 = set([u.sanitize_wwpn_for_api(x) for x in wwpn_set2])
     return [y for y in wwpn_set1 if u.sanitize_wwpn_for_api(y) in wwpn_set2]
+
+
+def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
+    """Builds a blank NPIV port mapping, without any known vFC WWPNs.
+
+    This method is functionally similar to the derive_npiv_map.  However, the
+    derive_npiv_map method assumes knowledge of the Virtual Fibre Channel
+    mappings beforehand.  This method will generate a similar map, but when
+    sent to the add_npiv_port_mappings method, that method will allow the API
+    to generate the WWPNs rather than pre-seeding them.
+
+    :param vios_wraps: A list of VIOS wrappers.  Can be built using the
+                       extended attribute group (xag) of FC_MAPPING.
+    :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
+                         map the ports to.  These WWPNs should reside on
+                         Physical FC Ports on the VIOS wrappers that were
+                         passed in.
+    :param v_port_count: The number of virtual ports to create.
+    :return: A list of sets.  The format will be similar to that of the
+             derive_npiv_map method.  However, instead of a fused_vfc_port_wwpn
+             a marker will be used to indicate that the API should generate
+             the WWPN.
+    """
+    # Double the count of the markers.  Should result in -1 -1 as the WWPN.
+    v_port_markers = [_ANY_WWPN for x in range(0, v_port_count * 2)]
+    return derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_markers)
 
 
 def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
@@ -253,17 +283,43 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
     derive_npiv_map method) are on the necessary VIOSes.  Will perform the
     update to the actual VIOSes if any changes are needed.
 
+    This method supports WWPNs that are built either through the
+    derive_npiv_map or the derive_base_npiv_map.
+
     :param adapter: The pypowervm adapter.
     :param host_uuid: The pypowervm UUID of the host.
     :param lpar_uuid: The UUID of the LPAR that should have the vFC mapping
                       added to it.
     :param npiv_port_maps: The list of port mappings, as defined by the
                            pypowervm wwpn derive_npiv_map method.
+
+    :return: The updated mapping.  This is useful if the npiv_port_maps passed
+             into the method was built using the derive_base_npiv_map.
+             Otherwise the response will be functionally equivalent to what
+             is passed in.
+
+             The return value will contain all of the mappings from the
+             physical ports to the given client VM.
     """
     def add_action(vios_wraps, p_map):
         return _add_npiv_port_map(host_uuid, lpar_uuid, vios_wraps, p_map)
 
-    _mapping_actions(adapter, host_uuid, npiv_port_maps, add_action)
+    updated_vioses = _mapping_actions(adapter, host_uuid, npiv_port_maps,
+                                      add_action)
+
+    # Parse through the updated VIOSes to determine the mappings to return.
+    port_map = []
+    for vios in updated_vioses:
+        vfc_mappings = self.find_maps(vios.vfc_mappings, lpar_uuid)
+        for vfc_mapping in vfc_mappings:
+            # Found a matching mapping
+            p_wwpn = vfc_mapping.port.wwpn
+            c_wwpns = vfc_mapping.client_adapter.wwpns
+
+            # Convert it to the standard mapping type.
+            mapping = (p_wwpn, _fuse_vfc_ports(c_wwpns))
+            port_map.append(mapping)
+    return port_map
 
 
 def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
@@ -305,7 +361,10 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
                 Expected response:
                  - A pypowervm VIOS wrapper that was impacted by the
                    function.  If none were, then None is acceptable.
+    :return: List of VIOS wrappers on the system.  Includes the newly updated
+             VIOSes.
     """
+    # TODO(thorst) add retry logic into this.
     # Get all the VIOSes
     vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
                              child_type=pvm_vios.VIOS.schema_type,
@@ -315,6 +374,7 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
 
     # List of VIOSes that need to be updated.
     vioses_to_update = {}
+    vioses_untouched = {v.uuid: v for v in vios_wraps}
 
     # For each port mapping...
     for npiv_port_map in npiv_port_maps:
@@ -330,10 +390,23 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
                 vioses_to_update.get(vios_to_update.uuid) is None):
             vioses_to_update[vios_to_update.uuid] = vios_to_update
 
+            # Remove it from the untouched list.
+            vioses_untouched.pop(vios_to_update.uuid, None)
+
     # Now run the update against the affected VIOSes
+    resp_vioses = []
     for vios_w in vioses_to_update.values():
-        vios_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                           pvm_vios.VIOS.xags.STORAGE])
+        # TODO(thorst) run these in parallel
+        vios_w = vios_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                    pvm_vios.VIOS.xags.STORAGE])
+        resp_vioses.append(vios_w)
+
+    # Throw in all of the untouched VIOSes for completeness sake.  There could
+    # still be mappings that existed previously that matter...so we need to
+    # include them
+    resp_vioses.extend(list(vioses_untouched.values()))
+
+    return resp_vioses
 
 
 def _remove_npiv_port_map(vios_wraps, npiv_port_map):
@@ -401,8 +474,10 @@ def _add_npiv_port_map(host_uuid, vm_uuid, vios_wraps, npiv_port_map):
              were no affected VIOSes, returns None.
     """
     vios_w, p_port = find_vio_for_wwpn(vios_wraps, npiv_port_map[0])
-    v_wwpns = set([u.sanitize_wwpn_for_api(x)
-                   for x in npiv_port_map[1].split()])
+    v_wwpns = None
+    if npiv_port_map[1] != _FUSED_ANY_WWPN:
+        v_wwpns = set([u.sanitize_wwpn_for_api(x)
+                       for x in npiv_port_map[1].split()])
 
     for vfc_map in vios_w.vfc_mappings:
         if vfc_map.client_adapter is None:
@@ -418,7 +493,7 @@ def _add_npiv_port_map(host_uuid, vm_uuid, vios_wraps, npiv_port_map):
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
     vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, vm_uuid,
-                                      p_port.name, v_wwpns)
+                                      p_port.name, client_wwpns=v_wwpns)
     vios_w.vfc_mappings.append(vfc_map)
     return vios_w
 
