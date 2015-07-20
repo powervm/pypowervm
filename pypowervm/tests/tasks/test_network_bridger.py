@@ -501,3 +501,17 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_fo_resp)
         resp = bridger._find_peer_trunk(nbs[0], nbs[0].seas[0].primary_adpt)
         self.assertEqual(nbs[0].seas[1].primary_adpt, resp)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
+                '_reassign_arbitrary_vid')
+    def test_remove_vlan_from_nb_arb_vid(self, mock_reassign):
+        """Attempt to remove an arbitrary VID off the network bridge."""
+        # Mock Data
+        self.adpt.read.return_value = self.mgr_nbr_fo_resp
+
+        # Should not fail if fail_if_pvid set to False, but shouldn't call
+        # update either.
+        net_br.remove_vlan_from_nb(self.adpt, self.host_uuid, self.nb_uuid,
+                                   '4094')
+        self.assertEqual(1, mock_reassign.call_count)
+        mock_reassign.assert_called_with(4094, 4093, mock.ANY)
