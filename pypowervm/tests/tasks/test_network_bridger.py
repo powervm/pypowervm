@@ -324,11 +324,24 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         # Make sure the delete was called
         self.assertEqual(1, self.adpt.delete_by_href.call_count)
 
-    def test_find_available_lb(self):
+    def test_find_available_lg(self):
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
         bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
         lg = bridger._find_available_ld_grp(nb[0])
         self.assertIsNotNone(lg)
+
+    def test_find_available_min_lg(self):
+        nb = mock.MagicMock()
+
+        lg_main = mock.MagicMock()
+        lg_first_addl = mock.MagicMock()
+        lg_first_addl.vnet_uri_list = ['a', 'b', 'c']
+        lg_second_addl = mock.MagicMock()
+        lg_second_addl.vnet_uri_list = ['e', 'f']
+        nb.load_grps = [lg_main, lg_first_addl, lg_second_addl]
+
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        self.assertEqual(lg_second_addl, bridger._find_available_ld_grp(nb))
 
 
 class TestNetworkBridgerTA(TestNetworkBridger):
@@ -488,6 +501,27 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
         trunks = bridger._find_available_trunks(nb[0])
         self.assertIsNotNone(trunks)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA._trunk_list')
+    def test_find_available_min_trunk(self, mock_trunk_list):
+        nb = mock.MagicMock()
+
+        trunk_addl = mock.MagicMock()
+        trunk_addl.tagged_vlans = ['a', 'b', 'c']
+        trunk_addl2 = mock.MagicMock()
+        trunk_addl2.tagged_vlans = ['e', 'f']
+        trunk_addl3 = mock.MagicMock()
+        trunk_addl3.tagged_vlans = ['g', 'h', 'i']
+
+        sea = mock.MagicMock()
+        sea.addl_adpts = [trunk_addl, trunk_addl2, trunk_addl3]
+        nb.seas = [sea]
+
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+        bridger._find_available_trunks(nb)
+
+        # Validate the trunk list is called with the second additional adapter
+        mock_trunk_list.assert_called_with(nb, trunk_addl2)
 
     def test_find_peer_trunk(self):
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)

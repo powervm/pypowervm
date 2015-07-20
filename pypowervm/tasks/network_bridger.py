@@ -524,6 +524,9 @@ class NetworkBridgerVNET(NetworkBridger):
     def _find_available_ld_grp(self, nb):
         """Will return the Load Group that can support a new VLAN.
 
+        This will be the load group with the lowest number of virtual networks
+        on it.
+
         :param nb: The NetBridge to search through.
         :returns: The LoadGroup within the NetBridge that can support a new
                   VLAN.  If all are full, will return None.
@@ -533,11 +536,19 @@ class NetworkBridgerVNET(NetworkBridger):
         if len(nb.load_grps) == 1:
             return None
 
+        # Find the load group with the fewest VLANs.
+        cur_lg = None
         ld_grps = nb.load_grps[1:]
         for ld_grp in ld_grps:
-            if len(ld_grp.vnet_uri_list) < _MAX_VLANS_PER_VEA:
-                return ld_grp
-        return None
+            # If this load group has less than the max, and the 'current'
+            # load group has more VNETs, then this new load group is more
+            # desirable.
+            if (len(ld_grp.vnet_uri_list) < _MAX_VLANS_PER_VEA and
+                    (cur_lg is None or
+                     len(ld_grp.vnet_uri_list) < len(cur_lg.vnet_uri_list))):
+                # The new load group is the new 'current' load group
+                cur_lg = ld_grp
+        return cur_lg
 
     def _find_vnet_uri_from_lg(self, lg, vlan):
         """Finds the Virtual Network for a VLAN within a LoadGroup.
@@ -685,12 +696,21 @@ class NetworkBridgerTA(NetworkBridger):
     def _find_available_trunks(self, nb):
         """Will return a list of Trunk Adapters that can support a new VLAN.
 
+        Finds the set of trunk adapters with the lowest number of VLANs on
+        it.
+
         :param nb: The NetBridge to search through.
         :returns: A set of trunk adapters that can support the new VLAN.  If
                   None are found, then None is returned.
         """
-        # Only provision to the Additional Trunks.
+        # Find a trunk with the lowest amount of VLANs on it.
+        cur_min = None
         for trunk in nb.seas[0].addl_adpts:
-            if len(trunk.tagged_vlans) < _MAX_VLANS_PER_VEA:
-                return self._trunk_list(nb, trunk)
-        return None
+            if (len(trunk.tagged_vlans) < _MAX_VLANS_PER_VEA and
+                    (cur_min is None or
+                     len(trunk.tagged_vlans) < len(cur_min.tagged_vlans))):
+                cur_min = trunk
+
+        # Return the trunk list if we have a trunk adapter, otherwise just
+        # return None
+        return self._trunk_list(nb, cur_min) if cur_min is not None else None
