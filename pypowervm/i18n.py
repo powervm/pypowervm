@@ -16,7 +16,7 @@
 
 """Internationalization helpers."""
 
-from oslo.config import cfg
+from oslo_config import cfg
 import oslo_i18n._message as _msg
 
 cfg.CONF.register_opts([

@@ -28,7 +28,7 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 
-from oslo.utils import units
+from oslo_utils import units
 from pyasn1.codec.der import decoder as der_decoder
 from pyasn1_modules import rfc2459
 

@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 ibmpowervm_opts = [
     cfg.IntOpt('pypowervm_update_collision_retries',
