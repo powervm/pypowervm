@@ -440,3 +440,19 @@ def _fuse_vfc_ports(wwpn_list):
     """Returns a set of fused VFC WWPNs.  See derive_npiv_map."""
     l = list(map(u.sanitize_wwpn_for_api, wwpn_list))
     return list(map(' '.join, zip(l[::2], l[1::2])))
+
+
+def find_maps(mapping_list, client_lpar_id):
+    """Filter a list of VFC mappings by LPAR ID.
+
+    This is based on scsi_mapper.find_maps, but does not yet provide all the
+    same functionality.
+
+    :param mapping_list: The mappings to filter.  Iterable of VFCMapping.
+    :param client_lpar_id: Integer short ID of the LPAR on the client side of
+                           the mapping.
+    :return: A list comprising the subset of the input mapping_list whose
+             client LPAR IDs match client_lpar_id.
+    """
+    return [vfc_map for vfc_map in mapping_list
+            if vfc_map.server_adapter.lpar_id == int(client_lpar_id)]

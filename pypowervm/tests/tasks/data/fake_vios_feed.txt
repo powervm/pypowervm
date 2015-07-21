@@ -648,7 +648,7 @@ BODY{
                 <AdapterType kb="ROR" kxe="false">Client</AdapterType>
                 <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V63-C3</DynamicReconfigurationConnectorName>
                 <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V63-C3</LocationCode>
-                <LocalPartitionID kb="CUR" kxe="false">63</LocalPartitionID>
+                <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
                 <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
@@ -679,7 +679,7 @@ BODY{
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">94</VirtualSlotNumber>
                 <AdapterName kb="CUR" kxe="false">vfchost60</AdapterName>
-                <ConnectingPartitionID kb="CUR" kxe="false">63</ConnectingPartitionID>
+                <ConnectingPartitionID kb="CUR" kxe="false">10</ConnectingPartitionID>
                 <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
                 <UniqueDeviceID kb="CUR" kxe="false">1dU7895.43X.21EF9FB-V2-C94</UniqueDeviceID>
                 <MapPort kb="CUR" kxe="false">fcs1</MapPort>
@@ -708,7 +708,7 @@ BODY{
                 <AdapterType kb="ROR" kxe="false">Client</AdapterType>
                 <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V66-C4</DynamicReconfigurationConnectorName>
                 <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V66-C4</LocationCode>
-                <LocalPartitionID kb="CUR" kxe="false">66</LocalPartitionID>
+                <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
                 <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">4</VirtualSlotNumber>
@@ -739,7 +739,7 @@ BODY{
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">93</VirtualSlotNumber>
                 <AdapterName kb="CUR" kxe="false">vfchost63</AdapterName>
-                <ConnectingPartitionID kb="CUR" kxe="false">66</ConnectingPartitionID>
+                <ConnectingPartitionID kb="CUR" kxe="false">10</ConnectingPartitionID>
                 <ConnectingVirtualSlotNumber kb="CUR" kxe="false">4</ConnectingVirtualSlotNumber>
                 <UniqueDeviceID kb="CUR" kxe="false">1dU7895.43X.21EF9FB-V2-C93</UniqueDeviceID>
                 <MapPort kb="CUR" kxe="false">fcs1</MapPort>
@@ -768,7 +768,7 @@ BODY{
                 <AdapterType kb="ROR" kxe="false">Client</AdapterType>
                 <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V62-C4</DynamicReconfigurationConnectorName>
                 <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V62-C4</LocationCode>
-                <LocalPartitionID kb="CUR" kxe="false">62</LocalPartitionID>
+                <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
                 <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">4</VirtualSlotNumber>
@@ -799,7 +799,7 @@ BODY{
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">92</VirtualSlotNumber>
                 <AdapterName kb="CUR" kxe="false">vfchost59</AdapterName>
-                <ConnectingPartitionID kb="CUR" kxe="false">62</ConnectingPartitionID>
+                <ConnectingPartitionID kb="CUR" kxe="false">10</ConnectingPartitionID>
                 <ConnectingVirtualSlotNumber kb="CUR" kxe="false">4</ConnectingVirtualSlotNumber>
                 <UniqueDeviceID kb="CUR" kxe="false">1dU7895.43X.21EF9FB-V2-C92</UniqueDeviceID>
                 <MapPort kb="CUR" kxe="false">fcs1</MapPort>

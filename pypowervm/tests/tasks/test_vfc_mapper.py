@@ -373,3 +373,14 @@ class TestPortMappings(twrap.TestWrapper):
                         break
             if not has_wwpn:
                 self.fail("Unable to find WWPN %s" % my_wwpn)
+
+    def test_find_maps(self):
+        vwrap = self.entries[0]
+        matches = vfc_mapper.find_maps(vwrap.vfc_mappings, 10)
+        # Make sure we got the right ones
+        self.assertEqual(
+            ['U7895.43X.21EF9FB-V63-C3', 'U7895.43X.21EF9FB-V66-C4',
+             'U7895.43X.21EF9FB-V62-C4', 'U7895.43X.21EF9FB-V10-C4'],
+            [match.client_adapter.loc_code for match in matches])
+        # Bogus LPAR ID
+        self.assertEqual([], vfc_mapper.find_maps(vwrap.vfc_mappings, 1000))
