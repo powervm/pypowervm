@@ -1,0 +1,33 @@
+####################################################
+INFO{
+{'comment': 'User for HttpErrorResponse', 'status': '503', 'pw': 'abc123', 'reason': 'Service Unavailable', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'rest/api/uom/SharedStoragePool/3dc777cb-e7b1-3f3d-b904-b5e34b47c6fe?group=None'
+}
+END OF SECTION}
+HEADERS{
+{'content-length': '1746', 'x-transactionrecord-uuid': 'f3d8e93a-3ca5-4308-9c38-2ffb9529002e', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000IpIgP5r5Z7GMlTUhrOhOyF4:7e93a4c1-31cf-47c7-a2e1-3ba43f7626f9; Path=/; Secure; HttpOnly', 'expires': 'Thu, 01 Dec 1994 16:00:00 GMT', 'connection': 'Close', 'x-transaction-id': 'XT10140897', 'cache-control': 'no-cache="set-cookie, set-cookie2"', 'date': 'Fri, 17 Apr 2015 23:51:45 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>1a14745f-ebfd-4d4c-b22b-e6a6ab33e777</id>
+    <title>HttpErrorResponse</title>
+    <published>2015-04-17T23:51:46.756Z</published>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <content type="application/vnd.ibm.powervm.web+xml; type=HttpErrorResponse">
+        <HttpErrorResponse:HttpErrorResponse xmlns:HttpErrorResponse="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/web/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom/>
+    </Metadata>
+    <HTTPStatus kb="ROR" kxe="false">503</HTTPStatus>
+    <RequestURI kb="ROR" kxe="false">/rest/api/uom/SharedStoragePool/3dc777cb-e7b1-3f3d-b904-b5e34b47c6fe</RequestURI>
+    <ReasonCode kb="ROR" kxe="false">Unknown internal error.</ReasonCode>
+    <Message kb="ROO" kxe="false">Test error</Message>
+    <RequestBody kb="ROO" kxe="false"/>
+    <RequestHeaders kb="ROO" kxe="false">{If-None-Match=-1208061982, X-Audit-Memento=root, User-Agent=python-requests/2.5.3 CPython/2.7.6 Linux/3.13.0-49-generic, Accept=application/atom+xml, Accept-Encoding=gzip, deflate, Host=9.1.2.3:12443, Connection=keep-alive, X-API-Session=*******, X-Transaction-ID=XT99999999}</RequestHeaders>
+</HttpErrorResponse:HttpErrorResponse>
+    </content>
+</entry>
+
+END OF SECTION}
+

@@ -23,6 +23,7 @@ persists, it may mean the VIOS is in need of manual intervention.
 
 import time
 
+import pypowervm.const as c
 import pypowervm.exceptions as pvmex
 import pypowervm.wrappers.entry_wrapper as ew
 import pypowervm.wrappers.http_error as he
@@ -38,6 +39,19 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
         func: The Adapter request method to call
         max_retries (int): Max number retries.
     """
+
+    def is_retry(http_error):
+        """Determines if the error is one that can be retried."""
+        # If for some reason it is not an Http Error, it can't be retried.
+        if not isinstance(http_error, he.HttpError):
+            return False
+
+        # Check if the VIOS is clearly busy, or if there is a service
+        # unavailable.  The service unavailable can occur on child objects when
+        # a VIOS is busy.
+        return (http_error.is_vios_busy() or
+                http_error.status == c.HTTPStatus.SERVICE_UNAVAILABLE)
+
     def wrapper(*args, **kwds):
         retries = 0
         while True:
@@ -53,13 +67,13 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
                 resp = e.response
                 if resp and resp.body and resp.entry:
                     wrap = ew.EntryWrapper.wrap(resp.entry)
-                    if (isinstance(wrap, he.HttpError) and
-                            wrap.is_vios_busy()):
+                    if is_retry(wrap):
                         retries += 1
                         # Wait a few seconds before trying again, scaling
                         # out the delay based on the retry count.
                         SLEEP(delay * retries)
                         continue
+
                 # Doesn't look like a VIOS busy error, so just raise it.
                 raise
             else:

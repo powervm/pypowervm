@@ -49,7 +49,7 @@ class HttpError(ewrap.EntryWrapper):
     def is_vios_busy(self):
         try:
             msg = self.message
-            return (self.status == 500 and
+            return (self.status == pc.HTTPStatus.INTERNAL_ERROR and
                     ('VIOS' in msg and
                      'is busy processing some other request' in msg)
                     or any(code in msg for code in _VIOS_BUSY_ERR_CODES))
