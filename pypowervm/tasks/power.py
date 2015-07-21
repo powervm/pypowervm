@@ -114,7 +114,7 @@ def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
                 if force_immediate:
                     add_immediate = True
                 elif lpar is not None:
-                    rmc_state = lpar.check_dlpar_connectivity()[1]
+                    rmc_state = lpar.rmc_state
                     if rmc_state == bp.RMCState.ACTIVE:
                         operation = 'osshutdown'
                     else:

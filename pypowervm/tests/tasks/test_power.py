@@ -56,8 +56,7 @@ class TestPower(testtools.TestCase):
         mock_job_p.reset_mock()
 
         # Try a power off when the RMC state is active
-        rmc_active = pvm_bp.RMCState.ACTIVE
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
+        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
@@ -87,8 +86,7 @@ class TestPower(testtools.TestCase):
                                      mock_run_job):
         """Validate that when first power off times out, re-run."""
         mock_lpar.adapter = self.adpt
-        rmc_active = pvm_bp.RMCState.ACTIVE
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
+        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestTimedOut(
             operation_name='PowerOff', seconds=60)
 
@@ -107,8 +105,7 @@ class TestPower(testtools.TestCase):
     def test_power_off_job_failure(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job request failure."""
         mock_lpar.adapter = self.adpt
-        rmc_active = pvm_bp.RMCState.ACTIVE
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
+        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOff', operation_name='HSCL0DB4')
 
@@ -126,8 +123,7 @@ class TestPower(testtools.TestCase):
     def test_power_off_sysoff(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power off job when system is already off."""
         mock_lpar.adapter = self.adpt
-        rmc_active = pvm_bp.RMCState.ACTIVE
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
+        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOff', operation_name='HSCL1558')
 
@@ -143,8 +139,7 @@ class TestPower(testtools.TestCase):
     def test_power_on_syson(self, mock_lpar, mock_job_p, mock_run_job):
         """Validates a power on job when system is already on."""
         mock_lpar.adapter = self.adpt
-        rmc_active = pvm_bp.RMCState.ACTIVE
-        mock_lpar.check_dlpar_connectivity.return_value = ['Bah', rmc_active]
+        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
             error='PowerOn', operation_name='HSCL3681')
 
