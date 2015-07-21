@@ -89,13 +89,12 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
     :param host_uuid: TEMPORARY - The host system UUID that the LPAR/VIOS
                       resides on
-    :param force_immediate: Boolean.  Do immediate shutdown
-                            (for PowerOff suffix only)
-    :param restart: Boolean.  Do a restart after power off
-                            (for PowerOff suffix only)
-    :param timeout: Value in seconds for specifying
-                    how long to wait for the LPAR/VIOS to stop
-                    (for PowerOff suffix only)
+    :param force_immediate: Boolean.  Do immediate shutdown (for PowerOff
+                            suffix only)
+    :param restart: Boolean.  Do a restart after power off (for PowerOff suffix
+                    only)
+    :param timeout: Value in seconds for specifying how long to wait for the
+                    LPAR/VIOS to stop (for PowerOff suffix only)
     :param add_parms: dict of parameters to pass directly to the job template
     """
     complete = False
@@ -114,8 +113,10 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if force_immediate:
                     add_immediate = True
                 elif part is not None:
-                    rmc_state = part.check_dlpar_connectivity()[1]
-                    if rmc_state == bp.RMCState.ACTIVE:
+                    if part.rmc_state == bp.RMCState.ACTIVE:
+                        operation = 'osshutdown'
+                    elif (part.env == bp.LPARType.OS400 and
+                            part.ref_code == '00000000'):
                         operation = 'osshutdown'
                     else:
                         add_immediate = True

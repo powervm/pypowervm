@@ -109,6 +109,14 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_get_mtms_str(self):
         self.assertEqual(self.wrapper.mtms.mtms_str, '8203-E4A*ACE0001')
 
+    def test_highest_compat_mode(self):
+        self.assertEqual(self.wrapper.highest_compat_mode(), 7)
+
+    def test_proc_compat_modes(self):
+        expected = ('default', 'POWER5', 'POWER6', 'POWER6_Enhanced',
+                    'POWER6_Plus_Enhanced', 'POWER7')
+        self.assertEqual(self.wrapper.proc_compat_modes, expected)
+
     def test_get_proc_units(self):
         self.call_simple_getter("proc_units", "500", 0)
 

@@ -73,6 +73,104 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return super(LPAR, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env, io_cfg)
 
+    def _can_modify(self, dlpar_cap, cap_desc):
+        """Checks to determine if the LPAR can be modified.
+
+        :param dlpar_cap: The appropriate DLPAR attribute to validate.  Only
+                          used if system is active.
+        :param cap_desc: A translated string indicating the DLPAR capability.
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.env == bp.LPARType.OS400:
+            return True, None
+
+        # First check is the not activated state
+        if self.state == bp.LPARState.NOT_ACTIVATED:
+            return True, None
+
+        if self.rmc_state != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar_cap:
+            return False, _('LPAR does not have an active DLPAR capability '
+                            'for %s.') % cap_desc
+        return True, None
+
+    def can_modify_io(self):
+        """Determines if a LPAR is capable of adding/removing I/O HW.
+
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.io_dlpar, _('I/O'))
+
+    def can_modify_mem(self):
+        """Determines if a LPAR is capable of adding/removing Memory.
+
+        :return capable: True if memory can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'))
+
+    def can_modify_proc(self):
+        """Determines if a LPAR is capable of adding/removing processors.
+
+        :return capable: True if procs can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
+
+    def can_lpm(self, host_w):
+        """Determines if a LPAR is ready for Live Partition Migration.
+
+        This check does not validate that the target system is capable of
+        handling the LPAR.  It simply validates that the LPAR has the
+        essential capabilities in place for a LPM operation.
+
+        :param host_w: The host wrapper for the system.
+        :return capable: True if the LPAR is LPM capable.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of LPM.  If capable is True, the reason will
+                        be None.
+        """
+        # First check is the not activated state
+        if self.state != bp.LPARState.RUNNING:
+            return False, _("LPAR is not in an active state.")
+
+        if self.env == bp.LPARType.OS400:
+            # IBM i does not require RMC, but does need to check for
+            # restricted I/O.
+            if not self.restrictedio:
+                return False, _('IBM i LPAR does not have restricted I/O.')
+
+            c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
+            if not c:
+                return False, _('Source system does not have the IBM i LPAR '
+                                'Mobility Capability.')
+
+            compat_mode = host_w.highest_compat_mode()
+            if compat_mode < 7:
+                return False, _('IBM i LPAR Live Migration is only supported '
+                                'on POWER7 and higher systems.')
+        elif self.rmc_state != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+
+        c = self.capabilities
+        if not (c.mem_dlpar and c.proc_dlpar):
+            return False, _('LPAR is not available for LPM due to missing '
+                            'DLPAR capabilities.')
+        return True, None
+
     @property
     def migration_state(self):
         """See PartitionMigrationStateEnum.
