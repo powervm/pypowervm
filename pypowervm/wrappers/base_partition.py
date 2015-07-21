@@ -16,6 +16,7 @@
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
 
+import pypowervm.entities as ent
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -165,10 +166,13 @@ _TIO_EL_ORDER = (_TIO_ALT_CONSOLE, _TIO_ALT_LOAD_SRC, _TIO_CONSOLE,
 # Constants for the I/O Slot Configuration
 IO_SLOTS_ROOT = 'ProfileIOSlots'
 IO_SLOT_ROOT = 'ProfileIOSlot'
+_IO_SLOT_REQ = 'IsRequired'
 
 # Constants for the Associated I/O Slot
 ASSOC_IO_SLOT_ROOT = 'AssociatedIOSlot'
+_ASSOC_IO_SLOT_BUS_GRP = 'BusGroupingRequired'
 _ASSOC_IO_SLOT_DESC = 'Description'
+_ASSOC_IO_SLOT_FEAT_CODES = 'FeatureCodes'
 _ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
 _ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
 _ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
@@ -181,7 +185,17 @@ _ASSOC_IO_SLOT_DRC_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
 _ASSOC_IO_SLOT_DRC_NAME = 'SlotDynamicReconfigurationConnectorName'
 
 # Constants for generic I/O Adapter
+IO_ADPT_ROOT = 'IOAdapter'
 RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
+
+_AIO_ORDER = (_ASSOC_IO_SLOT_BUS_GRP, _ASSOC_IO_SLOT_DESC,
+              _ASSOC_IO_SLOT_FEAT_CODES, _ASSOC_IO_SLOT_PHYS_LOC,
+              _ASSOC_IO_SLOT_ADPT_ID, _ASSOC_IO_SLOT_PCI_CLASS,
+              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_MFG_ID,
+              _ASSOC_IO_SLOT_PCI_REV_ID, _ASSOC_IO_SLOT_PCI_VENDOR_ID,
+              _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID, RELATED_IO_ADPT_ROOT,
+              _ASSOC_IO_SLOT_DRC_INDEX, _ASSOC_IO_SLOT_DRC_NAME)
+
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
 _IO_ADPT_DESC = 'Description'
@@ -936,8 +950,31 @@ class IOSlot(ewrap.ElementWrapper):
 
     It may contain a piece of hardware within it.
     """
+    @classmethod
+    def bld(cls, adapter, bus_grp_required, drc_name, required=False):
+        """Build a new IOSlot wrapper with all required parameters.
 
-    @ewrap.ElementWrapper.pvm_type('AssociatedIOSlot', has_metadata=True)
+        :returns: A new IOSlot wrapper.
+        """
+        new_slot = super(IOSlot, cls)._bld(adapter)
+
+        new_slot.required = required
+
+        # Build out the AssociatedIOSlot
+        assoc_io_slot = cls.AssociatedIOSlot._bld_new(adapter,
+                                                      bus_grp_required,
+                                                      drc_name)
+
+        # Inject the AssociatedIOSlot into this wrapper
+        assoc_elem = ent.Element(ASSOC_IO_SLOT_ROOT, adapter, attrib={},
+                                 children=[])
+        assoc_elem.inject(assoc_io_slot.element)
+        new_slot.inject(assoc_elem)
+
+        return new_slot
+
+    @ewrap.ElementWrapper.pvm_type(ASSOC_IO_SLOT_ROOT, has_metadata=True,
+                                   child_order=_AIO_ORDER)
     class AssociatedIOSlot(ewrap.ElementWrapper):
         """Internal class.  Hides the nested AssociatedIOSlot from parent.
 
@@ -953,10 +990,47 @@ class IOSlot(ewrap.ElementWrapper):
         We still keep the structure internally, but makes the API easier to
         consume.
         """
+        @classmethod
+        def _bld_new(cls, adapter, bus_grp_required, drc_name):
+            """Build a new AssociatedIOSlot wrapper.
+
+            This will not typically be called outside of the IOSlot.bld
+            class method.
+
+            :returns: A new AssociatedIOSlot wrapper.
+            """
+            new_slot = super(IOSlot.AssociatedIOSlot, cls)._bld(adapter)
+            new_slot._bus_grp_required(bus_grp_required)
+            new_slot._pci_subsys_drc_name(drc_name)
+
+            # Build IOAdapter element
+            io_adp = IOAdapter._bld_new(adapter, drc_name)
+            io_adp_elem = ent.Element(IO_ADPT_ROOT, adapter, attrib={},
+                                      children=[])
+            io_adp_elem.inject(io_adp.element)
+
+            # Inject IOAdapter element into new RelatedIOAdapter
+            related_io = ent.Element(RELATED_IO_ADPT_ROOT,
+                                     adapter, attrib={},
+                                     children=[io_adp_elem])
+
+            new_slot.inject(related_io)
+            return new_slot
+
+        @property
+        def bus_grp_required(self):
+            return self._get_val_bool(_ASSOC_IO_SLOT_BUS_GRP)
+
+        def _bus_grp_required(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_BUS_GRP, val)
 
         @property
         def description(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DESC)
+
+        @property
+        def feat_codes(self):
+            return self._get_val_int(_ASSOC_IO_SLOT_FEAT_CODES)
 
         @property
         def phys_loc(self):
@@ -1002,6 +1076,9 @@ class IOSlot(ewrap.ElementWrapper):
         def pci_subsys_drc_name(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DRC_NAME)
 
+        def _pci_subsys_drc_name(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_DRC_NAME, val)
+
         @property
         def io_adapter(self):
             """Jumps over the 'Related IO Adapter' element direct to the I/O.
@@ -1028,6 +1105,14 @@ class IOSlot(ewrap.ElementWrapper):
 
             return None
 
+    @property
+    def required(self):
+        return self._get_val_bool(_IO_SLOT_REQ)
+
+    @required.setter
+    def required(self, val):
+        self.set_parm_value(_IO_SLOT_REQ, val)
+
     def __get_prop(self, func):
         """Thin wrapper to get the Associated I/O Slot and get a property."""
         elem = self._find(ASSOC_IO_SLOT_ROOT)
@@ -1039,8 +1124,16 @@ class IOSlot(ewrap.ElementWrapper):
         return getattr(assoc_io_slot, func)
 
     @property
+    def bus_grp_required(self):
+        return self.__get_prop('bus_grp_required')
+
+    @property
     def description(self):
         return self.__get_prop('description')
+
+    @property
+    def feat_codes(self):
+        return self.__get_prop('feat_codes')
 
     @property
     def phys_loc(self):
@@ -1096,13 +1189,29 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('io_adapter')
 
 
-@ewrap.ElementWrapper.pvm_type('IOAdapter', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter,
 
     This is a device plugged in to the system.  The location code indicates
     where it is plugged into the system.
     """
+    @classmethod
+    def _bld_new(cls, adapter, drc_name):
+        """Build a new IOAdapter wrapper with all required parameters.
+
+        These arguments are based around the parameters needed to build
+        an IOAdapter element. Generally, these will be pulled from the
+        IOSlot on the ManagedSystem, and the REST layer will validate
+        whether or not this can be created.
+
+        :returns: A new IOAdapter wrapper.
+        """
+        new_adp = super(IOAdapter, cls)._bld(adapter)
+
+        new_adp._dyn_reconfig_conn_name(drc_name)
+
+        return new_adp
 
     @property
     def id(self):
@@ -1120,6 +1229,9 @@ class IOAdapter(ewrap.ElementWrapper):
     @property
     def dyn_reconfig_conn_name(self):
         return self._get_val_str(_IO_ADPT_DYN_NAME)
+
+    def _dyn_reconfig_conn_name(self, val):
+        return self.set_parm_value(_IO_ADPT_DYN_NAME, val)
 
     @property
     def phys_loc_code(self):
