@@ -16,6 +16,7 @@
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
 
+import pypowervm.entities as ent
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -168,7 +169,9 @@ IO_SLOT_ROOT = 'ProfileIOSlot'
 
 # Constants for the Associated I/O Slot
 ASSOC_IO_SLOT_ROOT = 'AssociatedIOSlot'
+_ASSOC_IO_SLOT_BUS_GRP = 'BusGroupingRequired'
 _ASSOC_IO_SLOT_DESC = 'Description'
+_ASSOC_IO_SLOT_FEAT_CODES = 'FeatureCodes'
 _ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
 _ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
 _ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
@@ -181,7 +184,17 @@ _ASSOC_IO_SLOT_DRC_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
 _ASSOC_IO_SLOT_DRC_NAME = 'SlotDynamicReconfigurationConnectorName'
 
 # Constants for generic I/O Adapter
+IO_ADPT_ROOT = 'IOAdapter'
 RELATED_IO_ADPT_ROOT = 'RelatedIOAdapter'
+
+_AIO_ORDER = (_ASSOC_IO_SLOT_BUS_GRP, _ASSOC_IO_SLOT_DESC,
+              _ASSOC_IO_SLOT_FEAT_CODES, _ASSOC_IO_SLOT_PHYS_LOC,
+              _ASSOC_IO_SLOT_ADPT_ID, _ASSOC_IO_SLOT_PCI_CLASS,
+              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_MFG_ID,
+              _ASSOC_IO_SLOT_PCI_REV_ID, _ASSOC_IO_SLOT_PCI_VENDOR_ID,
+              _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID, RELATED_IO_ADPT_ROOT,
+              _ASSOC_IO_SLOT_DRC_INDEX, _ASSOC_IO_SLOT_DRC_NAME)
+
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
 _IO_ADPT_DESC = 'Description'
@@ -936,8 +949,37 @@ class IOSlot(ewrap.ElementWrapper):
 
     It may contain a piece of hardware within it.
     """
+    @classmethod
+    def bld(cls, adapter, bus_grp_required, description, feat_codes,
+            pci_class, pci_sub_dev_id, pci_rev_id, pci_vendor_id,
+            pci_sub_vendor_id, drc_index, drc_name):
+        """Build a new IOSlot wrapper with all required parameters.
 
-    @ewrap.ElementWrapper.pvm_type('AssociatedIOSlot', has_metadata=True)
+        These arguments are based around the parameters needed to build
+        a ProfileIOSlot, AssociatedIOSlot and IOAdapter element. Generally,
+        these will be pulled from the IOSlot on the ManagedSystem, and the
+        REST layer will validate whether or not this can be created.
+
+        :returns: A new IOSlot wrapper.
+        """
+        new_slot = super(IOSlot, cls)._bld(adapter)
+
+        # Build out the AssociatedIOSlot
+        assoc_io_slot = cls.AssociatedIOSlot._bld_new(
+            adapter, bus_grp_required, description, feat_codes, pci_class,
+            pci_sub_dev_id, pci_rev_id, pci_vendor_id, pci_sub_vendor_id,
+            drc_index, drc_name)
+
+        # Inject the AssociatedIOSlot into this wrapper
+        assoc_elem = ent.Element(ASSOC_IO_SLOT_ROOT, adapter, attrib={},
+                                 children=[])
+        assoc_elem.inject(assoc_io_slot.element)
+        new_slot.inject(assoc_elem)
+
+        return new_slot
+
+    @ewrap.ElementWrapper.pvm_type(ASSOC_IO_SLOT_ROOT, has_metadata=True,
+                                   child_order=_AIO_ORDER)
     class AssociatedIOSlot(ewrap.ElementWrapper):
         """Internal class.  Hides the nested AssociatedIOSlot from parent.
 
@@ -953,54 +995,146 @@ class IOSlot(ewrap.ElementWrapper):
         We still keep the structure internally, but makes the API easier to
         consume.
         """
+        @classmethod
+        def _bld_new(cls, adapter, bus_grp_required, description, feat_codes,
+                     pci_class, pci_sub_dev_id, pci_rev_id, pci_vendor_id,
+                     pci_sub_vendor_id, drc_index, drc_name):
+            """Build a new AssociatedIOSlot wrapper.
+
+            This will not typically be called outside of the IOSlot.bld
+            class method.
+
+            These arguments are based around the parameters needed to build
+            an AssociatedIOSlot and IOAdapter element. Generally,
+            these will be pulled from the IOSlot on the ManagedSystem, and the
+            REST layer will validate whether or not this can be created.
+
+            :returns: A new AssociatedIOSlot wrapper.
+            """
+            new_slot = super(IOSlot.AssociatedIOSlot, cls)._bld(adapter)
+            new_slot._bus_grp_required(bus_grp_required)
+            new_slot._description(description)
+            new_slot._feat_codes(feat_codes)
+            new_slot._pci_class(pci_class)
+            new_slot._pci_subsys_dev_id(pci_sub_dev_id)
+            new_slot._pci_rev_id(pci_rev_id)
+            new_slot._pci_vendor_id(pci_vendor_id)
+            new_slot._pci_subsys_vendor_id(pci_sub_vendor_id)
+            new_slot._pci_subsys_drc_index(drc_index)
+            new_slot._pci_subsys_drc_name(drc_name)
+
+            # Build IOAdapter element
+            io_adp = IOAdapter._bld_new(adapter, drc_index, drc_name,
+                                        description)
+            io_adp_elem = ent.Element(IO_ADPT_ROOT, adapter, attrib={},
+                                      children=[])
+            io_adp_elem.inject(io_adp.element)
+
+            # Inject IOAdapter element into new RelatedIOAdapter
+            related_io = ent.Element(RELATED_IO_ADPT_ROOT,
+                                     adapter, attrib={},
+                                     children=[io_adp_elem])
+
+            new_slot.inject(related_io)
+            return new_slot
+
+        @property
+        def bus_grp_required(self):
+            return self._get_val_bool(_ASSOC_IO_SLOT_BUS_GRP)
+
+        def _bus_grp_required(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_BUS_GRP, val)
 
         @property
         def description(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DESC)
 
+        def _description(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_DESC, val)
+
+        @property
+        def feat_codes(self):
+            return self._get_val_int(_ASSOC_IO_SLOT_FEAT_CODES)
+
+        def _feat_codes(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_FEAT_CODES, val)
+
         @property
         def phys_loc(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PHYS_LOC)
+
+        def _phys_loc(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PHYS_LOC, val)
 
         @property
         def pc_adpt_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_ADPT_ID)
 
+        def _pc_adpt_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_ADPT_ID, val)
+
         @property
         def pci_class(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_CLASS)
+
+        def _pci_class(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_CLASS, val)
 
         @property
         def pci_dev_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
 
+        def _pci_dev_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_DEV_ID, val)
+
         @property
         def pci_subsys_dev_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
+
+        def _pci_subsys_dev_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_DEV_ID, val)
 
         @property
         def pci_mfg_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_MFG_ID)
 
+        def _pci_mfg_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_MFG_ID, val)
+
         @property
         def pci_rev_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_REV_ID)
+
+        def _pci_rev_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_REV_ID, val)
 
         @property
         def pci_vendor_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_PCI_VENDOR_ID)
 
+        def _pci_vendor_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_PCI_VENDOR_ID, val)
+
         @property
         def pci_subsys_vendor_id(self):
             return self._get_val_str(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
+
+        def _pci_subsys_vendor_id(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID, val)
 
         @property
         def pci_subsys_drc_index(self):
             return self._get_val_int(_ASSOC_IO_SLOT_DRC_INDEX)
 
+        def _pci_subsys_drc_index(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_DRC_INDEX, val)
+
         @property
         def pci_subsys_drc_name(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DRC_NAME)
+
+        def _pci_subsys_drc_name(self, val):
+            self.set_parm_value(_ASSOC_IO_SLOT_DRC_NAME, val)
 
         @property
         def io_adapter(self):
@@ -1039,8 +1173,16 @@ class IOSlot(ewrap.ElementWrapper):
         return getattr(assoc_io_slot, func)
 
     @property
+    def bus_grp_required(self):
+        return self.__get_prop('bus_grp_required')
+
+    @property
     def description(self):
         return self.__get_prop('description')
+
+    @property
+    def feat_codes(self):
+        return self.__get_prop('feat_codes')
 
     @property
     def phys_loc(self):
@@ -1096,34 +1238,74 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('io_adapter')
 
 
-@ewrap.ElementWrapper.pvm_type('IOAdapter', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter,
 
     This is a device plugged in to the system.  The location code indicates
     where it is plugged into the system.
     """
+    @classmethod
+    def _bld_new(cls, adapter, drc_index, drc_name, description=''):
+        """Build a new IOAdapter wrapper with all required parameters.
+
+        These arguments are based around the parameters needed to build
+        an IOAdapter element. Generally, these will be pulled from the
+        IOSlot on the ManagedSystem, and the REST layer will validate
+        whether or not this can be created.
+
+        :returns: A new IOAdapter wrapper.
+        """
+        new_adp = super(IOAdapter, cls)._bld(adapter)
+        new_adp._description(description)
+
+        # TODO(clbush): What should we do with this, if anything?
+        new_adp._id(drc_index)
+        # TODO(clbush): Is this right? Set to drc_name based on
+        #                existing payloads in my env.
+        new_adp._phys_loc_code(drc_name)
+
+        new_adp._dev_name(drc_name)
+        new_adp._dyn_reconfig_conn_name(drc_name)
+
+        return new_adp
 
     @property
     def id(self):
         """The adapter system id."""
         return self._get_val_str(_IO_ADPT_ID)
 
+    def _id(self, val):
+        # TODO(clbush): What should we do with this, if anything?
+        return self.set_parm_value(_IO_ADPT_ID, val)
+
     @property
     def description(self):
         return self._get_val_str(_IO_ADPT_DESC)
+
+    def _description(self, val):
+        return self.set_parm_value(_IO_ADPT_DESC, val)
 
     @property
     def dev_name(self):
         return self._get_val_str(_IO_ADPT_DEV_NAME)
 
+    def _dev_name(self, val):
+        return self.set_parm_value(_IO_ADPT_DEV_NAME, val)
+
     @property
     def dyn_reconfig_conn_name(self):
         return self._get_val_str(_IO_ADPT_DYN_NAME)
 
+    def _dyn_reconfig_conn_name(self, val):
+        return self.set_parm_value(_IO_ADPT_DYN_NAME, val)
+
     @property
     def phys_loc_code(self):
         return self._get_val_str(_IO_ADPT_PHYS_LOC)
+
+    def _phys_loc_code(self, val):
+        return self.set_parm_value(_IO_ADPT_PHYS_LOC, val)
 
 
 @ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelAdapter',
