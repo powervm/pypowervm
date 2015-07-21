@@ -319,6 +319,38 @@ class BasePartition(ewrap.EntryWrapper):
 
         return partition
 
+    def check_modification_ability(self, ok_if_off=True):
+        """Determines if a LPAR is capable of adding/removing HW.
+
+        There are many different scenarios that require checking the state of
+        a system to determine if HW can be added or removed.  This may be:
+         - Adding/Removing a NIC
+         - Adding/Removing a VFC or SCSI mapping
+         - Performing a live migration
+         - etc...
+
+        This method will return if a VM is capable of adding/removing hardware.
+
+        :param lpar_w: The LPAR wrapper.
+        :param ok_if_off: (Optional, Default True) If set to true, will return
+                          that the LPAR is modifiable if the system is powered
+                          off.
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # First check is the not activated state
+        if ok_if_off and self.state == LPARState.NOT_ACTIVATED:
+            return True, None
+
+        dlpar, rmc = self.check_dlpar_connectivity()
+
+        if rmc != RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar:
+            return False, _('LPAR does not have an active DLPAR connection.')
+
     @property
     def state(self):
         """See LPARState.
