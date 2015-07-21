@@ -238,8 +238,21 @@ class NetworkBridger(object):
         # Find our Network Bridge
         req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
 
-        # TODO(thorst) need to handle removing the VLAN if it is an arbitrary
-        # VID.
+        # Determine if we're trying to remove an arbitrary PVID off of the
+        # network bridge.  If so, we need to get a new, available arbitrary
+        # PVID and swap that in.
+        if vlan_id in req_nb.arbitrary_pvids:
+            # Need to find the peers on this vSwitch.  Arbitrary PVIDs can
+            # only be used once per vSwitch
+            all_nbs_on_vs = self._find_peer_nbs(nb_wraps, req_nb,
+                                                include_self=True)
+
+            # Find a new arbitrary VLAN ID and swap it to a new, available
+            # value
+            new_a_vid = self._find_new_arbitrary_vid(all_nbs_on_vs,
+                                                     others=[vlan_id])
+            self._reassign_arbitrary_vid(vlan_id, new_a_vid, req_nb)
+            return
 
         # If the VLAN is not on the bridge, no action
         if not req_nb.supports_vlan(vlan_id):
@@ -311,11 +324,13 @@ class NetworkBridger(object):
                 return vswitch
         return None
 
-    def _find_peer_nbs(self, nb_wraps, nb):
+    def _find_peer_nbs(self, nb_wraps, nb, include_self=False):
         """Finds all of the peer (same vSwitch) Network Bridges.
 
         :param nb_wraps: List of pypowervm NetBridge wrappers.
         :param nb: The NetBridge to find.
+        :param include_self: (Optional, Default False) If set to true, will
+                             include the nb in the response list.
         :return: List of Network Bridges on the same vSwitch as the seed.  Does
                  not include the nb element.
         """
@@ -325,7 +340,7 @@ class NetworkBridger(object):
         ret = []
         for nb_elem in nb_wraps:
             # Don't include self.
-            if nb.uuid == nb_elem.uuid:
+            if nb.uuid == nb_elem.uuid and not include_self:
                 continue
 
             # See if the vswitches match
