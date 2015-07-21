@@ -73,6 +73,110 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return super(LPAR, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env, io_cfg)
 
+    def can_modify_io(self):
+        """Determines if a LPAR is capable of adding/removing I/O HW.
+
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.operating_system == bp.LPARType.OS400:
+            return True, None
+
+        # First check is the not activated state
+        if self.state == bp.LPARState.NOT_ACTIVATED:
+            return True, None
+
+        dlpar, rmc = self.check_dlpar_connectivity()
+
+        if rmc != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar:
+            return False, _('LPAR does not have an active DLPAR connection.')
+        return True, None
+
+    def can_modify_mem(self):
+        """Determines if a LPAR is capable of adding/removing Memory.
+
+        :return capable: True if memory can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.operating_system == bp.LPARType.OS400:
+            return True, None
+
+        # First check is the not activated state
+        if self.state == bp.LPARState.NOT_ACTIVATED:
+            return True, None
+
+        dlpar, rmc = self.check_dlpar_connectivity()
+
+        if rmc != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar:
+            return False, _('LPAR does not have an active DLPAR connection.')
+        return True, None
+
+    def can_modify_proc(self):
+        """Determines if a LPAR is capable of adding/removing processors.
+
+        :return capable: True if procs can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.operating_system == bp.LPARType.OS400:
+            return True, None
+
+        # First check is the not activated state
+        if self.state == bp.LPARState.NOT_ACTIVATED:
+            return True, None
+
+        dlpar, rmc = self.check_dlpar_connectivity()
+
+        if rmc != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar:
+            return False, _('LPAR does not have an active DLPAR connection.')
+        return True, None
+
+    def can_lpm(self):
+        """Determines if a LPAR is ready for Live Partition Migration.
+
+        This check does not validate that the target system is capable of
+        handling the LPAR.  It simply validates that the LPAR has the
+        essential capabilities in place for a LPM operation.
+
+        :return capable: True if the LPAR is LPM capable.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of LPM.  If capable is True, the reason will
+                        be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.operating_system == bp.LPARType.OS400:
+            return True, None
+
+        # First check is the not activated state
+        if self.state != bp.LPARState.RUNNING:
+            return False, _("LPAR is not in an active state.")
+
+        dlpar, rmc = self.check_dlpar_connectivity()
+
+        if rmc != bp.RMCState.ACTIVE:
+            return False, _('LPAR does not have an active RMC connection.')
+        if not dlpar:
+            return False, _('LPAR does not have an active DLPAR connection.')
+        return True, None
+
     @property
     def migration_state(self):
         """See PartitionMigrationStateEnum.
