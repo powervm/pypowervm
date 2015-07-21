@@ -212,7 +212,7 @@ def _find_map_port(potential_ports, mappings):
     # This is where we reduce the 'candidate physical ports' down to those
     # that are least used by our existing mappings.
     #
-    # There is a reasonable upper limit of 50 mappings (which should be far
+    # There is a reasonable upper limit of 128 mappings (which should be
     # beyond what admins will want to map vFC's to a single pFC).  We simply
     # put that in to avoid infinite loops in the extremely, almost unimaginable
     # event that we've reached an upper boundary.  :-)
@@ -221,7 +221,7 @@ def _find_map_port(potential_ports, mappings):
     # for the next available port.
     starting_count = 0
     list_of_cand_ports = []
-    while len(list_of_cand_ports) == 0 and starting_count < 50:
+    while len(list_of_cand_ports) == 0 and starting_count < 128:
         for port_info in port_dict.values():
             if port_info['port_mapping_use'] == starting_count:
                 list_of_cand_ports.append(port_info['port'])
