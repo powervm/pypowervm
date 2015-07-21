@@ -17,6 +17,7 @@
 import unittest
 import uuid
 
+import mock
 import testtools
 
 import pypowervm.tests.test_fixtures as fx
@@ -200,14 +201,6 @@ class TestLogicalPartition(testtools.TestCase):
         self._shared_wrapper.profile_sync = "Off"
         self.call_simple_getter("profile_sync", False, False)
 
-    def test_check_dlpar_connectivity(self):
-        self.call_simple_getter("check_dlpar_connectivity",
-                                (False, bp.RMCState.INACTIVE), (False, None))
-        self._shared_wrapper.capabilities.set_parm_value(
-            bp._CAP_DLPAR_MEM_CAPABLE, 'true')
-        self.call_simple_getter("check_dlpar_connectivity",
-                                (True, bp.RMCState.INACTIVE), (False, None))
-
     def test_get_operating_system(self):
         self.call_simple_getter(
             "operating_system", EXPECTED_OPERATING_SYSTEM_VER, "Unknown")
@@ -254,16 +247,83 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertIsInstance(proc.dedicated_proc_cfg,
                               bp.DedicatedProcessorConfiguration)
 
-    # PartitionCapabilities
+    def test_can_modifies(self):
+        """Simple check on the 'can_modify_xxx' methods."""
+        wrap = TestLogicalPartition._shared_wrapper
+        wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.ACTIVE)
+        self.assertTrue(wrap.can_modify_io()[0])
+        self.assertFalse(wrap.can_modify_mem()[0])
+        self.assertTrue(wrap.can_modify_proc()[0])
+
+    def test_can_modify(self):
+        """Detailed testing on the _can_modify method."""
+        wrap = TestLogicalPartition._shared_wrapper
+
+        # By default, it will return True because it is a non-activated LPAR
+        self.assertTrue(wrap._can_modify(mock.Mock())[0])
+
+        # Turn on the LPAR.  Should fail due to RMC
+        wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        val, reason = wrap._can_modify(mock.Mock())
+        self.assertFalse(val)
+        self.assertTrue('RMC' in reason)
+
+        # Turn on RMC, but have the DLPAR return false.
+        wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.ACTIVE)
+        val, reason = wrap._can_modify(None)
+        self.assertFalse(val)
+        self.assertTrue('DLPAR' in reason)
+
+        # Turn on DLPAR
+        val, reason = wrap._can_modify(mock.Mock())
+        self.assertTrue(val)
+        self.assertIsNone(reason)
+
+        # Now turn off RMC but change the LPAR type to OS400.  Should be OK.
+        wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.INACTIVE)
+        wrap.set_parm_value(bp._BP_TYPE, bp.LPARType.OS400)
+        val, reason = wrap._can_modify(mock.Mock())
+        self.assertTrue(val)
+        self.assertIsNone(reason)
+
+    def test_can_lpm(self):
+        """Tests for the can_lpm method."""
+        wrap = TestLogicalPartition._shared_wrapper
+
+        # By default, it will return True because it is a non-activated LPAR
+        val, reason = wrap.can_lpm()
+        self.assertFalse(val)
+        self.assertTrue('active' in reason)
+
+        # Turn on the LPAR, but make it RMC inactive
+        wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.INACTIVE)
+        val, reason = wrap.can_lpm()
+        self.assertFalse(val)
+        self.assertTrue('RMC' in reason)
+
+        # Turn on RMC, but by default some of the capabilities are off.
+        wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.ACTIVE)
+        val, reason = wrap.can_lpm()
+        self.assertFalse(val)
+        self.assertTrue('DLPAR' in reason)
+
+        # Turn on the DLPAR bits.  Mem is the only one required as the others
+        # are on in the root XML.
+        wrap.capabilities.set_parm_value(bp._CAP_DLPAR_MEM_CAPABLE, True)
+        val, reason = wrap.can_lpm()
+        self.assertTrue(val)
+        self.assertIsNone(reason)
 
     def test_capabilities(self):
+        # PartitionCapabilities
         self.call_simple_getter("capabilities.io_dlpar", True, False)
         self.call_simple_getter("capabilities.mem_dlpar", False, False)
         self.call_simple_getter("capabilities.proc_dlpar", True, False)
 
-    # PartitionProcessorConfiguration
-
     def test_get_proc_mode(self):
+        # PartitionProcessorConfiguration
         self.call_simple_getter(
             "proc_config.has_dedicated", False, False)
         self.call_simple_getter(
@@ -273,12 +333,11 @@ class TestLogicalPartition(testtools.TestCase):
             "proc_config.has_dedicated", False, False, use_dedicated=True)
 
     def test_get_current_sharing_mode(self):
+        # SharedProcessorConfiguration
         self.call_simple_getter("proc_config.sharing_mode", "uncapped", None)
         self._shared_wrapper.proc_config.sharing_mode = "keep idle procs"
         self.call_simple_getter("proc_config.sharing_mode", "keep idle procs",
                                 None)
-
-    # SharedProcessorConfiguration
 
     def test_desired_units(self):
         self.call_simple_getter("proc_config.shared_proc_cfg.desired_units",

@@ -416,16 +416,6 @@ class BasePartition(ewrap.EntryWrapper):
         """
         self.set_parm_value(_BP_PENDING_PROC_MODE, value)
 
-    def check_dlpar_connectivity(self):
-        """Check the partition for DLPAR capability and rmc state.
-
-        :returns: Returns true or false if DLPAR capable
-        :returns: Returns RMC state as string
-        """
-        dlpar = self.capabilities.mem_dlpar and self.capabilities.proc_dlpar
-
-        return dlpar, self.rmc_state
-
     @property
     def is_mgmt_partition(self):
         """Is this the management partition?  Default False if field absent."""
