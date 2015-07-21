@@ -73,6 +73,35 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return super(LPAR, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env, io_cfg)
 
+    def check_modification_ability(self, ok_if_off=True):
+        """Determines if a LPAR is capable of adding/removing HW.
+
+        There are many different scenarios that require checking the state of
+        a system to determine if HW can be added or removed.  This may be:
+         - Adding/Removing a NIC
+         - Adding/Removing a VFC or SCSI mapping
+         - Performing a live migration
+         - etc...
+
+        This method will return if a VM is capable of adding/removing hardware.
+
+        :param lpar_w: The LPAR wrapper.
+        :param ok_if_off: (Optional, Default True) If set to true, will return
+                          that the LPAR is modifiable if the system is powered
+                          off.
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # If we are in the LPAR, we have access to the operating system type.
+        # If it is an OS400 type, then we can add/remove HW no matter what.
+        if self.operating_system == bp.LPARType.OS400:
+            return True, None
+
+        # Delegate the other checks to the parent.
+        return super(LPAR, self).check_modification_ability()
+
     @property
     def migration_state(self):
         """See PartitionMigrationStateEnum.
