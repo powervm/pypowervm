@@ -18,7 +18,7 @@
 
 import logging
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 import pypowervm.const as c
 import pypowervm.exceptions as pexc
