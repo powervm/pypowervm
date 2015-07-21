@@ -19,6 +19,7 @@
 import pypowervm.const as c
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
+import re
 
 import logging
 
@@ -237,6 +238,20 @@ class System(ewrap.EntryWrapper):
         This is a READ-ONLY list.
         """
         return tuple(self._get_vals(_PROC_COMPAT_MODES))
+
+    def highest_compat_mode(self):
+        """This method returns the highest compatibility mode of the host."""
+        modes = []
+        pattern = "^(power)([0-9]+)(\+?)$"
+        for mode in self.proc_compat_modes:
+            match = re.search(pattern, mode.lower())
+            if match:
+                modes.append(int(match.group(2)))
+        modes = sorted(modes)
+        if modes:
+            return modes[-1]
+        else:
+            return 0
 
     @property
     def migration_data(self):

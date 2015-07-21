@@ -114,8 +114,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if force_immediate:
                     add_immediate = True
                 elif part is not None:
-                    rmc_state = part.check_dlpar_connectivity()[1]
-                    if rmc_state == bp.RMCState.ACTIVE:
+                    if part.rmc_state == bp.RMCState.ACTIVE:
                         operation = 'osshutdown'
                     else:
                         add_immediate = True
