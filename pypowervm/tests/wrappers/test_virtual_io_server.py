@@ -448,6 +448,8 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(553713674, self.io_slot.pci_subsys_drc_index)
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
                          self.io_slot.pci_subsys_drc_name)
+        self.assertEqual(False, self.io_slot.bus_grp_required)
+        self.assertEqual(False, self.io_slot.required)
 
     def test_io_slots_setter(self):
         old_len = len(self.dwrap.io_config.io_slots)
@@ -460,6 +462,13 @@ class TestIOSlots(twrap.TestWrapper):
 
     def test_io_adpt(self):
         self.assertIsNotNone(self.io_slot.adapter)
+
+    def test_bld(self):
+        new_slot = bp.IOSlot.bld(self.adpt, True, 'newslot')
+        self.assertEqual(False, new_slot.required)
+        self.assertEqual(True, new_slot.bus_grp_required)
+        self.assertEqual('newslot', new_slot.pci_subsys_drc_name)
+        self.assertEqual('newslot', new_slot.adapter.dyn_reconfig_conn_name)
 
 
 class TestGenericIOAdapter(twrap.TestWrapper):
