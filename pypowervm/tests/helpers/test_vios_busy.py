@@ -25,6 +25,7 @@ from pypowervm.helpers import vios_busy
 from pypowervm.tests.wrappers.util import pvmhttp
 
 HTTPRESP_FILE = "fake_httperror.txt"
+HTTPRESP_SA_FILE = "fake_httperror_service_unavail.txt"
 
 
 class TestVIOSBusyHelper(unittest.TestCase):
@@ -33,14 +34,11 @@ class TestVIOSBusyHelper(unittest.TestCase):
         super(TestVIOSBusyHelper, self).setUp()
 
         self.http_error = pvmhttp.load_pvm_resp(HTTPRESP_FILE)
-        self.assertIsNotNone(self.http_error,
-                             "Could not load %s " %
-                             HTTPRESP_FILE)
+        self.http_error_sa = pvmhttp.load_pvm_resp(HTTPRESP_SA_FILE)
 
     @mock.patch('pypowervm.adapter.Session')
     @mock.patch('pypowervm.helpers.vios_busy.SLEEP')
     def test_vios_busy_helper(self, mock_sleep, mock_sess):
-
         # Try with 1 retries
         hlp = functools.partial(vios_busy.vios_busy_retry_helper,
                                 max_retries=1)
@@ -73,3 +71,14 @@ class TestVIOSBusyHelper(unittest.TestCase):
                           body='the body', helpers=hlp)
         # There should be no retries since the response was None
         self.assertEqual(mock_sess.request.call_count, 1)
+
+        # Test with a Service Unavailable exception
+        mock_sess.reset_mock()
+        hlp = functools.partial(vios_busy.vios_busy_retry_helper,
+                                max_retries=1)
+        error = pvmex.Error('yo', response=self.http_error_sa.response)
+        mock_sess.request.side_effect = error
+        adpt = adp.Adapter(mock_sess, use_cache=False, helpers=hlp)
+        self.assertRaises(
+            pvmex.Error, adpt._request, 'method', 'path', body='the body')
+        self.assertEqual(mock_sess.request.call_count, 2)
