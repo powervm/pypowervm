@@ -427,5 +427,52 @@ class TestLULinkedClone(testtools.TestCase):
         self.adpt.update_by_path = trap_update
         ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3, update=False)
 
+
+class TestVOptMedia(testtools.TestCase):
+    def setUp(self):
+        super(TestVOptMedia, self).setUp()
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
+        self.adpt = self.adptfx.adpt
+        self.vg_resp = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_rm_vopts(self, mock_update):
+        mock_update.return_value = self.vg_resp
+        vg_wrap = stor.VG.wrap(self.vg_resp)
+        repo = vg_wrap.vmedia_repos[0]
+        # Remove a valid VOptMedia
+        valid_vopt = repo.optical_media[0]
+        # Removal should hit.
+        self.assertEqual(1, ts.rm_vopts(vg_wrap, [valid_vopt]))
+        # Update happens, by default
+        self.assertEqual(1, mock_update.call_count)
+        self.assertEqual(2, len(repo.optical_media))
+        self.assertNotEqual(valid_vopt.udid, repo.optical_media[0].udid)
+        self.assertNotEqual(valid_vopt.udid, repo.optical_media[1].udid)
+
+        # Bogus removal with must_exist - raises, doesn't affect vg_wrap, and
+        # doesn't update.
+        mock_update.reset_mock()
+        invalid_vopt = stor.VOptMedia.bld(self.adpt, 'bogus')
+        self.assertRaises(ValueError, ts.rm_vopts, vg_wrap, [invalid_vopt])
+        self.assertEqual(0, mock_update.call_count)
+        self.assertEqual(2, len(repo.optical_media))
+
+        # Bogus removal with must_exist=False - doesn't affect vg_wrap, and
+        # doesn't update.
+        mock_update.reset_mock()
+        self.assertEqual(0, ts.rm_vopts(vg_wrap, [invalid_vopt],
+                                        must_exist=False))
+        self.assertEqual(0, mock_update.call_count)
+        self.assertEqual(2, len(repo.optical_media))
+
+        # Valid multiple removal; no update
+        mock_update.reset_mock()
+        self.assertEqual(2, ts.rm_vopts(vg_wrap, repo.optical_media[:],
+                                        update=False))
+        self.assertEqual(0, mock_update.call_count)
+        self.assertEqual(0, len(repo.optical_media))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -138,6 +138,46 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return reference, f_uuid
 
 
+def rm_vopts(vg_wrap, vopts, update=True, must_exist=True):
+    """Delete some number of virtual optical media from a volume group.
+
+    This should be executed under lock LOCK_VOL_GRP.
+
+    :param vg_wrap: VG wrapper representing the Volume Group to update.
+    :param vopts: Iterable of VOptMedia wrappers representing the devices to
+                  delete.
+    :param update: If True, update the volume group (flush the changes back to
+                   the server).  If False, just modify the vg_wrap.
+    :param must_exist: If True, each element in vopts must be present in the
+                       vg_wrap; else ValueError will be raised on the first
+                       discrepancy.  In this case, the vg_wrap will not be
+                       flushed to the server (regardless of the value of the
+                       update parameter), but its state cannot be relied upon
+                       (it should be refreshed before further use).
+                       If False, any element in vopts which is not present in
+                       vg_wrap is simply ignored.
+    :return: The number of VOptMedia removed from vg_wrap.  A consumer running
+             with update=False may use this to decide whether to run
+             vg_wrap.update() or not.  If must_exist=True, the return value
+             should always equal len(vopts).
+    """
+    vg_om = vg_wrap.vmedia_repos[0].optical_media
+    changes = 0
+    for vopt in vopts:
+        try:
+            vg_om.remove(vopt)
+            changes += 1
+        except ValueError:
+            if must_exist:
+                raise
+
+    # Update the volume group to remove the storage, if necessary and requested
+    if update and changes:
+        vg_wrap.update()
+
+    return changes
+
+
 def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
                   sha_chksum=None):
     """Creates a new SSP Logical Unit and uploads a data stream to it.
