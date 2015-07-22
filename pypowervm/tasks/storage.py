@@ -39,7 +39,7 @@ FILE_UUID = 'FileUUID'
 LOG = logging.getLogger(__name__)
 
 _LOCK_SSP = 'ssp_op_lock'
-_LOCK_VOL_GRP = 'vol_grp_lock'
+LOCK_VOL_GRP = 'vol_grp_lock'
 
 # Concurrent uploads
 _UPLOAD_SEM = threading.Semaphore(3)
@@ -423,12 +423,12 @@ def _image_lu_in_use(ssp, image_lu):
     return False
 
 
-@lock.synchronized(_LOCK_VOL_GRP)
+@lock.synchronized(LOCK_VOL_GRP)
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     """Creates a new Virtual Disk in the specified volume group.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change.
+                    change.
     :param v_uuid: The UUID of the Virtual I/O Server that will host the disk.
     :param vol_grp_uuid: The volume group that will host the new Virtual Disk.
     :param d_name: The name that should be given to the disk on the Virtual
@@ -460,6 +460,43 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     # but adding just in case as we don't want to create the file meta
     # without a backing disk.
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
+
+
+def rm_vdisks(vg_wrap, vdisks, update=True):
+    """Delete some number of virtual disks from a volume group.
+
+    This should be executed under lock LOCK_VOL_GRP.
+
+    :param vg_wrap: VG wrapper representing the Volume Group to update.
+    :param vdisks: Iterable of VDisk wrappers representing the Virtual Disks to
+                   delete.
+    :param update: If True, update the volume group (flush the changes back to
+                   the server).  If False, just modify the vg_wrap.
+    :return: The number of disks removed from vg_wrap.  A consumer running with
+             update=False may use this to decide whether to run
+             vg_wrap.update() or not.
+    """
+    existing_vds = vg_wrap.virtual_disks
+    changes = 0
+    for removal in vdisks:
+
+        # Can't just call direct on remove, because attribs are off.
+        match = None
+        for existing_vd in existing_vds:
+            if existing_vd.udid == removal.udid:
+                match = existing_vd
+                break
+
+        if match is not None:
+            LOG.info(_('Deleting disk: %s'), match.name)
+            existing_vds.remove(match)
+            changes += 1
+
+    # Update the volume group to remove the storage, if necessary and requested
+    if update and changes:
+        vg_wrap.update()
+
+    return changes
 
 
 @lock.synchronized(_LOCK_SSP)
