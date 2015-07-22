@@ -167,7 +167,7 @@ def is_instance_path(href):
     path = dice_href(href, include_scheme_netloc=False, include_query=False,
                      include_fragment=False)
 
-    return re.match(const.UUID_REGEX, path.rsplit('/', 1)[1])
+    return re.match(const.UUID_REGEX_WORD, path.rsplit('/', 1)[1])
 
 
 def determine_paths(resp):
@@ -275,7 +275,7 @@ def get_req_path_uuid(path, preserve_case=False, root=False):
     p = dice_href(path, include_query=False, include_fragment=False)
     if '/' in p:
         for maybe_id in p.rsplit('/', 3)[1::2]:
-            uuid_match = re.match(const.UUID_REGEX, maybe_id)
+            uuid_match = re.match(const.UUID_REGEX_WORD, maybe_id)
             if uuid_match:
                 ret = maybe_id if preserve_case else maybe_id.lower()
                 if root:

@@ -17,14 +17,13 @@
 """Manage mappings of virtual storage devices from VIOS to LPAR."""
 
 import logging
-import re
 
 from oslo_concurrency import lockutils as lock
 
-from pypowervm import const
 from pypowervm.i18n import _
 from pypowervm import util
 from pypowervm.utils import retry as pvm_retry
+from pypowervm.utils import uuid
 from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -162,27 +161,6 @@ def _separate_mappings(vios_w, client_href):
     return resp
 
 
-def _id_or_uuid(lpar_id):
-    """Sanitizes an LPAR short ID or string UUID, and indicates which was used.
-
-    Use as:
-        is_uuid, lpar_id = _id_or_uuid(lpar_id)
-        if is_uuid:  # lpar_id is a string UUID
-        else:  # lpar_id is LPAR short ID of type int
-
-    :param lpar_id: LPAR short ID (may be string or int) or string UUID.
-    :return: Boolean.  If True, the other return is a UUID string.  If False,
-                       it is an integer.
-    """
-    if isinstance(lpar_id, str) and re.match(const.UUID_REGEX, lpar_id):
-        is_uuid = True
-        ret_id = lpar_id
-    else:
-        is_uuid = False
-        ret_id = int(lpar_id)
-    return is_uuid, ret_id
-
-
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(argmod_func=_argmod)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
@@ -308,7 +286,7 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
             stg_el.schema_type == stg_elem.schema_type and
             stg_el.name == stg_elem.name)
 
-    is_uuid, client_id = _id_or_uuid(client_lpar_id)
+    is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
     for existing_scsi_map in mapping_list:
         # No client, continue on unless including orphans.
