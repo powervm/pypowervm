@@ -129,7 +129,10 @@ _SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
 _VADPT_LPAR_ID = 'LocalPartitionID'
+# SCSI adapters use this
 _VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
+# ...and FC adapters use this
+_VADPT_CONN_PARTITION_ID = 'ConnectingPartitionID'
 _VADPT_UDID = 'UniqueDeviceID'
 _VADPT_MAP_PORT = 'MapPort'
 _VADPT_WWPNS = 'WWPNs'
@@ -750,15 +753,6 @@ class VServerStorageAdapter(VStorageAdapter):
         """The device's Unique Device Identifier."""
         return self._get_val_str(_VADPT_UDID)
 
-    @property
-    def lpar_id(self):
-        """The short ID (not UUID) of the LPAR side of this adapter.
-
-        Note that the LPAR ID is LocalPartitionID on the client side, and
-        RemoteLogicalPartitionID on the server side.
-        """
-        return self._get_val_int(_VADPT_REM_LPAR_ID)
-
 
 # pvm_type decorator by superclass (it is not unique)
 class VSCSIClientAdapter(VClientStorageAdapter):
@@ -780,6 +774,15 @@ class VSCSIServerAdapter(VServerStorageAdapter):
     def backing_dev_name(self):
         """The backing device name that this virtual adapter is hooked into."""
         return self._get_val_str(_VADPT_BACK_DEV_NAME)
+
+    @property
+    def lpar_id(self):
+        """The short ID (not UUID) of the LPAR side of this adapter.
+
+        Note that the LPAR ID is LocalPartitionID on the client side, and
+        RemoteLogicalPartitionID on the server side.
+        """
+        return self._get_val_int(_VADPT_REM_LPAR_ID)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -833,3 +836,12 @@ class VFCServerAdapter(VServerStorageAdapter):
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
         return self._get_val_str(_VADPT_MAP_PORT)
+
+    @property
+    def lpar_id(self):
+        """The integer short ID (not UUID) of the client side of the adapter.
+
+        Note that the LPAR ID is LocalPartitionID on the client side, and
+        ConnectingPartitionID on the server side.
+        """
+        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
