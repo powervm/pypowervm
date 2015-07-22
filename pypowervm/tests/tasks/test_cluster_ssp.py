@@ -92,6 +92,3 @@ class TestClusterSSP(unittest.TestCase):
         cs.crt_cluster_ssp('clust_name', 'ssp_name', repos, node, data)
         # run_job() should run delete_job() at the end
         self.assertEqual(mock_del_job.call_count, 1)
-
-if __name__ == '__main__':
-    unittest.main()

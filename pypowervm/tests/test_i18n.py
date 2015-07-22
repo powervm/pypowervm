@@ -35,6 +35,3 @@ class TranslationTests(unittest.TestCase):
         self.assertEqual(
             _("This is a message for which a translation doesn't exist"),
             "This is a message for which a translation doesn't exist")
-
-if __name__ == "__main__":
-    unittest.main()
