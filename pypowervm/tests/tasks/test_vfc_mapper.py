@@ -384,3 +384,14 @@ class TestPortMappings(twrap.TestWrapper):
             [match.client_adapter.loc_code for match in matches])
         # Bogus LPAR ID
         self.assertEqual([], vfc_mapper.find_maps(vwrap.vfc_mappings, 1000))
+
+        # Now try with UUID
+        matches = vfc_mapper.find_maps(vwrap.vfc_mappings,
+                                       '3ADDED46-B3A9-4E12-B6EC-8223421AF49B')
+        self.assertEqual(
+            ['U7895.43X.21EF9FB-V63-C3', 'U7895.43X.21EF9FB-V66-C4',
+             'U7895.43X.21EF9FB-V62-C4', 'U7895.43X.21EF9FB-V10-C4'],
+            [match.client_adapter.loc_code for match in matches])
+        # Bogus LPAR UUID
+        self.assertEqual([], vfc_mapper.find_maps(
+            vwrap.vfc_mappings, '4BEEFD00-B3A9-4E12-B6EC-8223421AF49B'))
