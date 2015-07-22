@@ -252,6 +252,106 @@ class TestUploadLV(testtools.TestCase):
         return vf.File.wrap(resp)
 
 
+class TestVDisk(testtools.TestCase):
+    def setUp(self):
+        super(TestVDisk, self).setUp()
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
+        self.adpt = self.adptfx.adpt
+        self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
+        self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
+        self.vg_resp = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_crt_vdisk(self, mock_read, mock_update):
+        mock_read.return_value = self.vg_resp
+
+        def _mock_update(*a, **kwa):
+            vg_wrap = a[0]
+            new_vdisk = vg_wrap.virtual_disks[-1]
+            self.assertEqual('vdisk_name', new_vdisk.name)
+            self.assertEqual(10, new_vdisk.capacity)
+            return vg_wrap.entry
+
+        mock_update.side_effect = _mock_update
+        ret = ts.crt_vdisk(
+            self.adpt, self.v_uuid, self.vg_uuid, 'vdisk_name', 10)
+        self.assertEqual('vdisk_name', ret.name)
+        self.assertEqual(10, ret.capacity)
+
+
+class TestRMSTorage(testtools.TestCase):
+    def setUp(self):
+        super(TestRMSTorage, self).setUp()
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
+        self.adpt = self.adptfx.adpt
+        self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
+        self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
+        self.vg_resp = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_rm_vdisks(self, mock_update):
+        mock_update.return_value = self.vg_resp
+        vg_wrap = stor.VG.wrap(self.vg_resp)
+        # Remove a valid VDisk
+        valid_vd = vg_wrap.virtual_disks[0]
+        # Removal should hit.
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vdisks=[valid_vd])
+        # Update happens, by default
+        self.assertEqual(1, mock_update.call_count)
+        self.assertEqual(1, len(vg_wrap.virtual_disks))
+        self.assertNotEqual(valid_vd.udid, vg_wrap.virtual_disks[0].udid)
+
+        # Bogus removal doesn't affect vg_wrap, and doesn't update.
+        mock_update.reset_mock()
+        invalid_vd = mock.Mock()
+        invalid_vd.name = 'vdisk_name'
+        invalid_vd.udid = 'vdisk_udid'
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vdisks=[invalid_vd])
+        # Update doesn't happen, because no changes
+        self.assertEqual(0, mock_update.call_count)
+        self.assertEqual(1, len(vg_wrap.virtual_disks))
+
+        # Valid (but sparse) removal; invalid is ignored.
+        mock_update.reset_mock()
+        valid_vd = mock.Mock()
+        valid_vd.name = 'vdisk_name'
+        valid_vd.udid = '0300f8d6de00004b000000014a54555cd9.3'
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vdisks=[valid_vd, invalid_vd])
+        self.assertEqual(1, mock_update.call_count)
+        self.assertEqual(0, len(vg_wrap.virtual_disks))
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_rm_vopts(self, mock_update):
+        mock_update.return_value = self.vg_resp
+        vg_wrap = stor.VG.wrap(self.vg_resp)
+        repo = vg_wrap.vmedia_repos[0]
+        # Remove a valid VOptMedia
+        valid_vopt = repo.optical_media[0]
+        # Removal should hit.
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vopts=[valid_vopt])
+        # Update happens, by default
+        self.assertEqual(1, mock_update.call_count)
+        repo = vg_wrap.vmedia_repos[0]
+        self.assertEqual(2, len(repo.optical_media))
+        self.assertNotEqual(valid_vopt.udid, repo.optical_media[0].udid)
+        self.assertNotEqual(valid_vopt.udid, repo.optical_media[1].udid)
+
+        # Bogus removal doesn't affect vg_wrap, and doesn't update.
+        mock_update.reset_mock()
+        invalid_vopt = stor.VOptMedia.bld(self.adpt, 'bogus')
+        mock_update.reset_mock()
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vopts=[invalid_vopt])
+        self.assertEqual(0, mock_update.call_count)
+        self.assertEqual(2, len(vg_wrap.vmedia_repos[0].optical_media))
+
+        # Valid multiple removal
+        mock_update.reset_mock()
+        vg_wrap = ts.rm_vg_storage(vg_wrap, vopts=repo.optical_media[:])
+        self.assertEqual(1, mock_update.call_count)
+        self.assertEqual(0, len(vg_wrap.vmedia_repos[0].optical_media))
+
+
 class TestLU(testtools.TestCase):
 
     def setUp(self):
@@ -426,6 +526,7 @@ class TestLULinkedClone(testtools.TestCase):
             self.fail()
         self.adpt.update_by_path = trap_update
         ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3, update=False)
+
 
 if __name__ == '__main__':
     unittest.main()

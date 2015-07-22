@@ -28,6 +28,7 @@ import pypowervm.const as c
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
 from pypowervm import util
+from pypowervm.utils import retry
 from pypowervm.wrappers import job
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -428,7 +429,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     """Creates a new Virtual Disk in the specified volume group.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
-                     change.
+                    change.
     :param v_uuid: The UUID of the Virtual I/O Server that will host the disk.
     :param vol_grp_uuid: The volume group that will host the new Virtual Disk.
     :param d_name: The name that should be given to the disk on the Virtual
@@ -460,6 +461,84 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     # but adding just in case as we don't want to create the file meta
     # without a backing disk.
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
+
+
+@lock.synchronized(_LOCK_VOL_GRP)
+@retry.retry(argmod_func=retry.refresh_wrapper)
+def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
+    """Remove storage elements from a volume group.
+
+    Changes are flushed back to the REST server.
+
+    :param vg_wrap: VG wrapper representing the Volume Group to update.
+    :param vdisks: Iterable of VDisk wrappers representing the Virtual Disks to
+                   delete.  Ignored if None or empty.
+    :param vopts: Iterable of VOptMedia wrappers representing the devices to
+                  delete.  Ignored if None or empty.
+    :return: The (possibly) updated vg_wrap.
+    """
+    changes = 0
+    if vdisks:
+        changes += _rm_vdisks(vg_wrap, vdisks)
+    if vopts:
+        changes += _rm_vopts(vg_wrap, vopts)
+    if changes:
+        # Update the volume group to remove the storage, if necessary.
+        vg_wrap = vg_wrap.update()
+    return vg_wrap
+
+
+def _rm_vdisks(vg_wrap, vdisks):
+    """Delete some number of virtual disks from a volume group wrapper.
+
+    The wrapper is not updated back to the REST server.
+
+    :param vg_wrap: VG wrapper representing the Volume Group to update.
+    :param vdisks: Iterable of VDisk wrappers representing the Virtual Disks to
+                   delete.
+    :return: The number of disks removed from vg_wrap.  The consumer may use
+             this to decide whether to run vg_wrap.update() or not.
+    """
+    existing_vds = vg_wrap.virtual_disks
+    changes = 0
+    for removal in vdisks:
+        # Can't just call direct on remove, because attribs are off.
+        match = None
+        for existing_vd in existing_vds:
+            if existing_vd.udid == removal.udid:
+                match = existing_vd
+                break
+
+        if match is not None:
+            LOG.info(_('Deleting disk: %s'), match.name)
+            existing_vds.remove(match)
+            changes += 1
+
+    return changes
+
+
+def _rm_vopts(vg_wrap, vopts):
+    """Delete some number of virtual optical media from a volume group wrapper.
+
+    The wrapper is not updated back to the REST server.
+
+    :param vg_wrap: VG wrapper representing the Volume Group to update.
+    :param vopts: Iterable of VOptMedia wrappers representing the devices to
+                  delete.
+    :return: The number of VOptMedia removed from vg_wrap.  The consumer may
+             use this to decide whether to run vg_wrap.update() or not.
+    """
+    vg_om = vg_wrap.vmedia_repos[0].optical_media
+    changes = 0
+    for vopt in vopts:
+        try:
+            vg_om.remove(vopt)
+            changes += 1
+        except ValueError:
+            # It's okay if the vopt was already absent.
+            pass
+
+    return changes
 
 
 @lock.synchronized(_LOCK_SSP)

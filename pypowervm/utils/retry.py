@@ -31,6 +31,22 @@ NO_DELAY = lambda *args, **kwds: None
 NO_ARGMOD = lambda this_try, max_tries, *args, **kwds: (args, kwds)
 
 
+def refresh_wrapper(trynum, maxtries, *args, **kwargs):
+    """A @retry argmod_func to refresh a Wrapper, which must be the first arg.
+
+    When using @retry to decorate a method which modifies a Wrapper, a common
+    cause of retry is etag mismatch.  In this case, the retry should refresh
+    the wrapper before attempting the modifications again.  This method may be
+    passed to @retry's argmod_func argument to effect such a refresh.
+
+    Note that the decorated method must be defined such that the wrapper is its
+    first argument.
+    """
+    arglist = list(args)
+    arglist[0] = arglist[0].refresh()
+    return arglist, kwargs
+
+
 def retry(tries=3, delay_func=NO_DELAY,
           retry_except=None, http_codes=DFT_RETRY_CODES, test_func=None,
           resp_checker=NO_CHECKER, limit_except=None, argmod_func=NO_ARGMOD):
