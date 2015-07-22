@@ -16,6 +16,10 @@
 
 """Utilities around Universally-Unique Identifiers (UUIDs)."""
 
+import re
+
+from pypowervm import const
+
 
 def convert_uuid_to_pvm(uuid):
     """Converts a standard UUID to PowerVM format
@@ -26,3 +30,27 @@ def convert_uuid_to_pvm(uuid):
     :returns: A PowerVM compliant uuid
     """
     return "%x%s" % (int(uuid[0], 16) & 7, uuid[1:])
+
+
+def id_or_uuid(an_id):
+    """Sanitizes a short ID or string UUID, and indicates which was used.
+
+    Use as:
+        is_uuid, lpar_id = id_or_uuid(lpar_id)
+        if is_uuid:  # lpar_id is a string UUID
+        else:  # lpar_id is LPAR short ID of type int
+
+    :param an_id: Short ID (may be string or int) or string UUID of, e.g., an
+                  LPAR.
+    :return: Boolean.  If True, the other return is a UUID string.  If False,
+                       it is an integer.
+    :return: The input ID, either converted to int, or in its original string
+             form if a UUID.
+    """
+    if isinstance(an_id, str) and re.match(const.UUID_REGEX_WORD, an_id):
+        is_uuid = True
+        ret_id = an_id
+    else:
+        is_uuid = False
+        ret_id = int(an_id)
+    return is_uuid, ret_id

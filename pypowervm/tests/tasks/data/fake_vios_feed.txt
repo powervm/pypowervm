@@ -700,7 +700,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/1376CD39-813B-4B3F-8262-041B65095DB2" rel="related"/>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/3ADDED46-B3A9-4E12-B6EC-8223421AF49B" rel="related"/>
             <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
                 <Metadata>
                     <Atom/>
@@ -760,7 +760,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/50EA92C9-244B-4C96-9F26-5CA30C4EA0A7" rel="related"/>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/3ADDED46-B3A9-4E12-B6EC-8223421AF49B" rel="related"/>
             <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
                 <Metadata>
                     <Atom/>
@@ -3225,7 +3225,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/7B2B3248-8496-4C1D-A3AE-6D77463DA9E8" rel="related"/>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/3ADDED46-B3A9-4E12-B6EC-8223421AF49B" rel="related"/>
             <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
                 <Metadata>
                     <Atom/>
@@ -4618,7 +4618,7 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
-            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/7B2B3248-8496-4C1D-A3AE-6D77463DA9E8" rel="related"/>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/3ADDED46-B3A9-4E12-B6EC-8223421AF49B" rel="related"/>
             <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
                 <Metadata>
                     <Atom/>

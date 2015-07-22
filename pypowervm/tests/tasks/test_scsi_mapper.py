@@ -346,7 +346,7 @@ class TestSCSIMapper(testtools.TestCase):
         matches = scsi_mapper.find_maps(maps, 1)
         self.assertEqual(0, len(matches))
         # For the wrong LPAR UUID, it should be none of 'em.
-        matches = scsi_mapper.find_maps(maps, LPAR_UUID[:36] + '0')
+        matches = scsi_mapper.find_maps(maps, LPAR_UUID[:35] + '0')
         self.assertEqual(0, len(matches))
         # Specific storage element generates match func for that element.
         matches = scsi_mapper.find_maps(maps, 2,
