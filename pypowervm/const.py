@@ -60,8 +60,11 @@ PCM_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/'
 UOM_BASE_NS = 'http://www.ibm.com/xmlns/systems/power/firmware/uom/mc'
 UOM_NS = UOM_BASE_NS + '/2012_10/'
 
-UUID_REGEX = ('[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-' +
-              '[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}')
+# Match a UUID anywhere in the search string
+UUID_REGEX = '%(x)s{8}-%(x)s{4}-%(x)s{4}-%(x)s{4}-%(x)s{12}' % {
+    'x': '[A-Fa-f0-9]'}
+# Entire search string must be a UUID and nothing more
+UUID_REGEX_WORD = '^%s$' % UUID_REGEX
 
 SUFFIX_TYPE_DO = 'do'
 LINK = 'link'

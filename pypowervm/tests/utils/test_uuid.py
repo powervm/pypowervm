@@ -35,3 +35,15 @@ class TestUUID(unittest.TestCase):
         uuid = 'c89ffb20-5d19-4a8c-bb80-13650627d985'
         pvm_uuid = uuid_utils.convert_uuid_to_pvm(uuid)
         self.assertEqual('4' + uuid[1:], pvm_uuid)
+
+    def test_id_or_uuid(self):
+        self.assertEqual((False, 123), uuid_utils.id_or_uuid(123))
+        self.assertEqual((False, 123), uuid_utils.id_or_uuid('123'))
+        self.assertEqual(
+            (True, '12345678-abcd-ABCD-0000-0a1B2c3D4e5F'),
+            uuid_utils.id_or_uuid('12345678-abcd-ABCD-0000-0a1B2c3D4e5F'))
+        self.assertRaises(ValueError, uuid_utils.id_or_uuid,
+                          '12345678abcdABCD00000a1B2c3D4e5F')
+        # This one has too many digits
+        self.assertRaises(ValueError, uuid_utils.id_or_uuid,
+                          '12345678-abcd-ABCD-0000-0a1B2c3D4e5F0')

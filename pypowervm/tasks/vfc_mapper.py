@@ -20,6 +20,7 @@ import random
 
 from pypowervm import exceptions as e
 from pypowervm import util as u
+from pypowervm.utils import uuid
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -449,10 +450,28 @@ def find_maps(mapping_list, client_lpar_id):
     same functionality.
 
     :param mapping_list: The mappings to filter.  Iterable of VFCMapping.
-    :param client_lpar_id: Integer short ID of the LPAR on the client side of
-                           the mapping.
+    :param client_lpar_id: Integer short ID or string UUID of the LPAR on the
+                           client side of the mapping.  Note that the UUID form
+                           relies on the presence of the client_lpar_href
+                           field.  Some mappings lack this field, and would
+                           therefore be ignored.
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id.
     """
-    return [vfc_map for vfc_map in mapping_list
-            if vfc_map.server_adapter.lpar_id == int(client_lpar_id)]
+    is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
+    matching_maps = []
+    for vfc_map in mapping_list:
+        # If to a different VM, continue on.
+        href = vfc_map.client_lpar_href
+        if is_uuid and (not href or client_id != u.get_req_path_uuid(
+                href, preserve_case=True)):
+            continue
+        elif (not is_uuid and
+                # Use the server adapter in case this is an orphan.
+                vfc_map.server_adapter.lpar_id != client_id):
+            continue
+
+        # Found a match!
+        matching_maps.append(vfc_map)
+
+    return matching_maps
