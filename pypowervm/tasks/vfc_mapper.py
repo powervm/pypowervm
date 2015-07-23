@@ -17,6 +17,9 @@
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
 import random
+from taskflow import engines as tf_eng
+from taskflow.patterns import unordered_flow as tf_uf
+from taskflow import task as tf_task
 
 from pypowervm import exceptions as e
 from pypowervm import util as u
@@ -395,12 +398,24 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
             vioses_untouched.pop(vios_to_update.uuid, None)
 
     # Now run the update against the affected VIOSes
+    class VioUpdater(tf_task.Task):
+        def __init__(self, vio_w, *args, **kwargs):
+            super(VioUpdater, self).__init__(*args, **kwargs)
+            self.vio_w = vio_w
+
+        def execute(self):
+            self.vio_w = self.vio_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                                pvm_vios.VIOS.xags.STORAGE])
+            resp_vioses.append(self.vio_w)
+
     resp_vioses = []
+    unordered_flow = tf_uf.Flow("vfc_mapping")
     for vios_w in vioses_to_update.values():
-        # TODO(thorst) run these in parallel
-        vios_w = vios_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                    pvm_vios.VIOS.xags.STORAGE])
-        resp_vioses.append(vios_w)
+        unordered_flow.add(VioUpdater(vios_w, name='vio_%s' % vios_w.uuid))
+
+    # Run the updates in parallel
+    tf_engine = tf_eng.load(unordered_flow, engine='parallel', max_workers=4)
+    tf_engine.run()
 
     # Throw in all of the untouched VIOSes for completeness sake.  There could
     # still be mappings that existed previously that matter...so we need to
