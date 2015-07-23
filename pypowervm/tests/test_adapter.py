@@ -467,7 +467,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(204, ret_delete_value.status)
         self.assertEqual(reqpath, ret_delete_value.reqpath)
 
-    @mock.patch('pypowervm.adapter.LOG.warn')
+    @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('requests.Session')
     def test_unauthorized_error(self, mock_session, mock_log):
         """401 (unauthorized) calling Adapter.create()."""
@@ -490,7 +490,7 @@ class TestAdapter(testtools.TestCase):
         # Run the actual test
         self.assertRaises(pvmex.HttpError, adapter.create, element,
                           root_type, root_id, child_type)
-        mock_log.assert_called_once_with(mock.ANY)
+        mock_log.warn.assert_called_once_with(mock.ANY)
 
     def test_element_iter(self):
         """Test the ETElement iter() method found in the Adapter class."""
