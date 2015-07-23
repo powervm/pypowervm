@@ -32,19 +32,6 @@ FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
 
 class TestVFCMapper(unittest.TestCase):
 
-    def test_build_wwpn_pair(self):
-        # By its nature, this is a random generation algorithm.  Run it
-        # several times...just to increase probability of issues.
-        i = 0
-        while i < 100:
-            wwpn_pair = vfc_mapper.build_wwpn_pair(None, None)
-            self.assertIsNotNone(wwpn_pair)
-            self.assertEqual(2, len(wwpn_pair))
-            for elem in wwpn_pair:
-                self.assertEqual(16, len(elem))
-                int(elem, 16)  # Would throw ValueError if not hex.
-            i += 1
-
     def test_find_vio_for_wwpn(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
         vios_feed_w = [vios_w]
