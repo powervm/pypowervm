@@ -16,6 +16,8 @@
 
 import unittest
 
+import mock
+
 from pypowervm import adapter as adpt
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
@@ -189,6 +191,30 @@ class TestRetry(unittest.TestCase):
 
         _func(10, 20, five='foo')
         self.assertEqual(3, called_count)
+
+    def test_retry_refresh_wrapper(self):
+        """Test @retry with the 'refresh_wrapper' argmod_func."""
+        global called_count
+        called_count = 0
+        mock_wrapper = mock.Mock()
+        mock_wrapper.value = 0
+
+        def _refresh():
+            mock_wrapper.value += 1
+            return mock_wrapper
+        mock_wrapper.refresh.side_effect = _refresh
+
+        @pvm_retry.retry(argmod_func=pvm_retry.refresh_wrapper)
+        def _func(wrapper, arg1, arg2, kw0=None, kw1=None):
+            global called_count
+            self.assertEqual(called_count, wrapper.value)
+            # Ensure the other args didn't change
+            self.assertEqual('a1', arg1)
+            self.assertEqual('a2', arg2)
+            self.assertEqual('k0', kw0)
+            self.assertEqual('k1', kw1)
+            called_count += 1
+        _func(mock_wrapper, 'a1', 'a2', kw0='k0', kw1='k1')
 
 if __name__ == "__main__":
     unittest.main()
