@@ -394,13 +394,8 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
             # Remove it from the untouched list.
             vioses_untouched.pop(vios_to_update.uuid, None)
 
-    # Now run the update against the affected VIOSes
-    resp_vioses = []
-    for vios_w in vioses_to_update.values():
-        # TODO(thorst) run these in parallel
-        vios_w = vios_w.update(xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                    pvm_vios.VIOS.xags.STORAGE])
-        resp_vioses.append(vios_w)
+    # Run the parallel updates against the VIOSes
+    resp_vioses = u.parallel_update(vioses_to_update.values())
 
     # Throw in all of the untouched VIOSes for completeness sake.  There could
     # still be mappings that existed previously that matter...so we need to

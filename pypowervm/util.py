@@ -31,6 +31,9 @@ except ImportError:
 from oslo_utils import units
 from pyasn1.codec.der import decoder as der_decoder
 from pyasn1_modules import rfc2459
+from taskflow import engines as tf_eng
+from taskflow.patterns import unordered_flow as tf_uf
+from taskflow import task as tf_task
 
 from pypowervm import const
 from pypowervm.i18n import _
@@ -457,3 +460,34 @@ def find_wrapper(haystack, needle_uuid):
 def xpath(*toks):
     """Constructs an XPath out of the passed-in string components."""
     return XPATH_DELIM.join(toks)
+
+
+class _WrapperUpdateTask(tf_task.Task):
+    """An internal task flow class to support an update operation."""
+    def __init__(self, wrapper, *args, **kwargs):
+        super(_WrapperUpdateTask, self).__init__(
+            name='update_wrap_%s' % wrapper.uuid, requires=['updated_list'])
+        self.wrapper = wrapper
+
+    def execute(self, updated_list):
+        updated_list.append(self.wrapper.update())
+
+
+def parallel_update(wrappers):
+    """Runs a set of updates against wrappers in parallel.
+
+    :param wrappers: A list of wrappers as input.
+    :return: The updated set of wrappers.
+    """
+    unordered_flow = tf_uf.Flow("parallel_updates")
+    for wrapper in wrappers:
+        unordered_flow.add(_WrapperUpdateTask(wrapper))
+
+    # The response list
+    update_list = []
+
+    # Run the updates in parallel
+    tf_engine = tf_eng.load(unordered_flow, engine='parallel', max_workers=4,
+                            store=dict(updated_list=update_list))
+    tf_engine.run()
+    return update_list
