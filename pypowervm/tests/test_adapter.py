@@ -407,9 +407,9 @@ class TestAdapter(testtools.TestCase):
             adapter.extend_path('basepath?foo=4,5,6&group=None&foo=1,2,3',
                                 xag=['a', 'b', 'c']))
 
-    @mock.patch('pypowervm.adapter.LOG.debug')
+    @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('pypowervm.adapter.Adapter.read_by_path')
-    def test_read_by_href(self, mock_read_by_path, mock_log_debug):
+    def test_read_by_href(self, mock_read_by_path, mock_log):
         """Ensure read_by_href correctly extends, preserves query strings."""
         def validate_read_by_path(expected):
             def _read_by_path(path, etag, timeout, auditmemento, age,
@@ -428,13 +428,13 @@ class TestAdapter(testtools.TestCase):
         mock_read_by_path.side_effect = validate_read_by_path(
             '/rest/api/uom/Bar?k=v&group=None#frag')
         adapter.read_by_href('http://foo:123/rest/api/uom/Bar?k=v#frag')
-        self.assertFalse(mock_log_debug.called)
+        self.assertFalse(mock_log.debug.called)
 
         self.sess.host = 'bar'
         mock_read_by_path.side_effect = validate_read_by_path(
             '/rest/api/uom/Bar?k=v&group=None#frag')
         adapter.read_by_href('http://foo:123/rest/api/uom/Bar?k=v#frag')
-        self.assertTrue(mock_log_debug.called)
+        self.assertTrue(mock_log.debug.called)
 
         mock_read_by_path.side_effect = validate_read_by_path(
             '/rest/api/uom/Bar?k=v&group=RealGroup#frag')
@@ -467,7 +467,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(204, ret_delete_value.status)
         self.assertEqual(reqpath, ret_delete_value.reqpath)
 
-    @mock.patch('pypowervm.adapter.LOG.warn')
+    @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('requests.Session')
     def test_unauthorized_error(self, mock_session, mock_log):
         """401 (unauthorized) calling Adapter.create()."""
@@ -490,7 +490,7 @@ class TestAdapter(testtools.TestCase):
         # Run the actual test
         self.assertRaises(pvmex.HttpError, adapter.create, element,
                           root_type, root_id, child_type)
-        mock_log.assert_called_once_with(mock.ANY)
+        mock_log.warn.assert_called_once_with(mock.ANY)
 
     def test_element_iter(self):
         """Test the ETElement iter() method found in the Adapter class."""

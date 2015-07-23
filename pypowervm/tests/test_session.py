@@ -42,9 +42,9 @@ class TestAdapter(unittest.TestCase):
         self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
                           '0.0.0.0', 'uid', 'pwd')
 
-    @mock.patch('pypowervm.adapter.LOG.warn')
+    @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('pypowervm.adapter.Session._logon')
-    def test_session_init(self, mock_logon, mock_log_warn):
+    def test_session_init(self, mock_logon, mock_log):
         """Ensure proper parameter handling in the Session initializer."""
         # No params - local, file-based, http.
         sess = adp.Session()
@@ -59,7 +59,7 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
-        self.assertEqual(0, mock_log_warn.call_count)
+        self.assertEqual(0, mock_log.warn.call_count)
 
         # Ensure proper protocol, port, and certpath defaulting when remote
         sess = adp.Session(host='host', username='user', password='pass')
@@ -74,12 +74,12 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay
-        self.assertEqual(0, mock_log_warn.call_count)
+        self.assertEqual(0, mock_log.warn.call_count)
 
         # Proper port defaulting and warning emitted when remote + http
         sess = adp.Session(host='host', protocol='http')
         self.assertEqual(12080, sess.port)
-        self.assertEqual(1, mock_log_warn.call_count)
+        self.assertEqual(1, mock_log.warn.call_count)
 
     @mock.patch('pypowervm.util.validate_certificate')
     @mock.patch('requests.Session')
