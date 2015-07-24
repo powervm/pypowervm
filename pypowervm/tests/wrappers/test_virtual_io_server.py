@@ -464,11 +464,10 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertIsNotNone(self.io_slot.adapter)
 
     def test_bld(self):
-        new_slot = bp.IOSlot.bld(self.adpt, True, 'newslot')
+        new_slot = bp.IOSlot.bld(self.adpt, True, 12345678)
         self.assertEqual(False, new_slot.required)
         self.assertEqual(True, new_slot.bus_grp_required)
-        self.assertEqual('newslot', new_slot.pci_subsys_drc_name)
-        self.assertEqual('newslot', new_slot.adapter.dyn_reconfig_conn_name)
+        self.assertEqual(12345678, new_slot.pci_subsys_drc_index)
 
 
 class TestGenericIOAdapter(twrap.TestWrapper):
