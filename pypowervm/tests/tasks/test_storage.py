@@ -22,10 +22,12 @@ import pypowervm.exceptions as exc
 import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
+import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
+import pypowervm.wrappers.virtual_io_server as vios
 
 import unittest
 
@@ -34,6 +36,7 @@ LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
+VIOS_FEED = 'fake_vios_feed.txt'
 
 
 def _mock_update_by_path(ssp, etag, path):
@@ -500,6 +503,24 @@ class TestLULinkedClone(testtools.TestCase):
         self.adpt.update_by_path = lambda *a, **k: self.fail()
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu4])
 
+
+class TestScrub(testtools.TestCase):
+
+    def setUp(self):
+        super(TestScrub, self).setUp()
+        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
+        self.feed = vios.VIOS.wrap(tju.load_file(VIOS_FEED, self.adptfx.adpt))
+
+    @mock.patch('pypowervm.tasks.scsi_mapper.remove_maps')
+    @mock.patch('pypowervm.tasks.vfc_mapper.remove_maps')
+    def test_scrub_no_matches(self, mock_rm_vfc_maps, mock_rm_scsi_maps):
+        vwraps = self.feed
+        self.useFixture(fx.FeedTaskFx(vwraps))
+        ftsk = tx.FeedTask('scrub', vwraps)
+        mock_rm_vfc_maps.return_value = []
+        mock_rm_scsi_maps.return_value = []
+        ts.add_lpar_storage_scrub_tasks(1, ftsk)
+        # XXX YOU ARE HERE.
 
 if __name__ == '__main__':
     unittest.main()
