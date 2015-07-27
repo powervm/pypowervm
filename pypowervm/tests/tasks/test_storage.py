@@ -22,10 +22,12 @@ import pypowervm.exceptions as exc
 import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
+import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
+import pypowervm.wrappers.virtual_io_server as vios
 
 import unittest
 
@@ -34,6 +36,8 @@ LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
+VIOS_FEED = 'fake_vios_feed.txt'
+VIOS_ENTRY = 'fake_vios_ssp_npiv.txt'
 
 
 def _mock_update_by_path(ssp, etag, path):
@@ -500,6 +504,111 @@ class TestLULinkedClone(testtools.TestCase):
         self.adpt.update_by_path = lambda *a, **k: self.fail()
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu4])
 
+
+class TestScrub(testtools.TestCase):
+    """Two VIOSes in feed; no VFC mappings; no storage in VSCSI mappings."""
+    def setUp(self):
+        super(TestScrub, self).setUp()
+        adpt = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
+        self.vio_feed = vios.VIOS.wrap(tju.load_file(VIOS_FEED, adpt))
+        self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
+        self.logfx = self.useFixture(fx.LoggingFx())
+        self.ftsk = tx.FeedTask('scrub', self.vio_feed)
+
+    @mock.patch('pypowervm.tasks.storage._RemoveStorage.execute')
+    def test_no_matches(self, mock_rm_stg):
+        """When removals have no hits, log debug messages, but no warnings."""
+        # Our data set has no VFC mappings and no VSCSI mappings with LPAR ID 1
+        ts.add_lpar_storage_scrub_tasks(1, self.ftsk)
+        self.ftsk.execute()
+        self.assertEqual(0, self.logfx.patchers['warn'].mock.call_count)
+        for vname in (vwrap.name for vwrap in self.vio_feed):
+            self.logfx.patchers['debug'].mock.assert_any_call(
+                r'No VSCSI mappings found for LPAR ID %(lpar_id)d on VIOS '
+                r'%(vios_name)s.', dict(lpar_id=1, vios_name=vname))
+        self.assertEqual(0, self.txfx.patchers['update'].mock.call_count)
+        self.assertEqual(1, mock_rm_stg.call_count)
+
+    @mock.patch('pypowervm.tasks.vfc_mapper.remove_maps')
+    def test_matches_warn(self, mock_rm_vfc_maps):
+        """When removals hit, log warnings including the removal count."""
+        # Mock vfc remove_maps with a multi-element list to verify num_maps
+        mock_rm_vfc_maps.return_value = [1, 2, 3]
+        ts.add_lpar_storage_scrub_tasks(32, self.ftsk)
+        self.ftsk.execute()
+        mock_rm_vfc_maps.assert_has_calls(
+            [mock.call(wrp, 32) for wrp in self.vio_feed], any_order=True)
+        for vname in (vwrap.name for vwrap in self.vio_feed):
+            self.logfx.patchers['warn'].mock.assert_any_call(
+                r"Removing %(num_maps)d VFC mappings associated with LPAR ID "
+                r"%(lpar_id)d from VIOS %(vios_name)s.",
+                dict(num_maps=3, lpar_id=32, vios_name=vname))
+        self.logfx.patchers['warn'].mock.assert_any_call(
+            r"Removing %(num_maps)d VSCSI mappings associated with LPAR "
+            r"ID %(lpar_id)d from VIOS %(vios_name)s.",
+            dict(num_maps=1, lpar_id=32, vios_name='nimbus-ch03-p2-vios1'))
+        self.logfx.patchers['debug'].mock.assert_any_call(
+            r'No VSCSI mappings found for LPAR ID %(lpar_id)d on VIOS '
+            r'%(vios_name)s.', dict(lpar_id=32,
+                                    vios_name='nimbus-ch03-p2-vios2'))
+        self.assertEqual(2, self.txfx.patchers['update'].mock.call_count)
+        # By not mocking _RemoveStorage, prove it shorts out (the mapping for
+        # LPAR ID 32 has no backing storage).
+
+
+class TestScrub2(testtools.TestCase):
+    """One VIOS in feed; VFC mappings; interesting VSCSI mappings."""
+    def setUp(self):
+        super(TestScrub2, self).setUp()
+        self.adpt = self.useFixture(
+            fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
+        self.vio_feed = [vios.VIOS.wrap(tju.load_file(VIOS_ENTRY, self.adpt))]
+        self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
+        self.logfx = self.useFixture(fx.LoggingFx())
+        self.ftsk = tx.FeedTask('scrub', self.vio_feed)
+
+    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage._rm_lus')
+    def test_lu_vopt_vdisk(self, mock_rm_lu, mock_rm_vopt, mock_rm_vd):
+        def verify_rm_stg_call(exp_list):
+            def _rm_stg(wrapper, stglist, *a, **k):
+                self.assertEqual(len(exp_list), len(stglist))
+                for exp, act in zip(exp_list, stglist):
+                    self.assertEqual(exp.udid, act.udid)
+            return _rm_stg
+        warns = [mock.call(
+            r"Removing %(num_maps)d VSCSI mappings associated with LPAR ID "
+            r"%(lpar_id)d from VIOS %(vios_name)s.",
+            {'lpar_id': 3, 'num_maps': 3, 'vios_name': self.vio_feed[0].name})]
+
+        lurm = self.vio_feed[0].scsi_mappings[4].backing_storage
+        mock_rm_lu.side_effect = verify_rm_stg_call([lurm])
+        warns.append(mock.call(
+            r"Scrubbing Logical Unit %(luname)s (%(udid)s), which was mapped "
+            r"from VIOS %(vios)s.", {'luname': lurm.name, 'udid': lurm.udid,
+                                     'vios': self.vio_feed[0].name}))
+
+        vorm = self.vio_feed[0].scsi_mappings[5].backing_storage
+        mock_rm_vopt.side_effect = verify_rm_stg_call([vorm])
+        warns.append(mock.call(
+            r"Scrubbing the following %(vocount)d Virtual Opticals from VIOS "
+            r"%(vios)s: %(volist)s",
+            {'vocount': 1, 'vios': self.vio_feed[0].name,
+             'volist': ["%s (%s)" % (vorm.name, vorm.udid)]}))
+
+        vdrm = self.vio_feed[0].scsi_mappings[8].backing_storage
+        mock_rm_vd.side_effect = verify_rm_stg_call([vdrm])
+        warns.append(mock.call(
+            r"Scrubbing the following %(vdcount)d Virtual Disks from VIOS "
+            r"%(vios)s: %(vdlist)s",
+            {'vdcount': 1, 'vios': self.vio_feed[0].name,
+             'vdlist': ["%s (%s)" % (vdrm.name, vdrm.udid)]}))
+
+        ts.add_lpar_storage_scrub_tasks(3, self.ftsk)
+        self.ftsk.execute()
+        self.logfx.patchers['warn'].mock.assert_has_calls(
+            warns, any_order=True)
 
 if __name__ == '__main__':
     unittest.main()
