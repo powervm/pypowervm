@@ -18,6 +18,8 @@
 
 import re
 
+import oslo_concurrency.lockutils as lock
+
 from pypowervm import const
 
 
@@ -54,3 +56,24 @@ def id_or_uuid(an_id):
         is_uuid = False
         ret_id = int(an_id)
     return is_uuid, ret_id
+
+
+def lock_by_uuid(func):
+    """Decorator to synchronize a wrapper-taking method on that wrapper's UUID.
+
+    This decorator ensures that only one method thus decorated can operate on a
+    given PowerVM object at one time.
+
+    The decorated method must accept an EntryWrapper as its first argument.
+
+    Example usage (this will synchronize on thingy_wrapper.uuid):
+
+    @lock_by_uuid
+    def add_gizmos_to_thingy_wrapper(thingy_wrapper, gizmos):
+        thingy_wrapper.gizmo_list.extend(gizmos)
+        return thingy_wrapper.update()
+    """
+    def _wrapped(wrapper, *a, **k):
+        with lock.lock(wrapper.uuid, do_log=True):
+            return func(wrapper, *a, **k)
+    return _wrapped
