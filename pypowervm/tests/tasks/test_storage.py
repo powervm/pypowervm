@@ -395,36 +395,10 @@ class TestLU(testtools.TestCase):
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.ssp, lu=lu)
-        self.assertEqual(lu, lurm)
+        ssp = ts.rm_ssp_storage(self.ssp, [lu])
+        self.assertNotIn(lu, ssp.logical_units)
         self.assertEqual(ssp.etag, 'after')
         self.assertEqual(len(ssp.logical_units), 4)
-
-    def test_rm_lu_by_name(self):
-        lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.ssp, name='lu2')
-        self.assertEqual(lu, lurm)
-        self.assertEqual(ssp.etag, 'after')
-        self.assertEqual(len(ssp.logical_units), 4)
-
-    def test_rm_lu_by_udid(self):
-        lu = self.ssp.logical_units[2]
-        ssp, lurm = ts.rm_lu(self.ssp, udid='udid_lu2')
-        self.assertEqual(lu, lurm)
-        self.assertEqual(ssp.etag, 'after')
-        self.assertEqual(len(ssp.logical_units), 4)
-
-    def test_rm_lu_not_found(self):
-        # By LU
-        lu = stor.LU.bld(self.adpt, 'lu5', 6)
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
-                          lu=lu)
-        # By name
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
-                          name='lu5')
-        # By UDID
-        self.assertRaises(exc.LUNotFoundError, ts.rm_lu, self.ssp,
-                          udid='lu5_udid')
 
 
 class TestLULinkedClone(testtools.TestCase):
@@ -457,14 +431,14 @@ class TestLULinkedClone(testtools.TestCase):
     def _mk_img_lu(self, idx):
         lu = stor.LU.bld(self.adpt, 'img_lu%d' % idx, 123,
                          typ=stor.LUType.IMAGE)
-        lu._udid('xxImage-LU-UDID-%d' % idx)
+        lu._udid('xxabc123%d' % idx)
         return lu
 
     def _mk_dsk_lu(self, idx, cloned_from_idx):
         lu = stor.LU.bld(self.adpt, 'dsk_lu%d' % idx, 123,
                          typ=stor.LUType.DISK)
         lu._udid('xxDisk-LU-UDID-%d' % idx)
-        lu._cloned_from_udid('yyImage-LU-UDID-%d' % cloned_from_idx)
+        lu._cloned_from_udid('yyabc123%d' % cloned_from_idx)
         return lu
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
@@ -479,7 +453,7 @@ class TestLULinkedClone(testtools.TestCase):
                 '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
                 '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
                 'rameterName>SourceUDID</web:ParameterName><web:ParameterValue'
-                '>xxImage-LU-UDID-1</web:ParameterValue></web:JobParameter>'.
+                '>xxabc1231</web:ParameterValue></web:JobParameter>'.
                 encode('utf-8'),
                 job_parms[0].toxmlstring())
             self.assertEqual(
@@ -501,31 +475,30 @@ class TestLULinkedClone(testtools.TestCase):
         self.assertEqual(self.img_lu2,
                          ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
 
-    def test_remove_lu_linked_clone(self):
+    def test_rm_ssp_storage(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)
         # This one should remove the disk LU but *not* the image LU
-        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3)
+        ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu3],
+                                del_unused_images=False)
         lu_names.remove(self.dsk_lu3.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove *both* the disk LU and the image LU
-        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu4,
-                                        del_unused_image=True)
+        ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu4])
         lu_names.remove(self.dsk_lu4.name)
         lu_names.remove(self.img_lu2.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove the disk LU but *not* the image LU, even
         # though it's now unused.
         self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu5))
-        ssp = ts.remove_lu_linked_clone(self.ssp, self.dsk_lu6)
+        ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu6],
+                                del_unused_images=False)
         lu_names.remove(self.dsk_lu6.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
 
-    def test_remove_lu_linked_clone_no_update(self):
-        def trap_update(*a, **k):
-            self.fail()
-        self.adpt.update_by_path = trap_update
-        ts.remove_lu_linked_clone(self.ssp, self.dsk_lu3, update=False)
+        # No update if no change
+        self.adpt.update_by_path = lambda *a, **k: self.fail()
+        ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu4])
 
 
 if __name__ == '__main__':
