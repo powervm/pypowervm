@@ -161,6 +161,34 @@ def _separate_mappings(vios_w, client_href):
     return resp
 
 
+def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
+    """Remove one or more SCSI mappings from a VIOS wrapper.
+
+    The changes are not flushed back to the REST server.
+
+    :param vwrap: VIOS EntryWrapper representing the Virtual I/O Server whose
+                  SCSI mappings are to be updated.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param match_func: (Optional) Matching function suitable for passing to
+                       find_maps.  See that method's match_func parameter.
+                       Defaults to None (match only on client_lpar_id).
+    :param include_orphans: (Optional) An "orphan" contains a server adapter
+                            but no client adapter.  If this parameter is True,
+                            mappings with no client adapter will be considered
+                            for removal. If False, mappings with no client
+                            adapter will be left alone, regardless of any other
+                            criteria.  Default: False (don't include orphans).
+    :return: The list of removed mappings.
+    """
+    resp_list = []
+    for matching_map in find_maps(
+            vwrap.scsi_mappings, client_lpar_id, match_func=match_func,
+            include_orphans=include_orphans):
+        vwrap.scsi_mappings.remove(matching_map)
+        resp_list.append(matching_map)
+    return resp_list
+
+
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(argmod_func=_argmod)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
@@ -188,19 +216,16 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
                          xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
 
-    # Find and remove each matching map.
-    resp_list = []
-    for matching_map in find_maps(
-            vios.scsi_mappings, client_lpar_id, match_func=match_func):
-        vios.scsi_mappings.remove(matching_map)
-        resp_list.append(matching_map.backing_storage)
+    resp_list = remove_maps(vios, client_lpar_id, match_func=match_func)
 
     # Update the VIOS, but only if we actually removed mappings
     if resp_list:
         vios = vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
 
-    # return the (possibly updated) VIOS and the list of removed elements.
-    return vios, resp_list
+    # return the (possibly updated) VIOS and the list of removed backing
+    # storage elements.
+    return vios, [rmap.backing_storage for rmap in resp_list
+                  if rmap.backing_storage is not None]
 
 
 def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
