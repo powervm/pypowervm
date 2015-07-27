@@ -341,50 +341,22 @@ def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     return ssp, dst_lu
 
 
-@lock.synchronized(_LOCK_SSP)
-def remove_lu_linked_clone(ssp, disk_lu, del_unused_image=False,
-                           update=True):
-    """Remove a linked clone LU and maybe its backing Image LU.
+def _image_lu_in_use(ssp, image_lu):
+    """Determine whether an Image LU still has any Disk LU linked clones.
 
-    :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
-                which to operate.
-    :param disk_lu: The LU EntryWrapper representing the Disk LU linked clone
-                    to remove.
-    :param del_unused_image: If True, and the removed Disk LU was the last one
-                             linked to its backing Image LU, the backing Image
-                             LU is also removed.
-    :param update: If True, flush the change back through the adapter.  If
-                   False, just update the ssp wrapper locally.  Use this to
-                   optimize multiple concurrent removals.
-    :return: The updated SSP EntryWrapper.
+    :param ssp: The SSP EntryWrapper to search.
+    :param image_lu: LU EntryWrapper representing the Image LU.
+    :return: True if the SSP contains any Disk LU linked clones backed by the
+             image_lu; False otherwise.
     """
-    # Find the right image LU
-    image_lu = _image_lu_for_clone(ssp, disk_lu)
-    if image_lu is None:
-        raise exc.BackingLUNotFoundError(lu_name=disk_lu.name,
-                                         ssp_name=ssp.name)
-
-    # Remove the disk_lu.  Don't flush the update yet.
-    LOG.debug("Removing Disk LU %(lu_name)s from SSP %(ssp_name)s"
-              % dict(lu_name=disk_lu.name, ssp_name=ssp.name))
-    ssp, removed_lu = rm_lu(ssp, lu=disk_lu, update=False)
-
-    # Remove the image LU if requested and it's no longer in use
-    if del_unused_image:
-        if _image_lu_in_use(ssp, image_lu):
-            LOG.debug("Not removing Image LU %(lu_name)s from SSP "
-                      "%(ssp_name)s because it is still in use."
-                      % dict(lu_name=image_lu.name, ssp_name=ssp.name))
-        else:
-            LOG.debug("Removing Image LU %(lu_name)s from SSP %(ssp_name)s "
-                      "because it is no longer in use."
-                      % dict(lu_name=image_lu.name, ssp_name=ssp.name))
-            ssp.logical_units.remove(image_lu)
-
-    # Finally, push the update back to PowerVM if requested.
-    if update:
-        ssp = ssp.update()
-    return ssp
+    # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
+    image_udid = image_lu.udid[2:]
+    for lu in ssp.logical_units:
+        if lu.lu_type != stor.LUType.DISK:
+            continue
+        if lu.cloned_from_udid[2:] == image_udid:
+            return True
+    return False
 
 
 def _image_lu_for_clone(ssp, clone_lu):
@@ -404,24 +376,6 @@ def _image_lu_for_clone(ssp, clone_lu):
         if lu.udid[2:] == image_udid:
             return lu
     return None
-
-
-def _image_lu_in_use(ssp, image_lu):
-    """Determine whether an Image LU still has any Disk LU linked clones.
-
-    :param ssp: The SSP EntryWrapper to search.
-    :param image_lu: LU EntryWrapper representing the Image LU.
-    :return: True if the SSP contains any Disk LU linked clones backed by the
-             image_lu; False otherwise.
-    """
-    # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
-    image_udid = image_lu.udid[2:]
-    for lu in ssp.logical_units:
-        if lu.lu_type != stor.LUType.DISK:
-            continue
-        if lu.cloned_from_udid[2:] == image_udid:
-            return True
-    return False
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
@@ -572,44 +526,61 @@ def crt_lu(ssp, name, size, thin=None, typ=None):
     return ssp, newlu
 
 
-def rm_lu(ssp, lu=None, udid=None, name=None, update=True):
-    """Remove a LogicalUnit from a SharedStoragePool.
+@lock.synchronized(_LOCK_SSP)
+@retry.retry(argmod_func=retry.refresh_wrapper)
+def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
+    """Remove some number of LogicalUnits from a SharedStoragePool.
 
-    This method allows the LU to be specified by wrapper, name, or UDID.
+    The changes are flushed back to the REST server.
 
-    :param ssp: SSP EntryWrapper denoting the Shared Storage Pool from which to
-                remove the LU.
-    :param lu: LU ElementWrapper indicating the LU to remove.  If specified,
-               the name and udid parameters are ignored.
-    :param udid: The UDID of the LU to remove.  If both name and udid are
-                 specified, udid is used.
-    :param name: The name of the LU to remove.  If both name and udid are
-                 specified, udid is used.
-    :param update: If True, flush the change back through the adapter.  If
-                   False, just update the ssp wrapper locally.
-    :return: The updated SSP wrapper.  (It will contain the modified LU list
-             and have a new etag.)
-    :return: LU ElementWrapper representing the Logical Unit removed.
+    :param ssp_wrap: SSP EntryWrapper representing the SharedStoragePool to
+    modify.
+    :param lus: Iterable of LU EntryWrappers representing the LogicalUnits to
+                delete.
+    :param del_unused_images: If True, and a removed Disk LU was the last one
+                              linked to its backing Image LU, the backing Image
+                              LU is also removed.
+    :return: The (possibly) modified SSP wrapper.
     """
-    lus = ssp.logical_units
-    lu_to_rm = None
-    if lu:
-        try:
-            lu_to_rm = lus[lus.index(lu)]
-        except ValueError:
-            raise exc.LUNotFoundError(lu_label=lu.name, ssp_name=ssp.name)
-    else:
-        for l in lus:
-            # This should implicitly account for 'None'
-            if l.udid == udid or l.name == name:
-                lu_to_rm = l
-                break
-        if lu_to_rm is None:
-            label = name or udid
-            raise exc.LUNotFoundError(lu_label=label, ssp_name=ssp.name)
-    lus.remove(lu_to_rm)
+    ssp_lus = ssp_wrap.logical_units
+    changes = 0
+    backing_images = set()
 
-    if update:
-        with lock.lock(_LOCK_SSP):
-            ssp = ssp.update()
-    return ssp, lu_to_rm
+    for lu in lus:
+        # Is it a linked clone?  (We only care if del_unused_images.)
+        if del_unused_images and lu.lu_type == stor.LUType.DISK:
+            # Note: This can add None to the set
+            backing_images.add(_image_lu_for_clone(ssp_wrap, lu))
+        msgargs = dict(lu_name=lu.name, ssp_name=ssp_wrap.name)
+        try:
+            LOG.debug("Removing LU %(lu_name)s from SSP %(ssp_name)s"
+                      % msgargs)
+            ssp_lus.remove(lu)
+            changes += 1
+        except ValueError:
+            # It's okay if the LU was already absent.
+            LOG.debug("LU %(lu_name)s was not found in SSP %(ssp_name)s"
+                      % msgargs)
+
+    # Now remove any unused backing images.  This set will be empty if
+    # del_unused_images=False
+    for backing_image in backing_images:
+        # Ignore None, which could have appeared in the unusual event that a
+        # clone existed with no backing image.
+        if backing_image is not None:
+            msgargs = dict(lu_name=backing_image.name, ssp_name=ssp_wrap.name)
+            # Only remove backing images that are not in use.
+            if _image_lu_in_use(ssp_wrap, backing_image):
+                LOG.debug("Not removing Image LU %(lu_name)s from SSP "
+                          "%(ssp_name)s because it is still in use." % msgargs)
+            else:
+                LOG.debug("Removing Image LU %(lu_name)s from SSP "
+                          "%(ssp_name)s because it is no longer in use." %
+                          msgargs)
+                ssp_wrap.logical_units.remove(backing_image)
+                changes += 1
+
+    # Flush changes, if any
+    if changes:
+        ssp_wrap = ssp_wrap.update()
+    return ssp_wrap
