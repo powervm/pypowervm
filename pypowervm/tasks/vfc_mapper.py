@@ -314,7 +314,7 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
         vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
         for vfc_mapping in vfc_mappings:
             # Found a matching mapping
-            p_wwpn = vfc_mapping.port.wwpn
+            p_wwpn = vfc_mapping.backing_port.wwpn
             c_wwpns = vfc_mapping.client_adapter.wwpns
 
             # Convert it to the standard mapping type.
