@@ -410,3 +410,17 @@ class FeedTaskFx(SimplePatchingFx, Logger):
             LoggingPatcher(self, 'lock', SEM_ENTER),
             LoggingPatcher(self, 'unlock', SEM_EXIT)
         )
+
+
+class LoggingFx(SimplePatchingFx):
+    """Fixture for LOG.*, not to be confused with Logger/LoggingPatcher.
+
+    Provides patches and mocks for LOG.x for x in
+    ('info', 'warn', 'debug', 'error', 'exception')
+    """
+    def __init__(self):
+        """Create the fixture for the various logging methods."""
+        super(LoggingFx, self).__init__()
+        self.add_patchers(
+            *(SimplePatcher(self, x, 'logging.Logger.%s' % x) for x in
+              ('info', 'warn', 'debug', 'error', 'exception')))
