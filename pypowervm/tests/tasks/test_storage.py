@@ -500,6 +500,17 @@ class TestLULinkedClone(testtools.TestCase):
         self.adpt.update_by_path = lambda *a, **k: self.fail()
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu4])
 
+    @mock.patch('pypowervm.tasks.scsi_mapper.remove_maps')
+    @mock.patch('pypowervm.tasks.vfc_mapper.remove_maps')
+    def test_scrub_no_matches(self, mock_rm_vfc_maps, mock_rm_scsi_maps):
+        mock_vwraps = [mock.Mock()]
+        mock_rm_vfc_maps.return_value = []
+        mock_rm_scsi_maps.return_value = []
+        ret = ts.scrub_storage_for_lpar(self.adpt, 1, mock_vwraps)
+        self.assertEqual(mock_vwraps, ret)
+        self.assertEqual(0, mock_vwraps[0].update.call_count)
+        self.assertEqual(0, self.adpt.read.call_count)
+        XXX YOU ARE HERE.  MORE TESTING.
 
 if __name__ == '__main__':
     unittest.main()
