@@ -23,10 +23,13 @@ import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
+import taskflow.task as tf_tsk
 
 import pypowervm.const as c
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.tasks import scsi_mapper as sm
+from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.wrappers import job
@@ -427,8 +430,8 @@ def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
     :param vg_wrap: VG wrapper representing the Volume Group to update.
     :param vdisks: Iterable of VDisk wrappers representing the Virtual Disks to
                    delete.  Ignored if None or empty.
-    :param vopts: Iterable of VOptMedia wrappers representing the devices to
-                  delete.  Ignored if None or empty.
+    :param vopts: Iterable of VOptMedia wrappers representing Virtual Optical
+                  devices to delete.  Ignored if None or empty.
     :return: The (possibly) updated vg_wrap.
     """
     changes = 0
@@ -585,3 +588,121 @@ def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
     if changes:
         ssp_wrap = ssp_wrap.update()
     return ssp_wrap
+
+
+def scrub_storage_for_lpar(lpar_id, ftsk):
+    """Delete storage mappings and elements associated with an LPAR ID.
+
+    This should typically be used to clean leftovers from an LPAR that has been
+    deleted, since stale storage artifacts can cause conflicts with a new LPAR
+    recycling that ID.
+
+    This operates by inspecting mappings first, since we have no other way to
+    associate a mapping-less storage element with an LPAR ID.
+
+    Storage elements are deleted if their only mappings are to the LPAR ID
+    being scrubbed.
+
+    :param lpar_id: The integer short ID (not UUID) of the LPAR whose storage
+                    artifacts are to be scrubbed.
+    :param ftsk: FeedTask to which the scrubbing actions should be added, for
+                 execution by the caller.  The FeedTask must be built for all
+                 the VIOSes from which mappings and storage should be scrubbed.
+                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+    """
+    # Find and remove all VSCSI mappings for this LPAR ID
+    ftsk.add_functor_subtask(
+        sm.remove_maps, lpar_id, include_orphans=True,
+        provides='vscsi_removals', logspec=[
+            LOG.info, _("Removing VSCSI mappings associated with LPAR ID %s."),
+            lpar_id])
+
+    # Find and remove all VFC mappings for this LPAR ID
+    ftsk.add_functor_subtask(
+        fm.remove_maps, lpar_id, provides='vfc_removals', logspec=[
+            LOG.info, _("Removing VFC mappings associated with LPAR ID %s."),
+            lpar_id])
+
+    adapter = ftsk.adapter
+
+    def remove_storage(wrapper_task_rets):
+        lus_to_rm = []
+        for vuuid, rets in wrapper_task_rets.items():
+            vwrap = rets['wrapper']
+            # VFC mappings don't have storage we can get to, so ignore those.
+            vscsi_rms = rets['subtask_rets']['vscsi_removals']
+
+            # We can short out of this VIOS if no vscsi mappings were removed
+            # from it.
+            if not vscsi_rms:
+                continue
+
+            # Figure out which storage elements need to be removed.
+            # Some VSCSI mappings may not have backing storage.
+            stg_els_to_remove = [rmap.backing_storage for rmap in vscsi_rms
+                                 if rmap.backing_storage is not None]
+
+            # Index remaining VSCSI mappings to isolate still-in-use storage.
+            smindex = sm.index_mappings(vwrap.scsi_mappings)
+            # Ignore any storage elements that are still in use (still have
+            # mappings associated with them).
+            stg_els_to_remove = [el for el in stg_els_to_remove
+                                 if el.udid not in smindex['by-storage-udid']]
+
+            # If there's nothing left, we're done with this VIOS
+            if not stg_els_to_remove:
+                continue
+
+            # Extract lists of each type of storage
+            vopts_to_rm = []
+            vdisks_to_rm = []
+            for stg in stg_els_to_remove:
+                if isinstance(stg, stor.LU):
+                    lus_to_rm.append(stg)
+                elif isinstance(stg, stor.VOptMedia):
+                    vopts_to_rm.append(stg)
+                elif isinstance(stg, stor.VDisk):
+                    vdisks_to_rm.append(stg)
+                else:
+                    LOG.warn(_("Unexpected storage element type %s."),
+                             stg.schema_type)
+
+            # Any local storage to be deleted?
+            if not any((vopts_to_rm, vdisks_to_rm)):
+                continue
+
+            # If we get here, we have storage that needs to be deleted from one
+            # or more volume groups.  We don't have a way of knowing which ones
+            # without REST calls, so get all VGs for this VIOS and delete from
+            # all of them.  POST will only be done on VGs which actually need
+            # updating.
+            # TODO(efried): FeedTask this.
+            vg_wraps = stor.VG.wrap(adapter.read(
+                vwrap.schema_type, root_id=vwrap.uuid,
+                child_type=stor.VG.schema_type))
+            for vg_wrap in vg_wraps:
+                LOG.warn(_("Removing %(vdisk_count)d VDisk and %(vopt_count)d "
+                           "VOptMedia devices associated with LPAR ID "
+                           "%(lpar_id)d from VIOS %(vios_name)s."),
+                         dict(lpar_id=lpar_id, vios_name=vwrap.name,
+                              vdisk_count=len(vdisks_to_rm),
+                              vopt_count=len(vopts_to_rm)))
+                rm_vg_storage(vg_wrap, vdisks=vdisks_to_rm, vopts=vopts_to_rm)
+
+        if lus_to_rm:
+            LOG.warn(_("Removing %(lu_count)d LUs associated with LPAR ID "
+                       "%(lpar_id)d."), dict(lpar_id=lpar_id,
+                                             lu_count=len(lus_to_rm)))
+
+            # We need to remove logical units, but we don't know which SSP(s)
+            # they live in.  It's actually easier to get all SSPs on the host
+            # than to find out which SSP each VIOS belongs to inside the above
+            # loop.
+            ssplist = stor.SSP.wrap(adapter.read(stor.SSP.schema_type))
+            # Try removals from each SSP.  If LUs aren't in the SSP, no update
+            # will happen, so effectively no cost.
+            for ssp in ssplist:
+                rm_ssp_storage(ssp, lus_to_rm)
+
+    ftsk.add_post_execute(tf_tsk.FunctorTask(remove_storage))
+    # Caller responsible for executing ftsk.

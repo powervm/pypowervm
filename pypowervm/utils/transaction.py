@@ -294,6 +294,7 @@ class WrapperTask(tf_task.BaseTask):
         # to make this a list and use it to denote the order in which subtasks
         # were run.)
         self.provided_keys = set()
+        self.adapter = wrapper_or_getter.adapter
 
     def add_subtask(self, task):
         """Add a Subtask to this WrapperTask.
@@ -477,6 +478,7 @@ class FeedTask(tf_task.BaseTask):
         if isinstance(feed_or_getter, ewrap.FeedGetter):
             self._feed = None
             self._getter = feed_or_getter
+            self.adapter = feed_or_getter.adapter
         elif isinstance(feed_or_getter, list):
             # Make sure the feed has something in it.
             if len(feed_or_getter) == 0:
@@ -488,6 +490,8 @@ class FeedTask(tf_task.BaseTask):
                                  "exclusively.")
             self._feed = feed_or_getter
             self._getter = None
+            # Grab the adapter from the first EntryWrapper
+            self.adapter = self._feed[0].adapter
         else:
             raise ValueError(_("Must supply either a list of EntryWrappers or "
                                "a FeedGetter."))
