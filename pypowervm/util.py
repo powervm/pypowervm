@@ -479,6 +479,9 @@ def parallel_update(wrappers):
     :param wrappers: A list of wrappers as input.
     :return: The updated set of wrappers.
     """
+    if not wrappers:
+        return []
+
     unordered_flow = tf_uf.Flow("parallel_updates")
     for wrapper in wrappers:
         unordered_flow.add(_WrapperUpdateTask(wrapper))
