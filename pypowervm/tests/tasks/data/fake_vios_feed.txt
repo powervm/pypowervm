@@ -4001,6 +4001,66 @@ BODY{
                 </PhysicalPort>
             </ServerAdapter>
         </VirtualFibreChannelMapping>
+        <VirtualFibreChannelMapping schemaVersion="V1_1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/42DF39A2-3A4A-4748-998F-25B15352E8A7" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V53-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V53-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">100</LocalPartitionID>
+                <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">false</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <ConnectingPartitionID kb="CUR" kxe="false">2</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">100</ConnectingVirtualSlotNumber>
+                <WWPNs kb="CUR" kxe="false">c05076079cff045e c05076079cff045f</WWPNs>
+            </ClientAdapter>
+            <Port kxe="false" kb="CUR" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <LocationCode kb="ROR" kxe="false">U78AF.001.WZS04LA-P1-C37-L1-T1</LocationCode>
+                <PortName kb="CUR" kxe="false">fcs0</PortName>
+                <UniqueDeviceID kb="ROR" kxe="false">1aU78AF.001.WZS04LA-P1-C37-L1-T1</UniqueDeviceID>
+                <WWPN kb="CUR" kxe="false">10000090FA5371F1</WWPN>
+                <AvailablePorts kb="ROR" kxe="true">58</AvailablePorts>
+                <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+            </Port>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V2-C100</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V2-C100</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">100</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vfchost50</AdapterName>
+                <ConnectingPartitionID kb="CUR" kxe="false">53</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                <UniqueDeviceID kb="CUR" kxe="false">1dU7895.43X.21EF9FB-V2-C100</UniqueDeviceID>
+                <MapPort kb="CUR" kxe="false">fcs0</MapPort>
+                <PhysicalPort kb="CUD" kxe="false" schemaVersion="V1_1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LocationCode kb="ROR" kxe="false">U78AF.001.WZS04LA-P1-C37-L1-T1</LocationCode>
+                    <PortName kb="CUR" kxe="false">fcs0</PortName>
+                    <UniqueDeviceID kb="ROR" kxe="false">1aU78AF.001.WZS04LA-P1-C37-L1-T1</UniqueDeviceID>
+                    <WWPN kb="CUR" kxe="false">10000090FA5371F1</WWPN>
+                    <AvailablePorts kb="ROR" kxe="true">58</AvailablePorts>
+                    <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+                </PhysicalPort>
+            </ServerAdapter>
+        </VirtualFibreChannelMapping>
     </VirtualFibreChannelMappings>
     <VirtualSCSIMappings group="ViosSCSIMapping" kb="CUD" kxe="false" schemaVersion="V1_1_0">
         <Metadata>
@@ -9068,6 +9128,66 @@ BODY{
                 <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V3-C3</DynamicReconfigurationConnectorName>
                 <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V3-C3</LocationCode>
                 <LocalPartitionID kb="CUR" kxe="false">3</LocalPartitionID>
+                <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <ConnectingPartitionID kb="CUR" kxe="false">1</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">5</ConnectingVirtualSlotNumber>
+                <WWPNs kb="CUR" kxe="false">c05076079cff07ba c05076079cff07bb</WWPNs>
+            </ClientAdapter>
+            <Port kxe="false" kb="CUR" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <LocationCode kb="ROR" kxe="false">U78AF.001.WZS04LA-P1-C35-L1-T2</LocationCode>
+                <PortName kb="CUR" kxe="false">fcs1</PortName>
+                <UniqueDeviceID kb="ROR" kxe="false">1aU78AF.001.WZS04LA-P1-C35-L1-T2</UniqueDeviceID>
+                <WWPN kb="CUR" kxe="false">10000090FA53720A</WWPN>
+                <AvailablePorts kb="ROR" kxe="true">58</AvailablePorts>
+                <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+            </Port>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V1-C5</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V1-C5</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">5</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vfchost0</AdapterName>
+                <ConnectingPartitionID kb="CUR" kxe="false">3</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                <UniqueDeviceID kb="CUR" kxe="false">1dU7895.43X.21EF9FB-V1-C5</UniqueDeviceID>
+                <MapPort kb="CUR" kxe="false">fcs1</MapPort>
+                <PhysicalPort kb="CUD" kxe="false" schemaVersion="V1_1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LocationCode kb="ROR" kxe="false">U78AF.001.WZS04LA-P1-C35-L1-T2</LocationCode>
+                    <PortName kb="CUR" kxe="false">fcs1</PortName>
+                    <UniqueDeviceID kb="ROR" kxe="false">1aU78AF.001.WZS04LA-P1-C35-L1-T2</UniqueDeviceID>
+                    <WWPN kb="CUR" kxe="false">10000090FA53720A</WWPN>
+                    <AvailablePorts kb="ROR" kxe="true">58</AvailablePorts>
+                    <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+                </PhysicalPort>
+            </ServerAdapter>
+        </VirtualFibreChannelMapping>
+        <VirtualFibreChannelMapping schemaVersion="V1_1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/42DF39A2-3A4A-4748-998F-25B15352E8A7" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V3-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V3-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">100</LocalPartitionID>
                 <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>

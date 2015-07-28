@@ -243,11 +243,27 @@ class TestPortMappings(twrap.TestWrapper):
         full_map = fabric_A_maps + fabric_B_maps
 
         # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
-                                          full_map)
+        resp = vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid',
+                                                 FAKE_UUID, full_map)
 
         # The update should have been called twice.  Once for each VIOS.
         self.assertEqual(2, self.adpt.update_by_path.call_count)
+
+        # Validate the responses
+        e_resp = [('10000090FA5371F1', 'C05076079CFF045E C05076079CFF045F'),
+                  ('10000090FA53720A', 'C05076079CFF07BB C05076079CFF07BA')]
+
+        # Client WWPNs pulled from the expected response.  We can't be
+        # guaranteed of their ordering, so map out all valid types.
+        def reverse_wwpns(elem):
+            key, wwpn = elem
+            return key, ' '.join(wwpn.split()[::-1])
+
+        e_resp.append(reverse_wwpns(e_resp[0]))
+        e_resp.append(reverse_wwpns(e_resp[1]))
+
+        for needle in resp:
+            self.assertIn(needle, e_resp)
 
     def test_add_port_mapping_single_vios(self):
         """Validates that the port mappings are added on single VIOS.
