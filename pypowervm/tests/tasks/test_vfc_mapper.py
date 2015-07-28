@@ -458,3 +458,19 @@ class TestPortMappings(twrap.TestWrapper):
         # Bogus LPAR UUID
         self.assertEqual([], vfc_mapper.find_maps(
             vwrap.vfc_mappings, '4BEEFD00-B3A9-4E12-B6EC-8223421AF49B'))
+
+    def test_remove_maps(self):
+        vwrap = self.entries[0]
+        len_before = len(vwrap.vfc_mappings)
+        resp_list = vfc_mapper.remove_maps(vwrap, 10)
+        expected_removals = {
+            'U7895.43X.21EF9FB-V63-C3', 'U7895.43X.21EF9FB-V66-C4',
+            'U7895.43X.21EF9FB-V62-C4', 'U7895.43X.21EF9FB-V10-C4'}
+        self.assertEqual(
+            set([el.client_adapter.loc_code for el in resp_list]),
+            expected_removals)
+        self.assertEqual(len_before - 4, len(vwrap.vfc_mappings))
+        for remaining_map in vwrap.vfc_mappings:
+            if remaining_map.client_adapter is not None:
+                self.assertNotIn(remaining_map.client_adapter.loc_code,
+                                 expected_removals)
