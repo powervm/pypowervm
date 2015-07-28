@@ -531,3 +531,20 @@ def find_maps(mapping_list, client_lpar_id):
         matching_maps.append(vfc_map)
 
     return matching_maps
+
+
+def remove_maps(vwrap, client_lpar_id):
+    """Remove one or more VFC mappings from a VIOS wrapper.
+
+    The changes are not flushed back to the REST server.
+
+    :param vwrap: VIOS EntryWrapper representing the Virtual I/O Server whose
+                  VFC mappings are to be updated.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :return: The number of mappings removed from the VIOS wrapper.
+    """
+    resp_list = []
+    for matching_map in find_maps(vwrap.vfc_mappings, client_lpar_id):
+        vwrap.vfc_mappings.remove(matching_map)
+        resp_list.append(matching_map)
+    return resp_list
