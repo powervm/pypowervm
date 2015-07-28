@@ -316,5 +316,24 @@ class TestUtil(unittest.TestCase):
     # Tests for check_and_apply_xag covered by
     # test_adapter.TestAdapter.test_extended_path
 
+    def test_parallel_update(self):
+        """Test that parallel_update updates all wrappers."""
+        def _mk_mock_wrapper():
+            w = mock.Mock()
+            w.update.return_value = w
+            return w
+        w1 = _mk_mock_wrapper()
+        w2 = _mk_mock_wrapper()
+        w3 = _mk_mock_wrapper()
+        ret = util.parallel_update([w1, w2, w3])
+        w1.update.assert_called_with()
+        w2.update.assert_called_with()
+        w3.update.assert_called_with()
+        # The return order may be different, but they should all be there.
+        self.assertEqual({w1, w2, w3}, set(ret))
+
+        # Now make sure an empty list behaves properly
+        self.assertEqual([], util.parallel_update([]))
+
 if __name__ == "__main__":
     unittest.main()
