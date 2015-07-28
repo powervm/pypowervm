@@ -494,7 +494,7 @@ def _fuse_vfc_ports(wwpn_list):
     return list(map(' '.join, zip(l[::2], l[1::2])))
 
 
-def find_maps(mapping_list, client_lpar_id):
+def find_maps(mapping_list, client_lpar_id, client_adpt=None):
     """Filter a list of VFC mappings by LPAR ID.
 
     This is based on scsi_mapper.find_maps, but does not yet provide all the
@@ -506,6 +506,9 @@ def find_maps(mapping_list, client_lpar_id):
                            relies on the presence of the client_lpar_href
                            field.  Some mappings lack this field, and would
                            therefore be ignored.
+    :param client_adpt: (Optional, Default=None) If set, will only add the
+                        mapping if the client adapter's UUIDs match as well.
+                        This should be the client adapter within the
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id.
     """
@@ -521,6 +524,16 @@ def find_maps(mapping_list, client_lpar_id):
                 # Use the server adapter in case this is an orphan.
                 vfc_map.server_adapter.lpar_id != client_id):
             continue
+
+        if client_adpt:
+            # If they passed in a client adapter, but the map doesn't have
+            # one, then we have to ignore
+            if not vfc_map.client_adapter:
+                continue
+
+            # Check to make sure the WWPNs between the two match.
+            if set(client_adpt.wwpns()) != set(vfc_map.client_adapter.wwpns()):
+                continue
 
         # Found a match!
         matching_maps.append(vfc_map)
