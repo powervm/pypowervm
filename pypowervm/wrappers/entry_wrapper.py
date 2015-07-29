@@ -483,6 +483,17 @@ class EntryWrapper(Wrapper):
         self._etag = etag
 
     @classmethod
+    def getter(cls, adapter, entry_uuid, parent_class=None, parent_uuid=None,
+               xag=None):
+        """Return an EntryWrapperGetter for this EntryWrapper type.
+
+        Parameters are the same as described by EntryWrapperGetter.__init__
+        """
+        return EntryWrapperGetter(
+            adapter, cls, entry_uuid, parent_class=parent_class,
+            parent_uuid=parent_uuid, xag=xag)
+
+    @classmethod
     def _bld(cls, adapter, tag=None, has_metadata=None, ns=None, attrib=None):
         """Create a fresh EntryWrapper.
 
@@ -1064,8 +1075,16 @@ class WrapperSetUUIDMixin(object):
             pass
 
 
-class EntryWrapperGetSpec(object):
-    """Attribute container with enough information to GET an EntryWrapper."""
+class EntryWrapperGetter(object):
+    """Attribute container with enough information to GET an EntryWrapper.
+
+    An instance of this class can be used to defer the REST call which fetches
+    a PowerVM object.  This will typically be used as the first parameter to a
+    method decorated as pypowervm.utils.transaction.entry_transaction, allowing
+    that method to acquire a lock before performing the GET, thus minimizing
+    the probability of out-of-band changes resulting in etag mismatch and
+    requiring a retry.
+    """
     def __init__(self, adapter, entry_class, entry_uuid, parent_class=None,
                  parent_uuid=None, xag=None):
         """Create a GET specification for an EntryWrapper.
