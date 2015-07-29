@@ -74,28 +74,78 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
              This is current with respect to etag and SCSI mappings.
     """
     adapter = storage_elem.adapter
+
     # If the 'vios' param is a string UUID, retrieve the VIOS wrapper.
     if not isinstance(vios, pvm_vios.VIOS):
-        vios = pvm_vios.VIOS.wrap(
+        vios_w = pvm_vios.VIOS.wrap(
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
                          xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
+    else:
+        vios_w = vios
 
-    if find_maps(vios.scsi_mappings, lpar_uuid, stg_elem=storage_elem):
+    # If the storage element is already there, do nothing.
+    if find_maps(vios_w.scsi_mappings, lpar_uuid, stg_elem=storage_elem):
         LOG.info(_("Found existing mapping of %(stg_type)s storage element "
                    "%(stg_name)s from Virtual I/O Server %(vios_name)s to "
                    "client LPAR %(lpar_uuid)s."),
                  {'stg_type': storage_elem.schema_type,
                   'stg_name': storage_elem.name,
-                  'vios_name': vios.name,
+                  'vios_name': vios_w.name,
                   'lpar_uuid': lpar_uuid})
-        return vios
+        return vios_w
+
+    # Build the mapping.
+    scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
+                                   fuse_limit)
+
+    # Add the mapping.  It may have been updated to have a different client
+    # and server adapter.  It may be the original (which creates a new client
+    # and server pair).
+    vios_w.scsi_mappings.append(scsi_map)
+
+    LOG.info(_("Creating mapping of %(stg_type)s storage element %(stg_name)s "
+               "from Virtual I/O Server %(vios_name)s to client LPAR "
+               "%(lpar_uuid)s."),
+             {'stg_type': storage_elem.schema_type,
+              'stg_name': storage_elem.name,
+              'vios_name': vios_w.name,
+              'lpar_uuid': lpar_uuid})
+    return vios_w.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+
+
+def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
+                        fuse_limit=32):
+    """Will build a vSCSI mapping that can be added to a VIOS.
+
+    This method is used to create a mapping element (for either a vDisk, vOpt,
+    PV or LU) that connects a Virtual I/O Server to a LPAR.
+
+    A given mapping is essentially a 'vSCSI bus', which can host multiple
+    storage elements.  This method has a fuse limit which throttles the number
+    of devices on a given vSCSI bus.  The throttle should be lower if the
+    storage elements are high I/O, and higher otherwise.
+
+    :param host_uuid: The UUID of the host system.
+    :param vios_w: The virtual I/O server wrapper that the mapping is intended
+                   to be attached to.  The method will call the update against
+                   the API.  It will only update the in memory wrapper.
+    :param lpar_uuid: The UUID of the LPAR that will have the connected
+                      storage.
+    :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
+                         that is to be connected.
+    :param fuse_limit: (Optional) The max number of devices to allow on one
+                       scsi bus before creating a second SCSI bus.
+    :return: The SCSI mapping that can be added to the vios_w.  This does not
+             do any updates to the wrapper itself.
+    """
+    adapter = storage_elem.adapter
 
     # Get the client lpar href
     lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
                                                        lpar_uuid)
 
     # Separate out the mappings into the applicable ones for this client.
-    separated_mappings = _separate_mappings(vios, lpar_href)
+    separated_mappings = _separate_mappings(vios_w, lpar_href)
 
     # Used if we need to clone an existing mapping
     clonable_map = None
@@ -119,19 +169,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(adapter, host_uuid, lpar_uuid,
                                              storage_elem)
-
-    # Add the mapping.  It may have been updated to have a different client
-    # and server adapter.  It may be the original (which creates a new client
-    # and server pair).
-    vios.scsi_mappings.append(scsi_map)
-    LOG.info(_("Creating mapping of %(stg_type)s storage element %(stg_name)s "
-               "from Virtual I/O Server %(vios_name)s to client LPAR "
-               "%(lpar_uuid)s."),
-             {'stg_type': storage_elem.schema_type,
-              'stg_name': storage_elem.name,
-              'vios_name': vios.name,
-              'lpar_uuid': lpar_uuid})
-    return vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    return scsi_map
 
 
 def _separate_mappings(vios_w, client_href):
@@ -159,6 +197,29 @@ def _separate_mappings(vios_w, client_href):
             resp[key].append(existing_map)
 
     return resp
+
+
+def add_map(vios_w, scsi_mapping):
+    """Will add the mapping to the VIOS wrapper, if not already included.
+
+    This method has the logic in place to detect if the storage from the
+    mapping is already part of a SCSI mapping.  If so, it will not re-add
+    the mapping to the VIOS wrapper.
+
+    The new mapping is added to the wrapper, but it is up to the invoker to
+    call the update method on the wrapper.
+
+    :param vios_w: The Virtual I/O Server wrapping to add the mapping to.
+    :param scsi_mapping: The scsi mapping to include in the VIOS.
+    """
+    # Check to see if the mapping is already in the system.
+    lpar_uuid = util.get_req_path_uuid(scsi_mapping.client_lpar_href,
+                                       preserve_case=True)
+    existing_mappings = find_maps(vios_w.scsi_mappings, lpar_uuid,
+                                  stg_elem=scsi_mapping.backing_storage)
+    if len(existing_mappings) > 0:
+        return
+    vios_w.scsi_mappings.append(scsi_mapping)
 
 
 def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
