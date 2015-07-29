@@ -27,6 +27,7 @@ import pypowervm.adapter as apt
 import pypowervm.entities as ent
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.wrappers.util import test_wrapper_abc as twrap
 import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -1010,6 +1011,55 @@ class TestSetUUIDMixin(testtools.TestCase):
         # Exception attempting to set on an element with no metadata
         self.assertRaises(AttributeError, sewom.set_uuid, new_uuid)
 
+
+class TestEntryWrapperGetSpec(twrap.TestWrapper):
+    file = LPAR_FILE
+    wrapper_class_to_test = lpar.LPAR
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
+    def test_entry_wrapper_get_spec(self, mock_refresh):
+        self.adpt.read.return_value = self.dwrap.entry
+        mock_refresh.return_value = self.dwrap
+        # ROOT
+        gs = ewrap.EntryWrapperGetSpec(self.adpt, lpar.LPAR, 'lpar_uuid')
+        self.assertEqual('lpar_uuid', gs.uuid)
+        lwrap = gs.get()
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.assertEqual(self.dwrap.entry, lwrap.entry)
+        self.adpt.read.assert_called_with(
+            'LogicalPartition', 'lpar_uuid', child_id=None, child_type=None,
+            xag=None)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(0, mock_refresh.call_count)
+        # Second get doesn't re-read
+        lwrap = gs.get()
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.assertEqual(self.dwrap.entry, lwrap.entry)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(0, mock_refresh.call_count)
+        # get with refresh doesn't read, but does refresh
+        lwrap = gs.get(refresh=True)
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.assertEqual(self.dwrap.entry, lwrap.entry)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(1, mock_refresh.call_count)
+
+        # CHILD, xags
+        gs = ewrap.EntryWrapperGetSpec(
+            self.adpt, lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk,
+            parent_uuid='parent_uuid', xag=['one', 'two'])
+        self.assertEqual('lpar_uuid', gs.uuid)
+        lwrap = gs.get()
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.adpt.read.assert_called_with(
+            'VirtualDisk', 'parent_uuid', child_type='LogicalPartition',
+            child_id='lpar_uuid', xag=['one', 'two'])
+
+        # parent type & uuid must both be specified
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetSpec, self.adpt,
+                          lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk)
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetSpec, self.adpt,
+                          lpar.LPAR, 'lpar_uuid', parent_uuid='parent_uuid')
 
 if __name__ == '__main__':
     unittest.main()
