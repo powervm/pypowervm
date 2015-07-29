@@ -158,6 +158,31 @@ class TestSCSIMapper(testtools.TestCase):
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
+    def test_add_map(self):
+        """Tests the add_map method."""
+        vio_resp = tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)
+        vio_w = pvm_vios.VIOS.wrap(vio_resp)
+
+        pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
+
+        scsi_map = scsi_mapper.build_vscsi_mapping('host_uuid', vio_w,
+                                                   LPAR_UUID, pv)
+
+        # Get the original count
+        orig_mappings = len(vio_w.scsi_mappings)
+
+        scsi_mapper.add_map(vio_w, scsi_map)
+        scsi_mapper.add_map(vio_w, scsi_map)
+
+        # Make sure only one was added.
+        self.assertEqual(orig_mappings + 1, len(vio_w.scsi_mappings))
+
+        # Now make sure the mapping added can be found
+        found = scsi_mapper.find_maps(vio_w.scsi_mappings, LPAR_UUID,
+                                      stg_elem=pv)
+        self.assertEqual(1, len(found))
+        self.assertEqual(scsi_map, found[0])
+
     def test_remove_storage_vopt(self):
         # Mock Data
         self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
