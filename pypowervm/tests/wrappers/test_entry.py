@@ -1012,7 +1012,7 @@ class TestSetUUIDMixin(testtools.TestCase):
         self.assertRaises(AttributeError, sewom.set_uuid, new_uuid)
 
 
-class TestEntryWrapperGetSpec(twrap.TestWrapper):
+class TestEntryWrapperGetter(twrap.TestWrapper):
     file = LPAR_FILE
     wrapper_class_to_test = lpar.LPAR
 
@@ -1021,9 +1021,9 @@ class TestEntryWrapperGetSpec(twrap.TestWrapper):
         self.adpt.read.return_value = self.dwrap.entry
         mock_refresh.return_value = self.dwrap
         # ROOT
-        gs = ewrap.EntryWrapperGetSpec(self.adpt, lpar.LPAR, 'lpar_uuid')
-        self.assertEqual('lpar_uuid', gs.uuid)
-        lwrap = gs.get()
+        getter = ewrap.EntryWrapperGetter(self.adpt, lpar.LPAR, 'lpar_uuid')
+        self.assertEqual('lpar_uuid', getter.uuid)
+        lwrap = getter.get()
         self.assertIsInstance(lwrap, lpar.LPAR)
         self.assertEqual(self.dwrap.entry, lwrap.entry)
         self.adpt.read.assert_called_with(
@@ -1032,33 +1032,33 @@ class TestEntryWrapperGetSpec(twrap.TestWrapper):
         self.assertEqual(1, self.adpt.read.call_count)
         self.assertEqual(0, mock_refresh.call_count)
         # Second get doesn't re-read
-        lwrap = gs.get()
+        lwrap = getter.get()
         self.assertIsInstance(lwrap, lpar.LPAR)
         self.assertEqual(self.dwrap.entry, lwrap.entry)
         self.assertEqual(1, self.adpt.read.call_count)
         self.assertEqual(0, mock_refresh.call_count)
         # get with refresh doesn't read, but does refresh
-        lwrap = gs.get(refresh=True)
+        lwrap = getter.get(refresh=True)
         self.assertIsInstance(lwrap, lpar.LPAR)
         self.assertEqual(self.dwrap.entry, lwrap.entry)
         self.assertEqual(1, self.adpt.read.call_count)
         self.assertEqual(1, mock_refresh.call_count)
 
-        # CHILD, xags
-        gs = ewrap.EntryWrapperGetSpec(
-            self.adpt, lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk,
+        # CHILD, use the EntryWrapper.getter classmethod, use xags
+        getter = lpar.LPAR.getter(
+            self.adpt, 'lpar_uuid', parent_class=stor .VDisk,
             parent_uuid='parent_uuid', xag=['one', 'two'])
-        self.assertEqual('lpar_uuid', gs.uuid)
-        lwrap = gs.get()
+        self.assertEqual('lpar_uuid', getter.uuid)
+        lwrap = getter.get()
         self.assertIsInstance(lwrap, lpar.LPAR)
         self.adpt.read.assert_called_with(
             'VirtualDisk', 'parent_uuid', child_type='LogicalPartition',
             child_id='lpar_uuid', xag=['one', 'two'])
 
         # parent type & uuid must both be specified
-        self.assertRaises(ValueError, ewrap.EntryWrapperGetSpec, self.adpt,
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk)
-        self.assertRaises(ValueError, ewrap.EntryWrapperGetSpec, self.adpt,
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_uuid='parent_uuid')
 
 if __name__ == '__main__':
