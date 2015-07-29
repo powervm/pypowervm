@@ -284,7 +284,9 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
              physical ports to the given client VM.
     """
     def add_action(vios_wraps, p_map):
-        return _add_npiv_port_map(host_uuid, lpar_uuid, vios_wraps, p_map)
+        vios_w = find_vios_for_port_map(vios_wraps, p_map)
+        add_map(vios_w, host_uuid, lpar_uuid, port_map)
+        return vios_w
 
     updated_vioses = _mapping_actions(adapter, host_uuid, npiv_port_maps,
                                       add_action)
@@ -494,7 +496,7 @@ def _fuse_vfc_ports(wwpn_list):
     return list(map(' '.join, zip(l[::2], l[1::2])))
 
 
-def find_maps(mapping_list, client_lpar_id):
+def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
     """Filter a list of VFC mappings by LPAR ID.
 
     This is based on scsi_mapper.find_maps, but does not yet provide all the
@@ -506,11 +508,22 @@ def find_maps(mapping_list, client_lpar_id):
                            relies on the presence of the client_lpar_href
                            field.  Some mappings lack this field, and would
                            therefore be ignored.
+    :param client_adpt: (Optional, Default=None) If set, will only add the
+                        mapping if the client adapter's WWPNs match as well.
+    :param port_map: (Optional, Default=None) If set, will look for a matching
+                     mapping based off the client WWPNs as specified by the
+                     port mapping.  The format of this is defined by the
+                     derive_npiv_map.
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id.
     """
     is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
+
+    if port_map:
+        v_wwpns = set([u.sanitize_wwpn_for_api(x)
+                       for x in port_map[1].split()])
+
     for vfc_map in mapping_list:
         # If to a different VM, continue on.
         href = vfc_map.client_lpar_href
@@ -522,24 +535,102 @@ def find_maps(mapping_list, client_lpar_id):
                 vfc_map.server_adapter.lpar_id != client_id):
             continue
 
+        # If there is a client adapter, and it is not a 'ANY WWPN', then
+        # check to see if the mappings match.
+        if client_adpt and client_adpt.wwpns() != _FUSED_ANY_WWPN:
+            # If they passed in a client adapter, but the map doesn't have
+            # one, then we have to ignore
+            if not vfc_map.client_adapter:
+                continue
+
+            # Check to make sure the WWPNs between the two match.
+            if set(client_adpt.wwpns()) != set(vfc_map.client_adapter.wwpns()):
+                continue
+
+        # If the user had a port map, do the virtual WWPNs from that port
+        # map match the client adapter wwpn map.
+        if port_map:
+            if set(client_adpt.wwpns()) != v_wwpns:
+                continue
+
         # Found a match!
         matching_maps.append(vfc_map)
 
     return matching_maps
 
 
-def remove_maps(vwrap, client_lpar_id):
+def remove_maps(v_wrap, client_lpar_id, client_adpt=None, port_map=None):
     """Remove one or more VFC mappings from a VIOS wrapper.
 
     The changes are not flushed back to the REST server.
 
-    :param vwrap: VIOS EntryWrapper representing the Virtual I/O Server whose
-                  VFC mappings are to be updated.
+    :param v_wrap: VIOS EntryWrapper representing the Virtual I/O Server whose
+                   VFC mappings are to be updated.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
-    :return: The number of mappings removed from the VIOS wrapper.
+    :param client_adpt: (Optional, Default=None) If set, will only add the
+                        mapping if the client adapter's WWPNs match as well.
+    :param port_map: (Optional, Default=None) If set, will look for a matching
+                     mapping based off the client WWPNs as specified by the
+                     port mapping.  The format of this is defined by the
+                     derive_npiv_map.
+    :return: The mappings removed from the VIOS wrapper.
     """
     resp_list = []
-    for matching_map in find_maps(vwrap.vfc_mappings, client_lpar_id):
-        vwrap.vfc_mappings.remove(matching_map)
+    for matching_map in find_maps(v_wrap.vfc_mappings, client_lpar_id,
+                                  client_adpt=client_adpt,
+                                  port_map=port_map):
+        v_wrap.vfc_mappings.remove(matching_map)
         resp_list.append(matching_map)
     return resp_list
+
+
+def find_vios_for_port_map(vios_wraps, port_map):
+    """Finds the appropriate VIOS wrapper for a given port map.
+
+    :param vios_wraps: A list of Virtual I/O Server wrapper objects.
+    :param port_map: The port mapping (as defined by the derive_npiv_map
+                     method).
+    :return: The Virtual I/O Server wrapper that owns the physical FC port
+             defined by the port_map.
+    """
+    return find_vio_for_wwpn(vios_wraps, port_map[0])[0]
+
+
+def add_map(vios_w, host_uuid, lpar_uuid, port_map):
+    """Adds a vFC mapping to a given VIOS wrapper.
+
+    These changes are not flushed back to the REST server.  The wrapper itself
+    is simply updated.
+
+    :param vios_w: VIOS EntryWrapper representing the Virtual I/O Server whose
+                   VFC mappings are to be updated.
+    :param host_uuid: The pypowervm UUID of the host.
+    :param lpar_uuid: The pypowervm UUID of the client LPAR to attach to.
+    :param port_map: The port mapping (as defined by the derive_npiv_map
+                     method).
+    """
+    # This is meant to find the physical port.  Can run against a single
+    # element.  We assume invoker has passed correct VIOS.
+    vios_w, p_port = find_vio_for_wwpn([vios_w], port_map[0])
+
+    v_wwpns = None
+    if port_map[1] != _FUSED_ANY_WWPN:
+        v_wwpns = set([u.sanitize_wwpn_for_api(x)
+                       for x in port_map[1].split()])
+
+    for vfc_map in vios_w.vfc_mappings:
+        if vfc_map.client_adapter is None:
+            continue
+        if vfc_map.client_adapter.wwpns != v_wwpns:
+            continue
+
+        # If we reach this point, we know that we have a matching map.  So
+        # the attach of this volume, for this vFC mapping is complete.
+        # Nothing else needs to be done, exit the method.
+        return
+
+    # However, if we hit here, then we need to create a new mapping and
+    # attach it to the VIOS mapping
+    vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, lpar_uuid,
+                                      p_port.name, client_wwpns=v_wwpns)
+    vios_w.vfc_mappings.append(vfc_map)
