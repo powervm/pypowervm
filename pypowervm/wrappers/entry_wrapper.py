@@ -1062,3 +1062,67 @@ class WrapperSetUUIDMixin(object):
             # Note: we don't trap KeyError: if entry.properties is there, but
             # doesn't have an 'id' key, something is wrong.
             pass
+
+
+class EntryWrapperGetSpec(object):
+    """Attribute container with enough information to GET an EntryWrapper."""
+    def __init__(self, adapter, entry_class, entry_uuid, parent_class=None,
+                 parent_uuid=None, xag=None):
+        """Create a GET specification for an EntryWrapper.
+
+        :param adapter: A pypowervm.adapter.Adapter instance through which the
+                        GET can be performed.
+        :param entry_class: An EntryWrapper subclass indicating the type of the
+                            entry to GET.
+        :param entry_uuid: The string UUID of the entry to GET.
+        :param parent_class: If the target entry is a CHILD, this param is the
+                             EntryWrapper subclass of its parent object type.
+        :param parent_uuid: If the target entry is a CHILD, this param is the
+                            UUID of its parent object.
+        :param xag: List of extended attribute groups to request on the object.
+        """
+        self.adapter = adapter
+        self.entry_class = entry_class
+        self.entry_uuid = entry_uuid
+        if (parent_class and not parent_uuid) or (
+                parent_uuid and not parent_class):
+            raise ValueError(_("Must specify both parent class and parent "
+                               "UUID, or neither"))
+        self.parent_class = parent_class
+        self.parent_uuid = parent_uuid
+        self.xag = xag
+        self.entry = None
+
+    def get(self, refresh=False):
+        """Return the EntryWrapper indicated by this instance.
+
+        If the EntryWrapper has not yet been retrieved, it is fetched via GET
+        from the REST API.  Thereafter, it is cached.  Subsequent calls to this
+        method will return the cached copy unless refresh=True, in which case
+        the cached copy is refreshed before returning.
+
+        :param refresh: (Optional) If True, and the specified EntryWrapper was
+                        previously retrieved, it is refreshed before being
+                        returned.  If False (the default), it is returned
+                        without refreshing.  If the specified EntryWrapper had
+                        not yet been retrieved, this parameter has no effect.
+        :return: The EntryWrapper specified by this ENtryWrapperGetSpec
+                 instance.
+        """
+        if self.entry is None:
+            if self.parent_class:
+                root_type = self.parent_class.schema_type
+                root_id = self.parent_uuid
+                child_type = self.entry_class.schema_type
+                child_id = self.entry_uuid
+            else:
+                root_type = self.entry_class.schema_type
+                root_id = self.entry_uuid
+                child_type = None
+                child_id = None
+            self.entry = self.entry_class.wrap(self.adapter.read(
+                root_type, root_id, child_type=child_type, child_id=child_id,
+                xag=self.xag))
+        elif refresh:
+            self.entry = self.entry.refresh()
+        return self.entry
