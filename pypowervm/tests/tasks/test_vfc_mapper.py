@@ -32,24 +32,24 @@ FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
 
 class TestVFCMapper(unittest.TestCase):
 
-    def test_find_vio_for_wwpn(self):
+    def test_find_vios_for_wwpn(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
         vios_feed_w = [vios_w]
 
         # Basic test
-        vio_resp, p_resp = vfc_mapper.find_vio_for_wwpn(
+        vio_resp, p_resp = vfc_mapper.find_vios_for_wwpn(
             vios_feed_w, '10000090FA45473B')
         self.assertEqual(vios_w, vio_resp)
         self.assertIsNotNone(p_resp)
 
         # Validates the sanitized input
-        vio_resp, p_resp = vfc_mapper.find_vio_for_wwpn(
+        vio_resp, p_resp = vfc_mapper.find_vios_for_wwpn(
             vios_feed_w, '10:00:00:90:fa:45:47:3b')
         self.assertEqual(vios_w, vio_resp)
         self.assertIsNotNone(p_resp)
 
         # Make sure a bad WWPN returns no result
-        vio_resp, p_resp = vfc_mapper.find_vio_for_wwpn(
+        vio_resp, p_resp = vfc_mapper.find_vios_for_wwpn(
             vios_feed_w, '10:00:00:90:fa:45:47:3f')
         self.assertIsNone(vio_resp)
         self.assertIsNone(p_resp)
@@ -196,6 +196,44 @@ class TestPortMappings(twrap.TestWrapper):
         self.addCleanup(href_p.stop)
         href.return_value = 'fake_href'
         self.adpt.read.return_value = self.resp
+
+    def test_add_map(self):
+        """Validates the add_map method."""
+        # Determine the vios original values
+        vios_wrap = self.entries[0]
+        vios1_orig_map_count = len(vios_wrap.vfc_mappings)
+
+        # Subset the WWPNs on that VIOS
+        fabric_wwpns = ['10000090FA5371F2']
+
+        # Fake Virtual WWPNs
+        v_fabric_wwpns = ['0', '1']
+
+        # Get the mappings
+        fabric_map = vfc_mapper.derive_npiv_map([vios_wrap], fabric_wwpns,
+                                                v_fabric_wwpns)[0]
+
+        # Now call the add action
+        vfc_mapper.add_map(vios_wrap, 'host_uuid', 'lpar_uuid', fabric_map)
+
+        # The update should have been called once.
+        self.assertEqual(vios1_orig_map_count + 1, len(vios_wrap.vfc_mappings))
+
+    def test_find_vios_for_port_map(self):
+        """Tests the find_vios_for_port_map method."""
+        # This WWPN is on the first VIOS
+        e1 = ('10000090FA5371f1', 'a b')
+        self.assertEqual(self.entries[0],
+                         vfc_mapper.find_vios_for_port_map(self.entries, e1))
+
+        # This WWPN is on the second VIOS
+        e2 = ('10000090FA537209', 'a b')
+        self.assertEqual(self.entries[1],
+                         vfc_mapper.find_vios_for_port_map(self.entries, e2))
+
+        # Try with a bad WWPN
+        e3 = ('BAD', 'a b')
+        self.assertIsNone(vfc_mapper.find_vios_for_port_map(self.entries, e3))
 
     def test_add_port_mapping_multi_vios(self):
         """Validates that the port mappings are added cross VIOSes."""
@@ -460,17 +498,85 @@ class TestPortMappings(twrap.TestWrapper):
             vwrap.vfc_mappings, '4BEEFD00-B3A9-4E12-B6EC-8223421AF49B'))
 
     def test_remove_maps(self):
-        vwrap = self.entries[0]
-        len_before = len(vwrap.vfc_mappings)
-        resp_list = vfc_mapper.remove_maps(vwrap, 10)
+        v_wrap = self.entries[0]
+        len_before = len(v_wrap.vfc_mappings)
+        resp_list = vfc_mapper.remove_maps(v_wrap, 10)
         expected_removals = {
             'U7895.43X.21EF9FB-V63-C3', 'U7895.43X.21EF9FB-V66-C4',
             'U7895.43X.21EF9FB-V62-C4', 'U7895.43X.21EF9FB-V10-C4'}
         self.assertEqual(
             set([el.client_adapter.loc_code for el in resp_list]),
             expected_removals)
-        self.assertEqual(len_before - 4, len(vwrap.vfc_mappings))
-        for remaining_map in vwrap.vfc_mappings:
+        self.assertEqual(len_before - 4, len(v_wrap.vfc_mappings))
+
+        # Make sure the remaining adapters do not have the remove codes.
+        for remaining_map in v_wrap.vfc_mappings:
             if remaining_map.client_adapter is not None:
                 self.assertNotIn(remaining_map.client_adapter.loc_code,
                                  expected_removals)
+
+    def test_remove_maps_client_adpt(self):
+        """Tests the remove_maps method, with the client_adpt input."""
+        v_wrap = self.entries[0]
+        len_before = len(v_wrap.vfc_mappings)
+
+        c_adpt = vfc_mapper.find_maps(
+            v_wrap.vfc_mappings, 10)[0].client_adapter
+
+        resp_list = vfc_mapper.remove_maps(v_wrap, 10, client_adpt=c_adpt)
+        expected_removals = {'U7895.43X.21EF9FB-V63-C3'}
+        self.assertEqual(
+            set([el.client_adapter.loc_code for el in resp_list]),
+            expected_removals)
+        self.assertEqual(len_before - 1, len(v_wrap.vfc_mappings))
+
+        # Make sure the remaining adapters do not have the remove codes.
+        for remaining_map in v_wrap.vfc_mappings:
+            if remaining_map.client_adapter is not None:
+                self.assertNotIn(remaining_map.client_adapter.loc_code,
+                                 expected_removals)
+
+
+class TestAddRemoveMap(twrap.TestWrapper):
+    file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
+    wrapper_class_to_test = pvm_vios.VIOS
+    mock_adapter_fx_args = {}
+
+    def setUp(self):
+        super(TestAddRemoveMap, self).setUp()
+        href_p = mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.'
+                            'crt_related_href')
+        href = href_p.start()
+        self.addCleanup(href_p.stop)
+        href.return_value = (
+            'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+            'e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/'
+            '3ADDED46-B3A9-4E12-B6EC-8223421AF49B')
+        self.adpt.read.return_value = self.resp
+
+    def test_add_remove_map_any_wwpn(self):
+        """Tests a loop of add map/remove map when using _ANY_WWPN."""
+        v_wrap = self.entries[0]
+        len_before = len(v_wrap.vfc_mappings)
+
+        lpar_uuid = '3ADDED46-B3A9-4E12-B6EC-8223421AF49B'
+
+        # A fake mapping to the first IO Server
+        p_map_vio1 = ('10000090FA5371F2', vfc_mapper._FUSED_ANY_WWPN)
+        vfc_mapper.add_map(v_wrap, 'host_uuid', lpar_uuid, p_map_vio1)
+        self.assertEqual(len_before + 1, len(v_wrap.vfc_mappings))
+
+        # See if we can find that mapping.
+        maps = vfc_mapper.find_maps(v_wrap.vfc_mappings, lpar_uuid,
+                                    port_map=p_map_vio1)
+        self.assertEqual(1, len(maps))
+
+        # Even though we were searching for a 'FUSED' wwpn, the mapping itself
+        # will have nothing on it, to indicate that the API should generate
+        # the WWPNs.  Therefore, we validate that we found the mapping without
+        # any WWPNs on it.
+        self.assertEqual(set(), maps[0].client_adapter.wwpns)
+
+        # Now try to remove it...
+        vfc_mapper.remove_maps(v_wrap, lpar_uuid, port_map=p_map_vio1)
+        self.assertEqual(len_before, len(v_wrap.vfc_mappings))
