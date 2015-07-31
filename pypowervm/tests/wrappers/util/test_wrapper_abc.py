@@ -77,10 +77,9 @@ class TestWrapper(testtools.TestCase):
         super(TestWrapper, self).setUp()
         self.adptfx = None
         self.adpt = None
-        if self.mock_adapter_fx_args is not None:
-            self.adptfx = self.useFixture(
-                fx.AdapterFx(**self.mock_adapter_fx_args))
-            self.adpt = self.adptfx.adpt
+        adptfx_args = self.mock_adapter_fx_args or {}
+        self.adptfx = self.useFixture(fx.AdapterFx(**adptfx_args))
+        self.adpt = self.adptfx.adpt
 
         # Load the file just once...
         if self.__class__._pvmfile is None:
