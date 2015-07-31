@@ -26,7 +26,6 @@ from pypowervm.i18n import _
 import pypowervm.log as lgc
 import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
-import pypowervm.wrappers.logical_partition as wlpar
 import pypowervm.wrappers.managed_system as ms
 
 import six
@@ -50,24 +49,24 @@ _SUFFIX_PARM_POWER_OFF = 'PowerOff'
 
 
 @lgc.logcall
-def power_on(lpar, host_uuid, add_parms=None):
-    """Will Power On a Logical Partition.
+def power_on(part, host_uuid, add_parms=None):
+    """Will Power On a Logical Partition or Virtual I/O Server.
 
-    :param lpar: The LPAR wrapper of the instance to power on.
+    :param part: The LPAR/VIOS wrapper of the instance to power on.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param add_parms: dict of parameters to pass directly to the job template
     """
-    return _power_on_off(lpar, _SUFFIX_PARM_POWER_ON, host_uuid,
+    return _power_on_off(part, _SUFFIX_PARM_POWER_ON, host_uuid,
                          add_parms=add_parms)
 
 
 @lgc.logcall
-def power_off(lpar, host_uuid, force_immediate=False, restart=False,
+def power_off(part, host_uuid, force_immediate=False, restart=False,
               timeout=CONF.powervm_job_request_timeout, add_parms=None):
-    """Will Power Off a LPAR.
+    """Will Power Off a Logical Partition or Virtual I/O Server.
 
-    :param lpar: The LPAR wrapper of the instance to power off.
+    :param part: The LPAR/VIOS wrapper of the instance to power off.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param force_immediate: Boolean.  Perform an immediate power off.
@@ -76,34 +75,35 @@ def power_off(lpar, host_uuid, force_immediate=False, restart=False,
                     instance to stop.
     :param add_parms: dict of parameters to pass directly to the job template
     """
-    return _power_on_off(lpar, _SUFFIX_PARM_POWER_OFF, host_uuid,
+    return _power_on_off(part, _SUFFIX_PARM_POWER_OFF, host_uuid,
                          force_immediate, restart, timeout,
                          add_parms=add_parms)
 
 
-def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
+def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                   restart=False, timeout=CONF.powervm_job_request_timeout,
                   add_parms=None):
     """Internal function to power on or off an instance.
 
-    :param lpar: The LPAR wrapper of the instance to act on.
+    :param part: The LPAR/VIOS wrapper of the instance to act on.
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
-    :param host_uuid: TEMPORARY - The host system UUID that the LPAR resides on
+    :param host_uuid: TEMPORARY - The host system UUID that the LPAR/VIOS
+                      resides on
     :param force_immediate: Boolean.  Do immediate shutdown
                             (for PowerOff suffix only)
     :param restart: Boolean.  Do a restart after power off
                             (for PowerOff suffix only)
     :param timeout: Value in seconds for specifying
-                    how long to wait for the LPAR to stop
+                    how long to wait for the LPAR/VIOS to stop
                     (for PowerOff suffix only)
     :param add_parms: dict of parameters to pass directly to the job template
     """
     complete = False
-    uuid = lpar.uuid
-    adapter = lpar.adapter
+    uuid = part.uuid
+    adapter = part.adapter
     try:
         while not complete:
-            resp = adapter.read(wlpar.LPAR.schema_type, uuid,
+            resp = adapter.read(part.schema_type, uuid,
                                 suffix_type=c.SUFFIX_TYPE_DO,
                                 suffix_parm=suffix)
             job_wrapper = job.Job.wrap(resp.entry)
@@ -113,8 +113,8 @@ def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
                 add_immediate = False
                 if force_immediate:
                     add_immediate = True
-                elif lpar is not None:
-                    rmc_state = lpar.check_dlpar_connectivity()[1]
+                elif part is not None:
+                    rmc_state = part.check_dlpar_connectivity()[1]
                     if rmc_state == bp.RMCState.ACTIVE:
                         operation = 'osshutdown'
                     else:
@@ -152,10 +152,10 @@ def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
                     LOG.exception(_('Error: %s') % emsg)
                     if suffix == _SUFFIX_PARM_POWER_OFF:
                         raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=lpar.name)
+                                                     lpar_nm=part.name)
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=lpar.name)
+                                                    lpar_nm=part.name)
             except pexc.JobRequestFailed as error:
                 emsg = six.text_type(error)
                 LOG.exception(_('Error: %s') % emsg)
@@ -170,14 +170,14 @@ def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
                         force_immediate = True
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=lpar.name)
+                                                     lpar_nm=part.name)
                 else:
                     # If already powered on, don't send exception
                     if 'HSCL3681' in emsg:
                         complete = True
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=lpar.name)
+                                                    lpar_nm=part.name)
 
     # Invalidate the LPARentry in the adapter cache so the consumers get
     # the current LPAR state by forcing a subsequent read. Feeds must be
@@ -187,10 +187,10 @@ def _power_on_off(lpar, suffix, host_uuid, force_immediate=False,
         try:
             adapter.invalidate_cache_elem(
                 ms.System.schema_type, root_id=host_uuid,
-                child_type=wlpar.LPAR.schema_type, child_id=uuid,
+                child_type=part.schema_type, child_id=uuid,
                 invalidate_feeds=True)
         except Exception as e:
             LOG.exception(_('Error invalidating adapter cache for LPAR '
                             ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %
-                          {'lpar_name': lpar.name, 'lpar_uuid': uuid,
+                          {'lpar_name': part.name, 'lpar_uuid': uuid,
                            'exc': six.text_type(e)})
