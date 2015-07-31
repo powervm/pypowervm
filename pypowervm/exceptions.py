@@ -590,3 +590,12 @@ class ConsoleNotLocal(AbstractMsgFmtError):
                 "pypowervm API is running in a non-local mode.  The console "
                 "can only be deployed when pypowervm is co-located with "
                 "the PowerVM API.")
+
+
+class TransactionSubtaskReturnInvalid(AbstractMsgFmtError):
+    msg_fmt = _("%(clazz)s._execute must return either a single non-wrapper "
+                "value or a tuple of (wrapper, changes).  Got %(ret)s.")
+
+
+class TransactionNoSubtasks(AbstractMsgFmtError):
+    msg_fmt = _("Transaction %(name)s has no subtasks!")

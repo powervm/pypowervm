@@ -16,6 +16,7 @@
 
 """Tests for pypoowervm.utils.transaction."""
 
+import fixtures
 import mock
 import six
 
@@ -31,15 +32,104 @@ SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')
 SEM_EXIT = 'threading.%sSemaphore.__exit__' % ('_' if six.PY2 else '')
 
 
-class TestEntryTransaction(twrap.TestWrapper):
+class TransactionFx(fixtures.Fixture):
+    """Mocking and pseudo-logging for transaction primitives."""
+    def __init__(self, wrapper):
+        self._tx_log = []
+        self._wrapper = wrapper
+        self.get_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
+                                'EntryWrapperGetter.get')
+        self.refresh_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
+                                    'EntryWrapper.refresh')
+        self.enter_p = mock.patch(SEM_ENTER)
+        self.exit_p = mock.patch(SEM_EXIT)
+
+    def setUp(self):
+        super(TransactionFx, self).setUp()
+        self.reset_log()
+
+        # EntryWrapper.refresh()
+        def _refresh():
+            self.log('refresh')
+            return self._wrapper
+        mock_refresh = self.refresh_p.start()
+        mock_refresh.side_effect = _refresh
+        self.addCleanup(self.refresh_p.stop)
+
+        # EntryWrapper.get()
+        def _getter_get():
+            self.log('get')
+            return self._wrapper
+        mock_get = self.get_p.start()
+        mock_get.side_effect = _getter_get
+        self.addCleanup(self.get_p.stop)
+
+        # lockutils lock
+        mock_lock = self.enter_p.start()
+        mock_lock.side_effect = lambda *a, **k: self.log('lock')
+        self.addCleanup(self.enter_p.stop)
+
+        # lockutils unlock
+        mock_unlock = self.exit_p.start()
+        mock_unlock.side_effect = lambda *a, **k: self.log('unlock')
+        self.addCleanup(self.exit_p.stop)
+
+    def get_log(self):
+        return self._tx_log
+
+    def log(self, val):
+        self._tx_log.append(val)
+
+    def reset_log(self):
+        self._tx_log = []
+
+
+class TestTransaction(twrap.TestWrapper):
     file = 'lpar.txt'
     wrapper_class_to_test = lpar.LPAR
 
     def setUp(self):
-        super(TestEntryTransaction, self).setUp()
+        super(TestTransaction, self).setUp()
         self.getter = lpar.LPAR.getter(self.adpt, 'getter_uuid')
         # Set this up for getter.get()
         self.adpt.read.return_value = self.dwrap.entry
+        self.tracker = mock.Mock(counter=0)
+
+    class LparNameAndMem(tx.TransactionSubtask):
+        """TransactionSubtask modifying an LPAR's name and desired memory."""
+        def _execute(self, lpar_wrapper, new_name, des_mem=None, logger=None):
+            """Modify an LPAR's name and desired memory.
+
+            :param lpar_wrapper: The LPAR EntryWrapper to update.
+            :param new_name: The new name to give the LPAR.
+            :param des_mem: (Optional) The new desired memory value, an int.
+            :param logger: (Optional) If specified, "log" the class name for
+                           test inspection purposes.
+            :return: The (possibly modified) lpar_wrapper.
+            """
+            update_needed = False
+            if logger:
+                logger.log('LparNameAndMem_%s' % new_name)
+            old_name = lpar_wrapper.name
+            if old_name != new_name:
+                lpar_wrapper.name = new_name
+                update_needed = True
+            if des_mem is not None:
+                orig_mem = lpar_wrapper.mem_config.desired
+                if des_mem != orig_mem:
+                    lpar_wrapper.mem_config.desired = des_mem
+                    update_needed = True
+            return lpar_wrapper, update_needed
+
+    @staticmethod
+    def retry_twice(wrapper, tracker, logger):
+        # Force a couple of retries
+        tracker.counter += 1
+        logger.log('update %d' % tracker.counter)
+        if tracker.counter < 3:
+            raise ex.HttpError(
+                "mismatch", mock.Mock(status=c.HTTPStatus.ETAG_MISMATCH))
+        return wrapper
 
     @mock.patch('oslo_concurrency.lockutils.Semaphores.get')
     def test_synchronized_called_with_uuid(self, mock_semget):
@@ -66,11 +156,7 @@ class TestEntryTransaction(twrap.TestWrapper):
         self.assertEqual(1, mock_semget.call_count)
         mock_semget.assert_called_with('getter_uuid')
 
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get')
-    @mock.patch(SEM_EXIT)
-    @mock.patch(SEM_ENTER)
-    def test_sequence(self, mock_lock, mock_unlock, mock_get, mock_refresh):
+    def test_sequence(self):
         """Prove the sequence of events on a transaction-decorated method.
 
         We expect it to look like:
@@ -80,44 +166,210 @@ class TestEntryTransaction(twrap.TestWrapper):
         while the method raises etag error, refresh the wrapper and re-invoke
         unlock
         """
-        registry = []
-
-        mock_lock.side_effect = lambda *a, **k: registry.append('lock')
-        mock_unlock.side_effect = lambda *a, **k: registry.append('unlock')
-
-        def _getter_get():
-            registry.append('get')
-            return self.dwrap
-        mock_get.side_effect = _getter_get
-
-        def _refresh():
-            registry.append('refresh')
-            return self.dwrap
-        mock_refresh.side_effect = _refresh
-
-        tracker = mock.Mock(counter=0)
-        tracker.counter = 0
+        txfx = self.useFixture(TransactionFx(self.dwrap))
 
         @tx.entry_transaction
         def foo(wrapper_or_getter):
             # Always converted by now
             self.assertIsInstance(wrapper_or_getter, ewrap.EntryWrapper)
-            # Force a couple of retries
-            tracker.counter += 1
-            registry.append('foo %d' % tracker.counter)
-            if tracker.counter < 3:
-                raise ex.HttpError(
-                    "mismatch", mock.Mock(status=c.HTTPStatus.ETAG_MISMATCH))
-            return True
+            return self.retry_twice(wrapper_or_getter, self.tracker, txfx)
 
         # With an EntryWrapperGetter, get() is invoked
-        self.assertTrue(foo(self.getter))
-        self.assertEqual(['lock', 'get', 'foo 1', 'refresh', 'foo 2',
-                          'refresh', 'foo 3', 'unlock'], registry)
+        self.assertEqual(self.dwrap, foo(self.getter))
+        self.assertEqual(['lock', 'get', 'update 1', 'refresh', 'update 2',
+                          'refresh', 'update 3', 'unlock'], txfx.get_log())
 
         # With an EntryWrapper, get() is not invoked
-        tracker.counter = 0
-        registry = []
-        self.assertTrue(foo(self.dwrap))
-        self.assertEqual(['lock', 'foo 1', 'refresh', 'foo 2', 'refresh',
-                          'foo 3', 'unlock'], registry)
+        self.tracker.counter = 0
+        txfx.reset_log()
+        self.assertEqual(self.dwrap, foo(self.dwrap))
+        self.assertEqual(['lock', 'update 1', 'refresh', 'update 2', 'refresh',
+                          'update 3', 'unlock'], txfx.get_log())
+
+    def test_transaction_subtask(self):
+        # Same name, should result in no changes and no update_needed
+        txst1 = self.LparNameAndMem('z3-9-5-126-127-00000001')
+        lwrap = txst1.execute(self.dwrap)
+        self.assertFalse(txst1.update_needed)
+        self.assertEqual('z3-9-5-126-127-00000001', lwrap.name)
+        self.assertEqual(512, lwrap.mem_config.desired)
+        # New name should prompt update_needed.  Specified-but-same des_mem.
+        txst2 = self.LparNameAndMem('new-name', des_mem=512)
+        lwrap = txst2.execute(lwrap)
+        self.assertTrue(txst2.update_needed)
+        self.assertEqual('new-name', lwrap.name)
+        self.assertEqual(512, lwrap.mem_config.desired)
+        # New name and mem should prompt update_needed
+        txst3 = self.LparNameAndMem('newer-name', des_mem=1024)
+        lwrap = txst3.execute(lwrap)
+        self.assertTrue(txst3.update_needed)
+        self.assertEqual('newer-name', lwrap.name)
+        self.assertEqual(1024, lwrap.mem_config.desired)
+        # Same name and explicit same mem - no update_needed
+        txst4 = self.LparNameAndMem('newer-name', des_mem=1024)
+        lwrap = txst4.execute(lwrap)
+        self.assertFalse(txst4.update_needed)
+        self.assertEqual('newer-name', lwrap.name)
+        self.assertEqual(1024, lwrap.mem_config.desired)
+
+    def test_transaction_subtask_returns(self):
+        """Test that _execute methods' return values are processed properly."""
+        # Use internal _FunctorTransactionSubtask to make this easier.  Bonus:
+        # testing _FunctorTransactionSubtask at the same time.
+        FuTrSu = tx.Transaction._FunctorTransactionSubtask
+
+        def returns_tuple_too_big(wrapper):
+            """Returns a tuple with more than two items."""
+            return 1, 2, 3
+        self.assertRaises(ex.TransactionSubtaskReturnInvalid,
+                          FuTrSu(returns_tuple_too_big).execute, self.dwrap)
+
+        def returns_tuple_first_not_wrapper(wrapper):
+            """Returns a tuple whose first item is not a wrapper."""
+            return 1, 2
+        self.assertRaises(ex.TransactionSubtaskReturnInvalid,
+                          FuTrSu(returns_tuple_first_not_wrapper).execute,
+                          self.dwrap)
+
+        def returns_wrapper_and_second_arg(wrapper, boolable):
+            """Used to test various tuple returns."""
+            return wrapper, boolable
+
+        def returns_second_arg(wrapper, boolable):
+            """Used to test various boolable single returns."""
+            return boolable
+
+        # Raise when single return is the wrapper
+        self.assertRaises(ex.TransactionSubtaskReturnInvalid,
+                          FuTrSu(returns_second_arg, self.dwrap).execute,
+                          self.dwrap)
+
+        # Various valid 'False' boolables - update not needed
+        false_boolables = (0, '', [], {}, False)
+        for falseable in false_boolables:
+            txst = FuTrSu(returns_second_arg, falseable)
+            self.assertEqual(self.dwrap, txst.execute(self.dwrap))
+            self.assertFalse(txst.update_needed)
+
+        # Various valid 'True' boolables - update needed
+        true_boolables = (1, 'string', [0], {'k': 'v'}, True)
+        for trueable in true_boolables:
+            txst = FuTrSu(returns_second_arg, trueable)
+            self.assertEqual(self.dwrap, txst.execute(self.dwrap))
+            self.assertTrue(txst.update_needed)
+
+        # Various valid 'False'-yielding tuples - update not needed
+        for falseable in false_boolables:
+            txst = FuTrSu(returns_wrapper_and_second_arg, falseable)
+            self.assertEqual(self.dwrap, txst.execute(self.dwrap))
+            self.assertFalse(txst.update_needed)
+
+        # Various valid 'True'-yielding tuples - update needed
+        for trueable in true_boolables:
+            txst = FuTrSu(returns_wrapper_and_second_arg, trueable)
+            self.assertEqual(self.dwrap, txst.execute(self.dwrap))
+            self.assertTrue(txst.update_needed)
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
+    def test_transaction1(self, mock_update):
+        txfx = self.useFixture(TransactionFx(self.dwrap))
+
+        def _update():
+            txfx.log('update')
+            # Since we're passing around self.dwrap and modifying it in-place,
+            # this return should have the changes in it.
+            return self.dwrap
+        mock_update.side_effect = _update
+
+        # Must supply a wrapper or getter to instantiate
+        self.assertRaises(ValueError, tx.Transaction, 'foo', 'bar')
+
+        # Create a valid Transaction
+        tx1 = tx.Transaction('tx1', self.getter)
+        self.assertEqual('tx1', tx1.name)
+        self.assertEqual('wrapper_getter_uuid', tx1.provides)
+        # Nothing has been run yet
+        self.assertEqual([], txfx.get_log())
+        # Try running with no subtasks
+        self.assertRaises(ex.TransactionNoSubtasks, tx1.execute)
+        # Try adding something that isn't a TransactionSubtask
+        self.assertRaises(ValueError, tx1.add_subtask, '!TransactionSubtask')
+        # Error paths don't run anything.
+        self.assertEqual([], txfx.get_log())
+
+        # Add a subtask that doesn't change anything
+        tx1.add_subtask(self.LparNameAndMem('z3-9-5-126-127-00000001',
+                                            logger=txfx))
+        # Adding a subtask does not run anything
+        self.assertEqual([], txfx.get_log())
+
+        # Get the wrapper - this should invoke GET, but *not* under lock
+        self.assertEqual(self.dwrap, tx1.wrapper)
+        self.assertEqual(['get'], txfx.get_log())
+
+        # Run the transaction
+        lwrap = tx1.execute()
+        # The name should be unchanged
+        self.assertEqual('z3-9-5-126-127-00000001', lwrap.name)
+        # And update should not have been called
+        self.assertEqual(0, mock_update.call_count)
+        # ...which should also be reflected in the log.  Note that 'get' is NOT
+        # called a second time.
+        self.assertEqual([
+            'get', 'lock', 'LparNameAndMem_z3-9-5-126-127-00000001', 'unlock'],
+            txfx.get_log())
+
+        # Reset the log
+        txfx.reset_log()
+        # These subtasks do change the name.
+        tx1.add_subtask(self.LparNameAndMem('new_name', logger=txfx))
+        tx1.add_subtask(self.LparNameAndMem('newer_name', logger=txfx))
+        # But this one doesn't.  We're making sure the last 'no update needed'
+        # doesn't make the overall update_needed status False.
+        tx1.add_subtask(self.LparNameAndMem('newer_name', logger=txfx))
+        # Get the wrapper - this should *not* reinvoke GET
+        self.assertEqual(self.dwrap, tx1.wrapper)
+        self.assertEqual([], txfx.get_log())
+        # Now execute the transaction
+        lwrap = tx1.execute()
+        # Update should have been called.
+        self.assertTrue(1, mock_update.call_count)
+        # The last change should be the one that stuck
+        self.assertEqual('newer_name', lwrap.name)
+        # Check the overall order
+        self.assertEqual([
+            'lock', 'LparNameAndMem_z3-9-5-126-127-00000001',
+            'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
+            'LparNameAndMem_newer_name', 'update', 'unlock'], txfx.get_log())
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
+    def test_transaction2(self, mock_update):
+        # Now:
+        # o Fake like update forces retry
+        # o Test add_functor_subtask, including chaining
+        # o Ensure GET is deferred when .wrapper() is not called ahead of time.
+        # o Make sure subtask args are getting to the subtask.
+        txfx = self.useFixture(TransactionFx(self.dwrap))
+
+        def _update_retries_twice():
+            return self.retry_twice(self.dwrap, self.tracker, txfx)
+        mock_update.side_effect = _update_retries_twice
+
+        def functor(wrapper, arg1, arg2, kwarg3=None, kwarg4=None):
+            txfx.log('functor')
+            # Make sure args are getting here
+            self.assertEqual(['arg', 1], arg1)
+            self.assertEqual('arg2', arg2)
+            self.assertIsNone(kwarg3)
+            self.assertEqual('kwarg4', kwarg4)
+            return wrapper, True
+        # Instantiate-add-execute chain
+        tx.Transaction('tx2', self.getter).add_functor_subtask(
+            functor, ['arg', 1], 'arg2', kwarg4='kwarg4').execute()
+        # Update should have been called thrice (two retries)
+        self.assertTrue(3, mock_update.call_count)
+        # Check the overall order
+        self.assertEqual([
+            'lock', 'get', 'functor', 'update 1', 'refresh', 'functor',
+            'update 2', 'refresh', 'functor', 'update 3', 'unlock'],
+            txfx.get_log())
