@@ -14,8 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+import six
 import oslo_concurrency.lockutils as lock
 
+from pypowervm.i18n import _
 from pypowervm.utils import retry
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -72,3 +75,98 @@ def entry_transaction(func):
             return _retry_refresh(wos, *a2, **k2)
         return _resolve_wrapper(wrp_or_spec, *a1, **k1)
     return _synchronize
+
+
+@six.add_metaclass(abc.ABCMeta)
+class TransactionTask(object):
+    def __init__(self, *save_args, **save_kwargs):
+        self.save_args = save_args
+        self.save_kwargs = save_kwargs
+        self._update_needed = False
+
+    @abc.abstractmethod
+    def execute(self, wrapper, *args, **kwargs):
+        pass
+
+    @property
+    def update_needed(self):
+        return self._update_needed
+
+    @update_needed.setter
+    def update_needed(self, needed):
+        self._update_needed = needed
+
+
+class FunctorTransactionTask(TransactionTask):
+    def __init__(self, func, *save_args, **save_kwargs):
+        super(FunctorTransactionTask, self).__init__(*save_args, **save_kwargs)
+        self.execute = func
+
+    def execute(self, wrapper, *args, **kwargs):
+        # Impl from __init__
+        pass
+
+
+class Transaction(object):
+    """An atomic modify-and-POST transaction over a single EntryWrapper.
+
+    Usage:
+    class ModifyGizmos(TransactionTask):
+        def execute(self, wrapper, *args, **kwargs):
+            gizmo_list = args[0]
+            if gizmo_list:
+                wrapper.gizmos.append(gizmo_list)
+                self.update_needed = True
+            return wrapper
+    ...
+    tx = Transaction(LPAR.getter(lpar_uuid))
+    ...
+    tx.add_task(ModifyGizmos([giz1, giz2]))
+    ...
+    tx.add_task(FunctorTransactionTask(add_widgets, [widg1, widg2], frob=True))
+    ...
+    finalized_lpar = tx.execute()
+    """
+    def __init__(self, wrapper_or_getter):
+        if isinstance(wrapper_or_getter, ewrap.EntryWrapperGetter):
+            self._wrapper = None
+            self._getter = wrapper_or_getter
+        elif isinstance(wrapper_or_getter, ewrap.EntryWrapper):
+            self._wrapper = wrapper_or_getter
+            self._getter = None
+        else:
+            raise ValueError(_("Must supply either EntryWrapper or "
+                               "EntryWrapperGetter"))
+        self._tasks = []
+
+    def add_task(self, task):
+        """
+        :param task: A TransactionTask subclass containing the logic to invoke.
+        :return: self, for chaining convenience.
+        """
+        if not isinstance(task, TransactionTask):
+            raise ValueError(_("Must supply a valid TransactionTask."))
+        self._tasks.append(task)
+        return self
+
+    @property
+    def wrapper(self):
+        """If you just gotta have the wrapper outside of the transaction."""
+        if not self._wrapper:
+            self._wrapper = self._getter.get()
+        return self._wrapper
+
+    def execute(self):
+        @entry_transaction
+        def _execute(wrapper):
+            update_needed = False
+            for task in self._tasks:
+                # TODO(efried): What if this raises?
+                wrapper = task.execute(wrapper, *task.save_args,
+                                       **task.save_kwargs)
+                if task.update_needed:
+                    update_needed = True
+            if update_needed:
+                wrapper = wrapper.update()
+            return wrapper
+        return _execute(self._wrapper)
