@@ -18,6 +18,7 @@
 
 from pypowervm import exceptions as e
 from pypowervm import util as u
+from pypowervm.utils import retry as pvm_retry
 from pypowervm.utils import uuid
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
@@ -321,6 +322,7 @@ def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
                      _remove_npiv_port_map)
 
 
+@pvm_retry.retry()
 def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
     """Handles the 'mapping' for a given instance.
 
@@ -346,7 +348,6 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
     :return: List of VIOS wrappers on the system.  Includes the newly updated
              VIOSes.
     """
-    # TODO(thorst) add retry logic into this.
     # Get all the VIOSes
     vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
                              child_type=pvm_vios.VIOS.schema_type,
