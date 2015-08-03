@@ -543,8 +543,9 @@ class NetworkBridgerVNET(NetworkBridger):
         on it.
 
         :param nb: The NetBridge to search through.
-        :returns: The LoadGroup within the NetBridge that can support a new
-                  VLAN.  If all are full, will return None.
+        :return: The 'best' LoadGroup within the NetBridge that can support a
+                 new VLAN.  If all are full, will return None.  Best is
+                 determined by 'one with least Virtual Networks'.
         """
         # Never provision to the first load group.  We do this to keep
         # consistency with how projects have done in past.
@@ -552,17 +553,31 @@ class NetworkBridgerVNET(NetworkBridger):
             return None
 
         # Find the load group with the fewest VLANs.
+        avail_count = 0
         cur_lg = None
         ld_grps = nb.load_grps[1:]
         for ld_grp in ld_grps:
-            # If this load group has less than the max, and the 'current'
-            # load group has more VNETs, then this new load group is more
-            # desirable.
-            if (len(ld_grp.vnet_uri_list) < _MAX_VLANS_PER_VEA and
-                    (cur_lg is None or
-                     len(ld_grp.vnet_uri_list) < len(cur_lg.vnet_uri_list))):
-                # The new load group is the new 'current' load group
+            # If there are too many Virtual Networks on this Load Group,
+            # skip to the next.
+            if len(ld_grp.vnet_uri_list) >= _MAX_VLANS_PER_VEA:
+                continue
+
+            avail_count += 1
+
+            # If the load group hasn't been set - OR - this load group has
+            # less than the previously set, update which we'll return
+            if (cur_lg is None or
+                    len(ld_grp.vnet_uri_list) < len(cur_lg.vnet_uri_list)):
                 cur_lg = ld_grp
+
+        # If load balancing is turned on, we have some futher inspection to
+        # do.
+        if nb.load_balance and cur_lg is not None:
+            # If we have only one available, but an odd number of additional,
+            # then we should create a new Load Group to keep the balance.
+            if avail_count == 1 and len(ld_grps) % 2 == 1:
+                return None
+
         return cur_lg
 
     def _find_vnet_uri_from_lg(self, lg, vlan):
@@ -715,16 +730,36 @@ class NetworkBridgerTA(NetworkBridger):
         it.
 
         :param nb: The NetBridge to search through.
-        :returns: A set of trunk adapters that can support the new VLAN.  If
-                  None are found, then None is returned.
+        :return: A set of trunk adapters that can support the new VLAN.  A set
+                 is returned as there may be multiple Virtual I/O Servers that
+                 support it.  Each I/O Server may have a trunk to update.  If
+                 No available Trunk Adapters are found, then None is returned.
         """
         # Find a trunk with the lowest amount of VLANs on it.
         cur_min = None
+        avail_count = 0
         for trunk in nb.seas[0].addl_adpts:
-            if len(trunk.tagged_vlans) < _MAX_VLANS_PER_VEA and (
-                    cur_min is None or
+            # Too many VLANS?  Skip to next.
+            if len(trunk.tagged_vlans) >= _MAX_VLANS_PER_VEA:
+                continue
+
+            # This could definitely support it...
+            avail_count += 1
+
+            # But, is it the best?
+            if (cur_min is None or
                     len(trunk.tagged_vlans) < len(cur_min.tagged_vlans)):
                 cur_min = trunk
+
+        # If load balancing is turned on, and we did find a candidate, further
+        # inspection is needed.
+        if nb.load_balance and cur_min is not None:
+            # If we have only one available, but an odd number of additional,
+            # then we should create a new trunk to keep the balance.
+            if avail_count == 1 and len(nb.seas[0].addl_adpts) % 2 == 1:
+                # So we should just return None to flag to the code to create
+                # a new Trunk Adapter.
+                return None
 
         # Return the trunk list if we have a trunk adapter, otherwise just
         # return None
