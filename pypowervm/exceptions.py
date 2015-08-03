@@ -594,3 +594,12 @@ class ConsoleNotLocal(AbstractMsgFmtError):
 
 class TransactionNoSubtasks(AbstractMsgFmtError):
     msg_fmt = _("Transaction %(name)s has no subtasks!")
+
+
+class AuthFileReadError(AbstractMsgFmtError):
+    msg_fmt = _("Failed to read session file.")
+
+
+class AuthFileReadMismatchOwnerError(AbstractMsgFmtError):
+    msg_fmt = _("Failed to read session file. Process group ID "
+                "%(p_id)d must match file group owner ID %(f_id)d.")
