@@ -18,6 +18,7 @@
 
 import pypowervm.const as c
 import pypowervm.util as u
+import pypowervm.wrappers.common_wrap as cwrap
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 import logging
@@ -87,12 +88,6 @@ _MAX_VCPUS_PER_AIX_LINUX_PARTITION = u.xpath(
 
 _VIOS_LINK = u.xpath("AssociatedVirtualIOServers", c.LINK)
 
-# MTMS XPath constants
-_MTMS_ROOT = 'MachineTypeModelAndSerialNumber'
-_MTMS_MT = 'MachineType'
-_MTMS_MODEL = 'Model'
-_MTMS_SERIAL = 'SerialNumber'
-
 # AssociatedSystemIOConfig constants
 _ASIO_ROOT = 'AssociatedSystemIOConfiguration'
 _ASIO_AVAIL_WWPNS = 'AvailableWWPNs'
@@ -126,7 +121,7 @@ class System(ewrap.EntryWrapper):
 
     @property
     def mtms(self):
-        return MTMS.wrap(self.element.find(_MTMS_ROOT))
+        return cwrap.MTMS.wrap(self.element.find(cwrap.MTMS_ROOT))
 
     @property
     def asio_config(self):
@@ -273,70 +268,6 @@ class System(ewrap.EntryWrapper):
         This is a READ-ONLY list.
         """
         return self.get_href(_VIOS_LINK)
-
-
-@ewrap.ElementWrapper.pvm_type(_MTMS_ROOT, has_metadata=True)
-class MTMS(ewrap.ElementWrapper):
-    """The Machine Type, Model and Serial Number wrapper."""
-
-    @classmethod
-    def bld(cls, adapter, mtms_str):
-        """Creates a new MTMS ElementWrapper.
-
-        If mtms_str is specified, it is parsed first.
-
-        If machine_type, model, and/or serial is specified, their values are
-        used, overriding any parsed values from mtms_str.
-
-        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
-        :param mtms_str: String representation of Machine Type, Model,
-        and Serial
-                     Number.  The format is
-                     Machine Type - Model Number * Serial
-                     Example: 8247-22L*1234567
-        """
-        mtms = super(MTMS, cls)._bld(adapter)
-        mtm, sn = mtms_str.split('*', 1)
-        mt, md = mtm.split('-', 1)
-
-        # Assignment order is significant
-        mtms.machine_type = mt
-        mtms.model = md
-        mtms.serial = sn
-        return mtms
-
-    @property
-    def machine_type(self):
-        return self._get_val_str(_MTMS_MT)
-
-    @machine_type.setter
-    def machine_type(self, mt):
-        self.set_parm_value(_MTMS_MT, mt)
-
-    @property
-    def model(self):
-        return self._get_val_str(_MTMS_MODEL)
-
-    @model.setter
-    def model(self, md):
-        self.set_parm_value(_MTMS_MODEL, md)
-
-    @property
-    def serial(self):
-        return self._get_val_str(_MTMS_SERIAL)
-
-    @serial.setter
-    def serial(self, sn):
-        self.set_parm_value(_MTMS_SERIAL, sn)
-
-    @property
-    def mtms_str(self):
-        """Builds a string representation of the MTMS.
-
-        Does not override default __str__ as that is useful for debug
-        purposes.
-        """
-        return self.machine_type + '-' + self.model + '*' + self.serial
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)
