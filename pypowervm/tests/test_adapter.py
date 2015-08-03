@@ -16,7 +16,13 @@
 
 from lxml import etree
 
+import errno
 import logging
+import six
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
 import unittest
 
 try:
@@ -466,6 +472,18 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('DELETE', ret_delete_value.reqmethod)
         self.assertEqual(204, ret_delete_value.status)
         self.assertEqual(reqpath, ret_delete_value.reqpath)
+
+    @mock.patch.object(builtins, 'open')
+    def test_auth_file_error(self, mock_open_patch):
+        mock_open_patch.side_effect = IOError(errno.EACCES, 'Error')
+        self.assertRaises(pvmex.AuthFileReadError,
+                          self.sess._get_auth_tok_from_file,
+                          mock.Mock(), mock.Mock())
+
+        mock_open_patch.side_effect = IOError(errno.EIO, 'Error')
+        self.assertRaises(pvmex.AuthFileAccessError,
+                          self.sess._get_auth_tok_from_file,
+                          mock.Mock(), mock.Mock())
 
     @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('requests.Session')

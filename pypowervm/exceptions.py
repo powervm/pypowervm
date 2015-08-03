@@ -598,3 +598,16 @@ class WrapperTaskNoSubtasks(AbstractMsgFmtError):
 
 class FeedTaskEmptyFeed(AbstractMsgFmtError):
     msg_fmt = _("FeedTask can't have an empty feed.")
+
+
+class TransactionNoSubtasks(AbstractMsgFmtError):
+    msg_fmt = _("Transaction %(name)s has no subtasks!")
+
+
+class AuthFileReadError(AbstractMsgFmtError):
+    msg_fmt = _("OS unable to read file %(access_file)s.")
+
+
+class AuthFileAccessError(AbstractMsgFmtError):
+    msg_fmt = _("OS able to read file %(access_file)s, but encountered an "
+                "access error.")
