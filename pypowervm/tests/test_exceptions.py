@@ -87,6 +87,7 @@ msg_params = {
     "volume": "volume_param",
     "volume_group_name": "volume_group_name_param",
     "volume_id": "volume_id_param",
+    "access_file": "testfile",
 }
 
 os.environ['LANG'] = 'en_US'
@@ -383,6 +384,10 @@ class2msg = {
     "LUA Discovery Completed with few ITL Error:"
     "Device dev_param Discovered, Status: status_param"
     "Reason: msg_param",
+    pvmex.AuthFileReadError:
+    "OS unable to read file testfile.",
+    pvmex.AuthFileAccessError:
+    "OS able to read file testfile, but encountered an access error.",
 }
 
 
