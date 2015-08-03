@@ -87,6 +87,8 @@ msg_params = {
     "volume": "volume_param",
     "volume_group_name": "volume_group_name_param",
     "volume_id": "volume_id_param",
+    "f_id": 1,
+    "p_id": 2
 }
 
 os.environ['LANG'] = 'en_US'
@@ -383,6 +385,11 @@ class2msg = {
     "LUA Discovery Completed with few ITL Error:"
     "Device dev_param Discovered, Status: status_param"
     "Reason: msg_param",
+    pvmex.AuthFileReadError:
+    "Failed to read session file.",
+    pvmex.AuthFileReadMismatchOwnerError:
+    "Failed to read session file. Process group ID 2 does not match "
+    "file group owner ID 1.",
 }
 
 

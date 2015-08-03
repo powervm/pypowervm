@@ -492,8 +492,17 @@ class Session(object):
                    "response.")
             LOG.error((msg + ' body= %s') % resp.body)
             raise pvmex.Error(msg, response=resp)
-        with open(tokfile_path, 'r') as tokfile:
-            tok = tokfile.read().strip(' \n')
+        try:
+            with open(tokfile_path, 'r') as tokfile:
+                tok = tokfile.read().strip(' \n')
+        except IOError:
+            process_gid = os.getegid()
+            file_gid = os.stat(tokfile_path).st_gid
+            if int(file_gid) != int(process_gid):
+                raise pvmex.AuthFileReadMismatchOwnerError(p_id=process_gid,
+                                                           f_id=file_gid)
+            else:
+                raise pvmex.AuthFileReadError()
         if not tok:
             # TODO(IBM): T9N
             msg = ("Token file %s didn't contain a readable session token." %
