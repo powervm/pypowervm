@@ -20,7 +20,7 @@ import pypowervm.const as pc
 import pypowervm.entities as ent
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.cluster as clust
-import pypowervm.wrappers.managed_system as ms
+import pypowervm.wrappers.common_wrap as cwrap
 import pypowervm.wrappers.storage as stor
 
 CLUSTER_RESP = ('<uom:Cluster xmlns:uom='
@@ -118,7 +118,7 @@ class TestCluster(twrap.TestWrapper):
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')
         # Now try with a MTMS ElementWrapper
-        node._mtms(ms.MTMS.bld(None, '4321-765*0FEDCBA'))
+        node._mtms(cwrap.MTMS.bld(None, '4321-765*0FEDCBA'))
         mtms = node.mtms
         self.assertEqual(mtms.machine_type, '4321')
         self.assertEqual(mtms.model, '765')
