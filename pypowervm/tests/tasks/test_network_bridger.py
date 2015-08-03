@@ -325,10 +325,23 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         self.assertEqual(1, self.adpt.delete_by_href.call_count)
 
     def test_find_available_lg(self):
-        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
         bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
-        lg = bridger._find_available_ld_grp(nb[0])
+        lg = bridger._find_available_ld_grp(nb)
         self.assertIsNotNone(lg)
+
+    def test_find_available_lg_load_balance(self):
+        """Tests finding the Load Group with load balancing enabled."""
+        # Set load balancing to True
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_fo_resp)[0]
+        nb.load_balance = True
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+
+        # Even though there is a free VEA, it should come back as None.  This
+        # is because there is only one free VEA, but we need to balance across
+        # two.
+        lg = bridger._find_available_ld_grp(nb)
+        self.assertIsNone(lg)
 
     def test_find_available_min_lg(self):
         nb = mock.MagicMock()
@@ -497,10 +510,23 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
     def test_find_available_trunks(self):
-        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
-        trunks = bridger._find_available_trunks(nb[0])
+        trunks = bridger._find_available_trunks(nb)
         self.assertIsNotNone(trunks)
+
+    def test_find_available_trunks_load_balance(self):
+        """Tests finding the trunk with load balancing enabled."""
+        # Set load balancing to True
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_fo_resp)[0]
+        nb.load_balance = True
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+
+        # Even though there is a free VEA, it should come back as None.  This
+        # is because there is only one free VEA, but we need to balance across
+        # two.
+        trunks = bridger._find_available_trunks(nb)
+        self.assertIsNone(trunks)
 
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA._trunk_list')
     def test_find_available_min_trunk(self, mock_trunk_list):
