@@ -19,6 +19,7 @@ import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
 import pypowervm.wrappers.managed_system as ms
+import pypowervm.wrappers.mtms as mtmwrap
 
 _MS_HTTPRESP_FILE = "managedsystem.txt"
 _MC_HTTPRESP_FILE = "managementconsole.txt"
@@ -206,7 +207,7 @@ class TestMSEntryWrapper(unittest.TestCase):
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
-        mtms = ms.MTMS.bld(None, '1234-567*ABCDEF0')
+        mtms = mtmwrap.MTMS.bld(None, '1234-567*ABCDEF0')
         self.assertEqual(mtms.machine_type, '1234')
         self.assertEqual(mtms.model, '567')
         self.assertEqual(mtms.serial, 'ABCDEF0')

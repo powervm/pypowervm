@@ -20,7 +20,7 @@ import logging
 
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
-import pypowervm.wrappers.managed_system as ms
+import pypowervm.wrappers.mtms as mtmwrap
 import pypowervm.wrappers.storage as stor
 
 LOG = logging.getLogger(__name__)
@@ -43,9 +43,8 @@ _N_NAME = 'PartitionName'
 _N_VIOS_LINK = 'VirtualIOServer'
 _N_VIOS_LEVEL = 'VirtualIOServerLevel'
 _N_IPADDR = 'IPAddress'
-_N_MTMS = ms.MTMS.schema_type
-_N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, _N_MTMS, _N_VIOS_LEVEL,
-               _N_VIOS_LINK, _N_IPADDR)
+_N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, mtmwrap.MTMS_ROOT,
+               _N_VIOS_LEVEL, _N_VIOS_LINK, _N_IPADDR)
 
 
 @ewrap.EntryWrapper.pvm_type('Cluster', child_order=_CL_EL_ORDER)
@@ -157,7 +156,7 @@ class Node(ewrap.ElementWrapper):
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param hostname: String hostname (or IP) of the Node.
         :param lpar_id: Integer LPAR ID of the Node.
-        :param mtms: String OR managed_system.MTMS wrapper representing the
+        :param mtms: String OR mtms.MTMS wrapper representing the
                      Machine Type, Model, and Serial Number of the system
                      hosting the VIOS.  String format: 'MT-M*S'
                      e.g. '8247-22L*1234A0B'.
@@ -192,16 +191,16 @@ class Node(ewrap.ElementWrapper):
     @property
     def mtms(self):
         """MTMS Element wrapper of the system hosting the Node (VIOS)."""
-        return ms.MTMS.wrap(self._find(_N_MTMS))
+        return mtmwrap.MTMS.wrap(self._find(mtmwrap.MTMS_ROOT))
 
     def _mtms(self, new_mtms):
         """Sets the MTMS of the Node.
 
         :param new_mtms: May be either a string of the form 'MT-M*S' or a
-                         managed_system.MTMS ElementWrapper.
+                         mtms.MTMS ElementWrapper.
         """
-        if not isinstance(new_mtms, ms.MTMS):
-            new_mtms = ms.MTMS.bld(self.adapter, new_mtms)
+        if not isinstance(new_mtms, mtmwrap.MTMS):
+            new_mtms = mtmwrap.MTMS.bld(self.adapter, new_mtms)
         self.inject(new_mtms.element)
 
     @property
