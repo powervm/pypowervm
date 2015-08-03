@@ -1,0 +1,70 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh managementconsole_ssh.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': 'passw0rd', 'reason': 'OK', 'host': '9.0.0.0', 'user': 'user', 'path': 'ManagementConsole'}
+END OF SECTION}
+HEADERS{
+{'content-length': '3708', 'x-transactionrecord-uuid': 'bd503387-b39b-4beb-868d-e592d85fad7a', 'x-powered-by': 'Servlet/3.1', 'set-cookie': 'JSESSIONID=0000_auvgCDt_q2sam9gdGIGdw7:2e950dd3-ffe7-465a-89be-2872724aef38; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_3_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Mon, 03 Aug 2015 14:25:48 GMT', 'x-transaction-id': 'XT10000048', 'etag': '1373645757', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Mon, 03 Aug 2015 14:25:48 GMT', 'x-mc-type': 'PVM', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>c9d6068f-6a1d-390c-bf6c-c8b60a068a14</id>
+    <updated>2015-08-03T10:25:48.292-04:00</updated>
+    <link rel="SELF" href="https://9.0.0.0:12443/rest/api/uom/ManagementConsole?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>8ce93bce-da59-368e-b840-3182589dec00</id>
+        <title>ManagementConsole</title>
+        <published>2015-08-03T10:25:48.482-04:00</published>
+        <link rel="SELF" href="https://9.0.0.0:12443/rest/api/uom/ManagementConsole/8ce93bce-da59-368e-b840-3182589dec00?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1373645726</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=ManagementConsole">
+            <ManagementConsole:ManagementConsole xmlns:ManagementConsole="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8ce93bce-da59-368e-b840-3182589dec00</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MachineTypeModelAndSerialNumber kxe="false" kb="ROR" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8247</MachineType>
+        <Model kb="CUR" kxe="false">21L</Model>
+        <SerialNumber kb="CUR" kxe="false">212A63A</SerialNumber>
+    </MachineTypeModelAndSerialNumber>
+    <ManagedFrames kb="CUD" kxe="false"/>
+    <ManagedSystems kb="CUD" kxe="false"/>
+    <ManagementConsoleName kxe="false" kb="CUR">localhost</ManagementConsoleName>
+    <NetworkInterfaces kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </NetworkInterfaces>
+    <PowerEnterprisePools kxe="false" kb="CUD"/>
+    <PublicSSHKey ksv="V1_3_0" kb="ROO" kxe="false">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuA/Av0jMYlG54YiaaaQXho8iOZfY+WkBnuFfweESZOy824Ce9FvPqXsNL+nPAgKWG3TONwJldYgCgnBsFXUizkcne9Dt/T/zs2Bzl7b1YPrXyYS1hxKFrV/pYEERUiFa9ppR+M8mxdNYO0+ph356LO3mbxOM6nEZ1L6l6RUvbUwV9Zuw3Hpiz1lAV6d6EwMHJZ+WFlipJ2wxpM4QUKmb0V2UJoHAb7tp3zipr3CCo0NtnpcD7wxsFhtz2ccRvNMbGhe1i9KikmBtQQDl1adMSbBL2+tGmyqHNq/H6d75bfXOUCl7NKtUq7VVGcXDOlTS1CDdLdmUn0l4z0AlyciQt wlp@9.0.0.0
+</PublicSSHKey>
+    <AuthorizedKeys ksv="V1_3_0" kxe="false" kb="ROO" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AuthorizedKey>ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyl3+yXyoYAzvScxTiWqxe0PDwYvTHwLsIkgAY7s7n+8tUR7zA0dYWggl4aCfOAE2RMF0zKoFyRK8a9M/I1kVCYLb9y1rWp76jnxZpRBD/1DjjQ0qW5e1fbdrS52mJcFLL1+MzeoLT7+6GeMUcgNrmZQMUqSbwF+Rdxv56YTdx9u0EH1qaT/H0syp1Y8EHCaBVwdZcmNQLBFaYnVxHNHTQMYMTqokkyrZ9whSaK98OiYQO//5gnJzESOxOURYTzLKLz8WPkiONM6QgF+E5Zobt/REr3Tq8l1e1V/e2+7owFkMMte14I2sfK8QnZUrpJziXv3gwOpUP34gDud6ceBlv wlp@9.0.0.0</AuthorizedKey>
+        <AuthorizedKey>ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3shE8yLGII+BPaPMIOdNgA6ZyDYKobCtXE6td8X9dgI0Sz08YCUQY9pOeWr/D63LwJaYsgqVspQaUEM5WH6s2eNKAERYayog6iCEaqApDDQETuf4XQ0JXo08izRPpMeRZwp3/RhNJVrxNheUp9nkHI3Mbx7jHvgwih48BTeqfj8L1Nnp4srhYDuzuN6NhUvbWLKJAjaQojRLSYEtys5ASq7v+D+OEXqVBSRheKf5eWOdEF68sBYpOaS4qLycZjd5YGPUg0b+DfME2jr8kjbig1js8omgljSvKIwHIKfrfWPwKbWxtHaqWzTT+fUPygD7IDxPqsSEQIAjNPWmWQM+D wlp@9.0.0.0</AuthorizedKey>
+    </AuthorizedKeys>
+
+</ManagementConsole:ManagementConsole>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
