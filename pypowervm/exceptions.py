@@ -594,3 +594,7 @@ class ConsoleNotLocal(AbstractMsgFmtError):
 
 class TransactionNoSubtasks(AbstractMsgFmtError):
     msg_fmt = _("Transaction %(name)s has no subtasks!")
+
+
+class FeedManagerEmptyFeed(AbstractMsgFmtError):
+    msg_fmt = _("FeedManager can't have an empty feed.")
