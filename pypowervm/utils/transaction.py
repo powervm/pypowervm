@@ -17,6 +17,8 @@
 import abc
 import oslo_concurrency.lockutils as lock
 import six
+from taskflow import engines as tf_eng
+from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
 
 import pypowervm.exceptions as ex
@@ -286,3 +288,47 @@ class Transaction(tf_task.BaseTask):
             return wrapper
         # Use the wrapper if already fetched, or the getter if not
         return _execute(self._wrapper or self._getter)
+
+
+class Manager(object):
+    """Will build a set of transactions and run them in parallel.
+
+    The Manager class is useful if working against a feed (or simply several
+    independent objects).  The Manager will act as a container for the
+    Transactions and execute them in parallel.
+    """
+
+    def __init__(self, wrappers_or_getters):
+        """Creates the manager.
+
+        :param wrappers_or_getters: A list/set of pypowervm EntryWrapper's or
+                     EntryWrapperGetter's.  The Manager will build one
+                     Transaction per element.
+        """
+        self.transactions = {x.uuid: Transaction(x)
+                             for x in wrappers_or_getters}
+
+    def get(self, uuid):
+        """Returns the Transaction for a given UUID.
+
+        :param uuid: The UUID of the entry.
+        :return: The Transaction for the given UUID.  Must have been input into
+                 the Manager upon creation.
+        """
+        return self.transactions.get(uuid)
+
+    def execute(self):
+        """Runs all of the transactions in parallel.
+
+        :return: The updated Wrappers for the transactions.
+        """
+        unordered_flow = tf_uf.Flow("parallel_transactions")
+        for tx in self.transactions:
+            unordered_flow.add(tx)
+
+        # Run the updates in parallel
+        tf_engine = tf_eng.load(unordered_flow, engine='parallel',
+                                max_workers=4)
+        tf_engine.run()
+
+        return [x.wrapper for x in self.transactions]
