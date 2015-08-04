@@ -1017,7 +1017,7 @@ class TestEntryWrapperGetter(twrap.TestWrapper):
     wrapper_class_to_test = lpar.LPAR
 
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
-    def test_entry_wrapper_get_spec(self, mock_refresh):
+    def test_entry_wrapper_getter(self, mock_refresh):
         self.adpt.read.return_value = self.dwrap.entry
         mock_refresh.return_value = self.dwrap
         # ROOT
@@ -1046,8 +1046,9 @@ class TestEntryWrapperGetter(twrap.TestWrapper):
 
         # CHILD, use the EntryWrapper.getter classmethod, use xags
         getter = lpar.LPAR.getter(
-            self.adpt, 'lpar_uuid', parent_class=stor .VDisk,
+            self.adpt, 'lpar_uuid', parent_class=stor.VDisk,
             parent_uuid='parent_uuid', xag=['one', 'two'])
+        self.assertIsInstance(getter, ewrap.EntryWrapperGetter)
         self.assertEqual('lpar_uuid', getter.uuid)
         lwrap = getter.get()
         self.assertIsInstance(lwrap, lpar.LPAR)
@@ -1060,6 +1061,52 @@ class TestEntryWrapperGetter(twrap.TestWrapper):
                           lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk)
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_uuid='parent_uuid')
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
+    def test_feed_getter(self, mock_refresh):
+        self.adpt.read.return_value = self.resp
+        feediter = iter(self.entries)
+        mock_refresh.side_effect = lambda: next(feediter)
+        # ROOT
+        getter = ewrap.FeedGetter(self.adpt, lpar.LPAR)
+        lfeed = getter.get()
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_called_with(
+            'LogicalPartition', None, child_id=None, child_type=None, xag=None)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(0, mock_refresh.call_count)
+        # Second get doesn't re-read
+        lfeed = getter.get()
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(0, mock_refresh.call_count)
+        # get with refresh refreshes all 21 wrappers (but doesn't call read)
+        lfeed = getter.get(refresh=True)
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(21, mock_refresh.call_count)
+        # get with refetch calls read, not refresh
+        lfeed = getter.get(refetch=True)
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(2, self.adpt.read.call_count)
+        self.adpt.read.assert_called_with(
+            'LogicalPartition', None, child_id=None, child_type=None, xag=None)
+        self.assertEqual(21, mock_refresh.call_count)
+
+        # CHILD, use the EntryWrapper.getter classmethod, use xags
+        getter = lpar.LPAR.getter(self.adpt, parent_class=stor.VDisk,
+                                  parent_uuid='p_uuid', xag=['one', 'two'])
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_called_with(
+            'VirtualDisk', 'p_uuid', child_type='LogicalPartition',
+            child_id=None, xag=['one', 'two'])
 
 if __name__ == '__main__':
     unittest.main()

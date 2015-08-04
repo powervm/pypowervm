@@ -592,5 +592,9 @@ class ConsoleNotLocal(AbstractMsgFmtError):
                 "the PowerVM API.")
 
 
-class TransactionNoSubtasks(AbstractMsgFmtError):
-    msg_fmt = _("Transaction %(name)s has no subtasks!")
+class WrapperTaskNoSubtasks(AbstractMsgFmtError):
+    msg_fmt = _("WrapperTask %(name)s has no subtasks!")
+
+
+class FeedTaskEmptyFeed(AbstractMsgFmtError):
+    msg_fmt = _("FeedTask can't have an empty feed.")
