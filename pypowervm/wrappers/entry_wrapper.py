@@ -483,15 +483,22 @@ class EntryWrapper(Wrapper):
         self._etag = etag
 
     @classmethod
-    def getter(cls, adapter, entry_uuid, parent_class=None, parent_uuid=None,
-               xag=None):
-        """Return an EntryWrapperGetter for this EntryWrapper type.
+    def getter(cls, adapter, entry_uuid=None, parent_class=None,
+               parent_uuid=None, xag=None):
+        """Return EntryWrapperGetter or FeedGetter for this EntryWrapper type.
 
         Parameters are the same as described by EntryWrapperGetter.__init__
+        If entry_uuid is None, a FeedGetter is returned.  Otherwise, an
+        EntryWrapperGetter is returned.
         """
-        return EntryWrapperGetter(
-            adapter, cls, entry_uuid, parent_class=parent_class,
-            parent_uuid=parent_uuid, xag=xag)
+        if entry_uuid is None:
+            return FeedGetter(
+                adapter, cls, parent_class=parent_class,
+                parent_uuid=parent_uuid, xag=xag)
+        else:
+            return EntryWrapperGetter(
+                adapter, cls, entry_uuid, parent_class=parent_class,
+                parent_uuid=parent_uuid, xag=xag)
 
     @classmethod
     def _bld(cls, adapter, tag=None, has_metadata=None, ns=None, attrib=None):
@@ -1079,7 +1086,8 @@ class EntryWrapperGetter(object):
     """Attribute container with enough information to GET an EntryWrapper.
 
     An instance of this class can be used to defer the REST call which fetches
-    a PowerVM object.  This will typically be used as the first parameter to a
+    a PowerVM object.  This will typically be used to initialize a
+    pypowervm.utils.transaction.WrapperTask, or as the first parameter to a
     method decorated as pypowervm.utils.transaction.entry_transaction, allowing
     that method to acquire a lock before performing the GET, thus minimizing
     the probability of out-of-band changes resulting in etag mismatch and
@@ -1110,7 +1118,7 @@ class EntryWrapperGetter(object):
         self.parent_class = parent_class
         self.parent_uuid = parent_uuid
         self.xag = xag
-        self.entry = None
+        self.cache = None
 
     def get(self, refresh=False):
         """Return the EntryWrapper indicated by this instance.
@@ -1125,10 +1133,10 @@ class EntryWrapperGetter(object):
                         returned.  If False (the default), it is returned
                         without refreshing.  If the specified EntryWrapper had
                         not yet been retrieved, this parameter has no effect.
-        :return: The EntryWrapper specified by this ENtryWrapperGetSpec
+        :return: The EntryWrapper specified by this EntryWrapperGetter
                  instance.
         """
-        if self.entry is None:
+        if self.cache is None:
             if self.parent_class:
                 root_type = self.parent_class.schema_type
                 root_id = self.parent_uuid
@@ -1139,12 +1147,12 @@ class EntryWrapperGetter(object):
                 root_id = self.entry_uuid
                 child_type = None
                 child_id = None
-            self.entry = self.entry_class.wrap(self.adapter.read(
+            self.cache = self.entry_class.wrap(self.adapter.read(
                 root_type, root_id, child_type=child_type, child_id=child_id,
                 xag=self.xag))
         elif refresh:
-            self.entry = self.entry.refresh()
-        return self.entry
+            self.cache = self.cache.refresh()
+        return self.cache
 
     @property
     def uuid(self):
@@ -1153,3 +1161,78 @@ class EntryWrapperGetter(object):
         This mainly exists so we can ask for wrapper_or_spec.uuid.
         """
         return self.entry_uuid
+
+
+class FeedGetter(EntryWrapperGetter):
+    """Attribute container with enough information to GET an EntryWrapper feed.
+
+    An instance of this class can be used to defer the REST call which fetches
+    a feed of PowerVM objects (a list of EntryWrapper).  This will typically be
+    used to initialize a pypowervm.utils.transaction.FeedTask, allowing the
+    FeedTask to defer the GET as long as possible, thus minimizing the
+    probability of out-of-band changes resulting in etag mismatch and requiring
+    a retry.
+    """
+    def __init__(self, adapter, entry_class, parent_class=None,
+                 parent_uuid=None, xag=None):
+        """Create a GET specification for an EntryWrapper feed.
+
+        :param adapter: A pypowervm.adapter.Adapter instance through which the
+                        GET can be performed.
+        :param entry_class: An EntryWrapper subclass indicating the type of the
+                            feed to GET.
+        :param parent_class: If the target object type is CHILD, this param is
+                             the EntryWrapper subclass of its parent object
+                             type.
+        :param parent_uuid: If the target object type is CHILD, this param is
+                            the UUID of its parent object.
+        :param xag: List of extended attribute groups to request on the feed.
+        """
+        # Using entry_uuid=None will cause the GET to fetch the feed.
+        super(FeedGetter, self).__init__(
+            adapter, entry_class, None, parent_class=parent_class,
+            parent_uuid=parent_uuid, xag=xag)
+
+    def get(self, refresh=False, refetch=False):
+        """Return the feed (list of EntryWrappers) indicated by this instance.
+
+        If the feed has not yet been retrieved, it is fetched via GET from the
+        REST API.  Thereafter, it is cached.  Subsequent calls to this
+        method will return the cached copy unless refresh or refetch is
+        specified.
+
+        The refresh option, if True, will cause each entry in the feed to be
+        refreshed if previously cached.  The refetch option, if True, will
+        cause the feed to be refetched as a whole.
+
+        Note: due to the design of the REST server, refetch will generally
+        perform better than refresh.
+
+        :param refresh: (Optional) If True, and the specified feed was
+                        previously retrieved, each entry therein is refreshed
+                        before the feed is returned.  If the specified feed had
+                        not yet been retrieved, this parameter has no effect.
+                        If both refresh and refetch are True, refresh takes
+                        precedence.
+        :param refetch: (Optional) If True, a fresh GET of the entire feed is
+                        performed, regardless of whether the feed was fetched
+                        and cached previously.
+                        If both refresh and refetch are True, refresh takes
+                        precedence.
+        :return: The feed (list of EntryWrappers) specified by this FeedGetter
+                 instance.
+        """
+        # Note: self.cache is the feed (list of EntryWrapper) in the context of
+        # this subclass.  Therefore, the superclass's concept of 'refresh' is
+        # no good (it would be trying [ewrap, ...].refresh()).
+        if refresh and self.cache is not None:
+            new_feed = [ewrap.refresh() for ewrap in self.cache]
+            self.cache = new_feed
+            return self.cache
+
+        # To refetch, simply wipe the cache before super.get().
+        if refetch:
+            self.cache = None
+
+        # Never, never call super.get(refresh=True).
+        return super(FeedGetter, self).get(refresh=False)
