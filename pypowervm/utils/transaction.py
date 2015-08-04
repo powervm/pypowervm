@@ -17,6 +17,7 @@
 import abc
 import oslo_concurrency.lockutils as lock
 import six
+from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
 
 import pypowervm.exceptions as ex
@@ -142,6 +143,23 @@ class Subtask(object):
         """
 
 
+class _FunctorSubtask(Subtask):
+    """Shim to create a Subtask around an existing callable."""
+    def __init__(self, _func, *save_args, **save_kwargs):
+        """Save the callable as well as the arguments.
+
+        :param _func: Callable to be invoked under the Transaction.
+        :param save_args: See Subtask.__init__(save_args).
+        :param save_kwargs: See Subtask.__init__(save_kwargs).
+        """
+        super(_FunctorSubtask, self).__init__(*save_args, **save_kwargs)
+        self._func = _func
+
+    def execute(self, wrapper, *_args, **_kwargs):
+        """Invoke saved callable with saved args."""
+        return self._func(wrapper, *_args, **_kwargs)
+
+
 class Transaction(tf_task.BaseTask):
     """An atomic modify-and-POST transaction Task over a single EntryWrapper.
 
@@ -169,7 +187,7 @@ class Transaction(tf_task.BaseTask):
                 update_needed = True
             return update_needed
     ...
-    tx = Transaction("do_lpar_things", LPAR.getter(lpar_uuid))
+    tx = Transaction("do_lpar_things", LPAR.getter(adapter, lpar_uuid))
     ...
     tx.add_subtask(ModifyGizmos([giz1, giz2]))
     ...
@@ -177,7 +195,16 @@ class Transaction(tf_task.BaseTask):
     ...
     finalized_lpar = tx.execute()
     """
-    def __init__(self, name, wrapper_or_getter):
+    def __init__(self, name, wrapper_or_getter, subtasks=None):
+        """Initialize this Transaction.
+
+        :param name: A descriptive string name for the transaction.
+        :param wrapper_or_getter: An EntryWrapper or EntryWrapperGetter
+                                  representing the PowerVM object on which this
+                                  Transaction is to be performed.
+        :param subtasks: (Optional) A list of Subtask subclass instances with
+                         which to seed this Transaction.
+        """
         super(Transaction, self).__init__(name)
         if isinstance(wrapper_or_getter, ewrap.EntryWrapperGetter):
             self._wrapper = None
@@ -188,7 +215,7 @@ class Transaction(tf_task.BaseTask):
         else:
             raise ValueError(_("Must supply either EntryWrapper or "
                                "EntryWrapperGetter"))
-        self._tasks = []
+        self._tasks = [] if subtasks is None else subtasks
         self.provides = 'wrapper_%s' % wrapper_or_getter.uuid
 
     def add_subtask(self, task):
@@ -206,23 +233,6 @@ class Transaction(tf_task.BaseTask):
         self._tasks.append(task)
         return self
 
-    class _FunctorSubtask(Subtask):
-        """Shim to create a Subtask around an existing callable."""
-        def __init__(self, _func, *save_args, **save_kwargs):
-            """Save the callable as well as the arguments.
-
-            :param _func: Callable to be invoked under the Transaction.
-            :param save_args: See Subtask.__init__(save_args).
-            :param save_kwargs: See Subtask.__init__(save_kwargs).
-            """
-            super(Transaction._FunctorSubtask, self).__init__(
-                *save_args, **save_kwargs)
-            self._func = _func
-
-        def execute(self, wrapper, *_args, **_kwargs):
-            """Invoke saved callable with saved args."""
-            return self._func(wrapper, *_args, **_kwargs)
-
     def add_functor_subtask(self, func, *args, **kwargs):
         """Create and add a Subtask for an already-defined method.
 
@@ -236,7 +246,7 @@ class Transaction(tf_task.BaseTask):
                        it is executed within the Transaction.
         :return: self, for chaining convenience.
         """
-        return self.add_subtask(self._FunctorSubtask(func, *args, **kwargs))
+        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
 
     @property
     def wrapper(self):
@@ -251,6 +261,11 @@ class Transaction(tf_task.BaseTask):
         if not self._wrapper:
             self._wrapper = self._getter.get()
         return self._wrapper
+
+    @property
+    def subtasks(self):
+        """Return the sequence of Subtasks registered with this Transaction."""
+        return self._tasks
 
     def execute(self):
         """Invoke subtasks and update under @entry_transaction.
@@ -280,4 +295,130 @@ class Transaction(tf_task.BaseTask):
                 wrapper = wrapper.update()
             return wrapper
         # Use the wrapper if already fetched, or the getter if not
-        return _execute(self._wrapper or self._getter)
+        self._wrapper = _execute(self._wrapper or self._getter)
+        return self._wrapper
+
+
+class FeedManager(object):
+    """Invokes Transactions in parallel over each EntryWrapper in a feed.
+
+    Usage:
+    fm = FeedManager('lpar_frobnicate', LPAR.getter(adapter))
+    fm.add_subtask(FrobnicateLpar(foo, bar))
+    for uuid, txn in fm.transactions:
+        if uuid == saved_uuid:
+            txn.add_subtask(FrobnicateLpar(baz, blah))
+    fm.add_functor_subtask(frobnify, abc, xyz)
+
+    taskflow.engines.load(fm.flow, engine='parallel', max_workers=10).run()
+    """
+    def __init__(self, name, feed_or_getter):
+        """Set up the FeedManager with a feed or FeedGetter.
+
+        :param name: A descriptive string name.  This will be used along with
+                     each wrapper's UUID to generate the name for that
+                     wrapper's Transaction.
+        :param feed_or_getter: pypowervm.wrappers.entry_wrapper.FeedGetter or
+                               an already-fetched feed (list of EntryWrappers)
+                               over which to operate.
+        """
+        self._name = name
+        if isinstance(feed_or_getter, ewrap.FeedGetter):
+            self._feed = None
+            self._getter = feed_or_getter
+        elif isinstance(feed_or_getter, list):
+            # Make sure the feed has something in it.
+            if len(feed_or_getter) == 0:
+                # TODO(reviewer): Do we really want to disallow this?
+                raise ValueError(_("Refusing to set up a FeedManager on an "
+                                   "empty feed."))
+            # Make sure it's a list of EntryWrapper
+            if [i for i in feed_or_getter
+                    if not isinstance(i, ewrap.EntryWrapper)]:
+                raise ValueError("List must contain EntryWrappers "
+                                 "exclusively.")
+            self._feed = feed_or_getter
+            self._getter = None
+        else:
+            raise ValueError(_("Must supply either a list of EntryWrappers or "
+                               "a FeedGetter."))
+        self._tx_by_uuid = {}
+        # Until we *need* to get the feed, save subtasks in one place.  The
+        # EntryWrapperGetter is a cheat to allow us to build the Transaction.
+        self._common_tx = Transaction(
+            'internal', ewrap.EntryWrapperGetter(None, None, None))
+
+    def _replicate_transactions(self):
+        if self._tx_by_uuid:
+            return
+        for entry in self.feed:
+            name = '%s_%s' % (self._name, entry.uuid)
+            self._tx_by_uuid[entry.uuid] = Transaction(
+                name, entry, subtasks=self._common_tx.subtasks)
+
+    @property
+    def transactions(self):
+        """Dictionary of {uuid: Transaction} for all wrappers.
+
+        The first access of this property triggers a GET of the feed if it has
+        not already been fetched, so use judiciously.
+        """
+        self._replicate_transactions()
+        return self._tx_by_uuid
+
+    def add_subtask(self, task):
+        """Add a Subtask to *all* Transactions in this FeedManager.
+
+        To add Subtasks to individual Transactions, iterate over the result of
+        the 'transactions' property.
+
+        Specification is the same as for Transaction.add_subtask.
+        """
+        if self._tx_by_uuid:
+            # _tx_by_uuid is guaranteed to have transactions for all UUIDs,
+            # including this one
+            for txn in self._tx_by_uuid.values():
+                txn.add_subtask(task)
+        else:
+            self._common_tx.add_subtask(task)
+        return self
+
+    def add_functor_subtask(self, func, *args, **kwargs):
+        """Add a functor Subtask to *all* Transactions in this FeedManager.
+
+        To add Subtasks to individual Transactions, iterate over the result of
+        the 'transactions' property.
+
+        Specification is the same as for Transaction.add_functor_subtask.
+        """
+        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
+
+    @property
+    def feed(self):
+        """(Fetches and) returns the feed associated with this FeedManager.
+
+        The first access of this property triggers a GET of the feed if it has
+        not already been fetched, so use this only if you need the
+        EntryWrappers outside of the execution itself.
+        """
+        # TODO(efried) you can't yet use this to retrieve the updated feed
+        # after running the flow generated by the 'flow' property.  Should be
+        # able to fix that.
+        if self._feed is None:
+            self._feed = self._getter.get()
+        if len(self._feed) == 0:
+            # TODO(reviewer): Do we really want to disallow this?
+            raise ValueError("Can't use a FeedManager on an empty feed.")
+        return self._feed
+
+    @property
+    def flow(self):
+        """Build an unordered TaskFlow Flow with all the Transactions.
+
+        This may be added to a 'parallel' engine to permit Transactions to
+        execute simultaneously.
+        """
+        # TODO(efried): Cache this?  Would we have to freeze the Transactions?
+        flow = tf_uf.Flow(self._name)
+        flow.add(self.transactions.values())
+        return flow
