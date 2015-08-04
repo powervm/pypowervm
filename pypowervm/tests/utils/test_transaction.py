@@ -16,80 +16,25 @@
 
 """Tests for pypoowervm.utils.transaction."""
 
-import fixtures
+import copy
 import mock
-import six
+import oslo_concurrency.lockutils as lock
 
 import pypowervm.const as c
 import pypowervm.exceptions as ex
+import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
 
-# Thread locking primitives are located slightly differently in py2 vs py3
-SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')
-SEM_EXIT = 'threading.%sSemaphore.__exit__' % ('_' if six.PY2 else '')
 
-
-class TransactionFx(fixtures.Fixture):
-    """Mocking and pseudo-logging for transaction primitives."""
-    def __init__(self, wrapper):
-        self._tx_log = []
-        self._wrapper = wrapper
-        self.get_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
-                                'EntryWrapperGetter.get')
-        self.refresh_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
-                                    'EntryWrapper.refresh')
-        self.enter_p = mock.patch(SEM_ENTER)
-        self.exit_p = mock.patch(SEM_EXIT)
-
-    def setUp(self):
-        super(TransactionFx, self).setUp()
-        self.reset_log()
-
-        # EntryWrapper.refresh()
-        def _refresh():
-            self.log('refresh')
-            return self._wrapper
-        mock_refresh = self.refresh_p.start()
-        mock_refresh.side_effect = _refresh
-        self.addCleanup(self.refresh_p.stop)
-
-        # EntryWrapper.get()
-        def _getter_get():
-            self.log('get')
-            return self._wrapper
-        mock_get = self.get_p.start()
-        mock_get.side_effect = _getter_get
-        self.addCleanup(self.get_p.stop)
-
-        # lockutils lock
-        mock_lock = self.enter_p.start()
-        mock_lock.side_effect = lambda *a, **k: self.log('lock')
-        self.addCleanup(self.enter_p.stop)
-
-        # lockutils unlock
-        mock_unlock = self.exit_p.start()
-        mock_unlock.side_effect = lambda *a, **k: self.log('unlock')
-        self.addCleanup(self.exit_p.stop)
-
-    def get_log(self):
-        return self._tx_log
-
-    def log(self, val):
-        self._tx_log.append(val)
-
-    def reset_log(self):
-        self._tx_log = []
-
-
-class TestTransaction(twrap.TestWrapper):
+class TestWrapperTask(twrap.TestWrapper):
     file = 'lpar.txt'
     wrapper_class_to_test = lpar.LPAR
 
     def setUp(self):
-        super(TestTransaction, self).setUp()
+        super(TestWrapperTask, self).setUp()
         self.getter = lpar.LPAR.getter(self.adpt, 'getter_uuid')
         # Set this up for getter.get()
         self.adpt.read.return_value = self.dwrap.entry
@@ -166,7 +111,7 @@ class TestTransaction(twrap.TestWrapper):
         while the method raises etag error, refresh the wrapper and re-invoke
         unlock
         """
-        txfx = self.useFixture(TransactionFx(self.dwrap))
+        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
 
         @tx.entry_transaction
         def foo(wrapper_or_getter):
@@ -188,7 +133,7 @@ class TestTransaction(twrap.TestWrapper):
 
     @staticmethod
     def tx_subtask_invoke(tst, wrapper):
-        """Simulates how Subtasks are invoked by Transaction.
+        """Simulates how Subtasks are invoked by WrapperTask.
 
         :param tst: A Subtask
         :param wrapper: The wrapper with which to invoke execute()
@@ -196,7 +141,7 @@ class TestTransaction(twrap.TestWrapper):
         """
         return tst.execute(wrapper, *tst.save_args, **tst.save_kwargs)
 
-    def test_transaction_subtask(self):
+    def test_wrapper_task_subtask(self):
         """Tests around Subtask."""
         # Same name, should result in no changes and no update_needed
         txst1 = self.LparNameAndMem('z3-9-5-126-127-00000001')
@@ -219,7 +164,7 @@ class TestTransaction(twrap.TestWrapper):
         self.assertEqual('newer-name', self.dwrap.name)
         self.assertEqual(1024, self.dwrap.mem_config.desired)
 
-    def test_transaction_subtask_returns(self):
+    def test_wrapper_task_subtask_returns(self):
         """Test that execute methods' return values are processed properly."""
         # Use internal _FunctorSubtask to make this easier.  Bonus: testing
         # _FunctorSubtask at the same time.
@@ -229,20 +174,20 @@ class TestTransaction(twrap.TestWrapper):
             return boolable
 
         # Various valid 'False' boolables - update not needed
-        falsable = (0, '', [], {}, False)
-        for falsable in falsable:
-            txst = tx.Transaction._FunctorSubtask(returns_second_arg, falsable)
+        falseables = (0, '', [], {}, False)
+        for falseable in falseables:
+            txst = tx._FunctorSubtask(returns_second_arg, falseable)
             self.assertFalse(self.tx_subtask_invoke(txst, self.dwrap))
 
         # Various valid 'True' boolables - update needed
-        truables = (1, 'string', [0], {'k': 'v'}, True)
-        for truable in truables:
-            txst = tx.Transaction._FunctorSubtask(returns_second_arg, truable)
+        trueables = (1, 'string', [0], {'k': 'v'}, True)
+        for trueable in trueables:
+            txst = tx._FunctorSubtask(returns_second_arg, trueable)
             self.assertTrue(self.tx_subtask_invoke(txst, self.dwrap))
 
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
-    def test_transaction1(self, mock_update):
-        txfx = self.useFixture(TransactionFx(self.dwrap))
+    def test_wrapper_task1(self, mock_update):
+        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
 
         def _update():
             txfx.log('update')
@@ -252,16 +197,16 @@ class TestTransaction(twrap.TestWrapper):
         mock_update.side_effect = _update
 
         # Must supply a wrapper or getter to instantiate
-        self.assertRaises(ValueError, tx.Transaction, 'foo', 'bar')
+        self.assertRaises(ValueError, tx.WrapperTask, 'foo', 'bar')
 
-        # Create a valid Transaction
-        tx1 = tx.Transaction('tx1', self.getter)
+        # Create a valid WrapperTask
+        tx1 = tx.WrapperTask('tx1', self.getter)
         self.assertEqual('tx1', tx1.name)
         self.assertEqual('wrapper_getter_uuid', tx1.provides)
         # Nothing has been run yet
         self.assertEqual([], txfx.get_log())
         # Try running with no subtasks
-        self.assertRaises(ex.TransactionNoSubtasks, tx1.execute)
+        self.assertRaises(ex.WrapperTaskNoSubtasks, tx1.execute)
         # Try adding something that isn't a Subtask
         self.assertRaises(ValueError, tx1.add_subtask, 'Not a Subtask')
         # Error paths don't run anything.
@@ -289,7 +234,6 @@ class TestTransaction(twrap.TestWrapper):
             'get', 'lock', 'LparNameAndMem_z3-9-5-126-127-00000001', 'unlock'],
             txfx.get_log())
 
-        # Reset the log
         txfx.reset_log()
         # These subtasks do change the name.
         tx1.add_subtask(self.LparNameAndMem('new_name', logger=txfx))
@@ -312,14 +256,34 @@ class TestTransaction(twrap.TestWrapper):
             'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
             'LparNameAndMem_newer_name', 'update', 'unlock'], txfx.get_log())
 
+        # Test 'cloning' the subtask list
+        txfx.reset_log()
+        tx2 = tx.WrapperTask('tx2', self.getter, subtasks=tx1.subtasks)
+        # Add another one to make sure it goes at the end
+        tx2.add_subtask(self.LparNameAndMem('newest_name', logger=txfx))
+        # Add one to the original transaction to make sure it doesn't affect
+        # this one.
+        tx1.add_subtask(self.LparNameAndMem('bogus_name', logger=txfx))
+        lwrap = tx2.execute()
+        # Update should have been called.
+        self.assertTrue(1, mock_update.call_count)
+        # The last change should be the one that stuck
+        self.assertEqual('newest_name', lwrap.name)
+        # Check the overall order.  This one GETs under lock.
+        self.assertEqual([
+            'lock', 'get', 'LparNameAndMem_z3-9-5-126-127-00000001',
+            'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
+            'LparNameAndMem_newer_name', 'LparNameAndMem_newest_name',
+            'update', 'unlock'], txfx.get_log())
+
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
-    def test_transaction2(self, mock_update):
+    def test_wrapper_task2(self, mock_update):
         # Now:
         # o Fake like update forces retry
         # o Test add_functor_subtask, including chaining
         # o Ensure GET is deferred when .wrapper() is not called ahead of time.
         # o Make sure subtask args are getting to the subtask.
-        txfx = self.useFixture(TransactionFx(self.dwrap))
+        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
 
         def _update_retries_twice():
             return self.retry_twice(self.dwrap, self.tracker, txfx)
@@ -334,7 +298,7 @@ class TestTransaction(twrap.TestWrapper):
             self.assertEqual('kwarg4', kwarg4)
             return wrapper, True
         # Instantiate-add-execute chain
-        tx.Transaction('tx2', self.getter).add_functor_subtask(
+        tx.WrapperTask('tx2', self.getter).add_functor_subtask(
             functor, ['arg', 1], 'arg2', kwarg4='kwarg4').execute()
         # Update should have been called thrice (two retries)
         self.assertTrue(3, mock_update.call_count)
@@ -343,3 +307,214 @@ class TestTransaction(twrap.TestWrapper):
             'lock', 'get', 'functor', 'update 1', 'refresh', 'functor',
             'update 2', 'refresh', 'functor', 'update 3', 'unlock'],
             txfx.get_log())
+
+
+class TestFeedTask(twrap.TestWrapper):
+    file = 'lpar.txt'
+    wrapper_class_to_test = lpar.LPAR
+
+    def setUp(self):
+        super(TestFeedTask, self).setUp()
+        self.getter = lpar.LPAR.getter(self.adpt)
+        # Set this up for getter.get()
+        self.adpt.read.return_value = self.resp
+        self.feed_task = tx.FeedTask('name', lpar.LPAR.getter(self.adpt))
+
+    def test_invalid_feed_or_getter(self):
+        """Various evil inputs to FeedTask.__init__'s feed_or_getter."""
+        self.assertRaises(ValueError, tx.FeedTask, 'name', 'something bogus')
+        # A "feed" of things that aren't EntryWrappers
+        self.assertRaises(ValueError, tx.FeedTask, 'name', [1, 2, 3])
+        # This one fails because .getter(..., uuid) produces EntryWrapperGetter
+        self.assertRaises(ValueError, tx.FeedTask, 'name',
+                          lpar.LPAR.getter(self.adpt, 'a_uuid'))
+        # Init with explicit empty feed tested below in test_empty_feed
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.FeedGetter.get')
+    def test_empty_feed(self, mock_get):
+        mock_get.return_value = []
+        # We're allowed to initialize it with a FeedGetter
+        fm = tx.FeedTask('name', ewrap.FeedGetter('mock', 'mock'))
+        # But as soon as we call a 'greedy' method, which does a .get, we raise
+        self.assertRaises(ex.FeedTaskEmptyFeed, fm.get_wrapper, 'uuid')
+        # Init with an explicit empty feed (list) raises right away
+        self.assertRaises(ex.FeedTaskEmptyFeed, tx.FeedTask, 'name', [])
+
+    def test_wrapper_task_adds_and_replication(self):
+        """Deferred replication of individual WrapperTasks with adds.
+
+        Covers:
+        o wrapper_tasks
+        o get_wrapper
+        o add_subtask
+        o add_functor_subtask
+        """
+        def wt_check(wt1, wt2, len1, len2=None, upto=None):
+            """Assert that two WrapperTasks have the same Subtasks.
+
+            :param wt1, wt2: The WrapperTask instances to compare.
+            :param len1, len2: The expected lengths of the WrapperTask.subtasks
+                               of wt1 and wt2, respectively.  If len2 is None,
+                               it is assumed to be the same as len1.
+            :param upto: (Optional, int) If specified, only the first 'upto'
+                         Subtasks are compared.  Otherwise, the subtask lists
+                         are compared up to the lesser of len1 and len2.
+            """
+            if len2 is None:
+                len2 = len1
+            self.assertEqual(len1, len(wt1.subtasks))
+            self.assertEqual(len2, len(wt2.subtasks))
+            if upto is None:
+                upto = min(len1, len2)
+            for i in range(upto):
+                self.assertIs(wt1.subtasks[i], wt2.subtasks[i])
+
+        # "Functors" for easy subtask creation.  Named so we can identify them.
+        foo = lambda: None
+        bar = lambda: None
+        baz = lambda: None
+        xyz = lambda: None
+        abc = lambda: None
+        # setUp's initialization of feed_task creates empty dict and common_tx
+        self.assertEqual({}, self.feed_task._tx_by_uuid)
+        self.assertEqual(0, len(self.feed_task._common_tx.subtasks))
+        # Asking for the feed does *not* replicate the WrapperTasks
+        feed = self.feed_task.feed
+        self.assertEqual({}, self.feed_task._tx_by_uuid)
+        self.assertEqual(0, len(self.feed_task._common_tx.subtasks))
+        # Add to the FeedTask
+        self.feed_task.add_subtask(tx._FunctorSubtask(foo))
+        self.feed_task.add_functor_subtask(bar)
+        # Still does not replicate
+        self.assertEqual({}, self.feed_task._tx_by_uuid)
+        subtasks = self.feed_task._common_tx.subtasks
+        # Make sure the subtasks are legit and in order
+        self.assertEqual(2, len(subtasks))
+        self.assertIsInstance(subtasks[0], tx.Subtask)
+        self.assertIsInstance(subtasks[1], tx.Subtask)
+        # Yes, these are both _FunctorSubtasks, but the point is verifying that
+        # they are in the right order.
+        self.assertIs(foo, subtasks[0]._func)
+        self.assertIs(bar, subtasks[1]._func)
+        # Now call something that triggers replication
+        wrap10 = self.feed_task.get_wrapper(feed[10].uuid)
+        self.assertEqual(feed[10], wrap10)
+        self.assertNotEqual({}, self.feed_task._tx_by_uuid)
+        self.assertEqual({lwrap.uuid for lwrap in feed},
+                         set(self.feed_task.wrapper_tasks.keys()))
+        # Pick a couple of wrapper tasks at random.
+        wt5, wt8 = (self.feed_task.wrapper_tasks[feed[i].uuid] for i in (5, 8))
+        # They should not be the same
+        self.assertNotEqual(wt5, wt8)
+        # Their subtasks should not refer to the same lists
+        self.assertIsNot(wt5.subtasks, wt8.subtasks)
+        # But they should have the same Subtasks (the same actual instances)
+        wt_check(wt5, wt8, 2)
+        # Adding more subtasks to the feed manager adds to all (and by the way,
+        # we don't have to refetch the WrapperTasks).
+        self.feed_task.add_functor_subtask(baz)
+        wt_check(wt5, wt8, 3)
+        self.assertIs(baz, wt5.subtasks[2]._func)
+        # Adding to an individual WrapperTask just adds to that one
+        wt5.add_functor_subtask(xyz)
+        wt_check(wt5, wt8, 4, 3)
+        self.assertIs(xyz, wt5.subtasks[3]._func)
+        # And we can still add another to both afterward
+        self.feed_task.add_functor_subtask(abc)
+        wt_check(wt5, wt8, 5, 4, upto=3)
+        # Check the last couple by hand
+        self.assertIs(xyz, wt5.subtasks[3]._func)
+        self.assertIs(wt5.subtasks[4], wt8.subtasks[3])
+        self.assertIs(abc, wt5.subtasks[4]._func)
+
+    def test_deferred_feed_get(self):
+        """Test deferred and unique GET of the internal feed."""
+        # setUp inits self.feed_task with FeedGetter.  This doesn't call read.
+        self.assertEqual(0, self.adpt.read.call_count)
+        lfeed = self.feed_task.feed
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.adpt.read.assert_called_with(
+            'LogicalPartition', None, child_id=None, child_type=None, xag=None)
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        # Getting feed again doesn't invoke GET again.
+        lfeed = self.feed_task.feed
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+
+        # Init with a feed - read is never called
+        self.adpt.read.reset_mock()
+        ftsk = tx.FeedTask('name', lfeed)
+        self.assertEqual(0, self.adpt.read.call_count)
+        nfeed = ftsk.feed
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(lfeed, nfeed)
+
+    def test_rebuild_feed(self):
+        """Feed gets rebuilt when transactions exist and an etag mismatches."""
+        # Populate and retrieve the feed
+        lfeed = self.feed_task.feed
+        # Pick out a wrapper UUID to use, from somewhere in the middle
+        uuid = lfeed[13].uuid
+        # Populate etags
+        for i in range(len(lfeed)):
+            lfeed[i]._etag = i + 100
+        # This get_wrapper will replicate the UUID-to-WrapperTask dict.
+        # Create a *copy* of the wrapper so that changing it will simulate how
+        # a WrapperTask modifies its internal EntryWrapper on update() without
+        # that change being reflected back to the FeedTask's _feed.  (Current
+        # mocks are just returning the same wrapper all the time.)
+        lpar13 = copy.deepcopy(self.feed_task.get_wrapper(uuid))
+        self.assertNotEqual({}, self.feed_task._tx_by_uuid)
+        # Set unique etag.
+        lpar13._etag = 42
+        # And stuff it back in the WrapperTask
+        self.feed_task.wrapper_tasks[uuid]._wrapper = lpar13
+        # Now we're set up.  First prove that the feed (as previously grabbed)
+        # isn't already reflecting the new entry.
+        self.assertNotEqual(lpar13.etag, lfeed[13].etag)
+        # Ask for the feed again and this should change
+        # The feed may have been reshuffled, so we have to find our LPAR again.
+        lfind = None
+        for entry in self.feed_task.feed:
+            if entry.uuid == uuid:
+                lfind = entry
+                break
+        self.assertEqual(lpar13.etag, lfind.etag)
+        # And it is in fact the new one now in the feed.
+        self.assertEqual(42, lfind.etag)
+
+    def test_execute(self):
+        """Execute a 'real' FeedTask."""
+        feed = self.feed_task.feed
+        # Initialize expected/actual flags dicts:
+        #   {uuid: [ordered, list, of, flags]}
+        # The list of flags for a given UUID should be ordered the same as the
+        # subtasks, though they may get shotgunned to the dict via parallel
+        # execution of the WrapperTasks.
+        exp_flags = {ent.uuid: [] for ent in feed}
+        act_flags = {ent.uuid: [] for ent in feed}
+
+        # A function that we can run within a Subtask.  No triggering update
+        # since we're just making sure the Subtasks run.
+        def func(wrapper, flag):
+            with lock.lock('act_flags'):
+                act_flags[wrapper.uuid].append(flag)
+            return False
+        # Start with a subtask common to all
+        self.feed_task.add_functor_subtask(func, 'common1')
+        for ent in feed:
+            exp_flags[ent.uuid].append('common1')
+        # Add individual separate subtasks to a few of the WrapperTasks
+        for i in range(5, 15):
+            self.feed_task.wrapper_tasks[
+                feed[i].uuid].add_functor_subtask(func, i)
+            exp_flags[feed[i].uuid].append(i)
+        # Add another common subtask
+        self.feed_task.add_functor_subtask(func, 'common2')
+        for ent in feed:
+            exp_flags[ent.uuid].append('common2')
+        # Run it!
+        self.feed_task.execute()
+        self.assertEqual(exp_flags, act_flags)

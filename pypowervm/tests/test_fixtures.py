@@ -17,6 +17,7 @@
 
 import fixtures
 import mock
+import six
 
 from pypowervm import traits as trt
 
@@ -98,3 +99,87 @@ def _mk_traits(local, hmc):
 LocalPVMTraits = _mk_traits(local=True, hmc=False)
 RemotePVMTraits = _mk_traits(local=False, hmc=False)
 RemoteHMCTraits = _mk_traits(local=False, hmc=True)
+
+# Thread locking primitives are located slightly differently in py2 vs py3
+SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')
+SEM_EXIT = 'threading.%sSemaphore.__exit__' % ('_' if six.PY2 else '')
+
+
+class WrapperTaskFx(fixtures.Fixture):
+    """Mocking and pseudo-logging for WrapperTask primitives.
+
+    Mocks:
+    EntyrWrapperGetter.get: Adds 'get' to the log.  Returns self._wrapper, the
+                            wrapper with which the fixture was initialized.
+    EntryWrapper.refresh: Adds 'refresh' to the log.  Returns self._wrapper,
+                          the wrapper with which the fixture was initialized.
+    lock, unlock: Adds 'lock'/'unlock', respectively, to the log.  Mocks out
+                  the semaphore locking (oslo_concurrency.lockutils.lock and
+                  @synchronized, ultimately threading.Semaphore) performed by
+                  the @entry_transaction decorator.
+
+    See examples in pypowervm.tests.utils.test_transaction.TestWrapperTask for
+    usage.
+    """
+    def __init__(self, wrapper):
+        """Create the fixture around a specific EntryWrapper.
+
+        :param wrapper: EntryWrapper instance to be returned by mocked
+                        EntryWrapperGetter.get and EntryWrapper.refresh methods
+        """
+        self._tx_log = []
+        self._wrapper = wrapper
+        self.get_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
+                                'EntryWrapperGetter.get')
+        self.refresh_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
+                                    'EntryWrapper.refresh')
+        self.enter_p = mock.patch(SEM_ENTER)
+        self.exit_p = mock.patch(SEM_EXIT)
+
+    def setUp(self):
+        super(WrapperTaskFx, self).setUp()
+        self.reset_log()
+
+        # EntryWrapper.refresh()
+        def _refresh():
+            self.log('refresh')
+            return self._wrapper
+        mock_refresh = self.refresh_p.start()
+        mock_refresh.side_effect = _refresh
+        self.addCleanup(self.refresh_p.stop)
+
+        # EntryWrapper.get()
+        def _getter_get():
+            self.log('get')
+            return self._wrapper
+        mock_get = self.get_p.start()
+        mock_get.side_effect = _getter_get
+        self.addCleanup(self.get_p.stop)
+
+        # lockutils lock
+        mock_lock = self.enter_p.start()
+        mock_lock.side_effect = lambda *a, **k: self.log('lock')
+        self.addCleanup(self.enter_p.stop)
+
+        # lockutils unlock
+        mock_unlock = self.exit_p.start()
+        mock_unlock.side_effect = lambda *a, **k: self.log('unlock')
+        self.addCleanup(self.exit_p.stop)
+
+    def get_log(self):
+        """Retrieve the event log.
+
+        :return: The log, a list of strings in the order they were added.
+        """
+        return self._tx_log
+
+    def log(self, val):
+        """Add a message to the log.
+
+        :param val: String value to append to the log.
+        """
+        self._tx_log.append(val)
+
+    def reset_log(self):
+        """Clear the log."""
+        self._tx_log = []
