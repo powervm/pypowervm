@@ -229,15 +229,15 @@ class TestTransaction(twrap.TestWrapper):
             return boolable
 
         # Various valid 'False' boolables - update not needed
-        falsable = (0, '', [], {}, False)
-        for falsable in falsable:
-            txst = tx.Transaction._FunctorSubtask(returns_second_arg, falsable)
+        falseables = (0, '', [], {}, False)
+        for falseable in falseables:
+            txst = tx._FunctorSubtask(returns_second_arg, falseable)
             self.assertFalse(self.tx_subtask_invoke(txst, self.dwrap))
 
         # Various valid 'True' boolables - update needed
-        truables = (1, 'string', [0], {'k': 'v'}, True)
-        for truable in truables:
-            txst = tx.Transaction._FunctorSubtask(returns_second_arg, truable)
+        trueables = (1, 'string', [0], {'k': 'v'}, True)
+        for trueable in trueables:
+            txst = tx._FunctorSubtask(returns_second_arg, trueable)
             self.assertTrue(self.tx_subtask_invoke(txst, self.dwrap))
 
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
