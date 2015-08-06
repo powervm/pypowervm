@@ -204,7 +204,9 @@ class DefaultStandardize(Standardize):
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
                                 allow_none=True).validate()
-        ProcCompatMode(attrs.get(PROC_COMPAT), allow_none=partial).validate()
+        ProcCompatMode(attrs.get(PROC_COMPAT),
+                       host_modes=self.mngd_sys.proc_compat_modes,
+                       allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -395,15 +397,20 @@ class ChoiceField(Field):
     _choices = None
 
     @classmethod
-    def convert_value(cls, value):
+    def convert_value(self, value):
         if value is None:
             raise ValueError('None value is not valid.')
         value = value.lower()
-        for choice in cls._choices:
+        for choice in self._choices:
             if value == choice.lower():
                 return choice
         # If we didn't find it, that's a problem...
-        raise ValueError('Value not valid: %s' % value)
+        values = dict(field=self._name, value=value,
+                      choices=self._choices)
+        msg = ("Value '%(value)s' is not valid "
+               "for field '%(field)s' with acceptable "
+               "choices: %(choices)s") % values
+        raise ValueError(msg)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -581,6 +588,11 @@ class LPARType(ChoiceField):
 class ProcCompatMode(ChoiceField):
     _choices = bp.LPARCompat.ALL_VALUES
     _name = 'Processor Compatability Mode'
+
+    def __init__(self, value, host_modes=None, allow_none=True):
+        super(ProcCompatMode, self).__init__(value, allow_none=allow_none)
+        if host_modes:
+            self._choices = host_modes
 
 
 class DedProcShareMode(ChoiceField):
