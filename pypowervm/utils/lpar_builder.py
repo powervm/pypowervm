@@ -204,7 +204,9 @@ class DefaultStandardize(Standardize):
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
                                 allow_none=True).validate()
-        ProcCompatMode(attrs.get(PROC_COMPAT), allow_none=partial).validate()
+        ProcCompatMode(attrs.get(PROC_COMPAT),
+                       host_modes=self.mngd_sys.proc_compat_modes,
+                       allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -581,6 +583,11 @@ class LPARType(ChoiceField):
 class ProcCompatMode(ChoiceField):
     _choices = bp.LPARCompat.ALL_VALUES
     _name = 'Processor Compatability Mode'
+
+    def __init__(self, value, host_modes=None, allow_none=True):
+        super(ProcCompatMode, self).__init__(value, allow_none=allow_none)
+        if host_modes:
+            self._choices = host_modes
 
 
 class DedProcShareMode(ChoiceField):
