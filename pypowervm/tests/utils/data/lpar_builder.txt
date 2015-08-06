@@ -68,7 +68,7 @@ SECTION:uncapped_lpar
 <uom:PartitionProcessorConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:HasDedicatedProcessors>false</uom:HasDedicatedProcessors><uom:SharedProcessorConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredProcessingUnits>0.50</uom:DesiredProcessingUnits><uom:DesiredVirtualProcessors>1</uom:DesiredVirtualProcessors><uom:MaximumProcessingUnits>0.50</uom:MaximumProcessingUnits><uom:MaximumVirtualProcessors>1</uom:MaximumVirtualProcessors><uom:MinimumProcessingUnits>0.50</uom:MinimumProcessingUnits><uom:MinimumVirtualProcessors>1</uom:MinimumVirtualProcessors><uom:SharedProcessorPoolID>0</uom:SharedProcessorPoolID><uom:UncappedWeight>100</uom:UncappedWeight></uom:SharedProcessorConfiguration>
 <uom:SharingMode>uncapped</uom:SharingMode></uom:PartitionProcessorConfiguration>
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
-<uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
+<uom:PendingProcessorCompatibilityMode>POWER6</uom:PendingProcessorCompatibilityMode>
 </uom:LogicalPartition>
 END OF SECTION
 #
