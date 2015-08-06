@@ -39,7 +39,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.sections = xml_sections.load_xml_sections(file_name)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
-        def _bld_mgd_sys(proc_units, mem_reg, srr):
+        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -50,10 +50,11 @@ class TestLPARBuilder(testtools.TestCase):
                 'simplified_remote_restart_capable': srr
             }
             mngd_sys.get_capabilities.return_value = capabilities
+            mngd_sys.proc_compat_modes = pcm
             return mngd_sys
 
-        self.mngd_sys = _bld_mgd_sys(20.0, 128, True)
-        self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False)
+        self.mngd_sys = _bld_mgd_sys(20.0, 128, True, bp.LPARCompat.ALL_VALUES)
+        self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False, 'POWER6')
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
 
@@ -259,6 +260,17 @@ class TestLPARBuilder(testtools.TestCase):
             bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
             new_lpar = bldr.build()
             self.assertEqual(new_lpar.pending_proc_compat_mode, pc)
+
+        attr = dict(name='name', memory=1024, vcpu=1,
+                    processor_compatibility='POWER6')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys2)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.pending_proc_compat_mode, 'POWER6')
+
+        attr = dict(name='name', memory=1024, vcpu=1,
+                    processor_compatibility='POWER8')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys2)
+        self.assertRaises(ValueError, bldr.build)
 
         # Build a VIOS
         attr = dict(name='TheName', env=bp.LPARType.VIOS, memory=1024,
