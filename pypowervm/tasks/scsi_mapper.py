@@ -211,6 +211,8 @@ def add_map(vios_w, scsi_mapping):
 
     :param vios_w: The Virtual I/O Server wrapping to add the mapping to.
     :param scsi_mapping: The scsi mapping to include in the VIOS.
+    :return: The scsi_mapping that was added.  None if the mapping was already
+             on the vios_w.
     """
     # Check to see if the mapping is already in the system.
     lpar_uuid = util.get_req_path_uuid(scsi_mapping.client_lpar_href,
@@ -218,8 +220,9 @@ def add_map(vios_w, scsi_mapping):
     existing_mappings = find_maps(vios_w.scsi_mappings, lpar_uuid,
                                   stg_elem=scsi_mapping.backing_storage)
     if len(existing_mappings) > 0:
-        return
+        return None
     vios_w.scsi_mappings.append(scsi_mapping)
+    return scsi_mapping
 
 
 def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
