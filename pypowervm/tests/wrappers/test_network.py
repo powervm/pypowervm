@@ -191,6 +191,7 @@ class TestNetwork(twrap.TestWrapper):
         self.assertEqual(1, sea1.pvid)
         self.assertEqual('vio_href1', sea1.vio_uri)
         self.assertEqual('ent0', sea1.backing_device.dev_name)
+        self.assertIsNone(sea1.control_channel)
         self.assertTrue(sea1.is_primary)
 
         # Validate the trunk.

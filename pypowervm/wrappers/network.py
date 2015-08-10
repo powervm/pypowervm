@@ -634,6 +634,11 @@ class SEA(ewrap.ElementWrapper):
         stor_elem.inject(eth_back_dev.element)
         self.inject(stor_elem)
 
+    @property
+    def control_channel(self):
+        """Returns the control channel interface name."""
+        return self._get_val_str(_SEA_CONTROL_CHANNEL)
+
 
 @ewrap.ElementWrapper.pvm_type('TrunkAdapter', child_order=_TA_EL_ORDER)
 class TrunkAdapter(ewrap.ElementWrapper):
