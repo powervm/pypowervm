@@ -15,6 +15,7 @@
 #    under the License.
 #
 
+import abc
 import fixtures
 import mock
 import six
@@ -105,66 +106,76 @@ SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')
 SEM_EXIT = 'threading.%sSemaphore.__exit__' % ('_' if six.PY2 else '')
 
 
-class WrapperTaskFx(fixtures.Fixture):
-    """Mocking and pseudo-logging for WrapperTask primitives.
+class SimplePatcher(object):
+    """Provide a basic mocking patcher on a test fixture."""
+    def __init__(self, fx, name, path, side_effect=None, return_value=None):
+        """Create a patcher on a given fixture.
 
-    Mocks:
-    EntyrWrapperGetter.get: Adds 'get' to the log.  Returns self._wrapper, the
-                            wrapper with which the fixture was initialized.
-    EntryWrapper.refresh: Adds 'refresh' to the log.  Returns self._wrapper,
-                          the wrapper with which the fixture was initialized.
-    lock, unlock: Adds 'lock'/'unlock', respectively, to the log.  Mocks out
-                  the semaphore locking (oslo_concurrency.lockutils.lock and
-                  @synchronized, ultimately threading.Semaphore) performed by
-                  the @entry_transaction decorator.
-
-    See examples in pypowervm.tests.utils.test_transaction.TestWrapperTask for
-    usage.
-    """
-    def __init__(self, wrapper):
-        """Create the fixture around a specific EntryWrapper.
-
-        :param wrapper: EntryWrapper instance to be returned by mocked
-                        EntryWrapperGetter.get and EntryWrapper.refresh methods
+        :param fx: The fixtures.Fixture (subclass) on which to register the
+                   patcher.
+        :param name: String name for the patcher.
+        :param path: String python path of the object being mocked.
+        :param side_effect: Side effect for the mock created by this patcher.
+                            If side_effect is supplied, return_value is
+                            ignored.
+        :param return_value: Return value for the mock created by this patcher.
+                             If side_effect is supplied, return_value is
+                             ignored.
         """
+        self.fx = fx
+        self.name = name
+        self.patcher = mock.patch(path)
+        self.return_value = return_value
+        self.side_effect = side_effect
+        self.mock = None
+
+    def start(self):
+        """Start the patcher, creating the and setting up the mock."""
+        self.mock = self.patcher.start()
+        if self.side_effect:
+            self.mock.side_effect = self.side_effect
+        else:
+            self.mock.return_value = self.return_value
+        self.fx.addCleanup(self.patcher.stop)
+
+
+class LoggingPatcher(SimplePatcher):
+    """SimplePatcher whose mock logs its name and returns a value."""
+    def __init__(self, fx, name, path, return_value=None):
+        """Create the logging patcher.
+
+        :param fx: The fixtures.Fixture (subclass) on which to register the
+                   patcher.  Must be a fixture providing a .log(msg) method.
+        :param name: String name for the patcher.
+        :param path: String python path of the object being mocked.
+        :param return_value: The return value for the mocked method.
+        """
+        # This ignores/overrides the superclass's return_value semantic.
+        self.ret = return_value
+        super(LoggingPatcher, self).__init__(
+            fx, name, path, side_effect=self.log_method())
+
+    def log_method(self):
+        def _log(*a, **k):
+            self.fx.log(self.name)
+            return self.ret
+        return _log
+
+    @property
+    def return_value(self):
+        return self.ret
+
+    @return_value.setter
+    def return_value(self, ret):
+        self.ret = ret
+        self.side_effect = self.log_method()
+
+
+@six.add_metaclass(abc.ABCMeta)
+class Logger(object):
+    def __init__(self):
+        super(Logger, self).__init__()
         self._tx_log = []
-        self._wrapper = wrapper
-        self.get_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
-                                'EntryWrapperGetter.get')
-        self.refresh_p = mock.patch('pypowervm.wrappers.entry_wrapper.'
-                                    'EntryWrapper.refresh')
-        self.enter_p = mock.patch(SEM_ENTER)
-        self.exit_p = mock.patch(SEM_EXIT)
-
-    def setUp(self):
-        super(WrapperTaskFx, self).setUp()
-        self.reset_log()
-
-        # EntryWrapper.refresh()
-        def _refresh():
-            self.log('refresh')
-            return self._wrapper
-        mock_refresh = self.refresh_p.start()
-        mock_refresh.side_effect = _refresh
-        self.addCleanup(self.refresh_p.stop)
-
-        # EntryWrapper.get()
-        def _getter_get():
-            self.log('get')
-            return self._wrapper
-        mock_get = self.get_p.start()
-        mock_get.side_effect = _getter_get
-        self.addCleanup(self.get_p.stop)
-
-        # lockutils lock
-        mock_lock = self.enter_p.start()
-        mock_lock.side_effect = lambda *a, **k: self.log('lock')
-        self.addCleanup(self.enter_p.stop)
-
-        # lockutils unlock
-        mock_unlock = self.exit_p.start()
-        mock_unlock.side_effect = lambda *a, **k: self.log('unlock')
-        self.addCleanup(self.exit_p.stop)
 
     def get_log(self):
         """Retrieve the event log.
@@ -183,3 +194,123 @@ class WrapperTaskFx(fixtures.Fixture):
     def reset_log(self):
         """Clear the log."""
         self._tx_log = []
+
+
+@six.add_metaclass(abc.ABCMeta)
+class SimplePatchingFx(fixtures.Fixture):
+    def __init__(self):
+        super(SimplePatchingFx, self).__init__()
+        self.patchers = {}
+
+    def add_patchers(self, *patchers):
+        for patcher in patchers:
+            self.patchers[patcher.name] = patcher
+
+    def setUp(self):
+        super(SimplePatchingFx, self).setUp()
+        for patcher in self.patchers.values():
+            patcher.start()
+
+
+class WrapperTaskFx(SimplePatchingFx, Logger):
+    """Customizable mocking and pseudo-logging for WrapperTask primitives.
+
+    Provides LoggingPatchers for REST and locking primitives.  By default,
+    these patchers simply log their name and return a sensible value (see
+    below).
+
+    However, patchers can be added, changed, or removed by name from the
+    fixture instance via its 'patchers' dict.  In order to have effect on your
+    test case, such modifications must be done between fixture initialization
+    and useFixture.  For example:
+
+    # Init the fixture, but do not start it:
+    wtfx = WrapperTaskFx(a_wrapper)
+    # An existing patcher can be modified:
+    upd = wtfx.patchers['update'].side_effect = SomeException()
+    # Or deleted:
+    del wtfx.patchers['refresh']
+    # New patchers can be added.  They must be instances of SimplePatcher (or a
+    # subclass).  Add directly to 'patchers':
+    wtfx.patchers['foo'] = LoggingPatcher(wtfx, 'frob', 'pypowervm.utils.frob')
+    # ...or use add_patchers to add more than one:
+    wtfx.add_patchers(p1, p2, p3)
+
+    # Finally, don't forget to start the fixture
+    self.useFixture(wtfx)
+
+    # Mocks can be accessed via their patchers and queried during testing as
+    # usual:
+    wtfx.patchers['foo'].mock.assert_called_with('bar', 'baz')
+    self.assertEqual(3, wtfx.patchers['update'].mock.call_count)
+
+    See live examples in pypowervm.tests.utils.test_transaction.TestWrapperTask
+
+    Default mocks:
+    'get': Mocks EntyrWrapperGetter.get.
+           Logs 'get'.
+           Returns the wrapper with which the fixture was initialized.
+    'refresh': Mocks EntryWrapper.refresh.
+               Logs 'refresh'.
+               Returns the wrapper with which the fixture was initialized.
+    'update': Mocks EntryWrapper.update.
+              Logs 'update'.
+              Returns the wrapper with which the fixture was initialized.
+    'lock', 'unlock': Mocks semaphore locking (oslo_concurrency.lockutils.lock
+                      and @synchronized, ultimately threading.Semaphore)
+                      performed by the @entry_transaction decorator.
+                      Logs 'lock'/'unlock', respectively.
+                      Returns None.
+
+    """
+    def __init__(self, wrapper):
+        """Create the fixture around a specific EntryWrapper.
+
+        :param wrapper: EntryWrapper instance to be returned by mocked
+                        EntryWrapperGetter.get and EntryWrapper.refresh methods
+        """
+        super(WrapperTaskFx, self).__init__()
+        self._wrapper = wrapper
+        self.add_patchers(
+            LoggingPatcher(
+                self, 'get',
+                'pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get',
+                return_value=self._wrapper),
+            LoggingPatcher(
+                self, 'refresh',
+                'pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh',
+                return_value=self._wrapper),
+            LoggingPatcher(
+                self, 'update',
+                'pypowervm.wrappers.entry_wrapper.EntryWrapper.update',
+                return_value=self._wrapper),
+            LoggingPatcher(self, 'lock', SEM_ENTER),
+            LoggingPatcher(self, 'unlock', SEM_EXIT)
+        )
+
+
+class FeedTaskFx(SimplePatchingFx, Logger):
+    """
+    !You will have to add the proper return to the 'update' patcher for now!
+    """
+    def __init__(self, feed):
+        super(FeedTaskFx, self).__init__()
+        self._feed = feed
+        self.add_patchers(
+            LoggingPatcher(
+                self, 'get',
+                'pypowervm.wrappers.entry_wrapper.FeedGetter.get',
+                return_value=self._feed),
+            LoggingPatcher(
+                self, 'refresh',
+                'pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh',
+                # TODO(efried): How to return 'self' from a mocked method??
+                return_value=self._feed[0]),
+            LoggingPatcher(
+                self, 'update',
+                'pypowervm.wrappers.entry_wrapper.EntryWrapper.update',
+                # TODO(efried): How to return 'self' from a mocked method??
+                return_value=self._feed[0]),
+            LoggingPatcher(self, 'lock', SEM_ENTER),
+            LoggingPatcher(self, 'unlock', SEM_EXIT)
+        )
