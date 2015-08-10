@@ -36,6 +36,7 @@ BODY{
             <AtomCreated>1412723263073</AtomCreated>
         </Atom>
     </Metadata>
+    <ControlChannelID kb="CUD" kxe="false">99</ControlChannelID>
     <FailoverEnabled kb="CUD" kxe="false">false</FailoverEnabled>
     <LoadBalancingEnabled kb="CUD" kxe="false">true</LoadBalancingEnabled>
     <LoadGroups kxe="false" kb="CUD" schemaVersion="V1_2_0">
