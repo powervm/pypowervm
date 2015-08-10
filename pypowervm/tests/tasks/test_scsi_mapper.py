@@ -171,8 +171,14 @@ class TestSCSIMapper(testtools.TestCase):
         # Get the original count
         orig_mappings = len(vio_w.scsi_mappings)
 
-        scsi_mapper.add_map(vio_w, scsi_map)
-        scsi_mapper.add_map(vio_w, scsi_map)
+        # Add the actual mapping
+        resp1 = scsi_mapper.add_map(vio_w, scsi_map)
+        self.assertIsNotNone(resp1)
+        self.assertIsInstance(resp1, pvm_vios.VSCSIMapping)
+
+        # The mapping should return as None, as it is already there.
+        resp2 = scsi_mapper.add_map(vio_w, scsi_map)
+        self.assertIsNone(resp2)
 
         # Make sure only one was added.
         self.assertEqual(orig_mappings + 1, len(vio_w.scsi_mappings))

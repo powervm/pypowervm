@@ -570,6 +570,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
     :param lpar_uuid: The pypowervm UUID of the client LPAR to attach to.
     :param port_map: The port mapping (as defined by the derive_npiv_map
                      method).
+    :return: The VFCMapping that was added.  If the mapping already existed
+             then None is returned.
     """
     # This is meant to find the physical port.  Can run against a single
     # element.  We assume invoker has passed correct VIOS.
@@ -589,10 +591,11 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
         # If we reach this point, we know that we have a matching map.  So
         # the attach of this volume, for this vFC mapping is complete.
         # Nothing else needs to be done, exit the method.
-        return
+        return None
 
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
     vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, lpar_uuid,
                                       p_port.name, client_wwpns=v_wwpns)
     vios_w.vfc_mappings.append(vfc_map)
+    return vfc_map

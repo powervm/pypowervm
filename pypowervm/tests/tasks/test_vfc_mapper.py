@@ -581,7 +581,10 @@ class TestAddRemoveMap(twrap.TestWrapper):
         self.assertEqual(0, len(maps))
 
         # Now call the add action
-        vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid, fabric_map)
+        resp = vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid,
+                                  fabric_map)
+        self.assertIsNotNone(resp)
+        self.assertIsInstance(resp, pvm_vios.VFCMapping)
 
         # Verify the update is now found.
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
@@ -591,7 +594,9 @@ class TestAddRemoveMap(twrap.TestWrapper):
 
         # Try to add it again...it shouldn't re-add it because its already
         # there.
-        vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid, fabric_map)
+        resp = vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid,
+                                  fabric_map)
+        self.assertIsNone(resp)
         self.assertEqual(vios1_orig_map_count + 1, len(vios_wrap.vfc_mappings))
 
         # We should only find one here...the original add.  Not two even though
