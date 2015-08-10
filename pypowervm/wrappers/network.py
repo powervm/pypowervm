@@ -39,6 +39,7 @@ _VSW_EL_ORDER = (_VSW_ID, _VSW_MODE, _VSW_NAME, _VSW_VIRT_NETS)
 
 SHARED_ETH_ADPT = 'SharedEthernetAdapter'
 
+_NB_CONTROL_CHANNEL_ID = 'ControlChannelID'
 _NB_FAILOVER = 'FailoverEnabled'
 _NB_LOADBALANCE = 'LoadBalancingEnabled'
 _NB_LGS = 'LoadGroups'
@@ -47,8 +48,8 @@ NB_SEAS = 'SharedEthernetAdapters'
 _NB_DEV_ID = 'UniqueDeviceID'
 _NB_VNETS = 'VirtualNetworks'
 _NB_LG = 'LoadGroup'
-_NB_EL_ORDER = (_NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS, _NB_PVID, NB_SEAS,
-                _NB_DEV_ID, _NB_VNETS)
+_NB_EL_ORDER = (_NB_CONTROL_CHANNEL_ID, _NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS,
+                _NB_PVID, NB_SEAS, _NB_DEV_ID, _NB_VNETS)
 
 ETH_BACK_DEV = 'EthernetBackingDevice'
 
@@ -471,6 +472,11 @@ class NetBridge(ewrap.EntryWrapper):
         """
         self.set_parm_value(_NB_FAILOVER, u.sanitize_bool_for_api(value))
 
+    @property
+    def control_channel_id(self):
+        """Returns the control channel interface ID."""
+        return self._get_val_int(_NB_CONTROL_CHANNEL_ID)
+
 
 @ewrap.ElementWrapper.pvm_type(SHARED_ETH_ADPT, has_metadata=True,
                                child_order=_SEA_EL_ORDER)
@@ -633,6 +639,11 @@ class SEA(ewrap.ElementWrapper):
                                 children=[])
         stor_elem.inject(eth_back_dev.element)
         self.inject(stor_elem)
+
+    @property
+    def control_channel(self):
+        """Returns the control channel interface name."""
+        return self._get_val_str(_SEA_CONTROL_CHANNEL)
 
 
 @ewrap.ElementWrapper.pvm_type('TrunkAdapter', child_order=_TA_EL_ORDER)
