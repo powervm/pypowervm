@@ -755,6 +755,11 @@ class TrunkAdapter(ewrap.ElementWrapper):
     def _associated_vswitch_uri(self, href):
         self.set_href(u.xpath(_TA_ASSOC_VSWITCH, c.LINK), href)
 
+    @property
+    def varied_on(self):
+        """Returns the VariedOn property."""
+        return self._get_val_bool(_TA_VARIED_ON)
+
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
 class LoadGroup(ewrap.ElementWrapper):
