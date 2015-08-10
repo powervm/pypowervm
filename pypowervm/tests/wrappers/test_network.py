@@ -478,6 +478,15 @@ class TestNetwork(twrap.TestWrapper):
         addl_adpt.has_tag_support = True
         self.assertTrue(addl_adpt.has_tag_support)
 
+    def test_varied_on(self):
+        self.assertEqual(1, len(self.dwrap.seas))
+
+        sea = self.dwrap.seas[0]
+
+	# Try the varied_on property
+        prim_t = sea.primary_adpt
+        self.assertTrue(prim_t.varied_on)
+
 
 class TestCNAWrapper(twrap.TestWrapper):
 
