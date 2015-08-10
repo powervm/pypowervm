@@ -45,9 +45,13 @@ class PVMFile(object):
     def load_file(self, file_name):
         """First try to load the name as passed in."""
         dirname = os.path.dirname(file_name)
+        f_name = file_name
         if dirname is None or dirname == '':
             dirname = os.path.dirname(os.path.dirname(__file__))
             file_name = os.path.join(dirname, "data", file_name)
+        if not os.path.isfile(file_name):
+            dirname = os.path.dirname(os.path.dirname(__file__))
+            file_name = os.path.join(dirname, "..", "tasks", "data", f_name)
 
         resp_file = open(file_name, "r")
 

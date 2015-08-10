@@ -25,7 +25,7 @@ from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIO_MULTI_MAP_FILE = 'vio_multi_vscsi_mapping.txt'
-VIO_MULTI_MAP_FILE2 = '../../wrappers/data/fake_vios_mappings.txt'
+VIO_MULTI_MAP_FILE2 = 'fake_vios_mappings.txt'
 LPAR_UUID = '42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC'
 
 

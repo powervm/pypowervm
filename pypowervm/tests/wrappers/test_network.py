@@ -24,6 +24,7 @@ import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
 import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net
+import pypowervm.wrappers.virtual_io_server as vios
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 VSWITCH_FEED_FILE = 'fake_vswitch_feed.txt'
@@ -165,6 +166,17 @@ class TestNetwork(twrap.TestWrapper):
         uri_list = self.dwrap.vnet_uri_list
         self.assertEqual(13, len(uri_list))
         self.assertEqual('http', uri_list[0][:4])
+
+    def test_contrl_channel(self):
+        vios_file = pvmhttp.PVMFile('fake_vios_feed.txt')
+
+        vios_resp = pvmhttp.PVMResp(pvmfile=vios_file).get_response()
+        vios_wrap = vios.VIOS.wrap(vios_resp.feed.entries[0])
+
+        self.assertEqual('ent5', vios_wrap.seas[0].control_channel)
+
+    def test_contrl_channel_id(self):
+        self.assertEqual(99, self.dwrap.control_channel_id)
 
     def test_crt_net_bridge(self):
         vswitch_file = pvmhttp.PVMFile('fake_vswitch_feed.txt')
