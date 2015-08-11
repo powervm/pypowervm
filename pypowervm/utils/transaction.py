@@ -15,6 +15,7 @@
 #    under the License.
 
 import abc
+import logging
 import oslo_concurrency.lockutils as lock
 import six
 from taskflow import engines as tf_eng
@@ -25,6 +26,8 @@ import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 from pypowervm.utils import retry
 import pypowervm.wrappers.entry_wrapper as ewrap
+
+LOG = logging.getLogger(__name__)
 
 
 def entry_transaction(func):
@@ -203,7 +206,8 @@ class WrapperTask(tf_task.BaseTask):
         ...
         finalized_lpar = tx.execute()
     """
-    def __init__(self, name, wrapper_or_getter, subtasks=None):
+    def __init__(self, name, wrapper_or_getter, subtasks=None,
+                 allow_empty=False):
         """Initialize this WrapperTask.
 
         :param name: A descriptive string name for the WrapperTask.
@@ -212,6 +216,14 @@ class WrapperTask(tf_task.BaseTask):
                                   WrapperTask is to be performed.
         :param subtasks: (Optional) Iterable of Subtask subclass instances with
                          which to seed this WrapperTask.
+        :param allow_empty: (Optional) By default, executing a WrapperTask
+                            containing no Subtasks will result in exception
+                            WrapperTaskNoSubtasks.  If this flag is set to
+                            True, this condition will instead log an info
+                            message.
+        :raise WrapperTaskNoSubtasks: If allow_empty is False and this
+                                      WrapperTask is executed without any
+                                      Subtasks having been added.
         """
         super(WrapperTask, self).__init__(name)
         if isinstance(wrapper_or_getter, ewrap.EntryWrapperGetter):
@@ -224,6 +236,7 @@ class WrapperTask(tf_task.BaseTask):
             raise ValueError(_("Must supply either EntryWrapper or "
                                "EntryWrapperGetter"))
         self._tasks = [] if subtasks is None else list(subtasks)
+        self.allow_empty = allow_empty
         self.provides = 'wrapper_%s' % wrapper_or_getter.uuid
 
     def add_subtask(self, task):
@@ -297,6 +310,9 @@ class WrapperTask(tf_task.BaseTask):
         5 Unlock
         """
         if len(self._tasks) == 0:
+            if self.allow_empty:
+                LOG.info(_("WrapperTask %s has no Subtasks; no-op execution."))
+                return
             raise ex.WrapperTaskNoSubtasks(name=self.name)
 
         @entry_transaction
@@ -428,7 +444,8 @@ class FeedTask(tf_task.BaseTask):
             for entry in self.feed:
                 name = '%s_%s' % (self.name, entry.uuid)
                 self._tx_by_uuid[entry.uuid] = WrapperTask(
-                    name, entry, subtasks=self._common_tx.subtasks)
+                    name, entry, subtasks=self._common_tx.subtasks,
+                    allow_empty=True)
         return self._tx_by_uuid
 
     def get_wrapper(self, uuid):
