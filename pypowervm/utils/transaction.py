@@ -19,6 +19,7 @@ import logging
 import oslo_concurrency.lockutils as lock
 import six
 from taskflow import engines as tf_eng
+from taskflow.patterns import linear_flow as tf_lf
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
 
@@ -448,6 +449,7 @@ class FeedTask(tf_task.BaseTask):
         # EntryWrapperGetter is a cheat to allow us to build the WrapperTask.
         self._common_tx = WrapperTask(
             'internal', ewrap.EntryWrapperGetter(None, None, None))
+        self._post_exec = []
 
     @property
     def wrapper_tasks(self):
@@ -517,6 +519,14 @@ class FeedTask(tf_task.BaseTask):
         return self.add_subtask(_FunctorSubtask(func, *args, **kwargs),
                                 post_update=post_update)
 
+    def add_post_execute(self, *tasks):
+        """Add some number of TaskFlow Tasks to run after the WrapperTasks.
+
+        :param tasks: Some number of TaskFlow Tasks (or Flows) to be executed
+                      linearly after the parallel WrapperTasks have completed.
+        """
+        self._post_exec.extend(tasks)
+
     @property
     def feed(self):
         """(Greedy) Returns this FeedTask's feed (list of wrappers).
@@ -554,4 +564,9 @@ class FeedTask(tf_task.BaseTask):
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.
         pflow.add(*self.wrapper_tasks.values())
-        tf_eng.run(pflow, engine='parallel', max_workers=self.max_workers)
+        if self._post_exec:
+            flow = tf_lf.Flow('%s_linear_flow' % self.name).add(
+                pflow, *self._post_exec)
+        else:
+            flow = pflow
+        tf_eng.run(flow, engine='parallel', max_workers=self.max_workers)
