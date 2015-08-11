@@ -17,6 +17,7 @@
 
 import abc
 import fixtures
+import importlib
 import mock
 import six
 
@@ -119,13 +120,22 @@ class SimplePatcher(object):
                                   return_value='abc').start()
         # ...
     """
-    def __init__(self, fx, name, path, side_effect=None, return_value=None):
+    def __init__(self, fx, name, path, patch_object=False, side_effect=None,
+                 return_value=None):
         """Create a patcher on a given fixture.
 
         :param fx: The fixtures.Fixture (subclass) on which to register the
                    patcher.
         :param name: String name for the patcher.
         :param path: String python path of the object being mocked.
+        :param patch_object: If True, the path parameter is parsed to create a
+                             mock.patch.object with autospec=True instead of a
+                             regular mock.patch.  For example,
+                         patch='foo.bar.Baz.meth'
+                             would result in
+                         mock.patch.object(foo.bar.Baz, 'meth', autospec=True)
+                             Note that this means the mock call will include
+                             the instance through which it was invoked.
         :param side_effect: Side effect for the mock created by this patcher.
                             If side_effect is supplied, return_value is
                             ignored.
@@ -135,7 +145,13 @@ class SimplePatcher(object):
         """
         self.fx = fx
         self.name = name
-        self.patcher = mock.patch(path)
+        if patch_object:
+            modname, klassname, methname = path.rsplit('.', 2)
+            module = importlib.import_module(modname)
+            klass = getattr(module, klassname)
+            self.patcher = mock.patch.object(klass, methname, autospec=True)
+        else:
+            self.patcher = mock.patch(path)
         self.return_value = return_value
         self.side_effect = side_effect
         self.mock = None
@@ -153,21 +169,32 @@ class SimplePatcher(object):
 
 class LoggingPatcher(SimplePatcher):
     """SimplePatcher whose mock logs its name and returns a value."""
-    def __init__(self, fx, name, path, return_value=None):
+    FIRST_ARG = '__MOCK_RETURNS_FIRST_ARGUMENT__'
+
+    def __init__(self, fx, name, path, patch_object=False, return_value=None):
         """Create the logging patcher.
 
         :param fx: The fixtures.Fixture (subclass) on which to register the
                    patcher.  Must be a fixture providing a .log(msg) method.
         :param name: String name for the patcher.
         :param path: String python path of the object being mocked.
+        :param patch_object: If True, the path parameter is parsed to create a
+                             mock.patch.object with autospec=True instead of a
+                             regular mock.patch.  For example,
+                         patch='foo.bar.Baz.meth'
+                             would result in
+                         mock.patch.object(foo.bar.Baz, 'meth', autospec=True)
+                             Note that this means the mock call will include
+                             the instance through which it was invoked.
         :param return_value: The return value for the mocked method.
         """
         def _log(*a, **k):
             self.fx.log(self.name)
-            return self.ret
+            return a[0] if self.ret is self.FIRST_ARG else self.ret
         # This ignores/overrides the superclass's return_value semantic.
         self.ret = return_value
-        super(LoggingPatcher, self).__init__(fx, name, path, side_effect=_log)
+        super(LoggingPatcher, self).__init__(
+            fx, name, path, patch_object=patch_object, side_effect=_log)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -313,7 +340,7 @@ class FeedTaskFx(SimplePatchingFx, Logger):
     """Customizable mocking and pseudo-logging for FeedTask primitives.
 
     Provides LoggingPatchers for REST and locking primitives.  By default,
-    these patchers simply log their name and return a sensible value** (see
+    these patchers simply log their name and return a sensible value (see
     below).
 
     However, patchers can be added, changed, or removed by name from the
@@ -344,31 +371,20 @@ class FeedTaskFx(SimplePatchingFx, Logger):
     See live examples in pypowervm.tests.utils.test_transaction.TestWrapperTask
 
     Default mocks:
-    'get': Mocks EntyrWrapperGetter.get.
+    'get': Mocks FeedGetter.get.
            Logs 'get'.
-           Returns the first wrapper in the feed with which the fixture was
-           initialized**.
+           Returns the feed with which the fixture was initialized.
     'refresh': Mocks EntryWrapper.refresh.
                Logs 'refresh'.
-               Returns the first wrapper in the feed with which the fixture was
-               initialized**.
+               Returns the wrapper on which the refresh method was called.
     'update': Mocks EntryWrapper.update.
               Logs 'update'.
-              Returns the first wrapper in the feed with which the fixture was
-              initialized**.
+              Returns the wrapper on which the update method was called.
     'lock', 'unlock': Mocks semaphore locking (oslo_concurrency.lockutils.lock
                       and @synchronized, ultimately threading.Semaphore)
                       performed by the @entry_transaction decorator.
                       Logs 'lock'/'unlock', respectively.
                       Returns None.
-
-    **XXX FIXME TODO(efried): Returning the first entry in the feed is NOT the
-      correct behavior for these mocks.  A future change set will figure out
-      how to return the wrapper on which the update was called.  Meanwhile, a
-      consumer wishing to make use of the proper return from the update mock
-      should override the return value.  For example:
-
-    ftfx.patchers['update'].ret = the_right_wrapper
     """
     def __init__(self, feed):
         """Create the fixture around a given feed.
@@ -386,13 +402,11 @@ class FeedTaskFx(SimplePatchingFx, Logger):
             LoggingPatcher(
                 self, 'refresh',
                 'pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh',
-                # TODO(efried): How to return 'self' from a mocked method??
-                return_value=self._feed[0]),
+                patch_object=True, return_value=LoggingPatcher.FIRST_ARG),
             LoggingPatcher(
                 self, 'update',
                 'pypowervm.wrappers.entry_wrapper.EntryWrapper.update',
-                # TODO(efried): How to return 'self' from a mocked method??
-                return_value=self._feed[0]),
+                patch_object=True, return_value=LoggingPatcher.FIRST_ARG),
             LoggingPatcher(self, 'lock', SEM_ENTER),
             LoggingPatcher(self, 'unlock', SEM_EXIT)
         )
