@@ -207,7 +207,7 @@ class WrapperTask(tf_task.BaseTask):
         finalized_lpar = tx.execute()
     """
     def __init__(self, name, wrapper_or_getter, subtasks=None,
-                 allow_empty=False):
+                 post_update_subtasks=None, allow_empty=False):
         """Initialize this WrapperTask.
 
         :param name: A descriptive string name for the WrapperTask.
@@ -216,6 +216,8 @@ class WrapperTask(tf_task.BaseTask):
                                   WrapperTask is to be performed.
         :param subtasks: (Optional) Iterable of Subtask subclass instances with
                          which to seed this WrapperTask.
+        :param post_update_subtasks: (Optional) Iterable of Subtask subclass
+                                     instances to be run after update.
         :param allow_empty: (Optional) By default, executing a WrapperTask
                             containing no Subtasks will result in exception
                             WrapperTaskNoSubtasks.  If this flag is set to
@@ -236,10 +238,12 @@ class WrapperTask(tf_task.BaseTask):
             raise ValueError(_("Must supply either EntryWrapper or "
                                "EntryWrapperGetter"))
         self._tasks = [] if subtasks is None else list(subtasks)
+        self._pu_tasks = [] if post_update_subtasks is None else list(
+            post_update_subtasks)
         self.allow_empty = allow_empty
         self.provides = 'wrapper_%s' % wrapper_or_getter.uuid
 
-    def add_subtask(self, task):
+    def add_subtask(self, task, post_update=False):
         """Add a Subtask to this WrapperTask.
 
         Subtasks will be invoked serially and synchronously in the order in
@@ -247,11 +251,16 @@ class WrapperTask(tf_task.BaseTask):
 
         :param task: Instance of a Subtask subclass containing the logic to
                      invoke.
+        :param post_update: (Optional) If True, this Subtask will be run after
+                            update.
         :return: self, for chaining convenience.
         """
         if not isinstance(task, Subtask):
             raise ValueError(_("Must supply a valid Subtask."))
-        self._tasks.append(task)
+        if post_update:
+            self._pu_tasks.append(task)
+        else:
+            self._tasks.append(task)
         return self
 
     def add_functor_subtask(self, func, *args, **kwargs):
@@ -263,11 +272,15 @@ class WrapperTask(tf_task.BaseTask):
         :param args: Positional arguments to be passed to the callable func
                      (after the EntryWrapper parameter) when it is executed
                      within the WrapperTask.
+        :param post_update: (Optional) If True, this Subtask will be run after
+                            update.
         :param kwargs: Keyword arguments to be passed to the callable func when
                        it is executed within the WrapperTask.
         :return: self, for chaining convenience.
         """
-        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
+        post_update = kwargs.pop('post_update', False)
+        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs),
+                                post_update=post_update)
 
     @property
     def wrapper(self):
@@ -294,6 +307,15 @@ class WrapperTask(tf_task.BaseTask):
         """
         return tuple(self._tasks)
 
+    @property
+    def post_update_subtasks(self):
+        """Return the sequence of post-update Subtasks.
+
+        This is returned as a tuple (not modifiable).  To add subtasks, use the
+        add_[functor_]subtask method.
+        """
+        return tuple(self._pu_tasks)
+
     def execute(self):
         """Invoke subtasks and update under @entry_transaction.
 
@@ -307,7 +329,8 @@ class WrapperTask(tf_task.BaseTask):
           mismatch:
             - Refresh the wrapper
             - goto 2
-        5 Unlock
+        5 Run any post-update Subtasks
+        6 Unlock
         """
         if len(self._tasks) == 0:
             if self.allow_empty:
@@ -323,6 +346,8 @@ class WrapperTask(tf_task.BaseTask):
                     update_needed = True
             if update_needed:
                 wrapper = wrapper.update()
+            for task in self._pu_tasks:
+                task.execute(wrapper, *task.save_args, **task.save_kwargs)
             return wrapper
         # Use the wrapper if already fetched, or the getter if not
         # NOTE: This assignment must remain atomic.  See TAG_WRAPPER_SYNC.
@@ -463,7 +488,7 @@ class FeedTask(tf_task.BaseTask):
         # It'll also be up to date without having to trigger a feed rebuild.
         return self.wrapper_tasks[uuid].wrapper
 
-    def add_subtask(self, task):
+    def add_subtask(self, task, post_update=False):
         """Add a Subtask to *all* WrapperTasks in this FeedTask.
 
         To add Subtasks to individual WrapperTasks, iterate over the result of
@@ -475,9 +500,9 @@ class FeedTask(tf_task.BaseTask):
             # _tx_by_uuid is guaranteed to have WrapperTasks for all UUIDs,
             # including this one
             for txn in self._tx_by_uuid.values():
-                txn.add_subtask(task)
+                txn.add_subtask(task, post_update=post_update)
         else:
-            self._common_tx.add_subtask(task)
+            self._common_tx.add_subtask(task, post_update=post_update)
         return self
 
     def add_functor_subtask(self, func, *args, **kwargs):
@@ -488,7 +513,9 @@ class FeedTask(tf_task.BaseTask):
 
         Specification is the same as for WrapperTask.add_functor_subtask.
         """
-        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
+        post_update = kwargs.pop('post_update', False)
+        return self.add_subtask(_FunctorSubtask(func, *args, **kwargs),
+                                post_update=post_update)
 
     @property
     def feed(self):
