@@ -213,7 +213,7 @@ class Job(ewrap.EntryWrapper):
             except pvmex.JobRequestFailed as e:
                 LOG.warn(six.text_type(e))
             exc = pvmex.JobRequestTimedOut(
-                operation_name=self.op, seconds=str(timeout))
+                operation_name=self.op, seconds=timeout)
             LOG.exception(exc)
             raise exc
         if status != JobStatus.COMPLETED_OK:
