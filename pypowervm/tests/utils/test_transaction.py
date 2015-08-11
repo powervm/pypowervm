@@ -185,16 +185,8 @@ class TestWrapperTask(twrap.TestWrapper):
             txst = tx._FunctorSubtask(returns_second_arg, trueable)
             self.assertTrue(self.tx_subtask_invoke(txst, self.dwrap))
 
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
-    def test_wrapper_task1(self, mock_update):
+    def test_wrapper_task1(self):
         txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
-
-        def _update():
-            txfx.log('update')
-            # Since we're passing around self.dwrap and modifying it in-place,
-            # this return should have the changes in it.
-            return self.dwrap
-        mock_update.side_effect = _update
 
         # Must supply a wrapper or getter to instantiate
         self.assertRaises(ValueError, tx.WrapperTask, 'foo', 'bar')
@@ -226,10 +218,8 @@ class TestWrapperTask(twrap.TestWrapper):
         lwrap = tx1.execute()
         # The name should be unchanged
         self.assertEqual('z3-9-5-126-127-00000001', lwrap.name)
-        # And update should not have been called
-        self.assertEqual(0, mock_update.call_count)
-        # ...which should also be reflected in the log.  Note that 'get' is NOT
-        # called a second time.
+        # And update should not have been called, which should be reflected in
+        # the log.  Note that 'get' is NOT called a second time.
         self.assertEqual([
             'get', 'lock', 'LparNameAndMem_z3-9-5-126-127-00000001', 'unlock'],
             txfx.get_log())
@@ -246,11 +236,9 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual([], txfx.get_log())
         # Now execute the transaction
         lwrap = tx1.execute()
-        # Update should have been called.
-        self.assertTrue(1, mock_update.call_count)
         # The last change should be the one that stuck
         self.assertEqual('newer_name', lwrap.name)
-        # Check the overall order
+        # Check the overall order.  Update was called.
         self.assertEqual([
             'lock', 'LparNameAndMem_z3-9-5-126-127-00000001',
             'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
@@ -265,29 +253,28 @@ class TestWrapperTask(twrap.TestWrapper):
         # this one.
         tx1.add_subtask(self.LparNameAndMem('bogus_name', logger=txfx))
         lwrap = tx2.execute()
-        # Update should have been called.
-        self.assertTrue(1, mock_update.call_count)
         # The last change should be the one that stuck
         self.assertEqual('newest_name', lwrap.name)
-        # Check the overall order.  This one GETs under lock.
+        # Check the overall order.  This one GETs under lock.  Update called.
         self.assertEqual([
             'lock', 'get', 'LparNameAndMem_z3-9-5-126-127-00000001',
             'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
             'LparNameAndMem_newer_name', 'LparNameAndMem_newest_name',
             'update', 'unlock'], txfx.get_log())
 
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
-    def test_wrapper_task2(self, mock_update):
+    def test_wrapper_task2(self):
         # Now:
         # o Fake like update forces retry
         # o Test add_functor_subtask, including chaining
         # o Ensure GET is deferred when .wrapper() is not called ahead of time.
         # o Make sure subtask args are getting to the subtask.
-        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
+        txfx = fx.WrapperTaskFx(self.dwrap)
 
         def _update_retries_twice():
             return self.retry_twice(self.dwrap, self.tracker, txfx)
-        mock_update.side_effect = _update_retries_twice
+        txfx.patchers['update'].side_effect = _update_retries_twice
+
+        self.useFixture(txfx)
 
         def functor(wrapper, arg1, arg2, kwarg3=None, kwarg4=None):
             txfx.log('functor')
@@ -300,9 +287,9 @@ class TestWrapperTask(twrap.TestWrapper):
         # Instantiate-add-execute chain
         tx.WrapperTask('tx2', self.getter).add_functor_subtask(
             functor, ['arg', 1], 'arg2', kwarg4='kwarg4').execute()
-        # Update should have been called thrice (two retries)
-        self.assertTrue(3, mock_update.call_count)
-        # Check the overall order
+        # Check the overall order.  Update should have been called thrice (two
+        # retries)
+        self.assertEqual(3, txfx.patchers['update'].mock.call_count)
         self.assertEqual([
             'lock', 'get', 'functor', 'update 1', 'refresh', 'functor',
             'update 2', 'refresh', 'functor', 'update 3', 'unlock'],
