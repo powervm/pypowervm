@@ -19,6 +19,7 @@
 import copy
 import mock
 import oslo_concurrency.lockutils as lock
+from taskflow import task as tf_task
 
 import pypowervm.const as c
 import pypowervm.exceptions as ex
@@ -520,3 +521,35 @@ class TestFeedTask(twrap.TestWrapper):
         # Mocking Flow initializer to fail, ensuring it doesn't get called.
         mock_flow.side_effect = self.fail
         tx.FeedTask('feed_task', lpar.LPAR.getter(None)).execute()
+
+    def test_post_exec(self):
+        def log_func(msg):
+            def _log(*a, **k):
+                ftfx.log(msg)
+            return _log
+
+        def log_task(msg):
+            return tf_task.FunctorTask(log_func(msg), name='functor_%s' % msg)
+
+        # Limit the feed to two to keep the logging sane
+        ftfx = self.useFixture(fx.FeedTaskFx(self.entries[:2]))
+        # Make the logging predictable by limiting to one thread
+        ftsk = tx.FeedTask('post_exec', lpar.LPAR.getter(None), max_workers=1)
+
+        # First prove that a FeedTask with *only* post-execs can run.
+        ftsk.add_post_execute(log_task('post1'))
+        ftsk.add_post_execute(log_task('post2'))
+        ftsk.execute()
+        # Note that no GETs or locks happen
+        self.assertEqual(['post1', 'post2'], ftfx.get_log())
+
+        # Now add regular subtasks
+        ftfx.reset_log()
+        ftsk.add_functor_subtask(log_func('main1'))
+        ftsk.add_functor_subtask(log_func('main2'))
+        ftsk.execute()
+        # One GET, up front.  Posts happen at the end.
+        self.assertEqual(['get',
+                          'lock', 'main1', 'main2', 'unlock',
+                          'lock', 'main1', 'main2', 'unlock',
+                          'post1', 'post2'], ftfx.get_log())
