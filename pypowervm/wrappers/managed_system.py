@@ -44,6 +44,11 @@ _IBMi_RESTRICTEDIO_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IBMiRestrictedIOModeCapable')
 _SIMP_REMOTE_RESTART_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
+_AIX_CAP = u.xpath(_SYS_CAPABILITIES, 'AIXCapable')
+_IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
+_LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
+_SHR_PROC_POOL_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'SharedProcessorPoolCapable')
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -207,10 +212,27 @@ class System(ewrap.EntryWrapper):
 
         return val
 
+    def _aix_capable(self):
+        """Intepret AIX capability string and return True/False.
+
+        Only expose this capability via externally via
+        get_capabilities method.
+        """
+        cap = self._get_val_str(_AIX_CAP)
+        # we can get 'unavailable' if PHYP interface is running an older
+        # level and doesn't support query of this information
+        if cap is not None and cap.lower() == 'inactive':
+            return False
+        # Default to true since that's what we always
+        # assume prior to this capability
+        return True
+
     def get_capabilities(self):
         """returns: The system capabilities from Power."""
         # VirtualEthernetCustomMACAddressCapable (custom_mac_addr_capable) will
         # default to True, which is the correct setting for POWER7 servers.
+        # For operating system capabilities, they will be default to True
+        # to match old Power server behaviors.
         cap_data = {'active_lpar_mobility_capable':
                     self._get_val_bool(_ACTIVE_LPM_CAP),
                     'inactive_lpar_mobility_capable':
@@ -222,7 +244,14 @@ class System(ewrap.EntryWrapper):
                     'ibmi_restrictedio_capable':
                     self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False),
                     'simplified_remote_restart_capable':
-                    self._get_val_bool(_SIMP_REMOTE_RESTART_CAP, False)
+                    self._get_val_bool(_SIMP_REMOTE_RESTART_CAP, False),
+                    'aix_capable': self._aix_capable(),
+                    'ibmi_capable':
+                    self._get_val_bool(_IBMi_CAP, True),
+                    'linux_capable':
+                    self._get_val_bool(_LINUX_CAP, True),
+                    'shared_processor_pool_capable':
+                    self._get_val_bool(_SHR_PROC_POOL_CAP, False)
                     }
         return cap_data
 
