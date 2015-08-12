@@ -19,6 +19,7 @@ import logging
 import oslo_concurrency.lockutils as lock
 import six
 from taskflow import engines as tf_eng
+from taskflow.patterns import linear_flow as tf_lf
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
 
@@ -426,6 +427,7 @@ class FeedTask(tf_task.BaseTask):
         # EntryWrapperGetter is a cheat to allow us to build the WrapperTask.
         self._common_tx = WrapperTask(
             'internal', ewrap.EntryWrapperGetter(None, None, None))
+        self._post_exec = []
 
     @property
     def wrapper_tasks(self):
@@ -493,6 +495,14 @@ class FeedTask(tf_task.BaseTask):
         """
         return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
 
+    def add_post_execute(self, *tasks):
+        """Add some number of TaskFlow Tasks to run after the WrapperTasks.
+
+        :param tasks: Some number of TaskFlow Tasks (or Flows) to be executed
+                      linearly after the parallel WrapperTasks have completed.
+        """
+        self._post_exec.extend(tasks)
+
     @property
     def feed(self):
         """(Greedy) Returns this FeedTask's feed (list of wrappers).
@@ -528,12 +538,24 @@ class FeedTask(tf_task.BaseTask):
         """Run this FeedTask's WrapperTasks in parallel TaskFlow engine."""
         # Ensure a true no-op (in particular, we don't want to GET the feed) if
         # there are no Subtasks
-        if not self._tx_by_uuid and not self._common_tx.subtasks:
+        if not any([self._tx_by_uuid, self._common_tx.subtasks,
+                    self._post_exec]):
             LOG.info(_("FeedTask %s has no Subtasks; no-op execution."),
                      self.name)
             return
-        pflow = tf_uf.Flow("%s_parallel_flow" % self.name)
+        pflow = None
         # Calling .wrapper_tasks will cause the feed to be fetched and
-        # WrapperTasks to be replicated, if not already done.
-        pflow.add(*self.wrapper_tasks.values())
-        tf_eng.run(pflow, engine='parallel', max_workers=self.max_workers)
+        # WrapperTasks to be replicated, if not already done.  Only do this if
+        # there exists at least one WrapperTask with Subtasks.
+        # (NB: It is legal to have a FeedTask that *only* has post-execs.)
+        if self._tx_by_uuid or self._common_tx.subtasks:
+            pflow = tf_uf.Flow("%s_parallel_flow" % self.name)
+            pflow.add(*self.wrapper_tasks.values())
+        if self._post_exec:
+            flow = tf_lf.Flow('%s_linear_flow' % self.name)
+            if pflow is not None:
+                flow.add(pflow)
+            flow.add(*self._post_exec)
+        else:
+            flow = pflow
+        tf_eng.run(flow, engine='parallel', max_workers=self.max_workers)
