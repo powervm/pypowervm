@@ -204,7 +204,9 @@ class DefaultStandardize(Standardize):
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
                                 allow_none=True).validate()
-        ProcCompatMode(attrs.get(PROC_COMPAT), allow_none=partial).validate()
+        ProcCompatMode(attrs.get(PROC_COMPAT),
+                       host_modes=self.mngd_sys.proc_compat_modes,
+                       allow_none=partial).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -396,14 +398,28 @@ class ChoiceField(Field):
 
     @classmethod
     def convert_value(cls, value):
+        return cls._validate_choices(value, cls._choices)
+
+    @classmethod
+    def _validate_choices(cls, value, choices):
         if value is None:
-            raise ValueError('None value is not valid.')
-        value = value.lower()
-        for choice in cls._choices:
-            if value == choice.lower():
+            raise ValueError(_LE('None value is not valid.'))
+        for choice in choices:
+            if value.lower() == choice.lower():
                 return choice
         # If we didn't find it, that's a problem...
-        raise ValueError('Value not valid: %s' % value)
+        values = dict(value=value, field=cls._name,
+                      choices=choices)
+        msg = _LE("Value '%(value)s' is not valid "
+                  "for field '%(field)s' with acceptable "
+                  "choices: %(choices)s") % values
+        raise ValueError(msg)
+
+    def validate(self):
+        if self.value is None and self.allow_none:
+            return
+        super(ChoiceField, self).validate()
+        self._validate_choices(self.value, self._choices)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -581,6 +597,11 @@ class LPARType(ChoiceField):
 class ProcCompatMode(ChoiceField):
     _choices = bp.LPARCompat.ALL_VALUES
     _name = 'Processor Compatability Mode'
+
+    def __init__(self, value, host_modes=None, allow_none=True):
+        super(ProcCompatMode, self).__init__(value, allow_none=allow_none)
+        if host_modes:
+            self._choices = host_modes
 
 
 class DedProcShareMode(ChoiceField):
