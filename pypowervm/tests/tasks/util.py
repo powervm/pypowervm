@@ -27,6 +27,10 @@ def load_file(file_name, adapter=None):
     data_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(data_dir, 'data')
     file_path = os.path.join(data_dir, file_name)
+    if not os.path.isfile(file_path):
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(dirname, "..", "wrappers", "data", file_name)
+
     return pvmhttp.load_pvm_resp(file_path, adapter).get_response()
 
 
