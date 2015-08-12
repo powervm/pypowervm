@@ -179,7 +179,8 @@ class TestHDisk(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
-        mock_lua_xml.assert_called_with({itls[0]}, mock_adapter, vendor='IBM')
+        mock_lua_xml.assert_called_with({itls[0]}, mock_adapter,
+                                        vendor='OTHER')
 
     @mock.patch('pypowervm.tasks.hdisk.lua_recovery')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
@@ -205,7 +206,7 @@ class TestHDisk(unittest.TestCase):
             mock_ftsk.assert_called_with('scrub_lpar_123_vios_vuuid', mock.ANY)
             mock_alsst.assert_called_with(123, mock.ANY)
             mock_luar.assert_has_calls([
-                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.IBM)
+                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.OTHER)
                 for i in range(2)])
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()
@@ -221,7 +222,7 @@ class TestHDisk(unittest.TestCase):
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
-                                         vendor=hdisk.LUAType.IBM)
+                                         vendor=hdisk.LUAType.OTHER)
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
