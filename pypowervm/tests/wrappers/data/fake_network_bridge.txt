@@ -205,6 +205,7 @@ BODY{
             </IPInterface>
             <UniqueDeviceID kb="ROR" kxe="false">10298abf2b234f52cb</UniqueDeviceID>
             <LargeSend kb="CUD" kxe="false">true</LargeSend>
+            <ConfigurationState kb="CUD" kxe="false">Configured</ConfigurationState>
         </SharedEthernetAdapter>
     </SharedEthernetAdapters>
     <UniqueDeviceID kxe="false" kb="ROR">2</UniqueDeviceID>

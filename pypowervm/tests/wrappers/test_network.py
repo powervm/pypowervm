@@ -155,6 +155,9 @@ class TestNetwork(twrap.TestWrapper):
     def test_pvid(self):
         self.assertEqual(1, self.dwrap.pvid)
 
+    def test_configuration_state(self):
+        self.assertEqual('Configured', self.dwrap.seas[0].configuration_state)
+
     def test_load_balance(self):
         self.assertTrue(self.dwrap.load_balance)
 
