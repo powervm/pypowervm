@@ -118,7 +118,7 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
+def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     """This method should be invoked after a new disk should be discovered.
 
     When a new disk is created externally (say on a block device), the Virtual
