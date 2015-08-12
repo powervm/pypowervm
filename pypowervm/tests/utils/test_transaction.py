@@ -185,6 +185,13 @@ class TestWrapperTask(twrap.TestWrapper):
             txst = tx._FunctorSubtask(returns_second_arg, trueable)
             self.assertTrue(self.tx_subtask_invoke(txst, self.dwrap))
 
+    def test_wrapper_task_allow_empty(self):
+        """Test the allow_empty=True condition."""
+        # No mocks - no REST calls should be run.
+        tx1 = tx.WrapperTask('tx1', self.getter, allow_empty=True)
+        # Does not raise, returns None
+        self.assertIsNone(tx1.execute())
+
     def test_wrapper_task1(self):
         txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
 
@@ -505,3 +512,11 @@ class TestFeedTask(twrap.TestWrapper):
         # Run it!
         self.feed_task.execute()
         self.assertEqual(exp_flags, act_flags)
+
+    @mock.patch('taskflow.patterns.unordered_flow.Flow.__init__')
+    def test_no_subtasks(self, mock_flow):
+        """Ensure that a FeedTask with no Subtasks is a no-op."""
+        # No REST mocks - any REST calls will blow up.
+        # Mocking Flow initializer to fail, ensuring it doesn't get called.
+        mock_flow.side_effect = self.fail
+        tx.FeedTask('feed_task', lpar.LPAR.getter(None)).execute()
