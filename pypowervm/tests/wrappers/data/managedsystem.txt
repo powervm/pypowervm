@@ -70,6 +70,7 @@ BODY{
         <ActiveMemorySharingCapable kb="ROO" kxe="false">true</ActiveMemorySharingCapable>
         <ActiveSystemOptimizerCapable kb="ROO" kxe="false">true</ActiveSystemOptimizerCapable>
         <AddressBroadcastPolicyCapable kb="ROO" kxe="false">true</AddressBroadcastPolicyCapable>
+        <AIXCapable kb="ROO" kxe="false">Inactive</AIXCapable>
         <AutorecoveryPowerOnCapable kb="ROO" kxe="false">false</AutorecoveryPowerOnCapable>
         <BarrierSynchronizationRegisterCapable kb="ROO" kxe="false">true</BarrierSynchronizationRegisterCapable>
         <CapacityOnDemandMemoryCapable kb="ROO" kxe="false">true</CapacityOnDemandMemoryCapable>
@@ -92,6 +93,7 @@ BODY{
         <IBMiRestrictedIOModeCapable kb="ROO" kxe="false">true</IBMiRestrictedIOModeCapable>
         <InactiveLogicalPartitionMobilityCapable kxe="false" kb="ROO">true</InactiveLogicalPartitionMobilityCapable>
         <IntelligentPlatformManagementInterfaceCapable kb="ROO" kxe="false">false</IntelligentPlatformManagementInterfaceCapable>
+        <LinuxCapable kb="ROO" kxe="false">false</LinuxCapable>
         <LogicalHostEthernetAdapterCapable kb="ROO" kxe="false">true</LogicalHostEthernetAdapterCapable>
         <LogicalPartitionAffinityGroupCapable kb="ROO" kxe="false">true</LogicalPartitionAffinityGroupCapable>
         <LogicalPartitionAvailabilityPriorityCapable kb="ROO" kxe="false">true</LogicalPartitionAvailabilityPriorityCapable>
