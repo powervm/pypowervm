@@ -18,6 +18,7 @@
 
 import abc
 import logging
+import oslo_concurrency.lockutils as lock
 import urllib
 
 from pypowervm import adapter as adpt
@@ -478,9 +479,62 @@ class EntryWrapper(Wrapper):
     # If it's an Entry, it must be a ROOT or CHILD
     has_metadata = True
 
+    # Global cache of {uuid: last_known_etag}, helps anticipate the need to
+    # refresh before POSTing results in 412 (etag mismatch).
+    _etag_cache = {}
+    # Global registry of how many instances exist for a particular object.
+    # Helps control the expiration of _etag_cache entries.
+    _uuid_refcounts = {}
+    # Synchronize updates to _uuid_refcounts and _etag_cache
+    _LOCK_CACHES = 'EntryWrapper_reference_count_registry_lock'
+
+    def _rm_cached_etag(self):
+        """Remove my entry from the etag cache.
+
+        If I'm not registered, ignore.
+
+        Caller must lock under _LOCK_CACHES.
+        """
+        if self.uuid in self._etag_cache:
+            del self._etag_cache[self.uuid]
+
+    def __del__(self):
+        """Decrement the UUID's refcount and maybe remove its etag cache entry.
+
+        If this instance is going out of scope, and it's the last one, we
+        remove it from the etag cache on the assumption that subsequent reads
+        of this same object *should* do a fresh GET.  This also helps prevent
+        the cache from growing uncontrollably.
+        """
+        with lock.lock(self._LOCK_CACHES):
+            urc = self._uuid_refcounts.get(self.uuid)
+            if urc is None or urc <= 1:
+                if urc is not None:
+                    del self._uuid_refcounts[self.uuid]
+                self._rm_cached_etag()
+            else:
+                self._uuid_refcounts[self.uuid] -= 1
+
+    def is_stale(self):
+        """Does the current etag match the last known etag for this instance?
+
+        This takes the conservative approach: if my etag is not registered,
+        assume it's because I was retrieved via some mechanism outside of this
+        class's methods.  In this case, assume NOT stale so we don't force a
+        refresh unnecessarily.
+        """
+        return self.etag != self._etag_cache.get(self.uuid, self.etag)
+
     def __init__(self, entry, etag=None):
         self.entry = entry
         self._etag = etag
+        # Putting UUID and etag cache registration here should catch all
+        # reasonable code paths, including .wrap().
+        with lock.lock(self._LOCK_CACHES):
+            if self.uuid not in self._uuid_refcounts:
+                self._uuid_refcounts[self.uuid] = 0
+            self._uuid_refcounts[self.uuid] += 1
+            self._etag_cache[self.uuid] = etag
 
     @classmethod
     def getter(cls, adapter, entry_uuid=None, parent_class=None,
@@ -745,6 +799,9 @@ class EntryWrapper(Wrapper):
     def delete(self):
         """Performs an adapter.delete (REST API PUT) with this wrapper."""
         self.adapter.delete_by_href(self.href, etag=self.etag)
+        # If this worked, remove me from the etag cache.
+        with lock.lock(self._LOCK_CACHES):
+            self._rm_cached_etag()
 
     def update(self, xag=None):
         """Performs adapter.update of this wrapper.

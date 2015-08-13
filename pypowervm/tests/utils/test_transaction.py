@@ -99,8 +99,7 @@ class TestWrapperTask(twrap.TestWrapper):
         # are making sure the right code path is being taken.)
         mock_semget.reset_mock()
         foo(self.getter)
-        self.assertEqual(1, mock_semget.call_count)
-        mock_semget.assert_called_with('getter_uuid')
+        mock_semget.assert_any_call('getter_uuid')
 
     def test_sequence(self):
         """Prove the sequence of events on a transaction-decorated method.
