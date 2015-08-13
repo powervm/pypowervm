@@ -129,6 +129,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                 job_wrapper.create_job_parameter(kw, str(val)))
 
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
+    return job_wrapper
 
 
 def migrate_recover(lpar, force=False,
@@ -150,6 +151,7 @@ def migrate_recover(lpar, force=False,
         job_parms.append(job_wrapper.create_job_parameter('Force', 'true'))
 
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
+    return job_wrapper
 
 
 def migrate_abort(lpar, timeout=CONF.powervm_job_request_timeout):
@@ -166,3 +168,4 @@ def migrate_abort(lpar, timeout=CONF.powervm_job_request_timeout):
                              suffix_parm=_SUFFIX_PARM_MIGRATE_ABORT)
     job_wrapper = job.Job.wrap(resp.entry)
     job_wrapper.run_job(lpar.uuid, job_parms=None, timeout=timeout)
+    return job_wrapper

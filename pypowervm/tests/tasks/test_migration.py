@@ -65,7 +65,8 @@ class TestMigration(testtools.TestCase):
         # Test simple call
         mock_run_job.side_effect = self._get_parm_checker(
             '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
-        mig.migrate_lpar(self.lpar_w, 'abc')
+        mig_job = mig.migrate_lpar(self.lpar_w, 'abc')
+        self.assertTrue(isinstance(mig_job, job.Job))
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',
                                                suffix_type='do')
@@ -80,11 +81,13 @@ class TestMigration(testtools.TestCase):
                      (mig.SRC_MSP, 'vios2')]
         mock_run_job.side_effect = self._get_parm_checker(
             '1234', parm_list, exp_timeout=1800)
-        mig.migrate_lpar(self.lpar_w, 'abc',
-                         tgt_mgmt_svr='host', tgt_mgmt_usr='usr',
-                         virtual_fc_mappings='1/1/1',
-                         virtual_scsi_mappings='2/2/2',
-                         dest_msp_name='vios1', source_msp_name='vios2')
+        mig_job_2 = mig.migrate_lpar(self.lpar_w, 'abc',
+                                     tgt_mgmt_svr='host', tgt_mgmt_usr='usr',
+                                     virtual_fc_mappings='1/1/1',
+                                     virtual_scsi_mappings='2/2/2',
+                                     dest_msp_name='vios1',
+                                     source_msp_name='vios2')
+        self.assertTrue(isinstance(mig_job_2, job.Job))
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',
                                                suffix_type='do')
@@ -93,7 +96,8 @@ class TestMigration(testtools.TestCase):
         mock_run_job.side_effect = self._get_parm_checker(
             '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
         mock_run_job.reset_mock()
-        mig.migrate_lpar(self.lpar_w, 'abc', validate_only=True)
+        mig_job_3 = mig.migrate_lpar(self.lpar_w, 'abc', validate_only=True)
+        self.assertTrue(isinstance(mig_job_3, job.Job))
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='MigrateValidate',
                                                suffix_type='do')
@@ -101,7 +105,8 @@ class TestMigration(testtools.TestCase):
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_migration_recover(self, mock_run_job):
         # Test simple call
-        mig.migrate_recover(self.lpar_w)
+        mig_job = mig.migrate_recover(self.lpar_w)
+        self.assertTrue(isinstance(mig_job, job.Job))
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='MigrateRecover',
                                                suffix_type='do')
@@ -113,7 +118,8 @@ class TestMigration(testtools.TestCase):
         mock_run_job.reset_mock()
         mock_run_job.side_effect = self._get_parm_checker(
             '1234', [('Force', 'true')], exp_timeout=1800)
-        mig.migrate_recover(self.lpar_w, force=True)
+        mig_job_2 = mig.migrate_recover(self.lpar_w, force=True)
+        self.assertTrue(isinstance(mig_job_2, job.Job))
 
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='MigrateRecover',
@@ -122,7 +128,8 @@ class TestMigration(testtools.TestCase):
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_migration_abort(self, mock_run_job):
         # Test simple call
-        mig.migrate_abort(self.lpar_w)
+        mig_job = mig.migrate_abort(self.lpar_w)
+        self.assertTrue(isinstance(mig_job, job.Job))
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='MigrateAbort',
                                                suffix_type='do')
