@@ -166,9 +166,6 @@ class2msg = {
     "If you specify a minimum and maximum value for processing units, you "
     "must also specify a value for desired processing units for virtual "
     "machine 'instance_name_param'.",
-    pvmex.VolumeAttachFailed:
-    "Unable to attach storage backing_dev_param to virtual machine "
-    "instance_name_param. reason_param",
     pvmex.InvalidExtraSpec:
     "Invalid attribute name 'key_param' was passed in as part of the flavor "
     "extra specs for virtual machine 'instance_name_param'.",
@@ -276,9 +273,6 @@ class2msg = {
     pvmex.VIOSIsTooBusy:
     "Virtual I/O Server vios_name_param is currently too busy to process "
     "update operations.",
-    pvmex.VolumeDetachFailed:
-    "Unable to detach storage backing_dev_param from virtual machine "
-    "instance_name_param. reason_param",
     pvmex.InvalidStorageConnectivityInfo:
     "Unable to perform this operation with the storage connectivity group "
     "provided for virtual machine instance_name_param.",
