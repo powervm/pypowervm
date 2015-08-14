@@ -70,6 +70,34 @@ class TestMonitors(testtools.TestCase):
             pref = pvm_mon.PcmPref.wrap(pvm_e.Entry({'etag': etag},
                                                     element, self.adpt))
 
+            self.assertFalse(pref.compute_ltm_enabled)
+            self.assertTrue(pref.ltm_enabled)
+            self.assertTrue(pref.stm_enabled)
+            self.assertFalse(pref.aggregation_enabled)
+            return element
+        self.adpt.update.side_effect = validate_of_update
+
+        # This will invoke the validate_of_update
+        pvm_t_mon.ensure_ltm_monitors(self.adpt, 'host_uuid')
+
+        # Make sure the update was in fact invoked though
+        self.assertEqual(1, self.adpt.update.call_count)
+
+    def test_ensure_ltm_monitors_non_default(self):
+        """Verifies that the LTM monitors with different default inputs"""
+        resp = tju.load_file('pcm_pref_feed.txt')
+        self.adpt.read_by_href.return_value = resp
+
+        # Create a side effect that can validate the input to the update
+        def validate_of_update(*kargs, **kwargs):
+            element = kargs[0]
+            etag = kargs[1]
+            self.assertIsNotNone(element)
+
+            # Wrap the element so we can validate it.
+            pref = pvm_mon.PcmPref.wrap(pvm_e.Entry({'etag': etag},
+                                                    element, self.adpt))
+
             self.assertTrue(pref.compute_ltm_enabled)
             self.assertTrue(pref.ltm_enabled)
             self.assertFalse(pref.stm_enabled)
@@ -78,7 +106,8 @@ class TestMonitors(testtools.TestCase):
         self.adpt.update.side_effect = validate_of_update
 
         # This will invoke the validate_of_update
-        pvm_t_mon.ensure_ltm_monitors(self.adpt, 'host_uuid')
+        pvm_t_mon.ensure_ltm_monitors(self.adpt, 'host_uuid', compute_ltm=True,
+                                      override_to_default=True)
 
         # Make sure the update was in fact invoked though
         self.assertEqual(1, self.adpt.update.call_count)
