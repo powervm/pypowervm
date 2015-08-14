@@ -133,8 +133,10 @@ _VADPT_MAC_ADDR = 'MACAddress'
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
+_VADPT_VSWITCH_ID = _TS_VS_ID
 _VADPT_PVID = _PVID
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_VIRTUAL_STATION_INTERFACE_TYPE_ID = 'VirtualStationInterfaceTypeId'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
 
@@ -1022,6 +1024,10 @@ class CNA(ewrap.EntryWrapper):
         self.set_parm_value(_VADPT_SLOT_NUM, sid)
 
     @property
+    def virtualstationinterfacetypeid(self):
+        return self._get_val_str(_VADPT_VIRTUAL_STATION_INTERFACE_TYPE_ID)
+
+    @property
     def _use_next_avail_slot_id(self):
         """Use next available (high) slot ID, true or false."""
         unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
@@ -1048,6 +1054,12 @@ class CNA(ewrap.EntryWrapper):
         The API returns a format with no colons and is upper cased.
         """
         return self._get_val_str(_VADPT_MAC_ADDR)
+
+    @property
+    def vswitchid(self):
+        """Returns the vswitchid for the adapter.
+        """
+        return self._get_val_int(_VADPT_VSWITCH_ID)
 
     @mac.setter
     def mac(self, new_val):
