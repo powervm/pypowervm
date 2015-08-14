@@ -522,6 +522,10 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNotNone(test._use_next_avail_slot_id)
         self.assertTrue(test._use_next_avail_slot_id)
         self.assertIsNone(test.mac)
+        self.assertIsNone(test.vsi_type_id)
+        self.assertIsNone(test.vsi_type_version)
+        self.assertIsNone(test.vsi_type_manager_id)
+        self.assertIsNone(test.vswitch_id)
         self.assertEqual(1, test.pvid)
 
     def test_unique_crt(self):
@@ -537,6 +541,10 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNotNone(test.mac)
         self.assertEqual("AABBCCDDEEFF", test.mac)
         self.assertEqual(5, test.pvid)
+        self.assertIsNone(test.vsi_type_id)
+        self.assertIsNone(test.vsi_type_version)
+        self.assertIsNone(test.vsi_type_manager_id)
+        self.assertIsNone(test.vswitch_id)
 
     def test_unasi_field(self):
         """UseNextAvailable(High)SlotID field is used, as appropriate."""
@@ -578,6 +586,10 @@ class TestCNAWrapper(twrap.TestWrapper):
                          '726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/'
                          '9e42d4a9-9725-3007-9932-d85374ebf5cf',
                          self.entries.vswitch_uri)
+        self.assertEqual(0, self.entries.vswitch_id)
+        self.assertEqual('VSITID', self.entries.vsi_type_id)
+        self.assertEqual('77.99', self.entries.vsi_type_version)
+        self.assertEqual('VSIMID', self.entries.vsi_type_manager_id)
 
     def test_tagged_vlan_modification(self):
         """Tests that the tagged vlans can be modified."""

@@ -133,6 +133,10 @@ _VADPT_MAC_ADDR = 'MACAddress'
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
+_VADPT_VSWITCH_ID = _TA_VS_ID
+_VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
+_VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
+_VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
 _VADPT_PVID = _PVID
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
@@ -1049,6 +1053,21 @@ class CNA(ewrap.EntryWrapper):
         """
         return self._get_val_str(_VADPT_MAC_ADDR)
 
+    @property
+    def vsi_type_id(self):
+        """Returns the virtual station interface type id."""
+        return self._get_val_str(_VADPT_VSI_TYPE_ID)
+
+    @property
+    def vsi_type_version(self):
+        """Returns the virtual station interface version."""
+        return self._get_val_str(_VADPT_VSI_TYPE_VERSION)
+
+    @property
+    def vsi_type_manager_id(self):
+        """Returns the virtual station interface manager id."""
+        return self._get_val_str(_VADPT_VSI_MANAGER_ID)
+
     @mac.setter
     def mac(self, new_val):
         new_mac = u.sanitize_mac_for_api(new_val)
@@ -1109,6 +1128,11 @@ class CNA(ewrap.EntryWrapper):
     @vswitch_uri.setter
     def vswitch_uri(self, new_val):
         self.set_href(u.xpath(_VADPT_VSWITCH, c.LINK), new_val)
+
+    @property
+    def vswitch_id(self):
+        """Returns the ID (typically 0-15) for the virtual switch."""
+        return self._get_val_int(_VADPT_VSWITCH_ID)
 
 
 @ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
