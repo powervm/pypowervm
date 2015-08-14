@@ -22,6 +22,7 @@ from taskflow import engines as tf_eng
 from taskflow.patterns import linear_flow as tf_lf
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
+import time
 
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
@@ -76,7 +77,12 @@ def entry_transaction(func):
             if isinstance(wos, ewrap.EntryWrapperGetter):
                 wos = wos.get()
 
-            @retry.retry(argmod_func=retry.refresh_wrapper)
+            def _delay(attempt, max_attempts, *args, **kwds):
+                """Delay a little bit more after each retry."""
+                time.sleep(.5 * attempt)
+
+            @retry.retry(argmod_func=retry.refresh_wrapper, tries=5,
+                         delay_func=_delay)
             def _retry_refresh(wrapper, *a3, **k3):
                 """Retry as needed, refreshing its wrapper each time."""
                 return func(wrapper, *a3, **k3)
