@@ -17,6 +17,7 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
+import time
 
 from six import moves
 
@@ -29,6 +30,21 @@ NO_TEST = lambda *args, **kwds: True
 NO_CHECKER = lambda *args, **kwds: False
 NO_DELAY = lambda *args, **kwds: None
 NO_ARGMOD = lambda this_try, max_tries, *args, **kwds: (args, kwds)
+
+
+def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
+    """A delay function that increases its delay per attempt.
+
+    The steps will be:
+     - Attempt 1: 0.0s
+     - Attempt 2: 0.5s
+     - Attempt 3: 2.0s
+     - Attempt 4: 6.5s
+     - Attempt 5: 20s
+     - Attempt 6+: 30s
+    """
+    sleep_time = (0.25 * (3**(attempt-1)) - 0.25)
+    time.sleep(min(sleep_time, 30))
 
 
 def refresh_wrapper(trynum, maxtries, *args, **kwargs):

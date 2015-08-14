@@ -216,5 +216,42 @@ class TestRetry(unittest.TestCase):
             called_count += 1
         _func(mock_wrapper, 'a1', 'a2', kw0='k0', kw1='k1')
 
+    @mock.patch('time.sleep')
+    def test_stepped_delay(self, mock_sleep):
+        # First attempt, no delay
+        pvm_retry.STEPPED_DELAY(1, 7)
+        mock_sleep.assert_called_once_with(0)
+        mock_sleep.reset_mock()
+
+        # Second attempt, .5s delay
+        pvm_retry.STEPPED_DELAY(2, 7)
+        mock_sleep.assert_called_once_with(.5)
+        mock_sleep.reset_mock()
+
+        # Third attempt, 2.0s delay
+        pvm_retry.STEPPED_DELAY(3, 7)
+        mock_sleep.assert_called_once_with(2.0)
+        mock_sleep.reset_mock()
+
+        # Fourth attempt, 6.5s delay
+        pvm_retry.STEPPED_DELAY(4, 7)
+        mock_sleep.assert_called_once_with(6.5)
+        mock_sleep.reset_mock()
+
+        # Fifth attempt, 20s delay
+        pvm_retry.STEPPED_DELAY(5, 7)
+        mock_sleep.assert_called_once_with(20.0)
+        mock_sleep.reset_mock()
+
+        # Sixth attempt, 30s delay
+        pvm_retry.STEPPED_DELAY(6, 7)
+        mock_sleep.assert_called_once_with(30.0)
+        mock_sleep.reset_mock()
+
+        # Seventh attempt, steady at 30s delay
+        pvm_retry.STEPPED_DELAY(7, 7)
+        mock_sleep.assert_called_once_with(30.0)
+        mock_sleep.reset_mock()
+
 if __name__ == "__main__":
     unittest.main()
