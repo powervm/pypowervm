@@ -522,6 +522,10 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNotNone(test._use_next_avail_slot_id)
         self.assertTrue(test._use_next_avail_slot_id)
         self.assertIsNone(test.mac)
+        self.assertIsNone(test.vsi_type_id)
+        self.assertIsNone(test.vsi_type_version)
+        self.assertIsNone(test.vsi_type_manager_id)
+        self.assertIsNone(test.vswitchid)
         self.assertEqual(1, test.pvid)
 
     def test_unique_crt(self):
@@ -537,6 +541,10 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNotNone(test.mac)
         self.assertEqual("AABBCCDDEEFF", test.mac)
         self.assertEqual(5, test.pvid)
+        self.assertIsNone(test.vsi_type_id)
+        self.assertIsNone(test.vsi_type_version)
+        self.assertIsNone(test.vsi_type_manager_id)
+        self.assertIsNone(test.vswitchid)
 
     def test_unasi_field(self):
         """UseNextAvailable(High)SlotID field is used, as appropriate."""
