@@ -133,10 +133,10 @@ _VADPT_MAC_ADDR = 'MACAddress'
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
-_VADPT_VSWITCH_ID = _TS_VS_ID
+_VADPT_VSWITCH_ID = _TA_VS_ID
 _VADPT_PVID = _PVID
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
-_VADPT_VIRTUAL_STATION_INTERFACE_TYPE_ID = 'VirtualStationInterfaceTypeId'
+_VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
 
@@ -1025,7 +1025,7 @@ class CNA(ewrap.EntryWrapper):
 
     @property
     def virtualstationinterfacetypeid(self):
-        return self._get_val_str(_VADPT_VIRTUAL_STATION_INTERFACE_TYPE_ID)
+        return self._get_val_str(_VADPT_VSI_TYPE_ID)
 
     @property
     def _use_next_avail_slot_id(self):
@@ -1057,8 +1057,7 @@ class CNA(ewrap.EntryWrapper):
 
     @property
     def vswitchid(self):
-        """Returns the vswitchid for the adapter.
-        """
+        """Returns the vswitchid for the adapter."""
         return self._get_val_int(_VADPT_VSWITCH_ID)
 
     @mac.setter
