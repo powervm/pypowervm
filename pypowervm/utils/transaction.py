@@ -53,6 +53,11 @@ def entry_transaction(func):
     it was updated - the wrapper is refreshed and the entire method is
     redriven.
 
+    Note: If the etag mistmatch occurs, the STEPPED_DELAY function is used
+    from the retry.py.  This provides a gradual increase in the delay (except
+    for the first retry - which is immediate).  A maximum number of 6 retries
+    will occur.
+
     Example usage:
 
     @entry_transaction
@@ -76,7 +81,8 @@ def entry_transaction(func):
             if isinstance(wos, ewrap.EntryWrapperGetter):
                 wos = wos.get()
 
-            @retry.retry(argmod_func=retry.refresh_wrapper)
+            @retry.retry(argmod_func=retry.refresh_wrapper, tries=6,
+                         delay_func=retry.STEPPED_DELAY)
             def _retry_refresh(wrapper, *a3, **k3):
                 """Retry as needed, refreshing its wrapper each time."""
                 return func(wrapper, *a3, **k3)

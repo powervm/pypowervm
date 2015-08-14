@@ -216,5 +216,14 @@ class TestRetry(unittest.TestCase):
             called_count += 1
         _func(mock_wrapper, 'a1', 'a2', kw0='k0', kw1='k1')
 
+    @mock.patch('time.sleep')
+    def test_stepped_delay(self, mock_sleep):
+        # Last set of delays should hit the cap.
+        delays = [0, .5, 2.0, 6.5, 20.0, 30.0, 30.0]
+        for i in range(1, 7):
+            pvm_retry.STEPPED_DELAY(i, 7)
+            mock_sleep.assert_called_once_with(delays[i-1])
+            mock_sleep.reset_mock()
+
 if __name__ == "__main__":
     unittest.main()
