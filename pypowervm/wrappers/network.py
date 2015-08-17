@@ -967,7 +967,8 @@ class CNA(ewrap.EntryWrapper):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a client partition.  This
-        can be PUT to LogicalPartition/<UUID>/ClientNetworkAdapter.
+        can be PUT to LogicalPartition/<UUID>/ClientNetworkAdapter or to
+        VirtualIOServer/<UUID>/ClientNetworkAdapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The Primary VLAN ID to use.
