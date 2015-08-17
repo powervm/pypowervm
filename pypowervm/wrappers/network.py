@@ -150,6 +150,12 @@ class HAMode(object):
     DISABLED = 'disabled'
 
 
+class SEAState(object):
+    CONFIGURED = 'Configured'
+    UNCONFIGURED = 'UnConfigured'
+    INVALID = 'InvalidConfiguration'
+
+
 def _order_by_pvid(adapters, pvid):
     """Orders a list of adapters.
 
@@ -652,7 +658,10 @@ class SEA(ewrap.ElementWrapper):
 
     @property
     def configuration_state(self):
-        """Returns the configuration state.  May be None."""
+        """Returns the configuration state.  May be None.
+
+        Refer to SEAState for valid values.
+        """
         return self._get_val_str(_SEA_CONFIGURATION_STATE)
 
 
