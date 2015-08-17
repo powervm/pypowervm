@@ -810,19 +810,19 @@ class VFCClientAdapter(VClientStorageAdapter):
     def _wwpns(self, value):
         """Sets the WWPN string.
 
-        :param value: The set (or list) of WWPNs.  Should only contain two.
+        :param value: The list of WWPNs.  Should only contain two.
         """
         if value is not None:
             self.set_parm_value(_VADPT_WWPNS, " ".join(value).lower())
 
     @property
     def wwpns(self):
-        """Returns a set that contains the WWPNs.  If no WWPNs, empty set."""
+        """Returns a list that contains the WWPNs.  If no WWPNs, empty list."""
         val = self._get_val_str(_VADPT_WWPNS)
         if val is None:
-            return set()
+            return []
         else:
-            return set(val.upper().split(' '))
+            return val.upper().split(' ')
 
 
 # pvm_type decorator by superclass (it is not unique)
