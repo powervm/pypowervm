@@ -150,6 +150,12 @@ class HAMode(object):
     DISABLED = 'disabled'
 
 
+class SEAState(object):
+    CONFIGURED = 'Configured'
+    UNCONFIGURED = 'InvalidConfiguration'
+    INVALID = 'InvalidConfiguration'
+
+
 def _order_by_pvid(adapters, pvid):
     """Orders a list of adapters.
 
