@@ -213,16 +213,6 @@ class NoRMCConnectivity(AbstractMsgFmtError):
                 "connectivity.")
 
 
-class VolumeAttachFailed(AbstractMsgFmtError):
-    msg_fmt = _("Unable to attach storage %(backing_dev)s to virtual machine "
-                "%(instance_name)s. %(reason)s")
-
-
-class VolumeDetachFailed(AbstractMsgFmtError):
-    msg_fmt = _("Unable to detach storage %(backing_dev)s from virtual "
-                "machine %(instance_name)s. %(reason)s")
-
-
 class VolumeLookupFailed(AbstractMsgFmtError):
     msg_fmt = _("Unable to determine that the volume with id %(uuid)s has "
                 "been discovered or mapped on a Virtual I/O Server")
