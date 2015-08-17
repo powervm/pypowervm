@@ -966,8 +966,9 @@ class CNA(ewrap.EntryWrapper):
             addl_tagged_vlans=None):
         """Creates a fresh CNA EntryWrapper.
 
-        This is used when creating a new CNA for a client partition.  This
-        can be PUT to LogicalPartition/<UUID>/ClientNetworkAdapter.
+        This is used when creating a new CNA for a partition.  This can be PUT
+        to LogicalPartition/<UUID>/ClientNetworkAdapter or to
+        VirtualIOServer/<UUID>/ClientNetworkAdapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param pvid: The Primary VLAN ID to use.
