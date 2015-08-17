@@ -204,6 +204,35 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.assertEqual(self.test_ioslot.dyn_reconfig_conn_name,
                          'U5294.001.CEC1234-P01-C011')
 
+    def test_get_aix_capable(self):
+        self.call_simple_getter("_aix_capable", False, True)
+
+    def test_get_capabilities(self):
+        good_cap = {'active_lpar_mobility_capable': True,
+                    'inactive_lpar_mobility_capable': True,
+                    'ibmi_lpar_mobility_capable': True,
+                    'custom_mac_addr_capable': True,
+                    'ibmi_restrictedio_capable': True,
+                    'simplified_remote_restart_capable': False,
+                    'aix_capable': False,
+                    'ibmi_capable': True,
+                    'linux_capable': False,
+                    'shared_processor_pool_capable': True
+                    }
+        bad_cap = {'active_lpar_mobility_capable': False,
+                   'inactive_lpar_mobility_capable': False,
+                   'ibmi_lpar_mobility_capable': False,
+                   'custom_mac_addr_capable': True,
+                   'ibmi_restrictedio_capable': False,
+                   'simplified_remote_restart_capable': False,
+                   'aix_capable': True,
+                   'ibmi_capable': False,
+                   'linux_capable': True,
+                   'shared_processor_pool_capable': False
+                   }
+        self.call_simple_getter("get_capabilities", good_cap,
+                                bad_cap)
+
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
