@@ -281,20 +281,45 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
              Otherwise the response will be functionally equivalent to what
              is passed in.
 
-             The return value will contain all of the mappings from the
-             physical ports to the given client VM.
+             The return value will contain just the new mappings.  If mappings
+             already existed they will not be part of the response payload.
     """
     def add_action(vios_wraps, p_map):
         vios_w = find_vios_for_port_map(vios_wraps, p_map)
         add_map(vios_w, host_uuid, lpar_uuid, p_map)
         return vios_w
 
-    updated_vioses = _mapping_actions(adapter, host_uuid, npiv_port_maps,
-                                      add_action)
+    # Get all the VIOSes
+    vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                             child_type=pvm_vios.VIOS.schema_type,
+                             xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                  pvm_vios.VIOS.xags.STORAGE])
+    vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
 
-    # Parse through the updated VIOSes to determine the mappings to return.
+    # Get the original VIOSes.
+    orig_maps = _get_port_map(vios_wraps, lpar_uuid)
+
+    # Run the mapping action
+    updated_vioses = _mapping_actions(adapter, host_uuid, npiv_port_maps,
+                                      add_action, vios_wraps=vios_wraps)
+
+    # Find the new mappings.  Remove the originals and return.
+    new_maps = _get_port_map(updated_vioses, lpar_uuid)
+    for old_map in orig_maps:
+        new_maps.remove(old_map)
+    return new_maps
+
+
+def _get_port_map(vioses, lpar_uuid):
+    """Builds a list of the port mappings across a set of VIOSes.
+
+    :param vioses: The VIOS lpar wrappers.
+    :param lpar_uuid: The UUID of the LPAR to gather the mappings for.
+    :return: List of port maps.  Is a list as there may be multiple, identical
+             mappings.  This indicates two paths over the same FC port.
+    """
     port_map = []
-    for vios in updated_vioses:
+    for vios in vioses:
         vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
         for vfc_mapping in vfc_mappings:
             # Found a matching mapping
@@ -322,8 +347,16 @@ def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
                      _remove_npiv_port_map)
 
 
-@pvm_retry.retry()
-def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
+def _mapping_argmod(this_try, max_tries, *args, **kwargs):
+    """Rebuilds the VIOSes on a _mapping_actions retry."""
+    # Simply setting to None will force a rebuild.
+    kwargs['vios_wraps'] = None
+    return args, kwargs
+
+
+@pvm_retry.retry(argmod_func=_mapping_argmod)
+def _mapping_actions(adapter, host_uuid, npiv_port_maps, func,
+                     vios_wraps=None):
     """Handles the 'mapping' for a given instance.
 
     A mapping function is either an 'add' or 'remove' of the NPIV fabric.
@@ -345,15 +378,19 @@ def _mapping_actions(adapter, host_uuid, npiv_port_maps, func):
                 Expected response:
                  - A pypowervm VIOS wrapper that was impacted by the
                    function.  If none were, then None is acceptable.
+    :param vios_wraps: (Optional) The list of the Virtual I/O Server wrappers.
+                       If none, the system will query.  A retry action will
+                       automatically re-get the VIOSes.
     :return: List of VIOS wrappers on the system.  Includes the newly updated
              VIOSes.
     """
-    # Get all the VIOSes
-    vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
-                             child_type=pvm_vios.VIOS.schema_type,
-                             xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                  pvm_vios.VIOS.xags.STORAGE])
-    vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
+    # Make sure we have the VIOSes
+    if vios_wraps is None:
+        vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
+                                 child_type=pvm_vios.VIOS.schema_type,
+                                 xag=[pvm_vios.VIOS.xags.FC_MAPPING,
+                                      pvm_vios.VIOS.xags.STORAGE])
+        vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
 
     # List of VIOSes that need to be updated.
     vioses_to_update = {}
