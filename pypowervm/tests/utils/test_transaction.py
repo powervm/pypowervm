@@ -202,7 +202,8 @@ class TestWrapperTask(twrap.TestWrapper):
         # Create a valid WrapperTask
         tx1 = tx.WrapperTask('tx1', self.getter)
         self.assertEqual('tx1', tx1.name)
-        self.assertEqual('wrapper_getter_uuid', tx1.provides)
+        self.assertIn('wrapper_getter_uuid', tx1.provides)
+        self.assertIn('subtask_rets_getter_uuid', tx1.provides)
         # Nothing has been run yet
         self.assertEqual([], txfx.get_log())
         # Try running with no subtasks
@@ -223,7 +224,7 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual(['get'], txfx.get_log())
 
         # Run the transaction
-        lwrap = tx1.execute()
+        (lwrap, subtask_rets) = tx1.execute()
         # The name should be unchanged
         self.assertEqual('z3-9-5-126-127-00000001', lwrap.name)
         # And update should not have been called, which should be reflected in
@@ -243,7 +244,7 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual(self.dwrap, tx1.wrapper)
         self.assertEqual([], txfx.get_log())
         # Now execute the transaction
-        lwrap = tx1.execute()
+        (lwrap, subtask_rets) = tx1.execute()
         # The last change should be the one that stuck
         self.assertEqual('newer_name', lwrap.name)
         # Check the overall order.  Update was called.
@@ -260,7 +261,7 @@ class TestWrapperTask(twrap.TestWrapper):
         # Add one to the original transaction to make sure it doesn't affect
         # this one.
         tx1.add_subtask(self.LparNameAndMem('bogus_name', logger=txfx))
-        lwrap = tx2.execute()
+        (lwrap, subtask_rets) = tx2.execute()
         # The last change should be the one that stuck
         self.assertEqual('newest_name', lwrap.name)
         # Check the overall order.  This one GETs under lock.  Update called.
