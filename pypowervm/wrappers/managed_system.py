@@ -140,15 +140,15 @@ class System(ewrap.EntryWrapper):
 
     @property
     def proc_units(self):
-        return self._get_val_str(_PROC_UNITS_INSTALLED, 0)
+        return self._get_val_float(_PROC_UNITS_INSTALLED, 0)
 
     @property
     def proc_units_configurable(self):
-        return self._get_val_str(_PROC_UNITS_CONFIGURABLE, 0)
+        return self._get_val_float(_PROC_UNITS_CONFIGURABLE, 0)
 
     @property
     def proc_units_avail(self):
-        return self._get_val_str(_PROC_UNITS_AVAIL, 0)
+        return self._get_val_float(_PROC_UNITS_AVAIL, 0)
 
     @property
     def max_sys_procs_limit(self):

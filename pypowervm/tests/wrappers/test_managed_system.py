@@ -118,13 +118,13 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.assertEqual(self.wrapper.proc_compat_modes, expected)
 
     def test_get_proc_units(self):
-        self.call_simple_getter("proc_units", "500", 0)
+        self.call_simple_getter("proc_units", 500.0, 0)
 
     def test_get_proc_units_configurable(self):
-        self.call_simple_getter("proc_units_configurable", "500", 0)
+        self.call_simple_getter("proc_units_configurable", 500.0, 0)
 
     def test_get_proc_units_avail(self):
-        self.call_simple_getter("proc_units_avail", "500", 0)
+        self.call_simple_getter("proc_units_avail", 500.0, 0)
 
     def test_get_memory_total(self):
         self.call_simple_getter("memory_total", 5767168, 0)
