@@ -17,6 +17,7 @@
 import abc
 import logging
 import oslo_concurrency.lockutils as lock
+from oslo_utils import reflection
 import six
 from taskflow import engines as tf_eng
 from taskflow.patterns import linear_flow as tf_lf
@@ -93,7 +94,9 @@ class Subtask(object):
     may or may not make changes to the EntryWrapper, which is its first
     argument.  Its return value must indicate whether changes were made to the
     wrapper: this is the trigger used by WrapperTask to determine whether to
-    POST the changes back to the REST server via update().
+    POST the changes back to the REST server via update().  The return value is
+    saved by the surrounding WrapperTask if the 'provides' argument is used on
+    initialization.  This value can then be retrieved by subsequent Subtasks.
 
     A Subtask should never update() or refresh() the wrapper.  That is handled
     by the surrounding WrapperTask.
@@ -107,8 +110,15 @@ class Subtask(object):
                           method - *after* the wrapper - when it is invoked
                           under a WrapperTask.
         :param save_kwargs: Keyword arguments to be passed to the execute
-                            method when it is invoked under a WrapperTask
+                            method when it is invoked under a WrapperTask.
+        :param provides: (Optional) String name for the return value from the
+                         execute method.  If this parameter is used, the return
+                         value will be saved by the surrounding WrapperTask and
+                         be available to subsequent Subtasks via the 'provided'
+                         keyword argument.  The 'provides' name must be unique
+                         within a WrapperTask.
         """
+        self.provides = save_kwargs.pop('provides', None)
         self.save_args = save_args
         self.save_kwargs = save_kwargs
 
@@ -122,14 +132,17 @@ class Subtask(object):
         2) Indicates whether any modifications were performed.
 
         Example:
-        def execute(thingy_wrapper, primary_widget, widget_list, option=True):
+        def execute(thingy_wrapper, primary_widget, provided=None):
             update_needed = False
             if primary_widget not in thingy_wrapper.widgets:
                 thingy_wrapper.set_primary_widget(primary_widget)
                 update_needed = True
-            for widget in widget_list:
-                thingy_wrapper.widgets.append(widget)
-                update_needed = True
+            # Was a widget list provided by a prior Subtask?
+            if provided is not None:
+                widget_list = provided.get('widget_list', [])
+                for widget in widget_list:
+                    thingy_wrapper.widgets.append(widget)
+                    update_needed = True
             return update_needed
 
         :param args: Positional arguments accepted by the execute method.  The
@@ -138,6 +151,11 @@ class Subtask(object):
                      names.
         :param kwargs: Keyword arguments accepted by the execute method.
                        Overrides may use explicit parameter names.
+        :param provided: Dict of return values provided by Subtasks whose
+                         execution preceded this one, and which used the
+                         'provides' keyword argument to save their returns.
+                         The keys of the dict are the 'provides' strings of the
+                         prior Subtasks.
         :return: The return value must be a single value (this may be a list,
                  but not a tuple) which evaluates to True or False.  Any True
                  value indicates that the wrapper was modified and should be
@@ -156,12 +174,16 @@ class _FunctorSubtask(Subtask):
         :param _func: Callable to be invoked under the WrapperTask.
         :param save_args: See Subtask.__init__(save_args).
         :param save_kwargs: See Subtask.__init__(save_kwargs).
+        :param provides: See Subtask.__init__(provides).
         """
         super(_FunctorSubtask, self).__init__(*save_args, **save_kwargs)
         self._func = _func
 
     def execute(self, wrapper, *_args, **_kwargs):
         """Invoke saved callable with saved args."""
+        if not ('provided' in reflection.get_callable_args(self._func)
+                or reflection.accepts_kwargs(self._func)):
+            _kwargs.pop('provided', None)
         return self._func(wrapper, *_args, **_kwargs)
 
 
@@ -185,12 +207,18 @@ class WrapperTask(tf_task.BaseTask):
 
     Usage:
         class ModifyGizmos(Subtask):
-            def execute(self, wrapper, gizmo_list):
-                update_needed = False
+            def execute(self, wrapper, gizmo_list, provides='first_gizmo'):
+                update_needed = None
                 if gizmo_list:
                     wrapper.gizmos.append(gizmo_list)
-                    update_needed = True
+                    update_needed = gizmo_list[0]
                 return update_needed
+
+        def add_widget(wrapper, widget, frob=False, provided=None):
+            if provided is not None:
+                widget.first_gizmo = provided.get('first_gizmo')
+            wrapper.widgets.append(widget, frob)
+            return len(wrapper.widgets)
         ...
         tx = WrapperTask("do_lpar_things", LPAR.getter(adapter, lpar_uuid))
       or
@@ -203,7 +231,7 @@ class WrapperTask(tf_task.BaseTask):
         ...
         tx.add_subtask(ModifyGizmos([giz1, giz2]))
         ...
-        tx.add_functor_subtask(add_widget, widget, frob=True)
+        tx.add_functor_subtask(add_widget, widget, provides='widget_count')
         ...
         finalized_lpar = tx.execute()
     """
@@ -228,7 +256,6 @@ class WrapperTask(tf_task.BaseTask):
                                       WrapperTask is executed without any
                                       Subtasks having been added.
         """
-        super(WrapperTask, self).__init__(name)
         if isinstance(wrapper_or_getter, ewrap.EntryWrapperGetter):
             self._wrapper = None
             self._getter = wrapper_or_getter
@@ -238,9 +265,17 @@ class WrapperTask(tf_task.BaseTask):
         else:
             raise ValueError(_("Must supply either EntryWrapper or "
                                "EntryWrapperGetter"))
+        super(WrapperTask, self).__init__(
+            name, provides=('wrapper_%s' % wrapper_or_getter.uuid,
+                            'subtask_rets_%s' % wrapper_or_getter.uuid))
         self._tasks = [] if subtasks is None else list(subtasks)
         self.allow_empty = allow_empty
-        self.provides = 'wrapper_%s' % wrapper_or_getter.uuid
+        # Dict of return values provided by Subtasks using the 'provides' arg.
+        self.provided = {}
+        # Set of 'provided' names to prevent duplicates.  (Some day we may want
+        # to make this a list and use it to denote the order in which subtasks
+        # were run.)
+        self.provided_keys = set()
 
     def add_subtask(self, task):
         """Add a Subtask to this WrapperTask.
@@ -254,6 +289,12 @@ class WrapperTask(tf_task.BaseTask):
         """
         if not isinstance(task, Subtask):
             raise ValueError(_("Must supply a valid Subtask."))
+        # Seed the 'provided' dict and ensure no duplicate names
+        if task.provides is not None:
+            if task.provides in self.provided_keys:
+                raise ValueError(_("Duplicate 'provides' name %s."),
+                                 task.provides)
+            self.provided_keys.add(task.provides)
         self._tasks.append(task)
         return self
 
@@ -268,6 +309,7 @@ class WrapperTask(tf_task.BaseTask):
                      within the WrapperTask.
         :param kwargs: Keyword arguments to be passed to the callable func when
                        it is executed within the WrapperTask.
+        :param provides: See Subtask.__init__(provides).
         :return: self, for chaining convenience.
         """
         return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
@@ -323,15 +365,22 @@ class WrapperTask(tf_task.BaseTask):
         def _execute(wrapper):
             update_needed = False
             for task in self._tasks:
-                if task.execute(wrapper, *task.save_args, **task.save_kwargs):
+                kwargs = task.save_kwargs
+                if ('provided' in reflection.get_callable_args(task.execute)
+                        or reflection.accepts_kwargs(task.execute)):
+                    kwargs['provided'] = self.provided
+                ret = task.execute(wrapper, *task.save_args, **kwargs)
+                if ret:
                     update_needed = True
+                if task.provides is not None:
+                    self.provided[task.provides] = ret
             if update_needed:
                 wrapper = wrapper.update()
             return wrapper
         # Use the wrapper if already fetched, or the getter if not
         # NOTE: This assignment must remain atomic.  See TAG_WRAPPER_SYNC.
         self._wrapper = _execute(self._wrapper or self._getter)
-        return self._wrapper
+        return self._wrapper, self.provided
 
 
 class FeedTask(tf_task.BaseTask):
@@ -498,6 +547,21 @@ class FeedTask(tf_task.BaseTask):
     def add_post_execute(self, *tasks):
         """Add some number of TaskFlow Tasks to run after the WrapperTasks.
 
+        Such Tasks may 'require' a parameter called wrapper_task_rets, which
+        will be a dict of the form:
+        {uuid: {
+            'wrapper': wrapper,
+            'subtask_rets': {
+                label: return_value,
+                ...}}}
+        ...where:
+        uuid is the UUID of the WrapperTask's wrapper.
+        wrapper is the WrapperTask's wrapper in its final (possibly-updated)
+                form.
+        label: return_value is a dict of return values from Subtasks using the
+                'provides' mechanism.  Each label corresponds to the name
+                given by the Subtask's 'provides' argument.
+
         :param tasks: Some number of TaskFlow Tasks (or Flows) to be executed
                       linearly after the parallel WrapperTasks have completed.
         """
@@ -534,6 +598,16 @@ class FeedTask(tf_task.BaseTask):
                     break
         return self._feed
 
+    @staticmethod
+    def _process_subtask_rets(subtask_rets):
+        ret = {}
+        for key, val in subtask_rets.items():
+            label, uuid = key.rsplit('_', 1)
+            if uuid not in ret:
+                ret[uuid] = {}
+            ret[uuid][label] = val
+        return ret
+
     def execute(self):
         """Run this FeedTask's WrapperTasks in parallel TaskFlow engine."""
         # Ensure a true no-op (in particular, we don't want to GET the feed) if
@@ -544,6 +618,7 @@ class FeedTask(tf_task.BaseTask):
                      self.name)
             return
         pflow = None
+        wrapper_task_rets = {}
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.  Only do this if
         # there exists at least one WrapperTask with Subtasks.
@@ -551,11 +626,14 @@ class FeedTask(tf_task.BaseTask):
         if self._tx_by_uuid or self._common_tx.subtasks:
             pflow = tf_uf.Flow("%s_parallel_flow" % self.name)
             pflow.add(*self.wrapper_tasks.values())
+            # Execute the parallel flow now so the results can be provided to
+            # any post-execs.
+            wrapper_task_rets = self._process_subtask_rets(
+                tf_eng.run(pflow, engine='parallel',
+                           max_workers=self.max_workers))
         if self._post_exec:
-            flow = tf_lf.Flow('%s_linear_flow' % self.name)
-            if pflow is not None:
-                flow.add(pflow)
+            flow = tf_lf.Flow('%s_post_execs' % self.name)
             flow.add(*self._post_exec)
-        else:
-            flow = pflow
-        tf_eng.run(flow, engine='parallel', max_workers=self.max_workers)
+            eng = tf_eng.load(flow, store={'wrapper_task_rets':
+                                           wrapper_task_rets})
+            eng.run()
