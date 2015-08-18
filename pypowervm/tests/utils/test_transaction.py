@@ -202,7 +202,8 @@ class TestWrapperTask(twrap.TestWrapper):
         # Create a valid WrapperTask
         tx1 = tx.WrapperTask('tx1', self.getter)
         self.assertEqual('tx1', tx1.name)
-        self.assertEqual('wrapper_getter_uuid', tx1.provides)
+        self.assertIn('wrapper_getter_uuid', tx1.provides)
+        self.assertIn('subtask_rets_getter_uuid', tx1.provides)
         # Nothing has been run yet
         self.assertEqual([], txfx.get_log())
         # Try running with no subtasks
@@ -223,7 +224,7 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual(['get'], txfx.get_log())
 
         # Run the transaction
-        lwrap = tx1.execute()
+        lwrap, subtask_rets = tx1.execute()
         # The name should be unchanged
         self.assertEqual('z3-9-5-126-127-00000001', lwrap.name)
         # And update should not have been called, which should be reflected in
@@ -243,7 +244,7 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual(self.dwrap, tx1.wrapper)
         self.assertEqual([], txfx.get_log())
         # Now execute the transaction
-        lwrap = tx1.execute()
+        lwrap, subtask_rets = tx1.execute()
         # The last change should be the one that stuck
         self.assertEqual('newer_name', lwrap.name)
         # Check the overall order.  Update was called.
@@ -260,7 +261,7 @@ class TestWrapperTask(twrap.TestWrapper):
         # Add one to the original transaction to make sure it doesn't affect
         # this one.
         tx1.add_subtask(self.LparNameAndMem('bogus_name', logger=txfx))
-        lwrap = tx2.execute()
+        lwrap, subtask_rets = tx2.execute()
         # The last change should be the one that stuck
         self.assertEqual('newest_name', lwrap.name)
         # Check the overall order.  This one GETs under lock.  Update called.
@@ -302,6 +303,84 @@ class TestWrapperTask(twrap.TestWrapper):
             'lock', 'get', 'functor', 'update 1', 'refresh', 'functor',
             'update 2', 'refresh', 'functor', 'update 3', 'unlock'],
             txfx.get_log())
+
+    def test_subtask_provides(self):
+        self.useFixture(fx.WrapperTaskFx(self.dwrap))
+        test_case = self
+
+        class ChainSubtask(tx.Subtask):
+            def __init__(self, val, *args, **kwargs):
+                self.val = val
+                super(ChainSubtask, self).__init__(*args, **kwargs)
+
+            def execute(self, *args, **kwargs):
+                test_case.assertEqual(test_case.dwrap, args[0])
+                # If execute accepts **kwargs, 'provided' is provided.
+                test_case.assertIn('provided', kwargs)
+                test_case.assertEqual(kwargs['expected_provided'],
+                                      kwargs['provided'])
+                return self.val
+
+        class ChainSubtask2(tx.Subtask):
+            def execute(self, wrp, provided, expected_provided):
+                test_case.assertEqual(test_case.dwrap, wrp)
+                # Able to get 'provided' as a named parameter
+                test_case.assertEqual(expected_provided, provided)
+
+        wtsk = tx.WrapperTask('name', self.getter)
+        wtsk.add_subtask(ChainSubtask(1, provides='one', expected_provided={}))
+        # Can't add another Subtask with the same 'provides'
+        self.assertRaises(ValueError, wtsk.add_subtask,
+                          ChainSubtask(2, provides='one'))
+        # Next subtask should see the result from the first.
+        wtsk.add_subtask(ChainSubtask(2, provides='two', expected_provided={
+            'one': 1}))
+        # Add one that doesn't provide.  Its return shouldn't show up in
+        # 'provided'.
+        wtsk.add_subtask(ChainSubtask(3, expected_provided={
+            'one': 1, 'two': 2}))
+        # 'provided' works implicitly when it's a named parameter on execute
+        wtsk.add_subtask(ChainSubtask2(expected_provided={'one': 1, 'two': 2}))
+        # Even when execute doesn't return anything, we 'provide' that None
+        wtsk.add_subtask(ChainSubtask2(provides='four', expected_provided={
+            'one': 1, 'two': 2}))
+
+        # Make sure the same stuff works for functors
+        def ret_val_kwargs(*args, **kwargs):
+            self.assertEqual(self.dwrap, args[0])
+            self.assertIn('provided', kwargs)
+            self.assertEqual(kwargs['expected_provided'], kwargs['provided'])
+            return args[1]
+
+        def ret_val_explicit(wrp, val, provided, expected_provided):
+            self.assertEqual(self.dwrap, wrp)
+            self.assertEqual(expected_provided, provided)
+            return val
+
+        self.assertRaises(ValueError, wtsk.add_functor_subtask, int,
+                          provides='one')
+        wtsk.add_functor_subtask(
+            ret_val_kwargs, 5, provides='five',
+            expected_provided={'one': 1, 'two': 2, 'four': None})
+        wtsk.add_functor_subtask(
+            ret_val_kwargs, 6,
+            expected_provided={'one': 1, 'two': 2, 'four': None, 'five': 5})
+        wtsk.add_functor_subtask(
+            ret_val_explicit, 7, provides='seven',
+            expected_provided={'one': 1, 'two': 2, 'four': None, 'five': 5})
+        wtsk.add_functor_subtask(
+            ret_val_explicit, 8,
+            expected_provided={'one': 1, 'two': 2, 'four': None, 'five': 5,
+                               'seven': 7})
+
+        # Execute the WrapperTask, verifying assertions in ChainSubtask[2] and
+        # ret_val_{kwargs|explicit)
+        wrapper, subtask_rets = wtsk.execute()
+        self.assertEqual(self.dwrap, wrapper)
+        # Verify final form of subtask_rets returned from WrapperTask.execute()
+        self.assertEqual(
+            {'one': 1, 'two': 2, 'four': None, 'five': 5, 'seven': 7},
+            subtask_rets)
 
 
 class TestFeedTask(twrap.TestWrapper):
@@ -553,3 +632,40 @@ class TestFeedTask(twrap.TestWrapper):
                           'lock', 'main1', 'main2', 'unlock',
                           'lock', 'main1', 'main2', 'unlock',
                           'post1', 'post2'], ftfx.get_log())
+
+    def test_wrapper_task_rets(self):
+        # Limit the feed to two to keep the return size sane
+        self.useFixture(fx.FeedTaskFx(self.entries[:2]))
+        ftsk = tx.FeedTask('subtask_rets', lpar.LPAR.getter(None))
+        exp_wtr = {
+            wrp.uuid: {
+                'wrapper': wrp,
+                'the_id': wrp.id,
+                'the_name': wrp.name}
+            for wrp in ftsk.feed}
+        called = []
+
+        def return_wrapper_name(wrapper):
+            return wrapper.name
+
+        def return_wrapper_id(wrapper):
+            return wrapper.id
+
+        def verify_rets_implicit(wrapper_task_rets):
+            called.append('implicit')
+            self.assertEqual(exp_wtr, wrapper_task_rets)
+
+        def verify_rets_explicit(**kwargs):
+            called.append('explicit')
+            self.assertEqual(exp_wtr, kwargs['wrapper_task_rets'])
+
+        ftsk.add_functor_subtask(return_wrapper_name, provides='the_name')
+        ftsk.add_functor_subtask(return_wrapper_id, provides='the_id')
+        ftsk.add_post_execute(tf_task.FunctorTask(verify_rets_implicit))
+        ftsk.add_post_execute(tf_task.FunctorTask(
+            verify_rets_explicit, requires='wrapper_task_rets'))
+
+        ftsk.execute()
+        # Make sure the post-execs actually ran (to guarantee their internal
+        # assertions passed).
+        self.assertEqual(['implicit', 'explicit'], called)
