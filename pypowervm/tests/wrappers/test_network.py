@@ -192,7 +192,6 @@ class TestNetwork(twrap.TestWrapper):
         nb = net.NetBridge.bld(self.adpt, pvid=1,
                                vios_to_backing_adpts=[('vio_href1', 'ent0'),
                                                       ('vio_href2', 'ent2')],
-                               vlan_ids=[1, 2, 3],
                                vswitch=vsw_wrap, load_balance=True)
 
         self.assertIsNotNone(nb)
@@ -213,8 +212,7 @@ class TestNetwork(twrap.TestWrapper):
         ta = sea1.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
-        self.assertEqual([1, 2, 3], ta.tagged_vlans)
-        self.assertTrue(ta.has_tag_support)
+        self.assertFalse(ta.has_tag_support)
         self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
         self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
@@ -232,8 +230,7 @@ class TestNetwork(twrap.TestWrapper):
         ta = sea2.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
-        self.assertEqual([1, 2, 3], ta.tagged_vlans)
-        self.assertTrue(ta.has_tag_support)
+        self.assertFalse(ta.has_tag_support)
         self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(2, ta.trunk_pri)
         self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)
@@ -246,8 +243,7 @@ class TestNetwork(twrap.TestWrapper):
 
         # Create mocked data
         sea = net.SEA.bld(self.adpt, pvid=1, vios_href='127.0.0.1',
-                          adpt_name='ent0', vlan_ids=[1, 2, 3],
-                          vswitch=vsw_wrap)
+                          adpt_name='ent0', vswitch=vsw_wrap)
 
         self.assertIsNotNone(sea)
         self.assertEqual(1, sea.pvid)
@@ -258,8 +254,7 @@ class TestNetwork(twrap.TestWrapper):
         ta = sea.primary_adpt
         self.assertTrue(ta._required)
         self.assertEqual(1, ta.pvid)
-        self.assertEqual([1, 2, 3], ta.tagged_vlans)
-        self.assertTrue(ta.has_tag_support)
+        self.assertFalse(ta.has_tag_support)
         self.assertEqual(vsw_wrap.switch_id, ta.vswitch_id)
         self.assertEqual(1, ta.trunk_pri)
         self.assertEqual(vsw_wrap.related_href, ta.associated_vswitch_uri)

@@ -271,7 +271,7 @@ class NetBridge(ewrap.EntryWrapper):
     """
 
     @classmethod
-    def bld(cls, adapter, pvid, vios_to_backing_adpts, vlan_ids, vswitch,
+    def bld(cls, adapter, pvid, vios_to_backing_adpts, vswitch,
             load_balance=False):
         """Create the NetBridge entry that can be used for a create operation.
 
@@ -284,8 +284,6 @@ class NetBridge(ewrap.EntryWrapper):
                                       trunk adapter names for 1 or 2 VIOS
                                       servers, depending whether failover is
                                       required.
-        :param vlan_ids: List of Additional VLAN ids for the trunk adapters.
-                         Maximum of 20.
         :param vswitch: The vswitch wrapper to retrieve ID and href.
         :param load_balance: (Optional) If set to True, the load balancing will
                              be enabled across the two SEAs.  This does
@@ -320,7 +318,7 @@ class NetBridge(ewrap.EntryWrapper):
         nb.seas = []
         for vio_tuple in vios_to_backing_adpts:
             nb.seas.append(SEA.bld(adapter, pvid, vio_tuple[0], vio_tuple[1],
-                                   vlan_ids, vswitch, primary=primary))
+                                   vswitch, primary=primary))
             primary = False
 
         return nb
@@ -495,8 +493,7 @@ class SEA(ewrap.ElementWrapper):
     """Represents the Shared Ethernet Adapter within a NetworkBridge."""
 
     @classmethod
-    def bld(cls, adapter, pvid, vios_href, adpt_name, vlan_ids, vswitch,
-            primary=True):
+    def bld(cls, adapter, pvid, vios_href, adpt_name, vswitch, primary=True):
         """Create the SEA entry that can be used for NetBridge creation.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -504,7 +501,6 @@ class SEA(ewrap.ElementWrapper):
         :param vios_href: The Assigned VIOS href.
         :param adpt_name: Name of the physical adapter or ether channel that
                           will back the SEA.
-        :param vlan_ids: Additional VLAN ids for the trunk adapters.
         :param vswitch: The vswitch wrapper to retrieve ID and href.
         :param primary: Used in a dual Virtual I/O Server environment.  If
                         set to True, indicates it is running on the I/O Server
@@ -521,7 +517,7 @@ class SEA(ewrap.ElementWrapper):
         sea._backing_device(EthernetBackingDevice.bld(adapter, adpt_name))
 
         trunk_pri = 1 if primary else 2
-        sea._primary_adpt(TrunkAdapter.bld(adapter, pvid, vlan_ids, vswitch,
+        sea._primary_adpt(TrunkAdapter.bld(adapter, pvid, [], vswitch,
                                            trunk_pri=trunk_pri))
         sea._is_primary(primary)
 
