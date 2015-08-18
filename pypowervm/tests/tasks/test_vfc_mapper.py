@@ -272,15 +272,6 @@ class TestPortMappings(twrap.TestWrapper):
         e_resp = [('10000090FA5371F1', 'C05076079CFF045E C05076079CFF045F'),
                   ('10000090FA53720A', 'C05076079CFF07BB C05076079CFF07BA')]
 
-        # Client WWPNs pulled from the expected response.  We can't be
-        # guaranteed of their ordering, so map out all valid types.
-        def reverse_wwpns(elem):
-            key, wwpn = elem
-            return key, ' '.join(wwpn.split()[::-1])
-
-        e_resp.append(reverse_wwpns(e_resp[0]))
-        e_resp.append(reverse_wwpns(e_resp[1]))
-
         for needle in resp:
             self.assertIn(needle, e_resp)
 
@@ -424,6 +415,7 @@ class TestPortMappings(twrap.TestWrapper):
 
         # Validate correct data passed back.
         self.assertEqual(1, len(resp))
+        self.assertEqual((None, '0 1'), resp[0])
 
     def test_remove_port_mapping_multi_vios(self):
         """Validates that the port mappings are removed cross VIOSes."""
@@ -612,7 +604,7 @@ class TestAddRemoveMap(twrap.TestWrapper):
         # will have nothing on it, to indicate that the API should generate
         # the WWPNs.  Therefore, we validate that we found the mapping without
         # any WWPNs on it.
-        self.assertEqual(set(), maps[0].client_adapter.wwpns)
+        self.assertEqual([], maps[0].client_adapter.wwpns)
 
         # Now try to remove it...
         vfc_mapper.remove_maps(v_wrap, self.lpar_uuid, port_map=p_map_vio1)

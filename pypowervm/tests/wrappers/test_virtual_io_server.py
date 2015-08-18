@@ -340,7 +340,7 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Validate the Client Adapter
         self.assertIsNotNone(mapping.client_adapter)
-        self.assertEqual({'AA', 'BB'}, mapping.client_adapter.wwpns)
+        self.assertEqual(['AA', 'BB'], mapping.client_adapter.wwpns)
 
     def test_bld_scsi_mapping_from_existing(self):
         def map_has_pieces(smap, lpar_href=True, client_adapter=True,

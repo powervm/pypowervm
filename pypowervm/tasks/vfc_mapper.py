@@ -51,13 +51,13 @@ def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
 def intersect_wwpns(wwpn_set1, wwpn_set2):
     """Will return the intersection of WWPNs between the two sets.
 
-    :param wwpn_set1: A set or list of WWPNs.
-    :param wwpn_set2: A set or list of WWPNs.
+    :param wwpn_set1: A list of WWPNs.
+    :param wwpn_set2: A list of WWPNs.
     :return: The intersection of the WWPNs.  Will maintain the WWPN format
              of wwpn_set1, but the comparison done will be agnostic of
              formats (ex. colons and/or upper/lower case).
     """
-    wwpn_set2 = set([u.sanitize_wwpn_for_api(x) for x in wwpn_set2])
+    wwpn_set2 = [u.sanitize_wwpn_for_api(x) for x in wwpn_set2]
     return [y for y in wwpn_set1 if u.sanitize_wwpn_for_api(y) in wwpn_set2]
 
 
@@ -443,8 +443,7 @@ def _remove_npiv_port_map(vios_wraps, npiv_port_map):
              were no affected VIOSes, returns None.
     """
     vios_w, p_port = find_vios_for_wwpn(vios_wraps, npiv_port_map[0])
-    v_wwpns = set([u.sanitize_wwpn_for_api(x)
-                   for x in npiv_port_map[1].split()])
+    v_wwpns = [u.sanitize_wwpn_for_api(x) for x in npiv_port_map[1].split()]
 
     removal_map = None
 
@@ -482,7 +481,7 @@ def _find_ports_on_vio(vio_w, p_port_wwpns):
 
 
 def _fuse_vfc_ports(wwpn_list):
-    """Returns a set of fused VFC WWPNs.  See derive_npiv_map."""
+    """Returns a list of fused VFC WWPNs.  See derive_npiv_map."""
     l = list(map(u.sanitize_wwpn_for_api, wwpn_list))
     return list(map(' '.join, zip(l[::2], l[1::2])))
 
@@ -512,8 +511,7 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
     matching_maps = []
 
     if port_map:
-        v_wwpns = set([u.sanitize_wwpn_for_api(x)
-                       for x in port_map[1].split()])
+        v_wwpns = [u.sanitize_wwpn_for_api(x) for x in port_map[1].split()]
 
     for vfc_map in mapping_list:
         # If to a different VM, continue on.
@@ -534,7 +532,9 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
             if not vfc_map.client_adapter:
                 continue
 
-            # Check to make sure the WWPNs between the two match.
+            # Check to make sure the WWPNs between the two match.  This should
+            # be an order independence check (as this query shouldn't care...
+            # but the API itself does care about order).
             if set(client_adpt.wwpns) != set(vfc_map.client_adapter.wwpns):
                 continue
 
@@ -546,10 +546,10 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
 
             # If it is a new mapping with generated WWPNs, then the client
             # adapter can't have WWPNs.
-            if v_wwpns == {_ANY_WWPN}:
-                if vfc_map.client_adapter.wwpns != set():
+            if v_wwpns == [_ANY_WWPN, _ANY_WWPN]:
+                if vfc_map.client_adapter.wwpns != []:
                     continue
-            elif set(vfc_map.client_adapter.wwpns) != v_wwpns:
+            elif vfc_map.client_adapter.wwpns != v_wwpns:
                 continue
 
         # Found a match!
@@ -616,8 +616,7 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
 
     v_wwpns = None
     if port_map[1] != _FUSED_ANY_WWPN:
-        v_wwpns = set([u.sanitize_wwpn_for_api(x)
-                       for x in port_map[1].split()])
+        v_wwpns = [u.sanitize_wwpn_for_api(x) for x in port_map[1].split()]
 
     for vfc_map in vios_w.vfc_mappings:
         if vfc_map.client_adapter is None:
