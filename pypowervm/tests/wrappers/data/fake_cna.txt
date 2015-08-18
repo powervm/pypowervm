@@ -43,6 +43,9 @@ BODY{
     <QualityOfServicePriorityEnabled kb="CUD" kxe="false">true</QualityOfServicePriorityEnabled>
     <TaggedVLANIDs kxe="false" kb="CUA">53 54 55</TaggedVLANIDs>
     <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+    <VirtualStationInterfaceTypeId kb="ROR" kxe="false">VSITID</VirtualStationInterfaceTypeId>
+    <VirtualStationInterfaceTypeVersion kb="ROR" kxe="false">77.99</VirtualStationInterfaceTypeVersion>
+    <VirtualStationInterfaceManagerID kb="ROR" kxe="false">VSIMID</VirtualStationInterfaceManagerID>
     <AssociatedVirtualSwitch kb="CUD" kxe="false">
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/9e42d4a9-9725-3007-9932-d85374ebf5cf" rel="related"/>
     </AssociatedVirtualSwitch>
