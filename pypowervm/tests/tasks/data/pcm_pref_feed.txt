@@ -45,8 +45,8 @@ BODY{
         <SerialNumber kb="ROR" kxe="false">2125D4A</SerialNumber>
     </MachineTypeModelSerialNumber>
     <LongTermMonitorEnabled kb="UOD" kxe="false">true</LongTermMonitorEnabled>
-    <AggregationEnabled kb="UOD" kxe="false">true</AggregationEnabled>
-    <ShortTermMonitorEnabled kb="UOD" kxe="false">false</ShortTermMonitorEnabled>
+    <AggregationEnabled kb="UOD" kxe="false">false</AggregationEnabled>
+    <ShortTermMonitorEnabled kb="UOD" kxe="false">true</ShortTermMonitorEnabled>
     <ComputeLTMEnabled ksv="V1_1_0" kb="UOD" kxe="false">false</ComputeLTMEnabled>
     <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b" rel="related"/>
 </ManagedSystemPcmPreference:ManagedSystemPcmPreference>

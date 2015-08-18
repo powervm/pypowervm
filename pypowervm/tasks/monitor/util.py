@@ -307,23 +307,25 @@ def query_ltm_feed(adapter, host_uuid):
     return pvm_mon.LTMMetrics.wrap(resp)
 
 
-def ensure_ltm_monitors(adapter, host_uuid, override_defaults=False):
+def ensure_ltm_monitors(adapter, host_uuid, override_to_default=False,
+                        compute_ltm=False):
     """Ensures that the Long Term Monitors are enabled.
 
     :param adapter: The pypowervm adapter.
     :param host_uuid: The host systems UUID.
-    :param override_defaults: (Optional) If True will ensure that the defaults
-                              are set on the system.  This means:
-                              - Short Term Metrics - disabled
-                              - Aggregation - turned on
-                              If left off, the previous values will be adhered
-                              to.
+    :param override_to_default: (Optional) If True will ensure that the
+                                defaults are set on the system.  This means:
+                                - Short Term Metrics - disabled
+                                - Aggregation - turned on
+                                If left off, the previous values will be
+                                adhered to.
+    :param compute_ltm: (Optional - Defaults to False) If set, will turn on
+                        only the compute long term metrics, and the VIOS
+                        and network metrics will not be considered.
     """
-    # Read from the feed.  PCM preferences appear to be janky.  If you don't
+    # Read from the feed.  PCM preferences appear to be odd.  If you don't
     # query the feed or update the feed directly, it will fail.  This means
     # you can't even query the element or update it direct.
-    #
-    # TODO(thorst) investigate API changes to fix this...
     href = adapter.build_href(pvm_ms.System.schema_type, root_id=host_uuid,
                               child_type=pvm_mon.PREFERENCES,
                               service=pvm_mon.PCM_SERVICE)
@@ -331,9 +333,9 @@ def ensure_ltm_monitors(adapter, host_uuid, override_defaults=False):
 
     # Wrap it to our wrapper.  There is only one element in the feed.
     pref = pvm_mon.PcmPref.wrap(resp)[0]
-    pref.compute_ltm_enabled = True
+    pref.compute_ltm_enabled = compute_ltm
     pref.ltm_enabled = True
-    if override_defaults:
+    if override_to_default:
         pref.stm_enabled = False
         pref.aggregation_enabled = True
 
