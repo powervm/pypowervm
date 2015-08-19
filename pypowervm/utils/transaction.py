@@ -179,17 +179,37 @@ class _FunctorSubtask(Subtask):
 
         :param _func: Callable to be invoked under the WrapperTask.
         :param save_args: See Subtask.__init__(save_args).
-        :param save_kwargs: See Subtask.__init__(save_kwargs).
-        :param provides: See Subtask.__init__(provides).
+        :param save_kwargs: See Subtask.__init__(save_kwargs).  May contain the
+                            following values, which are treated specially and
+                            NOT passed to the callable _func:
+               provides: See Subtask.__init__(provides).
+               logspec: Iterable comprising a logging function, a format
+                        string, and zero or more arguments.  The log method is
+                        invoked before the func.  Example:
+
+                    logspec = [LOG.info, _LI("Deleting widget %(widget)s from "
+                                             "instance %(instance)s."),
+                               {'widget': widg, 'instance': instance.name}]
+                    FunctorSubtask(..., logspec=logspec)
         """
+        self._logspec = save_kwargs.pop('logspec', [])
         super(_FunctorSubtask, self).__init__(*save_args, **save_kwargs)
         self._func = _func
+        if self._logspec:
+            if len(self._logspec) < 2 or not callable(self._logspec[0]):
+                raise ValueError(
+                    "logspec must be a list comprising a callable followed by "
+                    "a format string and zero or more arguments.")
 
     def execute(self, wrapper, *_args, **_kwargs):
         """Invoke saved callable with saved args."""
         if not ('provided' in reflection.get_callable_args(self._func)
                 or reflection.accepts_kwargs(self._func)):
             _kwargs.pop('provided', None)
+        if self._logspec:
+            # Execute the log method (the first element in the list) with its
+            # arguments (the remaining elements in the list).
+            self._logspec[0](*self._logspec[1:])
         return self._func(wrapper, *_args, **_kwargs)
 
 
@@ -237,7 +257,10 @@ class WrapperTask(tf_task.BaseTask):
         ...
         tx.add_subtask(ModifyGizmos([giz1, giz2]))
         ...
-        tx.add_functor_subtask(add_widget, widget, provides='widget_count')
+        logspec = [LOG.info, _LI("Added widget %(widget)s to LPAR %(lpar)s."),
+                   {'widget': widget.name, 'lpar': lpar_uuid}]
+        tx.add_functor_subtask(add_widget, widget, provides='widget_count',
+                               logspec=logspec)
         ...
         finalized_lpar = tx.execute()
     """
@@ -314,8 +337,18 @@ class WrapperTask(tf_task.BaseTask):
                      (after the EntryWrapper parameter) when it is executed
                      within the WrapperTask.
         :param kwargs: Keyword arguments to be passed to the callable func when
-                       it is executed within the WrapperTask.
-        :param provides: See Subtask.__init__(provides).
+                       it is executed within the WrapperTask.  May contain the
+                       following values, which are treated specially and NOT
+                       passed to the callable func:
+               provides: See Subtask.__init__(provides).
+               logspec: Iterable comprising a logging function, a format
+                        string, and zero or more arguments.  The log method is
+                        invoked before the func.  Example:
+
+                    logspec = [LOG.info, _LI("Deleting widget %(widget)s from "
+                                             "instance %(instance)s."),
+                               {'widget': widg, 'instance': instance.name}]
+                    FunctorSubtask(..., logspec=logspec)
         :return: self, for chaining convenience.
         """
         return self.add_subtask(_FunctorSubtask(func, *args, **kwargs))
