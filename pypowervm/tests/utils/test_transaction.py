@@ -271,6 +271,44 @@ class TestWrapperTask(twrap.TestWrapper):
             'LparNameAndMem_newer_name', 'LparNameAndMem_newest_name',
             'update', 'unlock'], txfx.get_log())
 
+    def test_logspec(self):
+        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
+        tx1 = tx.WrapperTask('tx1', self.getter)
+        mock_log = mock.Mock()
+        mock_log.side_effect = lambda *args: txfx.log('log')
+
+        def functor(wrp):
+            txfx.log('functor')
+
+        # "False" logspec ignored
+        tx1.add_functor_subtask(functor, logspec=[])
+        # logspec must have at least two args
+        self.assertRaises(ValueError, tx1.add_functor_subtask, functor,
+                          logspec=[1])
+        # First arg must be callable
+        self.assertRaises(ValueError, tx1.add_functor_subtask, functor,
+                          logspec=[1, 2])
+        # Valid call with just a string
+        tx1.add_functor_subtask(functor, logspec=[mock_log, "string"])
+        # Valid call with a format string and args
+        tx1.add_functor_subtask(functor, logspec=[
+            mock_log, "one %s two %s", 1, 2])
+        # Valid call with named args
+        tx1.add_functor_subtask(functor, logspec=[
+            mock_log,
+            "three %(three)s four %(four)s", {'three': 3, 'four': 4}])
+
+        tx1.execute()
+        self.assertEqual([
+            'lock', 'get', 'functor', 'log', 'functor', 'log', 'functor',
+            'log', 'functor', 'unlock'],
+            txfx.get_log())
+        mock_log.assert_has_calls([
+            mock.call("string"),
+            mock.call("one %s two %s", 1, 2),
+            mock.call("three %(three)s four %(four)s", {'three': 3, 'four': 4})
+        ])
+
     def test_wrapper_task2(self):
         # Now:
         # o Fake like update forces retry
