@@ -972,7 +972,7 @@ class CNA(ewrap.EntryWrapper):
 
     @classmethod
     def bld(cls, adapter, pvid, vswitch_href, slot_num=None, mac_addr=None,
-            addl_tagged_vlans=None):
+            addl_tagged_vlans=None, trunk_pri=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a partition.  This can be PUT
@@ -997,6 +997,8 @@ class CNA(ewrap.EntryWrapper):
                                   Input should be a list of int (or int string)
                                   Example: [51, 52, 53]
                                   Note: The limit is ~18 additional VLANs
+        :param trunk_pri: Optional TrunkPriority integer that, if specified,
+                          will create this wrapper as a trunk.
         :returns: A CNA EntryWrapper that can be used for create.
         """
         cna = super(CNA, cls)._bld(adapter)
@@ -1021,6 +1023,8 @@ class CNA(ewrap.EntryWrapper):
 
         # vSwitch URI
         cna.vswitch_uri = vswitch_href
+
+        cna._trunk_pri = trunk_pri
 
         return cna
 
@@ -1139,6 +1143,27 @@ class CNA(ewrap.EntryWrapper):
     def vswitch_id(self):
         """Returns the ID (typically 0-15) for the virtual switch."""
         return self._get_val_int(_VADPT_VSWITCH_ID)
+
+    @property
+    def trunk_pri(self):
+        """Returns the Trunk Priority for the adapter.
+
+        :returns: None if this is not a Trunk Adapter, priority otherwise.
+        """
+        return self._get_val_int(_TA_TRUNK_PRI)
+
+    def _trunk_pri(self, new_val):
+        self.set_parm_value(_TA_TRUNK_PRI, new_val)
+
+    @property
+    def is_trunk(self):
+        """Returns if this adapter was created with a trunk priority.
+
+        If the adapter was created without a trunk priority, it is just a
+        client network adapter. However, if it was given a trunk priority on
+        creation, it is a wrapper for a trunk adapter.
+        """
+        return self.trunk_pri is not None
 
 
 @ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
