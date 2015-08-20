@@ -9180,21 +9180,6 @@ BODY{
                 <Atom/>
             </Metadata>
             <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/42DF39A2-3A4A-4748-998F-25B15352E8A7" rel="related"/>
-            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_1_0">
-                <Metadata>
-                    <Atom/>
-                </Metadata>
-                <AdapterType kb="ROR" kxe="false">Client</AdapterType>
-                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V3-C3</DynamicReconfigurationConnectorName>
-                <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V3-C3</LocationCode>
-                <LocalPartitionID kb="CUR" kxe="false">100</LocalPartitionID>
-                <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
-                <VariedOn kb="CUD" kxe="true">true</VariedOn>
-                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
-                <ConnectingPartitionID kb="CUR" kxe="false">1</ConnectingPartitionID>
-                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">5</ConnectingVirtualSlotNumber>
-                <WWPNs kb="CUR" kxe="false">c05076079cff07ba c05076079cff07bb</WWPNs>
-            </ClientAdapter>
             <Port kxe="false" kb="CUR" schemaVersion="V1_1_0">
                 <Metadata>
                     <Atom/>

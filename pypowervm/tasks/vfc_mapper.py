@@ -16,12 +16,17 @@
 
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
+import logging
+
 from pypowervm import exceptions as e
+from pypowervm.i18n import _
 from pypowervm import util as u
 from pypowervm.utils import retry as pvm_retry
 from pypowervm.utils import uuid
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
+
+LOG = logging.getLogger(__name__)
 
 
 _ANY_WWPN = '-1'
@@ -316,12 +321,24 @@ def _get_port_map(vioses, lpar_uuid):
     :param vioses: The VIOS lpar wrappers.
     :param lpar_uuid: The UUID of the LPAR to gather the mappings for.
     :return: List of port maps.  Is a list as there may be multiple, identical
-             mappings.  This indicates two paths over the same FC port.
+             mappings.  This indicates two paths over the same FC port.  Does
+             NOT include stale mappings that may be associated with the LPAR.
+             A stale mapping is one that either:
+              - Does not have a backing physical port
+              - Does not have a client adapter
     """
     port_map = []
     for vios in vioses:
         vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
         for vfc_mapping in vfc_mappings:
+            # Check if this is a 'stale' mapping.  If it is stale, do not
+            # consider it for the response.
+            if not (vfc_mapping.backing_port and vfc_mapping.client_adapter and
+                    vfc_mapping.client_adapter.wwpns):
+                LOG.warn(_("Detected a stale mapping for LPAR with UUID %s.") %
+                         lpar_uuid)
+                continue
+
             # Found a matching mapping
             p_wwpn = vfc_mapping.backing_port.wwpn
             c_wwpns = vfc_mapping.client_adapter.wwpns
