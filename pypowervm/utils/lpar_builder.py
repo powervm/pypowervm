@@ -291,7 +291,7 @@ class DefaultStandardize(Standardize):
 
         # See if we need to calculate a default proc_units value and min/max
         # Before setting the proc units ensure it's between min/max
-        spec_proc_units = attr.get(PROC_UNITS)
+        spec_proc_units = self.attr.get(PROC_UNITS)
         if spec_proc_units is None:
             proc_units = int(attr[VCPU]) * self.proc_units_factor
 

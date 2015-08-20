@@ -208,6 +208,29 @@ class TestLPARBuilder(testtools.TestCase):
         procs = new_lpar.proc_config.shared_proc_cfg
         self.assertEqual(3.0, procs.min_units)
 
+        # Ensure the calculated procs are all 0.5
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=1,
+                    proc_units=0.5)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        procs = new_lpar.proc_config.shared_proc_cfg
+        self.assertEqual(0.5, procs.min_units)
+        self.assertEqual(0.5, procs.max_units)
+        self.assertEqual(0.5, procs.desired_units)
+
+        # Create a temp standardizer with a smaller proc units factor
+        stdz = lpar_bldr.DefaultStandardize(self.mngd_sys,
+                                            proc_units_factor=0.1)
+        # Ensure the min, max, and desired proc units works as VCPU is scaled.
+        for x in [1, 5, 10, 17, 20]:
+            attr = dict(name='lpar', memory=2048, vcpu=x)
+            bldr = lpar_bldr.LPARBuilder(self.adpt, attr, stdz)
+            new_lpar = bldr.build()
+            procs = new_lpar.proc_config.shared_proc_cfg
+            self.assertEqual(round(0.1 * x, 2), procs.min_units)
+            self.assertEqual(round(0.1 * x, 2), procs.max_units)
+            self.assertEqual(round(0.1 * x, 2), procs.desired_units)
+
         # Ensure the calculated procs are below the max
         attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
                     max_proc_units=2.1)
