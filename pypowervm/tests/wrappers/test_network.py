@@ -642,5 +642,21 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertTrue(net.CNA.has_metadata)
         self.assertEqual(net.CNA.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
+    def test_get_trunk_pri(self):
+        """Test that we can get the trunk priority."""
+        self.assertEqual(1, self.entries.trunk_pri)
+
+    def test_set_trunk_pri(self):
+        """Test that we can set the trunk priority."""
+        self.assertEqual(1, self.entries.trunk_pri)
+        self.entries._trunk_pri(2)
+        self.assertEqual(2, self.entries.trunk_pri)
+
+    def test_is_trunk(self):
+        """Test that we can get if this adapter is a trunk."""
+        self.assertTrue(self.entries.is_trunk)
+        self.entries._trunk_pri(None)
+        self.assertFalse(self.entries.is_trunk)
+
 if __name__ == "__main__":
     unittest.main()
