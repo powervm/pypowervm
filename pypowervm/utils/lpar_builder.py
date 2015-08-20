@@ -242,35 +242,35 @@ class DefaultStandardize(Standardize):
         # Validate the settings sent in
         self._validate_general(partial=True)
 
-        attr = {NAME: self.attr[NAME]}
-        self._set_val(attr, UUID)
-        self._set_val(attr, ENV, bp.LPARType.AIXLINUX,
+        bld_attr = {NAME: self.attr[NAME]}
+        self._set_val(bld_attr, UUID)
+        self._set_val(bld_attr, ENV, bp.LPARType.AIXLINUX,
                       convert_func=LPARType.convert_value)
-        self._set_val(attr, MAX_IO_SLOTS, self.max_slots)
-        self._set_val(attr, AVAIL_PRIORITY, self.avail_priority)
+        self._set_val(bld_attr, MAX_IO_SLOTS, self.max_slots)
+        self._set_val(bld_attr, AVAIL_PRIORITY, self.avail_priority)
         # See if the host is capable of SRR before setting it.
         host_cap = self.mngd_sys.get_capabilities()
         if host_cap['simplified_remote_restart_capable']:
-            self._set_val(attr, SRR_CAPABLE, self.srr,
+            self._set_val(bld_attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
-        self._set_val(attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
+        self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
 
         # Validate the attributes
-        self._validate_general(attrs=attr)
-        return attr
+        self._validate_general(attrs=bld_attr)
+        return bld_attr
 
     def memory(self):
         # Validate the partial settings
         self._validate_memory(partial=True)
 
-        attr = {MEM: self.attr[MEM]}
-        self._set_prop(attr, MAX_MEM, MEM)
-        self._set_prop(attr, MIN_MEM, MEM)
+        bld_attr = {MEM: self.attr[MEM]}
+        self._set_prop(bld_attr, MAX_MEM, MEM)
+        self._set_prop(bld_attr, MIN_MEM, MEM)
 
         # Validate the full memory settings
-        self._validate_memory(attrs=attr)
-        return attr
+        self._validate_memory(attrs=bld_attr)
+        return bld_attr
 
     def shr_proc(self):
         def _compare(prop, value, compare_func, typ):
@@ -285,15 +285,15 @@ class DefaultStandardize(Standardize):
         # Validate the partial settings
         self._validate_shared_proc(partial=True)
 
-        attr = {VCPU: self.attr[VCPU]}
-        self._set_prop(attr, MAX_VCPU, VCPU)
-        self._set_prop(attr, MIN_VCPU, VCPU)
+        bld_attr = {VCPU: self.attr[VCPU]}
+        self._set_prop(bld_attr, MAX_VCPU, VCPU)
+        self._set_prop(bld_attr, MIN_VCPU, VCPU)
 
         # See if we need to calculate a default proc_units value and min/max
         # Before setting the proc units ensure it's between min/max
-        spec_proc_units = attr.get(PROC_UNITS)
+        spec_proc_units = self.attr.get(PROC_UNITS)
         if spec_proc_units is None:
-            proc_units = int(attr[VCPU]) * self.proc_units_factor
+            proc_units = int(bld_attr[VCPU]) * self.proc_units_factor
 
             # Ensure it's at least as large as a specified min value
             proc_units = _compare(MIN_PROC_U, proc_units, max, float)
@@ -303,31 +303,31 @@ class DefaultStandardize(Standardize):
         else:
             proc_units = float(spec_proc_units)
 
-        self._set_val(attr, PROC_UNITS, proc_units)
-        self._set_val(attr, MIN_PROC_U, proc_units)
-        self._set_val(attr, MAX_PROC_U, proc_units)
-        self._set_val(attr, SHARING_MODE, bp.SharingMode.UNCAPPED)
+        self._set_val(bld_attr, PROC_UNITS, proc_units)
+        self._set_val(bld_attr, MIN_PROC_U, proc_units)
+        self._set_val(bld_attr, MAX_PROC_U, proc_units)
+        self._set_val(bld_attr, SHARING_MODE, bp.SharingMode.UNCAPPED)
 
         # If uncapped sharing mode then set the weight
-        if attr.get(SHARING_MODE) == bp.SharingMode.UNCAPPED:
-            self._set_val(attr, UNCAPPED_WEIGHT, self.uncapped_weight)
-        self._set_val(attr, SPP, self.spp)
+        if bld_attr.get(SHARING_MODE) == bp.SharingMode.UNCAPPED:
+            self._set_val(bld_attr, UNCAPPED_WEIGHT, self.uncapped_weight)
+        self._set_val(bld_attr, SPP, self.spp)
 
         # Validate all the values
-        self._validate_shared_proc(attrs=attr)
-        return attr
+        self._validate_shared_proc(attrs=bld_attr)
+        return bld_attr
 
     def ded_proc(self):
         self._validate_lpar_ded_cpu(partial=True)
         # Set the proc based on vcpu field
-        attr = {VCPU: self.attr[VCPU]}
-        self._set_prop(attr, MAX_VCPU, VCPU)
-        self._set_prop(attr, MIN_VCPU, VCPU)
-        self._set_val(attr, SHARING_MODE,
+        bld_attr = {VCPU: self.attr[VCPU]}
+        self._set_prop(bld_attr, MAX_VCPU, VCPU)
+        self._set_prop(bld_attr, MIN_VCPU, VCPU)
+        self._set_val(bld_attr, SHARING_MODE,
                       bp.DedicatedSharingMode.SHARE_IDLE_PROCS,
                       convert_func=DedProcShareMode.convert_value)
-        self._validate_lpar_ded_cpu(attrs=attr)
-        return attr
+        self._validate_lpar_ded_cpu(attrs=bld_attr)
+        return bld_attr
 
 
 @six.add_metaclass(abc.ABCMeta)
