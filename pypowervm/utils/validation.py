@@ -21,6 +21,7 @@ import logging
 import six
 
 from pypowervm.i18n import _
+from pypowervm.wrappers import base_partition as bp
 
 LOG = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ class LPARWrapperValidator(object):
         """Invoke attribute validation classes to perform validation"""
         ProcValidator(self.lpar_w, self.host_w,
                       cur_lpar_w=self.cur_lpar_w).validate()
-        # TODO(IBM): Memory Validation
+        MemValidator(self.lpar_w, self.host_w,
+                     cur_lpar_w=self.cur_lpar_w).validate()
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -81,27 +83,71 @@ class BaseValidator(object):
         self.cur_lpar_w = cur_lpar_w
 
     def validate(self):
-        """Determines what validation is needed and invokes it."""
+        """Determines what validation is requested and invokes it."""
         # Deploy
+        self._populate_new_values()
         if self.cur_lpar_w is None:
             self._validate_deploy()
-        # Inactive Resize
-        # TODO(IBM):
+        # Resize
+        else:
+            self._can_modify()
+            self._populate_resize_diffs()
+            # Active Resize
+            if self.cur_lpar_w.state == bp.LPARState.RUNNING:
+                self._validate_active_resize()
+            # Inactive Resize
+            else:
+                self._validate_inactive_resize()
+        self._validate_common()
 
-        # Active Resize
-        # TODO(IBM):
+    @abc.abstractmethod
+    def _populate_new_values(self):
+        """Abstract method for populating deploy values
+
+        This method will always be called in validate() and should
+        populate instance attributes with the new LPARWrapper
+        values.
+        """
+
+    @abc.abstractmethod
+    def _populate_resize_diffs(self):
+        """Abstract method for populating resize values
+
+        This method will only be called in validate() for resize
+        operations and should populate instance attributes with
+        the differences between the old and new LPARWrapper values.
+        """
 
     @abc.abstractmethod
     def _validate_deploy(self):
-        """Deploy validation abstract method."""
+        """Abstract method for deploy validation only."""
 
     @abc.abstractmethod
     def _validate_active_resize(self):
-        """Active resize validation abstract method."""
+        """Abstract method for active resize validation only."""
 
     @abc.abstractmethod
     def _validate_inactive_resize(self):
-        """Inactive resize validation abstract method."""
+        """Abstract method for inactive resize validation only."""
+
+    @abc.abstractmethod
+    def _validate_common(self):
+        """Abstract method for common validation
+
+        This method should be agnostic to the operation being validated
+        (deploy or resize) because the instance attributes will
+        be populated accordingly in validate().
+        """
+
+    @abc.abstractmethod
+    def _can_modify(self):
+        """Abstract method to check if resource may be modified
+
+        This method should invoke the corresponding can_modify
+        method in the LPAR class for the resource and raise an
+        exception if it returns False. Should only be called for
+        resize validation when cur_lpar_w is passed in.
+        """
 
     def _validate_host_has_available_res(self, des, avail, res_name):
         if round(des, 2) > round(avail, 2):
@@ -116,30 +162,162 @@ class BaseValidator(object):
             raise ValidatorException(msg)
 
 
-class ProcValidator(BaseValidator):
+class MemValidator(BaseValidator):
+    """Memory Validator.
+
+    This class implements memory validation for lpars in the case of
+    deploy, inactive resize, and active resize.
+
+    Instance attributes populated by _populate_new_values
+    :attr des_mem: desired memory of the new lpar
+    :attr avail_mem: available memory on the host
+    :attr res_mem: name of the resource
+    """
+    def _populate_new_values(self):
+        """Set newly desired LPAR attributes as instance attributes."""
+        mem_cfg = self.lpar_w.mem_config
+        self.des_mem = mem_cfg.desired
+        self.avail_mem = self.host_w.memory_free
+        self.res_name = _('memory')
+
+    def _populate_resize_diffs(self):
+        """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""
+        # TODO(IBM):
+        pass
 
     def _validate_deploy(self):
-        """Validate processor values for deployment.
-
-        Validation logic in place
-        1. desired processors are available on host
-        """
-        procs_avail = self.host_w.proc_units_avail
-        if self.lpar_w.proc_config.has_dedicated:
-            des_procs = (self.lpar_w.proc_config.
-                         dedicated_proc_cfg.desired)
-            res_name = _('CPUs')
-        else:
-            des_procs = (self.lpar_w.proc_config.
-                         shared_proc_cfg.desired_units)
-            res_name = _('processing units')
-        self._validate_host_has_available_res(des_procs, procs_avail,
-                                              res_name)
+        """Enforce validation rules specific to LPAR deployment."""
+        self._validate_host_has_available_res(
+            self.des_mem, self.avail_mem, self.res_name)
 
     def _validate_active_resize(self):
+        """Enforce validation rules specific to active resize."""
         # TODO(IBM):
-        raise NotImplementedError()
+        pass
 
     def _validate_inactive_resize(self):
+        """Enforce validation rules specific to inactive resize."""
         # TODO(IBM):
-        raise NotImplementedError()
+        pass
+
+    def _validate_common(self):
+        """Enforce operation agnostic validation rules."""
+        # TODO(IBM):
+        pass
+
+    def _can_modify(self):
+        """Checks mem dlpar and rmc state if LPAR not activated."""
+        modifiable, reason = self.cur_lpar_w.can_modify_mem()
+        if not modifiable:
+            LOG.error(reason)
+            raise ValidatorException(reason)
+
+
+class ProcValidator(BaseValidator):
+    """Processor Validator.
+
+    This class implements processor validation for LPARs in the case of
+    deploy, inactive resize, and active resize.
+
+    Instance attributes populated by _populate_new_values
+    :attr has_dedicated: LPAR has dedicated processors boolean
+    :attr procs_avail: available procs on host
+    :attr des_procs: desired processors from new LPAR
+    :attr res_name: name of the resource
+    :attr max_procs_per_aix_linux_lpar: max procs per LPAR on host
+    :attr max_sys_procs_limit: LPAR max procs limit on host
+    :attr des_vcpus: LPAR desired vcpus
+    :attr max_vcpus: LPAR max vcpus
+    """
+    def _populate_new_values(self):
+        """Set newly desired LPAR values as instance attributes."""
+        self.has_dedicated = self.lpar_w.proc_config.has_dedicated
+        self.procs_avail = self.host_w.proc_units_avail
+        if self.has_dedicated:
+            self._populate_dedicated_proc_values()
+        else:
+            self._populate_shared_proc_values()
+
+    def _populate_dedicated_proc_values(self):
+        """Set dedicated proc values as instance attributes."""
+        ded_proc_cfg = self.lpar_w.proc_config.dedicated_proc_cfg
+        self.des_procs = ded_proc_cfg.desired
+        self.res_name = _('CPUs')
+        # Proc host limits for dedicated proc
+        self.max_procs_per_aix_linux_lpar = (
+            self.host_w.max_procs_per_aix_linux_lpar)
+        self.max_sys_procs_limit = self.host_w.max_sys_procs_limit
+
+        # VCPUs doesn't mean anything in dedicated proc cfg
+        # FAIP in dedicated proc cfg vcpus == procs for naming convention
+        self.des_vcpus = self.des_procs
+        self.max_vcpus = ded_proc_cfg.max
+
+    def _populate_shared_proc_values(self):
+        """Set shared proc values as instance attributes."""
+        shr_proc_cfg = self.lpar_w.proc_config.shared_proc_cfg
+        self.des_procs = shr_proc_cfg.desired_units
+        self.res_name = _('processing units')
+        # VCPU host limits for shared proc
+        self.max_procs_per_aix_linux_lpar = (
+            self.host_w.max_vcpus_per_aix_linux_lpar)
+        self.max_sys_procs_limit = self.host_w.max_sys_vcpus_limit
+
+        self.des_vcpus = shr_proc_cfg.desired_virtual
+        self.max_vcpus = shr_proc_cfg.max_virtual
+
+    def _populate_resize_diffs(self):
+        """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""
+        # TODO(IBM):
+        pass
+
+    def _validate_deploy(self):
+        """Enforce validation rules specific to LPAR deployment."""
+        self._validate_host_has_available_res(
+            self.des_procs, self.procs_avail, self.res_name)
+
+    def _validate_active_resize(self):
+        """Enforce validation rules specific to active resize."""
+        # TODO(IBM):
+        pass
+
+    def _validate_inactive_resize(self):
+        """Enforce validation rules specific to inactive resize."""
+        # TODO(IBM):
+        pass
+
+    def _validate_common(self):
+        """Enforce operation agnostic validation rules."""
+        self._validate_host_max_allowed_procs_per_lpar()
+        self._validate_host_max_sys_procs_limit()
+
+    def _can_modify(self):
+        """Checks proc dlpar and rmc state if LPAR not activated."""
+        modifiable, reason = self.cur_lpar_w.can_modify_proc()
+        if not modifiable:
+            LOG.error(reason)
+            raise ValidatorException(reason)
+
+    def _validate_host_max_allowed_procs_per_lpar(self):
+        if self.des_vcpus > self.max_procs_per_aix_linux_lpar:
+            ex_args = {'vcpus': self.des_vcpus,
+                       'max_allowed': self.max_procs_per_aix_linux_lpar,
+                       'instance_name': self.lpar_w.name}
+            msg = _("The desired processors (%(vcpus)d) cannot be above "
+                    "the maximum allowed processors per partition "
+                    "(%(max_allowed)d) for virtual machine "
+                    "'%(instance_name)s'.") % ex_args
+            LOG.error(msg)
+            raise ValidatorException(msg)
+
+    def _validate_host_max_sys_procs_limit(self):
+        if self.max_vcpus > self.max_sys_procs_limit:
+            ex_args = {'vcpus': self.max_vcpus,
+                       'max_allowed': self.max_sys_procs_limit,
+                       'instance_name': self.lpar_w.name}
+            msg = _("The maximum processors (%(vcpus)d) cannot be above "
+                    "the maximum system capacity processor limit "
+                    "(%(max_allowed)d) for virtual machine "
+                    "'%(instance_name)s'.") % ex_args
+            LOG.error(msg)
+            raise ValidatorException(msg)
