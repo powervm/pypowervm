@@ -358,6 +358,12 @@ class AllocStgForDualFabricFailed(AbstractMsgFmtError):
                 "storage connectivity group. %(reasons)s")
 
 
+class UnableToDerivePhysicalPortForNPIV(AbstractMsgFmtError):
+    msg_fmt = _("Unable to derive the appropriate physical FC port for WWPN "
+                "%(wwpn)s.  The VIOS Extended Attribute Groups may have been "
+                "insufficient.  The VIOS URI for the query was %(vio_uri)s.")
+
+
 class MACNotSupported(AbstractMsgFmtError):
     msg_fmt = _("The virtual machine %(name)s cannot use the specified "
                 "port because it would require MAC address %(mac)s to be set. "

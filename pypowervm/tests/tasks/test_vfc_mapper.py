@@ -323,6 +323,16 @@ class TestPortMappings(twrap.TestWrapper):
         # The update should have been called once.
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
+    def test_add_port_bad_pfc(self):
+        """Validates that an error will be thrown with a bad pfc port."""
+        # Build the mappings - the provided WWPN is bad
+        vfc_map = ('10000090FA5371F9', '0 1')
+
+        # Now call the add action
+        self.assertRaises(e.UnableToDerivePhysicalPortForNPIV,
+                          vfc_mapper.add_map,
+                          self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
+
     def test_add_port_mapping_force_retry(self):
         """Validates that a retry forces an update of the vios wrappers."""
         # Determine the vios original values
