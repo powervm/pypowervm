@@ -629,7 +629,14 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
     """
     # This is meant to find the physical port.  Can run against a single
     # element.  We assume invoker has passed correct VIOS.
-    vios_w, p_port = find_vios_for_wwpn([vios_w], port_map[0])
+    new_vios_w, p_port = find_vios_for_wwpn([vios_w], port_map[0])
+    if new_vios_w is None:
+        # Log the payload in the response.
+        LOG.warn(_("Unable to find appropriate VIOS.  The payload provided "
+                   "was likely insufficient.  The payload data is:\n %s)"),
+                 vios_w.toxmlstring())
+        raise e.UnableToDerivePhysicalPortForNPIV(wwpn=port_map[0],
+                                                  vio_uri=vios_w.href)
 
     v_wwpns = None
     if port_map[1] != _FUSED_ANY_WWPN:
