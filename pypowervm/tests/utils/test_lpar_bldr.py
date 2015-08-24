@@ -47,7 +47,8 @@ class TestLPARBuilder(testtools.TestCase):
             type(mngd_sys).memory_region_size = (
                 mock.PropertyMock(return_value=mem_reg))
             capabilities = {
-                'simplified_remote_restart_capable': srr
+                'simplified_remote_restart_capable': srr,
+                'ibmi_restrictedio_capable': True
             }
             mngd_sys.get_capabilities.return_value = capabilities
             type(mngd_sys).proc_compat_modes = (
@@ -314,3 +315,30 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assertIsNotNone(new_lpar)
         self.assert_xml(new_lpar.entry, self.sections['vios'])
+
+    def test_IBMi(self):
+        attr = dict(name='TheName', env=bp.LPARType.OS400, memory=1024,
+                    vcpu=1)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertIsNotNone(bldr)
+
+        new_lpar = bldr.build()
+        self.assertIsNotNone(new_lpar)
+        self.assertTrue(new_lpar.restrictedio)
+        tag_io = new_lpar.io_config.tagged_io
+        self.assertEqual('HMC', tag_io.console)
+        self.assertEqual('0', tag_io.load_src)
+        self.assertEqual('NONE', tag_io.alt_load_src)
+
+        attr = dict(name='OS400LPAR', env=bp.LPARType.OS400, memory=1024,
+                    vcpu=1, console='CONSOLE', load_src='9', alt_load_src='9')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertIsNotNone(bldr)
+
+        new_lpar = bldr.build()
+        self.assertIsNotNone(new_lpar)
+        self.assertTrue(new_lpar.restrictedio)
+        tag_io = new_lpar.io_config.tagged_io
+        self.assertEqual('CONSOLE', tag_io.console)
+        self.assertEqual('9', tag_io.load_src)
+        self.assertEqual('9', tag_io.alt_load_src)

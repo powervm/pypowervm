@@ -455,6 +455,10 @@ class TestIBMiSpecific(twrap.TestWrapper):
     file = IBMI_HTTPRESP_FILE
     wrapper_class_to_test = lpar.LPAR
 
+    def test_restricted_io(self):
+        self.dwrap.restrictedio = True
+        self.assertTrue(self.dwrap.restrictedio)
+
     def test_desig_ipl_src(self):
         self.assertEqual('b', self.dwrap.desig_ipl_src)
         self.dwrap.desig_ipl_src = 'c'
@@ -482,7 +486,7 @@ class TestIBMiSpecific(twrap.TestWrapper):
         self.assertEqual('56', tio.load_src)
 
         # _bld honors child ordering
-        new_tio = bp.TaggedIO._bld(self.adpt)
+        new_tio = bp.TaggedIO.bld(self.adpt)
         new_tio.load_src = 1
         new_tio.alt_load_src = 2
         new_tio.console = 3
@@ -496,6 +500,14 @@ class TestIBMiSpecific(twrap.TestWrapper):
         # Setter
         self.dwrap.io_config.tagged_io = new_tio
         self.assertEqual('3', self.dwrap.io_config.tagged_io.console)
+
+        new_tio = bp.TaggedIO.bld(self.adpt)
+        self.assertEqual(
+            '<uom:TaggedIO xmlns:uom="http://www.ibm.com/xmlns/systems/power/f'
+            'irmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:'
+            'Atom/></uom:Metadata><uom:AlternateLoadSource>NONE</uom:Alternate'
+            'LoadSource><uom:Console>HMC</uom:Console><uom:LoadSource>0</uom:L'
+            'oadSource></uom:TaggedIO>'.encode('utf-8'), new_tio.toxmlstring())
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):

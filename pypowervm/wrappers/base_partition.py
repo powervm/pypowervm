@@ -907,6 +907,23 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 class TaggedIO(ewrap.ElementWrapper):
     """IBMi only - tagged I/O attributes of the I/O configuration."""
 
+    @classmethod
+    def bld(cls, adapter, load_src='0', console='HMC', alt_load_src='NONE'):
+        """Builds a Partition TaggedIO wrapper.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param load_src: Load source to use
+        :param console: Console to use for IBMi
+        :param alt_load_src: Alternate load source to use
+        :returns: Partition TaggedIO wrapper
+
+        """
+        cfg = super(TaggedIO, cls)._bld(adapter)
+        cfg.load_src = load_src
+        cfg.console = console
+        cfg.alt_load_src = alt_load_src
+        return cfg
+
     @property
     def alt_load_src(self):
         """Value may or may not be an integer - always returned as string."""

@@ -54,6 +54,12 @@ AVAIL_PRIORITY = 'avail_priority'
 SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
 
+# IBMi specific keys
+ALT_LOAD_SRC = 'alt_load_src'
+CONSOLE = 'console'
+LOAD_SRC = 'load_src'
+RESTRICTED_IO = 'restricted_io'
+
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
 # Keys that indicate that shared processors are being configured
@@ -100,6 +106,8 @@ class Standardize(object):
             Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
                       PROC_COMPAT
             Optional: SRR_CAPABLE, UUID
+                      IBMi value: CONSOLE, LOAD_SRC, ALT_LOAD_SRC,
+                                  RESTRICTED_IO
         """
         pass
 
@@ -208,6 +216,10 @@ class DefaultStandardize(Standardize):
                        host_modes=self.mngd_sys.proc_compat_modes,
                        allow_none=partial).validate()
 
+        # Validate fields specific to IBMi
+        if attrs.get(ENV, '') == bp.LPARType.OS400:
+            RestrictedIO(attrs.get(RESTRICTED_IO), allow_none=True).validate()
+
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
             attrs = self.attr
@@ -255,6 +267,15 @@ class DefaultStandardize(Standardize):
                           convert_func=SimplifiedRemoteRestart.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
+
+        # Build IBMi attributes
+        if bld_attr[ENV] == bp.LPARType.OS400:
+            self._set_val(bld_attr, CONSOLE, value='HMC')
+            self._set_val(bld_attr, LOAD_SRC, value='0')
+            self._set_val(bld_attr, ALT_LOAD_SRC, value='NONE')
+            if host_cap['ibmi_restrictedio_capable']:
+                self._set_val(bld_attr, RESTRICTED_IO, value=True,
+                              convert_func=RestrictedIO.convert_value)
 
         # Validate the attributes
         self._validate_general(attrs=bld_attr)
@@ -631,6 +652,10 @@ class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
 
 
+class RestrictedIO(BoolField):
+    _name = 'Restricted IO'
+
+
 class LPARBuilder(object):
     def __init__(self, adapter, attr, stdz):
         self.adapter = adapter
@@ -771,4 +796,13 @@ class LPARBuilder(object):
         lpar_w.mem_config = mem_cfg
         lpar_w.proc_config = proc_cfg
         lpar_w.io_config = io_cfg
+
+        # Add IBMi values if needed
+        if lpar_w.env == bp.LPARType.OS400:
+            lpar_w.io_config.tagged_io = bp.TaggedIO.bld(
+                self.adapter, load_src=std[LOAD_SRC], console=std[CONSOLE],
+                alt_load_src=std[ALT_LOAD_SRC])
+            if std.get(RESTRICTED_IO) is not None:
+                lpar_w.restrictedio = std[RESTRICTED_IO]
+
         return lpar_w
