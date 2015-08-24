@@ -48,146 +48,43 @@ class TestVterm(testtools.TestCase):
                           vterm._close_vterm_non_local, self.adpt, '12345')
         mock_run_job.reset_mock()
 
-    @mock.patch('pypowervm.tasks.vterm._clear_tty')
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
     @mock.patch('pypowervm.tasks.vterm._run_proc')
-    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
-    def test_open_vnc_vterm(self, mock_check_tty, mock_run_proc,
-                            mock_vnc_running, mock_get_lpar_id,
-                            mock_clear_tty):
-        mock_check_tty.return_value = None
-        mock_vnc_running.return_value = []
-        mock_get_lpar_id.return_value = '1'
+    def test_open_vnc_vterm(self, mock_run_proc, mock_get_lpar_id):
+        mock_get_lpar_id.return_value = '4'
+        std_out = '5903'
+        std_err = ('VNC is started on port 5903 for localhost access '
+                   'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (std_out, std_err)
 
-        # 1 - rmvterm
-        # 2 - openvt
-        # 3 - linuxvnc
-        mock_run_proc.side_effect = [(None, None), (None, '/asdf/tty4'),
-                                     (None, None)]
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
 
-        vterm.open_vnc_vterm(self.adpt, 'lpar_uuid')
-
-        mock_check_tty.assert_called_with('1')
-        mock_vnc_running.assert_called_with('4', 5904, listen_ip='127.0.0.1')
-        mock_clear_tty.assert_called_with('4')
-
-    @mock.patch('pypowervm.tasks.vterm._clear_tty')
-    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
-    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
-    def test_open_vnc_vterm_existing_tty(self, mock_check_tty, mock_run_proc,
-                                         mock_vnc_running, mock_get_lpar_id,
-                                         mock_clear_tty):
-        mock_check_tty.return_value = '5'
-        mock_vnc_running.return_value = ['running!']
-        mock_get_lpar_id.return_value = '1'
-
-        vterm.open_vnc_vterm(self.adpt, 'lpar_uuid')
-
-        mock_check_tty.assert_called_with('1')
-        mock_vnc_running.assert_called_with('5', 5905, listen_ip='127.0.0.1')
-        self.assertEqual(0, mock_run_proc.call_count)
-        mock_clear_tty.assert_called_with('5')
-
-    @mock.patch('pypowervm.tasks.vterm._clear_tty')
-    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
-    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
-    def test_close_vterm_local(self, mock_check_tty, mock_run_proc,
-                               mock_vnc_running, mock_get_lpar_id,
-                               mock_clear_tty):
-        self.close_vt_local_test(vterm._close_vterm_local, mock_check_tty,
-                                 mock_run_proc, mock_vnc_running,
-                                 mock_get_lpar_id, mock_clear_tty)
-
-    @mock.patch('pypowervm.tasks.vterm._clear_tty')
-    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
-    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
-    def test_close_vterm(self, mock_check_tty, mock_run_proc, mock_vnc_running,
-                         mock_get_lpar_id, mock_clear_tty):
-        # Will run down the local path
-        self.close_vt_local_test(vterm.close_vterm, mock_check_tty,
-                                 mock_run_proc, mock_vnc_running,
-                                 mock_get_lpar_id, mock_clear_tty)
-
-    def close_vt_local_test(self, func, mock_check_tty, mock_run_proc,
-                            mock_vnc_running, mock_get_lpar_id,
-                            mock_clear_tty):
-        # Mock
-        mock_get_lpar_id.return_value = '5'
-        mock_check_tty.return_value = '2'
-
-        proc = mock.MagicMock()
-        mock_vnc_running.return_value = [proc]
-
-        # Execute
-        func(self.adpt, "lpar_uuid")
-
-        # Validate
-        mock_check_tty.assert_called_with('5')
-        mock_vnc_running.assert_called_with('2', 5902)
-        # TODO(thorst) re-enable once sudo requirement is removed.
-        # self.assertEqual(1, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
-        mock_clear_tty.assert_called_with('2')
+        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
+                                               '--local'])
+        self.assertEqual(5903, resp)
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._has_vnc_running')
     @mock.patch('pypowervm.tasks.vterm._run_proc')
-    @mock.patch('pypowervm.tasks.vterm._check_for_tty')
-    def test_close_vt_local_no_tty(self, mock_check_tty, mock_run_proc,
-                                   mock_vnc_running, mock_get_lpar_id):
-        # Mock
-        mock_get_lpar_id.return_value = '5'
-        mock_check_tty.return_value = None
+    def test_open_vnc_vterm_second_pass(self, mock_run_proc, mock_get_lpar_id):
+        """Validates the output from the mkvterm if a vterm is active."""
+        mock_get_lpar_id.return_value = '4'
+        std_out = '5903'
+        std_err = ('\nVNC server is already started on port 5903. Use '
+                   '\'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (std_out, std_err)
 
-        proc = mock.MagicMock()
-        mock_vnc_running.return_value = [proc]
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
 
-        # Execute
-        vterm.close_vterm(self.adpt, "lpar_uuid")
+        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
+                                               '--local'])
+        self.assertEqual(5903, resp)
 
-        # Validate
-        mock_check_tty.assert_called_with('5')
-        self.assertEqual(0, mock_vnc_running.call_count)
-        # TODO(thorst) re-enable once sudo requirement is removed.
-        # self.assertEqual(0, proc.kill.call_count)
-        mock_run_proc.assert_called_with(['sudo', 'rmvtermutil', '--id', '5'])
-
-    @mock.patch('psutil.process_iter')
-    def test_check_for_tty(self, mock_proc_iter):
-        # Mock
-        bad_proc = self.proc(['notmvt', '--id', '5'], terminal='/proc/tty5')
-        bad_proc2 = self.proc(['/sbin/mkvtermutil', '--id', '5'])
-        good_proc = self.proc(['/sbin/mkvtermutil', '--id', '5'],
-                              terminal='/proc/tty6')
-        mock_proc_iter.return_value = [bad_proc, bad_proc2, good_proc]
-
-        # Execute
-        self.assertEqual('6', vterm._check_for_tty('5'))
-        self.assertEqual(None, vterm._check_for_tty('6'))
-
-    @mock.patch('psutil.process_iter')
-    def test_has_vnc_running(self, mock_proc_iter):
-        # Mock
-        proc1 = self.proc(['linuxvnc', '3', '-rfbport', '10', '-listen',
-                           '172.0.0.1'])
-        proc2 = self.proc(['linuxvnc', '3', '-rfbport', '11'])
-        proc3 = self.proc(['linuxvnc', '3', '-rfbport', '11', '-listen',
-                           '127.0.0.1'])
-        mock_proc_iter.return_value = [proc1, proc2, proc3]
-
-        # Execute
-        self.assertEqual(2, len(vterm._has_vnc_running('3', '11')))
-        self.assertEqual(1, len(vterm._has_vnc_running('3', '11',
-                                                       listen_ip='127.0.0.1')))
-        self.assertEqual(0, len(vterm._has_vnc_running('3', '11',
-                                                       listen_ip='172.0.0.1')))
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_close_vterm_local(self, mock_run_proc, mock_get_lpar_id):
+        mock_get_lpar_id.return_value = '2'
+        vterm._close_vterm_local(self.adpt, '5')
+        mock_run_proc.assert_called_once_with(['rmvterm', '--id', '2'])
 
     def proc(self, cmdline, terminal=None):
         process = mock.MagicMock()
