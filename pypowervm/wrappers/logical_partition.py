@@ -36,6 +36,8 @@ _HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
 
 
 _RESTRICTED_IO = 'IsRestrictedIOPartition'
+_RR = 'RemoteRestartCapable'
+_RR_STATE = 'RemoteRestartState'
 _SRR = 'SimplifiedRemoteRestartCapable'
 _DESIGNATED_IPL_SRC = 'DesignatedIPLSource'
 
@@ -46,7 +48,7 @@ _MIGRATION_STATE = 'MigrationState'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_ASSOCIATED_GROUPS, _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
-    _LPAR_DED_NICS, _SRR, _RESTRICTED_IO, _DESIGNATED_IPL_SRC)
+    _LPAR_DED_NICS, _RR, _SRR, _RESTRICTED_IO, _DESIGNATED_IPL_SRC)
 
 
 class IPLSrc(object):
@@ -57,6 +59,32 @@ class IPLSrc(object):
     D = 'd'
     UNKNOWN = 'Unknown'
     ALL_VALUES = (A, B, C, D, UNKNOWN)
+
+
+class RRState(object):
+    """Remote Restart states - mirror of PartitionRemoteRestart.Enum."""
+    INVALID = "Invalid"
+    RR_ABLE = "Remote_Restartable"
+    SRC_RRING = "Source_Remote_Restarting"
+    DEST_RRING = "Destination_Remote_Restarting"
+    REM_RESTARTED = "Remote_Restarted"
+    PROF_RESTORED = "Profile_Restored"
+    RES_STG_DEV_UPD_FAIL = "Reserved_Storage_Device_Update_Failed"
+    FORCED_SRC_RESTART = "Forced_Source_Side_Restart"
+    SRC_CLEANUP_FAIL = "Source_Side_Cleanup_Failed"
+    RES_STG_DEV_UPD_FAIL_W_OVRD = ("Reserved_Storage_Device_Update_Failed_With"
+                                   "_Override")
+    RR_ABLE_SUSPENDED = "Remote_Restartable_Suspended"
+    LOC_UPD_FAIL = "Local_Update_Failed"
+    PART_UPD = "Partial_Update"
+    STALE_DATA = "Stale_Data"
+    LOC_DATA_VALID = "Local_Data_Valid"
+    OUT_OF_SPACE = "Out_Of_Space"
+    LOC_DATA_INVALID = "Local_Data_Invalid"
+    DEST_RR_ED = "Destination_Remote_Restarted"
+    SRC_RRING_SUSPENDED = "Source_Remote_Restarting_Suspended"
+    LOC_STG_UPD_FAIL = "Local_Storage_Update_Failed"
+    PG_DEV_UPD_OVRD = "Page_Device_Update_Override"
 
 
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
@@ -184,6 +212,25 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     def operating_system(self):
         """String representing the OS and version, or 'Unknown'."""
         return self._get_val_str(_OPERATING_SYSTEM_VER, 'Unknown')
+
+    @property
+    def rr_enabled(self):
+        """Remote Restart capable?"""
+        return self._get_val_bool(_RR, False)
+
+    @rr_enabled.setter
+    def rr_enabled(self, value):
+        """Turn RR on or off.
+
+        LPAR must be powered off.
+
+        Currently only supported on HMC.
+        """
+        self.set_parm_value(_RR, u.sanitize_bool_for_api(value))
+
+    @property
+    def rr_state(self):
+        return self._get_val_str(_RR_STATE)
 
     @property
     def srr_enabled(self):

@@ -205,6 +205,12 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter(
             "operating_system", EXPECTED_OPERATING_SYSTEM_VER, "Unknown")
 
+    def test_rr_off(self):
+        """Remote Restart fields when not RR capable."""
+        self.call_simple_getter("rr_enabled", False, False)
+        self._shared_wrapper.rr_enabled = True
+        self.call_simple_getter("rr_enabled", True, False)
+
     def test_srr(self):
         self.call_simple_getter("srr_enabled", True, False)
         self._shared_wrapper.srr_enabled = False
@@ -496,6 +502,13 @@ class TestIBMiSpecific(twrap.TestWrapper):
         # Setter
         self.dwrap.io_config.tagged_io = new_tio
         self.assertEqual('3', self.dwrap.io_config.tagged_io.console)
+
+    def test_rr_real_values(self):
+        """Test Remote Restart fields when RR capable."""
+        # Testing this under IBMi because the IBMi payload file happens to have
+        # real data to use.
+        self.assertTrue(self.dwrap.rr_enabled)
+        self.assertEqual(lpar.RRState.INVALID, self.dwrap.rr_state)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):
