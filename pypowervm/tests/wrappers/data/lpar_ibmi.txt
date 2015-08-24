@@ -155,7 +155,7 @@ BODY{
     <IsServicePartition kb="CUD" kxe="false">false</IsServicePartition>
     <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
     <PowerOnWithHypervisor ksv="V1_2_0" kb="CUD" kxe="false">false</PowerOnWithHypervisor>
-    <RemoteRestartCapable kb="CUA" kxe="false">false</RemoteRestartCapable>
+    <RemoteRestartCapable kb="CUA" kxe="false">true</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable ksv="V1_2_0" kb="CUD" kxe="false">false</SimplifiedRemoteRestartCapable>
     <HasDedicatedProcessorsForMigration kb="ROR" kxe="false">false</HasDedicatedProcessorsForMigration>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
