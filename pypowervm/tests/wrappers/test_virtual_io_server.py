@@ -31,6 +31,14 @@ class TestVIOSWrapper(twrap.TestWrapper):
     file = 'fake_vios_ssp_npiv.txt'
     wrapper_class_to_test = vios.VIOS
 
+    def test_xag_hash(self):
+        self.assertEqual(hash('ViosNetwork'), hash(vios.VIOS.xags.NETWORK))
+        self.assertEqual(hash('ViosStorage'), hash(vios.VIOS.xags.STORAGE))
+        self.assertEqual(hash('ViosSCSIMapping'),
+                         hash(vios.VIOS.xags.SCSI_MAPPING))
+        self.assertEqual(hash('ViosFCMapping'),
+                         hash(vios.VIOS.xags.FC_MAPPING))
+
     def test_get_ip_addresses(self):
         expected_ips = ('9.1.2.4', '10.10.10.5')
         self.assertEqual(expected_ips, self.dwrap.ip_addresses)

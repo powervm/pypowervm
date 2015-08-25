@@ -51,6 +51,9 @@ class XAG(object):
         def __lt__(self, other):
             return self.name < other.name
 
+        def __hash__(self):
+            return hash(self.name)
+
         @property
         def attrs(self):
             schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
