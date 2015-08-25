@@ -471,7 +471,7 @@ def _rm_vdisks(vg_wrap, vdisks):
 
         if match is not None:
             LOG.info(_('Deleting virtual disk %(vdisk)s from volume group '
-                       '%(vg)s'), {'vopt': match.name, 'vg': vg_wrap.name})
+                       '%(vg)s'), {'vdisk': match.name, 'vg': vg_wrap.name})
             existing_vds.remove(match)
             changes.append(match)
 
