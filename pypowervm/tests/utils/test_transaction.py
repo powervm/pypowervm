@@ -19,6 +19,7 @@
 import copy
 import mock
 import oslo_concurrency.lockutils as lock
+import oslo_context.context as ctx
 from taskflow import task as tf_task
 
 import pypowervm.const as c
@@ -707,3 +708,18 @@ class TestFeedTask(twrap.TestWrapper):
         # Make sure the post-execs actually ran (to guarantee their internal
         # assertions passed).
         self.assertEqual(['implicit', 'explicit'], called)
+
+    def test_context(self):
+        context = ctx.RequestContext(request_id='123')
+
+        def verify_no_ctx(wrapper):
+            self.assertIsNone(ctx.get_current())
+        tx.FeedTask('test_no_context', lpar.LPAR.getter(
+            self.adpt)).add_functor_subtask(verify_no_ctx).execute()
+
+        def verify_ctx(wrapper):
+            _context = ctx.get_current()
+            self.assertIsNotNone(_context)
+            self.assertEqual('123', _context.request_id)
+        tx.FeedTask('test_set_context', lpar.LPAR.getter(self.adpt),
+                    context=context).add_functor_subtask(verify_ctx).execute()

@@ -265,7 +265,7 @@ class WrapperTask(tf_task.BaseTask):
         finalized_lpar = tx.execute()
     """
     def __init__(self, name, wrapper_or_getter, subtasks=None,
-                 allow_empty=False):
+                 allow_empty=False, context=None):
         """Initialize this WrapperTask.
 
         :param name: A descriptive string name for the WrapperTask.
@@ -281,6 +281,14 @@ class WrapperTask(tf_task.BaseTask):
                             message and return None (NOT the wrapper - note,
                             this is different from "subtasks ran, but didn't
                             change anything," which returns the wrapper).
+        :param context: (Optional) oslo_context.context.RequestContext to be
+                        set in this WrapperTask's execute method before
+                        Subtasks are run.  When run under a FeedTask, or via
+                        any other mechanism that uses a parallel taskflow
+                        engine, each WrapperTask may run in a separate thread.
+                        This parameter allows the parent thread's security
+                        context to be propagated to the child's thread-local
+                        storage.
         :raise WrapperTaskNoSubtasks: If allow_empty is False and this
                                       WrapperTask is executed without any
                                       Subtasks having been added.
@@ -299,6 +307,7 @@ class WrapperTask(tf_task.BaseTask):
                             'subtask_rets_%s' % wrapper_or_getter.uuid))
         self._tasks = [] if subtasks is None else list(subtasks)
         self.allow_empty = allow_empty
+        self.context = context
         # Dict of return values provided by Subtasks using the 'provides' arg.
         self.provided = {}
         # Set of 'provided' names to prevent duplicates.  (Some day we may want
@@ -383,6 +392,7 @@ class WrapperTask(tf_task.BaseTask):
 
         The flow is as follows:
 
+        0 Set thread-local security context, if available.
         1 Lock on wrapper UUID
         2 GET wrapper if necessary
         3 For each registered Subtask:
@@ -399,6 +409,9 @@ class WrapperTask(tf_task.BaseTask):
                          self.name)
                 return None
             raise ex.WrapperTaskNoSubtasks(name=self.name)
+
+        if self.context is not None:
+            self.context.update_store()
 
         @entry_transaction
         def _execute(wrapper):
@@ -473,7 +486,7 @@ class FeedTask(tf_task.BaseTask):
     workflow requires calling one of these early, it is not necessary to
     avoid them subsequently.
     """
-    def __init__(self, name, feed_or_getter, max_workers=10):
+    def __init__(self, name, feed_or_getter, max_workers=10, context=None):
         """Create a FeedTask with a FeedGetter (preferred) or existing feed.
 
         :param name: A descriptive string name.  This will be used along with
@@ -486,6 +499,8 @@ class FeedTask(tf_task.BaseTask):
                             worker threads to run in parallel within the .flow
                             or by the .execute method. See
                             concurrent.futures.ThreadPoolExecutor(max_workers).
+        :param context: (Optional) oslo_context.context.RequestContext to be
+                        set in each WrapperTask's thread-local storage.
         """
         super(FeedTask, self).__init__(name)
         if isinstance(feed_or_getter, ewrap.FeedGetter):
@@ -507,6 +522,8 @@ class FeedTask(tf_task.BaseTask):
                                "a FeedGetter."))
         # Max WrapperTasks to run in parallel
         self.max_workers = max_workers
+        # Security context to be propagated to each WrapperTask.
+        self.context = context
         # Map of {uuid: WrapperTask}.  We keep this empty until we need the
         # individual WraperTasks.  This is triggered by .wrapper_tasks and
         # .get_wrapper(uuid) (and obviously executing).
@@ -538,7 +555,7 @@ class FeedTask(tf_task.BaseTask):
                 name = '%s_%s' % (self.name, entry.uuid)
                 self._tx_by_uuid[entry.uuid] = WrapperTask(
                     name, entry, subtasks=self._common_tx.subtasks,
-                    allow_empty=True)
+                    allow_empty=True, context=self.context)
         return self._tx_by_uuid
 
     def get_wrapper(self, uuid):
