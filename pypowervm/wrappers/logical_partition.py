@@ -206,6 +206,10 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     def restrictedio(self):
         return self._get_val_bool(_RESTRICTED_IO, False)
 
+    @restrictedio.setter
+    def restrictedio(self, value):
+        self.set_parm_value(_RESTRICTED_IO, u.sanitize_bool_for_api(value))
+
     @property
     def desig_ipl_src(self):
         """Designated IPL Source - see IPLSrc enumeration."""
