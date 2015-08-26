@@ -14,12 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import unittest
 
 import pypowervm.cache as pcache
-
-logging.basicConfig()
 
 
 class TestCache(unittest.TestCase):

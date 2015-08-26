@@ -328,10 +328,11 @@ class TestPortMappings(twrap.TestWrapper):
         # Build the mappings - the provided WWPN is bad
         vfc_map = ('10000090FA5371F9', '0 1')
 
-        # Now call the add action
-        self.assertRaises(e.UnableToDerivePhysicalPortForNPIV,
-                          vfc_mapper.add_map,
-                          self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
+        # Now call the add action.  This should log a warning.
+        with self.assertLogs(vfc_mapper.__name__, level='WARNING'):
+            self.assertRaises(e.UnableToDerivePhysicalPortForNPIV,
+                              vfc_mapper.add_map,
+                              self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
 
     def test_add_port_mapping_force_retry(self):
         """Validates that a retry forces an update of the vios wrappers."""

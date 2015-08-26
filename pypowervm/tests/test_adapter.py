@@ -17,7 +17,6 @@
 from lxml import etree
 
 import errno
-import logging
 import six
 if six.PY2:
     import __builtin__ as builtins
@@ -44,8 +43,6 @@ import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.wrappers.util import pvmhttp
 from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
-
-logging.basicConfig()
 
 logon_text = testlib.file2b("logon.xml")
 

@@ -14,24 +14,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-import unittest
 
 import mock
 import requests.models as req_mod
 import requests.structures as req_struct
+import testtools
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 import pypowervm.tests.lib as testlib
-
-logging.basicConfig()
+import pypowervm.tests.test_fixtures as fx
 
 _logon_response_password = testlib.file2b("logon.xml")
 _logon_response_file = testlib.file2b("logon_file.xml")
 
 
-class TestAdapter(unittest.TestCase):
+class TestAdapter(testtools.TestCase):
     """Test cases to test the Adapter classes and methods."""
 
     def test_Session(self):
@@ -42,10 +40,10 @@ class TestAdapter(unittest.TestCase):
         self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
                           '0.0.0.0', 'uid', 'pwd')
 
-    @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('pypowervm.adapter.Session._logon')
-    def test_session_init(self, mock_logon, mock_log):
+    def test_session_init(self, mock_logon):
         """Ensure proper parameter handling in the Session initializer."""
+        logfx = self.useFixture(fx.LoggingFx())
         # No params - local, file-based, http.
         sess = adp.Session()
         self.assertTrue(sess.use_file_auth)
@@ -59,7 +57,7 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
-        self.assertEqual(0, mock_log.warn.call_count)
+        self.assertEqual(0, logfx.patchers['warn'].mock.call_count)
 
         # Ensure proper protocol, port, and certpath defaulting when remote
         sess = adp.Session(host='host', username='user', password='pass')
@@ -74,12 +72,14 @@ class TestAdapter(unittest.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay
-        self.assertEqual(0, mock_log.warn.call_count)
+        self.assertEqual(0, logfx.patchers['warn'].mock.call_count)
 
+    @mock.patch('pypowervm.adapter.Session._logon')
+    def test_session_init_remote_http(self, mock_logon):
         # Proper port defaulting and warning emitted when remote + http
-        sess = adp.Session(host='host', protocol='http')
+        with self.assertLogs(adp.__name__, 'WARNING'):
+            sess = adp.Session(host='host', protocol='http')
         self.assertEqual(12080, sess.port)
-        self.assertEqual(1, mock_log.warn.call_count)
 
     @mock.patch('pypowervm.util.validate_certificate')
     @mock.patch('requests.Session')

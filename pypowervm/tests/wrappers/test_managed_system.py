@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import unittest
 
 from pypowervm.tests.wrappers.util import pvmhttp
@@ -24,8 +23,6 @@ import pypowervm.wrappers.mtms as mtmwrap
 _MS_HTTPRESP_FILE = "managedsystem.txt"
 _MC_HTTPRESP_FILE = "managementconsole.txt"
 _MS_NAME = 'HV4'
-
-logging.basicConfig()
 
 
 class TestMSEntryWrapper(unittest.TestCase):

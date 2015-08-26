@@ -15,14 +15,11 @@
 #    under the License.
 
 import functools
-import logging
 import unittest
 
 import mock
 
 import pypowervm.adapter as adp
-
-logging.basicConfig()
 
 
 def cat_string_helper(func, string):
