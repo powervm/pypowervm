@@ -15,8 +15,10 @@
 #    under the License.
 
 import abc
+from concurrent.futures import thread as th
 import logging
 import oslo_concurrency.lockutils as lock
+import oslo_context.context as ctx
 from oslo_utils import reflection
 import six
 from taskflow import engines as tf_eng
@@ -422,6 +424,17 @@ class WrapperTask(tf_task.BaseTask):
         return self._wrapper, self.provided
 
 
+class ContextThreadPoolExecutor(th.ThreadPoolExecutor):
+    def submit(self, fn, *args, **kwargs):
+        context = ctx.get_current()
+
+        def wrapped():
+            if context is not None:
+                context.update_store()
+            return fn(*args, **kwargs)
+        return super(ContextThreadPoolExecutor, self).submit(wrapped)
+
+
 class FeedTask(tf_task.BaseTask):
     """Invokes WrapperTasks in parallel over each EntryWrapper in a feed.
 
@@ -673,7 +686,7 @@ class FeedTask(tf_task.BaseTask):
             LOG.info(_("FeedTask %s has no Subtasks; no-op execution."),
                      self.name)
             return
-        pflow = None
+
         wrapper_task_rets = {}
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.  Only do this if
@@ -684,9 +697,9 @@ class FeedTask(tf_task.BaseTask):
             pflow.add(*self.wrapper_tasks.values())
             # Execute the parallel flow now so the results can be provided to
             # any post-execs.
-            wrapper_task_rets = self._process_subtask_rets(
-                tf_eng.run(pflow, engine='parallel',
-                           max_workers=self.max_workers))
+            wrapper_task_rets = self._process_subtask_rets(tf_eng.run(
+                pflow, engine='parallel',
+                executor=ContextThreadPoolExecutor(self.max_workers)))
         if self._post_exec:
             flow = tf_lf.Flow('%s_post_execs' % self.name)
             flow.add(*self._post_exec)
