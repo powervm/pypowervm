@@ -17,6 +17,7 @@
 import abc
 import logging
 import oslo_concurrency.lockutils as lock
+import oslo_context.context as ctx
 from oslo_utils import reflection
 import six
 from taskflow import engines as tf_eng
@@ -299,6 +300,8 @@ class WrapperTask(tf_task.BaseTask):
                             'subtask_rets_%s' % wrapper_or_getter.uuid))
         self._tasks = [] if subtasks is None else list(subtasks)
         self.allow_empty = allow_empty
+        # Save the current security context
+        self.context = ctx.get_current()
         # Dict of return values provided by Subtasks using the 'provides' arg.
         self.provided = {}
         # Set of 'provided' names to prevent duplicates.  (Some day we may want
@@ -383,6 +386,7 @@ class WrapperTask(tf_task.BaseTask):
 
         The flow is as follows:
 
+        0 Set thread-local security context, if available.
         1 Lock on wrapper UUID
         2 GET wrapper if necessary
         3 For each registered Subtask:
@@ -399,6 +403,10 @@ class WrapperTask(tf_task.BaseTask):
                          self.name)
                 return None
             raise ex.WrapperTaskNoSubtasks(name=self.name)
+
+        # Carry forward the security context from the parent thread.
+        if self.context is not None:
+            self.context.update_store()
 
         @entry_transaction
         def _execute(wrapper):
@@ -507,6 +515,8 @@ class FeedTask(tf_task.BaseTask):
                                "a FeedGetter."))
         # Max WrapperTasks to run in parallel
         self.max_workers = max_workers
+        # Save the current security context
+        self.context = ctx.get_current()
         # Map of {uuid: WrapperTask}.  We keep this empty until we need the
         # individual WraperTasks.  This is triggered by .wrapper_tasks and
         # .get_wrapper(uuid) (and obviously executing).
@@ -673,7 +683,11 @@ class FeedTask(tf_task.BaseTask):
             LOG.info(_("FeedTask %s has no Subtasks; no-op execution."),
                      self.name)
             return
-        pflow = None
+
+        # Carry forward the security context from the parent thread.
+        if self.context is not None:
+            self.context.update_store()
+
         wrapper_task_rets = {}
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.  Only do this if
