@@ -564,6 +564,11 @@ class Adapter(object):
             return [helpers]
 
     @property
+    def helpers(self):
+        """Returns a copy of the list of helpers for the adapter."""
+        return list(self._helpers) if self._helpers else []
+
+    @property
     def traits(self):
         return self.session.traits
 
