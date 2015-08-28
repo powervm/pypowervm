@@ -30,17 +30,17 @@ class TestWrapper(testtools.TestCase):
     A single subclass tests a single wrapper class on a single file.
 
     Usage:
-    o Subclass this class.
-    o Provide the name of the data file to load, e.g.
+    - Subclass this class.
+    - Provide the name of the data file to load, e.g.
         file = 'ssp.txt'
-    o Indicate the wrapper class to be tested, e.g.
+    - Indicate the wrapper class to be tested, e.g.
         wrapper_class_to_test = clust.SSP
-    o If your tests will make use of traits, you must provide
+    - If your tests will make use of traits, you must provide
       mock_adapter_fx_args, resulting in AdapterFx being constructed with those
       args and used via useFixture.  Your tests may access the adapter via
       self.adpt and the fixture itself via self.adptfx.
-    o No __init__ or setUp is necessary.
-    o In your test cases, make use of the following variables:
+    - No __init__ or setUp is necessary.
+    - In your test cases, make use of the following variables:
         - self.resp: The raw Response object from
           load_pvm_resp().get_response().  May represent an entry or a feed.
         - self.dwrap: A single instance of the wrapper_class_to_test extracted

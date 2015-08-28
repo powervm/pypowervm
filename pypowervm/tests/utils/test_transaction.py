@@ -460,10 +460,10 @@ class TestFeedTask(twrap.TestWrapper):
         """Deferred replication of individual WrapperTasks with adds.
 
         Covers:
-        o wrapper_tasks
-        o get_wrapper
-        o add_subtask
-        o add_functor_subtask
+        - wrapper_tasks
+        - get_wrapper
+        - add_subtask
+        - add_functor_subtask
         """
         def wt_check(wt1, wt2, len1, len2=None, upto=None):
             """Assert that two WrapperTasks have the same Subtasks.

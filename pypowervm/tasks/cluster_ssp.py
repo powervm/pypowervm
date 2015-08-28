@@ -39,8 +39,8 @@ def crt_cluster_ssp(clust_name, ssp_name, repos_pv, first_node, data_pv_list):
                        cluster. (Cluster creation must be done with a single
                        node; other nodes may be added later.)  The Node wrapper
                        must contain either
-                       o mtms, lpar_id, AND hostname; or
-                       o vios_uri
+                       - mtms, lpar_id, AND hostname; or
+                       - vios_uri
                        The indicated node must be able to see each disk.
     :param data_pv_list: Iterable of storage.PV instances to use as the data
                          volume(s) for the SharedStoragePool.
