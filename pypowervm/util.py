@@ -402,8 +402,8 @@ def sanitize_partition_name_for_api(name, trunc_ok=True):
     """Sanitize a string to be suitable for use as a partition name.
 
     PowerVM's partition name restrictions are:
-    o Between 1 and 31 characters, inclusive;
-    o Containing ASCII characters between 0x20 (space) and 0x7E (~), inclusive,
+    - Between 1 and 31 characters, inclusive;
+    - Containing ASCII characters between 0x20 (space) and 0x7E (~), inclusive,
       except ()\<>*$&?|[]'"`
 
     :param name: The name to scrub.  Invalid characters will be replaced with
