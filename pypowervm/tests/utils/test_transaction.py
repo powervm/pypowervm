@@ -321,7 +321,8 @@ class TestWrapperTask(twrap.TestWrapper):
         # o Make sure subtask args are getting to the subtask.
         txfx = fx.WrapperTaskFx(self.dwrap)
 
-        def _update_retries_twice():
+        def _update_retries_twice(timeout=-1):
+            self.assertEqual(123, timeout)
             return self.retry_twice(self.dwrap, self.tracker, txfx)
         txfx.patchers['update'].side_effect = _update_retries_twice
 
@@ -336,7 +337,8 @@ class TestWrapperTask(twrap.TestWrapper):
             self.assertEqual('kwarg4', kwarg4)
             return wrapper, True
         # Instantiate-add-execute chain
-        tx.WrapperTask('tx2', self.getter).add_functor_subtask(
+        tx.WrapperTask('tx2', self.getter,
+                       update_timeout=123).add_functor_subtask(
             functor, ['arg', 1], 'arg2', kwarg4='kwarg4').execute()
         # Check the overall order.  Update should have been called thrice (two
         # retries)
@@ -677,8 +679,9 @@ class TestFeedTask(twrap.TestWrapper):
 
     def test_wrapper_task_rets(self):
         # Limit the feed to two to keep the return size sane
-        self.useFixture(fx.FeedTaskFx(self.entries[:2]))
-        ftsk = tx.FeedTask('subtask_rets', lpar.LPAR.getter(None))
+        ftfx = self.useFixture(fx.FeedTaskFx(self.entries[:2]))
+        ftsk = tx.FeedTask('subtask_rets', lpar.LPAR.getter(None),
+                           update_timeout=123)
         exp_wtr = {
             wrp.uuid: {
                 'wrapper': wrp,
@@ -711,6 +714,7 @@ class TestFeedTask(twrap.TestWrapper):
         # Make sure the post-execs actually ran (to guarantee their internal
         # assertions passed).
         self.assertEqual(['implicit', 'explicit'], called)
+        ftfx.patchers['update'].mock.assert_called_with(mock.ANY, timeout=123)
 
     def test_context(self):
         """Security context, if set, propagates to WrapperTask threads."""
