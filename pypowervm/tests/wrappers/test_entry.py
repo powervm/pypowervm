@@ -1012,7 +1012,7 @@ class TestSetUUIDMixin(testtools.TestCase):
         self.assertRaises(AttributeError, sewom.set_uuid, new_uuid)
 
 
-class TestEntryWrapperGetter(twrap.TestWrapper):
+class TestGetters(twrap.TestWrapper):
     file = LPAR_FILE
     wrapper_class_to_test = lpar.LPAR
 
@@ -1107,6 +1107,62 @@ class TestEntryWrapperGetter(twrap.TestWrapper):
         self.adpt.read.assert_called_with(
             'VirtualDisk', 'p_uuid', child_type='LogicalPartition',
             child_id=None, xag=['one', 'two'])
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
+    def test_uuid_feed_getter(self, mock_refresh):
+        """Verify UUIDFeedGetter."""
+        # Mock return separate entries per read.  Need multiple copies for
+        # multiple calls.
+        read_iter = iter(wrp.entry for wrp in (
+            self.entries[:3] + self.entries[:3] + self.entries[:3]))
+        self.adpt.read.side_effect = lambda *a, **k: next(read_iter)
+        # Separate iterator for refreshes
+        refresh_iter = iter(self.entries[:3])
+        mock_refresh.side_effect = lambda: next(refresh_iter)
+        # ROOT
+        uuids = ['u1', 'u2', 'u3']
+        getter = ewrap.UUIDFeedGetter(self.adpt, lpar.LPAR, uuids)
+        # In order to be useful for a FeedTask, this has to evaluate as an
+        # instance of FeedGetter
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        # This does three separate reads
+        self.adpt.read.assert_has_calls([mock.call(
+            lpar.LPAR.schema_type, uuid, child_type=None, child_id=None,
+            xag=None) for uuid in uuids])
+        self.assertEqual(0, mock_refresh.call_count)
+        # Second get doesn't re-read
+        lfeed = getter.get()
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(3, self.adpt.read.call_count)
+        self.assertEqual(0, mock_refresh.call_count)
+        # get with refresh refreshes all thre wrappers (but doesn't call read)
+        lfeed = getter.get(refresh=True)
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(3, self.adpt.read.call_count)
+        self.assertEqual(3, mock_refresh.call_count)
+        # get with refetch calls read, not refresh
+        lfeed = getter.get(refetch=True)
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.assertEqual(6, self.adpt.read.call_count)
+        self.assertEqual(3, mock_refresh.call_count)
+
+        # CHILD
+        getter = ewrap.UUIDFeedGetter(
+            self.adpt, lpar.LPAR, uuids, parent_class=stor.VDisk,
+            parent_uuid='p_uuid', xag=['one', 'two'])
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_has_calls([mock.call(
+            stor.VDisk.schema_type, 'p_uuid', child_type=lpar.LPAR.schema_type,
+            child_id=uuid, xag=['one', 'two']) for uuid in uuids])
 
 if __name__ == '__main__':
     unittest.main()
