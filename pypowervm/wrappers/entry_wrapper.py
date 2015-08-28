@@ -1236,3 +1236,51 @@ class FeedGetter(EntryWrapperGetter):
 
         # Never, never call super.get(refresh=True).
         return super(FeedGetter, self).get(refresh=False)
+
+
+class UUIDFeedGetter(FeedGetter):
+    """Quasi-FeedGetter that builds its "feed" based on a list of UUIDs.
+
+    This is expected to be useful for building FeedTasks when, for example:
+    o The FeedTask is operating on an SSP (the VIOSes aren't necessarily all in
+      the same feed);
+    o The operation is only concerned with one REST object, but a WrapperTask
+      is not sufficient.
+    """
+    def __init__(self, adapter, entry_class, uuid_list, parent_class=None,
+                 parent_uuid=None, xag=None):
+        """Create a UUIDFeedGetter.
+
+        :param adapter: See FeedGetter.
+        :param entry_class: See FeedGetter.
+        :param uuid_list: Iterable of string UUIDs of the objects with which to
+                          populate the quasi-feed.
+        :param parent_class: See FeedGetter.
+        :param parent_uuid: See FeedGetter.
+        :param xag: See FeedGetter.
+        """
+        super(UUIDFeedGetter, self).__init__(
+            adapter, entry_class, parent_class=parent_class,
+            parent_uuid=parent_uuid, xag=xag)
+        self.uuid_list = uuid_list
+        self._create_wrapper_getters()
+
+    def _create_wrapper_getters(self):
+        self.wrapper_getters = (EntryWrapperGetter(
+            self.adapter, self.entry_class, entry_uuid,
+            parent_class=self.parent_class, parent_uuid=self.parent_uuid,
+            xag=self.xag) for entry_uuid in self.uuid_list)
+
+    def get(self, refresh=False, refetch=False):
+        """Get the individual wrappers for each UUID and put them in a 'feed'.
+
+        :param refresh: See FeedGetter.get.
+        :param refetch: See FeedGetter.get.
+        """
+        if refetch:
+            # Rebuild the wrapper getters, guaranteeing that we clear anything
+            # already fetched
+            self._create_wrapper_getters()
+        # Populate the quasi-feed from the individual wrapper getters.
+        # TODO(efried): parallelize, for what it's worth.
+        return [wg.get(refresh=refresh) for wg in self.wrapper_getters]
