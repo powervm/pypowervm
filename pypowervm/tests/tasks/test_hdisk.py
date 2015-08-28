@@ -140,13 +140,13 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_discover_hdisk(self, mock_adapter, mock_job, mock_lua_result):
+    def test_lua_recovery(self, mock_adapter, mock_job, mock_lua_result):
         itls = [hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
 
         mock_lua_result.return_value = ('OK', 'hdisk1', 'udid')
 
-        status, devname, udid = hdisk.discover_hdisk(mock_adapter,
-                                                     'vios_uuid', itls)
+        status, devname, udid = hdisk.lua_recovery(mock_adapter,
+                                                   'vios_uuid', itls)
 
         # Validate value unpack
         self.assertEqual('OK', status)
@@ -161,15 +161,15 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_discover_hdisk_dupe_itls(self, mock_adapter, mock_job,
-                                      mock_lua_result, mock_lua_xml):
+    def test_lua_recovery_dupe_itls(self, mock_adapter, mock_job,
+                                    mock_lua_result, mock_lua_xml):
         itls = [hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238),
                 hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
 
         mock_lua_result.return_value = ('OK', 'hdisk1', 'udid')
 
-        status, devname, udid = hdisk.discover_hdisk(mock_adapter,
-                                                     'vios_uuid', itls)
+        status, devname, udid = hdisk.lua_recovery(mock_adapter,
+                                                   'vios_uuid', itls)
 
         # Validate value unpack
         self.assertEqual('OK', status)
@@ -180,6 +180,48 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
         mock_lua_xml.assert_called_with({itls[0]}, mock_adapter, vendor='IBM')
+
+    @mock.patch('pypowervm.tasks.hdisk.lua_recovery')
+    @mock.patch('pypowervm.utils.transaction.FeedTask')
+    @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
+    def test_discover_hdisk(self, mock_alsst, mock_ftsk, mock_luar):
+        def set_luar_side_effect(_stat, _dev):
+            """Set up the lua_recovery mock's side effect.
+
+            The second return will always be the same - used to verify that we
+            really called twice when appropriate.
+            The first return will be (_stat, _dev, "udid"), per the params.
+            """
+            mock_luar.reset_mock()
+            mock_luar.side_effect = [(_stat, _dev, 'udid'),
+                                     ('ok_s', 'ok_h', 'ok_u')]
+        # All of these should cause a scrub-and-retry
+        for st, dev in ((None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
+                        (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')):
+            set_luar_side_effect(st, dev)
+            self.assertEqual(
+                ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk(
+                    'adp', 'vuuid', ['itls'], 123))
+            mock_ftsk.assert_called_with('scrub_lpar_123_vios_vuuid', mock.ANY)
+            mock_alsst.assert_called_with(123, mock.ANY)
+            mock_luar.assert_has_calls([
+                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.IBM)
+                for i in range(2)])
+            mock_alsst.reset_mock()
+            mock_ftsk.reset_mock()
+
+        # These should *not* cause a scrub-and-retry
+        for st, dev in ((hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
+                        (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')):
+            set_luar_side_effect(st, dev)
+            self.assertEqual(
+                (st, dev, 'udid'), hdisk.discover_hdisk(
+                    'adp', 'vuuid', ['itls'], 123))
+            self.assertEqual(0, mock_ftsk.call_count)
+            self.assertEqual(0, mock_alsst.call_count)
+            self.assertEqual(1, mock_luar.call_count)
+            mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
+                                         vendor=hdisk.LUAType.IBM)
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
