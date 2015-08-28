@@ -19,6 +19,10 @@
 import copy
 import mock
 import oslo_concurrency.lockutils as lock
+import oslo_context.context as ctx
+from taskflow import engines as tf_eng
+from taskflow import exceptions as tf_ex
+from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
 
 import pypowervm.const as c
@@ -707,3 +711,33 @@ class TestFeedTask(twrap.TestWrapper):
         # Make sure the post-execs actually ran (to guarantee their internal
         # assertions passed).
         self.assertEqual(['implicit', 'explicit'], called)
+
+    def test_context(self):
+        """Security context, if set, propagates to WrapperTask threads."""
+        def verify_no_ctx(wrapper):
+            self.assertIsNone(ctx.get_current())
+        tx.FeedTask('test_no_context', lpar.LPAR.getter(
+            self.adpt)).add_functor_subtask(verify_no_ctx).execute()
+
+        def verify_ctx(wrapper):
+            _context = ctx.get_current()
+            self.assertIsNotNone(_context)
+            self.assertEqual('123', _context.request_id)
+
+        ctx.RequestContext(request_id='123')
+        tx.FeedTask('test_set_context', lpar.LPAR.getter(
+            self.adpt)).add_functor_subtask(verify_ctx).execute()
+
+        # Context propagates even if FeedTask is executed in a subthread, as
+        # long as our executor is used.
+        # Make two to ensure they're run in separate threads
+        ft1 = tx.FeedTask('subthread1', lpar.LPAR.getter(
+            self.adpt)).add_functor_subtask(verify_ctx)
+        ft2 = tx.FeedTask('subthread2', lpar.LPAR.getter(
+            self.adpt)).add_functor_subtask(verify_ctx)
+        self.assertRaises(tf_ex.WrappedFailure, tf_eng.run,
+                          tf_uf.Flow('subthread_flow').add(ft1, ft2),
+                          engine='parallel')
+        tf_eng.run(
+            tf_uf.Flow('subthread_flow').add(ft1, ft2), engine='parallel',
+            executor=tx.ContextThreadPoolExecutor(2))
