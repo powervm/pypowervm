@@ -25,6 +25,9 @@ from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
+import pypowervm.tasks.storage as tsk_stg
+import pypowervm.utils.transaction as tx
+import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -118,12 +121,65 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.IBM):
-    """This method should be invoked after a new disk should be discovered.
+def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.IBM):
+    """Attempt to discover a hard disk attached to a Virtual I/O Server.
+
+    See lua_recovery.  This method attempts that call and analyzes the
+    results.  On certain failure conditions (see below), this method will scrub
+    stale storage artifacts associated with the specified lpar_id and then
+    retry lua_recovery.  The retry is only attempted once; that result is
+    returned regardless.
+
+    The main objective of this method is to resolve errors resulting from
+    incomplete cleanup of a previous LPAR.  The stale LPAR's storage mappings
+    can cause hdisk discovery to fail because it thinks the hdisk is already in
+    use.
+
+    Retry conditions: The scrub-and-retry will be triggered if:
+    o dev_name is None; or
+    o status is anything other than DEVICE_AVAILABLE or FOUND_ITL_ERR.  (The
+      latter is acceptable because it means we discovered some, but not all, of
+      the ITLs.  This is okay as long as dev_name is set.)
+
+    :param adapter: The pypowervm adapter.
+    :param vios_uuid: The Virtual I/O Server UUID.
+    :param itls: A list of ITL objects.
+    :parat lpar_id: Integer short ID (not UUID) of the Logical Partition for
+                    which hdisk discovery is being performed.
+    :param vendor: The vendor for the LUN.  See the LUAType.* constants.
+    :return status: The status code from the discover process.
+                    See LUAStatus.* constants.
+    :return dev_name: The name of the discovered hdisk.
+    :return udid: The UDID of the device.
+    """
+    # First attempt
+    status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
+                                         vendor=vendor)
+    # Do we need to scrub and retry?
+    if devname is None or status not in (LUAStatus.DEVICE_AVAILABLE,
+                                         LUAStatus.FOUND_ITL_ERR):
+        # Detailed warning message by _log_lua_status
+        LOG.warn(_("hdisk discovery failed; will scrub stale storage for LPAR "
+                   "ID %d and retry."), lpar_id)
+        # Scrub from just the VIOS in question.
+        scrub_task = tx.FeedTask(
+            'scrub_lpar_%d_vios_%s' % (lpar_id, vios_uuid),
+            ewrap.UUIDFeedGetter(adapter, pvm_vios.VIOS, [vios_uuid], xag=(
+                pvm_vios.VIOS.xags.SCSI_MAPPING,
+                pvm_vios.VIOS.xags.FC_MAPPING)))
+        tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task)
+        scrub_task.execute()
+        status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
+                                             vendor=vendor)
+    return status, devname, udid
+
+
+def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.IBM):
+    """Logical Unit Address Recovery - discovery of a FC-attached hdisk.
 
     When a new disk is created externally (say on a block device), the Virtual
-    I/O Server may or may not discover it immediately.  This method forces
-    a discovery on a given Virtual I/O Server.
+    I/O Server may or may not discover it immediately.  This method forces a
+    discovery on a given Virtual I/O Server.
 
     :param adapter: The pypowervm adapter.
     :param vios_uuid: The Virtual I/O Server UUID.
