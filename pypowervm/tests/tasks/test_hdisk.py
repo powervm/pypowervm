@@ -181,6 +181,48 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual(1, mock_lua_result.call_count)
         mock_lua_xml.assert_called_with({itls[0]}, mock_adapter, vendor='IBM')
 
+    @mock.patch('pypowervm.tasks.hdisk.discover_hdisk')
+    @mock.patch('pypowervm.utils.transaction.FeedTask')
+    @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
+    def test_discover_hdisk_scrub_retry(self, mock_alsst, mock_ftsk, mock_dhd):
+        def set_dhd_side_effect(_stat, _dev):
+            """Set up the discover_hdisk mock's side effect.
+
+            The second return will always be the same - used to verify that we
+            really called twice when appropriate.
+            The first return will be (_stat, _dev, "udid"), per the params.
+            """
+            mock_dhd.reset_mock()
+            mock_dhd.side_effect = [(_stat, _dev, 'udid'),
+                                    ('ok_s', 'ok_h', 'ok_u')]
+        # All of these should cause a scrub-and-retry
+        for st, dev in ((None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
+                        (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')):
+            set_dhd_side_effect(st, dev)
+            self.assertEqual(
+                ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk_scrub_retry(
+                    'adp', 'vuuid', ['itls'], 123))
+            mock_ftsk.assert_called_with('scrub_lpar_123_vios_vuuid', mock.ANY)
+            mock_alsst.assert_called_with(123, mock.ANY)
+            mock_dhd.assert_has_calls([
+                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.IBM)
+                for i in range(2)])
+            mock_alsst.reset_mock()
+            mock_ftsk.reset_mock()
+
+        # These should *not* cause a scrub-and-retry
+        for st, dev in ((hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
+                        (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')):
+            set_dhd_side_effect(st, dev)
+            self.assertEqual(
+                (st, dev, 'udid'), hdisk.discover_hdisk_scrub_retry(
+                    'adp', 'vuuid', ['itls'], 123))
+            self.assertEqual(0, mock_ftsk.call_count)
+            self.assertEqual(0, mock_alsst.call_count)
+            self.assertEqual(1, mock_dhd.call_count)
+            mock_dhd.assert_called_with('adp', 'vuuid', ['itls'],
+                                        vendor=hdisk.LUAType.IBM)
+
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.adapter.Adapter')
