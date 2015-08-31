@@ -17,12 +17,17 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
+import logging
 import time
 
 from six import moves
 
 from pypowervm import const
 from pypowervm import exceptions as exc
+from pypowervm.i18n import _
+
+
+LOG = logging.getLogger(__name__)
 
 DFT_RETRY_CODES = frozenset([const.HTTPStatus.ETAG_MISMATCH])
 
@@ -138,6 +143,19 @@ def retry(tries=3, delay_func=NO_DELAY,
                 # Otherwise, we will continue trying
                 return
 
+            def _log_known_retry(try_, max_tries, uri, resp_code):
+                LOG.warn(_('Retry Attempt %(retry)d of total retries '
+                           '%(total)d for URI %(uri)s.  Error was a known '
+                           'retry response code: %(resp_code)s'),
+                         {'retry': try_, 'total': max_tries, 'uri': uri,
+                          'resp_code': resp_code})
+
+            def _log_unknown_retry(try_, max_tries, exc):
+                LOG.warn(_('Retry Attempt %(retry)d of total retries '
+                           '%(total)d due to the following exception:\n'
+                           '%(except)s.'),
+                         {'retry': try_, 'total': max_tries, 'except': exc})
+
             # Standardize input
             # For some reason, if we use the parms in an 'if' directly
             # python throws an exception.  Assigning them avoids it.
@@ -171,11 +189,14 @@ def retry(tries=3, delay_func=NO_DELAY,
                         return resp
                 except exc.HttpError as e:
                     if caller_test_func or e.response.status in _http_codes:
+                        _log_known_retry(try_, _tries, e.response.reqpath,
+                                         e.response.status)
                         _test_retry(e)
                     else:
                         _raise_exc()
                 except _retry_except as e:
-                        _test_retry(e)
+                    _log_unknown_retry(try_, _tries, e)
+                    _test_retry(e)
                 # If we get here then we're going to retry
                 delay_func(try_, _tries, *args, **kwds)
                 # Adjust arguments if necessary

@@ -14,9 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
 import mock
+import testtools
 
 from pypowervm import adapter as adpt
 from pypowervm import const as c
@@ -26,7 +25,7 @@ from pypowervm.utils import retry as pvm_retry
 called_count = 0
 
 
-class TestRetry(unittest.TestCase):
+class TestRetry(testtools.TestCase):
     """Unit tests for pypowervm.util."""
 
     def test_retry(self):
@@ -102,7 +101,9 @@ class TestRetry(unittest.TestCase):
 
         called_count = 0
         # Should get back OurException after just 3 calls
-        self.assertRaises(OurException, func_except_method, 1, 2)
+        with self.assertLogs(pvm_retry.__name__, 'WARNING') as warn_logs:
+            self.assertRaises(OurException, func_except_method, 1, 2)
+            self.assertEqual(3, len(warn_logs.output))
         self.assertEqual(called_count, 3)
 
         # Test the response checking function
@@ -154,8 +155,13 @@ class TestRetry(unittest.TestCase):
 
             return None
 
-        self.assertEqual(_powervm_update('Req'), 'Req')
-        self.assertEqual(called_count, 3)
+        with self.assertLogs(pvm_retry.__name__, 'WARNING') as warn_logs:
+            self.assertEqual(_powervm_update('Req'), 'Req')
+            # only one warning (etag mismatch).  The 'VIOS IS BUSY' is
+            # returned as OK by the _resp_checker, but doesn't do its own
+            # logging
+            self.assertEqual(1, len(warn_logs.output))
+            self.assertEqual(called_count, 3)
 
     def test_retry_argmod(self):
         global called_count
@@ -224,6 +230,3 @@ class TestRetry(unittest.TestCase):
             pvm_retry.STEPPED_DELAY(i, 7)
             mock_sleep.assert_called_once_with(delays[i-1])
             mock_sleep.reset_mock()
-
-if __name__ == "__main__":
-    unittest.main()
