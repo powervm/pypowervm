@@ -331,7 +331,8 @@ class TestLPARBuilder(testtools.TestCase):
         self.assertEqual('NONE', tag_io.alt_load_src)
 
         attr = dict(name='OS400LPAR', env=bp.LPARType.OS400, memory=1024,
-                    vcpu=1, console='CONSOLE', load_src='9', alt_load_src='9')
+                    vcpu=1, console='CONSOLE', load_src='9', alt_load_src='8',
+                    ipl_src='a', keylock_pos='manual')
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertIsNotNone(bldr)
 
@@ -341,4 +342,18 @@ class TestLPARBuilder(testtools.TestCase):
         tag_io = new_lpar.io_config.tagged_io
         self.assertEqual('CONSOLE', tag_io.console)
         self.assertEqual('9', tag_io.load_src)
-        self.assertEqual('9', tag_io.alt_load_src)
+        self.assertEqual('8', tag_io.alt_load_src)
+        self.assertEqual('a', new_lpar.desig_ipl_src)
+        self.assertEqual('manual', new_lpar.keylock_pos)
+
+        # Invalid keylock position
+        attr = dict(name='OS400LPAR', env=bp.LPARType.OS400, memory=1024,
+                    vcpu=1, keylock_pos='unlocked ;-)')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Invalid ipl source
+        attr = dict(name='OS400LPAR', env=bp.LPARType.OS400, memory=1024,
+                    vcpu=1, ipl_src='Z')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertRaises(ValueError, bldr.build)

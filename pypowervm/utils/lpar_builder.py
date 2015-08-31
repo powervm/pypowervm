@@ -59,6 +59,8 @@ ALT_LOAD_SRC = 'alt_load_src'
 CONSOLE = 'console'
 LOAD_SRC = 'load_src'
 RESTRICTED_IO = 'restricted_io'
+KEYLOCK_POS = 'keylock_pos'
+IPL_SOURCE = 'ipl_src'
 
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
@@ -107,7 +109,7 @@ class Standardize(object):
                       PROC_COMPAT
             Optional: SRR_CAPABLE, UUID
                       IBMi value: CONSOLE, LOAD_SRC, ALT_LOAD_SRC,
-                                  RESTRICTED_IO
+                                  RESTRICTED_IO, IPL_SOURCE, KEYLOCK_POS
         """
         pass
 
@@ -219,6 +221,8 @@ class DefaultStandardize(Standardize):
         # Validate fields specific to IBMi
         if attrs.get(ENV, '') == bp.LPARType.OS400:
             RestrictedIO(attrs.get(RESTRICTED_IO), allow_none=True).validate()
+            IPLSrc(attrs.get(IPL_SOURCE), allow_none=True).validate()
+            KeyPosition(attrs.get(KEYLOCK_POS), allow_none=True).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -273,6 +277,8 @@ class DefaultStandardize(Standardize):
             self._set_val(bld_attr, CONSOLE, value='HMC')
             self._set_val(bld_attr, LOAD_SRC, value='0')
             self._set_val(bld_attr, ALT_LOAD_SRC, value='NONE')
+            self._set_val(bld_attr, KEYLOCK_POS, value=bp.KeylockPos.NORMAL)
+            self._set_val(bld_attr, IPL_SOURCE, value=lpar.IPLSrc.B)
             if host_cap['ibmi_restrictedio_capable']:
                 self._set_val(bld_attr, RESTRICTED_IO, value=True,
                               convert_func=RestrictedIO.convert_value)
@@ -656,6 +662,16 @@ class RestrictedIO(BoolField):
     _name = 'Restricted IO'
 
 
+class KeyPosition(ChoiceField):
+    _choices = bp.KeylockPos.ALL_VALUES
+    _name = 'Key Lock Position'
+
+
+class IPLSrc(ChoiceField):
+    _choices = lpar.IPLSrc.ALL_VALUES
+    _name = 'IPL Source'
+
+
 class LPARBuilder(object):
     def __init__(self, adapter, attr, stdz):
         self.adapter = adapter
@@ -799,6 +815,8 @@ class LPARBuilder(object):
 
         # Add IBMi values if needed
         if lpar_w.env == bp.LPARType.OS400:
+            lpar_w.keylock_pos = std[KEYLOCK_POS]
+            lpar_w.desig_ipl_src = std[IPL_SOURCE]
             lpar_w.io_config.tagged_io = bp.TaggedIO.bld(
                 self.adapter, load_src=std[LOAD_SRC], console=std[CONSOLE],
                 alt_load_src=std[ALT_LOAD_SRC])
