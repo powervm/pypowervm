@@ -31,24 +31,27 @@ def cat_string_helper(func, string):
 class TestHelpers(unittest.TestCase):
     def test_none(self):
         adpt = adp.Adapter('mock_session', use_cache=False, helpers=None)
-        self.assertEqual(None, adpt._helpers)
+        self.assertEqual([], adpt.helpers)
 
     def test_single(self):
         hlp = functools.partial(cat_string_helper, string="purple!")
         adpt = adp.Adapter('mock_session', use_cache=False, helpers=hlp)
-        self.assertEqual([hlp], adpt._helpers)
+        self.assertEqual([hlp], adpt.helpers)
 
     def test_single_list(self):
         hlp = functools.partial(cat_string_helper, string="purple!")
-        adpt = adp.Adapter('mock_session', use_cache=False, helpers=[hlp])
-        self.assertEqual([hlp], adpt._helpers)
+        hlp_list = [hlp]
+        adpt = adp.Adapter('mock_session', use_cache=False, helpers=hlp_list)
+        self.assertEqual(hlp_list, adpt.helpers)
+        # Use this test to ensure the list returned is a copy
+        self.assertNotEqual(id(hlp_list), id(adpt.helpers))
 
     def test_multi_list(self):
         hlp1 = functools.partial(cat_string_helper, string="1")
         hlp2 = functools.partial(cat_string_helper, string="2")
         adpt = adp.Adapter('mock_session', use_cache=False,
                            helpers=[hlp1, hlp2])
-        self.assertEqual([hlp1, hlp2], adpt._helpers)
+        self.assertEqual([hlp1, hlp2], adpt.helpers)
 
     @mock.patch('pypowervm.adapter.Session')
     def test_no_helpers(self, mock_sess):
