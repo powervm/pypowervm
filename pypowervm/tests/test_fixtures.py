@@ -24,15 +24,33 @@ import six
 from pypowervm import traits as trt
 
 
+def _mk_traits(local, hmc):
+    """Mock a single APITraits configuration.
+
+    :param local: Should the APITraits pretend to be local?  True or False.
+    :param hmc: Should the APITraits pretend to be running against HMC (True)
+                or PVM (False)?
+    :return: APITraits instance with the specified behavior.
+    """
+    _sess = mock.Mock()
+    _sess.use_file_auth = local
+    _sess.mc_type = 'HMC' if hmc else 'PVM'
+    return trt.APITraits(_sess)
+
+LocalPVMTraits = _mk_traits(local=True, hmc=False)
+RemotePVMTraits = _mk_traits(local=False, hmc=False)
+RemoteHMCTraits = _mk_traits(local=False, hmc=True)
+
+
 class SessionFx(fixtures.Fixture):
     """Patch pypowervm.adapter.Session."""
 
-    def __init__(self, traits=None):
+    def __init__(self, traits=LocalPVMTraits):
         """Create Session patcher with traits.
 
         :param traits: APITraits instance to be assigned to the .traits
                        attribute of the mock Session.  If not specified,
-                       sess.traits will be None. LocalPVMTraits,
+                       sess.traits will be LocalPVMTraits. LocalPVMTraits,
                        RemotePVMTraits, and RemoteHMCTraits are provided below
                        for convenience.
         :return:
@@ -59,7 +77,7 @@ class AdapterFx(fixtures.Fixture):
                         SessionFx fixture is created and used.
         :param traits: APITraits instance to be assigned to the .traits
                        attribute of the Session and/or Adapter mock.  If
-                       not specified, session.traits will be used.  If both
+                       not specified, LocalPVMTraits will be used.  If both
                        session and traits are specified, the session's traits
                        will be overwritten with the traits parameter.
                        LocalPVMTraits, RemotePVMTraits, and RemoteHMCTraits are
@@ -67,7 +85,12 @@ class AdapterFx(fixtures.Fixture):
         """
         super(AdapterFx, self).__init__()
         self.session = session
-        self.traits = traits
+        if traits is None and (session is None or session.traits is None):
+            self.traits = LocalPVMTraits
+        elif traits:
+            self.traits = traits
+        else:
+            self.traits = session.traits
         self._patcher = mock.patch('pypowervm.adapter.Adapter')
 
     def setUp(self):
@@ -84,24 +107,6 @@ class AdapterFx(fixtures.Fixture):
         # Mocked Adapter needs to see both routes to traits.
         self.adpt.session.traits = traits
         self.adpt.traits = traits
-
-
-def _mk_traits(local, hmc):
-    """Mock a single APITraits configuration.
-
-    :param local: Should the APITraits pretend to be local?  True or False.
-    :param hmc: Should the APITraits pretend to be running against HMC (True)
-                or PVM (False)?
-    :return: APITraits instance with the specified behavior.
-    """
-    _sess = mock.Mock()
-    _sess.use_file_auth = local
-    _sess.mc_type = 'HMC' if hmc else 'PVM'
-    return trt.APITraits(_sess)
-
-LocalPVMTraits = _mk_traits(local=True, hmc=False)
-RemotePVMTraits = _mk_traits(local=False, hmc=False)
-RemoteHMCTraits = _mk_traits(local=False, hmc=True)
 
 
 class SimplePatcher(object):
