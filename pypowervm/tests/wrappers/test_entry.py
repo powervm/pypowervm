@@ -821,8 +821,9 @@ class TestUpdate(testtools.TestCase):
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update()
-        mock_ubp.assert_called_with(self.cl, self.clust_etag,
-                                    self.clust_path + '?group=None')
+        mock_ubp.assert_called_with(
+            self.cl, self.clust_etag, self.clust_path + '?group=None',
+            timeout=-1)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -832,9 +833,10 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(xag=['one', 'two', 'three'])
-        mock_ubp.assert_called_with(self.cl, self.clust_etag,
-                                    self.clust_path + '?group=one,three,two')
+        newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=123)
+        mock_ubp.assert_called_with(
+            self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
+            timeout=123)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -849,9 +851,10 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(xag=['one', 'two', 'three'])
-        mock_ubp.assert_called_with(self.cl, self.clust_etag,
-                                    self.clust_path + '?group=one,three,two')
+        newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=-1)
+        mock_ubp.assert_called_with(
+            self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
+            timeout=-1)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -884,24 +887,27 @@ class TestCreate(testtools.TestCase):
     def test_create_root(self):
         vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
 
-        def validate_create(element, root_type, service):
+        def validate_create(element, root_type, service, timeout=-1):
             self.assertIsInstance(element, net.VSwitch)
             self.assertEqual(net.VSwitch.schema_type, root_type)
             self.assertEqual('uom', service)
+            self.assertEqual(123, timeout)
             return vswitch.entry
         self.adpt.create.side_effect = validate_create
-        vswitch.create()
+        vswitch.create(timeout=123)
 
     def test_create_child(self):
         # We can safely pretend VSwitch is a child for purposes of this test.
         vswitch = net.VSwitch.bld(self.adpt, 'a_switch')
 
-        def validate_create(element, root_type, root_id, child_type, service):
+        def validate_create(element, root_type, root_id, child_type, service,
+                            timeout=456):
             self.assertIsInstance(element, net.VSwitch)
             self.assertEqual(net.VSwitch.schema_type, child_type)
             self.assertEqual('NetworkBridge', root_type)
             self.assertEqual('SomeUUID', root_id)
             self.assertEqual('uom', service)
+            self.assertEqual(-1, timeout)
             return vswitch.entry
         self.adpt.create.side_effect = validate_create
         # Make sure it works when parent_type is a class...
@@ -913,13 +919,14 @@ class TestCreate(testtools.TestCase):
         """Ensure non-UOM service goes through."""
         vfile = vf.File.bld(self.adpt, "filename", "filetype", "vios_uuid")
 
-        def validate_create(element, root_type, service):
+        def validate_create(element, root_type, service, timeout=345):
             self.assertIsInstance(element, vf.File)
             self.assertEqual(vf.File.schema_type, root_type)
             self.assertEqual('web', service)
+            self.assertEqual(-1, timeout)
             return vfile.entry
         self.adpt.create.side_effect = validate_create
-        vfile.create()
+        vfile.create(timeout=-1)
 
     def test_create_raises(self):
         """Verify invalid inputs raise exceptions."""

@@ -712,7 +712,7 @@ class EntryWrapper(Wrapper):
                 ret.feed.entries.extend(resp.feed.entries)
             return ret
 
-    def create(self, parent_type=None, parent_uuid=None):
+    def create(self, parent_type=None, parent_uuid=None, timeout=-1):
         """Performs an adapter.create (REST API PUT) with this wrapper.
 
         :param parent_type: If creating a CHILD, both parent_type and
@@ -722,12 +722,17 @@ class EntryWrapper(Wrapper):
         :param parent_uuid: If creating a CHILD, both parent_type and
                             parent_uuid must be specified.  This parameter
                             indicates the UUID of the parent ROOT object.
+        :param timeout: (Optional) Integer number of seconds after which to
+                        time out the PUT request.  -1, the default, causes the
+                        request to use the timeout value configured on the
+                        Session belonging to the Adapter.
         :return: New EntryWrapper of the invoking class representing the PUT
                  response.
         """
         service = pc.SERVICE_BY_NS[self.schema_ns]
         if parent_type is None and parent_uuid is None:
-            resp = self.adapter.create(self, self.schema_type, service=service)
+            resp = self.adapter.create(self, self.schema_type, service=service,
+                                       timeout=timeout)
         elif parent_type is not None and parent_uuid is not None:
             # parent_type and parent_uuid specified.
             # Allow either string or class.
@@ -735,7 +740,7 @@ class EntryWrapper(Wrapper):
                 parent_type = parent_type.schema_type
             resp = self.adapter.create(
                 self, parent_type, root_id=parent_uuid,
-                child_type=self.schema_type, service=service)
+                child_type=self.schema_type, service=service, timeout=timeout)
         else:
             # parent_type xor parent_uuid specified
             raise ValueError(
@@ -743,13 +748,17 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     def delete(self):
-        """Performs an adapter.delete (REST API PUT) with this wrapper."""
+        """Performs an adapter.delete (REST API DELETE) with this wrapper."""
         self.adapter.delete_by_href(self.href, etag=self.etag)
 
-    def update(self, xag=None):
+    def update(self, xag=None, timeout=-1):
         """Performs adapter.update of this wrapper.
 
         :param xag: List of extended attribute group names.
+        :param timeout: (Optional) Integer number of seconds after which to
+                        time out the POST request.  -1, the default, causes the
+                        request to use the timeout value configured on the
+                        Session belonging to the Adapter.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
         # adapter.update_by_path expects the path (e.g.
@@ -757,7 +766,8 @@ class EntryWrapper(Wrapper):
         path = util.dice_href(self.href, include_fragment=False)
         # No-op if xag is empty/None
         path = self.adapter.extend_path(path, xag=xag)
-        return self.wrap(self.adapter.update_by_path(self, self.etag, path))
+        return self.wrap(self.adapter.update_by_path(self, self.etag, path,
+                                                     timeout=timeout))
 
     @property
     def element(self):

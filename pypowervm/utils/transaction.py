@@ -267,7 +267,7 @@ class WrapperTask(tf_task.BaseTask):
         finalized_lpar = tx.execute()
     """
     def __init__(self, name, wrapper_or_getter, subtasks=None,
-                 allow_empty=False):
+                 allow_empty=False, update_timeout=-1):
         """Initialize this WrapperTask.
 
         :param name: A descriptive string name for the WrapperTask.
@@ -283,6 +283,11 @@ class WrapperTask(tf_task.BaseTask):
                             message and return None (NOT the wrapper - note,
                             this is different from "subtasks ran, but didn't
                             change anything," which returns the wrapper).
+        :param update_timeout: (Optional) Integer number of seconds after which
+                               to time out the POST request.  -1, the default,
+                               causes the request to use the timeout value
+                               configured on the Session belonging to the
+                               Adapter.
         :raise WrapperTaskNoSubtasks: If allow_empty is False and this
                                       WrapperTask is executed without any
                                       Subtasks having been added.
@@ -301,6 +306,7 @@ class WrapperTask(tf_task.BaseTask):
                             'subtask_rets_%s' % wrapper_or_getter.uuid))
         self._tasks = [] if subtasks is None else list(subtasks)
         self.allow_empty = allow_empty
+        self.update_timeout = update_timeout
         # Dict of return values provided by Subtasks using the 'provides' arg.
         self.provided = {}
         # Set of 'provided' names to prevent duplicates.  (Some day we may want
@@ -416,7 +422,7 @@ class WrapperTask(tf_task.BaseTask):
                 if task.provides is not None:
                     self.provided[task.provides] = ret
             if update_needed:
-                wrapper = wrapper.update()
+                wrapper = wrapper.update(timeout=self.update_timeout)
             return wrapper
         # Use the wrapper if already fetched, or the getter if not
         # NOTE: This assignment must remain atomic.  See TAG_WRAPPER_SYNC.
@@ -486,7 +492,8 @@ class FeedTask(tf_task.BaseTask):
     workflow requires calling one of these early, it is not necessary to
     avoid them subsequently.
     """
-    def __init__(self, name, feed_or_getter, max_workers=10):
+    def __init__(self, name, feed_or_getter, max_workers=10,
+                 update_timeout=-1):
         """Create a FeedTask with a FeedGetter (preferred) or existing feed.
 
         :param name: A descriptive string name.  This will be used along with
@@ -499,6 +506,11 @@ class FeedTask(tf_task.BaseTask):
                             worker threads to run in parallel within the .flow
                             or by the .execute method. See
                             concurrent.futures.ThreadPoolExecutor(max_workers).
+        :param update_timeout: (Optional) Integer number of seconds after which
+                               to time each WrapperTask's POST request.  -1,
+                               the default, causes the request to use the
+                               timeout value configured on the Session
+                               belonging to the Adapter.
         """
         super(FeedTask, self).__init__(name)
         if isinstance(feed_or_getter, ewrap.FeedGetter):
@@ -520,6 +532,7 @@ class FeedTask(tf_task.BaseTask):
                                "a FeedGetter."))
         # Max WrapperTasks to run in parallel
         self.max_workers = max_workers
+        self.update_timeout = update_timeout
         # Map of {uuid: WrapperTask}.  We keep this empty until we need the
         # individual WraperTasks.  This is triggered by .wrapper_tasks and
         # .get_wrapper(uuid) (and obviously executing).
@@ -551,7 +564,7 @@ class FeedTask(tf_task.BaseTask):
                 name = '%s_%s' % (self.name, entry.uuid)
                 self._tx_by_uuid[entry.uuid] = WrapperTask(
                     name, entry, subtasks=self._common_tx.subtasks,
-                    allow_empty=True)
+                    allow_empty=True, update_timeout=self.update_timeout)
         return self._tx_by_uuid
 
     def get_wrapper(self, uuid):

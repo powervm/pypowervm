@@ -40,7 +40,7 @@ VIOS_FEED = 'fake_vios_feed.txt'
 VIOS_ENTRY = 'fake_vios_ssp_npiv.txt'
 
 
-def _mock_update_by_path(ssp, etag, path):
+def _mock_update_by_path(ssp, etag, path, timeout=-1):
     # Spoof adding UDID and defaulting thinness
     for lu in ssp.logical_units:
         if not lu.udid:
