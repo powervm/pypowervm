@@ -99,6 +99,32 @@ class VIOS(bp.BasePartition):
                    SCSI_MAPPING='ViosSCSIMapping',
                    FC_MAPPING='ViosFCMapping')
 
+    def update(self, xag=None, timeout=-1):
+        """Override default timeout to five minutes.
+
+        VIOS POST operations, especially on a VIOS that is heavily-configured
+        (has a lot of I/O devices) or under heavy load (a lot of I/O traffic
+        and/or configuration operations in flight) can legitimately take a long
+        time to complete - longer than the one-minute timeout that is
+        configured by default in pypowervm.adapter.Session.  This override sets
+        the default timeout for just VIOS POST operations to a more reasonable
+        five minutes.  Otherwise, the behavior is identical to
+        EntryWrapper.update.
+
+        :param xag: See EntryWrapper.update(xag).
+        :param timeout: (Optional) Integer number of seconds after which to
+                        time out the POST request.  However, unlike the
+                        implementation in the superclass, -1, the default,
+                        causes the request to use five minutes as the timeout
+                        and ignore the value configured on the Session
+                        belonging to the Adapter.
+        :return: See EntryWrapper.update().
+        """
+        if timeout == -1:
+            # Override timeout for VIOS POSTs to five minutes
+            timeout = 5 * 60
+        return super(VIOS, self).update(xag=xag, timeout=timeout)
+
     @classmethod
     def bld(cls, adapter, name, mem_cfg, proc_cfg, io_cfg=None):
         """Creates a new VIOS wrapper."""

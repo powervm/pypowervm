@@ -39,6 +39,15 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.assertEqual(hash('ViosFCMapping'),
                          hash(vios.VIOS.xags.FC_MAPPING))
 
+    def test_update_timeout(self):
+        self.adpt.update_by_path.return_value = self.dwrap.entry
+        self.assertEqual(self.dwrap.entry, self.dwrap.update().entry)
+        self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
+                                                    timeout=300)
+        self.assertEqual(self.dwrap.entry, self.dwrap.update(timeout=42).entry)
+        self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
+                                                    timeout=42)
+
     def test_get_ip_addresses(self):
         expected_ips = ('9.1.2.4', '10.10.10.5')
         self.assertEqual(expected_ips, self.dwrap.ip_addresses)
