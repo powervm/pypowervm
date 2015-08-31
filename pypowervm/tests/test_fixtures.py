@@ -45,6 +45,7 @@ class SessionFx(fixtures.Fixture):
         self.sess = self._patcher.start()
         self.addCleanup(self._patcher.stop)
         self.sess.traits = self.traits
+        self.sess.timeout = 60
 
 
 class AdapterFx(fixtures.Fixture):
@@ -72,7 +73,7 @@ class AdapterFx(fixtures.Fixture):
     def setUp(self):
         super(AdapterFx, self).setUp()
         if not self.session:
-            self.session = self.useFixture(SessionFx(self.traits))
+            self.session = self.useFixture(SessionFx(self.traits)).sess
 
         self.adpt = self._patcher.start()
         self.addCleanup(self._patcher.stop)
