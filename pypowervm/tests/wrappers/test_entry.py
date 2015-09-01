@@ -805,7 +805,10 @@ class TestUpdate(testtools.TestCase):
 
     def setUp(self):
         super(TestUpdate, self).setUp()
-        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        mock_session = self.useFixture(fx.SessionFx()).sess
+        mock_session.timeout = 60
+        self.adp = apt.Adapter(mock_session, use_cache=False)
+
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.cl = clust.Cluster.bld(
             self.adp, 'mycluster', stor.PV.bld(
@@ -823,7 +826,7 @@ class TestUpdate(testtools.TestCase):
         newcl = self.cl.update()
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path + '?group=None',
-            timeout=-1)
+            timeout=300)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -854,7 +857,7 @@ class TestUpdate(testtools.TestCase):
         newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=-1)
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
-            timeout=-1)
+            timeout=300)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
