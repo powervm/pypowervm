@@ -14,13 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 import mock
 
 import unittest
 
-from pypowervm import adapter as pvm_adpt
-from pypowervm import const as c
 from pypowervm import exceptions as e
 from pypowervm.tasks import vfc_mapper
 import pypowervm.tests.tasks.util as tju
@@ -249,9 +246,11 @@ class TestPortMappings(twrap.TestWrapper):
         fabric_A_wwpns = ['10000090FA5371f2', '10000090FA53720A']
         fabric_B_wwpns = ['10000090FA5371F1', '10000090FA537209']
 
-        # Fake Virtual WWPNs
+        # Fake Virtual WWPNs.  Fabric B has an existing mapping that should
+        # just get re-used.
         v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        v_fabric_B_wwpns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+        v_fabric_B_wwpns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                            'C05076079CFF045E', 'C05076079CFF045F']
 
         # Get the mappings
         fabric_A_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_A_wwpns,
@@ -268,12 +267,18 @@ class TestPortMappings(twrap.TestWrapper):
         # The update should have been called twice.  Once for each VIOS.
         self.assertEqual(2, self.adpt.update_by_path.call_count)
 
-        # Validate the responses
+        # Validate the responses.  These should not be in there because they
+        # were there already.  The first was explicitly added (see
+        # fabric_b_wwpns).  The second happens to already exist in the test
+        # data, but isn't part of the return.
         e_resp = [('10000090FA5371F1', 'C05076079CFF045E C05076079CFF045F'),
                   ('10000090FA53720A', 'C05076079CFF07BB C05076079CFF07BA')]
 
         for needle in resp:
-            self.assertIn(needle, e_resp)
+            self.assertNotIn(needle, e_resp)
+
+        # The newly added maps should be 10 different mappings
+        self.assertEqual(10, len(resp))
 
     def test_add_port_mapping_single_vios(self):
         """Validates that the port mappings are added on single VIOS.
@@ -334,34 +339,6 @@ class TestPortMappings(twrap.TestWrapper):
                               vfc_mapper.add_map,
                               self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
 
-    def test_add_port_mapping_force_retry(self):
-        """Validates that a retry forces an update of the vios wrappers."""
-        # Determine the vios original values
-        vios_wraps = self.entries
-
-        # Force a retry
-        etag = pvm_adpt.Response('reqmethod', 'reqpath',
-                                 c.HTTPStatus.ETAG_MISMATCH, 'reason',
-                                 'headers', None)
-        http_exc = e.HttpError('msg', etag)
-        self.adpt.update_by_path.side_effect = http_exc
-
-        # Build the mappings
-        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        vfc_map = vfc_mapper.derive_npiv_map(vios_wraps, ['10000090FA5371F2'],
-                                             v_fabric_A_wwpns)
-
-        # Now call the add action
-        self.assertRaises(e.HttpError, vfc_mapper.add_npiv_port_mappings,
-                          self.adpt, 'host_uuid', FAKE_UUID, vfc_map)
-
-        # The update should be called the three times (due to retries)
-        self.assertEqual(3, self.adpt.update_by_path.call_count)
-
-        # The read should also occur multiple times to re-read the VIOSes on
-        # a given retry.
-        self.assertEqual(3, self.adpt.read.call_count)
-
     def test_add_port_mapping_generated_wwpns(self):
         """Validates that the port mappings with generated wwpns works."""
         # Determine the vios original values
@@ -399,35 +376,6 @@ class TestPortMappings(twrap.TestWrapper):
         # The update should have been called once.
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.vfc_mapper._mapping_actions')
-    def test_add_port_mapping_with_updated_maps(self, mock_mapping_actions):
-        """Validates that only updated mappings are returned."""
-        # Determine the vios original values
-        vios_wrap = self.entries[0]
-
-        # Create a new mapping to return
-        root_uri = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
-                    'e7344c5b-79b5-3e73-8f64-94821424bc25/LogicalPartition/')
-        updated_vio_wrap = copy.deepcopy(vios_wrap)
-        mapping = pvm_vios.VFCMapping.bld(self.adpt, 'host_uuid', FAKE_UUID,
-                                          'fcs0', ['0', '1'])
-        mapping.set_href(pvm_vios._MAP_CLIENT_LPAR, root_uri + FAKE_UUID)
-        updated_vio_wrap.vfc_mappings.append(mapping)
-        mock_mapping_actions.return_value = [updated_vio_wrap, self.entries[1]]
-
-        # Build the mappings
-        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        vfc_map = vfc_mapper.derive_npiv_map([vios_wrap], ['10000090FA5371F2'],
-                                             v_fabric_A_wwpns)
-
-        # Now call the add action
-        resp = vfc_mapper.add_npiv_port_mappings(
-            self.adpt, 'host_uuid', FAKE_UUID, vfc_map)
-
-        # Validate correct data passed back.
-        self.assertEqual(1, len(resp))
-        self.assertEqual((None, '0 1'), resp[0])
-
     def test_remove_port_mapping_multi_vios(self):
         """Validates that the port mappings are removed cross VIOSes."""
         # Determine the vios original values
@@ -460,7 +408,9 @@ class TestPortMappings(twrap.TestWrapper):
         maps = [p_map_vio1, p_map_vio2]
 
         # Now call the add action
-        vfc_mapper.remove_npiv_port_mappings(self.adpt, 'host_uuid', maps)
+        vfc_mapper.remove_npiv_port_mappings(
+            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
+            maps)
 
         # The update should have been called twice.  Once for each VIOS.
         self.assertEqual(2, self.adpt.update_by_path.call_count)
@@ -489,7 +439,9 @@ class TestPortMappings(twrap.TestWrapper):
         maps = [('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')]
 
         # Now call the add action
-        vfc_mapper.remove_npiv_port_mappings(self.adpt, 'host_uuid', maps)
+        vfc_mapper.remove_npiv_port_mappings(
+            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
+            maps)
 
         # The update should have been called once.
         self.assertEqual(1, self.adpt.update_by_path.call_count)
