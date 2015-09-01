@@ -167,7 +167,8 @@ def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.IBM):
             ewrap.UUIDFeedGetter(adapter, pvm_vios.VIOS, [vios_uuid], xag=(
                 pvm_vios.VIOS.xags.SCSI_MAPPING,
                 pvm_vios.VIOS.xags.FC_MAPPING)))
-        tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task)
+        tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task,
+                                             clean_disks=False)
         scrub_task.execute()
         status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
                                              vendor=vendor)

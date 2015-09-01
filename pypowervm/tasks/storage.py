@@ -736,7 +736,7 @@ class _RemoveStorage(tf_tsk.Task):
                        engine='parallel')
 
 
-def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
+def add_lpar_storage_scrub_tasks(lpar_id, ftsk, clean_disks=True):
     """Delete storage mappings and elements associated with an LPAR ID.
 
     This should typically be used to clean leftovers from an LPAR that has been
@@ -759,7 +759,15 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+    :param clean_disks: (Optional, Default: True) If set to true, will also
+                        clean out the backing storage components for the
+                        mappings connected to the LPAR.
     """
     ftsk.add_subtask(_RemoveVscsiMaps(lpar_id, provides='vscsi_removals'))
-    ftsk.add_subtask(_RemoveVfcMaps(lpar_id))
-    ftsk.add_post_execute(_RemoveStorage(lpar_id))
+    if clean_disks:
+        # Only run the VFC Maps if we are cleaning disks.  This is because
+        # we have no insight as to what is behind the VIOS in this case.
+        ftsk.add_subtask(_RemoveVfcMaps(lpar_id))
+
+        # Only remove the storage if stated that we should.
+        ftsk.add_post_execute(_RemoveStorage(lpar_id))

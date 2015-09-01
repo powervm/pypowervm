@@ -284,9 +284,9 @@ class TestVDisk(testtools.TestCase):
         self.assertEqual(10, ret.capacity)
 
 
-class TestRMSTorage(testtools.TestCase):
+class TestRMStorage(testtools.TestCase):
     def setUp(self):
-        super(TestRMSTorage, self).setUp()
+        super(TestRMStorage, self).setUp()
         self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
         self.adpt = self.adptfx.adpt
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
@@ -554,6 +554,12 @@ class TestScrub(testtools.TestCase):
         self.assertEqual(2, self.txfx.patchers['update'].mock.call_count)
         # By not mocking _RemoveStorage, prove it shorts out (the mapping for
         # LPAR ID 32 has no backing storage).
+
+    def test_no_clean(self):
+        """Validates no post exec tasks when clean disks is set to false."""
+        # Mock vfc remove_maps with a multi-element list to verify num_maps
+        ts.add_lpar_storage_scrub_tasks(32, self.ftsk, clean_disks=False)
+        self.assertEqual(0, len(self.ftsk._post_exec))
 
 
 class TestScrub2(testtools.TestCase):

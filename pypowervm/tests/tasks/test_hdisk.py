@@ -203,7 +203,7 @@ class TestHDisk(unittest.TestCase):
                 ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk(
                     'adp', 'vuuid', ['itls'], 123))
             mock_ftsk.assert_called_with('scrub_lpar_123_vios_vuuid', mock.ANY)
-            mock_alsst.assert_called_with(123, mock.ANY)
+            mock_alsst.assert_called_with(123, mock.ANY, clean_disks=False)
             mock_luar.assert_has_calls([
                 mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.IBM)
                 for i in range(2)])
