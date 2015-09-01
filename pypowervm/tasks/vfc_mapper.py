@@ -21,7 +21,7 @@ import logging
 from pypowervm import exceptions as e
 from pypowervm.i18n import _
 from pypowervm import util as u
-from pypowervm.utils import retry as pvm_retry
+from pypowervm.utils import transaction as tx
 from pypowervm.utils import uuid
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
@@ -289,67 +289,33 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
              The return value will contain just the new mappings.  If mappings
              already existed they will not be part of the response payload.
     """
-    def add_action(vios_wraps, p_map):
-        vios_w = find_vios_for_port_map(vios_wraps, p_map)
-        add_map(vios_w, host_uuid, lpar_uuid, p_map)
-        return vios_w
+    # Build the feed task
+    vio_getter = pvm_vios.VIOS.getter(
+        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
+        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
+    npiv_ft = tx.FeedTask('add_npiv_port_mappings', vio_getter)
 
-    # Get all the VIOSes
-    vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
-                             child_type=pvm_vios.VIOS.schema_type,
-                             xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                  pvm_vios.VIOS.xags.STORAGE])
-    vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
+    # Add the 'add_map' action to the FeedTask.  Each will provide a map of
+    # what it added.
+    x = 0
+    for npiv_port_map in npiv_port_maps:
+        npiv_ft.add_functor_subtask(add_map, host_uuid, lpar_uuid,
+                                    npiv_port_map, error_if_invalid=False,
+                                    provides='added_map_%d' % x)
+        x += 1
 
-    # Get the original VIOSes.
-    orig_maps = _get_port_map(vios_wraps, lpar_uuid)
+    # Execute the port map.
+    ret = npiv_ft.execute()
 
-    # Run the mapping action
-    updated_vioses = _mapping_actions(adapter, host_uuid, npiv_port_maps,
-                                      add_action, vios_wraps=vios_wraps)
-
-    # Find the new mappings.  Remove the originals and return.
-    new_maps = _get_port_map(updated_vioses, lpar_uuid)
-    for old_map in orig_maps:
-        new_maps.remove(old_map)
+    # Get all of the new maps that were provided by the wrapper tasks.
+    new_maps = []
+    for wrp_tsk_ret in ret['wrapper_task_rets'].values():
+        new_maps.extend([val for key, val in wrp_tsk_ret
+                         if key.startswith('added_map_') and val is not None])
     return new_maps
 
 
-def _get_port_map(vioses, lpar_uuid):
-    """Builds a list of the port mappings across a set of VIOSes.
-
-    :param vioses: The VIOS lpar wrappers.
-    :param lpar_uuid: The UUID of the LPAR to gather the mappings for.
-    :return: List of port maps.  Is a list as there may be multiple, identical
-             mappings.  This indicates two paths over the same FC port.  Does
-             NOT include stale mappings that may be associated with the LPAR.
-             A stale mapping is one that either:
-              - Does not have a backing physical port
-              - Does not have a client adapter
-    """
-    port_map = []
-    for vios in vioses:
-        vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
-        for vfc_mapping in vfc_mappings:
-            # Check if this is a 'stale' mapping.  If it is stale, do not
-            # consider it for the response.
-            if not (vfc_mapping.backing_port and vfc_mapping.client_adapter and
-                    vfc_mapping.client_adapter.wwpns):
-                LOG.warn(_("Detected a stale mapping for LPAR with UUID %s.") %
-                         lpar_uuid)
-                continue
-
-            # Found a matching mapping
-            p_wwpn = vfc_mapping.backing_port.wwpn
-            c_wwpns = vfc_mapping.client_adapter.wwpns
-
-            # Convert it to the standard mapping type.
-            mapping = (p_wwpn, _fuse_vfc_ports(c_wwpns)[0])
-            port_map.append(mapping)
-    return port_map
-
-
-def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
+def remove_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
     """Removes the port mappings off of all of the affected VIOSes.
 
     This method will remove all of the NPIV Port Mappings (as defined by the
@@ -357,131 +323,22 @@ def remove_npiv_port_mappings(adapter, host_uuid, npiv_port_maps):
 
     :param adapter: The pypowervm adapter.
     :param host_uuid: The pypowervm UUID of the host.
+    :param lpar_uuid: The UUID or short ID of the LPAR to remove the maps from.
     :param npiv_port_maps: The list of port mappings, as defined by the
                            pypowervm wwpn derive_npiv_map method.
     """
-    _mapping_actions(adapter, host_uuid, npiv_port_maps,
-                     _remove_npiv_port_map)
+    vio_getter = pvm_vios.VIOS.getter(
+        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
+        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
+    npiv_ft = tx.FeedTask('remove_npiv_port_mappings', vio_getter)
 
-
-def _mapping_argmod(this_try, max_tries, *args, **kwargs):
-    """Rebuilds the VIOSes on a _mapping_actions retry."""
-    # Simply setting to None will force a rebuild.
-    kwargs['vios_wraps'] = None
-    return args, kwargs
-
-
-@pvm_retry.retry(argmod_func=_mapping_argmod)
-def _mapping_actions(adapter, host_uuid, npiv_port_maps, func,
-                     vios_wraps=None):
-    """Handles the 'mapping' for a given instance.
-
-    A mapping function is either an 'add' or 'remove' of the NPIV fabric.
-
-    This method reads all of the VIOSes up front, gathers the mapping
-    function, and then execute the function with that specified input.
-
-    Once the modification functions are run, an update on the VIOSes will
-    occur.
-
-    :param adapter: The pypowervm adapter.
-    :param host_uuid: The pypowervm UUID of the host.
-    :param npiv_port_maps: The list of port mappings, as defined by the
-                           pypowervm wwpn derive_npiv_map method.
-    :param func: The function to run against each fabric.  The input is:
-                 - vios_wraps: A list of the wrappers
-                 - phys_mappings: A single mapping for the fabric (as defined
-                                  by the pvm_wwpn derive_npiv_map method).
-                Expected response:
-                 - A pypowervm VIOS wrapper that was impacted by the
-                   function.  If none were, then None is acceptable.
-    :param vios_wraps: (Optional) The list of the Virtual I/O Server wrappers.
-                       If none, the system will query.  A retry action will
-                       automatically re-get the VIOSes.
-    :return: List of VIOS wrappers on the system.  Includes the newly updated
-             VIOSes.
-    """
-    # Make sure we have the VIOSes
-    if vios_wraps is None:
-        vios_resp = adapter.read(pvm_ms.System.schema_type, root_id=host_uuid,
-                                 child_type=pvm_vios.VIOS.schema_type,
-                                 xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                      pvm_vios.VIOS.xags.STORAGE])
-        vios_wraps = pvm_vios.VIOS.wrap(vios_resp)
-
-    # List of VIOSes that need to be updated.
-    vioses_to_update = {}
-    vioses_untouched = {v.uuid: v for v in vios_wraps}
-
-    # For each port mapping...
+    # Add the remove actions to the feed task
     for npiv_port_map in npiv_port_maps:
-        # For each mapping connection, ensure that it is mapped into the
-        # wrapper.
-        vios_to_update = func(vios_wraps, npiv_port_map)
+        npiv_ft.add_functor_subtask(remove_maps, lpar_uuid,
+                                    port_map=npiv_port_map)
 
-        # If there was a VIOS to update, and we're not already slated
-        # to update it...add it to the list.  This is useful for
-        # multi pathing scenarios, to make sure we don't update the
-        # same VIOS multiple times.
-        if (vios_to_update is not None and
-                vioses_to_update.get(vios_to_update.uuid) is None):
-            vioses_to_update[vios_to_update.uuid] = vios_to_update
-
-            # Remove it from the untouched list.
-            vioses_untouched.pop(vios_to_update.uuid, None)
-
-    # Run the parallel updates against the VIOSes
-    resp_vioses = u.parallel_update(vioses_to_update.values())
-
-    # Throw in all of the untouched VIOSes for completeness sake.  There could
-    # still be mappings that existed previously that matter...so we need to
-    # include them
-    resp_vioses.extend(list(vioses_untouched.values()))
-
-    return resp_vioses
-
-
-def _remove_npiv_port_map(vios_wraps, npiv_port_map):
-    """Ensures that the mapping is removed from the VIOS wrapper.
-
-    This method takes in a port mapping (see the derive_npiv_map method), which
-    is a pair of values: (p_wwpn, fused_v_wwpn)
-
-    Will loop through all of the VIOSes and will remove it from the correct
-    wrapper.  Does not call the update on the VIOS, simply modifies the
-    wrapper.
-
-    If the mapping does not exist on any VIOS, no action is taken.
-
-    :param vios_wraps: The list of pypowervm VIOS wrappers.
-    :param npiv_port_map: A single npiv port mapping, as defined by the
-                          derive_npiv_map method.
-    :return: The VIOS wrapper that had the port mapping removed.  If there
-             were no affected VIOSes, returns None.
-    """
-    vios_w, p_port = find_vios_for_wwpn(vios_wraps, npiv_port_map[0])
-    v_wwpns = [u.sanitize_wwpn_for_api(x) for x in npiv_port_map[1].split()]
-
-    removal_map = None
-
-    for vfc_map in vios_w.vfc_mappings:
-        if vfc_map.client_adapter is None:
-            continue
-        if vfc_map.client_adapter.wwpns != v_wwpns:
-            continue
-
-        # If we reach this point, we know that we have a matching map.  So this
-        # becomes the one we will want to remove from the connection list.
-        removal_map = vfc_map
-        break
-
-    # If there was no removal map...then nothing to be done.
-    if removal_map is None:
-        return None
-
-    # However, if it isn't none, then go into the VIOS wrapper and remove it
-    vios_w.vfc_mappings.remove(removal_map)
-    return vios_w
+    # Execute the updates
+    npiv_ft.execute()
 
 
 def _find_ports_on_vio(vio_w, p_port_wwpns):
@@ -612,7 +469,7 @@ def find_vios_for_port_map(vios_wraps, port_map):
     return find_vios_for_wwpn(vios_wraps, port_map[0])[0]
 
 
-def add_map(vios_w, host_uuid, lpar_uuid, port_map):
+def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     """Adds a vFC mapping to a given VIOS wrapper.
 
     These changes are not flushed back to the REST server.  The wrapper itself
@@ -624,6 +481,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
     :param lpar_uuid: The pypowervm UUID of the client LPAR to attach to.
     :param port_map: The port mapping (as defined by the derive_npiv_map
                      method).
+    :param error_if_invalid: (Optional, Default: True) If the port mapping
+                             physical port can not be found, raise an error.
     :return: The VFCMapping that was added.  If the mapping already existed
              then None is returned.
     """
@@ -631,12 +490,15 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map):
     # element.  We assume invoker has passed correct VIOS.
     new_vios_w, p_port = find_vios_for_wwpn([vios_w], port_map[0])
     if new_vios_w is None:
-        # Log the payload in the response.
-        LOG.warn(_("Unable to find appropriate VIOS.  The payload provided "
-                   "was likely insufficient.  The payload data is:\n %s)"),
-                 vios_w.toxmlstring())
-        raise e.UnableToDerivePhysicalPortForNPIV(wwpn=port_map[0],
-                                                  vio_uri=vios_w.href)
+        if error_if_invalid:
+            # Log the payload in the response.
+            LOG.warn(_("Unable to find appropriate VIOS.  The payload "
+                       "provided was likely insufficient.  The payload data "
+                       "is:\n %s)"), vios_w.toxmlstring())
+            raise e.UnableToDerivePhysicalPortForNPIV(wwpn=port_map[0],
+                                                      vio_uri=vios_w.href)
+        else:
+            return None
 
     v_wwpns = None
     if port_map[1] != _FUSED_ANY_WWPN:
