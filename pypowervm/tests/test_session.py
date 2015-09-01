@@ -53,7 +53,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('http', sess.protocol)
         self.assertEqual(12080, sess.port)
         self.assertEqual('http://localhost:12080', sess.dest)
-        self.assertEqual(60, sess.timeout)
+        self.assertEqual(1200, sess.timeout)
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
@@ -68,7 +68,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('https', sess.protocol)
         self.assertEqual(12443, sess.port)
         self.assertEqual('https://host:12443', sess.dest)
-        self.assertEqual(60, sess.timeout)
+        self.assertEqual(1200, sess.timeout)
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay

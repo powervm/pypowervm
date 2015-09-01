@@ -761,6 +761,11 @@ class EntryWrapper(Wrapper):
                         Session belonging to the Adapter.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
+        if timeout == -1:
+            # Override default timeout to 60 minutes unless the Session is
+            # configured for longer already.
+            timeout = max(60 * 60, self.adapter.session.timeout)
+
         # adapter.update_by_path expects the path (e.g.
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
