@@ -699,22 +699,37 @@ class TestFeedTask(twrap.TestWrapper):
         def verify_rets_implicit(wrapper_task_rets):
             called.append('implicit')
             self.assertEqual(exp_wtr, wrapper_task_rets)
+            return 'verify_rets_implicit_return'
 
         def verify_rets_explicit(**kwargs):
             called.append('explicit')
             self.assertEqual(exp_wtr, kwargs['wrapper_task_rets'])
+            return 'verify_rets_explicit_return'
 
         ftsk.add_functor_subtask(return_wrapper_name, provides='the_name')
         ftsk.add_functor_subtask(return_wrapper_id, provides='the_id')
-        ftsk.add_post_execute(tf_task.FunctorTask(verify_rets_implicit))
         ftsk.add_post_execute(tf_task.FunctorTask(
-            verify_rets_explicit, requires='wrapper_task_rets'))
+            verify_rets_implicit, provides='post_exec_implicit'))
+        ftsk.add_post_execute(tf_task.FunctorTask(
+            verify_rets_explicit, requires='wrapper_task_rets',
+            provides='post_exec_explicit'))
 
-        ftsk.execute()
+        ret = ftsk.execute()
         # Make sure the post-execs actually ran (to guarantee their internal
         # assertions passed).
         self.assertEqual(['implicit', 'explicit'], called)
         ftfx.patchers['update'].mock.assert_called_with(mock.ANY, timeout=123)
+        # Verify that we got the returns from the subtasks AND the post-execs
+        self.assertEqual({
+            'wrapper_task_rets': {
+                self.entries[0].uuid: {'the_name': self.entries[0].name,
+                                       'the_id': self.entries[0].id,
+                                       'wrapper': self.entries[0]},
+                self.entries[1].uuid: {'the_name': self.entries[1].name,
+                                       'the_id': self.entries[1].id,
+                                       'wrapper': self.entries[1]}},
+            'post_exec_implicit': 'verify_rets_implicit_return',
+            'post_exec_explicit': 'verify_rets_explicit_return'}, ret)
 
     def test_context(self):
         """Security context, if set, propagates to WrapperTask threads."""

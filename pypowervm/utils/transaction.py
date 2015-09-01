@@ -691,7 +691,17 @@ class FeedTask(tf_task.BaseTask):
         return ret
 
     def execute(self):
-        """Run this FeedTask's WrapperTasks in parallel TaskFlow engine."""
+        """Run this FeedTask's WrapperTasks in parallel TaskFlow engine.
+
+        :return: Dictionary of results provided by subtasks and post-execs.
+                 The shape of this dict is as normally expected from TaskFlow,
+                 noting that the WrapperTasks are executed in a subflow and
+                 their results processed into wrapper_task_rets.  For example:
+            {'wrapper_task_rets': { uuid: {...}, uuid: {...}, ...}
+             'post_exec_x_provides': ...,
+             'post_exec_y_provides': ...,
+             ...}
+        """
         # Ensure a true no-op (in particular, we don't want to GET the feed) if
         # there are no Subtasks
         if not any([self._tx_by_uuid, self._common_tx.subtasks,
@@ -699,8 +709,7 @@ class FeedTask(tf_task.BaseTask):
             LOG.info(_("FeedTask %s has no Subtasks; no-op execution."),
                      self.name)
             return
-
-        wrapper_task_rets = {}
+        rets = {}
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.  Only do this if
         # there exists at least one WrapperTask with Subtasks.
@@ -710,12 +719,13 @@ class FeedTask(tf_task.BaseTask):
             pflow.add(*self.wrapper_tasks.values())
             # Execute the parallel flow now so the results can be provided to
             # any post-execs.
-            wrapper_task_rets = self._process_subtask_rets(tf_eng.run(
+            rets = self._process_subtask_rets(tf_eng.run(
                 pflow, engine='parallel',
                 executor=ContextThreadPoolExecutor(self.max_workers)))
         if self._post_exec:
             flow = tf_lf.Flow('%s_post_execs' % self.name)
             flow.add(*self._post_exec)
-            eng = tf_eng.load(flow, store={'wrapper_task_rets':
-                                           wrapper_task_rets})
+            eng = tf_eng.load(flow, store={'wrapper_task_rets': rets})
             eng.run()
+            rets = eng.storage.fetch_all()
+        return rets
