@@ -319,12 +319,12 @@ class TestAdapter(testtools.TestCase):
                          'group=ViosFCMapping')
         self._assert_paths_equivalent(expected_path, path)
 
-        # Multiple XAGs
+        # Multiple XAGs in a set
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.VIOS.xags.FC_MAPPING,
-                                        pvm_vios.VIOS.xags.NETWORK])
+                                   xag={pvm_vios.VIOS.xags.FC_MAPPING,
+                                        pvm_vios.VIOS.xags.NETWORK})
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
@@ -380,23 +380,23 @@ class TestAdapter(testtools.TestCase):
         self._assert_paths_equivalent(
             'basepath?group=a,b,c',
             adapter.extend_path('basepath?group=a,b,c'))
-        # path_xag=None, arg_xag=[] => no group=
+        # path_xag=None, arg_xag=() => no group=
         self._assert_paths_equivalent(
-            'basepath', adapter.extend_path('basepath', xag=[]))
-        # path_xag='None', arg_xag=[] => no group=
+            'basepath', adapter.extend_path('basepath', xag=()))
+        # path_xag='None', arg_xag={} => no group=
         self._assert_paths_equivalent(
-            'basepath', adapter.extend_path('basepath?group=None', xag=[]))
+            'basepath', adapter.extend_path('basepath?group=None', xag={}))
         # path_xag='a,b,c', arg_xag=[] => ValueError
         self.assertRaises(
             ValueError, adapter.extend_path, 'basepath?group=a,b,c', xag=[])
         # path_xag=None, arg_xag='a,b,c' => group='a,b,c'
         self._assert_paths_equivalent(
             'basepath?group=a,b,c',
-            adapter.extend_path('basepath', xag=['a', 'b', 'c']))
+            adapter.extend_path('basepath', xag={'a', 'b', 'c'}))
         # path_xag='None', arg_xag='a,b,c' => group='a,b,c'
         self._assert_paths_equivalent(
             'basepath?group=a,b,c',
-            adapter.extend_path('basepath?group=None', xag=['a', 'b', 'c']))
+            adapter.extend_path('basepath?group=None', xag=('a', 'b', 'c')))
         # path_xag='a,b,c', arg_xag='a,b,c' => group='a,b,c'
         self._assert_paths_equivalent(
             'basepath?group=a,b,c',

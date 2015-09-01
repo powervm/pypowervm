@@ -95,7 +95,7 @@ def check_and_apply_xag(path, xag):
                  string, which may or may not contain a group=*.  (Multiple
                  group=* not handled.)  Values in the group=* must be
                  alpha sorted.
-    :param xag: Proposed list of extended attribute values to be included
+    :param xag: Iterable of proposed extended attribute values to be included
                 in the query string of the resulting path.
     :return: path, with at most one group=* in the query string.  That
              group= query param's value will be alpha sorted.
@@ -107,6 +107,8 @@ def check_and_apply_xag(path, xag):
     if xag is None:
         arg_xag = 'None'
     else:
+        # Ensure we have a mutable copy to sort
+        xag = list(xag)
         xag.sort()
         arg_xag = ','.join(map(str, xag))  # may be ''
 
