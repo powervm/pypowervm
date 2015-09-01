@@ -16,17 +16,11 @@
 
 """Internationalization helpers."""
 
-from oslo_config import cfg
 import oslo_i18n._message as _msg
-
-cfg.CONF.register_opts([
-    cfg.BoolOpt('translation_lazy_load', default=True,
-                help='Specifies whether to Lazy-Load Translation')
-])
 
 
 def _(msg, domain='pypowervm'):
     """Shortcut method to return a translated message."""
     msg = _msg.Message(msg, domain=domain)
     # If we are supposed to lazy-load, then return the message object
-    return msg if cfg.CONF.translation_lazy_load else msg.translate()
+    return msg.translate()

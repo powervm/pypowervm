@@ -19,7 +19,6 @@
 import logging
 import time
 
-from oslo_config import cfg
 import six
 
 import pypowervm.const as pc
@@ -30,15 +29,6 @@ import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
-
-job_opts = [
-    cfg.IntOpt('powervm_job_request_timeout',
-               default=1800,
-               help='Default timeout in seconds for Job requests to the API')
-]
-
-CONF = cfg.CONF
-CONF.register_opts(job_opts)
 
 _JOBS = 'jobs'
 _REQ_OP = 'RequestedOperation'
@@ -178,9 +168,7 @@ class Job(ewrap.EntryWrapper):
             message = self.get_job_resp_exception_msg(default=default)
         return message
 
-    def run_job(self, uuid, job_parms=None,
-                timeout=CONF.pypowervm_job_request_timeout,
-                sensitive=False):
+    def run_job(self, uuid, job_parms=None, timeout=1800, sensitive=False):
         """Invokes and polls a job.
 
         Adds job parameters to the job element if specified and calls the
@@ -224,9 +212,7 @@ class Job(ewrap.EntryWrapper):
             raise exc
         self.delete_job()
 
-    def monitor_job(self, job_id=None,
-                    timeout=CONF.pypowervm_job_request_timeout,
-                    sensitive=False):
+    def monitor_job(self, job_id=None, timeout=1800, sensitive=False):
         """Polls a job.
 
         Waits on a job until it is no longer running.  If a timeout is given,
@@ -260,8 +246,7 @@ class Job(ewrap.EntryWrapper):
             message = self.get_job_message()
         return status, message, timed_out
 
-    def cancel_job(self, timeout=CONF.pypowervm_job_request_timeout,
-                   sensitive=False):
+    def cancel_job(self, timeout=1800, sensitive=False):
         """Cancels and deletes incomplete/running jobs.
 
         :param timeout: maximum number of seconds to keep checking job status
