@@ -582,12 +582,7 @@ class TestScrub2(testtools.TestCase):
             r"%(lpar_id)d from VIOS %(vios_name)s.",
             {'lpar_id': 3, 'num_maps': 3, 'vios_name': self.vio_feed[0].name})]
 
-        lurm = self.vio_feed[0].scsi_mappings[4].backing_storage
-        mock_rm_lu.side_effect = verify_rm_stg_call([lurm])
-        warns.append(mock.call(
-            r"Scrubbing Logical Unit %(luname)s (%(udid)s), which was mapped "
-            r"from VIOS %(vios)s.", {'luname': lurm.name, 'udid': lurm.udid,
-                                     'vios': self.vio_feed[0].name}))
+        mock_rm_lu.side_effect = self.fail
 
         vorm = self.vio_feed[0].scsi_mappings[5].backing_storage
         mock_rm_vopt.side_effect = verify_rm_stg_call([vorm])

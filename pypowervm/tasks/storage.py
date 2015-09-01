@@ -636,11 +636,15 @@ class _RemoveStorage(tf_tsk.Task):
         super(_RemoveStorage, self).__init__('rm_storage_lpar_%d' % lpar_id)
 
     def execute(self, wrapper_task_rets):
-        """Remove the storage elements associated with the deleted mappings."""
+        """Remove the storage elements associated with the deleted mappings.
+
+        We remove storage elements for each VIOS, but only those we can be sure
+        belong ONLY to that VIOS.  That is, we do not remove SSP Logical Units
+        because they may be mapped from some other VIOS in the cluster - one we
+        don't even know about.
+        """
         # Accumulate removal tasks
         rmtasks = []
-        # FeedTask for LU removal.  Lazy initialization.
-        luftsk = None
         for vuuid, rets in wrapper_task_rets.items():
             vwrap = rets['wrapper']
             # VFC mappings don't have storage we can get to, so ignore those.
@@ -672,25 +676,8 @@ class _RemoveStorage(tf_tsk.Task):
             vdisks_to_rm = []
             for stg in stg_els_to_remove:
                 if isinstance(stg, stor.LU):
-                    # We need to remove logical units, but we don't know which
-                    # SSP(s) they live in.  It's actually easier to get all
-                    # SSPs on the host than to find out which SSP each VIOS
-                    # belongs to.  If we try removing an LU from an SSP that
-                    # doesn't contain it, no update will happen, and it only
-                    # cost us the extra SSP GET.
-                    if luftsk is None:
-                        luftsk = tx.FeedTask('scrub_ssp',
-                                             stor.SSP.getter(stg.adapter))
-                        rmtasks.append(luftsk)
-                    # Adding one removal at a time here, rather than
-                    # accumulating all removals in a temporary list and doing
-                    # one batch at the end.
-                    luftsk.add_functor_subtask(
-                        _rm_lus, [stg], logspec=(LOG.warn, _(
-                            "Scrubbing Logical Unit %(luname)s (%(udid)s), "
-                            "which was mapped from VIOS %(vios)s."), {
-                            'luname': stg.name, 'udid': stg.udid,
-                            'vios': vwrap.name}))
+                    # Ignore Logical Units
+                    pass
                 elif isinstance(stg, stor.VOptMedia):
                     vopts_to_rm.append(stg)
                 elif isinstance(stg, stor.VDisk):
@@ -699,7 +686,7 @@ class _RemoveStorage(tf_tsk.Task):
                     LOG.warn(_("Unexpected storage element type %s."),
                              stg.schema_type)
 
-            # Any local storage to be deleted?
+            # Any storage to be deleted?
             if not any((vopts_to_rm, vdisks_to_rm)):
                 continue
 
@@ -731,9 +718,10 @@ class _RemoveStorage(tf_tsk.Task):
 
         # We only created removal Tasks if we found something to remove.
         if rmtasks:
-            # Execute any storage removals in parallel
-            tf_eng.run(tf_uf.Flow('remove_storage').add(*rmtasks),
-                       engine='parallel')
+            # Execute any storage removals in parallel, max 8 threads.
+            tf_eng.run(
+                tf_uf.Flow('remove_storage').add(*rmtasks), engine='parallel',
+                executor=tx.ContextThreadPoolExecutor(max(8, len(rmtasks))))
 
 
 def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
