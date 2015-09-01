@@ -43,7 +43,7 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.adpt.update_by_path.return_value = self.dwrap.entry
         self.assertEqual(self.dwrap.entry, self.dwrap.update().entry)
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
-                                                    timeout=300)
+                                                    timeout=3600)
         self.assertEqual(self.dwrap.entry, self.dwrap.update(timeout=42).entry)
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
                                                     timeout=42)

@@ -71,7 +71,7 @@ class Session(object):
     """Responsible for PowerVM API session management."""
 
     def __init__(self, host='localhost', username=None, password=None,
-                 auditmemento=None, protocol=None, port=None, timeout=60,
+                 auditmemento=None, protocol=None, port=None, timeout=1200,
                  certpath='/etc/ssl/certs/', certext='.crt'):
         """Persistent authenticated session with the REST API server.
 
@@ -93,7 +93,8 @@ class Session(object):
                      unspecified, will default based on the protocol parameter:
                      protocol='http' => port=12080;
                      protocol='https' => port=12443.
-        :param timeout: See timeout param on requests.Session.request
+        :param timeout: See timeout param on requests.Session.request.  Default
+                        is 20 minutes.
         :param certpath: Directory in which the certificate file can be found.
                          Certificate file path is constructed as
                          {certpath}{host}{certext}.  For example, given

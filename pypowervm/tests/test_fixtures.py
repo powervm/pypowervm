@@ -63,7 +63,7 @@ class SessionFx(fixtures.Fixture):
         self.sess = self._patcher.start()
         self.addCleanup(self._patcher.stop)
         self.sess.traits = self.traits
-        self.sess.timeout = 60
+        self.sess.timeout = 1200
 
 
 class AdapterFx(fixtures.Fixture):
