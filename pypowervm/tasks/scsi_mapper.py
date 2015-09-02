@@ -322,8 +322,8 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
     return match_func
 
 
-def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
-              include_orphans=False):
+def find_maps(mapping_list, client_lpar_id=None, match_func=None,
+              stg_elem=None, include_orphans=False):
     """Filter a list of scsi mappings by LPAR ID/UUID and a matching function.
 
     :param mapping_list: The mappings to filter.  Iterable of VSCSIMapping.
@@ -331,7 +331,9 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
                            client side of the mapping.  Note that the UUID form
                            relies on the presence of the client_lpar_href
                            field.  Some mappings lack this field, and would
-                           therefore be ignored.
+                           therefore be ignored. If client_lpar_id is not
+                           passed it will return matching mappings for all
+                           the lpar_ids.
     :param match_func: Callable with the following specification:
 
         def match_func(storage_elem)
@@ -375,7 +377,10 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
             stg_el.schema_type == stg_elem.schema_type and
             stg_el.name == stg_elem.name)
 
-    is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
+    is_uuid = False
+    client_id = None
+    if client_lpar_id:
+        is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
     for existing_scsi_map in mapping_list:
         # No client, continue on unless including orphans.
@@ -387,7 +392,7 @@ def find_maps(mapping_list, client_lpar_id, match_func=None, stg_elem=None,
         if is_uuid and (not href or client_id != util.get_req_path_uuid(
                 href, preserve_case=True)):
             continue
-        elif (not is_uuid and
+        elif (client_lpar_id and not is_uuid and
                 # Use the server adapter in case this is an orphan.
                 existing_scsi_map.server_adapter.lpar_id != client_id):
             continue
