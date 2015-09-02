@@ -1024,7 +1024,12 @@ class CNA(ewrap.EntryWrapper):
         # vSwitch URI
         cna.vswitch_uri = vswitch_href
 
-        cna._trunk_pri(trunk_pri)
+        # If a trunk priority is specified, set it. It will make this CNA
+        # build out a trunk adapter. However, if it is not specified, we
+        # do not want to set it as we don't want to include the element in
+        # the payload we send for the CNA creation.
+        if trunk_pri:
+            cna._trunk_pri(trunk_pri)
 
         return cna
 

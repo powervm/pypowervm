@@ -523,6 +523,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.vsi_type_manager_id)
         self.assertIsNone(test.vswitch_id)
         self.assertEqual(1, test.pvid)
+        self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
 
@@ -540,6 +541,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.vsi_type_manager_id)
         self.assertIsNone(test.vswitch_id)
         self.assertEqual(1, test.pvid)
+        self.assertIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertTrue(test.is_trunk)
         self.assertEqual(test.trunk_pri, 2)
 
@@ -560,6 +562,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.vsi_type_version)
         self.assertIsNone(test.vsi_type_manager_id)
         self.assertIsNone(test.vswitch_id)
+        self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
 
