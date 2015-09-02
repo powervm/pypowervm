@@ -36,6 +36,8 @@ from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
 from pypowervm.wrappers import job
+import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.managed_system as sys
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
 import pypowervm.wrappers.virtual_io_server as vios
@@ -751,3 +753,22 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
     ftsk.add_subtask(_RemoveVscsiMaps(lpar_id, provides='vscsi_removals'))
     ftsk.add_subtask(_RemoveVfcMaps(lpar_id))
     ftsk.add_post_execute(_RemoveStorage(lpar_id))
+
+
+def find_stale_lpars(vios_w):
+    """Find orphan LPAR IDs in a Virtual I/O Server's VSCSI mappings.
+
+    This method collates all client LPAR IDs from the VSCSI mappings of the
+    specified VIOS wrapper and compares to the list of LPAR IDs on that VIOS's
+    host, returning the list of any IDs which exist in the former but not the
+    latter.
+
+    :param vios_w: VIOS EntryWrapper
+    :return: List of LPAR IDs (integer short IDs, not UUIDs) which don't exist
+             on the system.
+    """
+    ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(vios_w.adapter.read(
+        sys.System.schema_type, root_id=vios_w.assoc_sys_uuid,
+        child_type=lpar.LPAR.schema_type))}
+    map_lpar_ids = {smp.server_adapter.lpar_id for smp in vios_w.scsi_mappings}
+    return list(map_lpar_ids - ex_lpar_ids)
