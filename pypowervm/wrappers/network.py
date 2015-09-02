@@ -1024,7 +1024,7 @@ class CNA(ewrap.EntryWrapper):
         # vSwitch URI
         cna.vswitch_uri = vswitch_href
 
-        cna._trunk_pri = trunk_pri
+        cna._trunk_pri(trunk_pri)
 
         return cna
 
