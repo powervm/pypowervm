@@ -121,7 +121,7 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.IBM):
+def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.OTHER):
     """Attempt to discover a hard disk attached to a Virtual I/O Server.
 
     See lua_recovery.  This method attempts that call and analyzes the
@@ -174,7 +174,7 @@ def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.IBM):
     return status, devname, udid
 
 
-def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.IBM):
+def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     """Logical Unit Address Recovery - discovery of a FC-attached hdisk.
 
     When a new disk is created externally (say on a block device), the Virtual
@@ -211,7 +211,7 @@ def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.IBM):
     return status, devname, udid
 
 
-def _lua_recovery_xml(itls, adapter, vendor=LUAType.IBM):
+def _lua_recovery_xml(itls, adapter, vendor=LUAType.OTHER):
     """Builds the XML that is used as input for the lua_recovery job.
 
     The lua_recovery provides a very quick way for the system to discover
