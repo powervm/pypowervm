@@ -912,7 +912,7 @@ BODY{
                 <VariedOn kb="CUD" kxe="true">true</VariedOn>
                 <VirtualSlotNumber kb="CUR" kxe="false">4</VirtualSlotNumber>
                 <AdapterName kb="CUR" kxe="false">vfchost0</AdapterName>
-                <ConnectingPartitionID kb="CUR" kxe="false">2</ConnectingPartitionID>
+                <ConnectingPartitionID kb="CUR" kxe="false">21</ConnectingPartitionID>
                 <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
                 <UniqueDeviceID kb="CUR" kxe="false">1dU8246.L1C.0604CAA-V1-C4</UniqueDeviceID>
                 <MapPort kxe="false" kb="CUR">fcs0</MapPort>
