@@ -606,17 +606,11 @@ class TestScrub2(testtools.TestCase):
         self.logfx.patchers['warn'].mock.assert_has_calls(
             warns, any_order=True)
 
-
-class TestFindStaleLpars(testtools.TestCase):
-    def setUp(self):
-        super(TestFindStaleLpars, self).setUp()
-        self.adpt = self.useFixture(fx.AdapterFx()).adpt
-
     def test_find_stale_lpars(self):
         self.adpt.read.return_value = tju.load_file(LPAR_FEED,
                                                     adapter=self.adpt)
         vwrap = vios.VIOS.wrap(tju.load_file(VIOS_ENTRY, adapter=self.adpt))
-        self.assertEqual([55], ts.find_stale_lpars(vwrap))
+        self.assertEqual({55, 21}, set(ts.find_stale_lpars(vwrap)))
 
 if __name__ == '__main__':
     unittest.main()

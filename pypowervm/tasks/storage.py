@@ -756,19 +756,22 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
 
 
 def find_stale_lpars(vios_w):
-    """Find orphan LPAR IDs in a Virtual I/O Server's VSCSI mappings.
+    """Find orphan LPAR IDs in a Virtual I/O Server's VSCSI/VFC mappings.
 
-    This method collates all client LPAR IDs from the VSCSI mappings of the
+    This method collates all client LPAR IDs from the VSCSI/VFC mappings of the
     specified VIOS wrapper and compares to the list of LPAR IDs on that VIOS's
     host, returning the list of any IDs which exist in the former but not the
     latter.
 
-    :param vios_w: VIOS EntryWrapper
+    :param vios_w: VIOS EntryWrapper.  To be effective, this must have been
+                   retrieved with the SCSI_MAPPING and FC_MAPPING extended
+                   attribute groups.
     :return: List of LPAR IDs (integer short IDs, not UUIDs) which don't exist
              on the system.
     """
     ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(vios_w.adapter.read(
         sys.System.schema_type, root_id=vios_w.assoc_sys_uuid,
         child_type=lpar.LPAR.schema_type))}
-    map_lpar_ids = {smp.server_adapter.lpar_id for smp in vios_w.scsi_mappings}
+    map_lpar_ids = {smp.server_adapter.lpar_id for smp in
+                    (list(vios_w.scsi_mappings) + list(vios_w.vfc_mappings))}
     return list(map_lpar_ids - ex_lpar_ids)
