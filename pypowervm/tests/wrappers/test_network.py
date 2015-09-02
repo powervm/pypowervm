@@ -523,6 +523,25 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.vsi_type_manager_id)
         self.assertIsNone(test.vswitch_id)
         self.assertEqual(1, test.pvid)
+        self.assertFalse(test.is_trunk)
+        self.assertIsNone(test.trunk_pri)
+
+    def test_trunk_crt(self):
+        """Tests a standard create of the CNA."""
+        test = net.CNA.bld(self.adpt, 1, "fake_vs", trunk_pri=2)
+        self.assertEqual('fake_vs', test.vswitch_uri)
+        self.assertFalse(test.is_tagged_vlan_supported)
+        self.assertEqual([], test.tagged_vlans)
+        self.assertIsNotNone(test._use_next_avail_slot_id)
+        self.assertTrue(test._use_next_avail_slot_id)
+        self.assertIsNone(test.mac)
+        self.assertIsNone(test.vsi_type_id)
+        self.assertIsNone(test.vsi_type_version)
+        self.assertIsNone(test.vsi_type_manager_id)
+        self.assertIsNone(test.vswitch_id)
+        self.assertEqual(1, test.pvid)
+        self.assertTrue(test.is_trunk)
+        self.assertEqual(test.trunk_pri, 2)
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
@@ -541,6 +560,8 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.vsi_type_version)
         self.assertIsNone(test.vsi_type_manager_id)
         self.assertIsNone(test.vswitch_id)
+        self.assertFalse(test.is_trunk)
+        self.assertIsNone(test.trunk_pri)
 
     def test_unasi_field(self):
         """UseNextAvailable(High)SlotID field is used, as appropriate."""
