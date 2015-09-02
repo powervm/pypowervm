@@ -185,7 +185,10 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.tasks.hdisk.lua_recovery')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
     @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
-    def test_discover_hdisk(self, mock_alsst, mock_ftsk, mock_luar):
+    @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get')
+    def test_discover_hdisk(self, mock_ewget, mock_fsl, mock_alsst, mock_ftsk,
+                            mock_luar):
         def set_luar_side_effect(_stat, _dev):
             """Set up the lua_recovery mock's side effect.
 
@@ -196,33 +199,59 @@ class TestHDisk(unittest.TestCase):
             mock_luar.reset_mock()
             mock_luar.side_effect = [(_stat, _dev, 'udid'),
                                      ('ok_s', 'ok_h', 'ok_u')]
+        stale_lpar_ids = [12, 34]
         # All of these should cause a scrub-and-retry
-        for st, dev in ((None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
-                        (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')):
+        retry_rets = [(None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
+                      (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
+        # These should *not* cause a scrub-and-retry
+        no_retry_rets = [(hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
+                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')]
+        mock_fsl.return_value = stale_lpar_ids
+        for st, dev in retry_rets:
             set_luar_side_effect(st, dev)
             self.assertEqual(
                 ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk(
-                    'adp', 'vuuid', ['itls'], 123))
-            mock_ftsk.assert_called_with('scrub_lpar_123_vios_vuuid', mock.ANY)
-            mock_alsst.assert_called_with(123, mock.ANY)
+                    'adp', 'vuuid', ['itls']))
+            self.assertEqual(1, mock_fsl.call_count)
+            mock_ftsk.assert_called_with('scrub_vios_vuuid', mock.ANY)
+            mock_alsst.assert_has_calls([mock.call(lid, mock.ANY) for lid in
+                                         stale_lpar_ids])
             mock_luar.assert_has_calls([
                 mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.OTHER)
                 for i in range(2)])
+            mock_fsl.reset_mock()
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()
 
-        # These should *not* cause a scrub-and-retry
-        for st, dev in ((hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
-                        (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')):
+        for st, dev in no_retry_rets:
             set_luar_side_effect(st, dev)
             self.assertEqual(
                 (st, dev, 'udid'), hdisk.discover_hdisk(
-                    'adp', 'vuuid', ['itls'], 123))
+                    'adp', 'vuuid', ['itls']))
+            self.assertEqual(0, mock_fsl.call_count)
             self.assertEqual(0, mock_ftsk.call_count)
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
                                          vendor=hdisk.LUAType.OTHER)
+
+        # If no stale LPARs found, scrub-and-retry should not be triggered with
+        # either set.
+        mock_fsl.return_value = []
+        for st, dev in retry_rets + no_retry_rets:
+            set_luar_side_effect(st, dev)
+            self.assertEqual(
+                (st, dev, 'udid'), hdisk.discover_hdisk(
+                    'adp', 'vuuid', ['itls']))
+            # find_stale_lpars will be called for retry_rets, but not for
+            # no_retry_rets
+            self.assertLessEqual(mock_fsl.call_count, 1)
+            self.assertEqual(0, mock_ftsk.call_count)
+            self.assertEqual(0, mock_alsst.call_count)
+            self.assertEqual(1, mock_luar.call_count)
+            mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
+                                         vendor=hdisk.LUAType.OTHER)
+            mock_fsl.reset_mock()
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')

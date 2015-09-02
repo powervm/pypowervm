@@ -27,7 +27,6 @@ import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 import pypowervm.tasks.storage as tsk_stg
 import pypowervm.utils.transaction as tx
-import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -121,17 +120,17 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.OTHER):
+def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     """Attempt to discover a hard disk attached to a Virtual I/O Server.
 
     See lua_recovery.  This method attempts that call and analyzes the
-    results.  On certain failure conditions (see below), this method will scrub
-    stale storage artifacts associated with the specified lpar_id and then
-    retry lua_recovery.  The retry is only attempted once; that result is
-    returned regardless.
+    results.  On certain failure conditions (see below), this method will find
+    stale LPARs, scrub storage artifacts associated with them, and then retry
+    lua_recovery.  The retry is only attempted once; that result is returned
+    regardless.
 
     The main objective of this method is to resolve errors resulting from
-    incomplete cleanup of a previous LPAR.  The stale LPAR's storage mappings
+    incomplete cleanup of previous LPARs.  The stale LPAR's storage mappings
     can cause hdisk discovery to fail because it thinks the hdisk is already in
     use.
 
@@ -144,8 +143,6 @@ def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.OTHER):
     :param adapter: The pypowervm adapter.
     :param vios_uuid: The Virtual I/O Server UUID.
     :param itls: A list of ITL objects.
-    :parat lpar_id: Integer short ID (not UUID) of the Logical Partition for
-                    which hdisk discovery is being performed.
     :param vendor: The vendor for the LUN.  See the LUAType.* constants.
     :return status: The status code from the discover process.
                     See LUAStatus.* constants.
@@ -158,19 +155,22 @@ def discover_hdisk(adapter, vios_uuid, itls, lpar_id, vendor=LUAType.OTHER):
     # Do we need to scrub and retry?
     if devname is None or status not in (LUAStatus.DEVICE_AVAILABLE,
                                          LUAStatus.FOUND_ITL_ERR):
-        # Detailed warning message by _log_lua_status
-        LOG.warn(_("hdisk discovery failed; will scrub stale storage for LPAR "
-                   "ID %d and retry."), lpar_id)
-        # Scrub from just the VIOS in question.
-        scrub_task = tx.FeedTask(
-            'scrub_lpar_%d_vios_%s' % (lpar_id, vios_uuid),
-            ewrap.UUIDFeedGetter(adapter, pvm_vios.VIOS, [vios_uuid], xag=(
-                pvm_vios.VIOS.xags.SCSI_MAPPING,
-                pvm_vios.VIOS.xags.FC_MAPPING)))
-        tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task)
-        scrub_task.execute()
-        status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
-                                             vendor=vendor)
+        vwrap = pvm_vios.VIOS.getter(adapter, entry_uuid=vios_uuid,
+                                     xag=(pvm_vios.VIOS.xags.SCSI_MAPPING,
+                                          pvm_vios.VIOS.xags.FC_MAPPING)).get()
+
+        scrub_ids = tsk_stg.find_stale_lpars(vwrap)
+        if scrub_ids:
+            # Detailed warning message by _log_lua_status
+            LOG.warn(_("hdisk discovery failed; will scrub stale storage for "
+                       "LPAR IDs %s and retry."), scrub_ids)
+            # Scrub from just the VIOS in question.
+            scrub_task = tx.FeedTask('scrub_vios_%s' % vios_uuid, [vwrap])
+            for lpar_id in scrub_ids:
+                tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task)
+            scrub_task.execute()
+            status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
+                                                 vendor=vendor)
     return status, devname, udid
 
 
