@@ -384,6 +384,12 @@ class TestSCSIMapper(testtools.TestCase):
                                         stg_elem=maps[2].backing_storage)
         self.assertEqual(1, len(matches))
         self.assertEqual(maps[2], matches[0])
+        # Test find maps when client lpar id is not specified and backing
+        # storage is given
+        matches = scsi_mapper.find_maps(maps, None,
+                                        stg_elem=maps[2].backing_storage)
+        self.assertEqual(1, len(matches))
+        self.assertEqual(maps[2], matches[0])
 
         # All the mappings in VIO_MULTI_MAP_FILE are "complete".  Now play with
         # some that aren't.
