@@ -182,13 +182,14 @@ class TestHDisk(unittest.TestCase):
         mock_lua_xml.assert_called_with({itls[0]}, mock_adapter,
                                         vendor='OTHER')
 
+    @mock.patch('pypowervm.tasks.hdisk._good_discovery')
     @mock.patch('pypowervm.tasks.hdisk.lua_recovery')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
     @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
     @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get')
     def test_discover_hdisk(self, mock_ewget, mock_fsl, mock_alsst, mock_ftsk,
-                            mock_luar):
+                            mock_luar, mock_good):
         def set_luar_side_effect(_stat, _dev):
             """Set up the lua_recovery mock's side effect.
 
@@ -202,13 +203,15 @@ class TestHDisk(unittest.TestCase):
         stale_lpar_ids = [12, 34]
         # All of these should cause a scrub-and-retry
         retry_rets = [(None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
-                      (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
+                      (hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID, 'hdisk456')]
         # These should *not* cause a scrub-and-retry
         no_retry_rets = [(hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
-                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')]
+                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456'),
+                         (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
         mock_fsl.return_value = stale_lpar_ids
         for st, dev in retry_rets:
             set_luar_side_effect(st, dev)
+            mock_good.return_value = False
             self.assertEqual(
                 ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk(
                     'adp', 'vuuid', ['itls']))
@@ -225,6 +228,7 @@ class TestHDisk(unittest.TestCase):
 
         for st, dev in no_retry_rets:
             set_luar_side_effect(st, dev)
+            mock_good.return_value = True
             self.assertEqual(
                 (st, dev, 'udid'), hdisk.discover_hdisk(
                     'adp', 'vuuid', ['itls']))
