@@ -602,7 +602,24 @@ def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
     return ssp_wrap
 
 
-class _RemoveVscsiMaps(tx.Subtask):
+def _remove_orphan_maps(map_list):
+    """Remove orphan storage mappings (no client adapter) from a list.
+
+    This works for both VSCSI and VFC mappings.
+
+    :param map_list: A mutable list of mappings (subclass of VStorageMapping).
+                     The list is modified by this method.  Orphan mappings
+                     (those lacking a client adapter) are removed.
+    :return: The list of mappings removed from map_list.  May be empty.
+    """
+    removals = [mp for mp in map_list if mp.client_adapter is None]
+    for rm_map in removals:
+        map_list.remove(rm_map)
+    return removals
+
+
+class _RemoveLparVscsiMaps(tx.Subtask):
+    """Subtask to remove all VSCSI mappings for a specified LPAR ID."""
     def execute(self, vwrap, lpar_id):
         """Find and remove all VSCSI mappings for this LPAR ID."""
         msgargs = dict(lpar_id=lpar_id, vios_name=vwrap.name)
@@ -617,7 +634,7 @@ class _RemoveVscsiMaps(tx.Subtask):
         return vscsi_removals
 
 
-class _RemoveVfcMaps(tx.Subtask):
+class _RemoveLparVfcMaps(tx.Subtask):
     def execute(self, vwrap, lpar_id):
         """Find and remove all VFC mappings for this LPAR ID."""
         msgargs = dict(lpar_id=lpar_id, vios_name=vwrap.name)
@@ -632,10 +649,45 @@ class _RemoveVfcMaps(tx.Subtask):
         return vfc_removals
 
 
+class _RemoveOrphanVscsiMaps(tx.Subtask):
+    """Subtask to remove all orphan VSCSI mappings (no client adapter)."""
+    def execute(self, vwrap):
+        """Find and remove all orphan VSCSI mappings (no client adapter)."""
+        msgargs = dict(vios_name=vwrap.name)
+        vscsi_removals = _remove_orphan_maps(vwrap.scsi_mappings)
+        if vscsi_removals:
+            LOG.warn(_("Removing %(num_maps)d orphan VSCSI mappings from VIOS "
+                       "%(vios_name)s."),
+                     dict(msgargs, num_maps=len(vscsi_removals)))
+        else:
+            LOG.debug("No orphan VSCSI mappings found on VIOS %(vios_name)s.",
+                      msgargs)
+        return vscsi_removals
+
+
+class _RemoveOrphanVfcMaps(tx.Subtask):
+    """Subtask to remove all orphan VFC mappings (no client adapter)."""
+    def execute(self, vwrap):
+        """Find and remove all orphan VFC mappings (no client adapter)."""
+        msgargs = dict(vios_name=vwrap.name)
+        vfc_removals = _remove_orphan_maps(vwrap.vfc_mappings)
+        if vfc_removals:
+            LOG.warn(_("Removing %(num_maps)d orphan VFC mappings from VIOS "
+                       "%(vios_name)s."),
+                     dict(msgargs, num_maps=len(vfc_removals)))
+        else:
+            LOG.debug("No orphan VFC mappings found on VIOS %(vios_name)s.",
+                      msgargs)
+        return vfc_removals
+
+
 class _RemoveStorage(tf_tsk.Task):
-    def __init__(self, lpar_id):
-        self.lpar_id = lpar_id
-        super(_RemoveStorage, self).__init__('rm_storage_lpar_%d' % lpar_id)
+    def __init__(self, tag):
+        """Initialize the storage removal Task.
+
+        :param tag: Added to the Task name to make it unique within a Flow.
+        """
+        super(_RemoveStorage, self).__init__('rm_storage_%s' % tag)
 
     def execute(self, wrapper_task_rets):
         """Remove the storage elements associated with the deleted mappings.
@@ -750,9 +802,22 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
     """
-    ftsk.add_subtask(_RemoveVscsiMaps(lpar_id, provides='vscsi_removals'))
-    ftsk.add_subtask(_RemoveVfcMaps(lpar_id))
+    ftsk.add_subtask(_RemoveLparVscsiMaps(lpar_id, provides='vscsi_removals'))
+    ftsk.add_subtask(_RemoveLparVfcMaps(lpar_id))
     ftsk.add_post_execute(_RemoveStorage(lpar_id))
+
+
+def add_orphan_storage_scrub_tasks(ftsk):
+    """Delete orphan mappings (no client adapter) and their storage elements.
+
+    :param ftsk: FeedTask to which the scrubbing actions should be added, for
+                 execution by the caller.  The FeedTask must be built for all
+                 the VIOSes from which mappings and storage should be scrubbed.
+                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+    """
+    ftsk.add_subtask(_RemoveOrphanVscsiMaps(provides='vscsi_removals'))
+    ftsk.add_subtask(_RemoveOrphanVfcMaps())
+    ftsk.add_post_execute(_RemoveStorage('orphans'))
 
 
 def find_stale_lpars(vios_w):
