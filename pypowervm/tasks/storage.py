@@ -508,6 +508,7 @@ def _rm_vopts(vg_wrap, vopts):
 
 
 @lock.synchronized(_LOCK_SSP)
+@retry.retry(argmod_func=retry.refresh_wrapper)
 def crt_lu(ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
