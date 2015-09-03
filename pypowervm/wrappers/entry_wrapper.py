@@ -1072,7 +1072,7 @@ class WrapperSetUUIDMixin(object):
         """
         if not self.has_metadata:
             raise AttributeError(
-                _('Cannot set UUID on Wrapper with no Metadata'))
+                _('Cannot set UUID on Wrapper with no Metadata.'))
 
         # Step 1: sanitize uuid value
         s_uuid = str(new_uuid)
@@ -1129,7 +1129,7 @@ class EntryWrapperGetter(object):
         if (parent_class and not parent_uuid) or (
                 parent_uuid and not parent_class):
             raise ValueError(_("Must specify both parent class and parent "
-                               "UUID, or neither"))
+                               "UUID, or neither."))
         self.parent_class = parent_class
         self.parent_uuid = parent_uuid
         self.xag = xag

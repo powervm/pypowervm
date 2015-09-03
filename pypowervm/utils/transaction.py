@@ -300,7 +300,7 @@ class WrapperTask(tf_task.BaseTask):
             self._getter = None
         else:
             raise ValueError(_("Must supply either EntryWrapper or "
-                               "EntryWrapperGetter"))
+                               "EntryWrapperGetter."))
         super(WrapperTask, self).__init__(
             name, provides=('wrapper_%s' % wrapper_or_getter.uuid,
                             'subtask_rets_%s' % wrapper_or_getter.uuid))

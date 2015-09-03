@@ -144,7 +144,7 @@ def retry(tries=3, delay_func=NO_DELAY,
                 return
 
             def _log_response_retry(try_, max_tries, uri, resp_code):
-                LOG.warn(_('Attempt %(retry)d of total %(total)d  for URI '
+                LOG.warn(_('Attempt %(retry)d of total %(total)d for URI '
                            '%(uri)s.  Error was a known retry response code: '
                            '%(resp_code)s'),
                          {'retry': try_, 'total': max_tries, 'uri': uri,
