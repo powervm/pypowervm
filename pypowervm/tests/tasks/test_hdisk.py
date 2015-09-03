@@ -202,10 +202,11 @@ class TestHDisk(unittest.TestCase):
         stale_lpar_ids = [12, 34]
         # All of these should cause a scrub-and-retry
         retry_rets = [(None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
-                      (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
+                      (hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID, 'hdisk456')]
         # These should *not* cause a scrub-and-retry
         no_retry_rets = [(hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
-                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456')]
+                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456'),
+                         (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
         mock_fsl.return_value = stale_lpar_ids
         for st, dev in retry_rets:
             set_luar_side_effect(st, dev)
