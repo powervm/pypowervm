@@ -100,6 +100,13 @@ class ITL(object):
         return not self.__eq__(other)
 
 
+def good_discovery(status, device_name):
+    """Checks the hdisk discovery results for a good discovery."""
+    return device_name is not None and status in [
+        LUAStatus.DEVICE_AVAILABLE, LUAStatus.DEVICE_IN_USE,
+        LUAStatus.FOUND_ITL_ERR]
+
+
 def build_itls(i_wwpns, t_wwpns, lun):
     """This method builds the list of ITLs for all of the permutations.
 
@@ -153,8 +160,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
                                          vendor=vendor)
     # Do we need to scrub and retry?
-    if devname is None or status not in (LUAStatus.DEVICE_AVAILABLE,
-                                         LUAStatus.FOUND_ITL_ERR):
+    if not good_discovery(status, devname):
         vwrap = pvm_vios.VIOS.getter(adapter, entry_uuid=vios_uuid,
                                      xag=(pvm_vios.VIOS.xags.SCSI_MAPPING,
                                           pvm_vios.VIOS.xags.FC_MAPPING)).get()
