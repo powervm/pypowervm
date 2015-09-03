@@ -530,6 +530,18 @@ class TestScrub(testtools.TestCase):
         self.assertEqual(0, self.txfx.patchers['update'].mock.call_count)
         self.assertEqual(1, mock_rm_stg.call_count)
 
+    def test_orphan(self):
+        """Scrub the one orphan mapping on one VIOS, with no storage."""
+        ts.add_orphan_storage_scrub_tasks(self.ftsk)
+        ret = self.ftsk.execute()
+        self.assertEqual(1, self.logfx.patchers['warn'].mock.call_count)
+        removals = (ret['wrapper_task_rets']
+                    ['1300C76F-9814-4A4D-B1F0-5B69352A7DEA']['vscsi_removals'])
+        self.assertEqual(1, len(removals))
+        self.assertEqual('1eU7895.43X.21EF9FB-V2-C51',
+                         removals[0].server_adapter.udid)
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+
     @mock.patch('pypowervm.tasks.vfc_mapper.remove_maps')
     def test_matches_warn(self, mock_rm_vfc_maps):
         """When removals hit, log warnings including the removal count."""

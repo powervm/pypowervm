@@ -238,12 +238,7 @@ def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
     :param match_func: (Optional) Matching function suitable for passing to
                        find_maps.  See that method's match_func parameter.
                        Defaults to None (match only on client_lpar_id).
-    :param include_orphans: (Optional) An "orphan" contains a server adapter
-                            but no client adapter.  If this parameter is True,
-                            mappings with no client adapter will be considered
-                            for removal. If False, mappings with no client
-                            adapter will be left alone, regardless of any other
-                            criteria.  Default: False (don't include orphans).
+    :param include_orphans: (Optional) See find_maps(include_orphans).
     :return: The list of removed mappings.
     """
     resp_list = []
@@ -361,7 +356,9 @@ def find_maps(mapping_list, client_lpar_id=None, match_func=None,
                             no client adapter will still be considered for
                             inclusion.  If False, mappings with no client
                             adapter will be skipped entirely, regardless of any
-                            other criteria.
+                            other criteria.  If the string 'ONLY', mappings
+                            *with* client adapters will be skipped (only
+                            orphans will be included).
     :return: A list comprising the subset of the input mapping_list whose
              client LPAR IDs match client_lpar_id and whose backing storage
              elements satisfy match_func.
@@ -384,24 +381,28 @@ def find_maps(mapping_list, client_lpar_id=None, match_func=None,
     if client_lpar_id:
         is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
-    for existing_scsi_map in mapping_list:
+    for a_map in mapping_list:
         # No client, continue on unless including orphans.
-        if not include_orphans and existing_scsi_map.client_adapter is None:
+        if include_orphans is False and a_map.client_adapter is None:
+            continue
+
+        # If only orphans are wanted and this map has a client adapter, skip.
+        if include_orphans == 'ONLY' and a_map.client_adapter is not None:
             continue
 
         # If to a different VM, continue on.
-        href = existing_scsi_map.client_lpar_href
+        href = a_map.client_lpar_href
         if is_uuid and (not href or client_id != util.get_req_path_uuid(
                 href, preserve_case=True)):
             continue
         elif (client_lpar_id and not is_uuid and
                 # Use the server adapter in case this is an orphan.
-                existing_scsi_map.server_adapter.lpar_id != client_id):
+                a_map.server_adapter.lpar_id != client_id):
             continue
 
-        if match_func(existing_scsi_map.backing_storage):
+        if match_func(a_map.backing_storage):
             # Found a match!
-            matching_maps.append(existing_scsi_map)
+            matching_maps.append(a_map)
     return matching_maps
 
 
