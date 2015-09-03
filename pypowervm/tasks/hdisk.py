@@ -305,7 +305,7 @@ def _log_lua_status(status, dev_name, message):
     """Logs any issues with the LUA."""
 
     if status == LUAStatus.DEVICE_AVAILABLE:
-        LOG.info(_("LUA Discovery Successful Device Found: %s"),
+        LOG.info(_("LUA Recovery Successful. Device Found: %s"),
                  dev_name)
     elif status == LUAStatus.FOUND_ITL_ERR:
         # Message is already set.
@@ -313,7 +313,7 @@ def _log_lua_status(status, dev_name, message):
     elif status == LUAStatus.DEVICE_IN_USE:
         LOG.warn(_("%s Device is currently in use"), dev_name)
     elif status == LUAStatus.FOUND_DEVICE_UNKNOWN_UDID:
-        LOG.warn(_("%s Device discovered with unknown uuid"), dev_name)
+        LOG.warn(_("%s Device discovered with unknown UDID"), dev_name)
     elif status == LUAStatus.INCORRECT_ITL:
         LOG.warn(_("Failed to Discover the Device : %s"), dev_name)
 

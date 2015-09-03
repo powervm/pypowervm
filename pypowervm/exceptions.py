@@ -537,22 +537,22 @@ class ErrorExtendingVolume(AbstractMsgFmtError):
 class NoLicenseSRC(AbstractMsgFmtError):
     msg_fmt = _("Unable to deploy virtual machine '%(instance_name)s' "
                 "because the host does not support the operating system "
-                "installed on this image")
+                "installed on this image.")
 
 
 class UnSupportedOSVersion(AbstractMsgFmtError):
     msg_fmt = _("Unable to deploy virtual machine '%(instance_name)s' "
-                "because the host does not support the operating system"
-                "version installed on this image")
+                "because the host does not support the operating system "
+                "version installed on this image.")
 
 
 class LUADiscoveryFailed(AbstractMsgFmtError):
-    msg_fmt = _("Failed to discover the volume error code %(status)s")
+    msg_fmt = _("Failed to discover the volume error code %(status)s.")
 
 
 class LUADiscoveryITLError(AbstractMsgFmtError):
-    msg_fmt = _("LUA Discovery Completed with few ITL Error:"
-                "Device %(dev)s Discovered, Status: %(status)s"
+    msg_fmt = _("LUA Recovery Completed with ITL Errors. "
+                "Device %(dev)s Discovered, Status: %(status)s, "
                 "Reason: %(msg)s")
 
 
@@ -594,10 +594,6 @@ class WrapperTaskNoSubtasks(AbstractMsgFmtError):
 
 class FeedTaskEmptyFeed(AbstractMsgFmtError):
     msg_fmt = _("FeedTask can't have an empty feed.")
-
-
-class TransactionNoSubtasks(AbstractMsgFmtError):
-    msg_fmt = _("Transaction %(name)s has no subtasks!")
 
 
 class AuthFileReadError(AbstractMsgFmtError):

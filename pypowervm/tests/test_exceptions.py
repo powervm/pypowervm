@@ -367,16 +367,16 @@ class2msg = {
     pvmex.NoLicenseSRC:
     "Unable to deploy virtual machine 'instance_name_param' "
     "because the host does not support the operating system "
-    "installed on this image",
+    "installed on this image.",
     pvmex.UnSupportedOSVersion:
     "Unable to deploy virtual machine 'instance_name_param' "
-    "because the host does not support the operating system"
-    "version installed on this image",
+    "because the host does not support the operating system "
+    "version installed on this image.",
     pvmex.LUADiscoveryFailed:
-    "Failed to discover the volume error code status_param",
+    "Failed to discover the volume error code status_param.",
     pvmex.LUADiscoveryITLError:
-    "LUA Discovery Completed with few ITL Error:"
-    "Device dev_param Discovered, Status: status_param"
+    "LUA Recovery Completed with ITL Errors. "
+    "Device dev_param Discovered, Status: status_param, "
     "Reason: msg_param",
     pvmex.AuthFileReadError:
     "OS unable to read file testfile.",
