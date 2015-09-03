@@ -33,7 +33,6 @@ from pypowervm.i18n import _
 from pypowervm.tasks import scsi_mapper as sm
 from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
-from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as lpar
@@ -47,7 +46,6 @@ FILE_UUID = 'FileUUID'
 # Setup logging
 LOG = logging.getLogger(__name__)
 
-_LOCK_SSP = 'ssp_op_lock'
 _LOCK_VOL_GRP = 'vol_grp_lock'
 
 # Concurrent uploads
@@ -426,7 +424,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
-@retry.retry(argmod_func=retry.refresh_wrapper)
+@tx.entry_transaction
 def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
     """Remove storage elements from a volume group.
 
@@ -507,7 +505,7 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
-@lock.synchronized(_LOCK_SSP)
+@tx.entry_transaction
 def crt_lu(ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
@@ -580,8 +578,7 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
     return changes
 
 
-@lock.synchronized(_LOCK_SSP)
-@retry.retry(argmod_func=retry.refresh_wrapper)
+@tx.entry_transaction
 def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
     """Remove some number of LogicalUnits from a SharedStoragePool.
 
