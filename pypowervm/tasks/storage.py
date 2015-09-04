@@ -47,7 +47,6 @@ FILE_UUID = 'FileUUID'
 # Setup logging
 LOG = logging.getLogger(__name__)
 
-_LOCK_SSP = 'ssp_op_lock'
 _LOCK_VOL_GRP = 'vol_grp_lock'
 
 # Concurrent uploads
@@ -507,7 +506,7 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
-@lock.synchronized(_LOCK_SSP)
+@tx.entry_transaction
 def crt_lu(ssp, name, size, thin=None, typ=None):
     """Create a Logical Unit on the specified Shared Storage Pool.
 
@@ -580,8 +579,7 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
     return changes
 
 
-@lock.synchronized(_LOCK_SSP)
-@retry.retry(argmod_func=retry.refresh_wrapper)
+@tx.entry_transaction
 def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
     """Remove some number of LogicalUnits from a SharedStoragePool.
 
