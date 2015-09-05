@@ -38,6 +38,7 @@ UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
 VIOS_FEED = 'fake_vios_feed.txt'
 VIOS_ENTRY = 'fake_vios_ssp_npiv.txt'
+VIOS_ENTRY2 = 'fake_vios_mappings.txt'
 LPAR_FEED = 'lpar.txt'
 
 
@@ -611,6 +612,55 @@ class TestScrub2(testtools.TestCase):
                                                     adapter=self.adpt)
         vwrap = vios.VIOS.wrap(tju.load_file(VIOS_ENTRY, adapter=self.adpt))
         self.assertEqual({55, 21}, set(ts.find_stale_lpars(vwrap)))
+
+
+class TestScrub3(testtools.TestCase):
+    """One VIOS; lots of orphan VSCSI and VFC mappings."""
+    def setUp(self):
+        super(TestScrub3, self).setUp()
+        adpt = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
+        self.vio_feed = [vios.VIOS.wrap(tju.load_file(VIOS_ENTRY2, adpt))]
+        self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
+        self.logfx = self.useFixture(fx.LoggingFx())
+        self.ftsk = tx.FeedTask('scrub', self.vio_feed)
+
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    def test_orphan(self, mock_rm_vopts):
+        """Scrub orphan VSCSI and VFC mappings."""
+        def validate_rm_vopts(vgwrap, vopts, **kwargs):
+            # Two of the VSCSI mappings have storage; both are vopts
+            self.assertEqual(2, len(vopts))
+        mock_rm_vopts.side_effect = validate_rm_vopts
+        vwrap = self.vio_feed[0]
+        # Save the "before" sizes of the mapping lists
+        vscsi_len = len(vwrap.scsi_mappings)
+        vfc_len = len(vwrap.vfc_mappings)
+        ts.add_orphan_storage_scrub_tasks(self.ftsk)
+        ret = self.ftsk.execute()
+        # One for vscsi maps, one for vfc maps, one for vopt storage
+        self.assertEqual(3, self.logfx.patchers['warn'].mock.call_count)
+        # Pull out the WrapperTask returns from the (one) VIOS
+        wtr = ret['wrapper_task_rets'].popitem()[1]
+        vscsi_removals = wtr['vscsi_removals']
+        self.assertEqual(18, len(vscsi_removals))
+        # Removals are really orphans
+        for srm in vscsi_removals:
+            self.assertIsNone(srm.client_adapter)
+        # The right number of maps remain.
+        self.assertEqual(vscsi_len - 18, len(vwrap.scsi_mappings))
+        # Remaining maps are not orphans.
+        for smp in vwrap.scsi_mappings:
+            self.assertIsNotNone(smp.client_adapter)
+        # _RemoveOrphanVfcMaps doesn't "provide", so the following are limited.
+        # The right number of maps remain.
+        self.assertEqual(vfc_len - 19, len(vwrap.vfc_mappings))
+        # Remaining maps are not orphans.
+        for fmp in vwrap.vfc_mappings:
+            self.assertIsNotNone(fmp.client_adapter)
+        # POST was warranted.
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+        # _RemoveStorage invoked _rm_vopts
+        self.assertEqual(1, mock_rm_vopts.call_count)
 
 if __name__ == '__main__':
     unittest.main()
