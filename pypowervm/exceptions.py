@@ -143,3 +143,7 @@ class AuthFileReadError(AbstractMsgFmtError):
 class AuthFileAccessError(AbstractMsgFmtError):
     msg_fmt = _("OS able to read file %(access_file)s, but encountered an "
                 "access error.")
+
+
+class MigrationFailed(AbstractMsgFmtError):
+    msg_fmt = _("The migration task failed. %(error)s")

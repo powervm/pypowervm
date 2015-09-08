@@ -57,6 +57,8 @@ class2msg = {
     "OS unable to read file testfile.",
     pvmex.AuthFileAccessError:
     "OS able to read file testfile, but encountered an access error.",
+    pvmex.MigrationFailed:
+    "The migration task failed. error_param"
 }
 
 
