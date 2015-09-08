@@ -536,6 +536,20 @@ class TestPortMappings(twrap.TestWrapper):
                 self.assertNotIn(remaining_map.client_adapter.loc_code,
                                  expected_removals)
 
+    def test_has_client_wwpns(self):
+        v_wrap_1 = self.entries[0]
+        v_wrap_2 = self.entries[1]
+        self.assertEqual(v_wrap_1, vfc_mapper.has_client_wwpns(
+            self.entries, ['c05076079cff0e56', 'c05076079cff0e57']))
+
+        # Second vios.  Reversed WWPNs.  Mixed Case.
+        self.assertEqual(v_wrap_2, vfc_mapper.has_client_wwpns(
+            self.entries, ['c05076079cff0e83', 'c05076079cff0E82']))
+
+        # Not found.
+        self.assertIsNone(vfc_mapper.has_client_wwpns(
+            self.entries, ['AAA', 'bbb']))
+
 
 class TestAddRemoveMap(twrap.TestWrapper):
     file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
