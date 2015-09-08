@@ -641,7 +641,7 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(3, self.logfx.patchers['warn'].mock.call_count)
         # Pull out the WrapperTask returns from the (one) VIOS
         wtr = ret['wrapper_task_rets'].popitem()[1]
-        vscsi_removals = wtr['vscsi_removals']
+        vscsi_removals = wtr['vscsi_removals_orphans']
         self.assertEqual(18, len(vscsi_removals))
         # Removals are really orphans
         for srm in vscsi_removals:
