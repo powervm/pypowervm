@@ -329,7 +329,7 @@ class WrapperTask(tf_task.BaseTask):
         # Seed the 'provided' dict and ensure no duplicate names
         if task.provides is not None:
             if task.provides in self.provided_keys:
-                raise ValueError(_("Duplicate 'provides' name %s."),
+                raise ValueError(_("Duplicate 'provides' name %s.") %
                                  task.provides)
             self.provided_keys.add(task.provides)
         self._tasks.append(task)

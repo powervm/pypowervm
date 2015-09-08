@@ -700,7 +700,13 @@ class _RemoveStorage(tf_tsk.Task):
         for vuuid, rets in wrapper_task_rets.items():
             vwrap = rets['wrapper']
             # VFC mappings don't have storage we can get to, so ignore those.
-            vscsi_rms = rets['vscsi_removals']
+
+            # We may get removals from more than one subtask.  All will have
+            # the 'vscsi_removals_' prefix.  There may be some overlap, but
+            # the removal methods will ignore duplicates.
+            vscsi_rms = []
+            for vrk in (k for k in rets if k.startswith('vscsi_removals_')):
+                vscsi_rms.extend(rets[vrk])
 
             # We can short out of this VIOS if no vscsi mappings were removed
             # from it.
@@ -800,7 +806,8 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
     """
-    ftsk.add_subtask(_RemoveLparVscsiMaps(lpar_id, provides='vscsi_removals'))
+    ftsk.add_subtask(_RemoveLparVscsiMaps(lpar_id, provides='vscsi_removals_%d'
+                                                            % lpar_id))
     ftsk.add_subtask(_RemoveLparVfcMaps(lpar_id))
     ftsk.add_post_execute(_RemoveStorage(lpar_id))
 
@@ -813,7 +820,7 @@ def add_orphan_storage_scrub_tasks(ftsk):
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
     """
-    ftsk.add_subtask(_RemoveOrphanVscsiMaps(provides='vscsi_removals'))
+    ftsk.add_subtask(_RemoveOrphanVscsiMaps(provides='vscsi_removals_orphans'))
     ftsk.add_subtask(_RemoveOrphanVfcMaps())
     ftsk.add_post_execute(_RemoveStorage('orphans'))
 
@@ -830,7 +837,7 @@ def find_stale_lpars(vios_w):
                    retrieved with the SCSI_MAPPING and FC_MAPPING extended
                    attribute groups.
     :return: List of LPAR IDs (integer short IDs, not UUIDs) which don't exist
-             on the system.
+             on the system.  The list is guaranteed to contain no duplicates.
     """
     ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(vios_w.adapter.read(
         sys.System.schema_type, root_id=vios_w.assoc_sys_uuid,
