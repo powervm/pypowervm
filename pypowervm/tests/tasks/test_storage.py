@@ -603,6 +603,10 @@ class TestScrub2(testtools.TestCase):
              'vdlist': ["%s (%s)" % (vdrm.name, vdrm.udid)]}))
 
         ts.add_lpar_storage_scrub_tasks(3, self.ftsk)
+        # LPAR ID 45 is not represented in the mappings.  Test a) that it is
+        # ignored, b) that we can have two separate LPAR storage scrub tasks
+        # in the same FeedTask (no duplicate 'provides' names).
+        ts.add_lpar_storage_scrub_tasks(45, self.ftsk)
         self.ftsk.execute()
         self.logfx.patchers['warn'].mock.assert_has_calls(
             warns, any_order=True)
@@ -641,7 +645,7 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(3, self.logfx.patchers['warn'].mock.call_count)
         # Pull out the WrapperTask returns from the (one) VIOS
         wtr = ret['wrapper_task_rets'].popitem()[1]
-        vscsi_removals = wtr['vscsi_removals']
+        vscsi_removals = wtr['vscsi_removals_orphans']
         self.assertEqual(18, len(vscsi_removals))
         # Removals are really orphans
         for srm in vscsi_removals:
