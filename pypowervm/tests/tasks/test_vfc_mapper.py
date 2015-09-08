@@ -415,7 +415,7 @@ class TestPortMappings(twrap.TestWrapper):
         p_map_vio2 = ('10000090FA537209', 'C05076079CFF0E58 C05076079CFF0E59')
         maps = [p_map_vio1, p_map_vio2]
 
-        # Now call the add action
+        # Now call the remove action
         vfc_mapper.remove_npiv_port_mappings(
             self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
             maps)
@@ -446,7 +446,38 @@ class TestPortMappings(twrap.TestWrapper):
 
         maps = [('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')]
 
-        # Now call the add action
+        # Now call the remove action
+        vfc_mapper.remove_npiv_port_mappings(
+            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
+            maps)
+
+        # The update should have been called once.
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+    def test_remove_port_mapping_single_vios_order_agnostic(self):
+        """Validates that the port mappings are removed with reverse order."""
+        # Determine the vios original values
+        vios_wraps = self.entries
+        vios1_name = vios_wraps[0].name
+        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
+
+        def mock_update(*kargs, **kwargs):
+            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
+            if vios1_name == vios_w.name:
+                self.assertEqual(vios1_orig_map_count - 1,
+                                 len(vios_w.vfc_mappings))
+            else:
+                self.fail("Unknown VIOS!")
+
+            self.ensure_does_not_have_wwpns(vios_w, ['C05076079CFF0E56',
+                                                     'C05076079CFF0E57'])
+
+            return vios_w.entry
+        self.adpt.update_by_path.side_effect = mock_update
+
+        maps = [('10000090FA5371F2', 'C05076079CFF0E57 C05076079CFF0E56')]
+
+        # Now call the remove action
         vfc_mapper.remove_npiv_port_mappings(
             self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
             maps)
