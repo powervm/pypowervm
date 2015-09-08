@@ -568,3 +568,25 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
                                       p_port.name, client_wwpns=v_wwpns)
     vios_w.vfc_mappings.append(vfc_map)
     return vfc_map
+
+
+def has_client_wwpns(vios_wraps, client_wwpn_pair):
+    """Returns true if the client WWPNs exist on the system.
+
+    :param vios_wraps: The VIOS wrappers.  Should be queried with the
+                       FC_MAPPING extended attribute.
+    :param client_wwpn_pair: The pair (list or set) of the client WWPNs.
+    :return: The VIOS wrapper containing the wwpn pair.  None if none contain
+             the pair.
+    """
+    client_wwpn_pair = [u.sanitize_wwpn_for_api(x) for x in client_wwpn_pair]
+
+    for vios_wrap in vios_wraps:
+        for vfc_map in vios_wrap.vfc_mappings:
+            if vfc_map.client_adapter is None:
+                continue
+
+            if set(vfc_map.client_adapter.wwpns) == set(client_wwpn_pair):
+                return vios_wrap
+
+    return None
