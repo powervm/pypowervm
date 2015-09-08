@@ -311,9 +311,14 @@ class TestPortMappings(twrap.TestWrapper):
         fabric_A_wwpns = ['10000090FA5371F2']
         fabric_B_wwpns = ['10000090FA5371F1']
 
-        # Fake Virtual WWPNs
-        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        v_fabric_B_wwpns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+        # Fake Virtual WWPNs.  Include some existing WWPNs to make sure they
+        # do NOT get added.  mock_update will ensure they don't get added.
+        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                            'c05076079cff0e56', 'c05076079cff0e57']
+
+        # Throw the existing into the front, to catch any edge cases.
+        v_fabric_B_wwpns = ['c05076079cff08da', 'c05076079cff08db',
+                            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
         # Get the mappings
         fabric_A_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_A_wwpns,
@@ -578,16 +583,22 @@ class TestPortMappings(twrap.TestWrapper):
     def test_has_client_wwpns(self):
         v_wrap_1 = self.entries[0]
         v_wrap_2 = self.entries[1]
-        self.assertEqual(v_wrap_1, vfc_mapper.has_client_wwpns(
-            self.entries, ['c05076079cff0e56', 'c05076079cff0e57']))
+        vio_w, vfc_map = vfc_mapper.has_client_wwpns(
+            self.entries, ['c05076079cff0e56', 'c05076079cff0e57'])
+        self.assertEqual(v_wrap_1, vio_w)
+        self.assertEqual('10000090FA5371F2', vfc_map.backing_port.wwpn)
 
         # Second vios.  Reversed WWPNs.  Mixed Case.
-        self.assertEqual(v_wrap_2, vfc_mapper.has_client_wwpns(
-            self.entries, ['c05076079cff0e83', 'c05076079cff0E82']))
+        vio_w, vfc_map = vfc_mapper.has_client_wwpns(
+            self.entries, ['c05076079cff0e83', 'c05076079cff0E82'])
+        self.assertEqual(v_wrap_2, vio_w)
+        self.assertEqual('10000090FA537209', vfc_map.backing_port.wwpn)
 
         # Not found.
-        self.assertIsNone(vfc_mapper.has_client_wwpns(
-            self.entries, ['AAA', 'bbb']))
+        vio_w, vfc_map = vfc_mapper.has_client_wwpns(
+            self.entries, ['AAA', 'bbb'])
+        self.assertIsNone(vio_w)
+        self.assertIsNone(vfc_map)
 
 
 class TestAddRemoveMap(twrap.TestWrapper):

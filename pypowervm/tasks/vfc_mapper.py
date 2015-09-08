@@ -137,9 +137,22 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     # Up front sanitization of all the p_port_wwpns
     p_port_wwpns = list(map(u.sanitize_wwpn_for_api, p_port_wwpns))
 
+    existing_maps = []
+    new_fused_wwpns = []
+
+    # Detect if any mappings already exist on the system.  If so, preserve them
+    for fused_v_wwpn in fused_v_port_wwpns:
+        # If the mapping already exists, then add it to the existing maps.
+        vios_w, vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))
+        if vfc_map is not None:
+            mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
+            existing_maps.append(mapping)
+        else:
+            new_fused_wwpns.append(fused_v_wwpn)
+
     # Determine how many mappings are needed.
-    needed_maps = len(fused_v_port_wwpns)
-    resp_maps = []
+    needed_maps = len(new_fused_wwpns)
+    newly_built_maps = []
 
     next_vio_pos = 0
     fuse_map_pos = 0
@@ -149,12 +162,14 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     # should be done by VIOS) and if there are ports on that VIOS, will add
     # them to the mapping.
     #
-    # There does need to be a rate limiter here though.  If none of the VIOSes
-    # are servicing the request, then this has potential to be infinite loop.
+    # There is a rate limiter here though.  If none of the VIOSes are servicing
+    # the request, then this has potential to be infinite loop.  The rate
+    # limiter detects such a scenario and will prevent it from occurring.  In
+    # these cases the UnableToFindFCPortMap exception is raised.
     #
     # As such, limit it such that if no VIOS services the request, we break
     # out of the loop and throw error.
-    while len(resp_maps) < needed_maps:
+    while len(newly_built_maps) < needed_maps:
         # Walk through each VIOS.
         vio = vios_wraps[next_vio_pos]
         loops_since_last_add += 1
@@ -175,19 +190,21 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
 
         # Next, from the potential ports, find the PhysFCPort that we should
         # use for the mapping.
-        new_map_port = _find_map_port(potential_ports, resp_maps)
+        new_map_port = _find_map_port(potential_ports,
+                                      newly_built_maps + existing_maps)
         if new_map_port is None:
             # If there was no mapping port, then we should continue on to
             # the next VIOS.
             continue
 
         # Add the mapping!
-        mapping = (new_map_port.wwpn, fused_v_port_wwpns[fuse_map_pos])
+        mapping = (new_map_port.wwpn, new_fused_wwpns[fuse_map_pos])
         fuse_map_pos += 1
-        resp_maps.append(mapping)
+        newly_built_maps.append(mapping)
         loops_since_last_add = 0
 
-    return resp_maps
+    # Mesh together the existing mapping lists plus the newly built ports.
+    return newly_built_maps + existing_maps
 
 
 def _find_map_port(potential_ports, mappings):
@@ -572,13 +589,14 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
 
 
 def has_client_wwpns(vios_wraps, client_wwpn_pair):
-    """Returns the vios wrapper if the client WWPNs exist on the system.
+    """Returns the vios wrapper and vfc map if the client WWPNs already exist.
 
     :param vios_wraps: The VIOS wrappers.  Should be queried with the
                        FC_MAPPING extended attribute.
     :param client_wwpn_pair: The pair (list or set) of the client WWPNs.
-    :return: The VIOS wrapper containing the wwpn pair.  None if none contain
-             the pair.
+    :return vios_w: The VIOS wrapper containing the wwpn pair.  None if none
+                    of the wrappers contain the pair.
+    :return vfc_map: The mapping containing the client pair.  May be None.
     """
     client_wwpn_pair = set([u.sanitize_wwpn_for_api(x)
                             for x in client_wwpn_pair])
@@ -588,7 +606,9 @@ def has_client_wwpns(vios_wraps, client_wwpn_pair):
             if vfc_map.client_adapter is None:
                 continue
 
-            if set(vfc_map.client_adapter.wwpns) == client_wwpn_pair:
-                return vios_wrap
+            pair = set([u.sanitize_wwpn_for_api(x)
+                        for x in vfc_map.client_adapter.wwpns])
+            if pair == client_wwpn_pair:
+                return vios_wrap, vfc_map
 
-    return None
+    return None, None
