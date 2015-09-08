@@ -130,9 +130,8 @@ class Job(ewrap.EntryWrapper):
             # See if there is a stack trace to log
             stack_trace = self._get_val_str(_JOB_STACKTRACE, default)
             if stack_trace:
-                exc = pvmex.JobRequestFailed(
-                    operation_name=self.op, error=stack_trace)
-                LOG.error(_('%s') % exc)
+                LOG.error(pvmex.JobRequestFailed(operation_name=self.op,
+                                                 error=stack_trace))
         return job_message
 
     def get_job_results_message(self, default=''):

@@ -99,7 +99,7 @@ def calculate_memory_overhead_on_host(adapter, host_uuid,
         results = job_wrapper.get_job_results_as_dict()
     except Exception as error:
         LOG.error(_("Error obtaining host memory overhead for host "
-                    "with UUID '%(host)s' %(error)s.") %
+                    "with UUID '%(host)s': %(error)s.") %
                   {'host': host_uuid, 'error': error})
         LOG.debug("Defaulting required memory overhead for host with UUID "
                   "'%s' to %d MB" % (host_uuid, default))
