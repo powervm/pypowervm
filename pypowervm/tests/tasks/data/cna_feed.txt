@@ -1,0 +1,93 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+####################################################
+INFO{
+{'comment': 'Use for Client Network Adapter Testing.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'VirtualIOServer/056D8CBE-82B5-4890-B581-FC3DB3161DB3/ClientNetworkAdapter'}
+END OF SECTION}
+HEADERS{
+{'content-length': '31567', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000qnsHzMw-UAQPrFwtNaS5qcC:945f5b75-c329-4322-89cf-e90b74473dc9; Path=/; Secure; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Wed, 05 Feb 2014 13:53:20 GMT', 'etag': '378412626', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Wed, 05 Feb 2014 13:53:19 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>fcc16de4-513d-3ea7-a321-575805b6f65e</id>
+    <updated>2015-09-09T11:11:43.636-05:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/1300C76F-9814-4A4D-B1F0-5B69352A7DEA/ClientNetworkAdapter?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>4204d084-77a5-329c-9d3b-2f5ccffe2803</id>
+        <title>ClientNetworkAdapter</title>
+        <published>2015-09-09T11:11:43.665-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/1300C76F-9814-4A4D-B1F0-5B69352A7DEA/ClientNetworkAdapter/4204d084-77a5-329c-9d3b-2f5ccffe2803?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-132918571</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=ClientNetworkAdapter">
+            <ClientNetworkAdapter:ClientNetworkAdapter xmlns:ClientNetworkAdapter="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4204d084-77a5-329c-9d3b-2f5ccffe2803</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D0A-V2-C3</DynamicReconfigurationConnectorName>
+    <LocationCode kxe="false" kb="ROR">U8247.22L.2125D0A-V2-C3</LocationCode>
+    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">3</VirtualSlotNumber>
+    <MACAddress kxe="false" kb="CUR">2AE44C673DFA</MACAddress>
+    <PortVLANID kxe="false" kb="CUR">1</PortVLANID>
+    <TaggedVLANIDs kb="CUA" kxe="false"/>
+    <TaggedVLANSupported kxe="false" kb="CUA">true</TaggedVLANSupported>
+    <AssociatedVirtualSwitch kb="CUD" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualSwitch/ec8aaa54-9837-3c23-a541-a4e4be3ae489" rel="related"/>
+    </AssociatedVirtualSwitch>
+    <VirtualSwitchID kxe="false" kb="ROR">0</VirtualSwitchID>
+    <TrunkPriority kxe="false" kb="CUD">1</TrunkPriority>
+    <VirtualNetworks kb="CUR" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualNetwork/eaf305f9-0fbb-31e3-a51b-44e7c7ff8b3a" rel="related"/>
+    </VirtualNetworks>
+</ClientNetworkAdapter:ClientNetworkAdapter>
+        </content>
+    </entry>
+    <entry>
+        <id>6a7bda96-bac7-3b96-9208-991e024fc0f9</id>
+        <title>ClientNetworkAdapter</title>
+        <published>2015-09-09T11:11:43.666-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/1300C76F-9814-4A4D-B1F0-5B69352A7DEA/ClientNetworkAdapter/6a7bda96-bac7-3b96-9208-991e024fc0f9?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-788086984</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=ClientNetworkAdapter">
+            <ClientNetworkAdapter:ClientNetworkAdapter xmlns:ClientNetworkAdapter="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6a7bda96-bac7-3b96-9208-991e024fc0f9</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D0A-V2-C6</DynamicReconfigurationConnectorName>
+    <LocationCode kxe="false" kb="ROR">U8247.22L.2125D0A-V2-C6</LocationCode>
+    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">6</VirtualSlotNumber>
+    <MACAddress kxe="false" kb="CUR">92B22C0F30BD</MACAddress>
+    <PortVLANID kxe="false" kb="CUR">4094</PortVLANID>
+    <TaggedVLANIDs kb="CUA" kxe="false"/>
+    <TaggedVLANSupported kxe="false" kb="CUA">true</TaggedVLANSupported>
+    <AssociatedVirtualSwitch kb="CUD" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualSwitch/e478fb72-2679-3973-8981-66a26af6f7e1" rel="related"/>
+    </AssociatedVirtualSwitch>
+    <VirtualSwitchID kxe="false" kb="ROR">1</VirtualSwitchID>
+    <VirtualNetworks kb="CUR" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualNetwork/97dcfc86-93a2-30ce-8904-bf8292852bad" rel="related"/>
+    </VirtualNetworks>
+</ClientNetworkAdapter:ClientNetworkAdapter>
+        </content>
+    </entry>
+</feed>
+
+
+END OF SECTION}
