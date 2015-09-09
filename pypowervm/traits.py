@@ -91,3 +91,8 @@ class APITraits(object):
     def has_high_slot(self):
         """Does the API support UseNextAvailableHighSlotID?"""
         return not self._is_hmc
+
+    @property
+    def hmc_as_ibmi_console(self):
+        """Is the console of IBMi HMC?"""
+        return self._is_hmc
