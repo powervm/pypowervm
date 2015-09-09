@@ -448,6 +448,10 @@ class TestNetwork(twrap.TestWrapper):
         self.dwrap.seas = sea_copy
         self.assertEqual(1, len(self.dwrap.seas))
 
+        # Test the 'contains_device' method within the SEA.
+        self.assertTrue(new_sea.contains_device('ent5'))
+        self.assertFalse(new_sea.contains_device('ent2'))
+
     def test_sea_trunks(self):
         """Tests the trunk adapters on the SEA."""
         sea = self.dwrap.seas[0]
@@ -578,6 +582,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
         self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
         self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertEqual('Unknown', ta.dev_name)
 
         # Swap to HMC - should *not* use High
         self.adptfx.set_traits(fx.RemoteHMCTraits)
@@ -587,6 +592,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
         self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
         self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertEqual('Unknown', cna.dev_name)
 
     def test_attrs(self):
         """Test getting the attributes."""
