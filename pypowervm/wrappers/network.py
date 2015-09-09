@@ -128,6 +128,7 @@ _VNET_VLAN_ID = 'NetworkVLANID'
 _VNET_SW_ID = 'VswitchID'
 _VNET_TAG = 'TaggedNetwork'
 
+_VADPT_DEV_NAME = 'DeviceName'
 _VADPT_LOCATION_CODE = 'LocationCode'
 _VADPT_MAC_ADDR = 'MACAddress'
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
@@ -664,6 +665,23 @@ class SEA(ewrap.ElementWrapper):
         """
         return self._get_val_str(_SEA_CONFIGURATION_STATE)
 
+    def contains_device(self, dev_name):
+        """Returns if one of the child adapters is owned by this SEA.
+
+        A child adapter is either the primary adapter, control channel, or
+        is one of the additional adapters.
+
+        :param dev_name: The name of the child device.
+        :return: True if owned by this SEA, False otherwise.
+        """
+        if self.control_channel == dev_name:
+            return True
+
+        if self.primary_adpt.dev_name == dev_name:
+            return True
+
+        return dev_name in [x.dev_name for x in self.addl_adpts]
+
 
 @ewrap.ElementWrapper.pvm_type('TrunkAdapter', child_order=_TA_EL_ORDER)
 class TrunkAdapter(ewrap.ElementWrapper):
@@ -718,7 +736,7 @@ class TrunkAdapter(ewrap.ElementWrapper):
 
         If RMC is down, will not be available.
         """
-        return self._get_val_str(_TA_DEV_NAME)
+        return self._get_val_str(_TA_DEV_NAME, 'Unknown')
 
     @property
     def has_tag_support(self):
@@ -1148,6 +1166,14 @@ class CNA(ewrap.EntryWrapper):
     def vswitch_id(self):
         """Returns the ID (typically 0-15) for the virtual switch."""
         return self._get_val_int(_VADPT_VSWITCH_ID)
+
+    @property
+    def dev_name(self):
+        """Returns the name of the device (if available).
+
+        If RMC is down, will not be available.
+        """
+        return self._get_val_str(_VADPT_DEV_NAME)
 
     @property
     def trunk_pri(self):

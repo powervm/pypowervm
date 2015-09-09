@@ -26,6 +26,7 @@ from pypowervm import util as pvm_util
 from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
+from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 _MAX_VLANS_PER_VEA = 20
 
@@ -125,6 +126,7 @@ class NetworkBridger(object):
         """
         self.adapter = adapter
         self.host_uuid = host_uuid
+        self.orphan_map = None
 
     @pvm_retry.retry()
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
@@ -194,6 +196,11 @@ class NetworkBridger(object):
                                                          others=vlan_ids)
                 self._reassign_arbitrary_vid(vlan_id, new_a_vid, req_nb)
                 return self.ensure_vlans_on_nb(nb_uuid, vlan_ids)
+
+            # At this point, we've done all the easy checks.  Next up is to
+            # detect if it is an orphan.
+            self._validate_orphan(vlan_id, req_nb.vswitch_id,
+                                  pvm_exc.OrphanVLANFoundOnProvision)
 
             # Lastly, if we're here...it must be a completely new VLAN.
             new_vlans.append(vlan_id)
@@ -348,6 +355,116 @@ class NetworkBridger(object):
             if other_vs_id == vs_search_id:
                 ret.append(nb_elem)
         return ret
+
+    def _validate_orphan(self, vlan, vswitch_id, error_class):
+        """Will throw an error if there is collision with VLAN and vSwitch.
+
+        An orphan VLAN is defined as a VLAN (on a specific vSwitch) that is
+        part of a VIOS, but not attached to a Network Bridge (ex. Shared
+        Ethernet Adapter).
+
+        This method will raise the error_class passed in if there is an orphan
+        VLAN found.
+
+        Input into the exception will be the dev_name (may be Unknown), vlan,
+        and the VIOS name.
+
+        :param vlan: The VLAN to query for.
+        :param vswitch_id: The virtual switch identifier.  This is the short
+                           number (0-15).
+        :param error_class: The exception to raise.  Should take in a dev_name,
+                            vlan_id (number), and vios_name.
+        :raises: Error class if an orphan is found.
+        """
+        if self.orphan_map is None:
+            self._build_orphan_map()
+
+        # If no oprhans on the vSwitch, then we're fine.
+        if self.orphan_map.get(vswitch_id) is None:
+            return False
+
+        # Walk through each element.
+        for vios_name, devices in self.orphan_map[vswitch_id].items():
+            for dev_name, vlans in devices.items():
+                if vlan in vlans:
+                    raise error_class(dev_name=dev_name, vlan_id=vlan,
+                                      vios=vios_name)
+
+    def _build_orphan_map(self):
+        """Builds the map of orphan VLANs per vSwitch.
+
+        Will set the orphan_map variable.  The result will be of the following
+        format:
+
+        { 'vswitch_id': {'vios_name': { 'dev_name': ['vlan_ids']} } }
+
+        This call should be used sparingly.  The map is only built if
+        provisioning a new VLAN or removing one.  The calls that this makes are
+        expensive, but necessary for correctness.  This is why they are lazy
+        loaded, as many calls may not even need this map.
+        """
+        # Wipe out the existing map.
+        self.orphan_map = {}
+
+        # Loop through all the VIOSes.
+        vios_feed = self.adapter.read(
+            pvm_ms.System.schema_type, root_id=self.host_uuid,
+            child_type=pvm_vios.VIOS.schema_type,
+            xag=[pvm_vios.VIOS.xags.NETWORK])
+        vios_wraps = pvm_vios.VIOS.wrap(vios_feed)
+
+        for vios_w in vios_wraps:
+            # List all of the trunk adapters that are not part of the SEAs
+            orphan_trunks = []
+            for trunk in vios_w.trunk_adapters:
+                # If the trunk has the same device ID as any of the SEAs
+                # children, then it is not an orphan.
+                found = False
+                for sea in vios_w.seas:
+                    if sea.contains_device(trunk.dev_name):
+                        found = True
+                        break
+
+                # If the device was not found, then it (and its VLANs) are
+                # orphans to this VIOS.
+                if not found:
+                    orphan_trunks.append(trunk)
+
+            # At this point, we know all the orphans for this VIOS.  Add them
+            # to the map.
+            for orphan_trunk in orphan_trunks:
+                vlans = [orphan_trunk.pvid] + orphan_trunk.tagged_vlans
+                self._put_orphan_in_map(vios_w, orphan_trunk.vswitch_id,
+                                        orphan_trunk.dev_name, vlans)
+
+            # Now see if there are any client network adapters (non-trunk)
+            cna_feed = self.adapter.read(
+                pvm_vios.VIOS.schema_type, root_id=vios_w.uuid,
+                child_type=pvm_net.CNA.schema_type)
+            cna_wraps = pvm_net.CNA.wrap(cna_feed)
+
+            # ALL client network adapters on a VIOS are considered orphans.
+            for cna_w in cna_wraps:
+                vlans = [cna_w.pvid] + cna_w.tagged_vlans
+                self._put_orphan_in_map(vios_w, cna_w.vswitch_id,
+                                        cna_w.dev_name, vlans)
+
+    def _put_orphan_in_map(self, vios_w, vswitch_id, dev_name, vlan_ids):
+        # Make sure the orphan map is initialized and ready.
+        if self.orphan_map is None:
+            self.orphan_map = {}
+        if self.orphan_map.get(vswitch_id) is None:
+            self.orphan_map[vswitch_id] = {}
+        if self.orphan_map[vswitch_id].get(vios_w.name) is None:
+            self.orphan_map[vswitch_id][vios_w.name] = {}
+
+        vio_part = self.orphan_map[vswitch_id][vios_w.name]
+
+        # We can't just replace the device name.  The name may be 'Unknown',
+        # so we just keep appending.
+        if vio_part.get(dev_name) is None:
+            vio_part[dev_name] = []
+        vio_part[dev_name].extend(vlan_ids)
 
     def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.

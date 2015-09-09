@@ -109,6 +109,15 @@ class PvidOfNetworkBridgeError(AbstractMsgFmtError):
                 "Identifier on a different Network Bridge.")
 
 
+class OrphanVLANFoundOnProvision(AbstractMsgFmtError):
+    msg_fmt = _("Unable to provision VLAN %(vlan_id)d.  It appears to be "
+                "contained on device '%(dev_name)s' on Virtual I/O Server "
+                "%(vios)s.  That device is not connected to any Network "
+                "Bridge (Shared Ethernet Adapter).  Please manually remove "
+                "the device or add it to the Network Bridge before "
+                "continuing.")
+
+
 class DuplicateLUNameError(AbstractMsgFmtError):
     msg_fmt = _("A Logical Unit with name %(lu_name)s already exists on "
                 "Shared Storage Pool %(ssp_name)s.")
