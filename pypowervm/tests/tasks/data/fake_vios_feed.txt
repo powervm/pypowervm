@@ -630,6 +630,28 @@ BODY{
             <DeviceName kb="ROR" kxe="false">ent8</DeviceName>
             <TrunkPriority kb="CUD" kxe="false">2</TrunkPriority>
         </TrunkAdapter>
+        <TrunkAdapter schemaVersion="V1_1_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U7895.43X.21EF9FB-V2-C4</DynamicReconfigurationConnectorName>
+            <LocationCode kb="ROR" kxe="false">U7895.43X.21EF9FB-V2-C4</LocationCode>
+            <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+            <VariedOn kb="CUD" kxe="true">true</VariedOn>
+            <VirtualSlotNumber kb="COD" kxe="false">8</VirtualSlotNumber>
+            <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+            <MACAddress kb="CUR" kxe="false">B28471747604</MACAddress>
+            <PortVLANID kb="CUR" kxe="false">4092</PortVLANID>
+            <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+            <TaggedVLANIDs kb="CUA" kxe="false">2018 2019</TaggedVLANIDs>
+            <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+            <AssociatedVirtualSwitch kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualSwitch/f5ea94ba-0646-3999-bd9a-e97b76803c76" rel="related"/>
+            </AssociatedVirtualSwitch>
+            <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+            <DeviceName kb="ROR" kxe="false">ent11</DeviceName>
+            <TrunkPriority kb="CUD" kxe="false">2</TrunkPriority>
+        </TrunkAdapter>
     </TrunkAdapters>
     <VirtualIOServerLicenseAccepted kb="CUD" kxe="false">true</VirtualIOServerLicenseAccepted>
     <VirtualFibreChannelMappings group="ViosFCMapping" kb="CUD" kxe="false" schemaVersion="V1_1_0">
