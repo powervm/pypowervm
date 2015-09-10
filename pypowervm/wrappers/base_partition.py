@@ -56,7 +56,7 @@ _BP_PROG_STATE = 'ProgressState'
 _BP_RMC_STATE = 'ResourceMonitoringControlState'
 _BP_RMC_IP = 'ResourceMonitoringIPAddress'
 _BP_VAL_INT_PERF = 'ValidInteractivePerformance'
-_BP_ASSOCIATED_SYSTEM = 'AssociatedManagedSystem'
+_BP_ASSOC_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
@@ -65,6 +65,12 @@ _BP_MAC_PREF = 'MACAddressPrefix'
 _BP_SVC_PARTITION = 'IsServicePartition'
 _BP_REF_CODE = 'ReferenceCode'
 _BP_MGT_PARTITION = 'IsManagementPartition'
+_BP_AUTO_START = 'AutoStart'
+_BP_BOOT_MODE = 'BootMode'
+_BP_ASSOC_GROUPS = 'AssociatedGroups'
+_BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
+_BP_ASSOC_TASKS = 'AssociatedTasks'
+_BP_DESC = 'Description'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -75,9 +81,11 @@ BP_EL_ORDER = (
     _BP_CAPABILITIES, _BP_ID, _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG,
     _BP_PROFS, _BP_STATE, _BP_TYPE, _BP_UUID, _BP_PENDING_PROC_MODE,
     _BP_PROC_POOL, _BP_PROG_DATA_REMAIN, _BP_PROG_DATA_TOTAL, _BP_PROG_STATE,
-    _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOCIATED_SYSTEM,
+    _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOC_SYSTEM,
     _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
-    _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION
+    _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION, _BP_AUTO_START,
+    _BP_BOOT_MODE, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS,
+    _BP_DESC
 )
 
 # Partition Capabilities (_CAP)
@@ -375,7 +383,7 @@ class BasePartition(ewrap.EntryWrapper):
     @property
     def assoc_sys_uuid(self):
         """UUID of the associated ManagedSystem."""
-        href = self.get_href(_BP_ASSOCIATED_SYSTEM, one_result=True)
+        href = self.get_href(_BP_ASSOC_SYSTEM, one_result=True)
         return u.get_req_path_uuid(href, preserve_case=True) if href else None
 
     @property
@@ -385,6 +393,15 @@ class BasePartition(ewrap.EntryWrapper):
         e.g. 'active', 'inactive', 'busy', etc.
         """
         return self._get_val_str(_BP_RMC_STATE)
+
+    @property
+    def operating_system(self):
+        """String representing the OS and version, or 'Unknown'."""
+        return self._get_val_str(_BP_OS_VER, 'Unknown')
+
+    @property
+    def ref_code(self):
+        return self._get_val_str(_BP_REF_CODE)
 
     @property
     def avail_priority(self):
