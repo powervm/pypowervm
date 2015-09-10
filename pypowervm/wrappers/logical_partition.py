@@ -26,29 +26,35 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
-_LPAR_ASSOCIATED_GROUPS = 'AssociatedGroups'
-_LPAR_ASSOCIATED_TASKS = 'AssociatedTasks'
 _LPAR_VFCA = 'VirtualFibreChannelClientAdapters'
 _LPAR_VSCA = 'VirtualSCSIClientAdapters'
 _LPAR_DED_NICS = 'DedicatedVirtualNICs'
-
-_HOST_CHANNEL_ADAPTERS = 'HostChannelAdapters'
-
-
-_RESTRICTED_IO = 'IsRestrictedIOPartition'
-_RR = 'RemoteRestartCapable'
-_RR_STATE = 'RemoteRestartState'
-_SRR = 'SimplifiedRemoteRestartCapable'
-_DESIGNATED_IPL_SRC = 'DesignatedIPLSource'
-
-_OPERATING_SYSTEM_VER = 'OperatingSystemVersion'
-
-_REF_CODE = 'ReferenceCode'
-_MIGRATION_STATE = 'MigrationState'
+_LPAR_MIG_STG_VIOS_DATA_STATUS = 'MigrationStorageViosDataStatus'
+_LPAR_MIG_STG_VIOS_DATA_TIME = 'MigrationStorageViosDataTimestamp'
+_LPAR_RR = 'RemoteRestartCapable'
+_LPAR_SRR = 'SimplifiedRemoteRestartCapable'
+_LPAR_HAS_DED_PROCS_FOR_MIG = 'HasDedicatedProcessorsForMigration'
+_LPAR_SUSPEND_CAP = 'SuspendCapable'
+_LPAR_MIG_STATE = 'MigrationState'
+_LPAR_RR_STATE = 'RemoteRestartState'
+_LPAR_POWER_MGT_MODE = 'PowerManagementMode'
+_LPAR_USES_HSL_OPTICONN = 'UsesHighSpeedLinkOpticonnect'
+_LPAR_USES_VIRT_OPTICONN = 'UsesVirtualOpticonnect'
+_LPAR_VFC_CLIENT_ADPTS = 'VirtualFibreChannelClientAdapters'
+_LPAR_VSCSI_CLIENT_ADPTS = 'VirtualSCSIClientAdapters'
+_LPAR_RESTRICTED_IO = 'IsRestrictedIOPartition'
+_LPAR_STG_DEV_UDID = 'StorageDeviceUniqueDeviceID'
+_LPAR_DES_IPL_SRC = 'DesignatedIPLSource'
+_LPAR_DED_VNICS = 'DedicatedVirtualNICs'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
-    _LPAR_ASSOCIATED_GROUPS, _LPAR_ASSOCIATED_TASKS, _LPAR_VFCA, _LPAR_VSCA,
-    _LPAR_DED_NICS, _RR, _SRR, _RR_STATE, _RESTRICTED_IO, _DESIGNATED_IPL_SRC)
+    _LPAR_VFCA, _LPAR_VSCA, _LPAR_DED_NICS, _LPAR_MIG_STG_VIOS_DATA_STATUS,
+    _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR, _LPAR_SRR,
+    _LPAR_HAS_DED_PROCS_FOR_MIG, _LPAR_SUSPEND_CAP, _LPAR_MIG_STATE,
+    _LPAR_RR_STATE, _LPAR_POWER_MGT_MODE, _LPAR_USES_HSL_OPTICONN,
+    _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS, _LPAR_VSCSI_CLIENT_ADPTS,
+    _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID, _LPAR_DES_IPL_SRC,
+    _LPAR_DED_VNICS)
 
 
 class IPLSrc(object):
@@ -206,17 +212,12 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         e.g. 'Not_Migrating', 'Migration_Starting', 'Migration_Failed', etc.
         Defaults to 'Not_Migrating'
         """
-        return self._get_val_str(_MIGRATION_STATE, 'Not_Migrating')
-
-    @property
-    def operating_system(self):
-        """String representing the OS and version, or 'Unknown'."""
-        return self._get_val_str(_OPERATING_SYSTEM_VER, 'Unknown')
+        return self._get_val_str(_LPAR_MIG_STATE, 'Not_Migrating')
 
     @property
     def rr_enabled(self):
         """Remote Restart capable?"""
-        return self._get_val_bool(_RR, False)
+        return self._get_val_bool(_LPAR_RR, False)
 
     @rr_enabled.setter
     def rr_enabled(self, value):
@@ -224,11 +225,11 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
         LPAR must be powered off.
         """
-        self.set_parm_value(_RR, u.sanitize_bool_for_api(value))
+        self.set_parm_value(_LPAR_RR, u.sanitize_bool_for_api(value))
 
     @property
     def rr_state(self):
-        return self._get_val_str(_RR_STATE)
+        return self._get_val_str(_LPAR_RR_STATE)
 
     @property
     def srr_enabled(self):
@@ -236,36 +237,33 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
         :returns: Returns SRR config boolean
         """
-        return self._get_val_bool(_SRR, False)
+        return self._get_val_bool(_LPAR_SRR, False)
 
     @srr_enabled.setter
     def srr_enabled(self, value):
-        self.set_parm_value(_SRR, u.sanitize_bool_for_api(value),
+        self.set_parm_value(_LPAR_SRR, u.sanitize_bool_for_api(value),
                             attrib=pc.ATTR_SCHEMA120)
 
     @property
-    def ref_code(self):
-        return self._get_val_str(_REF_CODE)
-
-    @property
     def restrictedio(self):
-        return self._get_val_bool(_RESTRICTED_IO, False)
+        return self._get_val_bool(_LPAR_RESTRICTED_IO, False)
 
     @restrictedio.setter
     def restrictedio(self, value):
-        self.set_parm_value(_RESTRICTED_IO, u.sanitize_bool_for_api(value))
+        self.set_parm_value(_LPAR_RESTRICTED_IO,
+                            u.sanitize_bool_for_api(value))
 
     @property
     def desig_ipl_src(self):
         """Designated IPL Source - see IPLSrc enumeration."""
-        return self._get_val_str(_DESIGNATED_IPL_SRC)
+        return self._get_val_str(_LPAR_DES_IPL_SRC)
 
     @desig_ipl_src.setter
     def desig_ipl_src(self, value):
         """Designated IPL Source - see IPLSrc enumeration."""
         if value not in IPLSrc.ALL_VALUES:
             raise ValueError(_("Invalid IPLSrc '%s'.") % value)
-        self.set_parm_value(_DESIGNATED_IPL_SRC, value)
+        self.set_parm_value(_LPAR_DES_IPL_SRC, value)
 
     def set_uuid(self, value):
         # LPAR uuids must be uppercase.

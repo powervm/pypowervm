@@ -332,13 +332,13 @@ class TestLogicalPartition(testtools.TestCase):
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
 
         # Check if restricted I/O is off.
-        wrap.set_parm_value(lpar._RESTRICTED_IO, 'False')
+        wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'False')
         val, reason = wrap.can_lpm(mock.ANY)
         self.assertFalse(val)
         self.assertIn('restricted I/O', reason)
 
         # Turn restricted I/O on, but get a host without the mobility cap
-        wrap.set_parm_value(lpar._RESTRICTED_IO, 'True')
+        wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'True')
         host_w = mock.MagicMock()
         host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
                                                 False}
