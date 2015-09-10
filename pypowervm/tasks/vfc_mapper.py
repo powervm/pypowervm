@@ -470,7 +470,7 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
             if v_wwpns == [_ANY_WWPN, _ANY_WWPN]:
                 if vfc_map.client_adapter.wwpns != []:
                     continue
-            elif vfc_map.client_adapter.wwpns != v_wwpns:
+            elif set(vfc_map.client_adapter.wwpns) != set(v_wwpns):
                 continue
 
         # Found a match!
@@ -496,6 +496,7 @@ def remove_maps(v_wrap, client_lpar_id, client_adpt=None, port_map=None):
     :return: The mappings removed from the VIOS wrapper.
     """
     resp_list = []
+
     for matching_map in find_maps(v_wrap.vfc_mappings, client_lpar_id,
                                   client_adpt=client_adpt,
                                   port_map=port_map):
