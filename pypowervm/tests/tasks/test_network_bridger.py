@@ -29,6 +29,7 @@ from pypowervm.wrappers import network as pvm_net
 
 MGR_NET_BR_FAILOVER_FILE = 'nbbr_network_bridge_failover.txt'
 MGR_NET_BR_FILE = 'nbbr_network_bridge.txt'
+MGR_NET_BR_PEER_FILE = 'nbbr_network_bridge_peer.txt'
 MGR_VNET_FILE = 'nbbr_virtual_network.txt'
 MGR_VSW_FILE = 'nbbr_virtual_switch.txt'
 ORPHAN_VIOS_FEED = 'fake_vios_feed.txt'
@@ -59,6 +60,7 @@ class TestNetworkBridger(testtools.TestCase):
 
         self.mgr_nbr_resp = resp(MGR_NET_BR_FILE)
         self.mgr_nbr_fo_resp = resp(MGR_NET_BR_FAILOVER_FILE)
+        self.mgr_nbr_peer_resp = resp(MGR_NET_BR_PEER_FILE)
         self.mgr_vnet_resp = resp(MGR_VNET_FILE)
         self.mgr_vsw_resp = resp(MGR_VSW_FILE)
         self.orphan_vio_resp = resp(ORPHAN_VIOS_FEED)
@@ -66,6 +68,7 @@ class TestNetworkBridger(testtools.TestCase):
 
         self.host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
         self.nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
+        self.nb_uuid_peer = '9af89d52-5892-11e5-885d-feff819cdc9f'
 
     def test_ensure_vlan_on_nb(self):
         """This does a happy path test.  Assumes VLAN on NB already.
@@ -75,6 +78,30 @@ class TestNetworkBridger(testtools.TestCase):
         self.adpt.read.return_value = self.mgr_nbr_resp
         net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2227)
         self.assertEqual(1, self.adpt.read.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger'
+                '._validate_orphan_on_ensure')
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger'
+                '.remove_vlan_from_nb')
+    def test_ensure_vlan_on_nb_wrong_peer(self, mock_remove, mock_orphan):
+        """Test moving vlan from one peer to another.
+
+        No subclass invocation.
+        """
+        self.adpt.read.side_effect = [
+            self.mgr_nbr_peer_resp, self.mgr_vsw_resp, self.mgr_vnet_resp]
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            nb = kargs[0]
+            self.assertEqual(self.nb_uuid, nb.uuid)
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
+
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 1001)
+        mock_remove.assert_called_once_with(
+            self.nb_uuid_peer, 1001, fail_if_pvid=True, existing_nbs=mock.ANY)
 
     def test_is_arbitrary_vid(self):
         nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
