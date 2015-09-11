@@ -29,10 +29,9 @@ from pypowervm.wrappers import network as pvm_net
 
 MGR_NET_BR_FAILOVER_FILE = 'nbbr_network_bridge_failover.txt'
 MGR_NET_BR_FILE = 'nbbr_network_bridge.txt'
+MGR_NET_BR_PEER_FILE = 'nbbr_network_bridge_peer.txt'
 MGR_VNET_FILE = 'nbbr_virtual_network.txt'
 MGR_VSW_FILE = 'nbbr_virtual_switch.txt'
-ORPHAN_VIOS_FEED = 'fake_vios_feed.txt'
-ORPHAN_CNA_FEED = 'cna_feed.txt'
 
 
 class TestNetworkBridger(testtools.TestCase):
@@ -59,13 +58,13 @@ class TestNetworkBridger(testtools.TestCase):
 
         self.mgr_nbr_resp = resp(MGR_NET_BR_FILE)
         self.mgr_nbr_fo_resp = resp(MGR_NET_BR_FAILOVER_FILE)
+        self.mgr_nbr_peer_resp = resp(MGR_NET_BR_PEER_FILE)
         self.mgr_vnet_resp = resp(MGR_VNET_FILE)
         self.mgr_vsw_resp = resp(MGR_VSW_FILE)
-        self.orphan_vio_resp = resp(ORPHAN_VIOS_FEED)
-        self.orphan_cna_feed = resp(ORPHAN_CNA_FEED)
 
         self.host_uuid = 'c5d782c7-44e4-3086-ad15-b16fb039d63b'
         self.nb_uuid = 'b6a027a8-5c0b-3ac0-8547-b516f5ba6151'
+        self.nb_uuid_peer = '9af89d52-5892-11e5-885d-feff819cdc9f'
 
     def test_ensure_vlan_on_nb(self):
         """This does a happy path test.  Assumes VLAN on NB already.
@@ -75,6 +74,28 @@ class TestNetworkBridger(testtools.TestCase):
         self.adpt.read.return_value = self.mgr_nbr_resp
         net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 2227)
         self.assertEqual(1, self.adpt.read.call_count)
+
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger'
+                '.remove_vlan_from_nb')
+    def test_ensure_vlan_on_nb_wrong_peer(self, mock_remove):
+        """Test moving vlan from one peer to another.
+
+        No subclass invocation.
+        """
+        self.adpt.read.side_effect = [
+            self.mgr_nbr_peer_resp, self.mgr_vsw_resp, self.mgr_vnet_resp]
+
+        def validate_of_update_nb(*kargs, **kwargs):
+            # Validate args
+            nb = kargs[0]
+            self.assertEqual(self.nb_uuid, nb.uuid)
+            return nb.entry
+
+        self.adpt.update_by_path.side_effect = validate_of_update_nb
+
+        net_br.ensure_vlan_on_nb(self.adpt, self.host_uuid, self.nb_uuid, 1001)
+        mock_remove.assert_called_once_with(
+            self.nb_uuid_peer, 1001, fail_if_pvid=True, existing_nbs=mock.ANY)
 
     def test_is_arbitrary_vid(self):
         nbs = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)
@@ -131,60 +152,6 @@ class TestNetworkBridger(testtools.TestCase):
         mock_vsw.return_value = vsw
         return nb
 
-    def test_build_orphan_map(self):
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
-        bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
-        orphan_map = bridger._build_orphan_map()
-
-        expected_map = {
-            0: {'nimbus-ch03-p2-vios1': {'Unknown': [1]},
-                'nimbus-ch03-p2-vios2': {'ent11': [4092, 2018, 2019],
-                                         'Unknown': [1]}},
-            1: {'nimbus-ch03-p2-vios1': {'Unknown': [4094]},
-                'nimbus-ch03-p2-vios2': {'Unknown': [4094]}}
-        }
-
-        self.assertEqual(expected_map, orphan_map)
-
-    def test_validate_orphan_on_ensure(self):
-        """Tests the _validate_orphan_on_ensure method."""
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
-        bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
-
-        # Test on the main vSwitch
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 1, 0)
-
-        # Test the Trunk Path - PVID and then an additional
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 4092, 0)
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 2018, 0)
-
-        # Different vSwitch
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 4094, 1)
-
-        # Shouldn't fail on a good vlan
-        bridger._validate_orphan_on_ensure(2, 0)
-
-    def test_get_orphan_vlans(self):
-        """Tests the _get_orphan_vlans method."""
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
-        bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
-
-        self.assertListEqual([], bridger._get_orphan_vlans(2))
-        self.assertListEqual([1, 2018, 2019, 4092],
-                             bridger._get_orphan_vlans(0))
-        self.assertListEqual([4094], bridger._get_orphan_vlans(1))
-
 
 class TestNetworkBridgerVNet(TestNetworkBridger):
     """General tests for the network bridge super class and the VNet impl."""
@@ -193,16 +160,11 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         super(TestNetworkBridgerVNet, self).setUp()
         self.adptfx.set_traits(fx.RemoteHMCTraits)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_get_orphan_vlans')
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_reassign_arbitrary_vid')
     @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
-    def test_ensure_vlan_on_nb_reassign(
-            self, mock_support_vlan, mock_reassign, mock_orphan_validate,
-            mock_orphans):
+    def test_ensure_vlan_on_nb_reassign(self, mock_support_vlan,
+                                        mock_reassign):
         """Validates that after update, we support the VLAN."""
         # Have the response
         self.adpt.read.return_value = self.mgr_nbr_resp
@@ -211,7 +173,6 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         # Second call, fake out that we now do.
         # Works in pairs, as there are two VLANs we're working through.
         mock_support_vlan.side_effect = [False, False, True, True]
-        mock_orphans.return_value = []
 
         # Invoke
         net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid, self.nb_uuid,
@@ -223,14 +184,11 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         # 4093 as that is also an additional VLAN.
         mock_reassign.assert_called_once_with(4094, 4092, mock.ANY)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_or_create_vnet')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet,
-                                        mock_orphan_validate):
+    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet):
         """Validates new VLAN on existing Load Group."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
@@ -260,14 +218,11 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         # Validate the calls
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_or_create_vnet')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet,
-                                         mock_orphan_validate):
+    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid, mock_find_vnet):
         """Validates new VLAN on existing Load Group."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
@@ -294,26 +249,20 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         # Validate the calls
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_get_orphan_vlans')
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_or_create_vnet')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_find_available_ld_grp')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlan_on_nb_new_lg(
-            self, mock_arb_vid, mock_avail_lg, mock_find_vnet,
-            mock_orphan_validate, mock_orphan_vlans):
+    def test_ensure_vlan_on_nb_new_lg(self, mock_arb_vid, mock_avail_lg,
+                                      mock_find_vnet):
         """Validates new VLAN on new Load Group."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_avail_lg.return_value = None
-        mock_orphan_vlans.return_value = []
 
         # Make the fake virtual networks (the new, then the arb vid)
         mock_vnet = mock.MagicMock()
@@ -440,16 +389,11 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         super(TestNetworkBridgerTA, self).setUp()
         self.adptfx.set_traits(fx.LocalPVMTraits)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_get_orphan_vlans')
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_reassign_arbitrary_vid')
     @mock.patch('pypowervm.wrappers.network.NetBridge.supports_vlan')
-    def test_ensure_vlan_on_nb_reassign(
-            self, mock_support_vlan, mock_reassign, mock_orphan_validate,
-            mock_orphan_vlans):
+    def test_ensure_vlan_on_nb_reassign(self, mock_support_vlan,
+                                        mock_reassign):
         """Validates that after update, we support the VLAN."""
         # Have the response
         self.adpt.read.return_value = self.mgr_nbr_resp
@@ -458,7 +402,6 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         # Second call, fake out that we now do.
         # Need pairs, as there are two VLANs we are passing in.
         mock_support_vlan.side_effect = [False, False, True, True]
-        mock_orphan_vlans.return_value = []
 
         # Invoke
         net_br.ensure_vlans_on_nb(self.adpt, self.host_uuid, self.nb_uuid,
@@ -470,12 +413,9 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         # 4093 as that is also an additional VLAN.
         mock_reassign.assert_called_once_with(4094, 4092, mock.ANY)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid,
-                                        mock_orphan_validate):
+    def test_ensure_vlan_on_nb_new_vlan(self, mock_arb_vid):
         """Validates new VLAN on existing Trunk Adapter."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
@@ -502,12 +442,9 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         # Validate the calls
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid,
-                                         mock_orphan_validate):
+    def test_ensure_vlans_on_nb_new_vlan(self, mock_arb_vid):
         """Validates new VLAN on existing Load Group."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
@@ -531,24 +468,18 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         # Validate the calls
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_get_orphan_vlans')
-    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridger.'
-                '_validate_orphan_on_ensure')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_find_available_trunks')
     @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
                 '_is_arbitrary_vid')
-    def test_ensure_vlan_on_nb_new_trunk(
-            self, mock_arb_vid, mock_avail_trunks, mock_orphan_validate,
-            mock_orphan_vlans):
+    def test_ensure_vlan_on_nb_new_trunk(self, mock_arb_vid,
+                                         mock_avail_trunks):
         """Validates new VLAN on new Load Group."""
         # Build the responses
         self.adpt.read.side_effect = [self.mgr_nbr_resp, self.mgr_vsw_resp,
                                       self.mgr_vnet_resp]
         mock_arb_vid.return_value = False
         mock_avail_trunks.return_value = None
-        mock_orphan_vlans.return_value = []
 
         def validate_of_update_nb(*kargs, **kwargs):
             # Validate args
