@@ -181,7 +181,7 @@ class NetworkBridger(object):
             for peer_nb in peer_nbs:
                 if peer_nb.supports_vlan(vlan_id):
                     # Remove the VLAN.
-                    self.remove_vlan_from_nb(nb_uuid, vlan_id,
+                    self.remove_vlan_from_nb(peer_nb.uuid, vlan_id,
                                              fail_if_pvid=True,
                                              existing_nbs=nb_wraps)
                     break

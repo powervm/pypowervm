@@ -1,0 +1,408 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+####################################################
+INFO{
+{'comment': 'Created by thorst.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>0ad02639-3eb2-3c5b-807a-e933548d556a</id>
+    <updated>2015-02-17T23:02:20.911Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge?group=None"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>b6a027a8-5c0b-3ac0-8547-b516f5ba6151</id>
+        <title>NetworkBridge</title>
+        <published>2015-02-17T23:02:21.590Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge/b6a027a8-5c0b-3ac0-8547-b516f5ba6151?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-43845602</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=NetworkBridge">
+            <NetworkBridge:NetworkBridge xmlns:NetworkBridge="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b6a027a8-5c0b-3ac0-8547-b516f5ba6151</AtomID>
+            <AtomCreated>1424131786240</AtomCreated>
+        </Atom>
+    </Metadata>
+    <FailoverEnabled kb="CUD" kxe="false">false</FailoverEnabled>
+    <LoadBalancingEnabled kb="CUD" kxe="false">false</LoadBalancingEnabled>
+    <LoadGroups kb="CUD" kxe="false" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <LoadGroup schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <PortVLANID kb="CUR" kxe="false">2227</PortVLANID>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D02</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">2227</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <VirtualNetworks kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/36cf4d94-d682-3962-bc86-acad65af6fbf" rel="related"/>
+            </VirtualNetworks>
+        </LoadGroup>
+        <LoadGroup schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C3</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C3</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D03</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANIDs kb="CUA" kxe="false">1000</TaggedVLANIDs>
+                    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent6</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <VirtualNetworks kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae" rel="related"/>
+            </VirtualNetworks>
+        </LoadGroup>
+    </LoadGroups>
+    <PortVLANID kb="COR" kxe="false">2227</PortVLANID>
+    <SharedEthernetAdapters kxe="false" kb="CUD" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <SharedEthernetAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssignedVirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualIOServer/3443DB77-AED1-47ED-9AA5-3DB9C6CF7089" rel="related"/>
+            <BackingDeviceChoice kb="CUD" kxe="false">
+                <EthernetBackingDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                    <Description kb="CUD" kxe="false">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                    <DeviceName kb="ROR" kxe="false">ent0</DeviceName>
+                    <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS007Y-P1-C10-T1</DynamicReconfigurationConnectorName>
+                    <PhysicalLocation kb="ROR" kxe="false">U78CB.001.WZS007Y-P1-C10-T1</PhysicalLocation>
+                    <UniqueDeviceID kb="ROR" kxe="false">13U78CB.001.WZS007Y-P1-C10-T1</UniqueDeviceID>
+                    <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <InterfaceName kb="CUD" kxe="false">en0</InterfaceName>
+                        <IPAddress kb="CUD" kxe="false">9.1.2.4</IPAddress>
+                        <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                        <State kb="CUD" kxe="false">Disconnected</State>
+                    </IPInterface>
+                </EthernetBackingDevice>
+            </BackingDeviceChoice>
+            <HighAvailabilityMode kb="CUD" kxe="false">disabled</HighAvailabilityMode>
+            <DeviceName kb="CUD" kxe="false">ent5</DeviceName>
+            <JumboFramesEnabled kxe="false" kb="UOD">false</JumboFramesEnabled>
+            <PortVLANID kb="ROR" kxe="false">2227</PortVLANID>
+            <QualityOfServiceMode kxe="false" kb="CUD">disabled</QualityOfServiceMode>
+            <QueueSize kb="UOD" kxe="false">8192</QueueSize>
+            <ThreadModeEnabled kxe="false" kb="CUD">true</ThreadModeEnabled>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D02</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">2227</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C3</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C3</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D03</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANIDs kb="CUA" kxe="false">1000</TaggedVLANIDs>
+                    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent6</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <IsPrimary kb="CUD" kxe="false">true</IsPrimary>
+            <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <InterfaceName kb="CUD" kxe="false">en5</InterfaceName>
+                <IPAddress kb="CUD" kxe="false">9.1.2.4</IPAddress>
+                <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                <State kb="CUD" kxe="false">Active</State>
+            </IPInterface>
+            <UniqueDeviceID kb="ROR" kxe="false">105a9dd36a17958199</UniqueDeviceID>
+            <LargeSend kb="CUD" kxe="false">true</LargeSend>
+        </SharedEthernetAdapter>
+    </SharedEthernetAdapters>
+    <UniqueDeviceID kb="ROR" kxe="false">0</UniqueDeviceID>
+    <VirtualNetworks kb="ROR" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/36cf4d94-d682-3962-bc86-acad65af6fbf" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae" rel="related"/>
+    </VirtualNetworks>
+</NetworkBridge:NetworkBridge>
+        </content>
+    </entry>
+    <entry>
+        <id>9af89d52-5892-11e5-885d-feff819cdc9f</id>
+        <title>NetworkBridge</title>
+        <published>2015-02-17T23:02:21.590Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/NetworkBridge/9af89d52-5892-11e5-885d-feff819cdc9f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-43845602</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=NetworkBridge">
+            <NetworkBridge:NetworkBridge xmlns:NetworkBridge="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9af89d52-5892-11e5-885d-feff819cdc9f</AtomID>
+            <AtomCreated>1424131786240</AtomCreated>
+        </Atom>
+    </Metadata>
+    <FailoverEnabled kb="CUD" kxe="false">false</FailoverEnabled>
+    <LoadBalancingEnabled kb="CUD" kxe="false">false</LoadBalancingEnabled>
+    <LoadGroups kb="CUD" kxe="false" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <LoadGroup schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <PortVLANID kb="CUR" kxe="false">2828</PortVLANID>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D02</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">2828</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <VirtualNetworks kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/a97a5706-5894-11e5-885d-feff819cdc9f" rel="related"/>
+            </VirtualNetworks>
+        </LoadGroup>
+        <LoadGroup schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <PortVLANID kb="CUR" kxe="false">4091</PortVLANID>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C3</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C3</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D03</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">4091</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANIDs kb="CUA" kxe="false">1001</TaggedVLANIDs>
+                    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent6</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <VirtualNetworks kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/bed3cc0e-5894-11e5-885d-feff819cdc9f" rel="related"/>
+            </VirtualNetworks>
+        </LoadGroup>
+    </LoadGroups>
+    <PortVLANID kb="COR" kxe="false">2828</PortVLANID>
+    <SharedEthernetAdapters kxe="false" kb="CUD" schemaVersion="V1_2_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <SharedEthernetAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssignedVirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualIOServer/3443DB77-AED1-47ED-9AA5-3DB9C6CF7089" rel="related"/>
+            <BackingDeviceChoice kb="CUD" kxe="false">
+                <EthernetBackingDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                    <Description kb="CUD" kxe="false">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                    <DeviceName kb="ROR" kxe="false">ent0</DeviceName>
+                    <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS007Y-P1-C10-T1</DynamicReconfigurationConnectorName>
+                    <PhysicalLocation kb="ROR" kxe="false">U78CB.001.WZS007Y-P1-C10-T1</PhysicalLocation>
+                    <UniqueDeviceID kb="ROR" kxe="false">13U78CB.001.WZS007Y-P1-C10-T1</UniqueDeviceID>
+                    <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <InterfaceName kb="CUD" kxe="false">en0</InterfaceName>
+                        <IPAddress kb="CUD" kxe="false">9.1.2.4</IPAddress>
+                        <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                        <State kb="CUD" kxe="false">Disconnected</State>
+                    </IPInterface>
+                </EthernetBackingDevice>
+            </BackingDeviceChoice>
+            <HighAvailabilityMode kb="CUD" kxe="false">disabled</HighAvailabilityMode>
+            <DeviceName kb="CUD" kxe="false">ent5</DeviceName>
+            <JumboFramesEnabled kxe="false" kb="UOD">false</JumboFramesEnabled>
+            <PortVLANID kb="ROR" kxe="false">2828</PortVLANID>
+            <QualityOfServiceMode kxe="false" kb="CUD">disabled</QualityOfServiceMode>
+            <QueueSize kb="UOD" kxe="false">8192</QueueSize>
+            <ThreadModeEnabled kxe="false" kb="CUD">true</ThreadModeEnabled>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">true</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D02</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">2828</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D4A-V1-C3</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8247.22L.2125D4A-V1-C3</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">16BE2AF56D03</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">4091</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANIDs kb="CUA" kxe="false">1001</TaggedVLANIDs>
+                    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent6</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <IsPrimary kb="CUD" kxe="false">true</IsPrimary>
+            <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <InterfaceName kb="CUD" kxe="false">en5</InterfaceName>
+                <IPAddress kb="CUD" kxe="false">9.1.2.4</IPAddress>
+                <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                <State kb="CUD" kxe="false">Active</State>
+            </IPInterface>
+            <UniqueDeviceID kb="ROR" kxe="false">105a9dd36a17958199</UniqueDeviceID>
+            <LargeSend kb="CUD" kxe="false">true</LargeSend>
+        </SharedEthernetAdapter>
+    </SharedEthernetAdapters>
+    <UniqueDeviceID kb="ROR" kxe="false">0</UniqueDeviceID>
+    <VirtualNetworks kb="ROR" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/a97a5706-5894-11e5-885d-feff819cdc9f" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/bed3cc0e-5894-11e5-885d-feff819cdc9f" rel="related"/>
+    </VirtualNetworks>
+</NetworkBridge:NetworkBridge>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
