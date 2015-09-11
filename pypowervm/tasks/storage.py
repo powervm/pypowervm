@@ -754,7 +754,7 @@ class _RemoveStorage(tf_tsk.Task):
             # all of them.  POST will only be done on VGs which actually need
             # updating.
             vgftsk = tx.FeedTask('scrub_vg_vios_%s' % vuuid, stor.VG.getter(
-                vwrap.adapter, parent_class=vwrap.schema_type,
+                vwrap.adapter, parent_class=vwrap.__class__,
                 parent_uuid=vwrap.uuid))
             if vdisks_to_rm:
                 vgftsk.add_functor_subtask(
