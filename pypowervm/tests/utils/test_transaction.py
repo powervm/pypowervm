@@ -452,7 +452,7 @@ class TestFeedTask(twrap.TestWrapper):
     def test_empty_feed(self, mock_get):
         mock_get.return_value = []
         # We're allowed to initialize it with a FeedGetter
-        fm = tx.FeedTask('name', ewrap.FeedGetter('mock', 'mock'))
+        fm = tx.FeedTask('name', ewrap.FeedGetter('mock', ewrap.EntryWrapper))
         # But as soon as we call a 'greedy' method, which does a .get, we raise
         self.assertRaises(ex.FeedTaskEmptyFeed, fm.get_wrapper, 'uuid')
         # Init with an explicit empty feed (list) raises right away

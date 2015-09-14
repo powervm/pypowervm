@@ -1070,6 +1070,23 @@ class TestGetters(twrap.TestWrapper):
                           lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk)
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_uuid='parent_uuid')
+        # entry_class/parent_class must be Wrapper subtypes
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt, 's',
+                          'lpar_uuid')
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
+                          None, 'lpar_uuid')
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
+                          ewrap.EntryWrapperGetter, 'lpar_uuid')
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
+                          lpar.LPAR, 'lpar_uuid', parent_class='s',
+                          parent_uuid='parent_uuid')
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
+                          lpar.LPAR, 'lpar_uuid', parent_class=None,
+                          parent_uuid='parent_uuid')
+        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
+                          lpar.LPAR, 'lpar_uuid',
+                          parent_class=ewrap.EntryWrapperGetter,
+                          parent_uuid='parent_uuid')
 
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
     def test_feed_getter(self, mock_refresh):
@@ -1116,6 +1133,19 @@ class TestGetters(twrap.TestWrapper):
         self.adpt.read.assert_called_with(
             'VirtualDisk', 'p_uuid', child_type='LogicalPartition',
             child_id=None, xag=['one', 'two'])
+
+        # entry_class/parent_class must be Wrapper subtypes
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, 's')
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, None)
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt,
+                          ewrap.EntryWrapperGetter)
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
+                          parent_class='s', parent_uuid='parent_uuid')
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
+                          parent_class=None, parent_uuid='parent_uuid')
+        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
+                          parent_class=ewrap.EntryWrapperGetter,
+                          parent_uuid='parent_uuid')
 
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.refresh')
     def test_uuid_feed_getter(self, mock_refresh):

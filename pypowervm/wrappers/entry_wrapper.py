@@ -1123,13 +1123,19 @@ class EntryWrapperGetter(object):
                             UUID of its parent object.
         :param xag: List of extended attribute groups to request on the object.
         """
+        def validate_wrapper_type(var):
+            if not issubclass(type(var), type) or not issubclass(var, Wrapper):
+                raise ValueError(_("Must specify a Wrapper subclass."))
         self.adapter = adapter
+        validate_wrapper_type(entry_class)
         self.entry_class = entry_class
         self.entry_uuid = entry_uuid
         if (parent_class and not parent_uuid) or (
                 parent_uuid and not parent_class):
             raise ValueError(_("Must specify both parent class and parent "
                                "UUID, or neither."))
+        if parent_class:
+            validate_wrapper_type(parent_class)
         self.parent_class = parent_class
         self.parent_uuid = parent_uuid
         self.xag = xag

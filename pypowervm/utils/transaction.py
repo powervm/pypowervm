@@ -540,7 +540,8 @@ class FeedTask(tf_task.BaseTask):
         # Until we *need* individual WrapperTasks, save subtasks in one place.
         # EntryWrapperGetter is a cheat to allow us to build the WrapperTask.
         self._common_tx = WrapperTask(
-            'internal', ewrap.EntryWrapperGetter(None, None, None))
+            'internal', ewrap.EntryWrapperGetter(None, ewrap.Wrapper,
+                                                 None))
         self._post_exec = []
 
     @property
