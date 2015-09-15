@@ -17,9 +17,11 @@
 """Module-specific error/exception subclasses."""
 
 import abc
-
+from lxml import etree
 import six
 
+from pypowervm import const as c
+from pypowervm import entities as ent
 from pypowervm.i18n import _
 
 
@@ -48,9 +50,49 @@ class TimeoutError(Error):
 class HttpError(Error):
     """HTTP Error on PowerVM API Adapter method invocation."""
 
-    def __init__(self, msg, response):
-        """Initializes HttpError with required `response` object."""
-        super(HttpError, self).__init__(msg, response=response)
+    def _unmarshal_httperror(self, resp):
+        # Attempt to extract PowerVM API's HttpErrorResponse object.
+        # Since this is an exception path, we use best effort only - don't want
+        # problems here to obscure the real exception.
+        try:
+            root = etree.fromstring(resp.body)
+            if root is not None and root.tag == str(etree.QName(c.ATOM_NS,
+                                                                'entry')):
+                resp.entry = ent.Entry.unmarshal_atom_entry(root, resp)
+                # Import inline to avoid circular dependencies
+                import pypowervm.wrappers.http_error as he
+                self.her_wrap = he.HttpError.wrap(resp)
+        except Exception:
+            pass
+
+    def __init__(self, resp):
+        """Initializes HttpError with required `response` object.
+
+        1) Constructs the exception message based on the contents of the
+        response parameter.
+
+        2) If possible, initializes a 'her_wrap' member which is a
+        pypowervm.wrappers.http_error.HttpError - an EntryWrapper for the
+        <HttpErrorResponse/> payload.  Consumers should check this member for
+        None before using.
+
+        :param resp: pypowervm.adapter.Response containing an
+                     <HttpErrorResponse/> response from the REST server.
+        """
+        self.her_wrap = None
+        # Embed the HttpErrorResponse wrapper
+        self._unmarshal_httperror(resp)
+        # Construct the exception message
+        msg = _('HTTP error %(status)s for method %(method)s on path '
+                '%(path)s: %(reason)s') % dict(status=resp.status,
+                                               method=resp.reqmethod,
+                                               path=resp.reqpath,
+                                               reason=resp.reason)
+        # For 500, the useful information is in the 'message'.
+        if resp.status == c.HTTPStatus.INTERNAL_ERROR and self.her_wrap:
+            msg += ' -- ' + self.her_wrap.message
+        # Initialize the exception
+        super(HttpError, self).__init__(msg, response=resp)
 
 
 class AtomError(Error):

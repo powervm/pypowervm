@@ -77,8 +77,7 @@ class TestWrapperTask(twrap.TestWrapper):
         tracker.counter += 1
         logger.log('update %d' % tracker.counter)
         if tracker.counter < 3:
-            raise ex.HttpError(
-                "mismatch", mock.Mock(status=c.HTTPStatus.ETAG_MISMATCH))
+            raise ex.HttpError(mock.Mock(status=c.HTTPStatus.ETAG_MISMATCH))
         return wrapper
 
     @mock.patch('oslo_concurrency.lockutils.Semaphores.get')
