@@ -550,7 +550,7 @@ class Adapter(object):
                 LOG.exception('Failed to register for events.  Events will '
                               'not be used.')
             if self._eventlistener is not None:
-                self._evthandler = _EventHandler(self._cache)
+                self._evthandler = _CacheEventHandler(self._cache)
                 self._eventlistener.subscribe(self._evthandler)
 
     def __del__(self):
@@ -1453,8 +1453,34 @@ class EventListener(object):
 
 @six.add_metaclass(abc.ABCMeta)
 class EventHandler(object):
+    """Used to handle events from the API.
+
+    The session can poll for events back from the API.  An event will give a
+    small indication of something that has occurred within the system.
+    An example may be a ClientNetworkAdapter being created against an LPAR.
+
+    Implement this class and add it to the Session's event listener to process
+    events back from the API.
+    """
+
     @abc.abstractmethod
     def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: A dictionary of events that has come back from the
+                       system.
+
+                       Format:
+                         - Key -> URI of event
+                         - Value -> Action of event.  May be one of the
+                                    following: add, delete or invalidate
+
+                       A special key of 'general' may exist.  The value for
+                       this is init or invalidate.  init indicates that the
+                       whole system is being initialized.  An invalidate
+                       indicates that the API event system has been refreshed
+                       and the user should do a clean get of the data it needs.
+        """
         pass
 
 
@@ -1478,15 +1504,14 @@ class _EventPollThread(threading.Thread):
         self.done = True
 
 
-class _EventHandler(EventHandler):
+class _CacheEventHandler(EventHandler):
     def __init__(self, the_cache):
         self.cache = the_cache
 
     def process(self, events):
         for k, v in six.iteritems(events):
-            if k == 'general':
-                if v == 'invalidate':
-                    self.cache.clear()
+            if k == 'general' and v == 'invalidate':
+                self.cache.clear()
             elif v in ['delete', 'invalidate']:
                 path = util.dice_href(k)
                 # remove from cache
