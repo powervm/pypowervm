@@ -38,5 +38,5 @@ def raiseRetryException():
     """Used for other tests wishing to raise an exception to a force retry."""
     resp = adpt.Response('reqmethod', 'reqpath', c.HTTPStatus.ETAG_MISMATCH,
                          'reason', 'headers')
-    http_exc = pvm_exc.HttpError('msg', resp)
+    http_exc = pvm_exc.HttpError(resp)
     raise http_exc
