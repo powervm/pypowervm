@@ -405,6 +405,12 @@ class Session(object):
                                                         response.status_code,
                                                         response.reason)
             _unmarshal_httperror(resp)
+            if response.status_code == c.HTTPStatus.INTERNAL_ERROR:
+                # Best effort to get the <Message> from the XML.
+                try:
+                    errmsg += ' -- ' + resp.entry.element.find('Message')
+                except Exception:
+                    pass
             raise pvmex.HttpError(errmsg, resp)
 
     def _logon(self):
