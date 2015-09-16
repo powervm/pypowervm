@@ -1,0 +1,80 @@
+# Translations template for pypowervm.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the pypowervm project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: pypowervm 0.0.3.dev211\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-09-16 04:38-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+
+#: pypowervm/utils/lpar_builder.py:180
+#, python-format
+msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:206
+#, python-format
+msgid "Logical partition name has invalid length. Name: %s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:372
+#, python-format
+msgid "Field '%(field)s' has invalid value: '%(value)s'"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:427
+msgid "None value is not valid."
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:434
+#, python-format
+msgid ""
+"Value '%(value)s' is not valid for field '%(field)s' with acceptable "
+"choices: %(choices)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:460
+#, python-format
+msgid ""
+"Field '%(field)s' has a value below the minimum. Value: %(value)s "
+"Minimum: %(minimum)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:469
+#, python-format
+msgid ""
+"Field '%(field)s' has a value above the maximum. Value: %(value)s "
+"Maximum: %(maximum)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:523
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value above the '%(max_field)s' value. "
+"Desired: %(desired)s Maximum: %(maximum)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:536
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value below the '%(min_field)s' value. "
+"Desired: %(desired)s Minimum: %(minimum)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:574
+#, python-format
+msgid ""
+"Memory value is not a multiple of the logical memory block size "
+"(%(lmb_size)s) of  the host.  Value: %(value)s"
+msgstr ""
+
