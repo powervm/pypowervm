@@ -87,6 +87,14 @@ class RRState(object):
     PG_DEV_UPD_OVRD = "Page_Device_Update_Override"
 
 
+class BootStorageType(object):
+    """Enumeration of possible storage connection methods for devices."""
+    VSCSI = 'vscsi'
+    VFC = 'npiv'
+    UNKNOWN = 'Unknown'
+    ALL_VALUES = (VSCSI, VFC, UNKNOWN)
+
+
 @ewrap.EntryWrapper.pvm_type('LogicalPartition',
                              child_order=_LPAR_EL_ORDER)
 class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
