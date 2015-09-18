@@ -35,17 +35,22 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
-# Power On options
-# Valid values for 'bootmode' parameter on power_on
-BOOTMODE_KEY = 'bootmode'
-BOOTMODE_NORM = 'norm'
-BOOTMODE_SMS = 'sms'
-BOOTMODE_DD = 'dd'
-BOOTMODE_DS = 'ds'
-BOOTMODE_OF = 'of'
-
 _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
+
+
+class BootMode(object):
+    """Power On options, valid values for 'bootmode' parameter on power_on.
+
+    Example usage:
+        power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
+    """
+    KEY = 'bootmode'
+    NORM = 'norm'
+    SMS = 'sms'
+    DD = 'dd'
+    DS = 'ds'
+    OF = 'of'
 
 
 @lgc.logcall
