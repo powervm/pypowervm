@@ -544,7 +544,11 @@ class LU(ewrap.ElementWrapper):
         # The hash is used for assigning keys to hash buckets in a dictionary:
         # if two keys hash the same, their items go into the same bucket, but
         # they're still different items.
-        conv = int if six.PY3 else long
+        if six.PY3:
+            conv = int
+        else:
+            import __builtin__
+            conv = __builtin__.long
         return conv(self.udid[2:], base=16)
 
     @property

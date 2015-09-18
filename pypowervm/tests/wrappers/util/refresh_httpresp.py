@@ -21,6 +21,7 @@
 #
 
 import os
+import six
 import tempfile
 
 from pypowervm.tests.wrappers.util import create_httpresp
@@ -88,7 +89,7 @@ def get_txt_file():
         else:
             fmt = 'Enter index or name of file to refresh--> '
 
-        line = raw_input(fmt)
+        line = six.moves.input(fmt)
 
         line = line.strip()
         if line is None:

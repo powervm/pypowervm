@@ -18,6 +18,8 @@
 # cluster_ssp module.  Execute from project root directory as:
 # PYTHONPATH=. python pypowervm/tests/tasks/create_cluster.py
 
+import six
+
 import pypowervm.adapter as adp
 import pypowervm.exceptions as ex
 import pypowervm.tasks.cluster_ssp as cs
@@ -64,6 +66,6 @@ data_pvs = [
 try:
     cs.crt_cluster_ssp('clust1', 'ssp1', repos, node1, data_pvs)
 except ex.JobRequestFailed as e:
-    print(unicode(e))
+    print(six.text_type(e))
 
 adap = None
