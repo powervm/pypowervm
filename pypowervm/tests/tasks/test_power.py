@@ -86,10 +86,10 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_lpar, '1111',
-                       add_parms=dict(bootmode=power.BOOTMODE_SMS))
+                       add_parms=dict(bootmode=power.BootMode.SMS))
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        self.assertTrue(power.BOOTMODE_SMS in str(mock_job_p.call_args))
+        self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -201,10 +201,10 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_vios, '1111',
-                       add_parms=dict(bootmode=power.BOOTMODE_SMS))
+                       add_parms=dict(bootmode=power.BootMode.SMS))
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        self.assertTrue(power.BOOTMODE_SMS in str(mock_job_p.call_args))
+        self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
