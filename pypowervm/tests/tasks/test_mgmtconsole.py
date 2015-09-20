@@ -57,7 +57,7 @@ class TestMgmtCon(testtools.TestCase):
         # Test the transaction retry
         self.cons_w.reset_mock()
         resp = mock.Mock(status=const.HTTPStatus.ETAG_MISMATCH)
-        self.cons_w.update.side_effect = exc.HttpError('msg', response=resp)
+        self.cons_w.update.side_effect = exc.HttpError(resp)
         # When the transaction decorator refreshes the mgmt console wrapper
         # then we know it's retrying so just raise an exception and bail
         self.cons_w.refresh.side_effect = ValueError()

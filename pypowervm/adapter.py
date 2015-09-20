@@ -357,7 +357,6 @@ class Session(object):
                                 response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=response.text)
-                            _unmarshal_httperror(e.orig_response)
                             raise e
 
                     # Retry the original request
@@ -401,11 +400,7 @@ class Session(object):
                                 response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=errtext)
-            errmsg = 'HTTP error for %s %s: %s (%s)' % (method, path,
-                                                        response.status_code,
-                                                        response.reason)
-            _unmarshal_httperror(resp)
-            raise pvmex.HttpError(errmsg, resp)
+            raise pvmex.HttpError(resp)
 
     def _logon(self):
         LOG.info("Session logging on %s" % self.host)
@@ -444,11 +439,6 @@ class Session(object):
             if e.response:
                 # strip out sensitive data
                 e.response.reqbody = "<sensitive>"
-            if isinstance(e, pvmex.HttpError):
-                # clarify the error message
-                raise pvmex.HttpError('HTTP error on Logon: %s (%s)' %
-                                      (e.response.status, e.response.reason),
-                                      e.response)
             raise
 
         # parse out X-API-Session value
@@ -1520,17 +1510,6 @@ class _CacheEventHandler(EventHandler):
                 feed_paths = self.cache.get_feed_paths(path)
                 for feed_path in feed_paths:
                     self.cache.remove(feed_path)
-
-
-def _unmarshal_httperror(resp):
-    # Attempt to extract PowerVM API's HttpErrorResponse object
-    try:
-        root = etree.fromstring(resp.body)
-        if root is not None and root.tag == str(etree.QName(c.ATOM_NS,
-                                                            'entry')):
-            resp.err = ent.Entry.unmarshal_atom_entry(root, resp).element
-    except Exception:
-        pass
 
 
 def get_entry_from_feed(feedelem, uuid):
