@@ -61,6 +61,8 @@ class LPARWrapperValidator(object):
                       cur_lpar_w=self.cur_lpar_w).validate()
         MemValidator(self.lpar_w, self.host_w,
                      cur_lpar_w=self.cur_lpar_w).validate()
+        CapabilitiesValidator(self.lpar_w, self.host_w,
+                              cur_lpar_w=self.cur_lpar_w).validate()
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -170,20 +172,25 @@ class MemValidator(BaseValidator):
 
     Instance attributes populated by _populate_new_values
     :attr des_mem: desired memory of the new lpar
+    :attr max_mem: maximum memory of the new lpar
+    :attr min_mem: minimum memory of the new lpar
     :attr avail_mem: available memory on the host
-    :attr res_mem: name of the resource
+    :attr res_name: name of the resource
     """
     def _populate_new_values(self):
         """Set newly desired LPAR attributes as instance attributes."""
         mem_cfg = self.lpar_w.mem_config
         self.des_mem = mem_cfg.desired
+        self.max_mem = mem_cfg.max
+        self.min_mem = mem_cfg.min
         self.avail_mem = self.host_w.memory_free
         self.res_name = _('memory')
 
     def _populate_resize_diffs(self):
         """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""
-        # TODO(IBM):
-        pass
+        deltas = self._calculate_resize_deltas()
+        self.delta_des_mem = deltas['delta_mem']
+        self.delta_max_mem = deltas['delta_max_mem']
 
     def _validate_deploy(self):
         """Enforce validation rules specific to LPAR deployment."""
@@ -192,13 +199,21 @@ class MemValidator(BaseValidator):
 
     def _validate_active_resize(self):
         """Enforce validation rules specific to active resize."""
-        # TODO(IBM):
-        pass
+        curr_mem_cfg = self.cur_lpar_w.mem_config
+        curr_min_mem = curr_mem_cfg.min
+        curr_max_mem = curr_mem_cfg.max
+        # min/max values cannot be changed while lpar is running.
+        if self.max_mem != curr_max_mem or self.min_mem != curr_min_mem:
+            msg = (_("Changing minimum or maximum memory is not supported "
+                     "while virtual machine %s is running. "
+                     "It must be powered off first.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+        # Common validations for both active & inactive resizes.
+        self._validate_resize_common()
 
     def _validate_inactive_resize(self):
         """Enforce validation rules specific to inactive resize."""
-        # TODO(IBM):
-        pass
+        self._validate_resize_common()
 
     def _validate_common(self):
         """Enforce operation agnostic validation rules."""
@@ -211,6 +226,32 @@ class MemValidator(BaseValidator):
         if not modifiable:
             LOG.error(reason)
             raise ValidatorException(reason)
+
+    def _validate_resize_common(self):
+        """Validation rules common for both active and inactive resizes.
+
+        Helper method to enforce validation rules that are common for
+        both active and inactive resizes.
+        """
+        self._validate_host_has_available_res(self.delta_des_mem,
+                                              self.avail_mem,
+                                              self.res_name)
+
+    def _calculate_resize_deltas(self):
+        """Helper method to calculate the memory deltas for resize operation.
+
+        :return dict of memory deltas.
+        """
+        deltas = {}
+        # Current LPAR values
+        curr_mem_cfg = self.cur_lpar_w.mem_config
+        curr_des_mem = curr_mem_cfg.desired
+        curr_max_mem = curr_mem_cfg.max
+
+        # Calculate memory deltas
+        deltas['delta_mem'] = self.des_mem - curr_des_mem
+        deltas['delta_max_mem'] = self.max_mem - curr_max_mem
+        return deltas
 
 
 class ProcValidator(BaseValidator):
@@ -228,11 +269,17 @@ class ProcValidator(BaseValidator):
     :attr max_sys_procs_limit: LPAR max procs limit on host
     :attr des_vcpus: LPAR desired vcpus
     :attr max_vcpus: LPAR max vcpus
+    :attr min_vcpus: LPAR min vcpus
+    :attr proc_compat_mode: Processor compatibility mode
+    :attr pool_id: LPAR shared processor pool ID (only for shared proc mode)
+    :attr max_proc_units: LPAR max proc units (only for shared processor mode)
+    :attr min_proc_units: LPAR min proc units (only for shared processor mode)
     """
     def _populate_new_values(self):
         """Set newly desired LPAR values as instance attributes."""
         self.has_dedicated = self.lpar_w.proc_config.has_dedicated
         self.procs_avail = self.host_w.proc_units_avail
+        self.proc_compat_mode = self.lpar_w.proc_compat_mode
         if self.has_dedicated:
             self._populate_dedicated_proc_values()
         else:
@@ -252,6 +299,7 @@ class ProcValidator(BaseValidator):
         # FAIP in dedicated proc cfg vcpus == procs for naming convention
         self.des_vcpus = self.des_procs
         self.max_vcpus = ded_proc_cfg.max
+        self.min_vcpus = ded_proc_cfg.min
 
     def _populate_shared_proc_values(self):
         """Set shared proc values as instance attributes."""
@@ -265,11 +313,15 @@ class ProcValidator(BaseValidator):
 
         self.des_vcpus = shr_proc_cfg.desired_virtual
         self.max_vcpus = shr_proc_cfg.max_virtual
+        self.min_vcpus = shr_proc_cfg.min_virtual
+        self.max_proc_units = shr_proc_cfg.max_units
+        self.min_proc_units = shr_proc_cfg.min_units
+        self.pool_id = shr_proc_cfg.pool_id
 
     def _populate_resize_diffs(self):
         """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""
-        # TODO(IBM):
-        pass
+        deltas = self._calculate_resize_deltas()
+        self.delta_des_vcpus = deltas['delta_vcpu']
 
     def _validate_deploy(self):
         """Enforce validation rules specific to LPAR deployment."""
@@ -278,13 +330,66 @@ class ProcValidator(BaseValidator):
 
     def _validate_active_resize(self):
         """Enforce validation rules specific to active resize."""
-        # TODO(IBM):
-        pass
+        # Extract current values from existing LPAR.
+        curr_has_dedicated = self.cur_lpar_w.proc_config.has_dedicated
+        if curr_has_dedicated:
+            lpar_proc_config = self.cur_lpar_w.proc_config.dedicated_proc_cfg
+            curr_max_vcpus = lpar_proc_config.max
+            curr_min_vcpus = lpar_proc_config.min
+        else:
+            lpar_proc_config = self.cur_lpar_w.proc_config.shared_proc_cfg
+            curr_max_vcpus = lpar_proc_config.max_virtual
+            curr_min_vcpus = lpar_proc_config.min_virtual
+            curr_max_proc_units = lpar_proc_config.max_units
+            curr_min_proc_units = lpar_proc_config.min_units
+
+        # min/max cannot be changed while LPAR is running.
+        if (self.max_vcpus != curr_max_vcpus or
+                self.min_vcpus != curr_min_vcpus):
+            msg = (_("Changing minimum or maximum processors is not supported "
+                     "while virtual machine %s is running. "
+                     "It must be powered off first.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+
+        if not self.has_dedicated and not curr_has_dedicated:
+            curr_min_proc_units = round(float(curr_min_proc_units), 2)
+            curr_max_proc_units = round(float(curr_max_proc_units), 2)
+            if (round(self.max_proc_units, 2) != curr_max_proc_units or
+                    round(self.min_proc_units, 2) != curr_min_proc_units):
+                msg = (_("Changing minimum or maximum processor units is not "
+                         "supported while virtual machine %s is running. "
+                         "It must be powered off first.") %
+                       self.cur_lpar_w.name)
+                raise ValidatorException(msg)
+
+        # Processor Compatibility mode cannot be changed while LPAR is running.
+        curr_proc_compat = self.cur_lpar_w.proc_compat_mode
+        curr_pend_proc_compat = self.cur_lpar_w.pending_proc_compat_mode
+        if self.proc_compat_mode is not None:
+            proc_compat = self.proc_compat_mode.lower()
+            if (proc_compat != curr_proc_compat.lower() and
+                    (proc_compat != curr_pend_proc_compat.lower())):
+                # If requested was not the same as current, this is
+                # not supported while instance is running exception
+                msg = (_("Changing processor compatibility mode is not "
+                         "supported while virtual machine %s is "
+                         "running. It must be powered off first.") %
+                       self.cur_lpar_w.name)
+                raise ValidatorException(msg)
+
+        # Changing processing mode is not supported while LPAR is running.
+        if self.has_dedicated != curr_has_dedicated:
+            msg = (_("Changing Processing mode is not supported while "
+                     "virtual machine %s is running. "
+                     "It must be powered off first.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+
+        # Validations common for both active & inactive resizes.
+        self._validate_resize_common()
 
     def _validate_inactive_resize(self):
         """Enforce validation rules specific to inactive resize."""
-        # TODO(IBM):
-        pass
+        self._validate_resize_common()
 
     def _validate_common(self):
         """Enforce operation agnostic validation rules."""
@@ -321,3 +426,113 @@ class ProcValidator(BaseValidator):
                     "'%(instance_name)s'.") % ex_args
             LOG.error(msg)
             raise ValidatorException(msg)
+
+    def _validate_resize_common(self):
+        """Validation rules common for both active and inactive resizes.
+
+        Helper method to enforce validation rules that are common for
+        both active and inactive resizes.
+        """
+        curr_has_dedicated = self.cur_lpar_w.proc_config.has_dedicated
+        curr_proc_pool_id = self.cur_lpar_w.proc_config.shared_proc_cfg.pool_id
+        if curr_has_dedicated and not self.has_dedicated:
+            # Resize from Dedicated Mode to Shared Mode
+            if self.pool_id != 0:
+                msg = (_("Changing shared processor pool name to a pool other "
+                         "than DefaultPool is not "
+                         "supported for virtual machine %s.")
+                       % self.cur_lpar_w.name)
+                raise ValidatorException(msg)
+
+        if not self.has_dedicated and not curr_has_dedicated:
+            curr_proc_pool_id = self.cur_lpar_w.proc_config.\
+                shared_proc_cfg.pool_id
+            if curr_proc_pool_id != self.pool_id:
+                msg = (_("Changing shared processor pool name is not "
+                         "supported for virtual machine %s.")
+                       % self.cur_lpar_w.name)
+                raise ValidatorException(msg)
+
+        self._validate_host_has_available_res(self.delta_des_vcpus,
+                                              self.procs_avail,
+                                              self.res_name)
+
+    def _calculate_resize_deltas(self):
+        """Helper method to calculate the procs deltas for resize operation.
+
+        :return dict of processor deltas.
+        """
+        deltas = {}
+        # Extract current values from existing LPAR.
+        curr_has_dedicated = self.cur_lpar_w.proc_config.has_dedicated
+        if curr_has_dedicated:
+            lpar_proc_config = self.cur_lpar_w.proc_config.dedicated_proc_cfg
+            curr_des_vcpus = lpar_proc_config.desired
+        else:
+            lpar_proc_config = self.cur_lpar_w.proc_config.shared_proc_cfg
+            curr_des_vcpus = lpar_proc_config.desired_virtual
+            curr_proc_units = lpar_proc_config.desired_units
+
+        # Calculate VCPU deltas
+        deltas['delta_vcpu'] = self.des_vcpus - curr_des_vcpus
+
+        # If this is dedicated processor mode, there are no proc_units.
+        if self.has_dedicated:
+            if not curr_has_dedicated and curr_proc_units is not None:
+                # Resize from Shared to Dedicated mode
+                deltas['delta_vcpu'] = (
+                    round(self.des_vcpus - curr_proc_units, 2))
+        else:
+            if curr_has_dedicated:
+                # Resize from Dedicated to Shared mode
+                deltas['delta_vcpu'] = (
+                    round(self.des_procs - curr_des_vcpus, 2))
+            else:
+                deltas['delta_vcpu'] = (
+                    round(self.des_procs - curr_proc_units, 2))
+        return deltas
+
+
+class CapabilitiesValidator(BaseValidator):
+    """Capabilities Validator.
+
+    This class implements capabilities validation for lpars in the case of
+    deploy, inactive resize, and active resize.
+
+    Instance attributes populated by _populate_new_values
+    :attr srr_enabled: srr capability of the lpar
+    """
+    def _populate_new_values(self):
+        """Set newly desired resize attributes as instance attributes."""
+        self.srr_enabled = self.lpar_w.srr_enabled
+
+    def _validate_active_resize(self):
+        """Enforce validation rules specific to active resize."""
+        # Simplified Remote Restart capability cannot be changed while LPAR is
+        # running.
+        curr_srr_enabled = self.cur_lpar_w.srr_enabled
+        if curr_srr_enabled != self.srr_enabled:
+            msg = (_("Changing simplified remote restart capability is not "
+                     "supported while virtual machine %s is running. "
+                     "It must be powered off first.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+
+    def _populate_resize_diffs(self):
+        """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""
+        pass
+
+    def _validate_deploy(self):
+        """Enforce validation rules specific to LPAR deployment."""
+        pass
+
+    def _validate_inactive_resize(self):
+        """Enforce validation rules specific to inactive resize."""
+        pass
+
+    def _validate_common(self):
+        """Enforce operation agnostic validation rules."""
+        pass
+
+    def _can_modify(self):
+        """Check if capabilities may be modified."""
+        pass
