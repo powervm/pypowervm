@@ -521,7 +521,7 @@ class TestScrub(testtools.TestCase):
     def test_no_matches(self, mock_rm_stg):
         """When removals have no hits, log debug messages, but no warnings."""
         # Our data set has no VFC mappings and no VSCSI mappings with LPAR ID 1
-        ts.add_lpar_storage_scrub_tasks(1, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([1], self.ftsk)
         self.ftsk.execute()
         self.assertEqual(0, self.logfx.patchers['warn'].mock.call_count)
         for vname in (vwrap.name for vwrap in self.vio_feed):
@@ -536,7 +536,7 @@ class TestScrub(testtools.TestCase):
         """When removals hit, log warnings including the removal count."""
         # Mock vfc remove_maps with a multi-element list to verify num_maps
         mock_rm_vfc_maps.return_value = [1, 2, 3]
-        ts.add_lpar_storage_scrub_tasks(32, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([32], self.ftsk)
         self.ftsk.execute()
         mock_rm_vfc_maps.assert_has_calls(
             [mock.call(wrp, 32) for wrp in self.vio_feed], any_order=True)
@@ -602,11 +602,11 @@ class TestScrub2(testtools.TestCase):
             {'vdcount': 1, 'vios': self.vio_feed[0].name,
              'vdlist': ["%s (%s)" % (vdrm.name, vdrm.udid)]}))
 
-        ts.add_lpar_storage_scrub_tasks(3, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([3], self.ftsk)
         # LPAR ID 45 is not represented in the mappings.  Test a) that it is
         # ignored, b) that we can have two separate LPAR storage scrub tasks
         # in the same FeedTask (no duplicate 'provides' names).
-        ts.add_lpar_storage_scrub_tasks(45, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([45], self.ftsk)
         self.ftsk.execute()
         self.logfx.patchers['warn'].mock.assert_has_calls(
             warns, any_order=True)
