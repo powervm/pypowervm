@@ -125,8 +125,15 @@ class Subtask(object):
                          be available to subsequent Subtasks via the 'provided'
                          keyword argument.  The 'provides' name must be unique
                          within a WrapperTask.
+        :param flag_update: (Optional) Boolean indicating whether a True return
+                            from this Subtask should trigger an update() in the
+                            surrounding WrapperTask.  By default, this is True.
+                            Set this to False, for example, to provide some
+                            data to subsequent Subtasks without forcing an
+                            update.
         """
         self.provides = save_kwargs.pop('provides', None)
+        self.flag_update = save_kwargs.pop('flag_update', True)
         self.save_args = save_args
         self.save_kwargs = save_kwargs
 
@@ -165,7 +172,8 @@ class Subtask(object):
                          The keys of the dict are the 'provides' strings of the
                          prior Subtasks.
         :return: The return value must be a single value (this may be a list,
-                 but not a tuple) which evaluates to True or False.  Any True
+                 but not a tuple) which evaluates to True or False.  Unless
+                 this Subtask was initialized with flag_update=False, any True
                  value indicates that the wrapper was modified and should be
                  POSTed back to the REST server via update().  Any False value
                  (including None, [], {}, etc) indicates that this Subtask did
@@ -185,6 +193,7 @@ class _FunctorSubtask(Subtask):
                             following values, which are treated specially and
                             NOT passed to the callable _func:
                provides: See Subtask.__init__(provides).
+               flag_update: See Subtask.__init__(flag_update).
                logspec: Iterable comprising a logging function, a format
                         string, and zero or more arguments.  The log method is
                         invoked before the func.  Example:
@@ -349,6 +358,7 @@ class WrapperTask(tf_task.BaseTask):
                        following values, which are treated specially and NOT
                        passed to the callable func:
                provides: See Subtask.__init__(provides).
+               flag_update: See Subtask.__init__(flag_update).
                logspec: Iterable comprising a logging function, a format
                         string, and zero or more arguments.  The log method is
                         invoked before the func.  Example:
@@ -417,7 +427,7 @@ class WrapperTask(tf_task.BaseTask):
                         or reflection.accepts_kwargs(task.execute)):
                     kwargs['provided'] = self.provided
                 ret = task.execute(wrapper, *task.save_args, **kwargs)
-                if ret:
+                if task.flag_update and ret:
                     update_needed = True
                 if task.provides is not None:
                     self.provided[task.provides] = ret

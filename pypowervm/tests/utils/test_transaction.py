@@ -312,6 +312,19 @@ class TestWrapperTask(twrap.TestWrapper):
             mock.call("three %(three)s four %(four)s", {'three': 3, 'four': 4})
         ])
 
+    def test_flag_update(self):
+        """flag_update=False avoids update even if Subtask returns True."""
+        txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
+        tx1 = tx.WrapperTask('tx1', self.getter)
+        tx1.add_functor_subtask(lambda x: True, flag_update=False)
+        tx1.execute()
+        self.assertEqual(0, txfx.patchers['update'].mock.call_count)
+        # But if there's another Subtask that returns True without
+        # flag_update=False, it does trigger an update.
+        tx1.add_functor_subtask(lambda x: True)
+        tx1.execute()
+        self.assertEqual(1, txfx.patchers['update'].mock.call_count)
+
     def test_wrapper_task2(self):
         # Now:
         # o Fake like update forces retry
