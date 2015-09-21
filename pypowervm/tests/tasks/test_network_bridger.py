@@ -404,6 +404,26 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
                                    1000)
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
+    @mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerVNET.'
+                '_find_vnet_uri_from_lg')
+    def test_remove_vlan_from_nb_lb(self, mock_find_vnet):
+        """Validates a load balance leaves two total LoadGroups."""
+        # Mock Data
+        mock_find_vnet.return_value = (
+            'https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
+            'c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/'
+            'e6c0be9f-b974-35f4-855e-2b7192034fae')
+        net_bridge = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
+        net_bridge.load_balance = True
+
+        # Run the remove
+        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
+        bridger._remove_vlan_from_nb(net_bridge, 1000)
+
+        # Validate that we still have two load groups
+        self.assertEqual(2, len(net_bridge.load_grps))
+        self.assertEqual(0, len(net_bridge.load_grps[1].vnet_uri_list))
+
     def test_find_or_create_vnet(self):
         """Validates that a vnet is created (and deleted) as part of find."""
         # Load the data
@@ -696,3 +716,17 @@ class TestNetworkBridgerTA(TestNetworkBridger):
                                    '4094')
         self.assertEqual(1, mock_reassign.call_count)
         mock_reassign.assert_called_with(4094, 4093, mock.ANY)
+
+    def test_remove_vlan_from_nb_lb(self):
+        """Validates a load balance remove leaves an additional adpt."""
+        # Mock Data
+        net_bridge = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
+        net_bridge.load_balance = True
+
+        # Run the remove
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+        bridger._remove_vlan_from_nb(net_bridge, 1000)
+
+        # Validate that we left the trunk but no new additional VLANs
+        self.assertEqual(1, len(net_bridge.seas[0].addl_adpts))
+        self.assertEqual(0, len(net_bridge.seas[0].addl_adpts[0].tagged_vlans))
