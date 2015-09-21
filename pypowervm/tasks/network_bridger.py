@@ -584,11 +584,20 @@ class NetworkBridgerVNET(NetworkBridger):
                 matching_lg = lg
                 break
 
-        if len(matching_lg.tagged_vlans) == 1:
-            # If last VLAN in Load Group, remove the whole Load Group
+        # A load balanced bridge requires at least two load groups.  We can't
+        # remove a load group from the network bridge if it is load balanced,
+        # but only has two load groups...  Make sure if it is load balanced
+        # we wouldn't be deleting a required load group.
+        can_remove_for_lb = (len(req_nb.load_grps) > 2
+                             if req_nb.load_balance else True)
+
+        if can_remove_for_lb and len(matching_lg.tagged_vlans) == 1:
+            # Remove the load group
             req_nb.load_grps.remove(matching_lg)
         else:
-            # Else just remove that virtual network
+            # Else just remove that virtual network.  In the case of load
+            # balancing, you may end up with the second load group being
+            # just a place holder.  But this is required by the system.
             vnet_uri = self._find_vnet_uri_from_lg(matching_lg, vlan_id)
             matching_lg.vnet_uri_list.remove(vnet_uri)
 
@@ -823,8 +832,14 @@ class NetworkBridgerTA(NetworkBridger):
                 matching_tas = self._trunk_list(req_nb, trunk)
                 break
 
+        # A load balanced SEA requires at least a primary adapter and at least
+        # one additional adapter.  We can't remove a trunk from the SEA if it
+        # is load balanced, but only has a single additional
+        can_remove_for_lb = (len(req_nb.seas[0].addl_adpts) > 1
+                             if req_nb.load_balance else True)
+
         for matching_ta in matching_tas:
-            if len(matching_ta.tagged_vlans) == 1:
+            if len(matching_ta.tagged_vlans) == 1 and can_remove_for_lb:
                 # Last VLAN, so it can be removed from the SEA.
                 for sea in req_nb.seas:
                     if matching_ta in sea.addl_adpts:
