@@ -616,35 +616,58 @@ def _remove_orphan_maps(map_list):
     return removals
 
 
-class _RemoveLparVscsiMaps(tx.Subtask):
-    """Subtask to remove all VSCSI mappings for a specified LPAR ID."""
-    def execute(self, vwrap, lpar_id):
-        """Find and remove all VSCSI mappings for this LPAR ID."""
-        msgargs = dict(lpar_id=lpar_id, vios_name=vwrap.name)
-        vscsi_removals = sm.remove_maps(vwrap, lpar_id, include_orphans=True)
-        if vscsi_removals:
-            LOG.warn(_("Removing %(num_maps)d VSCSI mappings associated with "
-                       "LPAR ID %(lpar_id)d from VIOS %(vios_name)s."),
-                     dict(msgargs, num_maps=len(vscsi_removals)))
-        else:
-            LOG.debug("No VSCSI mappings found for LPAR ID %(lpar_id)d on "
-                      "VIOS %(vios_name)s.", msgargs)
-        return vscsi_removals
+class _RemoveLparMaps(tx.Subtask):
+    def __init__(self, type_str, lpars_exist, *args, **kwargs):
+        """Create a Subtask to remove storage mappings for an LPAR.
 
+        :param type_str: The type of mapping being removed.  Must be either
+                         'VFC' or 'VSCSI'.
+        :param lpars_exist: If set to False, mappings associated with an extant
+                            LPAR will be ignored (NOT scrubbed).  Otherwise, we
+                            will scrub mappings whether the LPAR exists or not.
+                            Thus, set to True only if intentionally removing
+                            mappings associated with extant LPARs.
+        :param args: Arguments to pass through to Subtask.__init__.
+        :param kwargs: Keyword arguments to pass through to Subtask.__init__.
+        """
+        super(_RemoveLparMaps, self).__init__(*args, **kwargs)
+        self.stg_type = type_str
+        # This will raise KeyError if initialized with a bogus type_str
+        self.rm_maps = dict(VSCSI=sm.remove_maps, VFC=fm.remove_maps)[type_str]
+        self.lpars_exist = lpars_exist
 
-class _RemoveLparVfcMaps(tx.Subtask):
-    def execute(self, vwrap, lpar_id):
-        """Find and remove all VFC mappings for this LPAR ID."""
-        msgargs = dict(lpar_id=lpar_id, vios_name=vwrap.name)
-        vfc_removals = fm.remove_maps(vwrap, lpar_id)
-        if vfc_removals:
-            LOG.warn(_("Removing %(num_maps)d VFC mappings associated with "
-                       "LPAR ID %(lpar_id)d from VIOS %(vios_name)s."),
-                     dict(msgargs, num_maps=len(vfc_removals)))
-        else:
-            LOG.debug("No VFC mappings found for LPAR ID %(lpar_id)d on "
-                      "VIOS %(vios_name)s.", msgargs)
-        return vfc_removals
+    def execute(self, vwrap, lpar_ids):
+        """Find and remove all mappings for this LPAR ID."""
+        msgargs = dict(stg_type=self.stg_type, vios_name=vwrap.name)
+        if not self.lpars_exist:
+            lpar_ids = set(lpar_ids)
+            # Restrict scrubbing to LPARs that don't exist on the system.
+            ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(
+                vwrap.adapter.read(sys.System.schema_type,
+                                   root_id=vwrap.assoc_sys_uuid,
+                                   child_type=lpar.LPAR.schema_type))}
+            preserve_lpars = lpar_ids & ex_lpar_ids
+            if preserve_lpars:
+                LOG.warn(_("Skipping scrub of %(stg_type)s mappings from VIOS "
+                           "%(vios_name)s for the following LPAR IDs because "
+                           "those LPARs exist: %(lpar_ids)s"),
+                         dict(msgargs, lpar_ids=list(preserve_lpars)))
+                lpar_ids -= preserve_lpars
+
+        removals = []
+        for lpar_id in lpar_ids:
+            msgargs['lpar_id'] = lpar_id
+            _removals = self.rm_maps(vwrap, lpar_id)
+            if _removals:
+                LOG.warn(_("Removing %(num_maps)d %(stg_type)s mappings "
+                           "associated with LPAR ID %(lpar_id)d from VIOS "
+                           "%(vios_name)s."),
+                         dict(msgargs, num_maps=len(_removals)))
+                removals.extend(_removals)
+            else:
+                LOG.debug("No %(stg_type)s mappings found for LPAR ID "
+                          "%(lpar_id)d on VIOS %(vios_name)s.", msgargs)
+        return removals
 
 
 class _RemoveOrphanVscsiMaps(tx.Subtask):
@@ -782,7 +805,7 @@ class _RemoveStorage(tf_tsk.Task):
                 executor=tx.ContextThreadPoolExecutor(max(8, len(rmtasks))))
 
 
-def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
+def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     """Delete storage mappings and elements associated with an LPAR ID.
 
     This should typically be used to clean leftovers from an LPAR that has been
@@ -799,17 +822,24 @@ def add_lpar_storage_scrub_tasks(lpar_id, ftsk):
     caller is responsible for executing that FeedTask in an appropriate Flow or
     other context.
 
-    :param lpar_id: The integer short ID (not UUID) of the LPAR whose storage
-                    artifacts are to be scrubbed.
+    :param lpar_ids: List of integer short IDs (not UUIDs) of the LPARl whose
+                     storage artifacts are to be scrubbed.
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+    :param lpars_exist: (Optional) If set to False (the default), storage
+                        artifacts associated with an extant LPAR will be
+                        ignored (NOT scrubbed).  Otherwise, we will scrub
+                        whether the LPAR exists or not. Thus, set to True only
+                        if intentionally removing mappings associated with
+                        extant LPARs.
     """
-    ftsk.add_subtask(_RemoveLparVscsiMaps(lpar_id, provides='vscsi_removals_%d'
-                                                            % lpar_id))
-    ftsk.add_subtask(_RemoveLparVfcMaps(lpar_id))
-    ftsk.add_post_execute(_RemoveStorage(lpar_id))
+    tag = '_'.join((str(lid) for lid in lpar_ids))
+    ftsk.add_subtask(_RemoveLparMaps('VSCSI', lpars_exist, lpar_ids,
+                                     provides='vscsi_removals_' + tag))
+    ftsk.add_subtask(_RemoveLparMaps('VFC', lpars_exist, lpar_ids))
+    ftsk.add_post_execute(_RemoveStorage(tag))
 
 
 def add_orphan_storage_scrub_tasks(ftsk):
