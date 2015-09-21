@@ -661,8 +661,8 @@ class TestScrub3(testtools.TestCase):
     """One VIOS; lots of orphan VSCSI and VFC mappings."""
     def setUp(self):
         super(TestScrub3, self).setUp()
-        adpt = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
-        self.vio_feed = [vios.VIOS.wrap(tju.load_file(VIOS_ENTRY2, adpt))]
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+        self.vio_feed = [vios.VIOS.wrap(tju.load_file(VIOS_ENTRY2, self.adpt))]
         self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
         self.logfx = self.useFixture(fx.LoggingFx())
         self.ftsk = tx.FeedTask('scrub', self.vio_feed)
@@ -704,6 +704,32 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
         # _RemoveStorage invoked _rm_vopts
         self.assertEqual(1, mock_rm_vopts.call_count)
+
+    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_comprehensive_scrub(self, mock_wrap, mock_stale_lids,
+                                 mock_rm_vopts, mock_rm_vdisks):
+        # Don't confuse the 'update' call count with the VG POST
+        mock_rm_vopts.return_value = None
+        mock_rm_vdisks.return_value = None
+        # Three "stale" LPARs in addition to the orphans.  These LPAR IDs are
+        # represented in both VSCSI and VFC mappings.
+        mock_stale_lids.return_value = [15, 18, 22]
+        # Make sure all our "stale" lpars hit.
+        mock_wrap.return_value = []
+        vwrap = self.vio_feed[0]
+        # Save the "before" sizes of the mapping lists
+        vscsi_len = len(vwrap.scsi_mappings)
+        vfc_len = len(vwrap.vfc_mappings)
+        ts.ComprehensiveScrub(self.adpt).execute()
+        # The right number of maps remain.
+        self.assertEqual(vscsi_len - 21, len(vwrap.scsi_mappings))
+        self.assertEqual(vfc_len - 22, len(vwrap.vfc_mappings))
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+        self.assertEqual(1, mock_rm_vopts.call_count)
+        self.assertEqual(1, mock_rm_vdisks.call_count)
 
 if __name__ == '__main__':
     unittest.main()
