@@ -227,7 +227,7 @@ def add_map(vios_w, scsi_mapping):
     return scsi_mapping
 
 
-def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
+def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=True):
     """Remove one or more SCSI mappings from a VIOS wrapper.
 
     The changes are not flushed back to the REST server.
@@ -243,7 +243,7 @@ def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=False):
                             mappings with no client adapter will be considered
                             for removal. If False, mappings with no client
                             adapter will be left alone, regardless of any other
-                            criteria.  Default: False (don't include orphans).
+                            criteria.  Default: True (remove orphans).
     :return: The list of removed mappings.
     """
     resp_list = []
