@@ -1532,6 +1532,9 @@ BODY{
         <NumberOfActiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfActiveMigrationsInProgress>
         <MaximumFirmwareActiveMigrations kb="ROR" kxe="false">9</MaximumFirmwareActiveMigrations>
     </SystemMigrationInformation>
+    <IsMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsMaster>
+    <IsHMCMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsHMCMaster>
+    <IsManagementPartitionMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsManagementPartitionMaster>
 </ManagedSystem:ManagedSystem>
         </content>
     </entry>
@@ -2475,6 +2478,9 @@ BODY{
         <NumberOfActiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfActiveMigrationsInProgress>
         <MaximumFirmwareActiveMigrations kb="ROR" kxe="false">16</MaximumFirmwareActiveMigrations>
     </SystemMigrationInformation>
+    <IsMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsMaster>
+    <IsHMCMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsHMCMaster>
+    <IsManagementPartitionMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsManagementPartitionMaster>
 </ManagedSystem:ManagedSystem>
         </content>
     </entry>
@@ -3434,6 +3440,9 @@ BODY{
         <NumberOfActiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfActiveMigrationsInProgress>
         <MaximumFirmwareActiveMigrations kb="ROR" kxe="false">16</MaximumFirmwareActiveMigrations>
     </SystemMigrationInformation>
+    <IsMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsMaster>
+    <IsHMCMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsHMCMaster>
+    <IsManagementPartitionMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsManagementPartitionMaster>
 </ManagedSystem:ManagedSystem>
         </content>
     </entry>
