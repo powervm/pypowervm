@@ -117,6 +117,8 @@ _IOSLOT_PCI_SUB_VEND_ID = 'PCISubsystemVendorID'
 _IOSLOT_DYN_REC_CON_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
 _IOSLOT_DYN_REC_CON_NAME = 'SlotDynamicReconfigurationConnectorName'
 
+_MASTER_MODE = "IsMaster"
+
 
 @ewrap.EntryWrapper.pvm_type('ManagedSystem')
 class System(ewrap.EntryWrapper):
@@ -313,6 +315,14 @@ class System(ewrap.EntryWrapper):
         This is a READ-ONLY list.
         """
         return self.get_href(_VIOS_LINK)
+
+    @property
+    def is_master(self):
+        return self._get_val_bool(_MASTER_MODE)
+
+    @is_master.setter
+    def is_master(self, val):
+        self.set_parm_value(_MASTER_MODE, u.sanitize_bool_for_api(val))
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)
