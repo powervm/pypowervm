@@ -19,8 +19,8 @@ import testtools
 
 import pypowervm.entities as ent
 from pypowervm.tasks import migration as mig
+import pypowervm.tests.tasks.util as u
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.wrappers import job
 
 
 class TestMigration(testtools.TestCase):
@@ -37,38 +37,12 @@ class TestMigration(testtools.TestCase):
         self.lpar_w.adapter = self.adpt
         self.lpar_w.uuid = '1234'
 
-    def _get_parm_checker(self, exp_uuid, exp_job_parms, exp_job_mappings=[],
-                          exp_timeout=None):
-        # Utility method to return a dynamic parameter checker for tests
-
-        # Build the expected job parameter strings
-        exp_job_parms_str = [job.Job.create_job_parameter(k, v).toxmlstring()
-                             for k, v in exp_job_parms]
-        exp_job_parms_str += [
-            job.Job.create_job_parameter(k, ",".join(v)).toxmlstring()
-            for k, v in exp_job_mappings]
-
-        def parm_checker(uuid, job_parms=None, timeout=None):
-            # Check simple parms
-            self.assertEqual(exp_uuid, uuid)
-            self.assertEqual(exp_timeout, timeout)
-
-            # Check the expected and actual number of job parms are equal
-            self.assertEqual(len(exp_job_parms_str), len(job_parms))
-
-            # Ensure each parameter is in the list of expected.
-            for parm in job_parms:
-                self.assertIn(parm.toxmlstring(), exp_job_parms_str)
-
-        # We return our custom checker
-        return parm_checker
-
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_migration(self, mock_run_job):
 
         # Test simple call
-        mock_run_job.side_effect = self._get_parm_checker(
-            '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
+        mock_run_job.side_effect = u.get_parm_checker(
+            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
         mig.migrate_lpar(self.lpar_w, 'abc')
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',
@@ -82,8 +56,10 @@ class TestMigration(testtools.TestCase):
                      (mig.SRC_MSP, 'vios2')]
         mapping_list = [(mig.VFC_MAPPINGS, ['1/1/1', '3/3/3//3']),
                         (mig.VSCSI_MAPPINGS, ['2/2/2'])]
-        mock_run_job.side_effect = self._get_parm_checker(
-            '1234', parm_list, exp_job_mappings=mapping_list, exp_timeout=1800)
+        mock_run_job.side_effect = u.get_parm_checker(
+            self, '1234', parm_list, exp_job_mappings=mapping_list,
+            exp_timeout=1800)
+
         mig.migrate_lpar(self.lpar_w, 'abc',
                          tgt_mgmt_svr='host', tgt_mgmt_usr='usr',
                          virtual_fc_mappings=['1/1/1', '3/3/3//3'],
@@ -94,8 +70,8 @@ class TestMigration(testtools.TestCase):
                                                suffix_type='do')
         # Test simple validation call
         self.adpt.read.reset_mock()
-        mock_run_job.side_effect = self._get_parm_checker(
-            '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
+        mock_run_job.side_effect = u.get_parm_checker(
+            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
         mock_run_job.reset_mock()
         mig.migrate_lpar(self.lpar_w, 'abc', validate_only=True)
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
@@ -115,8 +91,8 @@ class TestMigration(testtools.TestCase):
         # Test simple call with force
         self.adpt.read.reset_mock()
         mock_run_job.reset_mock()
-        mock_run_job.side_effect = self._get_parm_checker(
-            '1234', [('Force', 'true')], exp_timeout=1800)
+        mock_run_job.side_effect = u.get_parm_checker(
+            self, '1234', [('Force', 'true')], exp_timeout=1800)
         mig.migrate_recover(self.lpar_w, force=True)
 
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
