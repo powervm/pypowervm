@@ -511,7 +511,7 @@ class TestScrub(testtools.TestCase):
     """Two VIOSes in feed; no VFC mappings; no storage in VSCSI mappings."""
     def setUp(self):
         super(TestScrub, self).setUp()
-        adpt = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
+        adpt = self.useFixture(fx.AdapterFx()).adpt
         self.vio_feed = vios.VIOS.wrap(tju.load_file(VIOS_FEED, adpt))
         self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
         self.logfx = self.useFixture(fx.LoggingFx())
@@ -521,13 +521,14 @@ class TestScrub(testtools.TestCase):
     def test_no_matches(self, mock_rm_stg):
         """When removals have no hits, log debug messages, but no warnings."""
         # Our data set has no VFC mappings and no VSCSI mappings with LPAR ID 1
-        ts.add_lpar_storage_scrub_tasks(1, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([1], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
         self.assertEqual(0, self.logfx.patchers['warn'].mock.call_count)
         for vname in (vwrap.name for vwrap in self.vio_feed):
             self.logfx.patchers['debug'].mock.assert_any_call(
-                r'No VSCSI mappings found for LPAR ID %(lpar_id)d on VIOS '
-                r'%(vios_name)s.', dict(lpar_id=1, vios_name=vname))
+                mock.ANY, dict(stg_type='VSCSI', lpar_id=1, vios_name=vname))
+            self.logfx.patchers['debug'].mock.assert_any_call(
+                mock.ANY, dict(stg_type='VFC', lpar_id=1, vios_name=vname))
         self.assertEqual(0, self.txfx.patchers['update'].mock.call_count)
         self.assertEqual(1, mock_rm_stg.call_count)
 
@@ -536,26 +537,69 @@ class TestScrub(testtools.TestCase):
         """When removals hit, log warnings including the removal count."""
         # Mock vfc remove_maps with a multi-element list to verify num_maps
         mock_rm_vfc_maps.return_value = [1, 2, 3]
-        ts.add_lpar_storage_scrub_tasks(32, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([32], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
         mock_rm_vfc_maps.assert_has_calls(
             [mock.call(wrp, 32) for wrp in self.vio_feed], any_order=True)
         for vname in (vwrap.name for vwrap in self.vio_feed):
             self.logfx.patchers['warn'].mock.assert_any_call(
-                r"Removing %(num_maps)d VFC mappings associated with LPAR ID "
-                r"%(lpar_id)d from VIOS %(vios_name)s.",
-                dict(num_maps=3, lpar_id=32, vios_name=vname))
+                mock.ANY, dict(stg_type='VFC', num_maps=3, lpar_id=32,
+                               vios_name=vname))
         self.logfx.patchers['warn'].mock.assert_any_call(
-            r"Removing %(num_maps)d VSCSI mappings associated with LPAR "
-            r"ID %(lpar_id)d from VIOS %(vios_name)s.",
-            dict(num_maps=1, lpar_id=32, vios_name='nimbus-ch03-p2-vios1'))
+            mock.ANY, dict(stg_type='VSCSI', num_maps=1, lpar_id=32,
+                           vios_name='nimbus-ch03-p2-vios1'))
         self.logfx.patchers['debug'].mock.assert_any_call(
-            r'No VSCSI mappings found for LPAR ID %(lpar_id)d on VIOS '
-            r'%(vios_name)s.', dict(lpar_id=32,
-                                    vios_name='nimbus-ch03-p2-vios2'))
+            mock.ANY, dict(stg_type='VSCSI', lpar_id=32,
+                           vios_name='nimbus-ch03-p2-vios2'))
         self.assertEqual(2, self.txfx.patchers['update'].mock.call_count)
         # By not mocking _RemoveStorage, prove it shorts out (the mapping for
         # LPAR ID 32 has no backing storage).
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_multiple_removals(self, mock_wrap):
+        # Pretend LPAR feed is "empty" so we don't skip any removals.
+        mock_wrap.return_value = []
+        v1 = self.vio_feed[0]
+        v2 = self.vio_feed[1]
+        v1_map_count = len(v1.scsi_mappings)
+        v2_map_count = len(v2.scsi_mappings)
+        # Zero removals works
+        ts.add_lpar_storage_scrub_tasks([], self.ftsk)
+        self.ftsk.execute()
+        self.assertEqual(0, self.txfx.patchers['update'].mock.call_count)
+        # Removals for which no mappings exist
+        ts.add_lpar_storage_scrub_tasks([71, 72, 76, 77], self.ftsk)
+        self.ftsk.execute()
+        self.assertEqual(0, self.txfx.patchers['update'].mock.call_count)
+        # Remove some from each VIOS
+        self.assertEqual(v1_map_count, len(v1.scsi_mappings))
+        self.assertEqual(v2_map_count, len(v2.scsi_mappings))
+        ts.add_lpar_storage_scrub_tasks([3, 37, 80, 7, 27, 85], self.ftsk)
+        self.ftsk.execute()
+        self.assertEqual(2, self.txfx.patchers['update'].mock.call_count)
+        self.assertEqual(v1_map_count - 3, len(v1.scsi_mappings))
+        self.assertEqual(v2_map_count - 3, len(v2.scsi_mappings))
+        # Now make the LPAR feed hit some of the removals.  They should be
+        # skipped.
+        self.txfx.patchers['update'].mock.reset_mock()
+        v1_map_count = len(v1.scsi_mappings)
+        v2_map_count = len(v2.scsi_mappings)
+        mock_wrap.return_value = [mock.Mock(id=i) for i in (4, 5, 8, 11)]
+        ts.add_lpar_storage_scrub_tasks([4, 5, 6, 8, 11, 12], self.ftsk)
+        self.ftsk.execute()
+        self.assertEqual(2, self.txfx.patchers['update'].mock.call_count)
+        self.assertEqual(v1_map_count - 1, len(v1.scsi_mappings))
+        self.assertEqual(v2_map_count - 1, len(v2.scsi_mappings))
+        # Make sure the right ones were ignored
+        v1_map_lids = [sm.server_adapter.lpar_id for sm in v1.scsi_mappings]
+        v2_map_lids = [sm.server_adapter.lpar_id for sm in v2.scsi_mappings]
+        self.assertIn(4, v1_map_lids)
+        self.assertIn(5, v1_map_lids)
+        self.assertIn(8, v2_map_lids)
+        self.assertIn(11, v2_map_lids)
+        # ...and the right ones were removed
+        self.assertNotIn(6, v1_map_lids)
+        self.assertNotIn(12, v2_map_lids)
 
 
 class TestScrub2(testtools.TestCase):
@@ -580,33 +624,28 @@ class TestScrub2(testtools.TestCase):
                     self.assertEqual(exp.udid, act.udid)
             return _rm_stg
         warns = [mock.call(
-            r"Removing %(num_maps)d VSCSI mappings associated with LPAR ID "
-            r"%(lpar_id)d from VIOS %(vios_name)s.",
-            {'lpar_id': 3, 'num_maps': 3, 'vios_name': self.vio_feed[0].name})]
+            mock.ANY, {'stg_type': 'VSCSI', 'lpar_id': 3, 'num_maps': 3,
+                       'vios_name': self.vio_feed[0].name})]
 
         mock_rm_lu.side_effect = self.fail
 
         vorm = self.vio_feed[0].scsi_mappings[5].backing_storage
         mock_rm_vopt.side_effect = verify_rm_stg_call([vorm])
         warns.append(mock.call(
-            r"Scrubbing the following %(vocount)d Virtual Opticals from VIOS "
-            r"%(vios)s: %(volist)s",
-            {'vocount': 1, 'vios': self.vio_feed[0].name,
-             'volist': ["%s (%s)" % (vorm.name, vorm.udid)]}))
+            mock.ANY, {'vocount': 1, 'vios': self.vio_feed[0].name,
+                       'volist' '': ["%s (%s)" % (vorm.name, vorm.udid)]}))
 
         vdrm = self.vio_feed[0].scsi_mappings[8].backing_storage
         mock_rm_vd.side_effect = verify_rm_stg_call([vdrm])
         warns.append(mock.call(
-            r"Scrubbing the following %(vdcount)d Virtual Disks from VIOS "
-            r"%(vios)s: %(vdlist)s",
-            {'vdcount': 1, 'vios': self.vio_feed[0].name,
-             'vdlist': ["%s (%s)" % (vdrm.name, vdrm.udid)]}))
+            mock.ANY, {'vdcount': 1, 'vios': self.vio_feed[0].name,
+                       'vdlist' '': ["%s (%s)" % (vdrm.name, vdrm.udid)]}))
 
-        ts.add_lpar_storage_scrub_tasks(3, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([3], self.ftsk, lpars_exist=True)
         # LPAR ID 45 is not represented in the mappings.  Test a) that it is
         # ignored, b) that we can have two separate LPAR storage scrub tasks
         # in the same FeedTask (no duplicate 'provides' names).
-        ts.add_lpar_storage_scrub_tasks(45, self.ftsk)
+        ts.add_lpar_storage_scrub_tasks([45], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
         self.logfx.patchers['warn'].mock.assert_has_calls(
             warns, any_order=True)
