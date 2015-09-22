@@ -69,8 +69,8 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
 
     virtual_fc_mappings:
 
-    Comma separated list of virtual fibre channel adapter
-    mappings, with each mapping having the following format:
+    List of virtual fibre channel adapter mappings, with each mapping having
+    the following format:
 
     virtual-slot-number/vios-lpar-name/vios-lpar-ID
     [/[vios-virtual-slot-number][/[vios-fc-port-name]]]
@@ -93,8 +93,8 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
 
     virtual_scsi_mappings:
 
-    Comma separated list of virtual SCSI adapter mappings, with each mapping
-    having the following format:
+    List of virtual SCSI adapter mappings, with each mapping having the
+    following format:
 
     virtual-slot-number/vios-lpar-name/vios-lpar-ID
     [/vios-virtual-slot-number]
@@ -119,14 +119,22 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
     job_wrapper = job.Job.wrap(resp.entry)
     job_parms = [job_wrapper.create_job_parameter(TGT_MGD_SYS,
                                                   str(tgt_mgd_sys))]
+
+    # Generic 'raw' format job parameters.
     for kw, val in [(TGT_RMT_HMC, tgt_mgmt_svr),
-                    (TGT_RMT_HMC_USR, tgt_mgmt_usr),
-                    (VFC_MAPPINGS, virtual_fc_mappings),
-                    (VSCSI_MAPPINGS, virtual_scsi_mappings),
-                    (DEST_MSP, dest_msp_name), (SRC_MSP, source_msp_name)]:
+                    (TGT_RMT_HMC_USR, tgt_mgmt_usr), (DEST_MSP, dest_msp_name),
+                    (SRC_MSP, source_msp_name)]:
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))
+
+    # The mappings are special.  They require a join so that they are comma
+    # separated down to the API.
+    for kw, val in [(VFC_MAPPINGS, virtual_fc_mappings),
+                    (VSCSI_MAPPINGS, virtual_scsi_mappings)]:
+        if val:
+            job_parms.append(
+                job_wrapper.create_job_parameter(kw, ",".join(val)))
 
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
 
