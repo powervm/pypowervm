@@ -94,12 +94,12 @@ class BaseValidator(object):
         else:
             self._can_modify()
             self._populate_resize_diffs()
-            # Active Resize
-            if self.cur_lpar_w.state == bp.LPARState.RUNNING:
-                self._validate_active_resize()
             # Inactive Resize
-            else:
+            if self.cur_lpar_w.state == bp.LPARState.NOT_ACTIVATED:
                 self._validate_inactive_resize()
+            # Active Resize
+            else:
+                self._validate_active_resize()
         self._validate_common()
 
     @abc.abstractmethod
