@@ -203,7 +203,7 @@ class TestAdapter(testtools.TestCase):
         """Test create() method found in the Adapter class."""
         # Init test data
         adapter = adp.Adapter(self.sess, use_cache=False)
-        new_scsi = pvm_stor.VSCSIClientAdapter.bld(adapter)
+        new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
         root_type = 'ManagedSystem'
@@ -489,7 +489,7 @@ class TestAdapter(testtools.TestCase):
 
         # Init test data
         adapter = adp.Adapter(self.sess, use_cache=False)
-        new_scsi = pvm_stor.VSCSIClientAdapter.bld(adapter)
+        new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
         root_type = 'ManagedSystem'

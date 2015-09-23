@@ -310,7 +310,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def client_adapter(self):
-        """Returns the Client side VSCSIClientAdapter.
+        """Returns the Client side VSCSIClientAdapterElement.
 
         If None - then no client is connected.
         """
@@ -325,7 +325,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def server_adapter(self):
-        """Returns the Virtual I/O Server side VSCSIServerAdapter."""
+        """Returns the Virtual I/O Server side VSCSIServerAdapterElement."""
         return self._server_adapter_cls.wrap(
             self.element.find(stor.SERVER_ADPT))
 
@@ -351,8 +351,8 @@ class VSCSIMapping(VStorageMapping):
     new mapping.
     """
 
-    _client_adapter_cls = stor.VSCSIClientAdapter
-    _server_adapter_cls = stor.VSCSIServerAdapter
+    _client_adapter_cls = stor.VSCSIClientAdapterElement
+    _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
@@ -360,8 +360,8 @@ class VSCSIMapping(VStorageMapping):
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapter.bld(adapter))
-        s_map._server_adapter(stor.VServerStorageAdapter.bld(adapter))
+        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(adapter))
+        s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
         s_map._backing_storage(stg_ref)
         return s_map
 
@@ -430,8 +430,8 @@ class VFCMapping(VStorageMapping):
     new mapping.
     """
 
-    _client_adapter_cls = stor.VFCClientAdapter
-    _server_adapter_cls = stor.VFCServerAdapter
+    _client_adapter_cls = stor.VFCClientAdapterElement
+    _server_adapter_cls = stor.VFCServerAdapterElement
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, backing_phy_port,
@@ -464,7 +464,7 @@ class VFCMapping(VStorageMapping):
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VFCClientAdapter.bld(
+        s_map._client_adapter(stor.VFCClientAdapterElement.bld(
             adapter, wwpns=client_wwpns))
 
         # Create the backing port and change label.  API requires it be
@@ -473,7 +473,7 @@ class VFCMapping(VStorageMapping):
         backing_port.element.tag = 'Port'
         s_map._backing_port(backing_port)
 
-        s_map._server_adapter(stor.VFCServerAdapter.bld(adapter))
+        s_map._server_adapter(stor.VFCServerAdapterElement.bld(adapter))
         return s_map
 
     def _backing_port(self, value):
