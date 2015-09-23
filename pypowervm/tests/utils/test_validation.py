@@ -154,6 +154,10 @@ class TestValidator(testtools.TestCase):
         self.lpar_2dot2_proc_units = _bld_lpar(proc_units=2.2,
                                                name='2.2_procs')
         self.lpar_1_vcpus = _bld_lpar(des_vcpus=1, name='lpar_1_vcpus')
+        self.lpar_not_activated = _bld_lpar(name='lpar_not_activated',
+                                            state='not activated')
+        self.lpar_running = _bld_lpar(name='lpar_running', state='running')
+        self.lpar_starting = _bld_lpar(name='lpar_starting', state='starting')
 
     def test_validator(self):
         # Test desired proc units > host avail proc units fails for shared
@@ -323,3 +327,28 @@ class TestValidator(testtools.TestCase):
         self.assertEqual(2.40, proc_vldr.delta_des_vcpus,
                          'Incorrect delta proc calculation while resizing '
                          'from shared to dedicated mode')
+        # Test resizing not activated state lpar makes inactive_resize_checks
+        with mock.patch('pypowervm.utils.validation.ProcValidator.'
+                        '_validate_inactive_resize') as inactive_resize_checks:
+            proc_vldr = vldn.ProcValidator(self.lpar_not_activated,
+                                           self.mngd_sys,
+                                           cur_lpar_w=self.lpar_not_activated)
+            proc_vldr.validate()
+            self.assertTrue(inactive_resize_checks.called,
+                            'Inactive resize validations not performed.')
+        # Test resizing running state lpar makes active_resize_checks
+        with mock.patch('pypowervm.utils.validation.ProcValidator.'
+                        '_validate_active_resize') as active_resize_checks:
+            proc_vldr = vldn.ProcValidator(self.lpar_running, self.mngd_sys,
+                                           cur_lpar_w=self.lpar_running)
+            proc_vldr.validate()
+            self.assertTrue(active_resize_checks.called,
+                            'Active resize validations not performed.')
+        # Test resizing starting state lpar makes active_resize_checks
+        with mock.patch('pypowervm.utils.validation.ProcValidator.'
+                        '_validate_active_resize') as active_resize_checks:
+            proc_vldr = vldn.ProcValidator(self.lpar_starting, self.mngd_sys,
+                                           cur_lpar_w=self.lpar_starting)
+            proc_vldr.validate()
+            self.assertTrue(active_resize_checks.called,
+                            'Active resize validations not performed.')
