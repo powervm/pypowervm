@@ -1,0 +1,133 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: refresh_httpresp.py vfc_client_adapter_feed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': None, 'reason': 'OK', 'host': None, 'user': None, 'path': 'LogicalPartition/6A219EF0-591D-4199-ADC2-8F854B2F471B/VirtualFibreChannelClientAdapter'}
+END OF SECTION}
+HEADERS{
+{'content-length': '7698', 'x-transactionrecord-uuid': '7683b31d-2089-4018-a0fc-f11cd6090704', 'x-powered-by': 'Servlet/3.1', 'set-cookie': 'JSESSIONID=0000YheE-SOeTpwDuklLPnanVY-:356ef63c-ea0f-4a3b-b94b-f6edad1632ed; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_3_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Tue, 22 Sep 2015 21:16:28 GMT', 'x-transaction-id': 'XT10519925', 'etag': '1387621433', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Tue, 22 Sep 2015 21:16:28 GMT', 'x-mc-type': 'PVM', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>e5b7e5b9-07b0-34db-9015-fd5eb192fad3</id>
+    <updated>2015-09-22T17:16:28.843-04:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/LogicalPartition/6A219EF0-591D-4199-ADC2-8F854B2F471B/VirtualFibreChannelClientAdapter?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>e0d12002-bdac-3fb6-b567-bfcb17238de6</id>
+        <title>VirtualFibreChannelClientAdapter</title>
+        <published>2015-09-22T17:16:29.358-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/LogicalPartition/6A219EF0-591D-4199-ADC2-8F854B2F471B/VirtualFibreChannelClientAdapter/e0d12002-bdac-3fb6-b567-bfcb17238de6?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-256826913</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualFibreChannelClientAdapter">
+            <VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter xmlns:VirtualFibreChannelClientAdapter="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>e0d12002-bdac-3fb6-b567-bfcb17238de6</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.21L.212A64A-V25-C4</DynamicReconfigurationConnectorName>
+    <LocationCode kxe="false" kb="ROR">U8247.21L.212A64A-V25-C4</LocationCode>
+    <LocalPartitionID kb="CUR" kxe="false">25</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">4</VirtualSlotNumber>
+    <ConnectingPartitionID kxe="false" kb="CUR">2</ConnectingPartitionID>
+    <ConnectingVirtualSlotNumber kxe="false" kb="CUR">10</ConnectingVirtualSlotNumber>
+    <ServerAdapter kxe="false" kb="CUR" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.21L.212A64A-V2-C10</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8247.21L.212A64A-V2-C10</LocationCode>
+        <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+        <VirtualSlotNumber kxe="false" kb="COD">10</VirtualSlotNumber>
+        <AdapterName kb="CUR" kxe="false">vfchost5</AdapterName>
+        <ConnectingPartitionID kxe="false" kb="CUR">25</ConnectingPartitionID>
+        <ConnectingVirtualSlotNumber kxe="false" kb="CUR">4</ConnectingVirtualSlotNumber>
+        <UniqueDeviceID kb="CUR" kxe="false">1dU8247.21L.212A64A-V2-C10</UniqueDeviceID>
+        <MapPort kxe="false" kb="CUR">fcs0</MapPort>
+        <PhysicalPort kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <LocationCode kb="ROR" kxe="false">U78CB.001.WZS05RN-P1-C6-T1</LocationCode>
+            <PortName kxe="false" kb="CUR">fcs0</PortName>
+            <UniqueDeviceID kb="ROR" kxe="false">1aU78CB.001.WZS05RN-P1-C6-T1</UniqueDeviceID>
+            <WWPN kb="CUR" kxe="false">21000024ff64eb60</WWPN>
+            <WWNN ksv="V1_3_0" kb="ROO" kxe="false">20000024ff64eb60</WWNN>
+            <AvailablePorts kxe="true" kb="ROR">57</AvailablePorts>
+            <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+        </PhysicalPort>
+    </ServerAdapter>
+    <WWPNs kb="CUR" kxe="false">c05076087cba0169 c05076087cba0168</WWPNs>
+</VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter>
+        </content>
+    </entry>
+    <entry>
+        <id>7f28c1d6-4e56-3ad6-b79b-0ae808c46bba</id>
+        <title>VirtualFibreChannelClientAdapter</title>
+        <published>2015-09-22T17:16:29.359-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/LogicalPartition/6A219EF0-591D-4199-ADC2-8F854B2F471B/VirtualFibreChannelClientAdapter/7f28c1d6-4e56-3ad6-b79b-0ae808c46bba?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">759320183</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualFibreChannelClientAdapter">
+            <VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter xmlns:VirtualFibreChannelClientAdapter="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7f28c1d6-4e56-3ad6-b79b-0ae808c46bba</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.21L.212A64A-V25-C5</DynamicReconfigurationConnectorName>
+    <LocationCode kxe="false" kb="ROR">U8247.21L.212A64A-V25-C5</LocationCode>
+    <LocalPartitionID kb="CUR" kxe="false">25</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">5</VirtualSlotNumber>
+    <ConnectingPartitionID kxe="false" kb="CUR">3</ConnectingPartitionID>
+    <ConnectingVirtualSlotNumber kxe="false" kb="CUR">21</ConnectingVirtualSlotNumber>
+    <ServerAdapter kxe="false" kb="CUR" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.21L.212A64A-V3-C21</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8247.21L.212A64A-V3-C21</LocationCode>
+        <LocalPartitionID kb="CUR" kxe="false">3</LocalPartitionID>
+        <VirtualSlotNumber kxe="false" kb="COD">21</VirtualSlotNumber>
+        <AdapterName kb="CUR" kxe="false">vfchost2</AdapterName>
+        <ConnectingPartitionID kxe="false" kb="CUR">25</ConnectingPartitionID>
+        <ConnectingVirtualSlotNumber kxe="false" kb="CUR">5</ConnectingVirtualSlotNumber>
+        <UniqueDeviceID kb="CUR" kxe="false">1dU8247.21L.212A64A-V3-C21</UniqueDeviceID>
+        <MapPort kxe="false" kb="CUR">fcs0</MapPort>
+        <PhysicalPort kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <LocationCode kb="ROR" kxe="false">U78CB.001.WZS05RN-P1-C7-T1</LocationCode>
+            <PortName kxe="false" kb="CUR">fcs0</PortName>
+            <UniqueDeviceID kb="ROR" kxe="false">1aU78CB.001.WZS05RN-P1-C7-T1</UniqueDeviceID>
+            <WWPN kb="CUR" kxe="false">21000024ff64f4c4</WWPN>
+            <WWNN ksv="V1_3_0" kb="ROO" kxe="false">20000024ff64f4c4</WWNN>
+            <AvailablePorts kxe="true" kb="ROR">58</AvailablePorts>
+            <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
+        </PhysicalPort>
+    </ServerAdapter>
+    <WWPNs kb="CUR" kxe="false">c05076087cba016d c05076087cba016c</WWPNs>
+</VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

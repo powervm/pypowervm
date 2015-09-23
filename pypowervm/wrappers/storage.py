@@ -147,6 +147,8 @@ _LOCATION_CODE = 'LocationCode'
 CLIENT_ADPT = 'ClientAdapter'
 SERVER_ADPT = 'ServerAdapter'
 
+VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
+
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
 class VG(ewrap.EntryWrapper):
@@ -666,24 +668,8 @@ class SSP(ewrap.EntryWrapper):
         self.replace_list(_SSP_PVS, pvs)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class VStorageAdapter(ewrap.ElementWrapper):
-    """Parent class for the virtual storage adapters (FC or SCSI)."""
-    has_metadata = True
-
-    @classmethod
-    def _bld_new(cls, adapter, side):
-        """Build a {Client|Server}Adapter requesting a new virtual adapter.
-
-        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
-        :param side: Either 'Client' or 'Server'.
-        :returns: A fresh ClientAdapter or ServerAdapter wrapper with
-                  UseNextAvailableSlotID=true
-        """
-        adp = super(VStorageAdapter, cls)._bld(adapter)
-        adp._side(side)
-        adp._use_next_slot(True)
-        return adp
+class _VStorageAdapterMethods(ewrap.Wrapper):
+    """Mixin to be used with _VStorageAdapter{Element|Entry}."""
 
     @property
     def side(self):
@@ -720,13 +706,50 @@ class VStorageAdapter(ewrap.ElementWrapper):
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True)
-class VClientStorageAdapter(VStorageAdapter):
-    """Parent class for Client Virtual Storage Adapters."""
+class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
+    """Parent class for the virtual storage adapters (FC or SCSI)."""
+    has_metadata = True
 
     @classmethod
+    def _bld_new(cls, adapter, side):
+        """Build a {Client|Server}Adapter requesting a new virtual adapter.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param side: Either 'Client' or 'Server'.
+        :returns: A fresh ClientAdapter or ServerAdapter wrapper with
+                  UseNextAvailableSlotID=true
+        """
+        adp = super(_VStorageAdapterElement, cls)._bld(adapter)
+        adp._side(side)
+        adp._use_next_slot(True)
+        return adp
+
+
+@six.add_metaclass(abc.ABCMeta)
+class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
+    """Parent class for the virtual storage adapters (FC or SCSI)."""
+    has_metadata = True
+
+    @classmethod
+    def _bld_new(cls, adapter, side):
+        """Build a {Client|Server}Adapter requesting a new virtual adapter.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param side: Either 'Client' or 'Server'.
+        :returns: A fresh ClientAdapter or ServerAdapter wrapper with
+                  UseNextAvailableSlotID=true
+        """
+        adp = super(_VStorageAdapterEntry, cls)._bld(adapter)
+        adp._side(side)
+        adp._use_next_slot(True)
+        return adp
+
+
+class _VClientAdapterMethods(ewrap.Wrapper):
+    """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
+    @classmethod
     def bld(cls, adapter):
-        return super(VClientStorageAdapter, cls)._bld_new(adapter, 'Client')
+        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
 
     @property
     def lpar_id(self):
@@ -739,13 +762,22 @@ class VClientStorageAdapter(VStorageAdapter):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True)
+class VClientStorageAdapterElement(_VClientAdapterMethods,
+                                   _VStorageAdapterElement):
+    """Parent class for Client Virtual Storage Adapter Elements."""
+    pass
+
+
+@six.add_metaclass(abc.ABCMeta)
 @ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True)
-class VServerStorageAdapter(VStorageAdapter):
+class VServerStorageAdapterElement(_VStorageAdapterElement):
     """Parent class for Server Virtual Storage Adapters."""
 
     @classmethod
     def bld(cls, adapter):
-        return super(VServerStorageAdapter, cls)._bld_new(adapter, 'Server')
+        return super(VServerStorageAdapterElement, cls)._bld_new(adapter,
+                                                                 'Server')
 
     @property
     def name(self):
@@ -759,19 +791,19 @@ class VServerStorageAdapter(VStorageAdapter):
 
 
 # pvm_type decorator by superclass (it is not unique)
-class VSCSIClientAdapter(VClientStorageAdapter):
-    """The Virtual SCSI Adapter that hosts storage traffic.
+class VSCSIClientAdapterElement(VClientStorageAdapterElement):
+    """The Virtual SCSI Client Adapter within a VSCSI mapping.
 
-    Paired with a VSCSIServerAdapter.
+    Paired with a VSCSIServerAdapterElement.
     """
     pass  # Implemented by superclasses
 
 
 # pvm_type decorator by superclass (it is not unique)
-class VSCSIServerAdapter(VServerStorageAdapter):
-    """The Virtual SCSI Adapter that hosts storage traffic.
+class VSCSIServerAdapterElement(VServerStorageAdapterElement):
+    """The Virtual SCSI Server Adapter within a VSCSI mapping.
 
-    Paired with a VSCSIClientAdapter.
+    Paired with a VSCSIClientAdapterElement.
     """
 
     @property
@@ -789,28 +821,8 @@ class VSCSIServerAdapter(VServerStorageAdapter):
         return self._get_val_int(_VADPT_REM_LPAR_ID)
 
 
-# pvm_type decorator by superclass (it is not unique)
-class VFCClientAdapter(VClientStorageAdapter):
-    """The Virtual Fibre Channel Adapter on the client LPAR.
-
-    Paired with a VFCServerAdapter.
-    """
-
-    @classmethod
-    def bld(cls, adapter, wwpns=None):
-        """Create a fresh Virtual Fibre Channel Client Adapter.
-
-        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
-        :param wwpns: An optional set of two client WWPNs to set on the
-                      adapter.
-        """
-        adpt = super(VFCClientAdapter, cls).bld(adapter)
-
-        if wwpns is not None:
-            adpt._wwpns(wwpns)
-
-        return adpt
-
+class _VFCClientAdapterMethods(ewrap.Wrapper):
+    """Mixin to be used with VFCClientAdapter(Element)."""
     def _wwpns(self, value):
         """Sets the WWPN string.
 
@@ -830,10 +842,45 @@ class VFCClientAdapter(VClientStorageAdapter):
 
 
 # pvm_type decorator by superclass (it is not unique)
-class VFCServerAdapter(VServerStorageAdapter):
-    """The Virtual Fibre Channel Adapter on the VIOS.
+class VFCClientAdapterElement(VClientStorageAdapterElement,
+                              _VFCClientAdapterMethods):
+    """The Virtual Fibre Channel Client Adapter within a VFC mapping.
 
-    Paired with a VFCClientAdapter.
+    Paired with a VFCServerAdapterElement.
+    """
+
+    @classmethod
+    def bld(cls, adapter, wwpns=None):
+        """Create a fresh Virtual Fibre Channel Client Adapter.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param wwpns: An optional set of two client WWPNs to set on the
+                      adapter.
+        """
+        adpt = super(VFCClientAdapterElement, cls).bld(adapter)
+
+        if wwpns is not None:
+            adpt._wwpns(wwpns)
+
+        return adpt
+
+
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.EntryWrapper.pvm_type(VFC_CLIENT_ADPT, has_metadata=True)
+class VFCClientAdapter(_VStorageAdapterEntry, _VClientAdapterMethods,
+                       _VFCClientAdapterMethods):
+    """EntryWrapper for VirtualFibreChannelClientAdapter CHILD.
+
+    Use this to wrap LogicalPartition/{uuid}/VirtualFibreChannelClientAdapter.
+    """
+    pass
+
+
+# pvm_type decorator by superclass (it is not unique)
+class VFCServerAdapterElement(VServerStorageAdapterElement):
+    """The Virtual Fibre Channel Server Adapter within a VFC mapping.
+
+    Paired with a VFCClientAdapterElement.
     """
 
     @property
