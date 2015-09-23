@@ -182,6 +182,20 @@ class TestVFCMapper(unittest.TestCase):
         self.assertEqual(['A B', 'C D'],
                          vfc_mapper._fuse_vfc_ports(['a', 'b', 'c', 'd']))
 
+    def test_build_migration_mappings_for_fabric(self):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA45473B', '10:00:00:90:fa:45:17:58']
+        client_slots = ['1', '2']
+
+        # Run the derivation now
+        resp = vfc_mapper.build_migration_mappings_for_fabric(vios_wraps, 
+                                                              p_wwpns,
+                                                              client_slots)
+        self.assertEqual(['1', '2'], resp)
+
 
 class TestPortMappings(twrap.TestWrapper):
     file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
