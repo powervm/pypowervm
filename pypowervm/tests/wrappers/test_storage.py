@@ -340,5 +340,21 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertNotEqual({lu1}, {lu2})
 
 
+class TestVFCClientAdapter(twrap.TestWrapper):
+    file = 'vfc_client_adapter_feed.txt'
+    wrapper_class_to_test = stor.VFCClientAdapter
+
+    def test_vfc_client_adapter(self):
+        """Check getters on VFCClientAdapter.
+
+        The hard part - the wrapping - was done by TestWrapper.
+        """
+        self.assertEqual('U8247.21L.212A64A-V25-C4', self.dwrap.loc_code)
+        self.assertEqual(25, self.dwrap.lpar_id)
+        self.assertEqual('Client', self.dwrap.side)
+        self.assertEqual(4, self.dwrap.slot_number)
+        self.assertEqual(['C05076087CBA0169', 'C05076087CBA0168'],
+                         self.dwrap.wwpns)
+
 if __name__ == '__main__':
     unittest.main()
