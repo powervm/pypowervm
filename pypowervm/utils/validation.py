@@ -94,12 +94,12 @@ class BaseValidator(object):
         else:
             self._can_modify()
             self._populate_resize_diffs()
-            # Active Resize
-            if self.cur_lpar_w.state == bp.LPARState.RUNNING:
-                self._validate_active_resize()
             # Inactive Resize
-            else:
+            if self.cur_lpar_w.state == bp.LPARState.NOT_ACTIVATED:
                 self._validate_inactive_resize()
+            # Active Resize
+            else:
+                self._validate_active_resize()
         self._validate_common()
 
     @abc.abstractmethod
@@ -202,11 +202,11 @@ class MemValidator(BaseValidator):
         curr_mem_cfg = self.cur_lpar_w.mem_config
         curr_min_mem = curr_mem_cfg.min
         curr_max_mem = curr_mem_cfg.max
-        # min/max values cannot be changed while lpar is running.
+        # min/max values cannot be changed when lpar is not powered off.
         if self.max_mem != curr_max_mem or self.min_mem != curr_min_mem:
-            msg = (_("Changing minimum or maximum memory is not supported "
-                     "while virtual machine %s is running. "
-                     "It must be powered off first.") % self.cur_lpar_w.name)
+            msg = (_("The virtual machine must be powered off before changing "
+                     "the minimum or maximum memory. Power off virtual "
+                     "machine %s and try again.") % self.cur_lpar_w.name)
             raise ValidatorException(msg)
         # Common validations for both active & inactive resizes.
         self._validate_resize_common()
@@ -343,12 +343,12 @@ class ProcValidator(BaseValidator):
             curr_max_proc_units = lpar_proc_config.max_units
             curr_min_proc_units = lpar_proc_config.min_units
 
-        # min/max cannot be changed while LPAR is running.
+        # min/max cannot be changed when lpar is not powered off.
         if (self.max_vcpus != curr_max_vcpus or
                 self.min_vcpus != curr_min_vcpus):
-            msg = (_("Changing minimum or maximum processors is not supported "
-                     "while virtual machine %s is running. "
-                     "It must be powered off first.") % self.cur_lpar_w.name)
+            msg = (_("The virtual machine must be powered off before changing "
+                     "the minimum or maximum processors. Power off virtual "
+                     "machine %s and try again.") % self.cur_lpar_w.name)
             raise ValidatorException(msg)
 
         if not self.has_dedicated and not curr_has_dedicated:
@@ -356,13 +356,14 @@ class ProcValidator(BaseValidator):
             curr_max_proc_units = round(float(curr_max_proc_units), 2)
             if (round(self.max_proc_units, 2) != curr_max_proc_units or
                     round(self.min_proc_units, 2) != curr_min_proc_units):
-                msg = (_("Changing minimum or maximum processor units is not "
-                         "supported while virtual machine %s is running. "
-                         "It must be powered off first.") %
+                msg = (_("The virtual machine must be powered off before "
+                         "changing the minimum or maximum processor units. "
+                         "Power off virtual machine %s and try again.") %
                        self.cur_lpar_w.name)
                 raise ValidatorException(msg)
 
-        # Processor Compatibility mode cannot be changed while LPAR is running.
+        # Processor compatibility mode cannot be changed when lpar is not
+        # powered off.
         curr_proc_compat = self.cur_lpar_w.proc_compat_mode
         curr_pend_proc_compat = self.cur_lpar_w.pending_proc_compat_mode
         if self.proc_compat_mode is not None:
@@ -370,18 +371,18 @@ class ProcValidator(BaseValidator):
             if (proc_compat != curr_proc_compat.lower() and
                     (proc_compat != curr_pend_proc_compat.lower())):
                 # If requested was not the same as current, this is
-                # not supported while instance is running exception
-                msg = (_("Changing processor compatibility mode is not "
-                         "supported while virtual machine %s is "
-                         "running. It must be powered off first.") %
+                # not supported when instance is not powered off.
+                msg = (_("The virtual machine must be powered off before "
+                         "changing the processor compatibility mode. "
+                         "Power off virtual machine %s and try again.") %
                        self.cur_lpar_w.name)
                 raise ValidatorException(msg)
 
-        # Changing processing mode is not supported while LPAR is running.
+        # Processing mode cannot be changed when lpar is not powered off.
         if self.has_dedicated != curr_has_dedicated:
-            msg = (_("Changing processing mode is not supported while "
-                     "virtual machine %s is running. "
-                     "It must be powered off first.") % self.cur_lpar_w.name)
+            msg = (_("The virtual machine must be powered off before changing "
+                     "the processing mode. Power off virtual machine %s and "
+                     "try again.") % self.cur_lpar_w.name)
             raise ValidatorException(msg)
 
         # Validations common for both active & inactive resizes.
@@ -438,17 +439,15 @@ class ProcValidator(BaseValidator):
         if curr_has_dedicated and not self.has_dedicated:
             # Resize from Dedicated Mode to Shared Mode
             if self.pool_id != 0:
-                msg = (_("Changing shared processor pool name to a pool other "
-                         "than DefaultPool is not supported for virtual "
-                         "machine %s.") % self.cur_lpar_w.name)
+                msg = (_("The shared processor pool for %s must be "
+                         "DefaultPool.") % self.cur_lpar_w.name)
                 raise ValidatorException(msg)
 
         if not self.has_dedicated and not curr_has_dedicated:
             curr_proc_pool_id = self.cur_lpar_w.proc_config.\
                 shared_proc_cfg.pool_id
             if curr_proc_pool_id != self.pool_id:
-                msg = (_("Changing shared processor pool name is not "
-                         "supported for virtual machine %s.")
+                msg = (_("The shared processor pool for %s cannot be changed.")
                        % self.cur_lpar_w.name)
                 raise ValidatorException(msg)
 
@@ -507,13 +506,14 @@ class CapabilitiesValidator(BaseValidator):
 
     def _validate_active_resize(self):
         """Enforce validation rules specific to active resize."""
-        # Simplified Remote Restart capability cannot be changed while LPAR is
-        # running.
+        # Simplified Remote Restart capability cannot be changed when lpar is
+        # not powered off.
         curr_srr_enabled = self.cur_lpar_w.srr_enabled
         if curr_srr_enabled != self.srr_enabled:
-            msg = (_("Changing simplified remote restart capability is not "
-                     "supported while virtual machine %s is running. "
-                     "It must be powered off first.") % self.cur_lpar_w.name)
+            msg = (_("The virtual machine must be powered off before changing "
+                     "the simplified remote restart capability. Power off "
+                     "virtual machine %s and try again.") %
+                   self.cur_lpar_w.name)
             raise ValidatorException(msg)
 
     def _populate_resize_diffs(self):
