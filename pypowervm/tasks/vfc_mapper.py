@@ -53,6 +53,30 @@ def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
     return None, None
 
 
+def find_vios_for_vfc_wwpns(vios_wraps, vfc_wwpns):
+    """Will find the VIOS that is hosting the vfc_wwpns.
+
+    :param vios_wraps: A list or set of VIOS wrappers.
+    :param vfc_wwpns: The list or set of virtual fibre channel WWPNs.
+    :return: The VIOS wrapper that supports the vfc adapters.  If there is not
+             one, then None will be returned.
+    :return: The port (which is a PhysFCPort wrapper) on the VIOS wrapper that
+             represents the physical port supporting the WWPNs.
+    """
+    # Sanitize our input
+    vfc_wwpns = {u.sanitize_wwpn_for_api(x) for x in vfc_wwpns}
+    for vios_w in vios_wraps:
+        for vfc_map in vios_w.vfc_mappings:
+            # If the map has no client adapter...then move on
+            if not vfc_map.client_adapter:
+                continue
+
+            # If the WWPNs match, return it
+            if vfc_wwpns == set(vfc_map.client_adapter.wwpns):
+                return vios_w, vfc_map.backing_port
+    return None, None
+
+
 def intersect_wwpns(wwpn_set1, wwpn_set2):
     """Will return the intersection of WWPNs between the two sets.
 
@@ -522,7 +546,7 @@ def remove_maps(v_wrap, client_lpar_id, client_adpt=None, port_map=None):
     return resp_list
 
 
-def find_vios_for_port_map(vios_wraps, port_map):
+def find_vios_for_port_map(vios_wraps, port_map, elastic=False):
     """Finds the appropriate VIOS wrapper for a given port map.
 
     :param vios_wraps: A list of Virtual I/O Server wrapper objects.

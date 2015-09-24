@@ -247,6 +247,44 @@ class TestPortMappings(twrap.TestWrapper):
         e3 = ('BAD', 'a b')
         self.assertIsNone(vfc_mapper.find_vios_for_port_map(self.entries, e3))
 
+    def test_find_vios_for_vfc_wwpns(self):
+        """Tests the find_vios_for_vfc_wwpns method."""
+        # This WWPN is on the first VIOS
+        v_wwpns = ['c05076079cff0e56', 'c05076079cff0e57']
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertEqual(self.entries[0], vios)
+        self.assertEqual('10000090FA5371F2', port.wwpn)
+
+        # Have one of the ports be wrong
+        v_wwpns = ['c05076079cff0e56', 'c05076079cff0e59']
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertIsNone(vios)
+        self.assertIsNone(port)
+
+        # Try odd formatting
+        v_wwpns = ['C05076079cff0E56', 'c0:50:76:07:9c:ff:0E:57']
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertEqual(self.entries[0], vios)
+        self.assertEqual('10000090FA5371F2', port.wwpn)
+
+        # Second VIOS
+        v_wwpns = ['c05076079cff07ba', 'c05076079cff07bb']
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertEqual(self.entries[1], vios)
+        self.assertEqual('10000090FA53720A', port.wwpn)
+
+        # Reverse WWPNs
+        v_wwpns = ['c05076079cff07bb', 'c05076079cff07ba']
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertEqual(self.entries[1], vios)
+        self.assertEqual('10000090FA53720A', port.wwpn)
+
+        # Set Type
+        v_wwpns = {'c05076079cff07bb', 'c05076079cff07ba'}
+        vios, port = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
+        self.assertEqual(self.entries[1], vios)
+        self.assertEqual('10000090FA53720A', port.wwpn)
+
     def test_add_port_mapping_multi_vios(self):
         """Validates that the port mappings are added cross VIOSes."""
         # Determine the vios original values
