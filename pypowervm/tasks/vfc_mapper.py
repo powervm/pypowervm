@@ -612,3 +612,45 @@ def has_client_wwpns(vios_wraps, client_wwpn_pair):
                 return vios_wrap, vfc_map
 
     return None, None
+
+
+def build_migration_mappings_for_fabric(vios_wraps, p_port_wwpns,
+                                        client_slots):
+    """Builds the vFC migration mappings for a given fabric.
+
+    This method will build the migration mappings for a given fabric.
+    The response is a list of strings that can be used in the migration.py
+
+    Note: If you have multiple fabrics, then each fabric will need to
+    independently call this method with the appropriate p_port_wwpns.
+
+    Note: This must be run on the destination server before the migration.
+    It is typically input back to the source server for the migration call.
+
+    :param vios_wraps: The VIOS wrappers for the target system.  Must
+                       have the VFC_MAPPING xag specified.
+    :param p_port_wwpns: The physical port WWPNs that can be used for
+                         this specific fabric.  May span multiple VIOSes,
+                         but each must be part of the vios_wraps.
+    :param client_slots: A list of integers which represent the *source*
+                         system's LPAR virtual Fibre Channel slots that
+                         are participating in this fabric.
+    :return: List of mappings that can be passed into the migration.py
+             for the live migration.  The format is defined within the
+             migration.py, migrate_lpar method.
+    """
+    basic_mappings = derive_base_npiv_map(vios_wraps, p_port_wwpns,
+                                          len(client_slots))
+    resp = []
+    for basic_map, client_slot in zip(basic_mappings, client_slots):
+        # Find the appropriate VIOS hosting this physical port.
+        vios_w, port = find_vios_for_wwpn(vios_wraps, basic_map[0])
+
+        # The format is:
+        #     virtual-slot-number/vios-lpar-name/vios-lpar-ID
+        #     [/[vios-virtual-slot-number][/[vios-fc-port-name]]]
+        #
+        # We do not specify the vios-virtual-slot-number.
+        resp.append(str(client_slot) + "/" + vios_w.name + "/" +
+                    str(vios_w.id) + "//" + port.name)
+    return resp

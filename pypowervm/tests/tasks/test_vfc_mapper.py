@@ -182,6 +182,40 @@ class TestVFCMapper(unittest.TestCase):
         self.assertEqual(['A B', 'C D'],
                          vfc_mapper._fuse_vfc_ports(['a', 'b', 'c', 'd']))
 
+    @mock.patch('pypowervm.tasks.vfc_mapper.derive_base_npiv_map')
+    def test_build_migration_mappings_for_fabric(self, mock_derive):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA45473B', '10:00:00:90:fa:45:17:58']
+        client_slots = ['1', '2']
+
+        # The derive is non-deterministic.  That makes testing odd.  Force
+        # a deterministic result.
+        mock_derive.return_value = [('10000090FA451758', 'A A'),
+                                    ('10000090FA45473B', 'B B')]
+
+        # Build migration mappings success case
+        resp = vfc_mapper.build_migration_mappings_for_fabric(
+            vios_wraps, p_wwpns, client_slots)
+        self.assertEqual(2, len(resp))
+        self.assertEqual({'1/IO Server/1//fcs2', '2/IO Server/1//fcs1'},
+                         set(resp))
+
+    def test_build_migration_mappings_for_fabric_invalid_physical_port(self):
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
+        vios_wraps = [vios_w]
+
+        # Invalid WWPNs should raise an error.
+        p_wwpns = ['10000090FA45477B']
+        client_slots = ['1', '2']
+
+        # Build migration mappings success case
+        self.assertRaises(e.UnableToFindFCPortMap,
+                          vfc_mapper.build_migration_mappings_for_fabric,
+                          vios_wraps, p_wwpns, client_slots)
+
 
 class TestPortMappings(twrap.TestWrapper):
     file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
