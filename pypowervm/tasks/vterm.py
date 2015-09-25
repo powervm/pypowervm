@@ -25,8 +25,6 @@ from pypowervm.i18n import _
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as pvm_lpar
 
-import six
-
 LOG = logging.getLogger(__name__)
 
 _SUFFIX_PARM_CLOSE_VTERM = 'CloseVterm'
@@ -90,41 +88,25 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
 
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
 
-    cmd = ['mkvterm', '--id', lpar_id, '--vnc', '--local']
+    cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
     std_out, std_err = _run_proc(cmd)
 
     # The first line of the std_out should be the VNC port
     return int(std_out.splitlines()[0])
 
 
-def _run_proc(cmd, wait=True, shell=False):
+def _run_proc(cmd):
     """Simple wrapper to run a process.
 
-    Will return the stdout.  If the return code is not 0, an exception will
-    be raised and the stderr will be part of the exception.
-
+    Will return the stdout and stderr.
     :param cmd: The command arguments.  Should be a list.
-    :param wait: If true, will wait for the command to complete.
-    :return: The stdout and stderr from the command.  If not waiting for
-             the command, returns None, None
+    :return: The stdout and stderr from the command.
     """
     process = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                close_fds=True, env=None)
-    if wait:
-        if process.wait() != 0:
-            stdout, stderr = process.communicate()
-            err_text = six.text_type(stderr)
-            msg = _('Unable to run process.  Error is %(error)s\n'
-                    'Command being run: %(cmd)s') % {'error': err_text,
-                                                     'cmd': cmd}
-            LOG.exception(msg)
-            raise Exception(msg)
-
-        stdout, stderr = process.communicate()
-        return stdout, stderr
-    else:
-        return None, None
+    stdout, stderr = process.communicate()
+    return stdout, stderr
 
 
 def _get_lpar_id(adapter, lpar_uuid):
