@@ -21,6 +21,7 @@ import copy
 import logging
 import threading
 
+import pypowervm.const as c
 import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
 
@@ -130,6 +131,11 @@ def log_helper(func, max_logs=5):
             This value can only be set once per thread.
             Once it's set, subsequent calls will ignore the value.
     """
+    def is_etag_mismatch(ex):
+        """Is ex an HttpError with status 412 (etag mismatch)?"""
+        return (isinstance(ex, pvmex.HttpError) and
+                ex.response.status == c.HTTPStatus.ETAG_MISMATCH)
+
     def log_req_resp(*args, **kwds):
         # Set aside storage for a req/resp pair
         _init_thread_stg(max_entries=(max_logs * 2))
@@ -142,12 +148,14 @@ def log_helper(func, max_logs=5):
             # Call the request()
             response = func(*args, **kwds)
         except pvmex.Error as e:
-            _stash_response(sensitive, e.response)
-            # Now dump the log and raise the exception
-            _write_thread_log()
-            raise e
-        else:
-            _stash_response(sensitive, response)
-            return response
+            # Special case for 412 (etag mismatch)
+            if not is_etag_mismatch(e):
+                _stash_response(sensitive, e.response)
+                # Now dump the log and raise the exception
+                _write_thread_log()
+                raise e
+            response = e.response
+        _stash_response(sensitive, response)
+        return response
 
     return log_req_resp
