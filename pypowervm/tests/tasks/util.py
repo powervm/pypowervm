@@ -20,6 +20,7 @@ from pypowervm import adapter as adpt
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tests.wrappers.util import pvmhttp
+import pypowervm.wrappers.job as job
 
 
 def load_file(file_name, adapter=None):
@@ -40,3 +41,30 @@ def raiseRetryException():
                          'reason', 'headers')
     http_exc = pvm_exc.HttpError(resp)
     raise http_exc
+
+
+def get_parm_checker(test_obj, exp_uuid, exp_job_parms, exp_job_mappings=[],
+                     exp_timeout=None):
+    # Utility method to return a dynamic parameter checker for tests
+
+    # Build the expected job parameter strings
+    exp_job_parms_str = [job.Job.create_job_parameter(k, v).toxmlstring()
+                         for k, v in exp_job_parms]
+    exp_job_parms_str += [
+        job.Job.create_job_parameter(k, ",".join(v)).toxmlstring()
+        for k, v in exp_job_mappings]
+
+    def parm_checker(uuid, job_parms=None, timeout=None):
+        # Check simple parms
+        test_obj.assertEqual(exp_uuid, uuid)
+        test_obj.assertEqual(exp_timeout, timeout)
+
+        # Check the expected and actual number of job parms are equal
+        test_obj.assertEqual(len(exp_job_parms_str), len(job_parms))
+
+        # Ensure each parameter is in the list of expected.
+        for parm in job_parms:
+            test_obj.assertIn(parm.toxmlstring(), exp_job_parms_str)
+
+    # We return our custom checker
+    return parm_checker
