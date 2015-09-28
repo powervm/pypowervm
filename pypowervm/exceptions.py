@@ -195,3 +195,7 @@ class AuthFileAccessError(AbstractMsgFmtError):
 
 class MigrationFailed(AbstractMsgFmtError):
     msg_fmt = _("The migration task failed. %(error)s")
+
+
+class IBMiLoadSourceNotFound(AbstractMsgFmtError):
+    msg_fmt = _("No load source found for VM %(vm_name)s")
