@@ -21,6 +21,7 @@ import mock
 import testtools
 
 import pypowervm.adapter as adp
+import pypowervm.const as c
 import pypowervm.exceptions as pvmex
 import pypowervm.helpers.log_helper as log_hlp
 import pypowervm.tests.test_fixtures as fx
@@ -67,11 +68,18 @@ class TestLogHelper(testtools.TestCase):
         # are logged separately, so with maxlogs=5, it's 5 * 2 * 2.
         self.assertEqual(mock_log.info.call_count, (5 * 2 * 2))
 
-        # Add a few records, and ensure an exception dumps the logs
-        # and is then raised
+        mock_log.reset_mock()
+        # Add a few records
         adpt._request('method1', 'path', body='the body')
-        adpt._request('method2', 'path', body='the body')
-        self.sess.request.side_effect = pvmex.Error('yo')
+        # Ensure a 412 (special case) doesn't dump, but does raise
+        self.sess.request.side_effect = pvmex.HttpError(mock.Mock(
+            status=c.HTTPStatus.ETAG_MISMATCH))
+        self.assertRaises(
+            pvmex.HttpError, adpt._request, 'method2', 'path', body='the body')
+        self.assertEqual(0, mock_log.info.call_count)
+        # Ensure a non-412 exception dumps the logs and is then raised
+        self.sess.request.side_effect = pvmex.HttpError(mock.Mock(
+            status=c.HTTPStatus.INTERNAL_ERROR))
         mock_log.reset_mock()
         self.assertRaises(
             pvmex.Error, adpt._request, 'method', 'path', body='the body')
