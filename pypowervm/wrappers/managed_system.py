@@ -31,6 +31,7 @@ _PRIMARY_IP_ADDRESS = 'PrimaryIPAddress'
 _HOST_IP_ADDRESS = _PRIMARY_IP_ADDRESS
 _STATE = 'State'
 _SYSTEM_NAME = 'SystemName'
+_MASTER_MODE = 'IsMaster'
 
 _SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
 _ACTIVE_LPM_CAP = u.xpath(
@@ -313,6 +314,16 @@ class System(ewrap.EntryWrapper):
         This is a READ-ONLY list.
         """
         return self.get_href(_VIOS_LINK)
+
+    @property
+    def is_master(self):
+        """The master mode state of this managed system.
+
+        Use pypowervm.tasks.master_mode.request_master to request master mode
+        :returns: True if the management node of this System's adapter.session
+                  is the master.
+        """
+        return self._get_val_bool(_MASTER_MODE, True)
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)

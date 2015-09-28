@@ -238,6 +238,9 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
+    def test_is_master(self):
+        self.assertTrue(self.wrapper.is_master)
+
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
