@@ -289,3 +289,48 @@ class TestHDisk(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
+
+    def test_create_hdisk_inv_xml(self):
+        udid = "01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDBEQQ=="
+        exp_xml = ('<uom:VIO xmlns:uom="http://www.ibm.com/xmlns/systems/'
+                   'power/firmware/uom/mc/2012_10/" version="1.21" xmlns='
+                   '""><uom:Request action_str="QUERY_INVENTORY"><uom:'
+                   'InventoryRequest inventoryType="base"><uom:VioTypeFilter '
+                   'type="PV"/><uom:VioUdidFilter udid="01M0lCTTIxNDUxMjQ2MDA'
+                   '1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDBEQQ=="/></uom:Inventor'
+                   'yRequest></uom:Request></uom:VIO>')
+        self.assertEqual(exp_xml, hdisk._hdisk_inventory_xml(None, udid))
+
+    def test_process_hdisk_inv(self):
+        output = ('<VIO version="1.21" xmlns="http://ausgsa.austin.ibm">'
+                  '<Response><InventoryResponse viosId="8247-21L03212A60A"'
+                  ' sequence="435" inventoryType="base" eventLogOn="true">'
+                  '<PhysicalVolume udid="01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjF'
+                  'EODgwMDAwMDAwMDAwMDBEQQ==" name="hdisk2" description='
+                  '"MPIO IBM 2076 FC Disk"><PhysicalVolume_base capacity="204'
+                  '80" locationCode="U78CB.001.WZS05HN-P1-C7-T1-W500507680220'
+                  'E523-L2000000000000" unique_id="33213600507680282861D88000'
+                  '0000DA04214503IBMfcp" descriptor="NjAwNTA3NjgwMjgyODYxRDg'
+                  '4MDAwMDAwMDAwMDAwREE=" desType="NAA"></PhysicalVolume_base>'
+                  '</PhysicalVolume></InventoryResponse></Response></VIO>')
+        result = {'OutputXML': output}
+        naa = hdisk._process_hdisk_inv_result(result)
+        self.assertEqual("600507680282861D88000000000000DA", naa)
+
+    @mock.patch('pypowervm.tasks.hdisk._process_hdisk_inv_result')
+    @mock.patch('pypowervm.wrappers.job.Job')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_lua_inventory(self, mock_adapter, mock_job, mock_result):
+        udid = "01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDBEQQ=="
+        mock_result.return_value = "600507680282861D88000000000000DA"
+        naa = hdisk.hdisk_inventory(mock_adapter, 'vios_uuid', udid)
+        self.assertEqual("600507680282861D88000000000000DA", naa)
+
+    @mock.patch('pypowervm.tasks.hdisk.hdisk_inventory')
+    @mock.patch('pypowervm.adapter.Adapter')
+    def test_get_hdisk_NAA(self, mock_adapter, mock_lua_inv):
+        udid = "fake_udid"
+        vios_uuids = ['vios_uuid1', 'vios_uuid2']
+        mock_lua_inv.return_value = 'fake_naa'
+        naa = hdisk.get_pg83NAA_from_udid(mock_adapter, vios_uuids, udid)
+        self.assertEqual('fake_naa', naa)
