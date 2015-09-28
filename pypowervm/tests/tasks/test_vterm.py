@@ -49,13 +49,10 @@ class TestVterm(testtools.TestCase):
         mock_run_job.reset_mock()
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    @mock.patch('subprocess.check_output')
     def test_open_vnc_vterm(self, mock_run_proc, mock_get_lpar_id):
         mock_get_lpar_id.return_value = '4'
-        std_out = '5903'
-        std_err = ('VNC is started on port 5903 for localhost access '
-                   'only.  Use \'rmvterm --id 4\' to close it.')
-        mock_run_proc.return_value = (std_out, std_err)
+        mock_run_proc.return_value = '5903\n'
 
         resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
 
@@ -64,23 +61,7 @@ class TestVterm(testtools.TestCase):
         self.assertEqual(5903, resp)
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
-    def test_open_vnc_vterm_second_pass(self, mock_run_proc, mock_get_lpar_id):
-        """Validates the output from the mkvterm if a vterm is active."""
-        mock_get_lpar_id.return_value = '4'
-        std_out = '5903'
-        std_err = ('\nVNC server is already started on port 5903. Use '
-                   '\'rmvterm --id 4\' to close it.')
-        mock_run_proc.return_value = (std_out, std_err)
-
-        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
-
-        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
-                                               '--local'])
-        self.assertEqual(5903, resp)
-
-    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    @mock.patch('subprocess.check_output')
     def test_close_vterm_local(self, mock_run_proc, mock_get_lpar_id):
         mock_get_lpar_id.return_value = '2'
         vterm._close_vterm_local(self.adpt, '5')
