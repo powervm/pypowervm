@@ -24,12 +24,34 @@ from pypowervm import const
 def convert_uuid_to_pvm(uuid):
     """Converts a standard UUID to PowerVM format
 
-    PowerVM uuids always set the byte 0, bit 0 to 0.
+    PowerVM enforces the following UUID rules:
+    - Bit 0 must be zero.
+    - Bits 1-47 cannot all be zero.
+    - The next 4 bits (48-51) are the generation method which must be 4 (0100).
+    - The next 12 bits (52-63) cannot all be zero.
+    - The next 2 bits (64-65) are the Variant which must be 2 (10).
+    - The last 62 bits (66-127) cannot all be zero.
 
     :param uuid: A standard format uuid string
     :returns: A PowerVM compliant uuid
     """
-    return "%x%s" % (int(uuid[0], 16) & 7, uuid[1:])
+    # Bit 0 must be zero.
+    reta = ("%x%s" % (int(uuid[0], 16) & 7, uuid[1:])).split('-')
+    # Now the first 48 bits (xxxxxxxx-xxxx) can't all be zeroes
+    if reta[0] == '00000000' and reta[1] == '0000':
+        reta[1] = '0001'
+    # The next 4 bits (48-51) are the generation method which must be 4 (0100).
+    reta[2] = '4' + reta[2][1:]
+    # The next 12 bits (52-63) cannot all be zero, so this chunk can't be 4000.
+    if reta[2] == '4000':
+        reta[2] = '4001'
+    # The next 2 bits (64-65) are the Variant which must be 2 (10).
+    reta[3] = "%x%s" % (((int(reta[3][0], 16) | 4) & 7), reta[3][1:])
+    # The last 62 bits (66-127) cannot all be zero, so the last two chunks
+    # can't be 4000-000000000000
+    if reta[3] == '4000' and reta[4] == '000000000000':
+        reta[4] = '000000000001'
+    return '-'.join(reta)
 
 
 def id_or_uuid(an_id):
