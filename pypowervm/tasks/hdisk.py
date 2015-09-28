@@ -15,7 +15,7 @@
 #    under the License.
 
 """Tasks around VIOS-backed 'physical' disks."""
-
+import base64
 import itertools
 import logging
 
@@ -403,3 +403,105 @@ def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
         LOG.warn(_('CLIRunner Error: %s') % error)
+
+
+def lua_inventory(adapter, vios_uuid, udid):
+    """Logical Unit Address Recovery - discovery of a FC-attached hdisk.
+
+    When a new disk is created externally (say on a block device), the Virtual
+    I/O Server may or may not discover it immediately.  This method forces a
+    discovery on a given Virtual I/O Server.
+
+    :param adapter: The pypowervm adapter.
+    :param vios_uuid: The Virtual I/O Server UUID.
+    :param itls: A list of ITL objects.
+    :param vendor: The vendor for the LUN.  See the LUAType.* constants.
+    :return status: The status code from the discover process.
+                    See LUAStatus.* constants.
+    :return dev_name: The name of the discovered hdisk.
+    :return udid: The UDID of the device.
+    """
+    pg83_naa = None
+    # Build the LUA recovery XML
+    lua_xml = _lua_inventory_xml(adapter, udid)
+
+    # Build up the job & invoke
+    resp = adapter.read(
+        pvm_vios.VIOS.schema_type, root_id=vios_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_LUA_RECOVERY)
+    job_wrapper = pvm_job.Job.wrap(resp)
+    job_parms = [job_wrapper.create_job_parameter('inputXML', lua_xml,
+                                                  cdata=True)]
+    job_wrapper.run_job(vios_uuid, job_parms=job_parms)
+
+    # Get the job result, and parse the output.
+    result = job_wrapper.get_job_results_as_dict()
+    pg83_naa = _process_lua_inv_result(result)
+
+    return pg83_naa
+
+
+def get_hdisk_NAA(adapter, vios_uuids, udid):
+    for vios in vios_uuids:
+        pg83_naa = lua_inventory(adapter, vios, udid)
+        if pg83_naa is not None:
+            break
+
+    LOG.info(_("PG83 NAA pg83_naa= %(naa)s information retrieved for"
+               "disk %(id)s"), {'naa': pg83_naa, 'id': udid})
+    return pg83_naa
+
+
+def _lua_inventory_xml(adapter, udid):
+    """Create an lua query inventory input XML."""
+    xmlns = "http://ausgsa.austin.ibm.com/projects/v/vios/schema/1.21"
+    root = ent.Element('VIO', adapter, attrib={'xmlns': xmlns,
+                                               'version': "1.21"})
+    request = ent.Element('Request', adapter,
+                          attrib={'action_str': "QUERY_INVENTORY"})
+    inventory = ent.Element('InventoryRequest', adapter,
+                            attrib={'inventoryType': "base"})
+    VioTypeFilter = ent.Element('VioTypeFilter', adapter,
+                                attrib={'type': "PV"})
+    VioUdidFilter = ent.Element('VioUdidFilter',
+                                adapter, attrib={'udid': udid})
+    inventory.append(VioTypeFilter)
+    inventory.append(VioUdidFilter)
+    request.append(inventory)
+    root.append(request)
+    return root.toxmlstring().decode('utf-8')
+
+
+def _process_lua_inv_result(result):
+    """Processes the Output XML returned by LUARecovery"""
+    if result is None:
+        return None
+
+    naa = None
+    result = result['OutputXML']
+    LOG.debug("_process_lua_inv_result OutputXML: %s" % result)
+    if result is not None:
+        idx = result.find('</VIO>')
+        res = result.find('<Response')
+        result = result[res:idx]
+        LOG.debug("Output Response updated result : %s" % result)
+        root = etree.fromstring(result)
+        for pv in root.getiterator('PhysicalVolume_base'):
+            if ('desType' in pv.attrib.keys() and
+                    pv.attrib['desType'] == "NAA"):
+                # Don't fail if we can't decode. Go on
+                # without pg83. VIOS must have passed
+                # invalid data. Won't be able to use pg83
+                # for future vscsi lua_discoveries.
+                try:
+                    pg83_naa = pv.attrib['descriptor']
+                    naa = base64.b64decode(pg83_naa)
+                    LOG.info(_("PG83 NAA Found: %(naa)s and"
+                             "decode %(pg83)s"), {'naa': pg83_naa,
+                                                  'pg83': naa})
+                except Exception as ex:
+                    LOG.info(_("Failed decode pg83 %s"), pv)
+                    LOG.execption(ex)
+            elif 'desType' in pv.attrib.keys():
+                LOG.info(_("Available desTypes %s"), pv.attrib['desType'])
+    return naa
