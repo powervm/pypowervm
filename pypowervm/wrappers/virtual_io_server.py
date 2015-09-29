@@ -285,6 +285,13 @@ class VIOS(bp.BasePartition):
                     break
         return orphan_trunks
 
+    @property
+    def phys_vols(self):
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
+            stor.PV)
+        return es
+
 
 @six.add_metaclass(abc.ABCMeta)
 class VStorageMapping(ewrap.ElementWrapper):
