@@ -203,17 +203,20 @@ class TestRetry(testtools.TestCase):
         global called_count
         called_count = 0
         mock_wrapper = mock.Mock()
-        mock_wrapper.value = 0
+        mock_wrapper.refreshes = 0
 
-        def _refresh():
-            mock_wrapper.value += 1
+        def _refresh(**kwargs):
+            mock_wrapper.refreshes += 1
+            self.assertIn('use_etag', kwargs)
+            self.assertFalse(kwargs['use_etag'])
             return mock_wrapper
         mock_wrapper.refresh.side_effect = _refresh
 
-        @pvm_retry.retry(argmod_func=pvm_retry.refresh_wrapper)
+        @pvm_retry.retry(argmod_func=pvm_retry.refresh_wrapper,
+                         resp_checker=lambda *a, **k: True)
         def _func(wrapper, arg1, arg2, kw0=None, kw1=None):
             global called_count
-            self.assertEqual(called_count, wrapper.value)
+            self.assertEqual(called_count, wrapper.refreshes)
             # Ensure the other args didn't change
             self.assertEqual('a1', arg1)
             self.assertEqual('a2', arg2)
@@ -221,6 +224,10 @@ class TestRetry(testtools.TestCase):
             self.assertEqual('k1', kw1)
             called_count += 1
         _func(mock_wrapper, 'a1', 'a2', kw0='k0', kw1='k1')
+        # Three calls (overall attempts)
+        self.assertEqual(3, called_count)
+        # ...equals two refreshes
+        self.assertEqual(2, mock_wrapper.refreshes)
 
     @mock.patch('time.sleep')
     def test_stepped_delay(self, mock_sleep):

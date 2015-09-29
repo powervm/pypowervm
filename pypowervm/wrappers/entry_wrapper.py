@@ -568,7 +568,7 @@ class EntryWrapper(Wrapper):
         fmt = _("Must supply a Response or Entry to wrap.  Got %s")
         raise TypeError(fmt % str(type(response_or_entry)))
 
-    def refresh(self):
+    def refresh(self, use_etag=True):
         """Fetch the latest version of the entry from the REST API server.
 
         If the entry has not been updated on the server, self is returned
@@ -577,13 +577,17 @@ class EntryWrapper(Wrapper):
 
         wrapper_instance = wrapper_instance.refresh()
 
+        :param use_etag: (Optional) If False, the object's etag will not be
+                         sent with the request, ensuring that the object is
+                         retrieved afresh from the server.
         :return: EntryWrapper representing the latest data from the REST API
                  server.  If the input wrapper contains etag information and
                  the server responds 304 (Not Modified), the original wrapper
                  is returned.  Otherwise, a fresh EntryWrapper of the
                  appropriate type is returned.
         """
-        resp = self.adapter.read_by_href(self.href, etag=self.etag)
+        etag = self.etag if use_etag else None
+        resp = self.adapter.read_by_href(self.href, etag=etag)
         if resp.status == pc.HTTPStatus.NO_CHANGE:
             return self
         return self.wrap(resp)
