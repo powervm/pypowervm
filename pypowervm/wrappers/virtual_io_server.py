@@ -285,6 +285,18 @@ class VIOS(bp.BasePartition):
                     break
         return orphan_trunks
 
+    @property
+    def phys_vols(self):
+        """Will return a list of physical volumes attached to this VIOS.
+
+        This list is READ-ONLY.
+        """
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
+            stor.PV)
+        es_list = [es_val for es_val in es]
+        return tuple(es_list)
+
 
 @six.add_metaclass(abc.ABCMeta)
 class VStorageMapping(ewrap.ElementWrapper):

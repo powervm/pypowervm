@@ -134,6 +134,20 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.assertEqual(0, ports[0].npiv_available_ports)
         self.assertEqual(0, ports[0].npiv_total_ports)
 
+    def test_phys_vols(self):
+        """Tests that the physical volumes can be gathered."""
+        phys_vols = self.dwrap.phys_vols
+        self.assertIsNotNone(phys_vols)
+        self.assertEqual(11, len(phys_vols))
+
+        # Validate attributes on one.
+        self.assertEqual(phys_vols[0].description, 'SAS Disk Drive')
+        self.assertEqual(phys_vols[0].udid,
+                         '01M0lCTU1CRjI2MDBSQzUwMDAwMzk0NzgzQTUyQjg=')
+        self.assertEqual(phys_vols[0].capacity, 572325)
+        self.assertEqual(phys_vols[0].name, 'hdisk0')
+        self.assertEqual(phys_vols[0].state, 'active')
+
 
 class TestViosMappings(twrap.TestWrapper):
 
