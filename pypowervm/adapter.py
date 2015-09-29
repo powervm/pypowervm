@@ -524,8 +524,18 @@ class Adapter(object):
 
     # TODO(IBM): way to retrieve cache timestamp along with / instead of data?
 
-    def __init__(self, session, use_cache=False, helpers=None):
-        self.session = session
+    def __init__(self, session=None, use_cache=False, helpers=None):
+        """Create a new Adapter instance, connected to a Session.
+
+        :param session: (Optional) A Session instance.  If not specified, a
+                        new, local, file-authentication-based Session will be
+                        created and used.
+        :param use_cache: (Optional) Cache REST responses for faster operation.
+        :param helpers: A list of decorator methods in which to wrap the HTTP
+                        request call.  See the pypowervm.helpers package for
+                        examples.
+        """
+        self.session = session if session else Session()
         self._cache = None
         self._eventlistener = None
         self._refreshtime4path = {}

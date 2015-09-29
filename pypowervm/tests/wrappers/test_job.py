@@ -75,7 +75,7 @@ class TestJobEntryWrapper(unittest.TestCase):
 
         self.set_test_property_values()
 
-        self._fake_oper = adp.Adapter(None, use_cache=False)
+        self._fake_oper = adp.Adapter("session", use_cache=False)
 
     def set_single_value(self, entry, property_name, value):
         prop = entry.element.find(property_name)

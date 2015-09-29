@@ -109,6 +109,11 @@ class TestAdapter(testtools.TestCase):
         self.sess = None
         super(TestAdapter, self).tearDown()
 
+    @mock.patch('pypowervm.adapter.Session')
+    def test_empty_init(self, mock_sess):
+        adp.Adapter()
+        mock_sess.assert_called_with()
+
     @mock.patch('requests.Session')
     def test_read(self, mock_session):
         """Test read() method found in the Adapter class."""
@@ -154,7 +159,7 @@ class TestAdapter(testtools.TestCase):
 
             return validate_request
 
-        adpt = adp.Adapter(None)
+        adpt = adp.Adapter(mock.Mock())
         basepath = c.API_BASE_PATH + 'uom/SomeRootObject'
         uuid = "abcdef01-2345-2345-2345-67890abcdef0"
         hdr_xml = 'application/atom+xml'
