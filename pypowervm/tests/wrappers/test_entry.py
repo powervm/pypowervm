@@ -565,6 +565,21 @@ class TestActionableList(unittest.TestCase):
         self.assertEqual(5, function.call_count)
 
 
+class TestGet(twrap.TestWrapper):
+    """Tests for EntryWrapper.get()."""
+    file = LPAR_FILE
+    wrapper_class_to_test = lpar.LPAR
+
+    def test_get(self):
+        self.adpt.read.return_value = self.resp
+        ret = lpar.LPAR.get(self.adpt, foo='bar', baz=123)
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, foo='bar',
+                                          baz=123)
+        # Ensure that LPAR.wrap was called on the result
+        self.assertIsInstance(ret, list)
+        self.assertIsInstance(ret[0], lpar.LPAR)
+
+
 class TestSearch(testtools.TestCase):
     """Tests for EntryWrapper.search()."""
 
