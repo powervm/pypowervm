@@ -159,31 +159,21 @@ class TestNetworkBridger(testtools.TestCase):
         return nb
 
     def test_build_orphan_map(self):
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
+        self.adpt.read.side_effect = [self.orphan_vio_resp]
         bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
         orphan_map = bridger._build_orphan_map()
 
         expected_map = {
-            0: {'nimbus-ch03-p2-vios1': {'Unknown': [1]},
-                'nimbus-ch03-p2-vios2': {'ent11': [4092, 2018, 2019],
-                                         'Unknown': [1]}},
-            1: {'nimbus-ch03-p2-vios1': {'Unknown': [4094]},
-                'nimbus-ch03-p2-vios2': {'Unknown': [4094]}}
+            0: {'nimbus-ch03-p2-vios2': {'ent11': [4092, 2018, 2019]}},
+            1: {'nimbus-ch03-p2-vios2': {'ent12': [2800, 2801]}}
         }
 
         self.assertEqual(expected_map, orphan_map)
 
     def test_validate_orphan_on_ensure(self):
         """Tests the _validate_orphan_on_ensure method."""
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
+        self.adpt.read.side_effect = [self.orphan_vio_resp]
         bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
-
-        # Test on the main vSwitch
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 1, 0)
 
         # Test the Trunk Path - PVID and then an additional
         self.assertRaises(
@@ -191,26 +181,22 @@ class TestNetworkBridger(testtools.TestCase):
             bridger._validate_orphan_on_ensure, 4092, 0)
         self.assertRaises(
             pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 2018, 0)
-
-        # Different vSwitch
-        self.assertRaises(
-            pvm_exc.OrphanVLANFoundOnProvision,
-            bridger._validate_orphan_on_ensure, 4094, 1)
+            bridger._validate_orphan_on_ensure, 2800, 1)
 
         # Shouldn't fail on a good vlan
         bridger._validate_orphan_on_ensure(2, 0)
+        bridger._validate_orphan_on_ensure(1, 0)
+        bridger._validate_orphan_on_ensure(4094, 1)
 
     def test_get_orphan_vlans(self):
         """Tests the _get_orphan_vlans method."""
-        self.adpt.read.side_effect = [
-            self.orphan_vio_resp, self.orphan_cna_feed, self.orphan_cna_feed]
+        self.adpt.read.side_effect = [self.orphan_vio_resp]
         bridger = net_br.NetworkBridger(self.adpt, self.host_uuid)
 
         self.assertListEqual([], bridger._get_orphan_vlans(2))
-        self.assertListEqual([1, 2018, 2019, 4092],
+        self.assertListEqual([2018, 2019, 4092],
                              bridger._get_orphan_vlans(0))
-        self.assertListEqual([4094], bridger._get_orphan_vlans(1))
+        self.assertListEqual([2800, 2801], bridger._get_orphan_vlans(1))
 
 
 class TestNetworkBridgerVNet(TestNetworkBridger):

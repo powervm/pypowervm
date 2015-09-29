@@ -458,17 +458,6 @@ class NetworkBridger(object):
                     orphan_map, vios_w, orphan_trunk.vswitch_id,
                     orphan_trunk.dev_name, vlans)
 
-            # Now see if there are any client network adapters (non-trunk)
-            cna_feed = self.adapter.read(
-                pvm_vios.VIOS.schema_type, root_id=vios_w.uuid,
-                child_type=pvm_net.CNA.schema_type)
-            cna_wraps = pvm_net.CNA.wrap(cna_feed)
-
-            # ALL client network adapters on a VIOS are considered orphans.
-            for cna_w in cna_wraps:
-                vlans = [cna_w.pvid] + cna_w.tagged_vlans
-                self._put_orphan_in_map(orphan_map, vios_w, cna_w.vswitch_id,
-                                        cna_w.dev_name, vlans)
         return orphan_map
 
     def _put_orphan_in_map(self, orphan_map, vios_w, vswitch_id, dev_name,
