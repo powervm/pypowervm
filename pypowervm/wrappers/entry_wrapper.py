@@ -589,6 +589,29 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     @classmethod
+    def get(cls, adapter, **read_kwargs):
+        """GET and wrap an entry or feed of this type.
+
+        Shortcut to EntryWrapper.wrap(adapter.read(...)).
+        For example:
+            resp = adapter.read(VIOS.schema_type, root_id=v_uuid, xag=xags)
+            vwrap = VIOS.wrap(resp)
+        Becomes:
+            vwrap = VIOS.get(adapter, root_id=v_uuid, xag=xags)
+
+        :param cls: A subclass of EntryWrapper.  Its schema_type will be used
+                    as the first argument to adapter.read()
+        :param adapter: The pypowervm.adapter.Adapter instance through which to
+                        perform the GET.
+        :param read_kwargs: Any arguments to be passed directly through to
+                            Adapter.read().
+        :return: An EntryWrapper (or list thereof) around the requested REST
+                 object.  (Note that this may not be of the type from which the
+                 method was invoked, e.g. if the child_type parameter is used.)
+        """
+        return cls.wrap(adapter.read(cls.schema_type, **read_kwargs))
+
+    @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
                parent_uuid=None, **kwargs):
         """Performs a REST API search.
