@@ -17,6 +17,7 @@
 """Tests for pypoowervm.utils.transaction."""
 
 import copy
+
 import mock
 import oslo_concurrency.lockutils as lock
 import oslo_context.context as ctx
@@ -28,7 +29,7 @@ from taskflow import task as tf_task
 import pypowervm.const as c
 import pypowervm.exceptions as ex
 import pypowervm.tests.test_fixtures as fx
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar

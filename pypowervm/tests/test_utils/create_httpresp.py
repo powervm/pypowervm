@@ -18,7 +18,7 @@ import os
 import sys
 
 import pypowervm.adapter as adp
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 
 
 def refresh_response(file_to_refresh):

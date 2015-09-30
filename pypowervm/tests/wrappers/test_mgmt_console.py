@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pypowervm.tests.wrappers.util import test_wrapper_abc as twrap
+from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 import pypowervm.wrappers.management_console as mc
 
 _PUB_KEY = ('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuA/Av0jMYlG54YiaaaQXho8iO'

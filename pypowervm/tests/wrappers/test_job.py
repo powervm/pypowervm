@@ -17,7 +17,7 @@
 import unittest
 
 import pypowervm.adapter as adp
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 import pypowervm.wrappers.job as jwrap
 
 JOB_REQUEST_FILE = "job_request_power_off.txt"

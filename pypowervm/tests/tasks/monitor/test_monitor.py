@@ -17,7 +17,6 @@
 """Test for the monitoring functions."""
 
 import datetime
-import os
 
 import mock
 import testtools
@@ -26,10 +25,14 @@ from pypowervm import entities as pvm_e
 from pypowervm.tasks.monitor import util as pvm_t_mon
 from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import monitor as pvm_mon
 from pypowervm.wrappers.pcm import phyp as pvm_mon_phyp
 from pypowervm.wrappers.pcm import vios as pvm_mon_vios
+
+PHYP_DATA = 'phyp_pcm_data.txt'
+VIOS_DATA = 'vios_pcm_data.txt'
+LTM_FEED = 'ltm_feed2.txt'
 
 
 class TestMonitors(testtools.TestCase):
@@ -41,7 +44,7 @@ class TestMonitors(testtools.TestCase):
         self.adpt = self.adptfx.adpt
 
     def test_query_ltm_feed(self):
-        self.adpt.read_by_path.return_value = tju.load_file('ltm_feed.txt')
+        self.adpt.read_by_path.return_value = tju.load_file(LTM_FEED)
         feed = pvm_t_mon.query_ltm_feed(self.adpt, 'host_uuid')
 
         # Make sure the feed is correct.  Our sample data has 130 elements
@@ -56,7 +59,7 @@ class TestMonitors(testtools.TestCase):
 
     def test_ensure_ltm_monitors(self):
         """Verifies that the LTM monitors can be turned on."""
-        resp = tju.load_file('pcm_pref_feed.txt')
+        resp = tju.load_file('pcm_pref.txt')
         self.adpt.read_by_href.return_value = resp
 
         # Create a side effect that can validate the input to the update
@@ -64,7 +67,7 @@ class TestMonitors(testtools.TestCase):
             element = kargs[0]
             etag = kargs[1]
             self.assertIsNotNone(element)
-            self.assertEqual('1430365985674', etag)
+            self.assertEqual('-215935973', etag)
 
             # Wrap the element so we can validate it.
             pref = pvm_mon.PcmPref.wrap(pvm_e.Entry({'etag': etag},
@@ -72,7 +75,7 @@ class TestMonitors(testtools.TestCase):
 
             self.assertFalse(pref.compute_ltm_enabled)
             self.assertTrue(pref.ltm_enabled)
-            self.assertTrue(pref.stm_enabled)
+            self.assertFalse(pref.stm_enabled)
             self.assertFalse(pref.aggregation_enabled)
             return element
         self.adpt.update.side_effect = validate_of_update
@@ -85,7 +88,7 @@ class TestMonitors(testtools.TestCase):
 
     def test_ensure_ltm_monitors_non_default(self):
         """Verifies that the LTM monitors with different default inputs"""
-        resp = tju.load_file('pcm_pref_feed.txt')
+        resp = tju.load_file('pcm_pref.txt')
         self.adpt.read_by_href.return_value = resp
 
         # Create a side effect that can validate the input to the update
@@ -112,18 +115,16 @@ class TestMonitors(testtools.TestCase):
         # Make sure the update was in fact invoked though
         self.assertEqual(1, self.adpt.update.call_count)
 
-    def _load(self, path):
+    def _load(self, file_name):
         """Loads a file."""
-        dirname = os.path.dirname(__file__)
-        file_name = os.path.join(dirname, path)
         return pvmhttp.PVMFile(file_name).body
 
     def test_parse_to_vm_metrics(self):
         """Verifies the parsing to LPAR metrics."""
-        phyp_resp = self._load('../../wrappers/pcm/data/phyp_data.txt')
+        phyp_resp = self._load(PHYP_DATA)
         phyp_data = pvm_mon_phyp.PhypInfo(phyp_resp)
 
-        vios_resp = self._load('../../wrappers/pcm/data/vios_data.txt')
+        vios_resp = self._load(VIOS_DATA)
         vios_data = pvm_mon_vios.ViosInfo(vios_resp)
 
         metrics = pvm_t_mon.vm_metrics(phyp_data, [vios_data])
@@ -221,8 +222,8 @@ class TestMonitors(testtools.TestCase):
                                       mock_vio3_metric]
 
         # Data for the responses.
-        phyp_resp = self._load('../../wrappers/pcm/data/phyp_data.txt')
-        vios_resp = self._load('../../wrappers/pcm/data/vios_data.txt')
+        phyp_resp = self._load(PHYP_DATA)
+        vios_resp = self._load(VIOS_DATA)
 
         def validate_read(link, xag=None):
             resp = mock.MagicMock()

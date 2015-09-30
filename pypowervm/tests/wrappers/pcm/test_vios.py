@@ -16,12 +16,12 @@
 
 """Tests for the raw VIOS long term metrics."""
 
-import os
-
 import testtools
 
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers.pcm import vios as pcm_vios
+
+VIOS_DATA = 'vios_pcm_data.txt'
 
 
 class TestViosLTM(testtools.TestCase):
@@ -29,9 +29,7 @@ class TestViosLTM(testtools.TestCase):
     def setUp(self):
         super(TestViosLTM, self).setUp()
 
-        dirname = os.path.dirname(__file__)
-        file_name = os.path.join(dirname, 'data', 'vios_data.txt')
-        self.raw_json = pvmhttp.PVMFile(file_name).body
+        self.raw_json = pvmhttp.PVMFile(VIOS_DATA).body
 
     def test_parse(self):
         info = pcm_vios.ViosInfo(self.raw_json)

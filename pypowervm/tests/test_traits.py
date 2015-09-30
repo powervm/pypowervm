@@ -22,7 +22,7 @@ import requests.structures as req_struct
 
 import pypowervm.adapter as adp
 import pypowervm.tests.lib as testlib
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 from pypowervm import traits
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.network as net

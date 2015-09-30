@@ -14,14 +14,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-
 import unittest
+
+import mock
 
 from pypowervm import exceptions as e
 from pypowervm.tasks import vfc_mapper
 import pypowervm.tests.tasks.util as tju
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FILE = 'fake_vios.txt'
@@ -218,7 +218,7 @@ class TestVFCMapper(unittest.TestCase):
 
 
 class TestPortMappings(twrap.TestWrapper):
-    file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
+    file = VIOS_FEED
     wrapper_class_to_test = pvm_vios.VIOS
     mock_adapter_fx_args = {}
 
@@ -674,7 +674,7 @@ class TestPortMappings(twrap.TestWrapper):
 
 
 class TestAddRemoveMap(twrap.TestWrapper):
-    file = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
+    file = VIOS_FEED
     wrapper_class_to_test = pvm_vios.VIOS
     mock_adapter_fx_args = {}
 
