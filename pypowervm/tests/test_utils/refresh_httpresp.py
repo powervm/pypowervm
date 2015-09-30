@@ -21,10 +21,11 @@
 #
 
 import os
-import six
 import tempfile
 
-from pypowervm.tests.wrappers.util import create_httpresp
+import six
+
+from pypowervm.tests.test_utils import create_httpresp
 
 defaultresp_path = os.path.join(tempfile.gettempdir(), 'defaultresp.txt')
 

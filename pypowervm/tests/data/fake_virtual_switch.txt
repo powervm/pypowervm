@@ -1,0 +1,57 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: k2http.py -refresh sea_mgr_virtual_switch.txt
+#
+####################################################
+INFO{
+{'comment': 'Created by thorst.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>0b81f37e-06b3-39dc-8d10-35734aaddac5</id>
+    <updated>2015-02-17T23:07:17.073Z</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/6c1b9d4a-afc1-3cef-ae54-1977d908fda4"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>e1a852cb-2be5-3a51-9147-43761bc3d720</id>
+        <title>VirtualSwitch</title>
+        <published>2015-02-17T23:07:17.128Z</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSwitch/e1a852cb-2be5-3a51-9147-43761bc3d720?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1301754041</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSwitch">
+            <VirtualSwitch:VirtualSwitch xmlns:VirtualSwitch="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_2_0">
+    <Metadata>
+        <Atom>
+            <AtomID>e1a852cb-2be5-3a51-9147-43761bc3d720</AtomID>
+            <AtomCreated>1424132682404</AtomCreated>
+        </Atom>
+    </Metadata>
+    <SwitchID kb="ROR" kxe="false">0</SwitchID>
+    <SwitchMode kb="CUD" kxe="false">Veb</SwitchMode>
+    <SwitchName kb="CUD" kxe="false">ETHERNET0(Default)</SwitchName>
+    <VirtualNetworks kb="CUD" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/36cf4d94-d682-3962-bc86-acad65af6fbf" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/4cb636f5-7d15-3cf9-a14d-a10c138c98a1" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/e6c0be9f-b974-35f4-855e-2b7192034fae" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/4dc25253-d47c-3774-8e36-42752bf7223b" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/6508ca79-c94c-3f73-8137-af2e9c669c61" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/9b61c184-6878-36bf-88ea-dc4a61148316" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/3b19f453-9cbf-303b-9d72-4162d50739dc" rel="related"/>
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualNetwork/f6b2d900-fd4e-34fa-a2e8-2650392f724e" rel="related"/>
+    </VirtualNetworks>
+</VirtualSwitch:VirtualSwitch>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

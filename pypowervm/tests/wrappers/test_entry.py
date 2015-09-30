@@ -26,8 +26,8 @@ import testtools
 import pypowervm.adapter as apt
 import pypowervm.entities as ent
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
-from pypowervm.tests.wrappers.util import test_wrapper_abc as twrap
+from pypowervm.tests.test_utils import pvmhttp
+from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -38,8 +38,8 @@ import pypowervm.wrappers.vios_file as vf
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
-VIOS_FILE = 'pypowervm/tests/tasks/data/fake_vios_feed.txt'
-VNETS_FILE = 'pypowervm/tests/tasks/data/nbbr_virtual_network.txt'
+VIOS_FILE = 'fake_vios_feed.txt'
+VNETS_FILE = 'nbbr_virtual_network.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):

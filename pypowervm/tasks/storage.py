@@ -574,7 +574,7 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
                 LOG.info(_("Removing Image LU %(lu_name)s from SSP "
                            "%(ssp_name)s because it is no longer in use."),
                          msg_args)
-                ssp_wrap.logical_units.remove(backing_image)
+                ssp_lus.remove(backing_image)
                 changes.append(backing_image)
     return changes
 

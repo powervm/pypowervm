@@ -22,11 +22,11 @@ import pypowervm.adapter as adp
 from pypowervm.tasks import cna
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 import pypowervm.wrappers.entry_wrapper as ewrap
 from pypowervm.wrappers import network as pvm_net
 
-VSWITCH_FILE = 'cna_vswitches.txt'
+VSWITCH_FILE = 'fake_vswitch_feed.txt'
 VNET_FILE = 'fake_virtual_network_feed.txt'
 
 
