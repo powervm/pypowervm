@@ -183,8 +183,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
                        "LPAR IDs %s and retry."), scrub_ids)
             # Scrub from just the VIOS in question.
             scrub_task = tx.FeedTask('scrub_vios_%s' % vios_uuid, [vwrap])
-            for lpar_id in scrub_ids:
-                tsk_stg.add_lpar_storage_scrub_tasks(lpar_id, scrub_task)
+            tsk_stg.add_lpar_storage_scrub_tasks(scrub_ids, scrub_task)
             scrub_task.execute()
             status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
                                                  vendor=vendor)
