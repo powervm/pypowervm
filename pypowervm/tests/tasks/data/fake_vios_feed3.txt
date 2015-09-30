@@ -1,0 +1,908 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: k2http.py -refresh fake_virtual_switch.txt
+#
+####################################################
+INFO{
+{'comment': 'Created by thorst.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>95b05dcf-1ff1-3243-827d-d8d3854696c7</id>
+    <updated>2015-04-29T08:21:47.599-05:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer?group=ViosNetwork"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>691019AF-506A-4896-AADE-607E21FA93EE</id>
+        <title>VirtualIOServer</title>
+        <published>2015-04-29T08:21:49.674-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer/691019AF-506A-4896-AADE-607E21FA93EE?group=ViosNetwork"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1088276233</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer">
+            <VirtualIOServer:VirtualIOServer xmlns:VirtualIOServer="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>691019AF-506A-4896-AADE-607E21FA93EE</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <IsVirtualServiceAttentionLEDOn kxe="false" kb="ROR">false</IsVirtualServiceAttentionLEDOn>
+    <PartitionID kb="COD" kxe="false">1</PartitionID>
+    <PartitionIOConfiguration kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <HostChannelAdapters kb="ROR" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </HostChannelAdapters>
+        <MaximumVirtualIOSlots kb="CUD" kxe="false">200</MaximumVirtualIOSlots>
+        <ProfileIOSlots kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Empty slot</Description>
+                    <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">65535</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">65535</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">255</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713680</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C7</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713680</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C7</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Empty slot</Description>
+                    <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">65535</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">65535</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">255</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713683</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C11</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713683</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C11</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Quad 8 Gigabit Fibre Channel LP Adapter</Description>
+                    <FeatureCodes kb="ROO" kxe="false"/>
+                    <PCIClass kxe="false" kb="ROO">4</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1054</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">2</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">9522</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713688</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C6</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713688</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C6</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Universal Serial Bus UHC Spec</Description>
+                    <FeatureCodes kb="ROO" kxe="false"/>
+                    <PCIClass kxe="false" kb="ROO">3075</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1202</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">2</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">33345</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713691</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-T2</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713691</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-T2</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Empty slot</Description>
+                    <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">65535</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">65535</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">255</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713697</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C5</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713697</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C5</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">SAS RAID Controller, PCIe2, Dual-port 6Gb</Description>
+                    <FeatureCodes kb="ROO" kxe="false"/>
+                    <PCIClass kxe="false" kb="ROO">260</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1023</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">2</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">842</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553844757</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C14</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553844757</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C14</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Empty slot</Description>
+                    <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">65535</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">65535</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">255</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553844765</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C9</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553844765</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C9</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
+                    <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">512</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1056</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">1</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553910302</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C10</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553910302</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C10</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Empty slot</Description>
+                    <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">65535</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">65535</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">255</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553975839</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C15</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553975839</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C15</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+        </ProfileIOSlots>
+        <ProfileVirtualIOAdapters kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileTrunkAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">4</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                    <MaCAddressValue kxe="false" kb="CUD">2E223A41C3D6</MaCAddressValue>
+                    <PortVLANID kb="CUR" kxe="false">2</PortVLANID>
+                    <TaggedVLANIDs kxe="false" kb="CUA"/>
+                    <TrunkPriority kxe="false" kb="CUD">1</TrunkPriority>
+                </ProfileTrunkAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+        </ProfileVirtualIOAdapters>
+        <CurrentMaximumVirtualIOSlots kb="ROR" kxe="false">200</CurrentMaximumVirtualIOSlots>
+    </PartitionIOConfiguration>
+    <PartitionMemoryConfiguration kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <DesiredMemory kxe="false" kb="CUD">24576</DesiredMemory>
+        <HardwarePageTableRatio kb="CUD" kxe="false">6</HardwarePageTableRatio>
+        <MaximumMemory kxe="false" kb="CUD">24576</MaximumMemory>
+        <MinimumMemory kb="CUD" kxe="false">1024</MinimumMemory>
+        <CurrentEntitledMemory kxe="false" kb="ROR">AUTO</CurrentEntitledMemory>
+        <CurrentHardwarePageTableRatio kxe="false" kb="ROR">6</CurrentHardwarePageTableRatio>
+        <CurrentMaximumMemory kb="ROR" kxe="false">24576</CurrentMaximumMemory>
+        <CurrentMemory kb="ROR" kxe="false">24576</CurrentMemory>
+        <CurrentMemoryWeight kb="ROR" kxe="false">0</CurrentMemoryWeight>
+        <CurrentMinimumMemory kxe="false" kb="ROR">1024</CurrentMinimumMemory>
+        <RuntimeMemoryWeight kb="ROR" kxe="false">0</RuntimeMemoryWeight>
+        <SharedMemoryEnabled kxe="false" kb="CUD">false</SharedMemoryEnabled>
+    </PartitionMemoryConfiguration>
+    <PartitionName kxe="false" kb="CUR">21-25D0A</PartitionName>
+    <PartitionProcessorConfiguration kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <HasDedicatedProcessors kxe="false" kb="CUD">false</HasDedicatedProcessors>
+        <SharingMode kb="CUD" kxe="false">keep idle procs</SharingMode>
+        <CurrentHasDedicatedProcessors kxe="false" kb="ROR">false</CurrentHasDedicatedProcessors>
+        <CurrentSharingMode kxe="false" kb="ROR">keep idle procs</CurrentSharingMode>
+        <RuntimeHasDedicatedProcessors kb="ROR" kxe="false">false</RuntimeHasDedicatedProcessors>
+        <RuntimeSharingMode kb="ROR" kxe="false">keep idle procs</RuntimeSharingMode>
+        <CurrentSharedProcessorConfiguration kxe="false" kb="ROR" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AllocatedVirtualProcessors kxe="false" kb="ROR">2</AllocatedVirtualProcessors>
+            <CurrentMaximumProcessingUnits kxe="false" kb="ROR">2</CurrentMaximumProcessingUnits>
+            <CurrentMinimumProcessingUnits kb="ROR" kxe="false">0.00</CurrentMinimumProcessingUnits>
+            <CurrentProcessingUnits kxe="false" kb="ROR">1</CurrentProcessingUnits>
+            <CurrentSharedProcessorPoolID kb="ROR" kxe="false">0</CurrentSharedProcessorPoolID>
+            <CurrentMinimumVirtualProcessors kxe="false" kb="ROR">1</CurrentMinimumVirtualProcessors>
+            <CurrentMaximumVirtualProcessors kxe="false" kb="ROR">2</CurrentMaximumVirtualProcessors>
+        </CurrentSharedProcessorConfiguration>
+    </PartitionProcessorConfiguration>
+    <PartitionState kb="ROO" kxe="false">running</PartitionState>
+    <PartitionType kxe="false" kb="COD">Virtual IO Server</PartitionType>
+    <PartitionUUID kxe="false" kb="ROO">691019AF-506A-4896-AADE-607E21FA93EE</PartitionUUID>
+    <ResourceMonitoringControlState kb="ROR" kxe="false">inactive</ResourceMonitoringControlState>
+    <AssociatedManagedSystem kxe="false" kb="CUD" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074" rel="related"/>
+    <MACAddressPrefix kxe="false" kb="ROR"/>
+    <APICapable kb="CUD" kxe="false">true</APICapable>
+    <MoverServicePartition kb="CUD" kxe="false">true</MoverServicePartition>
+    <PagingServicePartition kb="CUD" kxe="false">false</PagingServicePartition>
+    <TrunkAdapters group="ViosNetwork" kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <TrunkAdapter schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8247.22L.2125D0A-V1-C4</DynamicReconfigurationConnectorName>
+            <LocationCode kxe="false" kb="ROR">U8247.22L.2125D0A-V1-C4</LocationCode>
+            <LocalPartitionID kxe="false" kb="CUR">1</LocalPartitionID>
+            <VirtualSlotNumber kxe="false" kb="COD">4</VirtualSlotNumber>
+            <MACAddress kxe="false" kb="CUR">2E223A41C3D6</MACAddress>
+            <PortVLANID kxe="false" kb="CUR">2</PortVLANID>
+            <TaggedVLANIDs kxe="false" kb="CUA"/>
+            <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+            <AssociatedVirtualSwitch kb="CUD" kxe="false">
+                <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/ec8aaa54-9837-3c23-a541-a4e4be3ae489" rel="related"/>
+            </AssociatedVirtualSwitch>
+            <VirtualSwitchID kxe="false" kb="ROR">0</VirtualSwitchID>
+            <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+        </TrunkAdapter>
+    </TrunkAdapters>
+    <VirtualFibreChannelMappings group="ViosFCMapping" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualFibreChannelMappings>
+    <VirtualSCSIMappings group="ViosSCSIMapping" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualSCSIMappings>
+</VirtualIOServer:VirtualIOServer>
+        </content>
+    </entry>
+    <entry>
+        <id>54F98B4D-92F5-45BC-8CB2-28DF1FC6D6DC</id>
+        <title>VirtualIOServer</title>
+        <published>2015-04-29T08:21:49.684-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer/54F98B4D-92F5-45BC-8CB2-28DF1FC6D6DC?group=ViosNetwork"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1019359186</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer">
+            <VirtualIOServer:VirtualIOServer xmlns:VirtualIOServer="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>54F98B4D-92F5-45BC-8CB2-28DF1FC6D6DC</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <IsVirtualServiceAttentionLEDOn kxe="false" kb="ROR">false</IsVirtualServiceAttentionLEDOn>
+    <OperatingSystemVersion kxe="false" kb="ROR">6.1, 6100-09-04-1441</OperatingSystemVersion>
+    <PartitionID kb="COD" kxe="false">2</PartitionID>
+    <PartitionIOConfiguration kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <HostChannelAdapters kb="ROR" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </HostChannelAdapters>
+        <MaximumVirtualIOSlots kb="CUD" kxe="false">500</MaximumVirtualIOSlots>
+        <ProfileIOSlots kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">Quad 8 Gigabit Fibre Channel LP Adapter</Description>
+                    <FeatureCodes kb="ROO" kxe="false"/>
+                    <PCIClass kxe="false" kb="ROO">4</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1054</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">2</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">9522</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553713705</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C3</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553713705</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C3</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+            <ProfileIOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AssociatedIOSlot kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <BusGroupingRequired kxe="false" kb="CUD">true</BusGroupingRequired>
+                    <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
+                    <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
+                    <PCIClass kxe="false" kb="ROO">512</PCIClass>
+                    <PCISubsystemDeviceID kxe="false" kb="ROO">1056</PCISubsystemDeviceID>
+                    <PCIRevisionID kb="ROO" kxe="false">1</PCIRevisionID>
+                    <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
+                    <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                    <RelatedIOAdapter kb="CUD" kxe="false">
+                        <IOAdapter schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <AdapterID kb="ROR" kxe="false">553779220</AdapterID>
+                            <DeviceName kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12</DeviceName>
+                        </IOAdapter>
+                    </RelatedIOAdapter>
+                    <SlotDynamicReconfigurationConnectorIndex kb="ROR" kxe="false">553779220</SlotDynamicReconfigurationConnectorIndex>
+                    <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C12</SlotDynamicReconfigurationConnectorName>
+                </AssociatedIOSlot>
+                <IsRequired kxe="false" kb="CUD">false</IsRequired>
+            </ProfileIOSlot>
+        </ProfileIOSlots>
+        <ProfileVirtualIOAdapters kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileVirtualFibreChannelServerAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">3</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                    <ConnectingPartitionID kb="CUR" kxe="false">4</ConnectingPartitionID>
+                </ProfileVirtualFibreChannelServerAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileVirtualFibreChannelServerAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">4</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                    <ConnectingPartitionID kb="CUR" kxe="false">3</ConnectingPartitionID>
+                </ProfileVirtualFibreChannelServerAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileVirtualFibreChannelServerAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">6</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                    <ConnectingPartitionID kb="CUR" kxe="false">5</ConnectingPartitionID>
+                </ProfileVirtualFibreChannelServerAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileVirtualSCSIServerAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">7</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <RemoteSlotNumber kb="CUA" kxe="false">4</RemoteSlotNumber>
+                    <RemotePartitionID kb="CUR" kxe="false">5</RemotePartitionID>
+                </ProfileVirtualSCSIServerAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileClientNetworkAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">8</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Client</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <MaCAddressValue kxe="false" kb="CUD">4697E5C2A811</MaCAddressValue>
+                    <PortVLANID kb="CUR" kxe="false">2</PortVLANID>
+                    <TaggedVLANIDs kxe="false" kb="CUA"/>
+                </ProfileClientNetworkAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+            <ProfileVirtualIOAdapterSubclass>
+                <ProfileTrunkAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualSlotNumber kxe="false" kb="CUR">10</VirtualSlotNumber>
+                    <AdapterType kb="CUR" kxe="false">Server</AdapterType>
+                    <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                    <MaCAddressValue kxe="false" kb="CUD">5EF2D77E0AF1</MaCAddressValue>
+                    <PortVLANID kb="CUR" kxe="false">50</PortVLANID>
+                    <TaggedVLANIDs kxe="false" kb="CUA"/>
+                    <TrunkPriority kxe="false" kb="CUD">1</TrunkPriority>
+                </ProfileTrunkAdapter>
+            </ProfileVirtualIOAdapterSubclass>
+        </ProfileVirtualIOAdapters>
+        <CurrentMaximumVirtualIOSlots kb="ROR" kxe="false">500</CurrentMaximumVirtualIOSlots>
+    </PartitionIOConfiguration>
+    <PartitionMemoryConfiguration kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <DesiredMemory kxe="false" kb="CUD">2048</DesiredMemory>
+        <HardwarePageTableRatio kb="CUD" kxe="false">6</HardwarePageTableRatio>
+        <MaximumMemory kxe="false" kb="CUD">4096</MaximumMemory>
+        <MinimumMemory kb="CUD" kxe="false">1024</MinimumMemory>
+        <CurrentEntitledMemory kxe="false" kb="ROR">AUTO</CurrentEntitledMemory>
+        <CurrentHardwarePageTableRatio kxe="false" kb="ROR">6</CurrentHardwarePageTableRatio>
+        <CurrentMaximumMemory kb="ROR" kxe="false">4096</CurrentMaximumMemory>
+        <CurrentMemory kb="ROR" kxe="false">2048</CurrentMemory>
+        <CurrentMemoryWeight kb="ROR" kxe="false">0</CurrentMemoryWeight>
+        <CurrentMinimumMemory kxe="false" kb="ROR">1024</CurrentMinimumMemory>
+        <RuntimeMemoryWeight kb="ROR" kxe="false">0</RuntimeMemoryWeight>
+        <SharedMemoryEnabled kxe="false" kb="CUD">false</SharedMemoryEnabled>
+    </PartitionMemoryConfiguration>
+    <PartitionName kxe="false" kb="CUR">vios1</PartitionName>
+    <PartitionProcessorConfiguration kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <HasDedicatedProcessors kxe="false" kb="CUD">false</HasDedicatedProcessors>
+        <SharingMode kb="CUD" kxe="false">keep idle procs</SharingMode>
+        <CurrentHasDedicatedProcessors kxe="false" kb="ROR">false</CurrentHasDedicatedProcessors>
+        <CurrentSharingMode kxe="false" kb="ROR">keep idle procs</CurrentSharingMode>
+        <RuntimeHasDedicatedProcessors kb="ROR" kxe="false">false</RuntimeHasDedicatedProcessors>
+        <RuntimeSharingMode kb="ROR" kxe="false">keep idle procs</RuntimeSharingMode>
+        <CurrentSharedProcessorConfiguration kxe="false" kb="ROR" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AllocatedVirtualProcessors kxe="false" kb="ROR">4</AllocatedVirtualProcessors>
+            <CurrentMaximumProcessingUnits kxe="false" kb="ROR">8</CurrentMaximumProcessingUnits>
+            <CurrentMinimumProcessingUnits kb="ROR" kxe="false">0.00</CurrentMinimumProcessingUnits>
+            <CurrentProcessingUnits kxe="false" kb="ROR">4</CurrentProcessingUnits>
+            <CurrentSharedProcessorPoolID kb="ROR" kxe="false">0</CurrentSharedProcessorPoolID>
+            <CurrentMinimumVirtualProcessors kxe="false" kb="ROR">1</CurrentMinimumVirtualProcessors>
+            <CurrentMaximumVirtualProcessors kxe="false" kb="ROR">8</CurrentMaximumVirtualProcessors>
+        </CurrentSharedProcessorConfiguration>
+    </PartitionProcessorConfiguration>
+    <PartitionState kb="ROO" kxe="false">running</PartitionState>
+    <PartitionType kxe="false" kb="COD">Virtual IO Server</PartitionType>
+    <PartitionUUID kxe="false" kb="ROO">54F98B4D-92F5-45BC-8CB2-28DF1FC6D6DC</PartitionUUID>
+    <ResourceMonitoringControlState kb="ROR" kxe="false">active</ResourceMonitoringControlState>
+    <ResourceMonitoringIPAddress kb="CUD" kxe="false">9.1.2.4</ResourceMonitoringIPAddress>
+    <AssociatedManagedSystem kxe="false" kb="CUD" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074" rel="related"/>
+    <MACAddressPrefix kxe="false" kb="ROR"/>
+    <APICapable kb="CUD" kxe="false">true</APICapable>
+    <MoverServicePartition kb="CUD" kxe="false">false</MoverServicePartition>
+    <PagingServicePartition kb="CUD" kxe="false">false</PagingServicePartition>
+    <SharedEthernetAdapters>
+        <SharedEthernetAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssignedVirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer/691019AF-506A-4896-AADE-607E21FA93EE" rel="related"/>
+            <BackingDeviceChoice kb="CUD" kxe="false">
+                <EthernetBackingDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                    <Description kb="CUD" kxe="false">4-Port 10/100/1000 Base-TX PCI-Express Adapter (14106803)</Description>
+                    <DeviceName kb="ROR" kxe="false">ent0</DeviceName>
+                    <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78AB.001.WZSH5ZY-P1-C4-T1</DynamicReconfigurationConnectorName>
+                    <PhysicalLocation kb="ROR" kxe="false">U78AB.001.WZSH5ZY-P1-C4-T1</PhysicalLocation>
+                    <UniqueDeviceID kb="ROR" kxe="false">13U78AB.001.WZSH5ZY-P1-C4-T1</UniqueDeviceID>
+                </EthernetBackingDevice>
+            </BackingDeviceChoice>
+            <HighAvailabilityMode kb="CUD" kxe="false">disabled</HighAvailabilityMode>
+            <DeviceName kb="CUD" kxe="false">ent8</DeviceName>
+            <JumboFramesEnabled kb="UOD" kxe="false">false</JumboFramesEnabled>
+            <PortVLANID kb="ROR" kxe="false">1</PortVLANID>
+            <QualityOfServiceMode kb="CUD" kxe="false">disabled</QualityOfServiceMode>
+            <QueueSize kb="UOD" kxe="false">8192</QueueSize>
+            <ThreadModeEnabled kb="CUD" kxe="false">true</ThreadModeEnabled>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+                <TrunkAdapter schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C3</DynamicReconfigurationConnectorName>
+                    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C3</LocationCode>
+                    <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                    <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+                    <MACAddress kb="CUR" kxe="false">1683B6A32203</MACAddress>
+                    <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
+                    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+                    <TaggedVLANIDs kb="CUA" kxe="false">100 150 175 200 250 300 333 350 900 1001 2227 2228</TaggedVLANIDs>
+                    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+                    <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+                    <DeviceName kb="ROR" kxe="false">ent5</DeviceName>
+                    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+                </TrunkAdapter>
+            </TrunkAdapters>
+            <IsPrimary kb="CUD" kxe="false">true</IsPrimary>
+            <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <InterfaceName kb="CUD" kxe="false">en8</InterfaceName>
+                <IPAddress kb="CUD" kxe="false">9.1.2.3</IPAddress>
+                <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                <State kb="CUD" kxe="false">Active</State>
+            </IPInterface>
+            <UniqueDeviceID kb="ROR" kxe="false">10298abf2b234f52cb</UniqueDeviceID>
+            <LargeSend kb="CUD" kxe="false">true</LargeSend>
+        </SharedEthernetAdapter>
+    </SharedEthernetAdapters>
+    <TrunkAdapters group="ViosNetwork" kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <TrunkAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C2</DynamicReconfigurationConnectorName>
+            <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C2</LocationCode>
+            <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+            <VariedOn kb="CUD" kxe="true">true</VariedOn>
+            <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+            <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+            <MACAddress kb="CUR" kxe="false">1683B6A32202</MACAddress>
+            <PortVLANID kb="CUR" kxe="false">1</PortVLANID>
+            <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+            <TaggedVLANSupported kb="CUA" kxe="false">false</TaggedVLANSupported>
+            <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+            <DeviceName kb="ROR" kxe="false">ent4</DeviceName>
+            <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+        </TrunkAdapter>
+        <TrunkAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V4-C3</DynamicReconfigurationConnectorName>
+            <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V4-C3</LocationCode>
+            <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+            <VariedOn kb="CUD" kxe="true">true</VariedOn>
+            <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+            <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+            <MACAddress kb="CUR" kxe="false">1683B6A32203</MACAddress>
+            <PortVLANID kb="CUR" kxe="false">4094</PortVLANID>
+            <QualityOfServicePriorityEnabled kb="CUD" kxe="false">false</QualityOfServicePriorityEnabled>
+            <TaggedVLANIDs kb="CUA" kxe="false">100 150 175 200 250 300 333 350 900 1001 2227 2228</TaggedVLANIDs>
+            <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+            <VirtualSwitchID kb="ROR" kxe="false">2</VirtualSwitchID>
+            <DeviceName kb="ROR" kxe="false">ent5</DeviceName>
+            <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+        </TrunkAdapter>
+    </TrunkAdapters>
+    <VirtualIOServerLicenseAccepted kxe="false" kb="CUD">true</VirtualIOServerLicenseAccepted>
+    <VirtualFibreChannelMappings group="ViosFCMapping" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualFibreChannelMappings>
+    <VirtualSCSIMappings group="ViosSCSIMapping" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </VirtualSCSIMappings>
+    <FreeIOAdaptersForLinkAggregation group="ViosNetwork" kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <IOAdapterChoice>
+            <IOAdapter schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent3</DeviceName>
+                <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C12-T4</DynamicReconfigurationConnectorName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T4</PhysicalLocation>
+                <UniqueDeviceID kb="ROR" kxe="false">13U78CB.001.WZS00A8-P1-C12-T4</UniqueDeviceID>
+            </IOAdapter>
+        </IOAdapterChoice>
+        <IOAdapterChoice>
+            <IOAdapter schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent2</DeviceName>
+                <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C12-T3</DynamicReconfigurationConnectorName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T3</PhysicalLocation>
+                <UniqueDeviceID kb="ROR" kxe="false">13U78CB.001.WZS00A8-P1-C12-T3</UniqueDeviceID>
+            </IOAdapter>
+        </IOAdapterChoice>
+        <IOAdapterChoice>
+            <IOAdapter schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent1</DeviceName>
+                <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78CB.001.WZS00A8-P1-C12-T2</DynamicReconfigurationConnectorName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T2</PhysicalLocation>
+                <UniqueDeviceID kb="ROR" kxe="false">13U78CB.001.WZS00A8-P1-C12-T2</UniqueDeviceID>
+            </IOAdapter>
+        </IOAdapterChoice>
+    </FreeIOAdaptersForLinkAggregation>
+    <FreeEthenetBackingDevicesForSEA group="ViosNetwork" kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <IOAdapterChoice>
+            <EthernetBackingDevice schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent3</DeviceName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T4</PhysicalLocation>
+                <IPInterface kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <InterfaceName kxe="false" kb="CUD">en3</InterfaceName>
+                    <State kb="CUD" kxe="false">Inactive</State>
+                </IPInterface>
+            </EthernetBackingDevice>
+        </IOAdapterChoice>
+        <IOAdapterChoice>
+            <EthernetBackingDevice schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent2</DeviceName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T3</PhysicalLocation>
+                <IPInterface kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <InterfaceName kxe="false" kb="CUD">en2</InterfaceName>
+                    <State kb="CUD" kxe="false">Inactive</State>
+                </IPInterface>
+            </EthernetBackingDevice>
+        </IOAdapterChoice>
+        <IOAdapterChoice>
+            <EthernetBackingDevice schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                <Description kxe="false" kb="CUD">4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)</Description>
+                <DeviceName kxe="false" kb="ROR">ent1</DeviceName>
+                <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS00A8-P1-C12-T2</PhysicalLocation>
+                <IPInterface kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <InterfaceName kxe="false" kb="CUD">en1</InterfaceName>
+                    <State kb="CUD" kxe="false">Inactive</State>
+                </IPInterface>
+            </EthernetBackingDevice>
+        </IOAdapterChoice>
+    </FreeEthenetBackingDevicesForSEA>
+</VirtualIOServer:VirtualIOServer>
+        </content>
+    </entry>
+</feed>
+
+
+END OF SECTION}

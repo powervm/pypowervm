@@ -56,7 +56,7 @@ class TestMonitors(testtools.TestCase):
 
     def test_ensure_ltm_monitors(self):
         """Verifies that the LTM monitors can be turned on."""
-        resp = tju.load_file('pcm_pref_feed.txt')
+        resp = tju.load_file('pcm_pref.txt')
         self.adpt.read_by_href.return_value = resp
 
         # Create a side effect that can validate the input to the update
@@ -64,7 +64,7 @@ class TestMonitors(testtools.TestCase):
             element = kargs[0]
             etag = kargs[1]
             self.assertIsNotNone(element)
-            self.assertEqual('1430365985674', etag)
+            self.assertEqual('-215935973', etag)
 
             # Wrap the element so we can validate it.
             pref = pvm_mon.PcmPref.wrap(pvm_e.Entry({'etag': etag},
@@ -72,7 +72,7 @@ class TestMonitors(testtools.TestCase):
 
             self.assertFalse(pref.compute_ltm_enabled)
             self.assertTrue(pref.ltm_enabled)
-            self.assertTrue(pref.stm_enabled)
+            self.assertFalse(pref.stm_enabled)
             self.assertFalse(pref.aggregation_enabled)
             return element
         self.adpt.update.side_effect = validate_of_update
@@ -85,7 +85,7 @@ class TestMonitors(testtools.TestCase):
 
     def test_ensure_ltm_monitors_non_default(self):
         """Verifies that the LTM monitors with different default inputs"""
-        resp = tju.load_file('pcm_pref_feed.txt')
+        resp = tju.load_file('pcm_pref.txt')
         self.adpt.read_by_href.return_value = resp
 
         # Create a side effect that can validate the input to the update

@@ -81,7 +81,7 @@ class TestCluster(twrap.TestWrapper):
     def test_nodes(self):
         """Tests the Node and MTMS wrappers as well."""
         nodes = self.dwrap.nodes
-        self.assertEqual(len(nodes), 2)
+        self.assertEqual(3, len(nodes))
         node = nodes[0]
         self.assertEqual(node.hostname, 'foo.example.com')
         self.assertEqual(node.lpar_id, 2)
@@ -101,7 +101,7 @@ class TestCluster(twrap.TestWrapper):
         # Test nodes setters
         node2 = nodes[1]
         nodes.remove(node)
-        self.assertEqual(len(self.dwrap.nodes), 1)
+        self.assertEqual(2, len(self.dwrap.nodes))
         node._hostname('blah.example.com')
         node._lpar_id(9)
         node._vios_uri('https://foo')
