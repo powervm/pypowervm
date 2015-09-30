@@ -20,7 +20,7 @@ import unittest
 import mock
 
 import pypowervm.adapter as adpt
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.storage as pvm_stor
 import pypowervm.wrappers.virtual_io_server as vios

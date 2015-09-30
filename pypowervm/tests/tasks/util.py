@@ -14,25 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 from pypowervm import adapter as adpt
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 import pypowervm.wrappers.job as job
 
 
 def load_file(file_name, adapter=None):
     """Helper method to load the responses from a given location."""
-    data_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(data_dir, 'data')
-    file_path = os.path.join(data_dir, file_name)
-    if not os.path.isfile(file_path):
-        dirname = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(dirname, "..", "wrappers", "data", file_name)
-
-    return pvmhttp.load_pvm_resp(file_path, adapter).get_response()
+    return pvmhttp.load_pvm_resp(file_name, adapter).get_response()
 
 
 def raiseRetryException():

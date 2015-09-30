@@ -20,7 +20,7 @@ import six
 import testtools
 
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 
 
 @six.add_metaclass(abc.ABCMeta)

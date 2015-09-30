@@ -48,7 +48,7 @@ def load_xml_sections(file_name):
 
     sections = {}
 
-    """First try to load the name as passed in."""
+    # First try to load the name as passed in.
     dirname = os.path.dirname(file_name)
     if dirname is None or dirname == '':
         dirname = os.path.dirname(os.path.dirname(__file__))

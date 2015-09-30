@@ -21,8 +21,8 @@ import mock
 
 import pypowervm.const as pc
 import pypowervm.tests.test_fixtures as fx
-import pypowervm.tests.wrappers.util.pvmhttp as pvmhttp
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.pvmhttp as pvmhttp
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.virtual_io_server as vios
 

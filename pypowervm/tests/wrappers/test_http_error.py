@@ -14,11 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-
 import unittest
 
-from pypowervm.tests.wrappers.util import pvmhttp
+import mock
+
+from pypowervm.tests.test_utils import pvmhttp
 import pypowervm.wrappers.http_error as he
 
 HTTPRESP_FILE = "fake_httperror.txt"

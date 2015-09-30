@@ -16,7 +16,7 @@
 
 import unittest
 
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.job as jwrap
 
 CORRECT_CDATA_PARAMVAL = (

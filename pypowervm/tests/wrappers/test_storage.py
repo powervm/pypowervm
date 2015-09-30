@@ -17,7 +17,7 @@
 import unittest
 
 import pypowervm.const as pc
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
 
 

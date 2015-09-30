@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.shared_proc_pool as spp
 
 SHRPROC_HTTPRESP_FILE = "shrprocpool.txt"
