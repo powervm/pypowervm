@@ -380,7 +380,13 @@ def _image_lu_in_use(ssp, image_lu):
     for lu in ssp.logical_units:
         if lu.lu_type != stor.LUType.DISK:
             continue
-        if lu.cloned_from_udid[2:] == image_udid:
+        cloned_from = lu.cloned_from_udid
+        if cloned_from is None:
+            LOG.warn(_("Linked clone Logical Unit %(luname)s (UDID %(udid)s) "
+                       "has no backing image LU.  It should probably be "
+                       "deleted."), {'luname': lu.name, 'udid': lu.udid})
+            continue
+        if cloned_from[2:] == image_udid:
             return True
     return False
 
