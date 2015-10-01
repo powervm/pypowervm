@@ -1046,35 +1046,35 @@ class IOSlot(ewrap.ElementWrapper):
 
         @property
         def pc_adpt_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_ADPT_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_ADPT_ID)
 
         @property
         def pci_class(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_CLASS)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_CLASS)
 
         @property
         def pci_dev_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_DEV_ID)
 
         @property
         def pci_subsys_dev_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_DEV_ID)
 
         @property
         def pci_mfg_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_MFG_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_MFG_ID)
 
         @property
         def pci_rev_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_REV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_REV_ID)
 
         @property
         def pci_vendor_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_PCI_VENDOR_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_VENDOR_ID)
 
         @property
         def pci_subsys_vendor_id(self):
-            return self._get_val_str(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
 
         @property
         def pci_subsys_drc_index(self):
