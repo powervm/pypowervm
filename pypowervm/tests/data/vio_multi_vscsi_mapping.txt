@@ -560,7 +560,8 @@ BODY{
             <VolumeState kb="ROR" kxe="false">active</VolumeState>
             <VolumeUniqueID kb="ROR" kxe="false">391BIBMIPR-0   5DB603000000002010IPR-0   5DB6030003IBMsas</VolumeUniqueID>
             <IsFibreChannelBacked kb="ROR" kxe="false">false</IsFibreChannelBacked>
-        </PhysicalVolume>
+            <DescriptorPage83 kxe="false" kb="ROR">NjAwNTA3NjgwMjgyODYxRDg4MDAwMDAwMDAwMDAwQjU=</DescriptorPage83>
+         </PhysicalVolume>
         <PhysicalVolume schemaVersion="V1_2_0">
             <Metadata>
                 <Atom/>
@@ -577,6 +578,7 @@ BODY{
             <VolumeState kb="ROR" kxe="false">active</VolumeState>
             <VolumeUniqueID kb="ROR" kxe="false">33213600507680282861D880000000000001204214503IBMfcp</VolumeUniqueID>
             <IsFibreChannelBacked kb="ROR" kxe="false">true</IsFibreChannelBacked>
+            <DescriptorPage83 kxe="false" kb="ROR">This is a bogus value</DescriptorPage83>
         </PhysicalVolume>
         <PhysicalVolume schemaVersion="V1_2_0">
             <Metadata>

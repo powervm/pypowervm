@@ -15,11 +15,12 @@
 #    under the License.
 
 """Tasks around VIOS-backed 'physical' disks."""
-import base64
+
 import itertools
 import logging
 
 from lxml import etree
+
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
@@ -401,124 +402,3 @@ def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
         LOG.warn(_('CLIRunner Error: %s') % error)
-
-
-def hdisk_inventory(adapter, vios_uuid, udid):
-    """Inventory call to fetch hdisk device attributes.
-
-    This method is used to issue the SCSI IOCTL call to retrieve the disk
-    attributes of the hdisk. Process the result of disk attributes and returns
-    the SCSI PG83 Name Address Attribute (NAA) which is used to uniquely
-    identify a particulal hdisk. Virtual I/O Server uses the UDID of the
-    device to issue hdisk inventory call.
-
-    :param adapter: The pypowervm adapter.
-    :param vios_uuid: The Virtual I/O Server UUID.
-    :param udid: The UDID of the device.
-    :return pg83_NAA: SCSI PG83 NAA descriptor
-    """
-    pg83_naa = None
-    # Build the hdisk inventory input XML
-    lua_xml = _hdisk_inventory_xml(adapter, udid)
-
-    # Build up the job & invoke
-    resp = adapter.read(
-        pvm_vios.VIOS.schema_type, root_id=vios_uuid,
-        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_LUA_RECOVERY)
-    job_wrapper = pvm_job.Job.wrap(resp)
-    job_parms = [job_wrapper.create_job_parameter('inputXML', lua_xml,
-                                                  cdata=True)]
-    job_wrapper.run_job(vios_uuid, job_parms=job_parms)
-
-    # Get the job result, and parse the output.
-    result = job_wrapper.get_job_results_as_dict()
-    pg83_naa = _process_hdisk_inv_result(result)
-
-    return pg83_naa
-
-
-def get_pg83NAA_from_udid(adapter, vios_uuids, udid):
-    """Gets the PG83 NAA SCSI descriptor using the UDID.
-
-    This function is used to get the PG83 NAA descriptor of the hdisk
-    using the UDID information. Loops through all the vioses on which
-    hdisk is attached and makes the hdisk inventory calls. Breaks out
-    if the PG83 NAA is found.
-    :param adapter: The pypowervm adapter
-    :param vios_uuids: List of vios_uuids to which hdisk is attached.
-    :param udid: UDID of the hdisk
-    :return pg83NAA: Returns the SCSI PG83 NAA Unique descriptor of the hdisk.
-    """
-    for vios in vios_uuids:
-        pg83_naa = hdisk_inventory(adapter, vios, udid)
-        if pg83_naa is not None:
-            break
-
-    LOG.debug("PG83 NAA pg83_naa= %(naa)s information retrieved for"
-              "disk %(id)s on VIOS %(vios)s" % {'naa': pg83_naa, 'id': udid,
-                                                'vios': vios})
-    return pg83_naa
-
-
-def _hdisk_inventory_xml(adapter, udid):
-    """Creates an input XML for hdisk_inventory call.
-
-    :param adapter: The pypowervm adapter.
-    :param udid: The UDID of the device
-    :return input_xml: Returns the input XML file for hdisk inventory call.
-    """
-    root = ent.Element('VIO', adapter, attrib={'xmlns': "",
-                                               'version': "1.21"})
-    request = ent.Element('Request', adapter,
-                          attrib={'action_str': "QUERY_INVENTORY"})
-    inventory = ent.Element('InventoryRequest', adapter,
-                            attrib={'inventoryType': "base"})
-    vio_type_filter = ent.Element('VioTypeFilter', adapter,
-                                  attrib={'type': "PV"})
-    vio_udid_filter = ent.Element('VioUdidFilter',
-                                  adapter, attrib={'udid': udid})
-    inventory.append(vio_type_filter)
-    inventory.append(vio_udid_filter)
-    request.append(inventory)
-    root.append(request)
-    return root.toxmlstring().decode('utf-8')
-
-
-def _process_hdisk_inv_result(result):
-    """Processes the Output XML returned by hdisk_inventory
-
-    :param result: Output XML response which needs to be processed.
-    :return naa: Returns the unique Pg83 NAA descriptor for the hdisk.
-    """
-    if result is None:
-        return None
-
-    # The result may push to StdOut or to OutputXML (different versions push
-    # to different locations).
-    xml_resp = result.get('OutputXML')
-    if xml_resp is None:
-        xml_resp = result.get('StdOut')
-
-    # If still none, nothing to do.
-    if xml_resp is None:
-        return None
-    naa = None
-    parser = etree.fromstring(xml_resp)
-    for pv in parser.getiterator():
-        qn = etree.QName(pv.tag)
-        if (qn.localname == 'PhysicalVolume_base' and 'desType' in
-                pv.attrib and pv.attrib['desType'] == "NAA"):
-            # Don't fail if we can't decode. Go on
-            # without pg83. VIOS must have passed
-            # invalid data. Won't be able to use pg83
-            # for future vscsi lua_discoveries.
-            try:
-                pg83_naa = pv.attrib['descriptor']
-                naa = base64.b64decode(pg83_naa)
-                LOG.debug("PG83 NAA Found: %(naa)s and"
-                          "decode %(pg83)s", {'naa': pg83_naa,
-                                              'pg83': naa})
-            except Exception as ex:
-                LOG.warn(_("Failed decode pg83 %s"), pv)
-                LOG.exception(ex)
-    return naa.decode('utf-8')
