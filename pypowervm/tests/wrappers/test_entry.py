@@ -811,6 +811,15 @@ class TestRefresh(testtools.TestCase):
         clust_refreshed = self.clust_old.refresh()
         _assert_clusters_equal(self, clust_new_save, clust_refreshed)
 
+    @mock.patch('pypowervm.adapter.Adapter.read_by_href')
+    def test_use_etag_false(self, mock_read):
+        mock_read.side_effect = self._mock_read_by_href(
+            None, self.resp200new)
+        self.clust_old._etag = self.old_etag
+        clust_new_save = copy.deepcopy(self.clust_new)
+        clust_refreshed = self.clust_old.refresh(use_etag=False)
+        _assert_clusters_equal(self, clust_new_save, clust_refreshed)
+
 
 class TestUpdate(testtools.TestCase):
     clust_uuid = 'cluster_uuid'

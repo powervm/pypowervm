@@ -64,7 +64,12 @@ def refresh_wrapper(trynum, maxtries, *args, **kwargs):
     first argument.
     """
     arglist = list(args)
-    arglist[0] = arglist[0].refresh()
+    # If we get here, we *usually* have an etag mismatch, so specifying
+    # use_etag=False *should* be redundant.  However, for scenarios where we're
+    # retrying for some other reason, we want to guarantee a fresh fetch to
+    # obliterate any local changes we made to the wrapper (because the retry
+    # should be making those changes again).
+    arglist[0] = arglist[0].refresh(use_etag=False)
     return arglist, kwargs
 
 
