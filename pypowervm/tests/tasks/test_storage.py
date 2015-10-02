@@ -430,6 +430,8 @@ class TestLULinkedClone(testtools.TestCase):
         self.ssp.logical_units.append(self.img_lu5)
         self.dsk_lu6 = self._mk_dsk_lu(6, 5)
         self.ssp.logical_units.append(self.dsk_lu6)
+        self.dsk_lu_orphan = self._mk_dsk_lu(7, None)
+        self.ssp.logical_units.append(self.dsk_lu_orphan)
         self.ssp.entry.properties = {
             'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
         self.ssp._etag = 'before'
@@ -444,7 +446,9 @@ class TestLULinkedClone(testtools.TestCase):
         lu = stor.LU.bld(self.adpt, 'dsk_lu%d' % idx, 123,
                          typ=stor.LUType.DISK)
         lu._udid('xxDisk-LU-UDID-%d' % idx)
-        lu._cloned_from_udid('yyabc123%d' % cloned_from_idx)
+        # Allow for "orphan" clones
+        if cloned_from_idx is not None:
+            lu._cloned_from_udid('yyabc123%d' % cloned_from_idx)
         return lu
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
@@ -474,7 +478,10 @@ class TestLULinkedClone(testtools.TestCase):
                                'linked_lu')
 
     def test_image_lu_in_use(self):
-        self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
+        # The orphan will trigger a warning as we cycle through all the LUs
+        # without finding any backed by this image.
+        with self.assertLogs(ts.__name__, 'WARNING'):
+            self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
         self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu2))
 
     def test_image_lu_for_clone(self):
