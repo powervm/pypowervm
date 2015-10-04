@@ -503,6 +503,10 @@ def _process_hdisk_inv_result(result):
     if xml_resp is None:
         return None
     naa = None
+    idx = xml_resp.find('</VIO>')
+    res = xml_resp.find('<Response')
+    xml_resp = xml_resp[res:idx]
+
     parser = etree.fromstring(xml_resp)
     for pv in parser.getiterator():
         qn = etree.QName(pv.tag)

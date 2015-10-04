@@ -311,7 +311,10 @@ class TestHDisk(unittest.TestCase):
                   'E523-L2000000000000" unique_id="33213600507680282861D88000'
                   '0000DA04214503IBMfcp" descriptor="NjAwNTA3NjgwMjgyODYxRDg'
                   '4MDAwMDAwMDAwMDAwREE=" desType="NAA"></PhysicalVolume_base>'
-                  '</PhysicalVolume></InventoryResponse></Response></VIO>')
+                  '</PhysicalVolume></InventoryResponse></Response></VIO>'
+                  '<?xml version="1.0"?><uom:VIO xmlns:uom="http://www.ibm'
+                  '.com/xmlns/systems/power/firmware/uom/mc/2012_10/" '
+                  'xmlns="" version="1.21"><uom:Response/></uom:VIO>')
         result = {'OutputXML': output}
         naa = hdisk._process_hdisk_inv_result(result)
         self.assertEqual("600507680282861D88000000000000DA", naa)
