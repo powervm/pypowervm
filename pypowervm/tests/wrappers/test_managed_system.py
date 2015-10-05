@@ -16,7 +16,7 @@
 
 import unittest
 
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.mtms as mtmwrap
 

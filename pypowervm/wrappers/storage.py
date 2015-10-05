@@ -17,10 +17,12 @@
 """Wrappers for virtual storage elements and adapters."""
 
 import abc
+import base64
+import binascii
 import logging
-
 import six
 
+from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -58,11 +60,13 @@ _PV_VOL_NAME = 'VolumeName'
 _PV_VOL_STATE = 'VolumeState'
 _PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
+_PV_STG_LABEL = 'StorageLabel'
+_PV_PG83 = 'DescriptorPage83'
 _PV_EL_ORDER = [_PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
                 _PV_PERSISTENT_RESERVE, _PV_RES_POLICY, _PV_RES_POLICY_ALGO,
                 _PV_TOTAL_PHYS_PARTS, _PV_UDID, _PV_AVAIL_FOR_USE,
                 _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
-                _PV_FC_BACKED]
+                _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83]
 
 # Virtual Optical Media Constants
 VOPT_ROOT = 'VirtualOpticalMedia'
@@ -423,6 +427,16 @@ class PV(ewrap.ElementWrapper):
     @property
     def loc_code(self):
         return self._get_val_str(_PV_LOC_CODE)
+
+    @property
+    def pg83(self):
+        encoded = self._get_val_str(_PV_PG83)
+        try:
+            return base64.b64decode(encoded) if encoded else None
+        except (TypeError, binascii.Error) as te:
+            LOG.warn(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but it '
+                       'failed to decode (%(type_error)s).'),
+                     {'pg83_raw': encoded, 'type_error': te.args[0]})
 
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,

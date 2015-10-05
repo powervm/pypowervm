@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import uuid
 
 import mock
@@ -22,11 +21,13 @@ import six
 import testtools
 
 from pypowervm.tests import test_fixtures as fx
-from pypowervm.tests.wrappers.util import xml_sections
+from pypowervm.tests.test_utils import xml_sections
 from pypowervm.utils import lpar_builder as lpar_bldr
 import pypowervm.utils.uuid as pvm_uuid
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
+
+LPAR_BLDR_DATA = 'lpar_builder.txt'
 
 
 class TestLPARBuilder(testtools.TestCase):
@@ -34,9 +35,7 @@ class TestLPARBuilder(testtools.TestCase):
 
     def setUp(self):
         super(TestLPARBuilder, self).setUp()
-        dirname = os.path.dirname(__file__)
-        file_name = os.path.join(dirname, 'data', 'lpar_builder.txt')
-        self.sections = xml_sections.load_xml_sections(file_name)
+        self.sections = xml_sections.load_xml_sections(LPAR_BLDR_DATA)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
         def _bld_mgd_sys(proc_units, mem_reg, srr, pcm):

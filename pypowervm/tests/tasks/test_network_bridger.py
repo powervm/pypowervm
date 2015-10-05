@@ -14,8 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 import mock
 import testtools
 
@@ -24,7 +22,7 @@ import pypowervm.entities as ent
 from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import network_bridger as net_br
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import network as pvm_net
 
 MGR_NET_BR_FAILOVER_FILE = 'nbbr_network_bridge_failover.txt'
@@ -45,18 +43,13 @@ class TestNetworkBridger(testtools.TestCase):
     def setUp(self):
         super(TestNetworkBridger, self).setUp()
 
-        # Find directory for response files
-        data_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(data_dir, 'data')
-
         self.adptfx = self.useFixture(fx.AdapterFx(
             traits=fx.LocalPVMTraits))
         self.adpt = self.adptfx.adpt
 
         def resp(file_name):
-            file_path = os.path.join(data_dir, file_name)
             return pvmhttp.load_pvm_resp(
-                file_path, adapter=self.adpt).get_response()
+                file_name, adapter=self.adpt).get_response()
 
         self.mgr_nbr_resp = resp(MGR_NET_BR_FILE)
         self.mgr_nbr_fo_resp = resp(MGR_NET_BR_FAILOVER_FILE)

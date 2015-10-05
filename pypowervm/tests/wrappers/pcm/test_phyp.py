@@ -16,12 +16,12 @@
 
 """Tests for the raw PHYP long term metrics."""
 
-import os
-
 import testtools
 
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers.pcm import phyp as pcm_phyp
+
+PHYP_DATA = 'phyp_pcm_data.txt'
 
 
 class TestPhypLTM(testtools.TestCase):
@@ -29,9 +29,7 @@ class TestPhypLTM(testtools.TestCase):
     def setUp(self):
         super(TestPhypLTM, self).setUp()
 
-        dirname = os.path.dirname(__file__)
-        file_name = os.path.join(dirname, 'data', 'phyp_data.txt')
-        self.raw_json = pvmhttp.PVMFile(file_name).body
+        self.raw_json = pvmhttp.PVMFile(PHYP_DATA).body
 
     def test_parse(self):
         info = pcm_phyp.PhypInfo(self.raw_json)

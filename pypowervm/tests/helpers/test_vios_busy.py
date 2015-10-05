@@ -22,7 +22,7 @@ import mock
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex
 from pypowervm.helpers import vios_busy
-from pypowervm.tests.wrappers.util import pvmhttp
+from pypowervm.tests.test_utils import pvmhttp
 
 HTTPRESP_FILE = "fake_httperror.txt"
 HTTPRESP_SA_FILE = "fake_httperror_service_unavail.txt"

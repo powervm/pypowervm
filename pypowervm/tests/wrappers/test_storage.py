@@ -17,8 +17,9 @@
 import unittest
 
 import pypowervm.const as pc
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
+import pypowervm.wrappers.virtual_io_server as vios
 
 
 class TestVolumeGroup(twrap.TestWrapper):
@@ -355,6 +356,22 @@ class TestVFCClientAdapter(twrap.TestWrapper):
         self.assertEqual(4, self.dwrap.slot_number)
         self.assertEqual(['C05076087CBA0169', 'C05076087CBA0168'],
                          self.dwrap.wwpns)
+
+
+class TestVIOS(twrap.TestWrapper):
+    file = 'vio_multi_vscsi_mapping.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def test_pv(self):
+        pvs = self.dwrap.phys_vols
+        # First PV has no pg83
+        self.assertIsNone(pvs[0].pg83)
+        # Second has a legit pg83
+        self.assertEqual('600507680282861D88000000000000B5',
+                         pvs[1].pg83.decode('utf-8'))
+        # Third has a bogus pg83
+        with self.assertLogs(stor.__name__, 'WARNING'):
+            self.assertIsNone(pvs[2].pg83)
 
 if __name__ == '__main__':
     unittest.main()

@@ -18,7 +18,7 @@ import datetime
 
 import pytz
 
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 from pypowervm.wrappers import monitor
 
 _DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%Z'

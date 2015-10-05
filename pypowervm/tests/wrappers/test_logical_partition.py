@@ -21,8 +21,8 @@ import mock
 import testtools
 
 import pypowervm.tests.test_fixtures as fx
-from pypowervm.tests.wrappers.util import pvmhttp
-import pypowervm.tests.wrappers.util.test_wrapper_abc as twrap
+from pypowervm.tests.test_utils import pvmhttp
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
