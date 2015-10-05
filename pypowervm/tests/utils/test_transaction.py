@@ -720,6 +720,18 @@ class TestFeedTask(twrap.TestWrapper):
 
         ftsk.add_functor_subtask(return_wrapper_name, provides='the_name')
         ftsk.add_functor_subtask(return_wrapper_id, provides='the_id')
+        # Execute once here to make sure the return is in the right shape when
+        # there are no post-execs
+        self.assertEqual({
+            'wrapper_task_rets': {
+                self.entries[0].uuid: {'the_name': self.entries[0].name,
+                                       'the_id': self.entries[0].id,
+                                       'wrapper': self.entries[0]},
+                self.entries[1].uuid: {'the_name': self.entries[1].name,
+                                       'the_id': self.entries[1].id,
+                                       'wrapper': self.entries[1]}}},
+                         ftsk.execute())
+
         ftsk.add_post_execute(tf_task.FunctorTask(
             verify_rets_implicit, provides='post_exec_implicit'))
         ftsk.add_post_execute(tf_task.FunctorTask(

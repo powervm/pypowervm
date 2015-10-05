@@ -720,7 +720,7 @@ class FeedTask(tf_task.BaseTask):
             LOG.info(_("FeedTask %s has no Subtasks; no-op execution."),
                      self.name)
             return
-        rets = {}
+        rets = {'wrapper_task_rets': {}}
         # Calling .wrapper_tasks will cause the feed to be fetched and
         # WrapperTasks to be replicated, if not already done.  Only do this if
         # there exists at least one WrapperTask with Subtasks.
@@ -730,13 +730,13 @@ class FeedTask(tf_task.BaseTask):
             pflow.add(*self.wrapper_tasks.values())
             # Execute the parallel flow now so the results can be provided to
             # any post-execs.
-            rets = self._process_subtask_rets(tf_eng.run(
+            rets['wrapper_task_rets'] = self._process_subtask_rets(tf_eng.run(
                 pflow, engine='parallel',
                 executor=ContextThreadPoolExecutor(self.max_workers)))
         if self._post_exec:
             flow = tf_lf.Flow('%s_post_execs' % self.name)
             flow.add(*self._post_exec)
-            eng = tf_eng.load(flow, store={'wrapper_task_rets': rets})
+            eng = tf_eng.load(flow, store=rets)
             eng.run()
             rets = eng.storage.fetch_all()
         return rets
