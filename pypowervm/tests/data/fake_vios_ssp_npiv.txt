@@ -447,7 +447,7 @@ BODY{
     <ProgressPartitionDataRemaining kb="ROR" kxe="false">0</ProgressPartitionDataRemaining>
     <ProgressPartitionDataTotal kb="ROR" kxe="false">0</ProgressPartitionDataTotal>
     <ResourceMonitoringControlState kb="ROR" kxe="false">active</ResourceMonitoringControlState>
-    <ResourceMonitoringIPAddress kb="CUD" kxe="false">9.1.2.4</ResourceMonitoringIPAddress>
+    <ResourceMonitoringIPAddress kb="CUD" kxe="false">9.1.2.5</ResourceMonitoringIPAddress>
     <AssociatedManagedSystem kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e955e11a-6ee0-3e04-987c-6fa319f8cb8c" rel="related"/>
     <LogicalPorts kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>
