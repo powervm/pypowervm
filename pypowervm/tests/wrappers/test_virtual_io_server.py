@@ -62,6 +62,9 @@ class TestVIOSWrapper(twrap.TestWrapper):
         expected_ips = ('9.1.2.4', '10.10.10.5')
         self.assertEqual(expected_ips, self.dwrap.ip_addresses)
 
+    def test_rmc_ip(self):
+        self.assertEqual('9.1.2.5', self.dwrap.rmc_ip)
+
     def test_license_accept(self):
         self.assertTrue(self.dwrap.is_license_accepted)
 

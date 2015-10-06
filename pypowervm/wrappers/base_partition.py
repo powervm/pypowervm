@@ -395,6 +395,11 @@ class BasePartition(ewrap.EntryWrapper):
         return self._get_val_str(_BP_RMC_STATE)
 
     @property
+    def rmc_ip(self):
+        """IP address used for RMC communication, as a string."""
+        return self._get_val_str(_BP_RMC_IP)
+
+    @property
     def operating_system(self):
         """String representing the OS and version, or 'Unknown'."""
         return self._get_val_str(_BP_OS_VER, 'Unknown')
