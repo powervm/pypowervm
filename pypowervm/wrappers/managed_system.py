@@ -31,7 +31,7 @@ _PRIMARY_IP_ADDRESS = 'PrimaryIPAddress'
 _HOST_IP_ADDRESS = _PRIMARY_IP_ADDRESS
 _STATE = 'State'
 _SYSTEM_NAME = 'SystemName'
-_MASTER_MODE = 'IsMaster'
+_MASTER_MODE = 'IsPowerVMManagementMaster'
 
 _SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
 _ACTIVE_LPM_CAP = u.xpath(
