@@ -714,16 +714,23 @@ class _RemoveStorage(tf_tsk.Task):
             vopts_to_rm = []
             vdisks_to_rm = []
             for stg in stg_els_to_remove:
-                if isinstance(stg, stor.LU):
-                    # Ignore Logical Units
-                    pass
+                if isinstance(stg, (stor.LU, stor.PV)):
+                    LOG.warn(_("Not removing storage %(stg_name)s of type "
+                               "%(stg_type)s because it cannot be determined "
+                               "whether it is still in use.  Manual "
+                               "verification and cleanup may be necessary."),
+                             {'stg_name': stg.name,
+                              'stg_type': stg.schema_type})
                 elif isinstance(stg, stor.VOptMedia):
                     vopts_to_rm.append(stg)
                 elif isinstance(stg, stor.VDisk):
                     vdisks_to_rm.append(stg)
                 else:
-                    LOG.warn(_("Unexpected storage element type %s."),
-                             stg.schema_type)
+                    LOG.warn(_("Storage scrub ignoring storage element "
+                               "%(stg_name)s because it is of unexpected type "
+                               "%(stg_type)s."),
+                             {'stg_name': stg.name,
+                              'stg_type': stg.schema_type})
 
             # Any storage to be deleted?
             if not any((vopts_to_rm, vdisks_to_rm)):

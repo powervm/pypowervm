@@ -634,7 +634,13 @@ class TestScrub2(testtools.TestCase):
             mock.ANY, {'stg_type': 'VSCSI', 'lpar_id': 3, 'num_maps': 3,
                        'vios_name': self.vio_feed[0].name})]
 
+        # We should ignore the LUs...
         mock_rm_lu.side_effect = self.fail
+        # ...but should emit a warning about ignoring them
+        warns.append(mock.call(
+            mock.ANY,
+            {'stg_name': 'volume-boot-8246L1C_0604CAA-salsman66-00000004',
+             'stg_type': 'LogicalUnit'}))
 
         vorm = self.vio_feed[0].scsi_mappings[5].backing_storage
         mock_rm_vopt.side_effect = verify_rm_stg_call([vorm])
