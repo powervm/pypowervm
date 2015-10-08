@@ -233,6 +233,11 @@ class TestPortMappings(twrap.TestWrapper):
 
     def test_find_vios_for_port_map(self):
         """Tests the find_vios_for_port_map method."""
+        # Try off of the client WWPNs
+        e0 = ('bad', 'c05076079cff08da c05076079cff08db')
+        self.assertEqual(self.entries[0],
+                         vfc_mapper.find_vios_for_port_map(self.entries, e0))
+
         # This WWPN is on the first VIOS
         e1 = ('10000090FA5371f1', 'a b')
         self.assertEqual(self.entries[0],
