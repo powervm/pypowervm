@@ -211,7 +211,10 @@ class VG(ewrap.EntryWrapper):
     @property
     def phys_vols(self):
         """Returns a list of the Physical Volumes that back this repo."""
-        es = ewrap.WrapperElemList(self._find_or_seed(_VG_PHS_VOLS), PV)
+        # TODO(efried): parent=self not needed once VIOS supports pg83
+        # descriptor in Events
+        es = ewrap.WrapperElemList(self._find_or_seed(_VG_PHS_VOLS), PV,
+                                   parent=self)
         return es
 
     @phys_vols.setter
@@ -368,6 +371,25 @@ class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
     @classmethod
+    def wrap(cls, element, **kwargs):
+        """Override to detect the parent, which may be a VIOS or VG.
+
+        :param element: Element to wrap.
+        :param kwargs: Optional keyword arguments.  This override looks for
+                       'parent', which should be set to the EntryWrapper
+                       instance wherein this PV can be found.  This is used by
+                       temporary pg83 getter code to discover the VIOS owning
+                       this PV.  Any other kwargs are passed to the superclass
+                       wrap implementation.
+        :return:
+        """
+        # TODO(efried): Remove this method once VIOS supports pg83 in Events
+        parent = kwargs.pop('parent', None)
+        wrapper = super(PV, cls).wrap(element, **kwargs)
+        wrapper.parent = parent
+        return wrapper
+
+    @classmethod
     def bld(cls, adapter, name, udid=None):
         """Creates the a fresh PV wrapper.
 
@@ -431,8 +453,38 @@ class PV(ewrap.ElementWrapper):
     @property
     def pg83(self):
         encoded = self._get_val_str(_PV_PG83)
+        # TODO(efried): Temporary workaround until VIOS supports pg83 in Events
+        # >>>CUT HERE>>>
+        if not encoded:
+            # The PhysicalVolume XML doesn't contain the DescriptorPage83
+            # property.  (This could be because the disk really doesn't have
+            # this attribute; but if the caller is asking for pg83, they likely
+            # expect that it should.)  More likely, it is because their VIOS is
+            # running at a level which supplies this datum in a fresh inventory
+            # query, but not in a PV ADD Event.  In that case, use the
+            # LUARecovery Job to perform the fresh inventory query to retrieve
+            # this value.  Since this is expensive, we cache the value.
+            if hasattr(self, '_pg83_encoded'):
+                return self._pg83_encoded
+
+            # Get the VIOS UUID from the parent of this PV.
+            # The parent is either a VG or a VIOS.  If a VG, it is a child of
+            # the owning VIOS, so pull out the ROOT UUID of its href.  If a
+            # VIOS, we can't count on the href being a root URI, so pull the
+            # target UUID regardless.
+            use_root_uuid = isinstance(self.parent, VG)
+            vio_uuid = u.get_req_path_uuid(
+                self.parent.href, preserve_case=True, root=use_root_uuid)
+
+            # Local import to prevent circular dependency
+            from pypowervm.tasks import hdisk
+            encoded = hdisk.get_pg83_via_job(self.adapter, vio_uuid, self.udid)
+            # Cache the encoded value for performance
+            self._pg83_encoded = encoded
+        # <<<CUT HERE<<<
         try:
-            return base64.b64decode(encoded) if encoded else None
+            return base64.b64decode(encoded).decode(
+                'utf-8') if encoded else None
         except (TypeError, binascii.Error) as te:
             LOG.warn(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but it '
                        'failed to decode (%(type_error)s).'),

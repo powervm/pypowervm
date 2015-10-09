@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import unittest
 
 import pypowervm.const as pc
@@ -362,16 +363,51 @@ class TestVIOS(twrap.TestWrapper):
     file = 'vio_multi_vscsi_mapping.txt'
     wrapper_class_to_test = vios.VIOS
 
-    def test_pv(self):
-        pvs = self.dwrap.phys_vols
-        # First PV has no pg83
-        self.assertIsNone(pvs[0].pg83)
-        # Second has a legit pg83
+    def test_pg83_in_pv(self):
+        """Legitimate pg83 data from the <PhysicalVolume/>."""
         self.assertEqual('600507680282861D88000000000000B5',
-                         pvs[1].pg83.decode('utf-8'))
-        # Third has a bogus pg83
+                         self.dwrap.phys_vols[1].pg83)
+
+    # TODO(efried): reinstate when VIOS supports pg83 descriptor in Events
+    # def test_pg83_absent_from_pv(self):
+    #     """No pg83 data in <PhysicalVolume/>."""
+    #     self.assertIsNone(self.dwrap.phys_vols[0].pg83)
+
+    # TODO(efried): remove once VIOS supports pg83 descriptor in Events
+    # >>>CUT HERE>>>
+    @mock.patch('pypowervm.wrappers.job.Job.wrap')
+    def test_pg83_absent_from_pv(self, mock_wrap):
+        """LUARecovery.QUERY_INVENTORY when no pg83 in <PhysicalVolume/>."""
+        mock_jwrap = mock.Mock()
+        mock_jwrap.get_job_results_as_dict.return_value = {
+            'OutputXML':
+                '<VIO version="1.21" xmlns="http://ausgsa.austin.ibm">'
+                '<Response><InventoryResponse viosId="8247-21L03212A60A" '
+                'sequence="435" inventoryType="base" eventLogOn="true">'
+                '<PhysicalVolume udid="01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEO'
+                'DgwMDAwMDAwMDAwMDBEQQ==" name="hdisk2" '
+                'description="MPIO IBM 2076 FC Disk">'
+                '<PhysicalVolume_base capacity="20480" '
+                'locationCode="U78CB.001.WZS05HN-P1-C7-T1-W500507680220E523-L2'
+                '000000000000" '
+                'unique_id="33213600507680282861D880000000DA04214503IBMfcp" '
+                'descriptor="SV9hbV9hX3BnODNfTkFBX2Rlc2NyaXB0b3I=" '
+                'desType="NAA"></PhysicalVolume_base></PhysicalVolume>'
+                '</InventoryResponse></Response></VIO><?xml version="1.0"?>'
+                '<uom:VIO xmlns:uom="http://www.ibm.com/xmlns/systems/power/fi'
+                'rmware/uom/mc/2012_10/" xmlns="" version="1.21">'
+                '<uom:Response/></uom:VIO>'}
+        mock_wrap.return_value = mock_jwrap
+        self.assertEqual('I_am_a_pg83_NAA_descriptor',
+                         self.dwrap.phys_vols[0].pg83)
+        mock_jwrap.run_job.assert_called_with(
+            '3443DB77-AED1-47ED-9AA5-3DB9C6CF7089', job_parms=[mock.ANY])
+    # <<<CUT HERE<<<
+
+    def test_bogus_pg83_in_pv(self):
+        """Bogus pg83 data in the <PhysicalVolume/> doesn't trigger the Job."""
         with self.assertLogs(stor.__name__, 'WARNING'):
-            self.assertIsNone(pvs[2].pg83)
+            self.assertIsNone(self.dwrap.phys_vols[2].pg83)
 
 if __name__ == '__main__':
     unittest.main()
