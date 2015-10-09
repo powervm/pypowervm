@@ -293,7 +293,7 @@ class VIOS(bp.BasePartition):
         """
         es = ewrap.WrapperElemList(
             self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
-            stor.PV)
+            stor.PV, parent=self)
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
