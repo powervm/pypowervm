@@ -548,12 +548,26 @@ def remove_maps(v_wrap, client_lpar_id, client_adpt=None, port_map=None):
 def find_vios_for_port_map(vios_wraps, port_map):
     """Finds the appropriate VIOS wrapper for a given port map.
 
+    Note that the algorithm first checks based off of the client WWPNs.  If the
+    client WWPNs can not be found (perhaps the map is still -1 -1 from the
+    derive_base_npiv_map) then the physical port WWPN will be checked.
+
     :param vios_wraps: A list of Virtual I/O Server wrapper objects.
     :param port_map: The port mapping (as defined by the derive_npiv_map
                      method).
-    :return: The Virtual I/O Server wrapper that owns the physical FC port
-             defined by the port_map.
+    :return: The Virtual I/O Server wrapper that supports the port map.
     """
+    # Check first based off the client WWPNs.  Note that this may be -1 -1
+    # in which case it will return nothing
+    vios_w = find_vios_for_vfc_wwpns(vios_wraps, port_map[1].split())[0]
+    if vios_w:
+        return vios_w
+
+    # If we had nothing, check based off the physical port WWPN.  The
+    # reason this is not the first check is because the mapping may be mid
+    # live migration, thus pointing to a source.  But if that was the case
+    # then the first check would have returned the right WWPNs.  The only
+    # time this should be hit is in the middle of a create operation.
     return find_vios_for_wwpn(vios_wraps, port_map[0])[0]
 
 
