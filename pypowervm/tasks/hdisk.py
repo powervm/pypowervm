@@ -15,12 +15,10 @@
 #    under the License.
 
 """Tasks around VIOS-backed 'physical' disks."""
-
 import itertools
 import logging
 
 from lxml import etree
-
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pexc
@@ -402,3 +400,58 @@ def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
         LOG.warn(_('CLIRunner Error: %s') % error)
+
+
+def get_pg83_via_job(adapter, vios_uuid, udid):
+    """Inventory call to fetch the encoded SCSI Page 0x83 descriptor for a PV.
+
+    :param adapter: The pypowervm adapter through which to run the Job.
+    :param vios_uuid: The UUID of the Virtual I/O Server owning the PV.
+    :param udid: The UDID of the PV to query.
+    :return: SCSI PG83 NAA descriptor, base64-encoded.  May be None.
+    """
+    # TODO(efried): Remove this method once VIOS supports pg83 in Events
+    # Build the hdisk inventory input XML
+    lua_xml = ('<uom:VIO xmlns:uom="http://www.ibm.com/xmlns/systems/power/fir'
+               'mware/uom/mc/2012_10/" version="1.21" xmlns=""><uom:Request ac'
+               'tion_str="QUERY_INVENTORY"><uom:InventoryRequest inventoryType'
+               '="base"><uom:VioTypeFilter type="PV"/><uom:VioUdidFilter udid='
+               '"%s"/></uom:InventoryRequest></uom:Request></uom:VIO>' % udid)
+
+    # Build up the job & invoke
+    job_wrapper = pvm_job.Job.wrap(adapter.read(
+        pvm_vios.VIOS.schema_type, root_id=vios_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_LUA_RECOVERY))
+    job_wrapper.run_job(vios_uuid, job_parms=[
+        job_wrapper.create_job_parameter('inputXML', lua_xml, cdata=True)])
+
+    # Get the job result, and parse the output.
+    result = job_wrapper.get_job_results_as_dict()
+
+    # The result may push to StdOut or to OutputXML (different versions push
+    # to different locations).
+    if not result or not any((k in result for k in ('OutputXML', 'StdOut'))):
+        LOG.warn(_('QUERY_INVENTORY LUARecovery Job succeeded, but result '
+                   'contained neither OutputXML nor StdOut.'))
+        return None
+    xml_resp = result.get('OutputXML', result.get('StdOut'))
+    LOG.debug('QUERY_INVENTORY result: %s' % xml_resp)
+
+    # QUERY_INVENTORY response may contain more than one element.  Each will be
+    # delimited by its own <?xml?> tag.  etree will only parse one at a time.
+    for chunk in xml_resp.split('<?xml version="1.0"?>'):
+        if not chunk:
+            continue
+        try:
+            parsed = etree.fromstring(chunk)
+        except etree.XMLSyntaxError as e:
+            LOG.warn(_('QUERY_INVENTORY produced invalid chunk of XML '
+                       '(%(chunk)s).  Error: %(err)s'),
+                     {'chunk': chunk, 'err': e.args[0]})
+            continue
+        for elem in parsed.getiterator():
+            if (etree.QName(elem.tag).localname == 'PhysicalVolume_base' and
+                    elem.attrib.get('desType') == "NAA"):
+                return elem.attrib.get('descriptor')
+    LOG.warn(_('Failed to find pg83 descriptor in XML output:\n%s'), xml_resp)
+    return None
