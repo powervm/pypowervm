@@ -16,8 +16,9 @@
 
 """Manage LPAR virtual terminals."""
 
-import logging
 import subprocess
+
+from oslo_log import log as logging
 
 import pypowervm.const as c
 from pypowervm import exceptions as pvm_exc

@@ -15,14 +15,14 @@
 #    under the License.
 
 """Wrappers, constants, and helpers around ManagedSystem and its children."""
+import re
+
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.mtms as mtmwrap
-
-import logging
-import re
 
 LOG = logging.getLogger(__name__)
 

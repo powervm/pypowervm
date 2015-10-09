@@ -18,8 +18,9 @@
 
 import copy
 import datetime as dt
-import logging
 import threading
+
+from oslo_log import log as logging
 
 from pypowervm import util
 

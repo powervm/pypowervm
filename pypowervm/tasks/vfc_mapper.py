@@ -16,7 +16,7 @@
 
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
-import logging
+from oslo_log import log as logging
 
 from pypowervm import exceptions as e
 from pypowervm.i18n import _

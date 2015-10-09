@@ -17,9 +17,9 @@
 """Tasks around VIOS-backed 'physical' disks."""
 
 import itertools
-import logging
 
 from lxml import etree
+from oslo_log import log as logging
 
 from pypowervm import const as c
 import pypowervm.entities as ent

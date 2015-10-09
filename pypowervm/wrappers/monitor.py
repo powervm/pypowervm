@@ -18,10 +18,10 @@
 
 import abc
 import datetime
-import logging
-
 import pytz
 import six
+
+from oslo_log import log as logging
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc

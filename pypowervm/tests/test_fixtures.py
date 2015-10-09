@@ -428,5 +428,5 @@ class LoggingFx(SimplePatchingFx):
         """Create the fixture for the various logging methods."""
         super(LoggingFx, self).__init__()
         self.add_patchers(
-            *(SimplePatcher(self, x, 'logging.Logger.%s' % x) for x in
-              ('info', 'warn', 'debug', 'error', 'exception')))
+            *(SimplePatcher(self, x, 'oslo_log.log.BaseLoggerAdapter.%s' % x)
+                for x in ('info', 'warn', 'debug', 'error', 'exception')))

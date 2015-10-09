@@ -16,12 +16,12 @@
 
 """Wrappers, constants, and helpers around ManagementConsole."""
 
+from oslo_log import log as logging
+
 import pypowervm.const as c
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.mtms as mtmwrap
-
-import logging
 
 LOG = logging.getLogger(__name__)
 

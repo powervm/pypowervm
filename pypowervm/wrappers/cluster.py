@@ -16,7 +16,7 @@
 
 """EntryWrappers for Cluster and its subelements."""
 
-import logging
+from oslo_log import log as logging
 
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap

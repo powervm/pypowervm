@@ -17,8 +17,9 @@
 """Extended validation utilities."""
 
 import abc
-import logging
 import six
+
+from oslo_log import log as logging
 
 from pypowervm.i18n import _
 from pypowervm.wrappers import base_partition as bp
