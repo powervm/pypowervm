@@ -17,9 +17,9 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
-import logging
 import time
 
+from oslo_log import log as logging
 from six import moves
 
 from pypowervm import const

@@ -21,7 +21,6 @@ import copy
 import datetime as dt
 import errno
 import hashlib
-import logging
 import os
 
 if os.name == 'posix':
@@ -39,6 +38,7 @@ except ImportError:
     import urllib.parse as urlparse
 
 import oslo_concurrency.lockutils as locku
+from oslo_log import log as logging
 import requests
 import requests.exceptions as rqex
 import six

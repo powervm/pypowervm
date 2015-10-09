@@ -10,5 +10,5 @@ Package: pypowervm
 Section: python
 Priority: optional
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, linuxvnc(>=0.9.9), python-lxml (>=3.4.1), python-oslo.i18n (>=1.2.0), python-oslo.utils (>=1.2.0), python-pbr (>>0.5.21), python-pyasn1-modules (>=0.0.5), python-pyasn1 (>=0.0.12a), python-requests (>=2.3.0), python-six (>=1.7.0), python-oslo.concurrency (>=0.3.0), python-tz, python-concurrent.futures, python-psutil (>=1.1.1), python-taskflow (>=0.7.1), python-oslo-context
+Depends: ${shlibs:Depends}, ${misc:Depends}, linuxvnc(>=0.9.9), python-lxml (>=3.4.1), python-oslo.i18n (>=1.2.0), python-oslo-log (>=1.0.0), python-oslo.utils (>=1.2.0), python-pbr (>>0.5.21), python-pyasn1-modules (>=0.0.5), python-pyasn1 (>=0.0.12a), python-requests (>=2.3.0), python-six (>=1.7.0), python-oslo.concurrency (>=0.3.0), python-tz, python-concurrent.futures, python-psutil (>=1.1.1), python-taskflow (>=0.7.1), python-oslo-context
 Description: Python API wrapper for PowerVM

@@ -16,9 +16,8 @@
 
 """Tasks to start, stop, and reboot partitions."""
 
-import logging
-
 from oslo_config import cfg
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.exceptions as pexc

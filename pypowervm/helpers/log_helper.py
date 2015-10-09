@@ -18,8 +18,9 @@
 
 import collections
 import copy
-import logging
 import threading
+
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.exceptions as pvmex

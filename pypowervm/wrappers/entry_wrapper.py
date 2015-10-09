@@ -17,8 +17,10 @@
 """Base classes for all wrapper classes in the pypowervm.wrappers package."""
 
 import abc
-import logging
+import six
 import urllib
+
+from oslo_log import log as logging
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
@@ -26,8 +28,6 @@ import pypowervm.entities as ent
 from pypowervm.i18n import _
 from pypowervm import util
 import pypowervm.utils.uuid as pvm_uuid
-
-import six
 
 LOG = logging.getLogger(__name__)
 

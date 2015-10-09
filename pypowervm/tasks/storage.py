@@ -16,13 +16,13 @@
 
 """Create, remove, map, unmap, and populate virtual storage objects."""
 
-import logging
 import math
 import threading
 import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
+from oslo_log import log as logging
 import taskflow.engines as tf_eng
 from taskflow.patterns import unordered_flow as tf_uf
 import taskflow.task as tf_tsk

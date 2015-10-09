@@ -16,10 +16,10 @@
 
 """EntryWrapper, constants, and enums around Job ('web' namespace)."""
 
-import logging
 import time
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import six
 
 import pypowervm.const as pc
