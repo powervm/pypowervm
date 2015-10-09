@@ -17,7 +17,8 @@
 """Logging helpers."""
 
 import functools
-import logging
+
+from oslo_log import log as logging
 
 LOG = logging.getLogger('pypowervm')
 

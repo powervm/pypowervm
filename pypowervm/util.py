@@ -18,7 +18,6 @@
 
 import datetime as dt
 import hashlib
-import logging
 import math
 import re
 import socket
@@ -28,6 +27,7 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 
+from oslo_log import log as logging
 from oslo_utils import units
 from pyasn1.codec.der import decoder as der_decoder
 from pyasn1_modules import rfc2459

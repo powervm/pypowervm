@@ -16,10 +16,10 @@
 
 """SharedProcPool, the EntryWrapper for SharedProcessorPool."""
 
+from oslo_log import log as logging
+
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
-
-import logging
 
 LOG = logging.getLogger(__name__)
 

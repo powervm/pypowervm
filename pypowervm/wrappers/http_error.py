@@ -16,10 +16,10 @@
 
 """HttpError, the EntryWrapper for HttpErrorResponse ('web' namespace)."""
 
+from oslo_log import log as logging
+
 import pypowervm.const as pc
 import pypowervm.wrappers.entry_wrapper as ewrap
-
-import logging
 
 LOG = logging.getLogger(__name__)
 

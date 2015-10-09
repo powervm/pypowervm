@@ -16,7 +16,7 @@
 
 """Tasks around IBMi VM changes."""
 
-import logging
+from oslo_log import log as logging
 
 import pypowervm.exceptions as pvmex
 from pypowervm import i18n

@@ -16,9 +16,9 @@
 
 import abc
 from concurrent.futures import thread as th
-import logging
 import oslo_concurrency.lockutils as lock
 import oslo_context.context as ctx
+from oslo_log import log as logging
 from oslo_utils import reflection
 import six
 from taskflow import engines as tf_eng

@@ -16,9 +16,8 @@
 
 """Tasks to request and release master mode."""
 
-import logging
-
 from oslo_config import cfg
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.log as lgc

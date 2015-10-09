@@ -16,9 +16,8 @@
 
 """Manage mappings of virtual storage devices from VIOS to LPAR."""
 
-import logging
-
 from oslo_concurrency import lockutils as lock
+from oslo_log import log as logging
 
 from pypowervm.i18n import _
 from pypowervm import util

@@ -17,9 +17,9 @@
 """Construction and basic validation of an LPAR or VIOS EntryWrapper."""
 
 import abc
-import logging
-
 import six
+
+from oslo_log import log as logging
 
 from pypowervm import i18n
 from pypowervm.wrappers import base_partition as bp

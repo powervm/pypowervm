@@ -17,7 +17,8 @@
 """Wrappers for virtual networking objects."""
 
 import copy
-import logging
+
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.entities as ent

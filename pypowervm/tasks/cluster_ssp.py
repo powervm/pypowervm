@@ -16,7 +16,7 @@
 
 """Tasks around Cluster/SharedStoragePool."""
 
-import logging
+from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.wrappers.cluster as clust

@@ -15,8 +15,7 @@
 #    under the License.
 
 import functools
-import logging
-
+import logging as base_logging
 import mock
 import testtools
 
@@ -28,7 +27,7 @@ import pypowervm.tests.test_fixtures as fx
 
 # Testing by hand it's useful to enable the next line instead of the following
 # logging.basicConfig(level=logging.INFO)
-logging.basicConfig()
+base_logging.basicConfig()
 
 
 class TestLogHelper(testtools.TestCase):

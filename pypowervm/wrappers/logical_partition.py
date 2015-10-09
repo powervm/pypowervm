@@ -16,13 +16,13 @@
 
 """LPAR, the EntryWrapper for LogicalPartition."""
 
+from oslo_log import log as logging
+
 import pypowervm.const as pc
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
-
-import logging
 
 LOG = logging.getLogger(__name__)
 

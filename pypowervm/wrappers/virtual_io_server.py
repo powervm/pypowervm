@@ -18,10 +18,10 @@
 
 import abc
 import copy
-import logging
 import re
-
 import six
+
+from oslo_log import log as logging
 
 import pypowervm.entities as ent
 import pypowervm.util as u
