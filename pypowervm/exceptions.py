@@ -199,3 +199,8 @@ class MigrationFailed(AbstractMsgFmtError):
 
 class IBMiLoadSourceNotFound(AbstractMsgFmtError):
     msg_fmt = _("No load source found for VM %(vm_name)s")
+
+
+class FoundDevMultipleTimes(AbstractMsgFmtError):
+    msg_fmt = _("Found device %(devname)s %(count)d times; expected to find "
+                "it at most once.")
