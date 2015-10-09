@@ -207,3 +207,8 @@ class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
                 "using a PV obtained through an unsupported property chain.  "
                 "The PV must be accessed via VIOS.phys_vols, VG.phys_vols, or "
                 "VIOS.scsi_mappings[n].backing_storage.")
+
+
+class FoundDevMultipleTimes(AbstractMsgFmtError):
+    msg_fmt = _("Found device %(devname)s %(count)d times; expected to find "
+                "it at most once.")

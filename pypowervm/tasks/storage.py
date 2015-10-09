@@ -455,6 +455,43 @@ def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
     return vg_wrap
 
 
+def _rm_dev_by_udid(dev, devlist):
+    """Use UDID matching to remove a device from a list.
+
+    Use this method in favor of devlist.remove(dev) when the dev originates
+    from somewhere other than the devlist, and may have some non-matching
+    properties which would cause normal equality comparison to fail.
+
+    For example, use this method when using a VSCSI mapping's backing_storage
+    to decide which LogicalUnit to remove from the list of SSP.logical_units.
+
+    Note: This method relies on UDIDs being present in both dev and the
+    corresponding item in devlist.
+
+    :param dev: The EntryWrapper representing the device to remove.  May be
+                VDisk, VOpt, PV, or LU.
+    :param devlist: The list from which to remove the device.
+    :return: The device removed, as it existed in the devlist.  None if the
+             device was not found by UDID.
+    """
+    if not dev.udid:
+        LOG.warn(_("Ignoring device because it lacks a UDID:\n%s"),
+                 dev.toxmlstring())
+        return None
+
+    matches = [realdev for realdev in devlist if realdev.udid == dev.udid]
+    if len(matches) == 0:
+        LOG.warn(_("Device %s not found in list."), dev.name)
+        return None
+    if len(matches) > 1:
+        raise exc.FoundDevMultipleTimes(devname=dev.name, count=len(matches))
+
+    LOG.debug("Removing %s from devlist.", dev.name)
+    match = matches[0]
+    devlist.remove(match)
+    return match
+
+
 def _rm_vdisks(vg_wrap, vdisks):
     """Delete some number of virtual disks from a volume group wrapper.
 
@@ -470,17 +507,12 @@ def _rm_vdisks(vg_wrap, vdisks):
     changes = []
     for removal in vdisks:
         # Can't just call direct on remove, because attribs are off.
-        match = None
-        for existing_vd in existing_vds:
-            if existing_vd.udid == removal.udid:
-                match = existing_vd
-                break
+        removed = _rm_dev_by_udid(removal, existing_vds)
 
-        if match is not None:
+        if removed is not None:
             LOG.info(_('Deleting virtual disk %(vdisk)s from volume group '
-                       '%(vg)s'), {'vdisk': match.name, 'vg': vg_wrap.name})
-            existing_vds.remove(match)
-            changes.append(match)
+                       '%(vg)s'), {'vdisk': removed.name, 'vg': vg_wrap.name})
+            changes.append(removed)
 
     return changes
 
@@ -554,15 +586,15 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
             # Note: This can add None to the set
             backing_images.add(_image_lu_for_clone(ssp_wrap, lu))
         msg_args = dict(lu_name=lu.name, ssp_name=ssp_wrap.name)
-        try:
-            ssp_lus.remove(lu)
+        removed = _rm_dev_by_udid(lu, ssp_lus)
+        if removed:
             LOG.info(_("Removing LU %(lu_name)s from SSP %(ssp_name)s"),
                      msg_args)
             changes.append(lu)
-        except ValueError:
+        else:
             # It's okay if the LU was already absent.
-            LOG.debug("LU %(lu_name)s was not found in SSP %(ssp_name)s"
-                      % msg_args)
+            LOG.info(_("LU %(lu_name)s was not found in SSP %(ssp_name)s"),
+                     msg_args)
 
     # Now remove any unused backing images.  This set will be empty if
     # del_unused_images=False
@@ -577,11 +609,16 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
                           "%(ssp_name)s because it is still in use." %
                           msg_args)
             else:
-                LOG.info(_("Removing Image LU %(lu_name)s from SSP "
-                           "%(ssp_name)s because it is no longer in use."),
-                         msg_args)
-                ssp_lus.remove(backing_image)
-                changes.append(backing_image)
+                removed = _rm_dev_by_udid(backing_image, ssp_lus)
+                if removed:
+                    LOG.info(_("Removing Image LU %(lu_name)s from SSP "
+                               "%(ssp_name)s because it is no longer in use."),
+                             msg_args)
+                    changes.append(backing_image)
+                else:
+                    # This would be wildly unexpected
+                    LOG.warn(_("Backing LU %(lu_name)s was not found in SSP "
+                               "%(ssp_name)s"), msg_args)
     return changes
 
 

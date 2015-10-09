@@ -295,6 +295,39 @@ class TestRMSTorage(testtools.TestCase):
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
         self.vg_resp = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
 
+    def test_rm_dev_by_udid(self):
+        dev1 = mock.Mock(udid=None)
+        # dev doesn't have a UDID
+        with self.assertLogs(ts.__name__, 'WARNING'):
+            self.assertIsNone(ts._rm_dev_by_udid(dev1, None))
+            dev1.toxmlstring.assert_called_with()
+        # Remove from empty list returns None, and warns (like not-found)
+        dev1.udid = 123
+        with self.assertLogs(ts.__name__, 'WARNING'):
+            self.assertIsNone(ts._rm_dev_by_udid(dev1, []))
+        # Works when exact same dev is in the list,
+        devlist = [dev1]
+        self.assertEqual(dev1, ts._rm_dev_by_udid(dev1, devlist))
+        self.assertEqual([], devlist)
+        # Works when matching-but-not-same dev is in the list.  Return is the
+        # one that was in the list, not the one that was passed in.
+        devlist = [dev1]
+        dev2 = mock.Mock(udid=123)
+        # Two different mocks are not equal
+        self.assertNotEqual(dev1, dev2)
+        self.assertEqual(dev1, ts._rm_dev_by_udid(dev2, devlist))
+        self.assertEqual([], devlist)
+        # Error when multiples found
+        devlist = [dev1, dev2, dev1]
+        self.assertRaises(exc.FoundDevMultipleTimes, ts._rm_dev_by_udid, dev1,
+                          devlist)
+        # One more good path with a longer list
+        dev3 = mock.Mock()
+        dev4 = mock.Mock(udid=456)
+        devlist = [dev3, dev2, dev4]
+        self.assertEqual(dev2, ts._rm_dev_by_udid(dev1, devlist))
+        self.assertEqual([dev3, dev4], devlist)
+
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
     def test_rm_vdisks(self, mock_update):
         mock_update.return_value = self.vg_resp
