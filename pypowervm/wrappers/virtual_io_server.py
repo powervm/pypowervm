@@ -242,7 +242,7 @@ class VIOS(bp.BasePartition):
         def_attrib = self.xags.SCSI_MAPPING.attrs
         es = ewrap.WrapperElemList(
             self._find_or_seed(_VIO_VSCSI_MAPPINGS, attrib=def_attrib),
-            VSCSIMapping)
+            VSCSIMapping, parent=self)
         return es
 
     @scsi_mappings.setter
@@ -367,6 +367,24 @@ class VSCSIMapping(VStorageMapping):
     _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
+    def wrap(cls, element, **kwargs):
+        """Override to detect the parent VIOS.
+
+        :param element: Element to wrap.
+        :param kwargs: Optional keyword arguments.  This override looks for
+                       'parent', which should be set to the VIOS EntryWrapper
+                       instance wherein this mapping can be found.  This is
+                       used by temporary pg83 getter code.  Any other kwargs
+                       are passed to the superclass wrap implementation.
+        :return: The newly-created VSCSIMapping ElementWrapper.
+        """
+        # TODO(efried): Remove this method once VIOS supports pg83 in Events
+        parent = kwargs.pop('parent', None)
+        wrapper = super(VSCSIMapping, cls).wrap(element, **kwargs)
+        wrapper.parent = parent
+        return wrapper
+
+    @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
@@ -409,7 +427,7 @@ class VSCSIMapping(VStorageMapping):
             return None
         # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
         # Allow ElementWrapper to detect (from the registry) and wrap correctly
-        return ewrap.ElementWrapper.wrap(stor_elems[0])
+        return ewrap.ElementWrapper.wrap(stor_elems[0], parent=self.parent)
 
     def _backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.

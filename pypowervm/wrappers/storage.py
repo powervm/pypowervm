@@ -382,7 +382,7 @@ class PV(ewrap.ElementWrapper):
                        temporary pg83 getter code to discover the VIOS owning
                        this PV.  Any other kwargs are passed to the superclass
                        wrap implementation.
-        :return:
+        :return: The newly-created PV ElementWrapper.
         """
         # TODO(efried): Remove this method once VIOS supports pg83 in Events
         parent = kwargs.pop('parent', None)
