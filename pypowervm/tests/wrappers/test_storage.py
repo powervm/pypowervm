@@ -18,6 +18,7 @@ import mock
 import unittest
 
 import pypowervm.const as pc
+import pypowervm.exceptions as ex
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.virtual_io_server as vios
@@ -401,6 +402,13 @@ class TestVIOS(twrap.TestWrapper):
                          self.dwrap.phys_vols[0].pg83)
         mock_jwrap.run_job.assert_called_with(
             '3443DB77-AED1-47ED-9AA5-3DB9C6CF7089', job_parms=[mock.ANY])
+
+    def test_pg83_raises_if_no_parent_entry(self):
+        """Raise attempting to get pg83 if PV has no parent_entry."""
+        # TODO(efried): remove this method once VIOS supports pg83 in Events
+        pv = stor.PV.bld(self.adpt, 'name', 'udid')
+        self.assertRaises(ex.UnableToBuildPG83EncodingMissingParent,
+                          lambda: pv.pg83)
 
     def test_bogus_pg83_in_pv(self):
         """Bogus pg83 data in the <PhysicalVolume/> doesn't trigger the Job."""

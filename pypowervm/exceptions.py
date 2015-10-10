@@ -199,3 +199,11 @@ class MigrationFailed(AbstractMsgFmtError):
 
 class IBMiLoadSourceNotFound(AbstractMsgFmtError):
     msg_fmt = _("No load source found for VM %(vm_name)s")
+
+
+class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
+    msg_fmt = _("Unable to derive the pg83 encoding for hdisk %(dev_name)s.  "
+                "The parent_entry attribute is not set.  This may be due to "
+                "using a PV obtained through an unsupported property chain.  "
+                "The PV must be accessed via VIOS.phys_vols, VG.phys_vols, or "
+                "VIOS.scsi_mappings[n].backing_storage.")
