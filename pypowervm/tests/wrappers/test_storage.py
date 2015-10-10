@@ -18,6 +18,7 @@ import mock
 import unittest
 
 import pypowervm.const as pc
+import pypowervm.exceptions as pvm_exc
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.virtual_io_server as vios
@@ -367,6 +368,18 @@ class TestVIOS(twrap.TestWrapper):
         """Legitimate pg83 data from the <PhysicalVolume/>."""
         self.assertEqual('600507680282861D88000000000000B5',
                          self.dwrap.phys_vols[1].pg83)
+
+    def test_pg83_fail_from_scsi_mapping(self):
+        """Fail from a vSCSI mapping"""
+        pv = self.dwrap.scsi_mappings[1].backing_storage
+
+        def test_pg83():
+            # Have to wrap as this is a property, so can not call directly from
+            # the 'assertRaises'.
+            pv.pg83
+
+        self.assertRaises(pvm_exc.UnableToBuildPG83EncodingMissingParent,
+                          test_pg83)
 
     # TODO(efried): reinstate when VIOS supports pg83 descriptor in Events
     # def test_pg83_absent_from_pv(self):
