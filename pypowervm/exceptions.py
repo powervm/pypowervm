@@ -169,6 +169,14 @@ class UnableToFindFCPortMap(AbstractMsgFmtError):
                 "for the physical Fibre Channel ports.")
 
 
+class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
+    msg_fmt = _("Unable to derive the pg83 encoding for hdisk %(dev_name)s.  "
+                "The parent attribute is not set.  This may be due to "
+                "deriving pg83 encoding from the PV within the VSCSIMapping.  "
+                "This is not currently supported.  The PV's must be directly "
+                "queried via the VIOS or VG objects.")
+
+
 class ConsoleNotLocal(AbstractMsgFmtError):
     msg_fmt = _("Unable to start the console to the Virtual Machine.  The "
                 "pypowervm API is running in a non-local mode.  The console "

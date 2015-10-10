@@ -23,6 +23,7 @@ import six
 
 from oslo_log import log as logging
 
+from pypowervm import exceptions as pvm_exc
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -453,9 +454,36 @@ class PV(ewrap.ElementWrapper):
 
     @property
     def pg83(self):
-        encoded = self._get_val_str(_PV_PG83)
+        """Returns the pg83 from the hdisk.
+
+        Note: Will raise an error if called from a VSCSIMapping.
+        """
+        # Get the VIOS UUID from the parent of this PV.
+        # The parent is either a VG or a VIOS.  If a VG, it is a child
+        # of the owning VIOS, so pull out the ROOT UUID of its href.
+        # If a VIOS, we can't count on the href being a root URI, so
+        # pull the target UUID regardless.
+        #
+        # Also note, if this was from a VSCSIMapping, there is no parent.  So
+        # raise an error in that case.
+        if not hasattr(self, 'parent'):
+            # Raise the exception.  But note, that once the VIOS supports pg83
+            # natively, it will may be supported natively.
+            raise pvm_exc.UnableToBuildPG83EncodingMissingParent(
+                dev_name=self.name)
+        use_root_uuid = isinstance(self.parent, VG)
+        vios_uuid = u.get_req_path_uuid(
+            self.parent.href, preserve_case=True, root=use_root_uuid)
+        return self._get_pg83(vios_uuid)
+
+    def _get_pg83(self, vios_uuid):
+        """Gets the pg83 for the hdisk.
+
+        NOTE: Temporary until the VIOS supports pg83 directly.  This method
+        WILL BE REMOVED in a future revision.
+        """
         # TODO(efried): Temporary workaround until VIOS supports pg83 in Events
-        # >>>CUT HERE>>>
+        encoded = self._get_val_str(_PV_PG83)
         if not encoded:
             # The PhysicalVolume XML doesn't contain the DescriptorPage83
             # property.  (This could be because the disk really doesn't have
@@ -466,22 +494,12 @@ class PV(ewrap.ElementWrapper):
             # LUARecovery Job to perform the fresh inventory query to retrieve
             # this value.  Since this is expensive, we cache the value.
             if not hasattr(self, '_pg83_encoded'):
-                # Get the VIOS UUID from the parent of this PV.
-                # The parent is either a VG or a VIOS.  If a VG, it is a child
-                # of the owning VIOS, so pull out the ROOT UUID of its href.
-                # If a VIOS, we can't count on the href being a root URI, so
-                # pull the target UUID regardless.
-                use_root_uuid = isinstance(self.parent, VG)
-                vio_uuid = u.get_req_path_uuid(
-                    self.parent.href, preserve_case=True, root=use_root_uuid)
-
                 # Local import to prevent circular dependency
                 from pypowervm.tasks import hdisk
                 # Cache the encoded value for performance
                 self._pg83_encoded = hdisk.get_pg83_via_job(
-                    self.adapter, vio_uuid, self.udid)
+                    self.adapter, vios_uuid, self.udid)
             encoded = self._pg83_encoded
-        # <<<CUT HERE<<<
         try:
             return base64.b64decode(encoded).decode(
                 'utf-8') if encoded else None
