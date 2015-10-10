@@ -23,6 +23,7 @@ import six
 
 from oslo_log import log as logging
 
+import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -212,10 +213,10 @@ class VG(ewrap.EntryWrapper):
     @property
     def phys_vols(self):
         """Returns a list of the Physical Volumes that back this repo."""
-        # TODO(efried): parent=self not needed once VIOS supports pg83
+        # TODO(efried): parent_entry=self not needed once VIOS supports pg83
         # descriptor in Events
         es = ewrap.WrapperElemList(self._find_or_seed(_VG_PHS_VOLS), PV,
-                                   parent=self)
+                                   parent_entry=self)
         return es
 
     @phys_vols.setter
@@ -372,25 +373,6 @@ class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
 
     @classmethod
-    def wrap(cls, element, **kwargs):
-        """Override to detect the parent, which may be a VIOS or VG.
-
-        :param element: Element to wrap.
-        :param kwargs: Optional keyword arguments.  This override looks for
-                       'parent', which should be set to the EntryWrapper
-                       instance wherein this PV can be found.  This is used by
-                       temporary pg83 getter code to discover the VIOS owning
-                       this PV.  Any other kwargs are passed to the superclass
-                       wrap implementation.
-        :return:
-        """
-        # TODO(efried): Remove this method once VIOS supports pg83 in Events
-        parent = kwargs.pop('parent', None)
-        wrapper = super(PV, cls).wrap(element, **kwargs)
-        wrapper.parent = parent
-        return wrapper
-
-    @classmethod
     def bld(cls, adapter, name, udid=None):
         """Creates the a fresh PV wrapper.
 
@@ -466,14 +448,19 @@ class PV(ewrap.ElementWrapper):
             # LUARecovery Job to perform the fresh inventory query to retrieve
             # this value.  Since this is expensive, we cache the value.
             if not hasattr(self, '_pg83_encoded'):
-                # Get the VIOS UUID from the parent of this PV.
-                # The parent is either a VG or a VIOS.  If a VG, it is a child
-                # of the owning VIOS, so pull out the ROOT UUID of its href.
-                # If a VIOS, we can't count on the href being a root URI, so
-                # pull the target UUID regardless.
-                use_root_uuid = isinstance(self.parent, VG)
+                # Get the VIOS UUID from the parent_entry of this PV.  Raise if
+                # it doesn't exist.
+                if not hasattr(self, 'parent_entry') or not self.parent_entry:
+                    raise ex.UnableToBuildPG83EncodingMissingParent(
+                        dev_name=self.name)
+                # The parent_entry is either a VG or a VIOS.  If a VG, it is a
+                # child of the owning VIOS, so pull out the ROOT UUID of its
+                # href. If a VIOS, we can't count on the href being a root URI,
+                # so pull the target UUID regardless.
+                use_root_uuid = isinstance(self.parent_entry, VG)
                 vio_uuid = u.get_req_path_uuid(
-                    self.parent.href, preserve_case=True, root=use_root_uuid)
+                    self.parent_entry.href, preserve_case=True,
+                    root=use_root_uuid)
 
                 # Local import to prevent circular dependency
                 from pypowervm.tasks import hdisk

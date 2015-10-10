@@ -240,9 +240,10 @@ class VIOS(bp.BasePartition):
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
         def_attrib = self.xags.SCSI_MAPPING.attrs
+        # TODO(efried): remove parent_entry once VIOS has pg83 in Events
         es = ewrap.WrapperElemList(
             self._find_or_seed(_VIO_VSCSI_MAPPINGS, attrib=def_attrib),
-            VSCSIMapping)
+            VSCSIMapping, parent_entry=self)
         return es
 
     @scsi_mappings.setter
@@ -291,9 +292,10 @@ class VIOS(bp.BasePartition):
 
         This list is READ-ONLY.
         """
+        # TODO(efried): remove parent_entry once VIOS has pg83 in Events
         es = ewrap.WrapperElemList(
             self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
-            stor.PV, parent=self)
+            stor.PV, parent_entry=self)
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
@@ -407,9 +409,12 @@ class VSCSIMapping(VStorageMapping):
         stor_elems = elem.getchildren()
         if len(stor_elems) != 1:
             return None
+        # TODO(efried): parent_entry not needed once VIOS has pg83 in Events
+        parent_entry = getattr(self, 'parent_entry', None)
         # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
         # Allow ElementWrapper to detect (from the registry) and wrap correctly
-        return ewrap.ElementWrapper.wrap(stor_elems[0])
+        return ewrap.ElementWrapper.wrap(stor_elems[0],
+                                         parent_entry=parent_entry)
 
     def _backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.

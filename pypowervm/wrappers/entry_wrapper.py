@@ -903,6 +903,7 @@ class ElementWrapper(Wrapper):
         subclass is used; otherwise a generic ElementWrapper is used.
 
         :param element: An existing adapter.Element to wrap.
+        :param **kwargs: Arbitrary attributes to set on the new ElementWrapper.
         :returns: An ElementWrapper (subclass) instance containing the element.
         """
         wcls = (cls._class_for_element(element)
@@ -910,6 +911,8 @@ class ElementWrapper(Wrapper):
                 else cls)
         wrap = wcls()
         wrap.element = element
+        for key, val in kwargs.items():
+            setattr(wrap, key, val)
         return wrap
 
     @property
