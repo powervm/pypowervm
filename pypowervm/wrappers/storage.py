@@ -115,6 +115,13 @@ _LU_NAME = 'UnitName'
 _LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
                 _LU_IN_USE, _LU_NAME)
 
+# VirtualFibreChannelNPortLoginStatus Constants
+_WWPN = 'WWPN'
+_WWPN_STATUS = 'WWPNStatus'
+_LOGGED_IN_BY = 'LoggedInBy'
+_STATUS_REASON = 'StatusReason'
+_VFC_NPORT_EL_ORDER = (_WWPN, _WWPN_STATUS, _LOGGED_IN_BY, _STATUS_REASON)
+
 
 class LUType(object):
     DISK = "VirtualIO_Disk"
@@ -154,6 +161,24 @@ CLIENT_ADPT = 'ClientAdapter'
 SERVER_ADPT = 'ServerAdapter'
 
 VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
+VFC_NPORT_LOGIN_STAT = 'VirtualFibreChannelNPortLoginStatus'
+
+
+class WWPNStatus(object):
+    """WWPN Status"""
+    UNKNOWN = "Unknown"
+    LOGGED_IN = "LoggedIn"
+    LOGGED_OUT = "LoggedOut"
+
+
+@ewrap.EntryWrapper.pvm_type('VirtualFibreChannelNPortLoginStatus',
+                             child_order=_VFC_NPORT_EL_ORDER)
+class VirtualFibreChannelNPortLoginStatus(ewrap.EntryWrapper):
+    """"Supported VFC NPort Login Statuses"""
+
+    @property
+    def get_wwpn_status(self):
+        return self._get_val_str(_WWPN_STATUS)
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -927,7 +952,11 @@ class VFCClientAdapter(_VStorageAdapterEntry, _VClientAdapterMethods,
 
     Use this to wrap LogicalPartition/{uuid}/VirtualFibreChannelClientAdapter.
     """
-    pass
+    @property
+    def vfc_nport_login_statuses(self):
+        """Returns a list of VirtualFibreChannelNPortLogin wrappers."""
+        seed = self._find_or_seed(VFC_NPORT_LOGIN_STAT)
+        return ewrap.WrapperElemList(seed, VFCClientAdapter)
 
 
 # pvm_type decorator by superclass (it is not unique)
