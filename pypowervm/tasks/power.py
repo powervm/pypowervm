@@ -19,13 +19,16 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-import pypowervm.const as c
-import pypowervm.exceptions as pexc
+from pypowervm import const as c
+from pypowervm import exceptions as pexc
 from pypowervm.i18n import _
-import pypowervm.log as lgc
-import pypowervm.wrappers.base_partition as bp
+from pypowervm import log as lgc
+from pypowervm import util as u
+from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import job
-import pypowervm.wrappers.managed_system as ms
+from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import managed_system as ms
+from pypowervm.wrappers import storage
 
 import six
 
@@ -62,6 +65,9 @@ def power_on(part, host_uuid, add_parms=None):
                       resides on.
     :param add_parms: dict of parameters to pass directly to the job template
     """
+    # Make sure initially that the vFC ports are powered off
+    power_off_vfcs(part, fail_if_invalid=False)
+
     return _power_on_off(part, _SUFFIX_PARM_POWER_ON, host_uuid,
                          add_parms=add_parms)
 
@@ -200,3 +206,121 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                             ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %
                           {'lpar_name': part.name, 'lpar_uuid': uuid,
                            'exc': six.text_type(e)})
+
+
+def power_off_vfcs(part, fail_if_invalid=False):
+    """Ensures vFC ports are powered off.
+
+    The vFC ports attached to a client LPAR may be logged in to the VIOS ahead
+    of time.  However, this can cause issues for the Power On operation.  This
+    method will ensure that if the client has vFC adapters, that they're logged
+    out prior to a power on.
+
+    :param part: The LPAR wrapper.
+    :param fail_if_invalid: (Optional, Default: False) If something is wrong
+                            and this is set to True, will raise the
+                            failure_error.  Examples: LPAR is powered on.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    failure_error = pexc.VFCPowerOffFailed if fail_if_invalid else None
+    return _power_vfcs(part, storage.WWPNStatus.LOGGED_OUT,
+                       failure_error=failure_error)
+
+
+def power_on_vfcs(part, wwpns, fail_if_invalid=False):
+    """Powers On the vFC ports for a given LPAR.
+
+    The vFC ports attached to a client LPAR may be logged in to the VIOS
+    without needing to power on the LPAR itself.  This function will perform
+    the power on (or logging in to the fabric).
+
+    :param part: The LPAR wrapper.
+    :param wwpns: The list/set of WWPN on the vFC adapters to log in.  Only one
+                  WWPN per vFC adapter may be specified, but multiple can
+                  be passed in for scenarios where the client LPAR has multiple
+                  vFC adapters.
+    :param fail_if_invalid: (Optional, Default: False) If something is wrong
+                            and this is set to True, will raise the
+                            failure_error.  Examples: LPAR is powered on.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    failure_error = pexc.VFCPowerOnFailed if fail_if_invalid else None
+    return _power_vfcs(part, storage.WWPNStatus.LOGGED_IN, wwpns=wwpns,
+                       failure_error=failure_error)
+
+
+def _power_vfcs(part, port_state, wwpns=None, failure_error=None):
+    """Runs a login/out action against a client vfc ports.
+
+    This artificially 'powers on' (or off) a client LPARs vFC port.  This
+    enables clients to get the WWPNs on the fabric without actually powering
+    on the system.
+
+    When the vFC's are powered on (but the instance is powered off), a standard
+    PHYP power on action may not complete properly.  The power_on wrapper will
+    ensure that the ports are logged out however, but general functions are
+    also exposed to clients as well.
+
+    :param part: The LPAR wrapper.
+    :param port_state: The state to set the port to.  Used by the power_on_vfcs
+                       and power_off_vfcs method.
+    :param wwpns: (Optional, Default: None) If not set, will perform the action
+                  against all of the vFC WWPNs on the client adapter.  If set
+                  will only perform the action against the adapters with the
+                  specified WWPNs.
+    :param failure_error: (Optional, Default: None) The error to raise if
+                          something is incorrect.  If an error is not passed in
+                          and an issue occurs, then False will be returned.
+
+                          Exception type must be either VFCPowerOnFailed or
+                          VFCPowerOffFailed.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    wwpns = [u.sanitize_wwpn_for_api(x) for x in wwpns] if wwpns else None
+
+    # If it is not a client LPAR, then exit.
+    if not isinstance(part, lpar.LPAR):
+        if failure_error:
+            raise failure_error(
+                lpar_nm=part.name,
+                reason=_('Part is not correct type.  Must be Client LPAR'))
+        else:
+            return False
+
+    if part.state != bp.LPARState.NOT_ACTIVATED:
+        # Unless the client LPAR is powered off...we can't do this.
+        if failure_error:
+            raise failure_error(
+                lpar_nm=part.name,
+                reason=(_('LPAR is not in a correct state.  State is %s.') %
+                        part.state))
+        else:
+            return False
+
+    # Query the vFC feed.
+    adpt = part.adapter
+    vfc_resp = adpt.read(lpar.LPAR.schema_type, root_id=part.uuid,
+                         child_type=storage.VFCClientAdapter.schema_type)
+    client_adpts = storage.VFCClientAdapter.wrap(vfc_resp)
+
+    # Note that if there are none, this is quick and no-ops
+    for client_adpt in client_adpts:
+        n_ports = client_adpt.nport_logins
+        for n_port in n_ports:
+            # If there was a specific wwpn to search for and we don't match,
+            # then skip.
+            if wwpns and u.sanitize_wwpn_for_api(n_port.wwpn) not in wwpns:
+                continue
+
+            # Update the port state.
+            n_port.wwpn_status = port_state
+
+        # At this juncture, update the vFC client adapter.
+        client_adpt.update()
+    return True
