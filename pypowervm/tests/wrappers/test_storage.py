@@ -359,6 +359,19 @@ class TestVFCClientAdapter(twrap.TestWrapper):
         self.assertEqual(['C05076087CBA0169', 'C05076087CBA0168'],
                          self.dwrap.wwpns)
 
+    def test_nport_logins(self):
+        """Check the NPort Login Status"""
+        # Check the number of VFCnPortLogin entries one for each wwpn
+        self.assertEqual(2, len(self.dwrap.nport_logins))
+        # Check the wwpn status
+        self.assertEqual('Unknown', self.dwrap.nport_logins[0].wwpn_status)
+        # Check the wwpn
+        self.assertEqual('c05076087cba0169', self.dwrap.nport_logins[0].wwpn)
+        # Set the wwpn status to LoggedIn
+        self.dwrap.nport_logins[0].wwpn_status = stor.WWPNStatus.LOGGED_IN
+        self.assertEqual(stor.WWPNStatus.LOGGED_IN,
+                         self.dwrap.nport_logins[0].wwpn_status)
+
 
 class TestVIOS(twrap.TestWrapper):
     file = 'vio_multi_vscsi_mapping.txt'
