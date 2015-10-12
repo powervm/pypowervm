@@ -19,13 +19,15 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-import pypowervm.const as c
-import pypowervm.exceptions as pexc
+from pypowervm import const as c
+from pypowervm import exceptions as pexc
 from pypowervm.i18n import _
-import pypowervm.log as lgc
-import pypowervm.wrappers.base_partition as bp
+from pypowervm import log as lgc
+from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import job
-import pypowervm.wrappers.managed_system as ms
+from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import managed_system as ms
+from pypowervm.wrappers import storage
 
 import six
 
@@ -200,3 +202,99 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                             ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %
                           {'lpar_name': part.name, 'lpar_uuid': uuid,
                            'exc': six.text_type(e)})
+
+
+def power_off_vfcs(part, fail_if_invalid=False):
+    """Ensures vFC ports are powered off.
+
+    The vFC ports attached to a client LPAR may be logged in to the VIOS ahead
+    of time.  However, this can cause issues for the Power On operation.  This
+    method will ensure that if the client has vFC adapters, that they're logged
+    out prior to a power on.
+
+    :param part: The LPAR wrapper.
+    :param fail_if_invalid: (Optional, Default: False) If something is wrong
+                            and this is set to True, will raise the
+                            failure_error.  Examples: LPAR is powered on.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    return _power_vfcs(part, pexc.VFCPowerOffFailed, asdf,
+                       fail_if_invalid=fail_if_invalid)
+
+
+def power_on_vfcs(part, fail_if_invalid=False):
+    """Powers On the vFC ports for a given LPAR.
+
+    The vFC ports attached to a client LPAR may be logged in to the VIOS
+    without needing to power on the LPAR itself.  This function will perform
+    the power on (or logging in to the fabric).
+
+    :param part: The LPAR wrapper.
+    :param fail_if_invalid: (Optional, Default: False) If something is wrong
+                            and this is set to True, will raise the
+                            failure_error.  Examples: LPAR is powered on.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    return _power_vfcs(part, pexc.VFCPowerOnFailed, asdf,
+                       fail_if_invalid=fail_if_invalid)
+
+
+def _power_vfcs(part, failure_error, port_state, fail_if_invalid=False):
+    """Runs a login/out action against a client vfc ports.
+
+    This artificially 'powers on' (or off) a client LPARs vFC port.  This
+    enables clients to get the WWPNs on the fabric without actually powering
+    on the system.
+
+    When the vFC's are powered on (but the instance is powered off), a standard
+    PHYP power on action may not complete properly.  The power_on wrapper will
+    ensure that the ports are logged out however, but general functions are
+    also exposed to clients as well.
+
+    :param part: The LPAR wrapper.
+    :param failure_error: The error to raise if something is incorrect.  Only
+                          used if fail_if_invalid is set to True.
+    :param port_state: The state to set the port to.  Used by the power_on_vfcs
+                       and power_off_vfcs method.
+    :param fail_if_invalid: (Optional, Default: False) If something is wrong
+                            and this is set to True, will raise the
+                            failure_error.  Examples: LPAR is powered on.
+    :return: True if the action completed successfully.  Returns False if the
+             fail_if_invalid is set to False, but something was wrong with the
+             system and therefore could not perform the action.
+    """
+    # If it is not a client LPAR, then exit.
+    if not isinstance(part, lpar.LPAR):
+        if fail_if_invalid:
+            raise failure_error(
+                lpar_nm=part.name,
+                reason=_('Part is not correct type.  Must be Client LPAR'))
+        else:
+            return False
+
+    if part.state != bp.LPARState.NOT_ACTIVATED:
+        # Unless the client LPAR is powered off...we can't do this.
+        if fail_if_invalid:
+            raise failure_error(
+                lpar_nm=part.name,
+                reason=(_('LPAR is not in a correct state.  State is %s.') %
+                        part.state))
+        else:
+            return False
+
+    # Query the vFC feed.
+    adpt = part.adapter
+    vfc_resp = adpt.read(lpar.LPAR.schema_type, root_id=part.uuid,
+                         child_type=storage.VFCClientAdapter.schema_type)
+    client_adpts = storage.VFCClientAdapter.wrap(vfc_resp)
+
+    # Note that if there are none, this is quick and no-ops
+    for client_adpt in client_adpts:
+        # TODO(thorst) what what?
+        if client_adpt.state != port_state:
+            client_adpt.state = port_state
+            client_adpt.update()
