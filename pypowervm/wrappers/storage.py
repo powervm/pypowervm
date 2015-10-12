@@ -115,6 +115,13 @@ _LU_NAME = 'UnitName'
 _LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
                 _LU_IN_USE, _LU_NAME)
 
+# VirtualFibreChannelNPortLoginStatus Constants
+_WWPN = 'WWPN'
+_WWPN_STATUS = 'WWPNStatus'
+_LOGGED_IN_BY = 'LoggedInBy'
+_STATUS_REASON = 'StatusReason'
+_VFC_NPORT_EL_ORDER = (_WWPN, _WWPN_STATUS, _LOGGED_IN_BY, _STATUS_REASON)
+
 
 class LUType(object):
     DISK = "VirtualIO_Disk"
@@ -154,6 +161,49 @@ CLIENT_ADPT = 'ClientAdapter'
 SERVER_ADPT = 'ServerAdapter'
 
 VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
+VFC_NPORT_LOGIN_STAT = 'VirtualFibreChannelNPortLoginStatus'
+
+
+class WWPNStatus(object):
+    """Used by the client VFC adapters to set the state on the adapter.
+
+    When a LPAR is powered off, the VFC adapters can be logged in or out
+    independently. The WWPNStatus is used for the update commands on the
+    VFCnPortLoginStatus to log in or out a port on an inactive LPAR.
+    """
+    UNKNOWN = "Unknown"
+    LOGGED_IN = "LoggedIn"
+    LOGGED_OUT = "LoggedOut"
+
+
+@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelNPortLoginStatus',
+                               child_order=_VDISK_EL_ORDER)
+class VFCnPortLoginStatus(ewrap.ElementWrapper):
+    """"Controls a Virtual Fibre Channel Client adapters login status."""
+
+    @classmethod
+    def bld(cls, adapter, wwpn, wwpn_status):
+        nport = super(VFCnPortLoginStatus, cls)._bld(adapter)
+        nport._wwpn(wwpn)
+        nport.wwpn_status = wwpn_status
+        return nport
+
+    @property
+    def wwpn_status(self):
+        """Note: The API returns Unknown.  Use the set to force a value."""
+        return self._get_val_str(_WWPN_STATUS, WWPNStatus.UNKNOWN)
+
+    @wwpn_status.setter
+    def wwpn_status(self, value):
+        """Note: The API returns Unknown.  Use the set to force a value."""
+        self.set_parm_value(_WWPN_STATUS, value)
+
+    @property
+    def wwpn(self):
+        return self._get_val_str(_WWPN)
+
+    def _wwpn(self, value):
+        self.set_parm_value(_WWPN, value)
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -927,7 +977,22 @@ class VFCClientAdapter(_VStorageAdapterEntry, _VClientAdapterMethods,
 
     Use this to wrap LogicalPartition/{uuid}/VirtualFibreChannelClientAdapter.
     """
-    pass
+
+    @property
+    def nport_logins(self):
+        """Returns the list of VFCnPortLoginStatus"""
+        seed = self._find_or_seed(VFC_NPORT_LOGIN_STAT)
+        elem_list = ewrap.WrapperElemList(seed,
+                                          child_class=VFCnPortLoginStatus)
+
+        # If the element list is empty, then it needs to be seeded.  There
+        # should be two elements, one for each WWPN.  Seed it in.
+        if len(elem_list) == 0:
+            for wwpn in self.wwpns:
+                elem_list.append(VFCnPortLoginStatus.bld(self.adapter, wwpn,
+                                                         WWPNStatus.UNKNOWN))
+
+        return elem_list
 
 
 # pvm_type decorator by superclass (it is not unique)
