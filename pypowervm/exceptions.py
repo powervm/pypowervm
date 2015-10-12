@@ -143,6 +143,16 @@ class VMPowerOnFailure(AbstractMsgFmtError):
     msg_fmt = _("Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s")
 
 
+class VFCPowerOffFailed(AbstractMsgFmtError):
+    msg_fmt = _("Failed to power off Virtual Fibre Channel adapters on "
+                "Virtual Machine %(lpar_nm)s: %(reason)s")
+
+
+class VFCPowerOnFailed(AbstractMsgFmtError):
+    msg_fmt = _("Failed to power on Virtual Fibre Channel adapters on Virtual "
+                "Machine %(lpar_nm)s: %(reason)s")
+
+
 class PvidOfNetworkBridgeError(AbstractMsgFmtError):
     msg_fmt = _("Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN "
                 "Identifier on a different Network Bridge.")
