@@ -70,6 +70,30 @@ BODY{
         </PhysicalPort>
     </ServerAdapter>
     <WWPNs kb="CUR" kxe="false">c05076087cba0169 c05076087cba0168</WWPNs>
+    <NportLoggedInStatus kb="UOD" kxe="false" schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualFibreChannelNPortLoginStatus schemaVersion="V1_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <WWPN kb="ROR" kxe="false">c05076087cba0169</WWPN>
+                        <WWPNStatus kb="UOD" kxe="false">Unknown</WWPNStatus>
+                        <LoggedInBy kb="ROR" kxe="false">Unknown</LoggedInBy>
+                        <StatusReason kb="ROR" kxe="false">DEFAULT_ENGLISH_MESSAGE=null, MESSAGE_ID=null, MESSAGE_PARMS=null, NLS_ENCODED_MSG_STRING=</StatusReason>
+                    </VirtualFibreChannelNPortLoginStatus>
+                    <VirtualFibreChannelNPortLoginStatus schemaVersion="V1_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <WWPN kb="ROR" kxe="false">c05076087cba0169</WWPN>
+                        <WWPNStatus kb="UOD" kxe="false">Unknown</WWPNStatus>
+                        <LoggedInBy kb="ROR" kxe="false">Unknown</LoggedInBy>
+                        <StatusReason kb="ROR" kxe="false">DEFAULT_ENGLISH_MESSAGE=null, MESSAGE_ID=null, MESSAGE_PARMS=null, NLS_ENCODED_MSG_STRING=</StatusReason>
+                    </VirtualFibreChannelNPortLoginStatus>
+    </NportLoggedInStatus>
+
 </VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter>
         </content>
     </entry>
@@ -124,6 +148,29 @@ BODY{
             <TotalPorts kb="ROR" kxe="true">64</TotalPorts>
         </PhysicalPort>
     </ServerAdapter>
+    <NportLoggedInStatus kb="UOD" kxe="false" schemaVersion="V1_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <VirtualFibreChannelNPortLoginStatus schemaVersion="V1_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <WWPN kb="ROR" kxe="false">c05076087cba016d</WWPN>
+                        <WWPNStatus kb="UOD" kxe="false">Unknown</WWPNStatus>
+                        <LoggedInBy kb="ROR" kxe="false">Unknown</LoggedInBy>
+                        <StatusReason kb="ROR" kxe="false">DEFAULT_ENGLISH_MESSAGE=null, MESSAGE_ID=null, MESSAGE_PARMS=null, NLS_ENCODED_MSG_STRING=</StatusReason>
+                    </VirtualFibreChannelNPortLoginStatus>
+                    <VirtualFibreChannelNPortLoginStatus schemaVersion="V1_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <WWPN kb="ROR" kxe="false">c05076087cba016d</WWPN>
+                        <WWPNStatus kb="UOD" kxe="false">Unknown</WWPNStatus>
+                        <LoggedInBy kb="ROR" kxe="false">Unknown</LoggedInBy>
+                        <StatusReason kb="ROR" kxe="false">DEFAULT_ENGLISH_MESSAGE=null, MESSAGE_ID=null, MESSAGE_PARMS=null, NLS_ENCODED_MSG_STRING=</StatusReason>
+                    </VirtualFibreChannelNPortLoginStatus>
+    </NportLoggedInStatus>
     <WWPNs kb="CUR" kxe="false">c05076087cba016d c05076087cba016c</WWPNs>
 </VirtualFibreChannelClientAdapter:VirtualFibreChannelClientAdapter>
         </content>
