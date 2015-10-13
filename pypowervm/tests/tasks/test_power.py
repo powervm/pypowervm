@@ -90,6 +90,28 @@ class TestPower(testtools.TestCase):
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
         self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111', add_parms={
+            power.IPLSource.KEY: power.IPLSource.A})
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        self.assertEqual("call('%(key)s', '%(call)s')"
+                         % {'key': power.IPLSource.KEY,
+                            'call': power.IPLSource.A},
+                         str(mock_job_p.call_args))
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111', add_parms={
+            power.KeyLock.KEY: power.KeyLock.MANUAL})
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        self.assertEqual("call('%(key)s', '%(call)s')"
+                         % {'key': power.KeyLock.KEY,
+                            'call': power.KeyLock.MANUAL},
+                         str(mock_job_p.call_args))
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -205,6 +227,8 @@ class TestPower(testtools.TestCase):
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
         self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
