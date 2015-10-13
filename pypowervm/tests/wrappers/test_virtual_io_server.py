@@ -583,5 +583,30 @@ class TestPhysFCPort(twrap.TestWrapper):
         self.assertEqual(64, self.io_port2.npiv_available_ports)
         self.assertEqual(64, self.io_port2.npiv_total_ports)
 
+
+class TestIOAdapterChoices(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def setUp(self):
+        super(TestIOAdapterChoices, self).setUp()
+        self.io_adpts = self.dwrap.io_adpts_for_link_agg
+
+    def test_adapter_choices(self):
+        self.assertEquals(len(self.io_adpts), 3)
+        self.assertEquals(self.io_adpts[0].adapter_id, 1)
+        self.assertEquals(
+            self.io_adpts[0].description,
+            '4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)')
+        self.assertEquals(self.io_adpts[0].dev_name, 'ent3')
+        self.assertEquals(self.io_adpts[0].dev_type, 'physicalEthernetAdpter')
+        self.assertEquals(self.io_adpts[0].drc_name,
+                          'U78AB.001.WZSJBM3-P1-C7-T4')
+        self.assertEquals(self.io_adpts[0].phys_loc,
+                          'U78AB.001.WZSJBM3-P1-C7-T4')
+        self.assertEquals(self.io_adpts[0].udid,
+                          '13U78AB.001.WZSJBM3-P1-C7-T4')
+
 if __name__ == "__main__":
     unittest.main()
