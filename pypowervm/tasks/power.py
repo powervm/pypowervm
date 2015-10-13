@@ -53,6 +53,32 @@ class BootMode(object):
     ALL_VALUES = (NORM, SMS, DD, DS, OF)
 
 
+class IPLSource(object):
+    """Power On options, valid values for 'iIPLsource' param on power_on.
+
+    Example usage:
+        power_on(..., add_parms={IPLSource.KEY: IPLSource.A, ...})
+    """
+    KEY = 'iIPLsource'
+    A = 'a'
+    B = 'b'
+    C = 'c'
+    D = 'd'
+    ALL_VALUES = (A, B, C, D)
+
+
+class KeyLock(object):
+    """Power On options, valid values for 'keylock' param on power_on.
+
+    Example usage:
+        power_on(..., add_parms={KeyLock.KEY: KeyLock.manual, ...})
+    """
+    KEY = 'keylock'
+    MANUAL = 'manual'
+    NORM = 'norm'
+    ALL_VALUES = (MANUAL, NORM)
+
+
 @lgc.logcall
 def power_on(part, host_uuid, add_parms=None):
     """Will Power On a Logical Partition or Virtual I/O Server.
