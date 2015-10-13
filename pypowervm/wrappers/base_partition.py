@@ -209,8 +209,10 @@ IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
 _IO_ADPT_DESC = 'Description'
 _IO_ADPT_DEV_NAME = 'DeviceName'
+_IO_ADPT_DEV_TYPE = 'DeviceType'
 _IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
 _IO_ADPT_PHYS_LOC = 'PhysicalLocation'
+_IO_ADPT_PHYS_UDID = 'UniqueDeviceID'
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
@@ -1220,12 +1222,20 @@ class IOAdapter(ewrap.ElementWrapper):
         return self._get_val_str(_IO_ADPT_DEV_NAME)
 
     @property
-    def dyn_reconfig_conn_name(self):
+    def dev_type(self):
+        return self._get_val_str(_IO_ADPT_DEV_TYPE)
+
+    @property
+    def drc_name(self):
         return self._get_val_str(_IO_ADPT_DYN_NAME)
 
     @property
     def phys_loc_code(self):
         return self._get_val_str(_IO_ADPT_PHYS_LOC)
+
+    @property
+    def udid(self):
+        return self._get_val_str(_IO_ADPT_PHYS_UDID)
 
 
 @ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelAdapter',

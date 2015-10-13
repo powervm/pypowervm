@@ -529,7 +529,7 @@ class TestGenericIOAdapter(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
                          self.io_adpt.dev_name)
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
-                         self.io_adpt.dyn_reconfig_conn_name)
+                         self.io_adpt.drc_name)
         self.assertEqual('T9', self.io_adpt.phys_loc_code)
         self.assertFalse(isinstance(self.io_adpt, bp.PhysFCAdapter))
 
@@ -550,7 +550,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
         self.assertEqual(desc, self.io_adpt.description)
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2', self.io_adpt.dev_name)
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
-                         self.io_adpt.dyn_reconfig_conn_name)
+                         self.io_adpt.drc_name)
         self.assertEqual('C2', self.io_adpt.phys_loc_code)
         self.assertTrue(isinstance(self.io_adpt, bp.PhysFCAdapter))
 
@@ -582,6 +582,31 @@ class TestPhysFCPort(twrap.TestWrapper):
         self.assertEqual('10000090FA1B6302', self.io_port2.wwpn)
         self.assertEqual(64, self.io_port2.npiv_available_ports)
         self.assertEqual(64, self.io_port2.npiv_total_ports)
+
+
+class TestIOAdapterChoices(twrap.TestWrapper):
+
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def setUp(self):
+        super(TestIOAdapterChoices, self).setUp()
+        self.io_adpts = self.dwrap.io_adpts_for_link_agg
+
+    def test_adapter_choices(self):
+        self.assertEqual(len(self.io_adpts), 3)
+        self.assertEqual(self.io_adpts[0].id, '1')
+        self.assertEqual(
+            self.io_adpts[0].description,
+            '4-Port Gigabit Ethernet PCI-Express Adapter (e414571614102004)')
+        self.assertEqual(self.io_adpts[0].dev_name, 'ent3')
+        self.assertEqual(self.io_adpts[0].dev_type, 'physicalEthernetAdpter')
+        self.assertEqual(self.io_adpts[0].drc_name,
+                         'U78AB.001.WZSJBM3-P1-C7-T4')
+        self.assertEqual(self.io_adpts[0].phys_loc_code,
+                         'U78AB.001.WZSJBM3-P1-C7-T4')
+        self.assertEqual(self.io_adpts[0].udid,
+                         '13U78AB.001.WZSJBM3-P1-C7-T4')
 
 if __name__ == "__main__":
     unittest.main()

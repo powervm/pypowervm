@@ -62,6 +62,17 @@ _VOL_UID = 'VolumeUniqueID'
 _VOL_NAME = 'VolumeName'
 _RESERVE_POLICY = 'ReservePolicy'
 
+_FREE_IO_ADPTS_LINK_AGG = 'FreeIOAdaptersForLinkAggregation'
+_IO_ADPT_CHOICE = 'IOAdapterChoice'
+_IO_ADPT = 'IOAdapter'
+_IO_LINK_AGG_ADPT_ID = 'AdapterID'
+_IO_LINK_AGG_DESC = 'Description'
+_IO_LINK_AGG_DEV_NAME = 'DeviceName'
+_IO_LINK_AGG_DEV_TYPE = 'DeviceType'
+_IO_LINK_AGG_DRC_NAME = 'DynamicReconfigurationConnectorName'
+_IO_LINK_AGG_PHYS_LOC = 'PhysicalLocation'
+_IO_LINK_AGG_UDID = 'UniqueDeviceID'
+
 _VIRT_MEDIA_REPOSITORY_PATH = u.xpath(_VIO_MEDIA_REPOS,
                                       'VirtualMediaRepository')
 _IF_ADDR = u.xpath('IPInterface', 'IPAddress')
@@ -299,6 +310,12 @@ class VIOS(bp.BasePartition):
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
+    @property
+    def io_adpts_for_link_agg(self):
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _FREE_IO_ADPTS_LINK_AGG), LinkAggrIOAdapterChoice)
+        return es
+
 
 @six.add_metaclass(abc.ABCMeta)
 class VStorageMapping(ewrap.ElementWrapper):
@@ -509,3 +526,48 @@ class VFCMapping(VStorageMapping):
         if elem is not None:
             return bp.PhysFCPort.wrap(elem)
         return None
+
+
+@ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
+class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
+    """A free I/O Adapter link aggregation choice.
+
+    Flattens this two step heirarchy to pull the information needed directly
+    from the IOAdapter element.
+    """
+    def __get_prop(self, func):
+        """Thin wrapper to get the IOAdapter and get a property."""
+        elem = self._find('IOAdapter')
+        if elem is None:
+            return None
+
+        io_adpt = bp.IOAdapter.wrap(elem)
+        return getattr(io_adpt, func)
+
+    @property
+    def id(self):
+        return self.__get_prop('id')
+
+    @property
+    def description(self):
+        return self.__get_prop('description')
+
+    @property
+    def dev_name(self):
+        return self.__get_prop('dev_name')
+
+    @property
+    def dev_type(self):
+        return self.__get_prop('dev_type')
+
+    @property
+    def drc_name(self):
+        return self.__get_prop('drc_name')
+
+    @property
+    def phys_loc_code(self):
+        return self.__get_prop('phys_loc_code')
+
+    @property
+    def udid(self):
+        return self.__get_prop('udid')
