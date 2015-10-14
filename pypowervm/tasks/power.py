@@ -18,6 +18,7 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
 
 import pypowervm.const as c
 import pypowervm.exceptions as pexc
@@ -27,8 +28,6 @@ import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
 import pypowervm.wrappers.managed_system as ms
 
-import six
-
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
@@ -36,47 +35,6 @@ CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
 _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
-
-
-class BootMode(object):
-    """Power On options, valid values for 'bootmode' parameter on power_on.
-
-    Example usage:
-        power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
-    """
-    KEY = 'bootmode'
-    NORM = 'norm'
-    SMS = 'sms'
-    DD = 'dd'
-    DS = 'ds'
-    OF = 'of'
-    ALL_VALUES = (NORM, SMS, DD, DS, OF)
-
-
-class IPLSource(object):
-    """Power On options, valid values for 'iIPLsource' param on power_on.
-
-    Example usage:
-        power_on(..., add_parms={IPLSource.KEY: IPLSource.A, ...})
-    """
-    KEY = 'iIPLsource'
-    A = 'a'
-    B = 'b'
-    C = 'c'
-    D = 'd'
-    ALL_VALUES = (A, B, C, D)
-
-
-class KeyLock(object):
-    """Power On options, valid values for 'keylock' param on power_on.
-
-    Example usage:
-        power_on(..., add_parms={KeyLock.KEY: KeyLock.manual, ...})
-    """
-    KEY = 'keylock'
-    MANUAL = 'manual'
-    NORM = 'norm'
-    ALL_VALUES = (MANUAL, NORM)
 
 
 @lgc.logcall

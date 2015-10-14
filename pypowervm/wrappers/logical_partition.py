@@ -58,7 +58,18 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
 
 
 class IPLSrc(object):
-    """Mirror of IPLSource.Enum."""
+    """Mirror of IPLSource.Enum (relevant to IBMi partitions only).
+
+    Valid values for:
+    - LPAR.desig_ipl_src
+    - 'iIPLsource' param in pypowervm.power.power_on.
+
+    Example usage:
+    - ilpar.desig_ipl_src = IPLSrc.C
+      ilpar.update()
+    - power_on(..., add_parms={IPLSrc.KEY: IPLSrc.A, ...})
+    """
+    KEY = 'iIPLsource'
     A = 'a'
     B = 'b'
     C = 'c'

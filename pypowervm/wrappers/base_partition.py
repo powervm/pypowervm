@@ -303,8 +303,42 @@ class RMCState(object):
     BUSY = 'busy'
 
 
+class BootMode(object):
+    """Mirror of PartitionBootMode.Enum.
+
+    Valid values for:
+    - LPAR.bootmode
+    - VIOS.bootmode
+    - 'bootmode' parameter in pypowervm.power.power_on.
+
+    Example usage:
+    - lwrap.bootmode = BootMode.NORM
+      lwrap.update()
+    - power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
+    """
+    KEY = 'bootmode'
+    NORM = 'norm'
+    SMS = 'sms'
+    DD = 'dd'
+    DS = 'ds'
+    OF = 'of'
+    ALL_VALUES = (NORM, SMS, DD, DS, OF)
+
+
 class KeylockPos(object):
-    """Mirror of KeylockPosition.Enum."""
+    """Mirror of KeylockPosition.Enum.
+
+    Valid values for:
+    - LPAR.keylock_pos
+    - VIOS.keylock_pos
+    - 'keylock' parameter in pypowervm.power.power_on.
+
+    Example usage:
+    - lwrap.keylock_pos = KeylockPos.MANUAL
+      lwrap.update()
+    - power_on(..., add_parms={KeylockPos.KEY: KeylockPos.MANUAL, ...})
+    """
+    KEY = 'keylock'
     MANUAL = 'manual'
     NORMAL = 'normal'
     UNKNOWN = 'unknown'
@@ -471,6 +505,17 @@ class BasePartition(ewrap.EntryWrapper):
         if value not in KeylockPos.ALL_VALUES:
             raise ValueError(_("Invalid KeylockPos '%s'.") % value)
         self.set_parm_value(_BP_KEYLOCK_POS, value)
+
+    @property
+    def bootmode(self):
+        """Boot mode - one of the BootMode enum values."""
+        return self._get_val_str(_BP_BOOT_MODE)
+
+    @bootmode.setter
+    def bootmode(self, val):
+        if val not in BootMode.ALL_VALUES:
+            raise ValueError(_("Invalid BootMode '%s'.") % val)
+        self.set_parm_value(_BP_BOOT_MODE, val)
 
     @property
     def capabilities(self):

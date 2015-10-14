@@ -241,6 +241,17 @@ class TestLogicalPartition(testtools.TestCase):
         except ValueError:
             pass
 
+    def test_bootmode(self):
+        self.call_simple_getter("bootmode", "norm", None)
+        self._shared_wrapper.bootmode = bp.BootMode.SMS
+        self.call_simple_getter("bootmode", "sms", None)
+        # Argh, testtools.TestCase overrides assertRaises - can't use 'with'
+        try:
+            self._shared_wrapper.bootmode = 'frobnicated'
+            self.fail()
+        except ValueError:
+            pass
+
     def test_subwrapper_getters(self):
         wrap = self._shared_wrapper
         self.assertIsInstance(wrap.capabilities, bp.PartitionCapabilities)

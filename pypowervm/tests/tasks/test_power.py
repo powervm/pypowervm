@@ -22,6 +22,7 @@ from pypowervm import exceptions as pexc
 from pypowervm.tasks import power
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.wrappers import base_partition as pvm_bp
+from pypowervm.wrappers import logical_partition as pvm_lpar
 
 
 class TestPower(testtools.TestCase):
@@ -86,26 +87,27 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_lpar, '1111',
-                       add_parms=dict(bootmode=power.BootMode.SMS))
+                       add_parms={pvm_bp.BootMode.KEY: pvm_bp.BootMode.SMS})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
+        mock_job_p.assert_called_with(pvm_bp.BootMode.KEY, pvm_bp.BootMode.SMS)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
         power.power_on(mock_lpar, '1111', add_parms={
-            power.IPLSource.KEY: power.IPLSource.A})
+            pvm_lpar.IPLSrc.KEY: pvm_lpar.IPLSrc.A})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(power.IPLSource.KEY, power.IPLSource.A)
+        mock_job_p.assert_called_with(pvm_lpar.IPLSrc.KEY, pvm_lpar.IPLSrc.A)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
         power.power_on(mock_lpar, '1111', add_parms={
-            power.KeyLock.KEY: power.KeyLock.MANUAL})
+            pvm_bp.KeylockPos.KEY: pvm_bp.KeylockPos.MANUAL})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(power.KeyLock.KEY, power.KeyLock.MANUAL)
+        mock_job_p.assert_called_with(pvm_bp.KeylockPos.KEY,
+                                      pvm_bp.KeylockPos.MANUAL)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -217,12 +219,10 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_vios, '1111',
-                       add_parms=dict(bootmode=power.BootMode.SMS))
+                       add_parms={pvm_bp.BootMode.KEY: pvm_bp.BootMode.SMS})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        self.assertTrue(power.BootMode.SMS in str(mock_job_p.call_args))
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        mock_job_p.assert_called_with(pvm_bp.BootMode.KEY, pvm_bp.BootMode.SMS)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
