@@ -17,6 +17,7 @@
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
 from oslo_log import log as logging
+import random
 
 from pypowervm import exceptions as e
 from pypowervm.i18n import _
@@ -31,6 +32,28 @@ LOG = logging.getLogger(__name__)
 
 _ANY_WWPN = '-1'
 _FUSED_ANY_WWPN = '-1 -1'
+
+
+def build_wwpn_pair(adapter, host_uuid, pair_count=1):
+    """Builds a WWPN pair that can be used for a VirtualFCAdapter.
+
+    TODO(IBM): Future implementation will interrogate the system for globally
+               unique WWPN.  For now, generate based off of random number
+               generation.  Likelihood of overlap is 1 in 281 trillion.
+
+    :param adapter: The adapter to talk over the API.
+    :param host_uuid: The host system for the generation.
+    :param pair_count: (Optional, Default: 1) The number of WWPN pairs to
+                       generate
+    :return: Non-mutable WWPN Pairs (list)
+    """
+    pairs = []
+    for i in range(pair_count):
+        resp = "C0"
+        while len(resp) < 14:
+            resp += random.choice('0123456789ABCDEF')
+        pairs.extend([resp + "00", resp + "01"])
+    return pairs
 
 
 def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
