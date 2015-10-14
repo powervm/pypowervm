@@ -234,12 +234,15 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter("keylock_pos", "normal", None)
         self._shared_wrapper.keylock_pos = "manual"
         self.call_simple_getter("keylock_pos", "manual", None)
-        # Argh, testtools.TestCase overrides assertRaises - can't use 'with'
-        try:
+        with testtools.ExpectedException(ValueError):
             self._shared_wrapper.keylock_pos = 'frobnicated'
-            self.fail()
-        except ValueError:
-            pass
+
+    def test_bootmode(self):
+        self.call_simple_getter("bootmode", "norm", None)
+        self._shared_wrapper.bootmode = bp.BootMode.SMS
+        self.call_simple_getter("bootmode", "sms", None)
+        with testtools.ExpectedException(ValueError):
+            self._shared_wrapper.bootmode = 'frobnicated'
 
     def test_subwrapper_getters(self):
         wrap = self._shared_wrapper
