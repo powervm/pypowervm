@@ -22,9 +22,7 @@ import random
 from pypowervm import exceptions as e
 from pypowervm.i18n import _
 from pypowervm import util as u
-from pypowervm.utils import transaction as tx
 from pypowervm.utils import uuid
-from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 LOG = logging.getLogger(__name__)
@@ -121,8 +119,8 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     This method is functionally similar to the derive_npiv_map.  However, the
     derive_npiv_map method assumes knowledge of the Virtual Fibre Channel
     mappings beforehand.  This method will generate a similar map, but when
-    sent to the add_npiv_port_mappings method, that method will allow the API
-    to generate the WWPNs rather than pre-seeding them.
+    sent to the add_map method, that method will allow the API to generate the
+    globally unique WWPNs rather than pre-seeding them.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
                        extended attribute group (xag) of FC_MAPPING.
@@ -328,118 +326,6 @@ def _find_map_port(potential_ports, mappings):
             high_avail_port = port
 
     return high_avail_port
-
-
-def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """Adds the port mappings to the affected VIOSes.
-
-    This method will verify that the port mappings (as defined by the
-    derive_npiv_map method) are on the necessary VIOSes.  Will perform the
-    update to the actual VIOSes if any changes are needed.
-
-    This method supports WWPNs that are built either through the
-    derive_npiv_map or the derive_base_npiv_map methods.
-
-    :param adapter: The pypowervm adapter.
-    :param host_uuid: The pypowervm UUID of the host.
-    :param lpar_uuid: The UUID of the LPAR that should have the vFC mapping
-                      added to it.
-    :param npiv_port_maps: The list of port mappings, as defined by the
-                           derive_npiv_map method.
-
-    :return: The updated mapping.  This is useful if the npiv_port_maps passed
-             into the method was built using the derive_base_npiv_map.
-             Otherwise the response will be functionally equivalent to what
-             is passed in.
-
-             The return value will contain just the new mappings.  If mappings
-             already existed they will not be part of the response payload.
-    """
-    # Build the feed task
-    vio_getter = pvm_vios.VIOS.getter(
-        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
-        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
-    npiv_ft = tx.FeedTask('add_npiv_port_mappings', vio_getter)
-
-    # Get the original VIOSes.
-    orig_maps = _get_port_map(npiv_ft.feed, lpar_uuid)
-
-    # Run the add actions
-    for npiv_port_map in npiv_port_maps:
-        npiv_ft.add_functor_subtask(add_map, host_uuid, lpar_uuid,
-                                    npiv_port_map, error_if_invalid=False)
-
-    # Execute the port map.
-    npiv_ft.execute()
-
-    # Find the new mappings.  Remove the originals and return.
-    new_maps = _get_port_map(npiv_ft.feed, lpar_uuid)
-    for old_map in orig_maps:
-        # Timing window may occur where an old map is no longer part of the
-        # original maps (between the get and update).
-        if old_map in new_maps:
-            new_maps.remove(old_map)
-    return new_maps
-
-
-def _get_port_map(vioses, lpar_uuid):
-    """Builds a list of the port mappings across a set of VIOSes.
-
-    :param vioses: The VIOS lpar wrappers.
-    :param lpar_uuid: The UUID of the LPAR to gather the mappings for.
-    :return: List of port maps.  Is a list as there may be multiple, identical
-             mappings.  This indicates two paths over the same FC port.  Does
-             NOT include stale mappings that may be associated with the LPAR.
-             A stale mapping is one that either:
-              - Does not have a backing physical port
-              - Does not have a client adapter
-    """
-    port_map = []
-    for vios in vioses:
-        vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
-        for vfc_mapping in vfc_mappings:
-            # Check if this is a 'stale' mapping.  If it is stale, do not
-            # consider it for the response.
-            if not (vfc_mapping.backing_port and vfc_mapping.client_adapter and
-                    vfc_mapping.client_adapter.wwpns):
-                LOG.warn(_("Detected a stale mapping for LPAR with UUID %s.") %
-                         lpar_uuid)
-                continue
-
-            # Found a matching mapping
-            p_wwpn = vfc_mapping.backing_port.wwpn
-            c_wwpns = vfc_mapping.client_adapter.wwpns
-
-            # Convert it to the standard mapping type.
-            mapping = (p_wwpn, _fuse_vfc_ports(c_wwpns)[0])
-            port_map.append(mapping)
-    return port_map
-
-
-def remove_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """Removes the port mappings off of all of the affected VIOSes.
-
-    This method will remove all of the NPIV Port Mappings (as defined by the
-    derive_npiv_map method) off of the affected VIOSes.
-
-    :param adapter: The pypowervm adapter.
-    :param host_uuid: The pypowervm UUID of the host.
-    :param lpar_uuid: The UUID or short ID of the LPAR to remove the maps from.
-    :param npiv_port_maps: The list of port mappings, as defined by the
-                           pypowervm wwpn derive_npiv_map method.
-    """
-    vio_getter = pvm_vios.VIOS.getter(
-        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
-        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
-    npiv_ft = tx.FeedTask('remove_npiv_port_mappings', vio_getter)
-
-    # Add the remove actions to the feed task
-    for npiv_port_map in npiv_port_maps:
-        npiv_ft.add_functor_subtask(remove_maps, lpar_uuid,
-                                    port_map=npiv_port_map)
-
-    # Execute the updates
-    npiv_ft.execute()
 
 
 def _find_ports_on_vio(vio_w, p_port_wwpns):
