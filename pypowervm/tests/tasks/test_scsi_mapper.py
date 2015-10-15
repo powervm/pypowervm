@@ -475,3 +475,68 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(5, len(idx['by-storage-udid'].keys()))
         for sudid in idx['by-storage-udid']:
             self.assertEqual(1, len(idx['by-storage-udid'][sudid]))
+
+    def test_gen_match_func(self):
+        """Tests for gen_match_func."""
+
+        # Class must match
+        mfunc = scsi_mapper.gen_match_func(str)
+        self.assertFalse(mfunc(1))
+        self.assertTrue(mfunc('foo'))
+
+        # Match names
+        elem = mock.Mock()
+        elem.name = 'foo'
+        # 'False' names/prefixes ignored
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=[])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=[])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=[], prefixes=[])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=['bar', 'baz'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=['bar', 'foobar',
+                                                             'baz'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock,
+                                           names=['bar', 'foo', 'baz'])
+        self.assertTrue(mfunc(elem))
+
+        # Prefixes are ignored if names specified
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes='x',
+                                           names=['bar', 'foo', 'baz'])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=['bar', 'baz'],
+                                           prefixes=['f'])
+        self.assertFalse(mfunc(elem))
+
+        # Prefixes
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=['f'])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=['foo'])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=['foo', 'x'])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=['x'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, prefixes=['xfoo', 'foox',
+                                                                'xfoox'])
+        self.assertFalse(mfunc(elem))
+
+        # Alternate key for the name property
+        elem = mock.Mock(alt_name='foo')
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, name_prop='alt_name',
+                                           names=[])
+        self.assertTrue(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, names=['bar', 'baz'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, name_prop='alt_name',
+                                           names=['bar', 'baz'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock,
+                                           names=['bar', 'foo', 'baz'])
+        self.assertFalse(mfunc(elem))
+        mfunc = scsi_mapper.gen_match_func(mock.Mock, name_prop='alt_name',
+                                           names=['bar', 'foo', 'baz'])
+        self.assertTrue(mfunc(elem))

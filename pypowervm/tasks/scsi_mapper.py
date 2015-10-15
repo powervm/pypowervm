@@ -314,10 +314,12 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
             return False
         if names:
             return getattr(existing_elem, name_prop) in names
-        elif prefixes:
+        if prefixes:
             for prefix in prefixes:
                 if getattr(existing_elem, name_prop).startswith(prefix):
                     return True
+            # prefixes specified, but none matched
+            return False
         # Neither names nor prefixes specified - hit everything
         return True
     return match_func
