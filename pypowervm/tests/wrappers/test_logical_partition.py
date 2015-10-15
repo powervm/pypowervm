@@ -232,15 +232,15 @@ class TestLogicalPartition(testtools.TestCase):
 
     def test_keylock_pos(self):
         self.call_simple_getter("keylock_pos", "normal", None)
-        self._shared_wrapper.keylock_pos = "manual"
+        self._shared_wrapper.keylock_pos = bp.KeylockPos.MANUAL
         self.call_simple_getter("keylock_pos", "manual", None)
         with testtools.ExpectedException(ValueError):
             self._shared_wrapper.keylock_pos = 'frobnicated'
 
     def test_bootmode(self):
-        self.call_simple_getter("bootmode", "norm", None)
+        self.call_simple_getter("bootmode", "Normal", None)
         self._shared_wrapper.bootmode = bp.BootMode.SMS
-        self.call_simple_getter("bootmode", "sms", None)
+        self.call_simple_getter("bootmode", "System_Management_Services", None)
         with testtools.ExpectedException(ValueError):
             self._shared_wrapper.bootmode = 'frobnicated'
 

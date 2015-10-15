@@ -37,6 +37,38 @@ _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
 
 
+class BootMode(object):
+    """Valid values for the 'bootmode' parameter in power_on.
+
+    Not to be confused with pypowervm.wrappers.base_partition.BootMode.
+
+    Example usage:
+        power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
+    """
+    KEY = 'bootmode'
+    NORM = 'norm'
+    SMS = 'sms'
+    DD = 'dd'
+    DS = 'ds'
+    OF = 'of'
+    ALL_VALUES = (NORM, SMS, DD, DS, OF)
+
+
+class KeylockPos(object):
+    """Valid values for the 'keylock' parameter in power_on.
+
+    Not to be confused with pypowervm.wrappers.base_partition.KeylockPos.
+
+    Example usage:
+        power_on(..., add_parms={KeylockPos.KEY: KeylockPos.MANUAL, ...})
+    """
+    KEY = 'keylock'
+    MANUAL = 'manual'
+    NORMAL = 'norm'
+    UNKNOWN = 'unknown'
+    ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
+
+
 @lgc.logcall
 def power_on(part, host_uuid, add_parms=None):
     """Will Power On a Logical Partition or Virtual I/O Server.

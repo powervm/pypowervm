@@ -167,7 +167,7 @@ BODY{
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
     <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
-    <BootMode kxe="false" kb="ROR">norm</BootMode>
+    <BootMode kxe="false" kb="ROR">Normal</BootMode>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable kb="COD" kxe="false">true</SimplifiedRemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>

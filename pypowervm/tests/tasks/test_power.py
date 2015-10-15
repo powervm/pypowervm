@@ -87,10 +87,10 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_lpar, '1111',
-                       add_parms={pvm_bp.BootMode.KEY: pvm_bp.BootMode.SMS})
+                       add_parms={power.BootMode.KEY: power.BootMode.SMS})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(pvm_bp.BootMode.KEY, pvm_bp.BootMode.SMS)
+        mock_job_p.assert_called_with(power.BootMode.KEY, power.BootMode.SMS)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
@@ -103,11 +103,11 @@ class TestPower(testtools.TestCase):
         mock_job_p.reset_mock()
 
         power.power_on(mock_lpar, '1111', add_parms={
-            pvm_bp.KeylockPos.KEY: pvm_bp.KeylockPos.MANUAL})
+            power.KeylockPos.KEY: power.KeylockPos.MANUAL})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(pvm_bp.KeylockPos.KEY,
-                                      pvm_bp.KeylockPos.MANUAL)
+        mock_job_p.assert_called_with(power.KeylockPos.KEY,
+                                      power.KeylockPos.MANUAL)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -219,10 +219,10 @@ class TestPower(testtools.TestCase):
 
         # Try optional parameters
         power.power_on(mock_vios, '1111',
-                       add_parms={pvm_bp.BootMode.KEY: pvm_bp.BootMode.SMS})
+                       add_parms={power.BootMode.KEY: power.BootMode.SMS})
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(pvm_bp.BootMode.KEY, pvm_bp.BootMode.SMS)
+        mock_job_p.assert_called_with(power.BootMode.KEY, power.BootMode.SMS)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
