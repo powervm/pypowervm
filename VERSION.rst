@@ -1,11 +1,14 @@
 =============================
 pypowervm - Version Reference
 =============================
+Version 1.0.0.0
+---------------
+Initial stable release.
 
 Version 0.0.2
 -------------
- - Enhanced metrics gathering
- - Move Python 3 support to version 3.4
+- Enhanced metrics gathering.
+- Move Python 3 support to version 3.4.
 
 Version 0.0.1
 -------------
