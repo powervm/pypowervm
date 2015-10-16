@@ -18,10 +18,11 @@ import unittest
 
 import mock
 
+from pypowervm import const as c
 from pypowervm import exceptions as e
 from pypowervm.tasks import vfc_mapper
-import pypowervm.tests.tasks.util as tju
-import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+from pypowervm.tests.tasks import util as tju
+from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FILE = 'fake_vios.txt'
@@ -32,18 +33,27 @@ FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
 
 class TestVFCMapper(unittest.TestCase):
 
-    def test_build_wwpn_pair(self):
-        # By its nature, this is a random generation algorithm.  Run it
-        # several times...just to increase probability of issues.
-        i = 0
-        while i < 50:
-            wwpn_pair = vfc_mapper.build_wwpn_pair(None, None, i)
-            self.assertIsNotNone(wwpn_pair)
-            self.assertEqual(2 * i, len(wwpn_pair))
-            for elem in wwpn_pair:
-                self.assertEqual(16, len(elem))
-                int(elem, 16)  # Would throw ValueError if not hex.
-            i += 1
+    @mock.patch('pypowervm.wrappers.job.Job')
+    def test_build_wwpn_pair(self, mock_job):
+        mock_adpt = mock.MagicMock()
+        mock_adpt.read.return_value = mock.Mock()
+
+        # Mock out the job response
+        job_w = mock.MagicMock()
+        mock_job.wrap.return_value = job_w
+        job_w.get_job_results_as_dict.return_value = {'wwpnList':
+                                                      'a,b,c,d,e,f,g,h'}
+
+        # Invoke and validate
+        resp = vfc_mapper.build_wwpn_pair(mock_adpt, 'host_uuid', pair_count=4)
+        self.assertEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], resp)
+
+        # Make sure that the job was built properly
+        mock_adpt.read.assert_called_once_with(
+            'ManagedSystem', root_id='host_uuid', suffix_type=c.SUFFIX_TYPE_DO,
+            suffix_parm=vfc_mapper._GET_NEXT_WWPNS)
+        job_w.create_job_parameter.assert_called_once_with(
+            'numberPairsRequested', '4')
 
     def test_find_vios_for_wwpn(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
