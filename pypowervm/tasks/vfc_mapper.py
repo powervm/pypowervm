@@ -17,12 +17,14 @@
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
 from oslo_log import log as logging
-import random
 
+from pypowervm import const as c
 from pypowervm import exceptions as e
 from pypowervm.i18n import _
 from pypowervm import util as u
 from pypowervm.utils import uuid
+from pypowervm.wrappers import job as pvm_job
+from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 LOG = logging.getLogger(__name__)
@@ -30,31 +32,34 @@ LOG = logging.getLogger(__name__)
 
 _ANY_WWPN = '-1'
 _FUSED_ANY_WWPN = '-1 -1'
+_GET_NEXT_WWPNS = 'GetNextWWPNs'
 
 
 def build_wwpn_pair(adapter, host_uuid, pair_count=1):
     """Builds a WWPN pair that can be used for a VirtualFCAdapter.
 
-    TODO(IBM): Future implementation will interrogate the system for globally
-               unique WWPN.  For now, generate based off of random number
-               generation.  Likelihood of overlap is 1 in 281 trillion.
+    Note: The API will only generate up to 8 pairs at a time.  Any more will
+    cause the API to raise an error.
 
     :param adapter: The adapter to talk over the API.
     :param host_uuid: The host system for the generation.
     :param pair_count: (Optional, Default: 1) The number of WWPN pairs to
-                       generate
+                       generate.  Can not be more than 8 or else the API will
+                       fail.
     :return: Non-mutable WWPN Pairs (list)
     """
-    pairs = []
+    # Build up the job & invoke
+    resp = adapter.read(
+        pvm_ms.System.schema_type, root_id=host_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_GET_NEXT_WWPNS)
+    job_w = pvm_job.Job.wrap(resp)
+    job_p = [job_w.create_job_parameter('numberPairsRequested',
+                                        str(pair_count))]
+    job_w.run_job(host_uuid, job_parms=job_p)
 
-    for i in range(pair_count):
-        # Sonar refuses to go unless I do something with i...
-        del i
-        resp = "C0"
-        while len(resp) < 14:
-            resp += random.choice('0123456789ABCDEF')
-        pairs.extend([resp + "00", resp + "01"])
-    return pairs
+    # Get the job result, and parse the output.
+    job_result = job_w.get_job_results_as_dict()
+    return job_result['wwpnList'].split(',')
 
 
 def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
