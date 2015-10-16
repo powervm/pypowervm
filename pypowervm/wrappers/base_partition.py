@@ -306,39 +306,36 @@ class RMCState(object):
 class BootMode(object):
     """Mirror of PartitionBootMode.Enum.
 
-    Valid values for:
-    - LPAR.bootmode
-    - VIOS.bootmode
-    - 'bootmode' parameter in pypowervm.power.power_on.
+    Valid values for LPAR.bootmode/VIOS.bootmode.
+
+    Not to be confused with pypowervm.tasks.power.BootMode.
 
     Example usage:
-    - lwrap.bootmode = BootMode.NORM
-      lwrap.update()
-    - power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
+        lwrap.bootmode = BootMode.NORM
+        lwrap.update()
     """
-    KEY = 'bootmode'
-    NORM = 'norm'
-    SMS = 'sms'
-    DD = 'dd'
-    DS = 'ds'
-    OF = 'of'
-    ALL_VALUES = (NORM, SMS, DD, DS, OF)
+    NORM = 'Normal'
+    SMS = 'System_Management_Services'
+    DD = 'Diagnostic_With_Default_Boot_List'
+    DS = 'Diagnostic_With_Stored_Boot_List'
+    OF = 'Open_Firmware'
+    UNAVAILABLE = 'Unavailable'
+    DEFAULT = 'Default'
+    UNKNOWN = 'Unknown'
+    ALL_VALUES = (NORM, SMS, DD, DS, OF, UNAVAILABLE, DEFAULT, UNKNOWN)
 
 
 class KeylockPos(object):
     """Mirror of KeylockPosition.Enum.
 
-    Valid values for:
-    - LPAR.keylock_pos
-    - VIOS.keylock_pos
-    - 'keylock' parameter in pypowervm.power.power_on.
+    Valid values for LPAR.keylock_pos/VIOS.keylock_pos.
+
+    Not to be confused with pypowervm.tasks.power.KeylockPos.
 
     Example usage:
-    - lwrap.keylock_pos = KeylockPos.MANUAL
-      lwrap.update()
-    - power_on(..., add_parms={KeylockPos.KEY: KeylockPos.MANUAL, ...})
+        lwrap.keylock_pos = KeylockPos.MANUAL
+        lwrap.update()
     """
-    KEY = 'keylock'
     MANUAL = 'manual'
     NORMAL = 'normal'
     UNKNOWN = 'unknown'
