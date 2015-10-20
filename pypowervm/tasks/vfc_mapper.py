@@ -331,30 +331,7 @@ def _find_map_port(potential_ports, mappings):
 
 
 def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """Adds the port mappings to the affected VIOSes.
-
-    This method will verify that the port mappings (as defined by the
-    derive_npiv_map method) are on the necessary VIOSes.  Will perform the
-    update to the actual VIOSes if any changes are needed.
-
-    This method supports WWPNs that are built either through the
-    derive_npiv_map or the derive_base_npiv_map methods.
-
-    :param adapter: The pypowervm adapter.
-    :param host_uuid: The pypowervm UUID of the host.
-    :param lpar_uuid: The UUID of the LPAR that should have the vFC mapping
-                      added to it.
-    :param npiv_port_maps: The list of port mappings, as defined by the
-                           derive_npiv_map method.
-
-    :return: The updated mapping.  This is useful if the npiv_port_maps passed
-             into the method was built using the derive_base_npiv_map.
-             Otherwise the response will be functionally equivalent to what
-             is passed in.
-
-             The return value will contain just the new mappings.  If mappings
-             already existed they will not be part of the response payload.
-    """
+    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
     # Build the feed task
     vio_getter = pvm_vios.VIOS.getter(
         adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
@@ -383,17 +360,7 @@ def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
 
 
 def _get_port_map(vioses, lpar_uuid):
-    """Builds a list of the port mappings across a set of VIOSes.
-
-    :param vioses: The VIOS lpar wrappers.
-    :param lpar_uuid: The UUID of the LPAR to gather the mappings for.
-    :return: List of port maps.  Is a list as there may be multiple, identical
-             mappings.  This indicates two paths over the same FC port.  Does
-             NOT include stale mappings that may be associated with the LPAR.
-             A stale mapping is one that either:
-              - Does not have a backing physical port
-              - Does not have a client adapter
-    """
+    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
     port_map = []
     for vios in vioses:
         vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
@@ -417,17 +384,7 @@ def _get_port_map(vioses, lpar_uuid):
 
 
 def remove_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """Removes the port mappings off of all of the affected VIOSes.
-
-    This method will remove all of the NPIV Port Mappings (as defined by the
-    derive_npiv_map method) off of the affected VIOSes.
-
-    :param adapter: The pypowervm adapter.
-    :param host_uuid: The pypowervm UUID of the host.
-    :param lpar_uuid: The UUID or short ID of the LPAR to remove the maps from.
-    :param npiv_port_maps: The list of port mappings, as defined by the
-                           pypowervm wwpn derive_npiv_map method.
-    """
+    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
     vio_getter = pvm_vios.VIOS.getter(
         adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
         xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
