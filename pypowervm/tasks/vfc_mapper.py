@@ -632,16 +632,18 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     if port_map[1] != _FUSED_ANY_WWPN:
         v_wwpns = [u.sanitize_wwpn_for_api(x) for x in port_map[1].split()]
 
-    for vfc_map in vios_w.vfc_mappings:
-        if vfc_map.client_adapter is None:
-            continue
-        if vfc_map.client_adapter.wwpns != v_wwpns:
-            continue
+    if v_wwpns is not None:
+        for vfc_map in vios_w.vfc_mappings:
+            if (vfc_map.client_adapter is None or
+                    vfc_map.client_adapter.wwpns is None):
+                continue
+            if set(vfc_map.client_adapter.wwpns) != set(v_wwpns):
+                continue
 
-        # If we reach this point, we know that we have a matching map.  So
-        # the attach of this volume, for this vFC mapping is complete.
-        # Nothing else needs to be done, exit the method.
-        return None
+            # If we reach this point, we know that we have a matching map.  So
+            # the attach of this volume, for this vFC mapping is complete.
+            # Nothing else needs to be done, exit the method.
+            return None
 
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping

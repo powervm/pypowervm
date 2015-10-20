@@ -442,43 +442,6 @@ class TestPortMappings(twrap.TestWrapper):
                               vfc_mapper.add_map,
                               self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
 
-    def test_add_port_mapping_generated_wwpns(self):
-        """Validates that the port mappings with generated wwpns works."""
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count + 8,
-                                 len(vios_w.vfc_mappings))
-            else:
-                self.fail("Unknown VIOS!")
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        # Subset the WWPNs on that VIOS
-        fabric_A_wwpns = ['10000090FA5371F2']
-        fabric_B_wwpns = ['10000090FA5371F1']
-
-        # Get the mappings
-        fabric_A_maps = vfc_mapper.derive_base_npiv_map(
-            vios_wraps, fabric_A_wwpns, 4)
-        vios_wraps.reverse()
-        fabric_B_maps = vfc_mapper.derive_base_npiv_map(
-            vios_wraps, fabric_B_wwpns, 4)
-        full_map = fabric_A_maps + fabric_B_maps
-
-        # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
-                                          full_map)
-
-        # The update should have been called once.
-        self.assertEqual(1, self.adpt.update_by_path.call_count)
-
     def test_remove_port_mapping_multi_vios(self):
         """Validates that the port mappings are removed cross VIOSes."""
         # Determine the vios original values
@@ -769,7 +732,8 @@ class TestAddRemoveMap(twrap.TestWrapper):
         self.assertEqual(vios1_orig_map_count + 1, len(vios_wrap.vfc_mappings))
 
         # Try to add it again...it shouldn't re-add it because its already
-        # there.
+        # there.  Flip WWPNs to verify set query.
+        fabric_map = ('10000090FA5371F2', '1 0')
         resp = vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid,
                                   fabric_map)
         self.assertIsNone(resp)
