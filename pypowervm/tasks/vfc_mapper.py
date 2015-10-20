@@ -635,7 +635,7 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     for vfc_map in vios_w.vfc_mappings:
         if vfc_map.client_adapter is None:
             continue
-        if vfc_map.client_adapter.wwpns != v_wwpns:
+        if set(vfc_map.client_adapter.wwpns) != set(v_wwpns):
             continue
 
         # If we reach this point, we know that we have a matching map.  So
