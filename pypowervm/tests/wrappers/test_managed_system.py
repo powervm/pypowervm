@@ -135,6 +135,9 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_get_firmware_memory(self):
         self.call_simple_getter("firmware_memory", 1536, 0)
 
+    def test_page_table_ratio(self):
+        self.call_simple_getter("page_table_ratio", 7, 0)
+
     def test_get_system_name(self):
         self.wrapper.set_parm_value(ms._SYSTEM_NAME, 'XYZ')
         name = self.wrapper.system_name
