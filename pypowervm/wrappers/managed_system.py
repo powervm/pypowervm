@@ -58,6 +58,7 @@ _MEMORY_AVAIL = u.xpath(_SYS_MEM_CONFIG, 'CurrentAvailableSystemMemory')
 _MEMORY_CONFIGURABLE = u.xpath(_SYS_MEM_CONFIG, 'ConfigurableSystemMemory')
 _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
+_PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -206,6 +207,10 @@ class System(ewrap.EntryWrapper):
     @property
     def firmware_memory(self):
         return self._get_val_int(_SYS_FIRMWARE_MEM, 0)
+
+    @property
+    def page_table_ratio(self):
+        return self._get_val_int(_PAGE_TABLE_RATIO, 0)
 
     @property
     def host_ip_address(self):
