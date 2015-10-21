@@ -91,3 +91,14 @@ class APITraits(object):
     def has_high_slot(self):
         """Does the API support UseNextAvailableHighSlotID?"""
         return not self._is_hmc
+
+    @property
+    def vea_as_ibmi_console(self):
+        """Indicates whether the console type of IBMi VM is vea.
+
+        IBMi depends on the trait to determine the console type. If the host is
+        not managed by HMC, the console type of an IBMi VM deployed on the host
+        shall be the slot number of its first virtual ethernet adapter.
+        Otherwise, the console type shall be "HMC".
+        """
+        return not self._is_hmc
