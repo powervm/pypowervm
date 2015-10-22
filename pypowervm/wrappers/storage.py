@@ -134,7 +134,7 @@ _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
-_VADPT_LPAR_ID = 'LocalPartitionID'
+_VADPT_LOCAL_ID = 'LocalPartitionID'
 # SCSI adapters use this
 _VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
 # ...and FC adapters use this
@@ -144,6 +144,10 @@ _VADPT_MAP_PORT = 'MapPort'
 _VADPT_WWPNS = 'WWPNs'
 _VADPT_BACK_DEV_NAME = 'BackingDeviceName'
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
+# SCSI adapters use this
+_VADPT_REM_SLOT_NUM = 'RemoteSlotNumber'
+# ...and FC adapters use this
+_VADPT_CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
 _VADPT_VARIED_ON = 'VariedOn'
 _VADPT_NAME = 'AdapterName'
 _VADPT_TYPE = 'AdapterType'
@@ -744,11 +748,6 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
         """True if the adapter is varied on."""
         return self._get_val_str(_VADPT_VARIED_ON)
 
-    @property
-    def slot_number(self):
-        """The (int) slot number that the adapter is in."""
-        return self._get_val_int(_VADPT_SLOT_NUM)
-
     def _use_next_slot(self, use):
         """Use next available (not high) slot."""
         self.set_parm_value(_NEXT_SLOT, u.sanitize_bool_for_api(use))
@@ -812,7 +811,12 @@ class _VClientAdapterMethods(ewrap.Wrapper):
         Note that the LPAR ID is LocalPartitionID on the client side, and
         RemoteLogicalPartitionID on the server side.
         """
-        return self._get_val_int(_VADPT_LPAR_ID)
+        return self._get_val_int(_VADPT_LOCAL_ID)
+
+    @property
+    def lpar_slot_num(self):
+        """The (int) slot number that the adapter is in."""
+        return self._get_val_int(_VADPT_SLOT_NUM)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -850,7 +854,19 @@ class VSCSIClientAdapterElement(VClientStorageAdapterElement):
 
     Paired with a VSCSIServerAdapterElement.
     """
-    pass  # Implemented by superclasses
+    @property
+    def vios_id(self):
+        """The short ID (not UUID) of the VIOS side of this adapter.
+
+        Note that the VIOS ID is RemoteLogicalPartitionID on the client side,
+        and LocalPartitionID on the server side.
+        """
+        return self._get_val_int(_VADPT_REM_LPAR_ID)
+
+    @property
+    def vios_slot_num(self):
+        """The (int) remote slot number of the paired adapter."""
+        return self._get_val_int(_VADPT_REM_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -874,6 +890,25 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         """
         return self._get_val_int(_VADPT_REM_LPAR_ID)
 
+    @property
+    def vios_id(self):
+        """The short ID (not UUID) of the VIOS side of this adapter.
+
+        Note that the VIOS ID is RemoteLogicalPartitionID on the client side,
+        and LocalPartitionID on the server side.
+        """
+        return self._get_val_int(_VADPT_LOCAL_ID)
+
+    @property
+    def lpar_slot_num(self):
+        """The (int) slot number that the adapter is in."""
+        return self._get_val_int(_VADPT_REM_SLOT_NUM)
+
+    @property
+    def vios_slot_num(self):
+        """The (int) remote slot number of the paired adapter."""
+        return self._get_val_int(_VADPT_SLOT_NUM)
+
 
 class _VFCClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with VFCClientAdapter(Element)."""
@@ -893,6 +928,16 @@ class _VFCClientAdapterMethods(ewrap.Wrapper):
             return []
         else:
             return val.upper().split(' ')
+
+    @property
+    def vios_id(self):
+        """The short ID (not UUID) of the VIOS side of this adapter."""
+        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+
+    @property
+    def vios_slot_num(self):
+        """The (int) remote slot number of the paired adapter."""
+        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -944,9 +989,20 @@ class VFCServerAdapterElement(VServerStorageAdapterElement):
 
     @property
     def lpar_id(self):
-        """The integer short ID (not UUID) of the client side of the adapter.
-
-        Note that the LPAR ID is LocalPartitionID on the client side, and
-        ConnectingPartitionID on the server side.
-        """
+        """The short ID (not UUID) of the LPAR side of this adapter."""
         return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+
+    @property
+    def vios_id(self):
+        """The short ID (not UUID) of the VIOS side of this adapter."""
+        return self._get_val_int(_VADPT_LOCAL_ID)
+
+    @property
+    def lpar_slot_num(self):
+        """The (int) slot number that the adapter is in."""
+        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
+
+    @property
+    def vios_slot_num(self):
+        """The (int) remote slot number of the paired adapter."""
+        return self._get_val_int(_VADPT_SLOT_NUM)
