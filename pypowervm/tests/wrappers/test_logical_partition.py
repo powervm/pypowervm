@@ -230,6 +230,11 @@ class TestLogicalPartition(testtools.TestCase):
     def test_is_mgmt_partition(self):
         self.call_simple_getter("is_mgmt_partition", True, False)
 
+    def test_is_svc_partition(self):
+        self.call_simple_getter("is_service_partition", False, False)
+        self._shared_wrapper.is_service_partition = True
+        self.call_simple_getter("is_service_partition", True, False)
+
     def test_keylock_pos(self):
         self.call_simple_getter("keylock_pos", "normal", None)
         self._shared_wrapper.keylock_pos = bp.KeylockPos.MANUAL
