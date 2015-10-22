@@ -76,7 +76,7 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
                 vios_wrap.scsi_mappings, lpar_w.id)
             client_adapters.extend([smap.client_adapter
                                     for smap in existing_maps])
-    slot_nums = set(s.slot_number for s in client_adapters)
+    slot_nums = set(s.lpar_slot_num for s in client_adapters)
     slot_nums = list(slot_nums)
     slot_nums.sort()
     if len(slot_nums) > 0:
