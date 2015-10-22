@@ -492,6 +492,16 @@ class BasePartition(ewrap.EntryWrapper):
         return self._get_val_bool(_BP_MGT_PARTITION)
 
     @property
+    def is_service_partition(self):
+        """Is this the service partition?  Default False if field absent."""
+        return self._get_val_bool(_BP_SVC_PARTITION)
+
+    @is_service_partition.setter
+    def is_service_partition(self, value):
+        """Set if this is the service partition."""
+        self.set_parm_value(_BP_SVC_PARTITION, u.sanitize_bool_for_api(value))
+
+    @property
     def keylock_pos(self):
         """Keylock position - see KeylockPos enumeration."""
         return self._get_val_str(_BP_KEYLOCK_POS)
