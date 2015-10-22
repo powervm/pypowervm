@@ -354,8 +354,10 @@ class TestVFCClientAdapter(twrap.TestWrapper):
         """
         self.assertEqual('U8247.21L.212A64A-V25-C4', self.dwrap.loc_code)
         self.assertEqual(25, self.dwrap.lpar_id)
+        self.assertEqual(2, self.dwrap.vios_id)
         self.assertEqual('Client', self.dwrap.side)
-        self.assertEqual(4, self.dwrap.slot_number)
+        self.assertEqual(4, self.dwrap.lpar_slot_num)
+        self.assertEqual(10, self.dwrap.vios_slot_num)
         self.assertEqual(['C05076087CBA0169', 'C05076087CBA0168'],
                          self.dwrap.wwpns)
 
