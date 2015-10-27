@@ -30,6 +30,7 @@ from pypowervm.wrappers import virtual_io_server as vios
 NAME = 'name'
 ENV = 'env'
 UUID = 'uuid'
+ID = 'id'
 
 MEM = 'memory'
 MAX_MEM = 'max_mem'
@@ -105,7 +106,7 @@ class Standardize(object):
         :returns: dict of attributes.
             Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
                       PROC_COMPAT
-            Optional: SRR_CAPABLE, UUID
+            Optional: SRR_CAPABLE, UUID, ID
                       IBMi value: CONSOLE, LOAD_SRC, ALT_LOAD_SRC,
                                   RESTRICTED_IO
         """
@@ -255,6 +256,7 @@ class DefaultStandardize(Standardize):
         self._validate_general(partial=True)
 
         bld_attr = {NAME: self.attr[NAME]}
+        self._set_val(bld_attr, ID)
         self._set_val(bld_attr, UUID)
         self._set_val(bld_attr, ENV, bp.LPARType.AIXLINUX,
                       convert_func=LPARType.convert_value)
@@ -767,6 +769,9 @@ class LPARBuilder(object):
         # by PowerVM
         if std.get(UUID) is not None:
             lpar_w.uuid = std[UUID]
+
+        if std.get(ID) is not None:
+            lpar_w._id(std[ID])
 
         return self.rebuild(lpar_w)
 

@@ -122,6 +122,13 @@ class TestLPARBuilder(testtools.TestCase):
         lpar_w = bldr.build()
         self.assertEqual(uuid1.upper(), lpar_w.uuid)
 
+        # Test setting id
+        id1 = 1234
+        attr = dict(name='lpar', memory=1024, uuid=uuid1, vcpu=1, id=id1)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        lpar_w = bldr.build()
+        self.assertEqual(id1, lpar_w.id)
+
         # Bad LPAR type
         attr = dict(name='lpar', memory=1024, env='BADLPARType', vcpu=1)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
