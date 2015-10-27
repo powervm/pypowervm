@@ -17,10 +17,11 @@
 """Logging helpers."""
 
 import functools
+import logging
 
-from oslo_log import log as logging
+from oslo_log import log as oslo_logging
 
-LOG = logging.getLogger('pypowervm')
+LOG = oslo_logging.getLogger('pypowervm')
 
 
 def _logcall(filter_=None, dump_parms=False):
