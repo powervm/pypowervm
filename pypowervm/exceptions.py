@@ -77,8 +77,9 @@ class HttpError(Error):
                 # Import inline to avoid circular dependencies
                 import pypowervm.wrappers.http_error as he
                 self.her_wrap = he.HttpError.wrap(resp)
-                # For 500, the useful information is in the 'message'.
-                if resp.status == c.HTTPStatus.INTERNAL_ERROR:
+
+                # Add the message to the reason if it is available.
+                if self.her_wrap.message:
                     reason += ' -- ' + self.her_wrap.message
         except Exception:
             pass
