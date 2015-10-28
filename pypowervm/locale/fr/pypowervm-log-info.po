@@ -1,0 +1,28 @@
+# Translations template for pypowervm.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the pypowervm project.
+# Automatically generated, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-10-06 13:53-0500\n"
+"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+
+#: pypowervm/tasks/ibmi.py:54
+#, python-format
+msgid "Setting Virtual Fibre Channel slot as load source for VM %s"
+msgstr "Définition de l'emplacement Fibre Channel virtuel comme source de chargement pour la machine virtuelle %s"
+
+#: pypowervm/tasks/ibmi.py:68
+#, python-format
+msgid "Setting Virtual SCSI slot slot as load source for VM %s"
+msgstr "Définition de l'emplacement SCSI virtuel comme source de chargement pour la machine virtuelle %s"
+

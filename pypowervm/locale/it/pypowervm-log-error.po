@@ -1,0 +1,91 @@
+# Translations template for pypowervm.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the pypowervm project.
+# Automatically generated, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-10-06 13:53-0500\n"
+"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+
+#: pypowervm/utils/lpar_builder.py:180
+#, python-format
+msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
+msgstr "Il fattore delle unità processore deve essere compreso tra 0.05 e 1.0. Valore: %s"
+
+#: pypowervm/utils/lpar_builder.py:206
+#, python-format
+msgid "Logical partition name has invalid length. Name: %s"
+msgstr "Il nome partizione logica ha una lunghezza non valida. Nome: %s"
+
+#: pypowervm/utils/lpar_builder.py:372
+#, python-format
+msgid "Field '%(field)s' has invalid value: '%(value)s'"
+msgstr "Il campo '%(field)s' ha un valore non valido: '%(value)s'"
+
+#: pypowervm/utils/lpar_builder.py:427
+msgid "None value is not valid."
+msgstr "Il valore Nessuno, non è valido."
+
+#: pypowervm/utils/lpar_builder.py:434
+#, python-format
+msgid ""
+"Value '%(value)s' is not valid for field '%(field)s' with acceptable "
+"choices: %(choices)s"
+msgstr ""
+"Il valore '%(value)s' non è valido per il campo '%(field)s' con "
+"scelte accettabili: %(choices)s"
+
+#: pypowervm/utils/lpar_builder.py:460
+#, python-format
+msgid ""
+"Field '%(field)s' has a value below the minimum. Value: %(value)s "
+"Minimum: %(minimum)s"
+msgstr ""
+"Il campo '%(field)s' ha un valore al di sotto del minimo. Valore: %(value)s "
+"Minimo: %(minimum)s"
+
+#: pypowervm/utils/lpar_builder.py:469
+#, python-format
+msgid ""
+"Field '%(field)s' has a value above the maximum. Value: %(value)s "
+"Maximum: %(maximum)s"
+msgstr ""
+"Il campo '%(field)s' ha un valore al di sopra del massimo. Valore: %(value)s "
+"Massimo: %(maximum)s"
+
+#: pypowervm/utils/lpar_builder.py:523
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value above the '%(max_field)s' value. "
+"Desired: %(desired)s Maximum: %(maximum)s"
+msgstr ""
+"'%(desired_field)s' haha un valore al di sopra del valore '%(max_field)s'. "
+"Desiderato: %(desired)s Massimo: %(maximum)s"
+
+#: pypowervm/utils/lpar_builder.py:536
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value below the '%(min_field)s' value. "
+"Desired: %(desired)s Minimum: %(minimum)s"
+msgstr ""
+"'%(desired_field)s' haha un valore al di sotto del valore '%(min_field)s'. "
+"Desiderato: %(desired)s Minimo: %(minimum)s"
+
+#: pypowervm/utils/lpar_builder.py:574
+#, python-format
+msgid ""
+"Memory value is not a multiple of the logical memory block size "
+"(%(lmb_size)s) of  the host.  Value: %(value)s"
+msgstr ""
+"Il valore della memoria non è un multiplo della dimensione del blocco di memoria logica "
+"(%(lmb_size)s) dell'host. Valore: %(value)s"
+
