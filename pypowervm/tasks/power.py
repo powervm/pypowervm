@@ -70,16 +70,22 @@ class KeylockPos(object):
 
 
 @lgc.logcall
-def power_on(part, host_uuid, add_parms=None):
+def power_on(part, host_uuid, add_parms=None, synchronous=True):
     """Will Power On a Logical Partition or Virtual I/O Server.
 
-    :param part: The LPAR/VIOS wrapper of the instance to power on.
+    :param part: The LPAR/VIOS wrapper of the partition to power on.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
     :param add_parms: dict of parameters to pass directly to the job template
+    :param synchronous: If True (the default), this method will not return
+                        until the PowerOn Job completes (whether success or
+                        failure) or times out.  If False, this method will
+                        return as soon as the Job has started on the server
+                        (that is, achieved any state beyond NOT_ACTIVE).  Note
+                        that timeout is still possible in this case.
     """
     return _power_on_off(part, _SUFFIX_PARM_POWER_ON, host_uuid,
-                         add_parms=add_parms)
+                         add_parms=add_parms, synchronous=synchronous)
 
 
 @lgc.logcall
@@ -97,13 +103,13 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
     :param add_parms: dict of parameters to pass directly to the job template
     """
     return _power_on_off(part, _SUFFIX_PARM_POWER_OFF, host_uuid,
-                         force_immediate, restart, timeout,
-                         add_parms=add_parms)
+                         force_immediate=force_immediate, restart=restart,
+                         timeout=timeout, add_parms=add_parms)
 
 
 def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                   restart=False, timeout=CONF.powervm_job_request_timeout,
-                  add_parms=None):
+                  add_parms=None, synchronous=True):
     """Internal function to power on or off an instance.
 
     :param part: The LPAR/VIOS wrapper of the instance to act on.
@@ -117,6 +123,12 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     :param timeout: Value in seconds for specifying how long to wait for the
                     LPAR/VIOS to stop (for PowerOff suffix only)
     :param add_parms: dict of parameters to pass directly to the job template
+    :param synchronous: If True (the default), this method will not return
+                        until the Job completes (whether success or failure) or
+                        times out.  If False, this method will return as soon
+                        as the Job has started on the server (that is, achieved
+                        any state beyond NOT_ACTIVE).  Note that timeout is
+                        still possible in this case.
     """
     complete = False
     uuid = part.uuid
@@ -159,7 +171,8 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                             job_wrapper.create_job_parameter(
                                 kw, str(add_parms[kw])))
             try:
-                job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout)
+                job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout,
+                                    synchronous=synchronous)
                 complete = True
             except pexc.JobRequestTimedOut as error:
                 if (suffix == _SUFFIX_PARM_POWER_OFF and
