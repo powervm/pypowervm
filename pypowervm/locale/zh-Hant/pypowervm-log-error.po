@@ -1,0 +1,91 @@
+# Translations template for pypowervm.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the pypowervm project.
+# Automatically generated, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-10-06 13:53-0500\n"
+"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+
+#: pypowervm/utils/lpar_builder.py:180
+#, python-format
+msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
+msgstr "處理器單位因子必須介於 0.05 到 1.0 之間。值：%s"
+
+#: pypowervm/utils/lpar_builder.py:206
+#, python-format
+msgid "Logical partition name has invalid length. Name: %s"
+msgstr "邏輯分割區名稱具有無效的長度。名稱：%s"
+
+#: pypowervm/utils/lpar_builder.py:372
+#, python-format
+msgid "Field '%(field)s' has invalid value: '%(value)s'"
+msgstr "欄位 '%(field)s' 具有無效的值：'%(value)s'"
+
+#: pypowervm/utils/lpar_builder.py:427
+msgid "None value is not valid."
+msgstr "None 值無效。"
+
+#: pypowervm/utils/lpar_builder.py:434
+#, python-format
+msgid ""
+"Value '%(value)s' is not valid for field '%(field)s' with acceptable "
+"choices: %(choices)s"
+msgstr ""
+"值 '%(value)s' 對於欄位 '%(field)s' 而言無效，可接受的"
+"選擇：%(choices)s"
+
+#: pypowervm/utils/lpar_builder.py:460
+#, python-format
+msgid ""
+"Field '%(field)s' has a value below the minimum. Value: %(value)s "
+"Minimum: %(minimum)s"
+msgstr ""
+"欄位 '%(field)s' 具有低於下限的值。值：%(value)s "
+"下限：%(minimum)s"
+
+#: pypowervm/utils/lpar_builder.py:469
+#, python-format
+msgid ""
+"Field '%(field)s' has a value above the maximum. Value: %(value)s "
+"Maximum: %(maximum)s"
+msgstr ""
+"欄位 '%(field)s' 具有高於上限的值。值：%(value)s "
+"上限：%(maximum)s"
+
+#: pypowervm/utils/lpar_builder.py:523
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value above the '%(max_field)s' value. "
+"Desired: %(desired)s Maximum: %(maximum)s"
+msgstr ""
+"'%(desired_field)s' 具有高於 '%(max_field)s' 值的值。"
+"期望：%(desired)s 上限：%(maximum)s"
+
+#: pypowervm/utils/lpar_builder.py:536
+#, python-format
+msgid ""
+"The '%(desired_field)s' has a value below the '%(min_field)s' value. "
+"Desired: %(desired)s Minimum: %(minimum)s"
+msgstr ""
+"'%(desired_field)s' 具有低於 '%(min_field)s' 值的值。"
+"期望：%(desired)s 下限：%(minimum)s"
+
+#: pypowervm/utils/lpar_builder.py:574
+#, python-format
+msgid ""
+"Memory value is not a multiple of the logical memory block size "
+"(%(lmb_size)s) of  the host.  Value: %(value)s"
+msgstr ""
+"記憶體值不是主機邏輯記憶體區塊大小"
+"(%(lmb_size)s) 的倍數。值：%(value)s"
+
