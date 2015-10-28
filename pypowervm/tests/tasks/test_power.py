@@ -40,6 +40,17 @@ class TestPower(testtools.TestCase):
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
     def test_power_on_off(self, mock_lpar, mock_job_p, mock_run_job):
         """Performs a simple set of Power On/Off Tests."""
+        def run_job_mock(**kwargs1):
+            """Produce a run_job method that validates the given kwarg values.
+
+            E.g. run_job_mock(foo='bar') will produce a mock run_job that
+            asserts its foo argument is 'bar'.
+            """
+            def run_job(*args, **kwargs2):
+                for key, val in kwargs1.items():
+                    self.assertEqual(val, kwargs2[key])
+            return run_job
+
         mock_lpar.adapter = self.adpt
         power._power_on_off(mock_lpar, 'PowerOn', '1111')
         self.assertEqual(1, mock_run_job.call_count)
@@ -85,6 +96,7 @@ class TestPower(testtools.TestCase):
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
+        mock_run_job.side_effect = run_job_mock(synchronous=True)
         # Try optional parameters
         power.power_on(mock_lpar, '1111',
                        add_parms={power.BootMode.KEY: power.BootMode.SMS})
@@ -95,15 +107,16 @@ class TestPower(testtools.TestCase):
         mock_job_p.reset_mock()
 
         power.power_on(mock_lpar, '1111', add_parms={
-            pvm_lpar.IPLSrc.KEY: pvm_lpar.IPLSrc.A})
+            pvm_lpar.IPLSrc.KEY: pvm_lpar.IPLSrc.A}, synchronous=True)
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
         mock_job_p.assert_called_with(pvm_lpar.IPLSrc.KEY, pvm_lpar.IPLSrc.A)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
+        mock_run_job.side_effect = run_job_mock(synchronous=False)
         power.power_on(mock_lpar, '1111', add_parms={
-            power.KeylockPos.KEY: power.KeylockPos.MANUAL})
+            power.KeylockPos.KEY: power.KeylockPos.MANUAL}, synchronous=False)
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(1, mock_job_p.call_count)
         mock_job_p.assert_called_with(power.KeylockPos.KEY,
