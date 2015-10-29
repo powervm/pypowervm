@@ -6,7 +6,14 @@ PACKAGE=pypowervm
 	dh $@ --with python2
 
 override_dh_auto_install:
-	python setup.py install --root=debian/pypowervm --install-layout=deb --install-lib=/usr/lib/`pyversions -d`/dist-packages/ --install-scripts=/usr/lib/`pyversions -d`/dist-packages/
+	python setup.py install --root=debian/pypowervm --install-layout=deb --install-lib=/usr/lib/`pyversions -d`/dist-packages/ --install-scripts=/usr/lib/`pyversions -d`/dist-packages/ ; \
+        for lc in de es fr it ja ko ru pt-BR zh-Hans zh-Hant; do \
+            mkdir -p debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES ; \
+            python setup.py compile_catalog -f --input-file pypowervm/locale/$$lc/pypowervm.po --output-file debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES/pypowervm.mo; \
+            for lvl in log-critical log-error log-info log-warning; do \
+                python setup.py compile_catalog -f --input-file pypowervm/locale/$$lc/pypowervm-$$lvl.po --output-file debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES/pypowervm-$$lvl.mo; \
+            done; \
+        done
 
 override_dh_clean:
 	dh_clean
