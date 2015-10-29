@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 0.0.3.dev181\n"
+"Project-Id-Version: pypowervm 0.0.3.dev270\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-03 10:32-0400\n"
-"PO-Revision-Date: 2015-09-03 10:32-0400\n"
+"POT-Creation-Date: 2015-10-06 13:53-0500\n"
+"PO-Revision-Date: 2015-10-06 13:53-0500\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -16,470 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 
-#: pypowervm/exceptions.py:77
-msgid "The virtual adapter configuration is invalid."
-msgstr "虚拟适配器配置无效。"
-
-#: pypowervm/exceptions.py:81
-#, python-format
-msgid "%(attr)s is a required attribute for virtual machine '%(instance_name)s'."
-msgstr "%(attr)s 是虚拟机“%(instance_name)s”的必需属性。"
-
-#: pypowervm/exceptions.py:86
-#, python-format
-msgid ""
-"'%(value)s' is not a valid value for %(attr)s for virtual machine "
-"'%(instance_name)s'."
-msgstr ""
-"“%(value)s”不是虚拟机的 %(attr)s 的有效值"
-"'%(instance_name)s'."
-
-#: pypowervm/exceptions.py:91
-#, python-format
-msgid ""
-"The value for minimum %(attr)s (%(value)s) cannot be greater than the "
-"desired %(attr)s (%(des_value)s) for virtual machine '%(instance_name)s'."
-msgstr ""
-"对于“%(instance_name)s”，最小值 %(attr)s 的值 (%(value)s)"
-"不能大于期望值 %(attr)s (%(des_value)s)。"
-
-#: pypowervm/exceptions.py:97
-#, python-format
-msgid ""
-"The value for maximum %(attr)s (%(value)s) cannot be less than the "
-"desired %(attr)s (%(des_value)s) for virtual machine '%(instance_name)s'."
-msgstr ""
-"对于“%(instance_name)s”，最大值 %(attr)s 的值 (%(value)s) 不得小于"
-"期望值 %(attr)s (%(des_value)s)。"
-
-#: pypowervm/exceptions.py:103
-#, python-format
-msgid ""
-"If you specify a minimum or maximum value for %(attr)s, you must specify "
-"both minimum and maximum %(attr)s for virtual machine "
-"'%(instance_name)s'."
-msgstr ""
-"如果您对 %(attr)s 指定最小值或最大值，"
-"那么必须为虚拟机“%(instance_name)s”"
-"同时指定最小值和最大值 %(attr)s。"
-
-#: pypowervm/exceptions.py:109
-#, python-format
-msgid ""
-"%(attr)s (%(value)d MB) is not a multiple of the region memory size "
-"(%(lmb)d MB) for virtual machine '%(instance_name)s'. Specify a value "
-"that is a multiple of the region memory size."
-msgstr ""
-"%(attr)s (%(value)d MB) 不是虚拟机“%(instance_name)s”"
-"的区域内存大小 (%(lmb)d MB) 的倍数。"
-"请指定一个是区域内存大小的倍数的值。"
-
 #: pypowervm/exceptions.py:116
-#, python-format
-msgid ""
-"'%(availability_priority)s' is not a valid value for availability "
-"priority for virtual machine '%(instance_name)s'. Specify a value between"
-" 0 and 255."
-msgstr ""
-"“%(availability_priority)s”不是虚拟机“%(instance_name)s”"
-"的可用性优先级的有效值。"
-" 请指定 0 到 255 之间的值。"
-
-#: pypowervm/exceptions.py:122
-#, python-format
-msgid ""
-"'%(processor_compatibility)s' is not a valid option for processor "
-"compatibility for virtual machine '%(instance_name)s'. Valid options "
-"include the following: '%(valid_values)s'."
-msgstr ""
-"“%(processor_compatibility)s”不是虚拟机“%(instance_name)s”"
-"的处理器兼容性的有效选项。"
-"有效选项包括下列选项：“%(valid_values)s”。"
-
-#: pypowervm/exceptions.py:129
-#, python-format
-msgid ""
-"Changing '%(processor_compatibility)s' is not supported because for an "
-"IBM i virtual machine '%(instance_name)s', its processor compatibility "
-"mode can only be set as 'default' on Power6 host."
-msgstr ""
-"由于 IBM i 虚拟机“%(instance_name)s”而不支持更改“%(processor_compatibility)s”，"
-"在 Power6 主机上，该虚拟机的处理器兼容性方式"
-"只能设置为“default”。"
-
-#: pypowervm/exceptions.py:137
-#, python-format
-msgid ""
-"'%(value)s' is not valid for virtual machine '%(instance_name)s'. "
-"%(option)s must either be true or false. "
-msgstr ""
-"“%(value)s”对于虚拟机“%(instance_name)s”无效。"
-"%(option)s 必须为 true 或 false。"
-
-#: pypowervm/exceptions.py:143
-#, python-format
-msgid ""
-"'%(ded_share_mode)s' is not a valid option for sharing mode for dedicated"
-" processors for virtual machine '%(instance_name)s'. Valid options "
-"include the following: '%(valid_values)s'."
-msgstr ""
-"“%(ded_share_mode)s”不是虚拟机“%(instance_name)s”"
-" 的专用处理器的共享方式的有效选项。"
-"有效选项包括下列选项：“%(valid_values)s”。"
-
-#: pypowervm/exceptions.py:150
-#, python-format
-msgid ""
-"'%(option)s' is not a valid option for dedicated processor mode for "
-"virtual machine '%(instance_name)s'."
-msgstr ""
-"“%(option)s”不是虚拟机“%(instance_name)s”"
-"的专用处理器方式的有效选项。"
-
-#: pypowervm/exceptions.py:155
-#, python-format
-msgid ""
-"'%(option)s' is not a valid option for shared processor mode for virtual "
-"machine '%(instance_name)s'."
-msgstr ""
-"“%(option)s”不是虚拟机“%(instance_name)s”"
-"的共享处理器方式的有效选项。"
-
-#: pypowervm/exceptions.py:160
-#, python-format
-msgid ""
-"Sharing weight is not a valid option for capped sharing mode for virtual "
-"machine '%(instance_name)s'."
-msgstr ""
-"共享权重不是虚拟机“%(instance_name)s”"
-"的受限制共享方式的有效选项。"
-
-#: pypowervm/exceptions.py:165
-#, python-format
-msgid ""
-"'%(shared_weight)s' is not a valid value for shared processor weight for "
-"virtual machine '%(instance_name)s'. Specify a value between 0 and 255."
-msgstr ""
-"“%(shared_weight)s”不是虚拟机“%(instance_name)s”"
-"的共享处理器权重的有效值。请指定 0 到 255 之间的值。"
-
-#: pypowervm/exceptions.py:171
-#, python-format
-msgid ""
-"If you specify a minimum and maximum value for processing units, you must"
-" also specify a minimum and maximum value for virtual CPUs for virtual "
-"machine '%(instance_name)s'."
-msgstr ""
-"如果您为处理单元数指定最小值和最大值，"
-" 那么还必须为虚拟机“%(instance_name)s”"
-"的虚拟 CPU 数指定最小值和最大值。"
-
-#: pypowervm/exceptions.py:177
-#, python-format
-msgid ""
-"If you specify a minimum and maximum value for processing units, you must"
-" also specify a value for desired processing units for virtual machine "
-"'%(instance_name)s'."
-msgstr ""
-"如果您为处理单元数指定最小值和最大值，"
-" 那么还必须为虚拟机“%(instance_name)s”"
-"指定期望的处理单元数的值。"
-
-#: pypowervm/exceptions.py:183
-#, python-format
-msgid ""
-"There must be a minimum of %(proc_units_per_vcpu)s processing units per "
-"virtual CPU. The requested %(level)s processing units were "
-"'%(proc_units)s' and the requested %(level)s virtual CPUs were "
-"'%(vcpus)d' for virtual machine '%(instance_name)s'."
-msgstr ""
-"每个虚拟 CPU 必须至少有 %(proc_units_per_vcpu)s 个处理单元。"
-"对于虚拟机“%(instance_name)s”，"
-"所请求的 %(level)s 处理单元数为“%(proc_units)s”，"
-"所请求的 %(level)s 虚拟 CPU 数为“%(vcpus)d”。"
-
-#: pypowervm/exceptions.py:191
-#, python-format
-msgid ""
-"The number of processing units cannot be a larger value than the number "
-"of virtual CPUs. The requested %(level)s processing units were "
-"'%(proc_units)s' and the requested %(level)s virtual CPUs were "
-"'%(vcpus)d' for virtual machine '%(instance_name)s'."
-msgstr ""
-"处理单元数不得是一个大于虚拟 CPU 数的值。"
-"对于虚拟机“%(instance_name)s”，"
-"所请求的 %(level)s 处理单元数为“%(proc_units)s”，"
-"所请求的 %(level)s 虚拟 CPU 数为“%(vcpus)d”。"
-
-#: pypowervm/exceptions.py:199
-#, python-format
-msgid ""
-"The desired processors (%(vcpus)d) cannot be above the maximum processors"
-" allowed per partition (%(max_allowed)d) for virtual machine "
-"'%(instance_name)s'."
-msgstr ""
-"对于虚拟机“%(instance_name)s”，"
-" 所期望的处理器数 (%(vcpus)d) 不得超过每个分区允许的"
-"最大处理器数 (%(max_allowed)d)。"
-
-#: pypowervm/exceptions.py:205
-#, python-format
-msgid ""
-"The maximum processors (%(vcpus)d) cannot be above the maximum system "
-"capacity processor limit %(max_allowed)d) for virtual machine "
-"'%(instance_name)s'."
-msgstr ""
-"对于虚拟机“%(instance_name)s”，"
-"最大处理器数 %(vcpus)d) 不得超过"
-"最大系统容量处理器限制 %(max_allowed)d)。"
-
-#: pypowervm/exceptions.py:211
-#, python-format
-msgid ""
-"Unable to resize virtual machine '%(instance_name)s'. Resizing an active "
-"virtual machine requires RMC connectivity."
-msgstr ""
-"无法调整虚拟机“%(instance_name)s”的大小。"
-"调整活动虚拟机的大小将需要建立 RMC 连接。"
-
-#: pypowervm/exceptions.py:217
-#, python-format
-msgid ""
-"Unable to determine that the volume with id %(uuid)s has been discovered "
-"or mapped on a Virtual I/O Server"
-msgstr ""
-"无法确定是否在 Virtual I/O Server 上"
-"已发现或映射标识为 %(uuid)s 的卷"
-
-#: pypowervm/exceptions.py:222
-msgid "Unable to locate the Virtual I/O Server for this operation"
-msgstr "找不到用于此操作的 Virtual I/O Server"
-
-#: pypowervm/exceptions.py:226
-#, python-format
-msgid ""
-"The storage type specified '%(storage_type)s' is not supported for this "
-"operation"
-msgstr ""
-"所指定的存储类型“%(storage_type)s”"
-"不支持此操作"
-
-#: pypowervm/exceptions.py:231
-#, python-format
-msgid ""
-"Desired %(attr)s requested (%(desired)s) is outside the currently "
-"assigned minimum (%(min)s) and maximum (%(max)s) values for virtual "
-"machine '%(instance_name)s'. Either specify a valid value for desired "
-"%(attr)s or power off the virtual machine before resizing."
-msgstr ""
-"期望值 %(attr)s 和所请求的值 (%(desired)s)"
-"超过了当前为虚拟机“%(instance_name)s”所指定的"
-"最小值 (%(min)s) 和最大值 (%(max)s)。请为期望值 %(attr)s 指定一个有效值，"
-"或者在调整大小之前关闭虚拟机。"
-
-#: pypowervm/exceptions.py:239
-#, python-format
-msgid ""
-"Changing %(attr)s is not supported while virtual machine "
-"'%(instance_name)s' is running. The virtual machine must be powered off "
-"first."
-msgstr ""
-"当虚拟机“%(instance_name)s”正在运行时，"
-"不支持更改 %(attr)s。必须首先"
-"关闭虚拟机。"
-
-#: pypowervm/exceptions.py:245
-#, python-format
-msgid ""
-"Failed to update object properties for %(uuid)s because the object "
-"information is out of date."
-msgstr ""
-"未能更新 %(uuid)s 的对象属性，"
-"因为对象信息已过时。"
-
-#: pypowervm/exceptions.py:250
-#, python-format
-msgid ""
-"Unable to find a supported storage connection type in the list of storage"
-" connectivity groups: %(scg_conn_types)s"
-msgstr ""
-"在存储器连接组列表中"
-" 找不到受支持的存储器连接类型：%(scg_conn_types)s"
-
-#: pypowervm/exceptions.py:255
-#, python-format
-msgid ""
-"Unable to create virtual adapter for attaching storage to virtual machine"
-" %(instance_name)s. Reason: %(reason)s"
-msgstr ""
-"无法创建虚拟适配器以将存储器连接至"
-" 虚拟机 %(instance_name)s。原因：%(reason)s"
-
-#: pypowervm/exceptions.py:260
-#, python-format
-msgid ""
-"Unable to perform this operation with the storage connectivity group "
-"provided for virtual machine %(instance_name)s."
-msgstr ""
-"无法使用为虚拟机 %(instance_name)s"
-"所提供的存储器连接组执行此操作。"
-
-#: pypowervm/exceptions.py:266
-#, python-format
-msgid ""
-"Failed to update object properties for %(uuid)s because the object "
-"information is incomplete."
-msgstr ""
-"未能更新 %(uuid)s 的对象属性，"
-"因为对象信息不完整。"
-
-#: pypowervm/exceptions.py:271
-#, python-format
-msgid ""
-"Unable to configure storage for virtual machine '%(instance_name)s'. "
-"Configuring storage for a virtual machine in Active state requires RMC "
-"connectivity."
-msgstr ""
-"无法为虚拟机“%(instance_name)s”配置存储器。"
-"为处于“活动”状态的虚拟机"
-"配置存储器需要建立 RMC 连接。"
-
-#: pypowervm/exceptions.py:277
-#, python-format
-msgid ""
-"Invalid attribute name '%(key)s' was passed in as part of the flavor "
-"extra specs for virtual machine '%(instance_name)s'."
-msgstr ""
-"作为虚拟机“%(instance_name)s”"
-"的 flavor 额外规范的一部分传递了无效属性名称“%(key)s”。"
-
-#: pypowervm/exceptions.py:283
-msgid ""
-"The operation cannot complete because the system is busy. Wait a few "
-"minutes and then try the operation again."
-msgstr ""
-"无法完成该操作，因为系统繁忙。"
-"请等待几分钟，然后重试该操作。"
-
-#: pypowervm/exceptions.py:288
-#, python-format
-msgid ""
-"Unable to find volume group '%(volume_group_name)s' on Virtual I/O Server"
-" '%(uuid)s'."
-msgstr ""
-"在 Virtual I/O Server“%(uuid)s”上"
-" 找不到卷组“%(volume_group_name)s”。"
-
-#: pypowervm/exceptions.py:293
-#, python-format
-msgid "Unable to retrieve host statistics for managed host %(host)s."
-msgstr "无法检索受管主机 %(host)s 的主机统计信息。"
-
-#: pypowervm/exceptions.py:298
-#, python-format
-msgid ""
-"Unable to remove the virtual adapter from Virtual I/O Server %(uuid)s "
-"because it is a required adapter."
-msgstr ""
-"无法从 Virtual I/O Server %(uuid)s 中除去虚拟适配器，"
-"因为它是必需的适配器。"
-
-#: pypowervm/exceptions.py:303
-#, python-format
-msgid ""
-"Unable to create virtual adapters on Virtual I/O Server '%(uuid)s'. Run "
-"the Verify Environment tool. You can either click the Verify Environment "
-"button on the GUI Home page or type the powervc-validate command on the "
-"command line. Verify that a sufficient number of virtual resources are "
-"configured for the Virtual I/O Server. Then, try the operation again."
-msgstr ""
-"无法在 Virtual I/O Server“%(uuid)s”上创建虚拟适配器。"
-"请运行“验证环境”工具。您可以单击 GUI 主页上的“验证环境”按钮，"
-"或者在命令行上输入 powervc-validate 命令。"
-"请验证是否为 Virtual I/O Server 配置了足够数量的虚拟资源。"
-"然后重试操作。"
-
-#: pypowervm/exceptions.py:313
-#, python-format
-msgid "The license for Virtual I/O Server %(vios_name)s has not been accepted."
-msgstr "尚未接受 Virtual I/O Server %(vios_name)s 的许可证。"
-
-#: pypowervm/exceptions.py:318
-#, python-format
-msgid ""
-"Virtual I/O Server %(vios_name)s is not running. The current state is: "
-"%(vios_state)s"
-msgstr ""
-"Virtual I/O Server %(vios_name)s 未运行。当前状态为："
-"%(vios_state)s"
-
-#: pypowervm/exceptions.py:323
-#, python-format
-msgid ""
-"Virtual I/O Server %(vios_name)s does not have an active Resource "
-"Monitoring Control state."
-msgstr ""
-"Virtual I/O Server %(vios_name)s 不具备活动的"
-"资源监控状态。"
-
-#: pypowervm/exceptions.py:328
-#, python-format
-msgid ""
-"Virtual I/O Server %(vios_name)s is currently too busy to process update "
-"operations."
-msgstr ""
-"Virtual I/O Server %(vios_name)s 当前太繁忙，"
-"无法处理更新操作。"
-
-#: pypowervm/exceptions.py:333
-#, python-format
-msgid ""
-"Virtual I/O Server %(vios_name)s does not have any fibre channel ports "
-"listed in the storage connectivity group."
-msgstr ""
-"Virtual I/O Server %(vios_name)s 不具备"
-"存储器连接组中所列示的任何光纤通道端口。"
-
-#: pypowervm/exceptions.py:339
-#, python-format
-msgid ""
-"There are not enough Virtual I/O Servers with the necessary connectivity "
-"within the storage connectivity group for virtual machine "
-"'%(instance_name)s' volume configuration: (Requested: %(min_vios)s "
-"Available: %(avail_vios)s). %(reasons)s"
-msgstr ""
-"在虚拟机“%(instance_name)s”卷配置的存储器连接组中，"
-"没有足够的具有所需要的连接的 Virtual I/O Server"
-"（请求的数量：%(min_vios)s，"
-"可用的数量：%(avail_vios)s）。%(reasons)s"
-
-#: pypowervm/exceptions.py:347
-#, python-format
-msgid ""
-"Unable to configure storage adapters for virtual machine "
-"%(instance_name)s on the required number of Virtual I/O Servers for the "
-"volume. Minimum number of Virtual I/O Servers required per volume: "
-"%(min_vios)s. %(reasons)s"
-msgstr ""
-"在卷的所需数目的 Virtual I/O Server 上，"
-"无法为虚拟机 %(instance_name)s 配置存储适配器。"
-"每个卷需要的最小数目的 Virtual I/O Server："
-"%(min_vios)s。%(reasons)s"
-
-#: pypowervm/exceptions.py:355
-#, python-format
-msgid ""
-"Unable to configure storage adapters for virtual machine "
-"%(instance_name)s on available physical Fibre Channel ports that satisfy "
-"the NPIV switch fabric requirement of the storage connectivity group. "
-"%(reasons)s"
-msgstr ""
-"无法为可用物理光纤通道端口上的虚拟机 %(instance_name)s"
-"配置能够满足存储器连接组的"
-"NPIV 交换光纤网需求的存储适配器。"
-"%(reasons)s"
-
-#: pypowervm/exceptions.py:362
 #, python-format
 msgid ""
 "Unable to derive the appropriate physical FC port for WWPN %(wwpn)s.  The"
@@ -487,325 +24,68 @@ msgid ""
 " for the query was %(vio_uri)s."
 msgstr ""
 "无法为 WWPN %(wwpn)s 派生相应的物理 FC 端口。"
-" VIOS 扩展属性组可能不足。查询的 VIOS URI"
-" 为 %(vio_uri)s。"
+"VIOS 扩展属性组可能不足。查询的 VIOS URI"
+"为 %(vio_uri)s。"
 
-#: pypowervm/exceptions.py:368
-#, python-format
-msgid ""
-"The virtual machine %(name)s cannot use the specified port because it "
-"would require MAC address %(mac)s to be set. The host does not support "
-"custom MAC addresses."
-msgstr ""
-"虚拟机 %(name)s 无法使用所指定的端口，"
-"因为它将要求设置 MAC 地址 %(mac)s。"
-"主机不支持定制 MAC 地址。"
-
-#: pypowervm/exceptions.py:374
-msgid ""
-"The operation failed because it is only allowed when the managed host is "
-"in the Standby or Operating state."
-msgstr ""
-"操作失败，因为仅当受管主机处于“备用”或“正在运行”状态时"
-"才允许执行该操作。"
-
-#: pypowervm/exceptions.py:379
-msgid ""
-"Error getting information from the Virtual I/O Server(s). This could be "
-"because the it is down or too busy to process the request."
-msgstr ""
-"从 Virtual I/O Server 获取信息时发生错误。"
-"这可能是因为它已关闭或者太繁忙，无法处理该请求。"
-
-#: pypowervm/exceptions.py:385
+#: pypowervm/exceptions.py:122
 #, python-format
 msgid "Element not found: %(element_type)s %(element)s"
 msgstr "找不到元素：%(element_type)s %(element)s"
 
-#: pypowervm/exceptions.py:389
+#: pypowervm/exceptions.py:126
 #, python-format
 msgid "LPAR not found: %(lpar_name)s"
 msgstr "找不到 LPAR：%(lpar_name)s"
 
-#: pypowervm/exceptions.py:393
-#, python-format
-msgid "System not found: %(system_name)s"
-msgstr "找不到系统：%(system_name)s"
-
-#: pypowervm/exceptions.py:397
-#, python-format
-msgid "The migration task failed. %(error)s"
-msgstr "迁移任务失败。%(error)s"
-
-#: pypowervm/exceptions.py:401
-#, python-format
-msgid "Migration of %(lpar_name)s is already in progress."
-msgstr "已经在迁移 %(lpar_name)s。"
-
-#: pypowervm/exceptions.py:405
-#, python-format
-msgid "Unable to update progress for virtual machine '%(uuid)s'."
-msgstr "无法更新虚拟机“%(uuid)s”的进度。"
-
-#: pypowervm/exceptions.py:409
-#, python-format
-msgid ""
-"The media library is too small for the ISO image. The media library "
-"requires %(medialib_mb_required)d MB of space but only "
-"%(mediavg_mb_avail)d MB is available."
-msgstr ""
-"对于 ISO 映像而言，介质库太小。介质库"
-"需要 %(medialib_mb_required)d MB 的空间，"
-"但是只有 %(mediavg_mb_avail)d MB 可用空间。"
-
-#: pypowervm/exceptions.py:415
-#, python-format
-msgid ""
-"Virtual machine '%(instance_name)s' is running during capture. Virtual "
-"machines must be stopped before they can be captured."
-msgstr ""
-"在捕获期间，虚拟机“%(instance_name)s”正在运行。虚拟机"
-"必须停止之后才能对其进行捕获。"
-
-#: pypowervm/exceptions.py:421
-#, python-format
-msgid "Unable to find virtual machine '%(instance_name)s'."
-msgstr "找不到虚拟机“%(instance_name)s”。"
-
-#: pypowervm/exceptions.py:425
-msgid "Insufficient resources"
-msgstr "资源不足"
-
-#: pypowervm/exceptions.py:429
-#, python-format
-msgid ""
-"The requested memory (%(mem_requested)d MB) is below the minimum required"
-" value (%(mem_min)d MB)"
-msgstr ""
-"所请求的内存量 (%(mem_requested)d MB) 少于"
-" 所需要的最小值 (%(mem_min)d MB)"
-
-#: pypowervm/exceptions.py:434
-#, python-format
-msgid ""
-"The requested disk (%(new_disk_size)d GB) is lesser than the existing "
-"disk (%(disk_size)d GB)"
-msgstr ""
-"所请求的磁盘空间 (%(new_disk_size)d GB) 少于"
-"现有磁盘空间 (%(disk_size)d GB)"
-
-#: pypowervm/exceptions.py:439
-#, python-format
-msgid ""
-"The requested CPUs (%(cpus_requested)d) are below the minimum required "
-"value (%(cpus_min)d) "
-msgstr ""
-"所请求的 CPU 数 (%(cpus_requested)d) 少于"
-"所需要的最小值 (%(cpus_min)d) "
-
-#: pypowervm/exceptions.py:444
-#, python-format
-msgid ""
-"The requested processing units (%(units_requested)d) are below the "
-"minimum required value (%(units_min)d) "
-msgstr ""
-"所请求的处理单元数 (%(units_requested)d)"
-"少于所需要的最小值 (%(units_min)d) "
-
-#: pypowervm/exceptions.py:449
-#, python-format
-msgid ""
-"Insufficient free memory: (%(mem_requested)d MB requested, %(mem_avail)d "
-"MB free)"
-msgstr ""
-"可用内存量不足：（请求的是 %(mem_requested)d MB，而实际只有 %(mem_avail)d MB"
-"可用）"
-
-#: pypowervm/exceptions.py:454
-#, python-format
-msgid ""
-"Insufficient CPUs available on host for virtual machine "
-"'%(instance_name)s' (%(cpus_requested)d requested and %(cpus_avail)d "
-"available)"
-msgstr ""
-"在主机上，没有足够的 CPU 可用于"
-"虚拟机“%(instance_name)s”（所请求的 CPU 数为 %(cpus_requested)d，"
-"可用的 CPU 数为 %(cpus_avail)d）"
-
-#: pypowervm/exceptions.py:460
-#, python-format
-msgid ""
-"Insufficient available processing units: (%(units_requested)d requested, "
-"%(units_avail)d available)"
-msgstr ""
-"可用处理单元数不足：（请求的单元数是 %(units_requested)d，"
-"而实际只有 %(units_avail)d 个可用）"
-
-#: pypowervm/exceptions.py:466
+#: pypowervm/exceptions.py:130
 #, python-format
 msgid "The '%(operation_name)s' operation failed. %(error)s"
 msgstr "“%(operation_name)s”操作失败。%(error)s"
 
-#: pypowervm/exceptions.py:470
+#: pypowervm/exceptions.py:134
 #, python-format
 msgid ""
 "The '%(operation_name)s' operation failed. Failed to complete the task in"
 " %(seconds)d seconds."
 msgstr ""
 "“%(operation_name)s”操作失败。"
-" 未能在 %(seconds)d 秒钟之内完成该任务。"
+"未能在 %(seconds)d 秒钟之内完成该任务。"
 
-#: pypowervm/exceptions.py:475
-#, python-format
-msgid "Virtual machine '%(instance_name)s' cleanup failed. Reason: %(reason)s"
-msgstr "清除虚拟机“%(instance_name)s”失败。原因：%(reason)s"
-
-#: pypowervm/exceptions.py:480
-#, python-format
-msgid "Failed to delete virtual machine. %(reason)s"
-msgstr "未能删除虚拟机。%(reason)s"
-
-#: pypowervm/exceptions.py:484
-#, python-format
-msgid ""
-"The boot device name attribute is not defined for virtual machine "
-"%(instance_name)s with ID %(instance_uuid)s."
-msgstr ""
-"未对标识为 %(instance_uuid)s 的虚拟机 %(instance_name)s"
-"定义引导设备名称属性。"
-
-#: pypowervm/exceptions.py:489
-#, python-format
-msgid ""
-"Unable to change disk size for virtual machine %(instance_name)s because "
-"disk size change is not supported for IBM i."
-msgstr ""
-"无法更改虚拟机 %(instance_name)s 的磁盘大小，"
-"因为 IBM i 不支持更改磁盘大小。"
-
-#: pypowervm/exceptions.py:495
-#, python-format
-msgid ""
-"Unable to save the captured image meta data for virtual machine "
-"%(instance_name)s because the image object is invalid."
-msgstr ""
-"无法保存虚拟机 %(instance_name)s 的已捕获映像元数据，"
-"因为映像对象无效。"
-
-#: pypowervm/exceptions.py:501
-#, python-format
-msgid ""
-"Boot volume %(volume)s is invalid for virtual machine %(instance_name)s "
-"with ID %(instance_uuid)s."
-msgstr ""
-"对于标识为 %(instance_uuid)s 的虚拟机 %(instance_name)s，"
-"引导卷 %(volume)s 无效。"
-
-#: pypowervm/exceptions.py:506
-#, python-format
-msgid ""
-"Clone for boot volume %(image_volume)s failed for virtual machine "
-"%(instance_name)s with ID %(instance_uuid)s."
-msgstr ""
-"对于标识为 %(instance_uuid)s 的虚拟机 %(instance_name)s，"
-"克隆引导卷 %(image_volume)s 失败。"
-
-#: pypowervm/exceptions.py:511
-msgid ""
-"An error occurred while working with objects returned from the PowerVM "
-"API."
-msgstr ""
-"处理从 PowerVM API 返回的对象时"
-"发生错误。"
-
-#: pypowervm/exceptions.py:516
-#, python-format
-msgid ""
-"Virtual machine '%(instance_name)s' does not have an operating system "
-"identified.  The process for bringing the virtual machine under "
-"management by PowerVC must be completed."
-msgstr ""
-"虚拟机“%(instance_name)s”未标识操作系统。"
-"必须完成使虚拟机"
-"由 PowerVC 进行管理的过程。"
-
-#: pypowervm/exceptions.py:523
-#, python-format
-msgid ""
-"The operating system %(os_distro)s for virtual machine "
-"'%(instance_name)s' is not supported. Supported operating systems include"
-" the following: %(options)s"
-msgstr ""
-"虚拟机“%(instance_name)s”的操作系统 %(os_distro)s 不受支持。"
-"受支持的操作系统包括下列操作系统："
-" %(options)s"
-
-#: pypowervm/exceptions.py:529
-#, python-format
-msgid ""
-"Unable to capture virtual machine '%(instance_name)s' because IBM i does "
-"not support multi-disks capture."
-msgstr ""
-"无法捕获虚拟机“%(instance_name)s”，"
-"因为 IBM i 不支持进行多磁盘捕获。"
-
-#: pypowervm/exceptions.py:534
-#, python-format
-msgid "An error occurred when extending volume %(volume_id)s"
-msgstr "扩充卷 %(volume_id)s 时发生错误"
-
-#: pypowervm/exceptions.py:538
-#, python-format
-msgid ""
-"Unable to deploy virtual machine '%(instance_name)s' because the host "
-"does not support the operating system installed on this image"
-msgstr ""
-"无法部署虚拟机“%(instance_name)s”，"
-"因为主机不支持安装在此映像上的操作系统"
-
-#: pypowervm/exceptions.py:544
-#, python-format
-msgid ""
-"Unable to deploy virtual machine '%(instance_name)s' because the host "
-"does not support the operating systemversion installed on this image"
-msgstr ""
-"无法部署虚拟机“%(instance_name)s”，"
-"因为主机不支持安装在此映像上的操作系统版本"
-
-#: pypowervm/exceptions.py:550
-#, python-format
-msgid "Failed to discover the volume error code %(status)s"
-msgstr "未能发现卷错误代码 %(status)s"
-
-#: pypowervm/exceptions.py:554
-#, python-format
-msgid ""
-"LUA Discovery Completed with few ITL Error:Device %(dev)s Discovered, "
-"Status: %(status)sReason: %(msg)s"
-msgstr ""
-"已完成 LUA 发现，发现了很少 ITL 错误：已发现设备 %(dev)s，"
-"状态：%(status)s 原因：%(msg)s"
-
-#: pypowervm/exceptions.py:560
+#: pypowervm/exceptions.py:139
 #, python-format
 msgid "Failed to power off Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "未能关闭虚拟机 %(lpar_nm)s：%(reason)s"
 
-#: pypowervm/exceptions.py:564
+#: pypowervm/exceptions.py:143
 #, python-format
 msgid "Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "未能开启虚拟机 %(lpar_nm)s：%(reason)s"
 
-#: pypowervm/exceptions.py:568
+#: pypowervm/exceptions.py:147
 #, python-format
 msgid ""
 "Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN Identifier on"
 " a different Network Bridge."
 msgstr ""
 "无法除去 VLAN %(vlan_id)d，"
-" 因为它是另外的网桥上的主 VLAN 标识。"
+"因为它是另外的网桥上的主 VLAN 标识。"
 
-#: pypowervm/exceptions.py:573
+#: pypowervm/exceptions.py:152
+#, python-format
+msgid ""
+"Unable to provision VLAN %(vlan_id)d.  It appears to be contained on "
+"device '%(dev_name)s' on Virtual I/O Server %(vios)s.  That device is not"
+" connected to any Network Bridge (Shared Ethernet Adapter).  Please "
+"manually remove the device or add it to the Network Bridge before "
+"continuing."
+msgstr ""
+"无法供应 VLAN %(vlan_id)d。它似乎包含在"
+"Virtual I/O Server %(vios)s 上的设备“%(dev_name)s”中。该设备未"
+"连接至任何网桥（共享以太网适配器）。请"
+"手动除去该设备，或将其添加至网桥，然后"
+"再继续操作。"
+
+#: pypowervm/exceptions.py:161
 #, python-format
 msgid ""
 "A Logical Unit with name %(lu_name)s already exists on Shared Storage "
@@ -814,7 +94,7 @@ msgstr ""
 "共享存储池 %(ssp_name)s 上已存在名称为 %(lu_name)s"
 "的逻辑单元。"
 
-#: pypowervm/exceptions.py:578
+#: pypowervm/exceptions.py:166
 msgid ""
 "Unable to find a physical port to map a virtual Fibre Channel port to.  "
 "This is due to either a Virtual I/O Server being unavailable, or improper"
@@ -822,43 +102,48 @@ msgid ""
 msgstr ""
 "找不到要将虚拟光纤通道端口映射至的物理端口。"
 "这是由于 Virtual I/O Server 不可用，"
-" 或者为物理光纤通道端口指定了不正确的端口。"
+"或者为物理光纤通道端口指定了不正确的端口。"
 
-#: pypowervm/exceptions.py:585
+#: pypowervm/exceptions.py:173
 msgid ""
 "Unable to start the console to the Virtual Machine.  The pypowervm API is"
 " running in a non-local mode.  The console can only be deployed when "
 "pypowervm is co-located with the PowerVM API."
 msgstr ""
 "无法对虚拟机启动控制台。pypowervm API"
-" 正在以非本地方式运行。仅当 pypowervm 与 PowerVM API 位于同一位置时，"
+"正在以非本地方式运行。仅当 pypowervm 与 PowerVM API 位于同一位置时，"
 "才能部署控制台。"
 
-#: pypowervm/exceptions.py:592
+#: pypowervm/exceptions.py:180
 #, python-format
 msgid "WrapperTask %(name)s has no subtasks!"
 msgstr "WrapperTask %(name)s 没有子任务！"
 
-#: pypowervm/exceptions.py:596
+#: pypowervm/exceptions.py:184
 msgid "FeedTask can't have an empty feed."
 msgstr "FeedTask 不能具有空的订阅源。"
 
-#: pypowervm/exceptions.py:600
-#, python-format
-msgid "Transaction %(name)s has no subtasks!"
-msgstr "事务 %(name)s 没有子任务！"
-
-#: pypowervm/exceptions.py:604
+#: pypowervm/exceptions.py:188
 #, python-format
 msgid "OS unable to read file %(access_file)s."
 msgstr "操作系统无法读取文件 %(access_file)s。"
 
-#: pypowervm/exceptions.py:608
+#: pypowervm/exceptions.py:192
 #, python-format
 msgid "OS able to read file %(access_file)s, but encountered an access error."
 msgstr "操作系统能够读取文件 %(access_file)s，但是遇到了访问错误。"
 
-#: pypowervm/util.py:125
+#: pypowervm/exceptions.py:197
+#, python-format
+msgid "The migration task failed. %(error)s"
+msgstr "迁移任务失败。%(error)s"
+
+#: pypowervm/exceptions.py:201
+#, python-format
+msgid "No load source found for VM %(vm_name)s"
+msgstr "找不到 VM %(vm_name)s 的装入源"
+
+#: pypowervm/util.py:122
 #, python-format
 msgid ""
 "Proposed extended attribute group '%(arg_xag)s' doesn't match existing "
@@ -867,30 +152,30 @@ msgstr ""
 "建议的扩展属性组“%(arg_xag)s”"
 "与现有的扩展属性组“%(path_xag)s”不匹配"
 
-#: pypowervm/util.py:394
+#: pypowervm/util.py:391
 #, python-format
 msgid "Prefix and suffix together may not be more than %d characters."
 msgstr "前缀和后缀一共不能超过 %d  个字符。"
 
-#: pypowervm/util.py:399
+#: pypowervm/util.py:396
 msgid "Total length must be at least 1 character."
 msgstr "总长度必须至少为 1 个字符。"
 
-#: pypowervm/util.py:422
+#: pypowervm/util.py:419
 msgid "The name parameter must be at least one character long."
 msgstr "name 参数的长度必须至少为 1 个字符。"
 
-#: pypowervm/util.py:425
+#: pypowervm/util.py:422
 #, python-format
 msgid "The name parameter must not exceed %d characters when trunk_ok is False."
 msgstr "当 trunk_ok 为 False 时，name 参数不得超过 %d 个字符。"
 
-#: pypowervm/helpers/log_helper.py:81
+#: pypowervm/helpers/log_helper.py:82
 #, python-format
 msgid "REQUEST: %s"
 msgstr "请求：%s"
 
-#: pypowervm/helpers/log_helper.py:101
+#: pypowervm/helpers/log_helper.py:102
 #, python-format
 msgid "RESPONSE: %s"
 msgstr "响应：%s"
@@ -900,7 +185,7 @@ msgstr "响应：%s"
 msgid "Unable to find the Virtual Switch %s on the system."
 msgstr "在系统上找不到虚拟交换机 %s。"
 
-#: pypowervm/tasks/hdisk.py:165
+#: pypowervm/tasks/hdisk.py:182
 #, python-format
 msgid ""
 "hdisk discovery failed; will scrub stale storage for LPAR IDs %s and "
@@ -909,32 +194,32 @@ msgstr ""
 "发现 hdisk 失败；将擦除 LPAR 标识 %s 的旧存储器，"
 "然后重试。"
 
-#: pypowervm/tasks/hdisk.py:308
+#: pypowervm/tasks/hdisk.py:324
 #, python-format
-msgid "LUA Discovery Successful Device Found: %s"
-msgstr "LUA 发现成功，找到的设备为：%s"
+msgid "LUA Recovery Successful. Device Found: %s"
+msgstr "LUA 恢复成功。找到的设备为：%s"
 
-#: pypowervm/tasks/hdisk.py:312
+#: pypowervm/tasks/hdisk.py:328
 #, python-format
 msgid "ITL Error encountered: %s"
 msgstr "遇到了 ITL 错误：%s"
 
-#: pypowervm/tasks/hdisk.py:314
+#: pypowervm/tasks/hdisk.py:330
 #, python-format
-msgid "%s Device is currently in use"
-msgstr "当前正在使用 %s 设备"
+msgid "%s Device is currently in use."
+msgstr "%s 设备当前正在使用中。"
 
-#: pypowervm/tasks/hdisk.py:316
+#: pypowervm/tasks/hdisk.py:332
 #, python-format
-msgid "%s Device discovered with unknown uuid"
-msgstr "发现了具有未知 UUID 的 %s 设备"
+msgid "%s Device discovered with unknown UDID."
+msgstr "发现了具有未知 UUID 的 %s 设备。"
 
-#: pypowervm/tasks/hdisk.py:318
+#: pypowervm/tasks/hdisk.py:334
 #, python-format
 msgid "Failed to Discover the Device : %s"
 msgstr "未能发现设备：%s"
 
-#: pypowervm/tasks/hdisk.py:388
+#: pypowervm/tasks/hdisk.py:404
 #, python-format
 msgid "CLIRunner Error: %s"
 msgstr "CLIRunner 错误：%s"
@@ -942,18 +227,18 @@ msgstr "CLIRunner 错误：%s"
 #: pypowervm/tasks/memory.py:101
 #, python-format
 msgid ""
-"Error obtaining host memory overhead for host with UUID '%(host)s' "
+"Error obtaining host memory overhead for host with UUID '%(host)s': "
 "%(error)s."
 msgstr ""
 "获取 UUID 为“%(host)s”的主机的主机内存开销时发生错误："
 "%(error)s。"
 
-#: pypowervm/tasks/power.py:153 pypowervm/tasks/power.py:162
+#: pypowervm/tasks/power.py:159 pypowervm/tasks/power.py:168
 #, python-format
 msgid "Error: %s"
 msgstr "错误：%s"
 
-#: pypowervm/tasks/power.py:194
+#: pypowervm/tasks/power.py:200
 #, python-format
 msgid ""
 "Error invalidating adapter cache for LPAR  %(lpar_name) with UUID "
@@ -966,7 +251,7 @@ msgstr ""
 msgid "Retrying modification of SCSI Mapping."
 msgstr "重试修改 SCSI 映射。"
 
-#: pypowervm/tasks/scsi_mapper.py:88
+#: pypowervm/tasks/scsi_mapper.py:89
 #, python-format
 msgid ""
 "Found existing mapping of %(stg_type)s storage element %(stg_name)s from "
@@ -975,7 +260,7 @@ msgstr ""
 "找到 %(stg_type)s 存储元素 %(stg_name)s 的"
 "从 Virtual I/O Server %(vios_name)s 到客户机 LPAR %(lpar_uuid)s 的现有映射。"
 
-#: pypowervm/tasks/scsi_mapper.py:106
+#: pypowervm/tasks/scsi_mapper.py:107
 #, python-format
 msgid ""
 "Creating mapping of %(stg_type)s storage element %(stg_name)s from "
@@ -984,67 +269,76 @@ msgstr ""
 "正在创建 %(stg_type)s 存储元素 %(stg_name)s 的"
 "从 Virtual I/O Server %(vios_name)s 到客户机 LPAR %(lpar_uuid)s 的映射。"
 
-#: pypowervm/tasks/scsi_mapper.py:367
+#: pypowervm/tasks/scsi_mapper.py:371
 msgid "Must not specify both match_func and stg_elem."
 msgstr "不得同时指定 match_func 和 stg_elem。"
 
-#: pypowervm/tasks/storage.py:288
+#: pypowervm/tasks/storage.py:287
 #, python-format
 msgid "Unable to cleanup after file upload. File uuid: %s"
-msgstr "上载文件之后无法将其清除。文件 UUID：%s"
+msgstr "上载文件之后无法清除。文件 UUID：%s"
 
-#: pypowervm/tasks/storage.py:425
+#: pypowervm/tasks/storage.py:385
+#, python-format
+msgid ""
+"Linked clone Logical Unit %(luname)s (UDID %(udid)s) has no backing image"
+" LU.  It should probably be deleted."
+msgstr ""
+"链接克隆逻辑单元 %(luname)s (UDID %(udid)s) 没有支持映像"
+" LU。可能应当将其删除。"
+
+#: pypowervm/tasks/storage.py:430
 msgid "Unable to locate new vDisk on file upload."
 msgstr "上载文件时找不到新的 vDisk。"
 
-#: pypowervm/tasks/storage.py:475
+#: pypowervm/tasks/storage.py:480
 #, python-format
 msgid "Deleting virtual disk %(vdisk)s from volume group %(vg)s"
 msgstr "正在从卷组 %(vg)s 中删除虚拟盘 %(vdisk)s"
 
-#: pypowervm/tasks/storage.py:499
+#: pypowervm/tasks/storage.py:504
 #, python-format
 msgid "Deleting virtual optical device %(vopt)s from volume group %(vg)s"
 msgstr "正在从卷组 %(vg)s 中删除虚拟光学设备 %(vopt)s"
 
-#: pypowervm/tasks/storage.py:554
+#: pypowervm/tasks/storage.py:559
 #, python-format
 msgid "Removing LU %(lu_name)s from SSP %(ssp_name)s"
 msgstr "正在从 SSP %(ssp_name)s 中除去 LU %(lu_name)s"
 
-#: pypowervm/tasks/storage.py:575
+#: pypowervm/tasks/storage.py:580
 #, python-format
 msgid ""
 "Removing Image LU %(lu_name)s from SSP %(ssp_name)s because it is no "
 "longer in use."
 msgstr ""
 "正在从 SSP %(ssp_name)s 中除去映像 LU %(lu_name)s，"
-"因为不再使用它。"
+"因为不再进行使用。"
 
-#: pypowervm/tasks/storage.py:611
+#: pypowervm/tasks/storage.py:625
 #, python-format
 msgid ""
-"Removing %(num_maps)d VSCSI mappings associated with LPAR ID %(lpar_id)d "
-"from VIOS %(vios_name)s."
+"Removing %(num_maps)d orphan %(stg_type)s mappings from VIOS "
+"%(vios_name)s."
 msgstr ""
-"正在从 VIOS %(vios_name)s 中除去与 LPAR 标识 %(lpar_id)d"
-"相关联的 %(num_maps)d 个 VSCSI 映射。"
+"正在从 VIOS %(vios_name)s 除去 %(num_maps)d 个孤线程 %(stg_type)s"
+"映射。"
 
-#: pypowervm/tasks/storage.py:626
+#: pypowervm/tasks/storage.py:652
 #, python-format
 msgid ""
-"Removing %(num_maps)d VFC mappings associated with LPAR ID %(lpar_id)d "
-"from VIOS %(vios_name)s."
+"Removing %(num_maps)d %(stg_type)s mappings associated with LPAR ID "
+"%(lpar_id)d from VIOS %(vios_name)s."
 msgstr ""
-"正在从 VIOS %(vios_name)s 中除去与 LPAR 标识 %(lpar_id)d"
-"相关联的 %(num_maps)d 个 VFC 映射。"
+"正在从 VIOS %(vios_name)s 除去与 LPAR 标识 "
+"%(lpar_id)d 相关联的 %(num_maps)d 个 %(stg_type)s 映射。"
 
-#: pypowervm/tasks/storage.py:688
+#: pypowervm/tasks/storage.py:725
 #, python-format
 msgid "Unexpected storage element type %s."
 msgstr "意外的存储元素类型 %s。"
 
-#: pypowervm/tasks/storage.py:705
+#: pypowervm/tasks/storage.py:742
 #, python-format
 msgid ""
 "Scrubbing the following %(vdcount)d Virtual Disks from VIOS %(vios)s: "
@@ -1053,7 +347,7 @@ msgstr ""
 "正在从 VIOS %(vios)s 中擦除下列 %(vdcount)d 个虚拟盘："
 "%(vdlist)s"
 
-#: pypowervm/tasks/storage.py:713
+#: pypowervm/tasks/storage.py:750
 #, python-format
 msgid ""
 "Scrubbing the following %(vocount)d Virtual Opticals from VIOS %(vios)s: "
@@ -1062,34 +356,34 @@ msgstr ""
 "正在从 VIOS %(vios)s 中擦除下列 %(vocount)d 个虚拟光学设备："
 "%(volist)s"
 
-#: pypowervm/tasks/vfc_mapper.py:338
+#: pypowervm/tasks/storage.py:814
+#, python-format
+msgid ""
+"Skipping scrub of %(stg_type)s mappings from VIOS %(vios_name)s for the "
+"following LPAR IDs because those LPARs exist: %(lpar_ids)s"
+msgstr ""
+"正在为下列 LPAR 标识跳过从 VIOS %(vios_name)s 擦除 %(stg_type)s 映射，"
+"因为这些 LPAR 已存在：%(lpar_ids)s"
+
+#: pypowervm/tasks/vfc_mapper.py:379
 #, python-format
 msgid "Detected a stale mapping for LPAR with UUID %s."
 msgstr "检测到 UUID 为 %s 的 LPAR 的旧映射。"
 
-#: pypowervm/tasks/vfc_mapper.py:635
+#: pypowervm/tasks/vfc_mapper.py:583
 #, python-format
 msgid ""
 "Unable to find appropriate VIOS.  The payload provided was likely "
 "insufficient.  The payload data is:\n"
 " %s)"
 msgstr ""
-"找不到相应的 VIOS。所提供的有效内容"
-"可能不足。有效内容数据为：\n"
+"找不到相应的 VIOS。所提供的有效内容可能"
+"不足。有效内容数据为：\n"
 " %s)"
 
-#: pypowervm/tasks/vterm.py:63
+#: pypowervm/tasks/vterm.py:61
 msgid "Unable to close vterm."
 msgstr "无法关闭 vterm。"
-
-#: pypowervm/tasks/vterm.py:118
-#, python-format
-msgid ""
-"Unable to run process.  Error is %(error)s\n"
-"Command being run: %(cmd)s"
-msgstr ""
-"无法运行流程。错误为 %(error)s\n"
-"正在运行的命令：%(cmd)s"
 
 #: pypowervm/tests/test_i18n.py:33
 msgid "This is a test"
@@ -1097,54 +391,54 @@ msgstr "这是一个测试"
 
 #: pypowervm/tests/test_i18n.py:36
 msgid "This is a message for which a translation doesn't exist"
-msgstr "这是一条不存在翻译的消息"
+msgstr "这是一条未进行翻译的消息"
 
-#: pypowervm/utils/retry.py:147
+#: pypowervm/utils/retry.py:152
 #, python-format
 msgid ""
-"Attempt %(retry)d of total %(total)d  for URI %(uri)s.  Error was a known"
-" retry response code: %(resp_code)s"
+"Attempt %(retry)d of total %(total)d for URI %(uri)s.  Error was a known "
+"retry response code: %(resp_code)s"
 msgstr ""
-"对 URI %(uri)s 尝试了 %(retry)d 次，总共 %(total)d 次。错误是"
-" 一个已知的重试响应代码：%(resp_code)s"
+"对 URI %(uri)s 尝试第 %(retry)d 次（共 %(total)d 次）。错误为"
+"一个已知的重试响应代码：%(resp_code)s"
 
-#: pypowervm/utils/retry.py:154
+#: pypowervm/utils/retry.py:159
 #, python-format
 msgid ""
 "Attempt %(retry)d of %(total)d failed.  Will retry. The exception was:\n"
 " %(except)s."
 msgstr ""
-"尝试了 %(retry)d 次（总共 %(total)d 次）都失败。将重试。异常为：\n"
-" %(except)s."
+"尝试第 %(retry)d 次（共 %(total)d 次）失败。将重试。异常为：\n"
+" %(except)s。"
 
-#: pypowervm/utils/transaction.py:302
-msgid "Must supply either EntryWrapper or EntryWrapperGetter"
-msgstr "必须提供 EntryWrapper 或 EntryWrapperGetter"
+#: pypowervm/utils/transaction.py:311
+msgid "Must supply either EntryWrapper or EntryWrapperGetter."
+msgstr "必须提供 EntryWrapper 或 EntryWrapperGetter。"
 
-#: pypowervm/utils/transaction.py:328
+#: pypowervm/utils/transaction.py:337
 msgid "Must supply a valid Subtask."
 msgstr "必须提供有效子任务。"
 
-#: pypowervm/utils/transaction.py:332
+#: pypowervm/utils/transaction.py:341
 #, python-format
 msgid "Duplicate 'provides' name %s."
 msgstr "重复的“provides”名称 %s。"
 
-#: pypowervm/utils/transaction.py:406
+#: pypowervm/utils/transaction.py:416
 #, python-format
 msgid "WrapperTask %s has no Subtasks; no-op execution."
 msgstr "WrapperTask %s 没有子任务；执行空操作。"
 
-#: pypowervm/utils/transaction.py:531
+#: pypowervm/utils/transaction.py:541
 msgid "Must supply either a list of EntryWrappers or a FeedGetter."
 msgstr "必须提供 EntryWrappers 或 FeedGetter 的列表。"
 
-#: pypowervm/utils/transaction.py:709
+#: pypowervm/utils/transaction.py:720
 #, python-format
 msgid "FeedTask %s has no Subtasks; no-op execution."
 msgstr "FeedTask %s 没有子任务；执行空操作。"
 
-#: pypowervm/utils/validation.py:112
+#: pypowervm/utils/validation.py:160
 #, python-format
 msgid ""
 "Insufficient available %(res_name)s on host for virtual machine "
@@ -1153,15 +447,105 @@ msgstr ""
 "在主机上，没有足够的 %(res_name)s 可用于虚拟机"
 "“%(instance_name)s”（请求的是 %(requested)s，而实际 %(avail)s 可用）"
 
-#: pypowervm/utils/validation.py:131
+#: pypowervm/utils/validation.py:187
+msgid "memory"
+msgstr "内存量"
+
+#: pypowervm/utils/validation.py:207
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the minimum or "
+"maximum memory. Power off virtual machine %s and try again."
+msgstr ""
+"更改最小或最大内存量之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/utils/validation.py:292
 msgid "CPUs"
 msgstr "CPU 数"
 
-#: pypowervm/utils/validation.py:135
+#: pypowervm/utils/validation.py:308
 msgid "processing units"
 msgstr "处理单元数"
 
-#: pypowervm/wrappers/base_partition.py:448
+#: pypowervm/utils/validation.py:349
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the minimum or "
+"maximum processors. Power off virtual machine %s and try again."
+msgstr ""
+"更改最小或最大处理器数之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/utils/validation.py:359
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the minimum or "
+"maximum processor units. Power off virtual machine %s and try again."
+msgstr ""
+"更改最小或最大处理器单元数之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/utils/validation.py:375
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the processor "
+"compatibility mode. Power off virtual machine %s and try again."
+msgstr ""
+"更改处理器兼容性方式之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/utils/validation.py:383
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the processing "
+"mode. Power off virtual machine %s and try again."
+msgstr ""
+"更改处理方式之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/utils/validation.py:412
+#, python-format
+msgid ""
+"The desired processors (%(vcpus)d) cannot be above the maximum allowed "
+"processors per partition (%(max_allowed)d) for virtual machine "
+"'%(instance_name)s'."
+msgstr ""
+"对于虚拟机“%(instance_name)s”，所期望的处理器数 (%(vcpus)d)"
+"不能超过每个分区允许的"
+"最大处理器数 (%(max_allowed)d)。"
+
+#: pypowervm/utils/validation.py:424
+#, python-format
+msgid ""
+"The maximum processors (%(vcpus)d) cannot be above the maximum system "
+"capacity processor limit (%(max_allowed)d) for virtual machine "
+"'%(instance_name)s'."
+msgstr ""
+"对于虚拟机“%(instance_name)s”，最大处理器数 (%(vcpus)d) "
+"不能超过"
+"最大系统容量处理器限制 (%(max_allowed)d)。"
+
+#: pypowervm/utils/validation.py:442
+#, python-format
+msgid "The shared processor pool for %s must be DefaultPool."
+msgstr "%s 的共享处理器池必须为 DefaultPool。"
+
+#: pypowervm/utils/validation.py:450
+#, python-format
+msgid "The shared processor pool for %s cannot be changed."
+msgstr "无法更改 %s  的共享处理器池。"
+
+#: pypowervm/utils/validation.py:513
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the simplified "
+"remote restart capability. Power off virtual machine %s and try again."
+msgstr ""
+"更改简化的远程重新启动功能之前，必须首先关闭虚拟机。"
+"请关闭虚拟机 %s，然后重试。"
+
+#: pypowervm/wrappers/base_partition.py:470
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "KeylockPos“%s”无效。"
@@ -1169,7 +553,7 @@ msgstr "KeylockPos“%s”无效。"
 #: pypowervm/wrappers/entry_wrapper.py:258
 #, python-format
 msgid "Cannot convert %(property_name)s='%(value)s' in object %(pvmobject)s"
-msgstr "无法转换对象 %(pvmobject)s 中的 %(property_name)s='%(value)s'"
+msgstr "无法转换对象 %(pvmobject)s 中的 %(property_name)s=“%(value)s”"
 
 #: pypowervm/wrappers/entry_wrapper.py:337
 #, python-format
@@ -1197,105 +581,113 @@ msgstr "响应缺少“entry”属性。"
 #: pypowervm/wrappers/entry_wrapper.py:568
 #, python-format
 msgid "Must supply a Response or Entry to wrap.  Got %s"
-msgstr "必须提供要合并的响应或条目。获得了 %s"
+msgstr "必须提供要合并的响应或条目。获得 %s"
 
-#: pypowervm/wrappers/entry_wrapper.py:640
+#: pypowervm/wrappers/entry_wrapper.py:667
 msgid "Parent UUID specified without parent type."
 msgstr "指定了没有父类型的父 UUID。"
 
-#: pypowervm/wrappers/entry_wrapper.py:643
+#: pypowervm/wrappers/entry_wrapper.py:670
 msgid "The search() method requires exactly one key=value argument."
 msgstr "search() 方法只需要一个 key=value 参数。"
 
-#: pypowervm/wrappers/entry_wrapper.py:671
+#: pypowervm/wrappers/entry_wrapper.py:698
 #, python-format
 msgid "Wrapper class %(class)s does not support search key '%(key)s'."
 msgstr "包装器类 %(class)s 不支持搜索键“%(key)s”。"
 
-#: pypowervm/wrappers/entry_wrapper.py:747
+#: pypowervm/wrappers/entry_wrapper.py:774
 msgid "Must specify both parent type and UUID, or neither."
 msgstr "必须同时指定父类型和 UUID，或者两者都不指定。"
 
-#: pypowervm/wrappers/entry_wrapper.py:824
+#: pypowervm/wrappers/entry_wrapper.py:851
 msgid "Cannot set uuid."
 msgstr "无法设置 UUID。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1014
+#: pypowervm/wrappers/entry_wrapper.py:1041
 msgid "No such child element."
 msgstr "没有这样的子元素。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1075
-msgid "Cannot set UUID on Wrapper with no Metadata"
-msgstr "无法在包装器上设置没有元数据的 UUID"
+#: pypowervm/wrappers/entry_wrapper.py:1102
+msgid "Cannot set UUID on Wrapper with no Metadata."
+msgstr "在没有元数据的情况下无法在包装器上设置 UUID。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1080
+#: pypowervm/wrappers/entry_wrapper.py:1107
 #, python-format
 msgid "uuid value not valid: %s"
 msgstr "UUID 值无效：%s"
 
-#: pypowervm/wrappers/entry_wrapper.py:1131
-msgid "Must specify both parent class and parent UUID, or neither"
+#: pypowervm/wrappers/entry_wrapper.py:1155
+msgid "Must specify a Wrapper subclass."
+msgstr "必须指定包装器子类。"
+
+#: pypowervm/wrappers/entry_wrapper.py:1162
+msgid "Must specify both parent class and parent UUID, or neither."
 msgstr "必须同时指定父类和父 UUID，或者两者都不指定。"
 
-#: pypowervm/wrappers/job.py:135
-#, python-format
-msgid "%s"
-msgstr "%s"
-
-#: pypowervm/wrappers/job.py:282
+#: pypowervm/wrappers/job.py:281
 #, python-format
 msgid "Job %(job_id)s failed to cancel after %(timeout)s seconds."
 msgstr "在 %(timeout)s 秒之后，作业 %(job_id)s 未能取消。"
 
-#: pypowervm/wrappers/job.py:303
+#: pypowervm/wrappers/job.py:302
 #, python-format
 msgid "Job %s not deleted. Job is in running state."
-msgstr "未删除作业 %s。该作业处于“正在运行”状态。"
+msgstr "未删除作业 %s。该作业处于正在运行状态。"
 
-#: pypowervm/wrappers/logical_partition.py:125
-#: pypowervm/wrappers/logical_partition.py:194
+#: pypowervm/wrappers/logical_partition.py:139
+#: pypowervm/wrappers/logical_partition.py:208
 msgid "LPAR does not have an active RMC connection."
 msgstr "LPAR 没有活动 RMC 连接。"
 
-#: pypowervm/wrappers/logical_partition.py:127
+#: pypowervm/wrappers/logical_partition.py:141
 #, python-format
 msgid "LPAR does not have an active DLPAR capability for %s."
 msgstr "LPAR 对于 %s 没有活动 DLPAR 能力。"
 
-#: pypowervm/wrappers/logical_partition.py:139
+#: pypowervm/wrappers/logical_partition.py:153
 msgid "I/O"
 msgstr "I/O"
 
-#: pypowervm/wrappers/logical_partition.py:149
+#: pypowervm/wrappers/logical_partition.py:163
 msgid "Memory"
 msgstr "内存量"
 
-#: pypowervm/wrappers/logical_partition.py:159
+#: pypowervm/wrappers/logical_partition.py:173
 msgid "Processors"
 msgstr "处理器"
 
-#: pypowervm/wrappers/logical_partition.py:176
+#: pypowervm/wrappers/logical_partition.py:190
 msgid "LPAR is not in an active state."
 msgstr "LPAR 处于不活动状态。"
 
-#: pypowervm/wrappers/logical_partition.py:182
+#: pypowervm/wrappers/logical_partition.py:196
 msgid "IBM i LPAR does not have restricted I/O."
 msgstr "IBM i LPAR 不具备有限 I/O。"
 
-#: pypowervm/wrappers/logical_partition.py:186
+#: pypowervm/wrappers/logical_partition.py:200
 msgid "Source system does not have the IBM i LPAR Mobility Capability."
 msgstr "源系统不具备 IBM i LPAR 移动性能力。"
 
-#: pypowervm/wrappers/logical_partition.py:191
+#: pypowervm/wrappers/logical_partition.py:205
 msgid "IBM i LPAR Live Migration is only supported on POWER7 and higher systems."
 msgstr "仅在 POWER7 和更高级别的系统上才支持 IBM i LPAR 实时迁移。"
 
-#: pypowervm/wrappers/logical_partition.py:198
+#: pypowervm/wrappers/logical_partition.py:212
 msgid "LPAR is not available for LPM due to missing DLPAR capabilities."
 msgstr "由于缺乏 DLPAR 能力，LPAR 不可用于 LPM。"
 
-#: pypowervm/wrappers/logical_partition.py:267
+#: pypowervm/wrappers/logical_partition.py:273
 #, python-format
 msgid "Invalid IPLSrc '%s'."
 msgstr "无效 IPLSrc“%s”。"
+
+#: pypowervm/wrappers/storage.py:437
+#, python-format
+msgid ""
+"PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
+"(%(type_error)s)."
+msgstr ""
+"PV 已对 pg83 描述符“%(pg83_raw)s”进行编码，但未能解码"
+"(%(type_error)s)。"
 
