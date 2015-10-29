@@ -21,14 +21,19 @@ import abc
 import datetime
 
 from oslo_concurrency import lockutils
+from oslo_log import log as logging
 import six
 
 from pypowervm import adapter as pvm_adpt
+from pypowervm.i18n import _
 from pypowervm.tasks.monitor import lpar as lpar_mon
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import monitor as pvm_mon
 from pypowervm.wrappers.pcm import phyp as phyp_mon
 from pypowervm.wrappers.pcm import vios as vios_mon
+
+
+LOG = logging.getLogger(__name__)
 
 RAW_METRICS = 'RawMetrics'
 
@@ -368,6 +373,14 @@ def vm_metrics(phyp, vioses):
                      between gathers).  Always validate that data is 'not
                      None' before use.
     """
+
+    # If the metrics just started, there may not be data yet.  Log this, but
+    # return no data
+    if phyp is None:
+        LOG.warn(_("Metric data is not available.  This may be due to "
+                   "the metrics being recently initialized."))
+        return {}
+
     vm_data = {}
     for lpar_sample in phyp.sample.lpars:
         lpar_metric = lpar_mon.LparMetric(lpar_sample.uuid)

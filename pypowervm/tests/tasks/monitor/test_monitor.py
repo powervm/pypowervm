@@ -187,6 +187,9 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
 
+    def test_vm_metrics_no_phyp_data(self):
+        self.assertEqual({}, pvm_t_mon.vm_metrics(None, []))
+
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
     def test_latest_stats(self, mock_ltm_feed):
         # Set up the return data.
