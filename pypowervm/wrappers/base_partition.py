@@ -397,6 +397,10 @@ class BasePartition(ewrap.EntryWrapper):
         """Short ID (not UUID)."""
         return self._get_val_int(_BP_ID)
 
+    def _id(self, value):
+        """Set ID (not UUID). Only settable on creation of the partition."""
+        self.set_parm_value(_BP_ID, int(value))
+
     @property
     def env(self):
         """See the LPARType Enumeration.
