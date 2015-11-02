@@ -31,6 +31,9 @@ LOG = logging.getLogger(__name__)
 _ANY_WWPN = '-1'
 _FUSED_ANY_WWPN = '-1 -1'
 
+VIO_AT_LEAST = 'AtLeast'
+VIO_EXACTLY = 'Exactly'
+
 
 def build_wwpn_pair(adapter, host_uuid, pair_count=1):
     """Builds a WWPN pair that can be used for a VirtualFCAdapter.
@@ -113,7 +116,8 @@ def intersect_wwpns(wwpn_set1, wwpn_set2):
     return [y for y in wwpn_set1 if u.sanitize_wwpn_for_api(y) in wwpn_set2]
 
 
-def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
+def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count,
+                         number_of_vioses=1, vios_enforcement=VIO_AT_LEAST):
     """Builds a blank NPIV port mapping, without any known vFC WWPNs.
 
     This method is functionally similar to the derive_npiv_map.  However, the
@@ -129,6 +133,18 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
                          Physical FC Ports on the VIOS wrappers that were
                          passed in.
     :param v_port_count: The number of virtual ports to create.
+    :param number_of_vioses: Used in conjunction with the vios_envorcement.
+                             Indicates how many Virtual I/O Servers are
+                             required for the mapping.
+    :param vios_enforcement: Must be set to either VIO_AT_LEAST or VIO_EXACTLY.
+                             If VIO_AT_LEAST, will ensure that the number of
+                             Virtual I/O Servers supporting the mapping are
+                             at least the number_of_vioses.
+                             If VIO_EXACTLY, will ensure that the number of
+                             Virtual I/O Servers supporting the mapping are
+                             exactly the number_of_vioses.
+                             If these requirements can't be met, an exception
+                             will be raised.
     :return: A list of sets.  The format will be similar to that of the
              derive_npiv_map method.  However, instead of a fused_vfc_port_wwpn
              a marker will be used to indicate that the API should generate
@@ -136,10 +152,13 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     """
     # Double the count of the markers.  Should result in -1 -1 as the WWPN.
     v_port_markers = [_ANY_WWPN for x in range(0, v_port_count * 2)]
-    return derive_npiv_map(vios_wraps, p_port_wwpns, v_port_markers)
+    return derive_npiv_map(vios_wraps, p_port_wwpns, v_port_markers,
+                           number_of_vioses=number_of_vioses,
+                           vios_enforcement=vios_enforcement)
 
 
-def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
+def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns, number_of_vioses=1,
+                    vios_enforcement=VIO_AT_LEAST):
     """This method will derive a NPIV map.
 
     A NPIV map is the linkage between an NPIV virtual FC Port and the backing
@@ -169,6 +188,18 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
                          passed in.
     :param v_port_wwpns: A list of the virtual fibre channel port WWPNs.  Must
                          be an even number of ports.
+    :param number_of_vioses: Used in conjunction with the vios_envorcement.
+                             Indicates how many Virtual I/O Servers are
+                             required for the mapping.
+    :param vios_enforcement: Must be set to either VIO_AT_LEAST or VIO_EXACTLY.
+                             If VIO_AT_LEAST, will ensure that the number of
+                             Virtual I/O Servers supporting the mapping are
+                             at least the number_of_vioses.
+                             If VIO_EXACTLY, will ensure that the number of
+                             Virtual I/O Servers supporting the mapping are
+                             exactly the number_of_vioses.
+                             If these requirements can't be met, an exception
+                             will be raised.
     :return: A list of tuples.  The format will be:
       [ (p_port_wwpn1, fused_vfc_port_wwpn1),
         (p_port_wwpn2, fused_vfc_port_wwpn2),
@@ -204,6 +235,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     next_vio_pos = 0
     fuse_map_pos = 0
     loops_since_last_add = 0
+    vios_used_uuids = set()
 
     # This loop will continue through each VIOS (first set of load balancing
     # should be done by VIOS) and if there are ports on that VIOS, will add
@@ -229,10 +261,23 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
         # This increments the VIOS position for the next loop
         next_vio_pos = (next_vio_pos + 1) % len(vios_wraps)
 
+        if (vios_enforcement == VIO_EXACTLY and
+                len(vios_used_uuids) == number_of_vioses and
+                vio.uuid not in vios_used_uuids):
+            # If we've already met our 'exact' VIOS count, and this potential
+            # candidate is on a different VIOS...its not a valid candidate.
+            LOG.debug("Not including VIOS %(name)s as already at max VIOS "
+                      "count of %(max_vio_count)d",
+                      {'name': vio.name,
+                       'max_vio_count': len(vios_used_uuids)})
+            continue
+
         # Find the FC Ports that are on this system.
         potential_ports = _find_ports_on_vio(vio, p_port_wwpns)
         if len(potential_ports) == 0:
             # No ports on this VIOS.  Continue to next.
+            LOG.debug("No physical ports on vios %s for this fabric" %
+                      vio.name)
             continue
 
         # Next, from the potential ports, find the PhysFCPort that we should
@@ -242,13 +287,31 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
         if new_map_port is None:
             # If there was no mapping port, then we should continue on to
             # the next VIOS.
+            LOG.debug("No available ports on vios %s, all are full" %
+                      vio.name)
             continue
 
         # Add the mapping!
+        LOG.debug("Adding mapping on vios (vios)s for physical wwpn "
+                  "%(phys_wwpn)s", {'vios': vio.name,
+                                    'phys_wwpn': new_map_port.wwpn})
         mapping = (new_map_port.wwpn, new_fused_wwpns[fuse_map_pos])
         fuse_map_pos += 1
         newly_built_maps.append(mapping)
         loops_since_last_add = 0
+        vios_used_uuids.add(vio.uuid)
+
+    # Determine if we have the appropriate VIOS count.
+    if (vios_enforcement == VIO_EXACTLY and
+            len(vios_used_uuids) != number_of_vioses):
+        raise e.UnableToFindFCPortMapTooFewVIOSes(
+            req_type=_('exactly'), vios_req_count=number_of_vioses,
+            vios_avail_count=len(vios_used_uuids))
+    elif (vios_enforcement == VIO_AT_LEAST and
+            len(vios_used_uuids) < number_of_vioses):
+        raise e.UnableToFindFCPortMapTooFewVIOSes(
+            req_type=_('at least'), vios_req_count=number_of_vioses,
+            vios_avail_count=len(vios_used_uuids))
 
     # Mesh together the existing mapping lists plus the newly built ports.
     return newly_built_maps + existing_maps

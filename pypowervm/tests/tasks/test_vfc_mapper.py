@@ -141,6 +141,40 @@ class TestVFCMapper(unittest.TestCase):
         unique_keys = set([i[0] for i in resp])
         self.assertEqual(set(p_wwpns), unique_keys)
 
+    def test_derive_npiv_map_multi_vio_limits(self):
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+
+        # Subset the WWPNs on that VIOS.  Limit to one WWPN.
+        p_wwpns = ['10000090FA5371F2']
+
+        # Virtual WWPNs can be faked, and simplified.
+        v_port_wwpns = ['0', '1', '2', '3']
+
+        # Run the derivation now.  Should fail as we require two VIOSes.
+        self.assertRaises(e.UnableToFindFCPortMapTooFewVIOSes,
+                          vfc_mapper.derive_npiv_map, vios_wraps, p_wwpns,
+                          v_port_wwpns, number_of_vioses=2,
+                          vios_enforcement=vfc_mapper.VIO_AT_LEAST)
+
+        # Try again.  Pass ports in for two VIOSes, limit to a single VIOS
+        # though.  Should get proper response back.
+        p_wwpns = ['10000090FA5371F2', '10000090FA53720A']
+        resp = vfc_mapper.derive_npiv_map(
+            vios_wraps, p_wwpns, v_port_wwpns, number_of_vioses=1,
+            vios_enforcement=vfc_mapper.VIO_EXACTLY)
+        self.assertEqual(2, len(resp))
+
+        # The physical WWPNs on the resp should match, indicating just one
+        # VIOS used.
+        self.assertEqual(resp[0][0], resp[1][0])
+
+        # Run again, but allow MORE VIOSes to be used.
+        resp = vfc_mapper.derive_npiv_map(
+            vios_wraps, p_wwpns, v_port_wwpns, number_of_vioses=1,
+            vios_enforcement=vfc_mapper.VIO_AT_LEAST)
+        self.assertEqual(2, len(resp))
+        self.assertNotEqual(resp[0][0], resp[1][0])
+
     def test_derive_npiv_map_failure(self):
         """Make sure we get a failure in the event of no candidates."""
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
