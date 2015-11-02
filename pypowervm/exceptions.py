@@ -169,6 +169,14 @@ class UnableToFindFCPortMap(AbstractMsgFmtError):
                 "for the physical Fibre Channel ports.")
 
 
+class UnableToFindFCPortMapTooFewVIOSes(UnableToFindFCPortMap):
+    msg_fmt = _("Unable to build a physical port map for virtual Fibre "
+                "Channel devices.  The requirement is for %(req_type) "
+                "%(vios_req_count)d Virtual I/O Servers, but only "
+                "%(vios_avail_count)d Virtual I/O Servers were available to "
+                "host the ports.")
+
+
 class ConsoleNotLocal(AbstractMsgFmtError):
     msg_fmt = _("Unable to start the console to the Virtual Machine.  The "
                 "pypowervm API is running in a non-local mode.  The console "
