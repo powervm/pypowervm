@@ -25,6 +25,7 @@ from taskflow import engines as tf_eng
 from taskflow.patterns import linear_flow as tf_lf
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
+import threading
 
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
@@ -32,6 +33,21 @@ from pypowervm.utils import retry
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
+_local = threading.local()
+
+
+def _get_locks():
+    """Returns the list of UUIDs locked by this thread."""
+    locks = getattr(_local, 'entry_transaction', None)
+    if locks is None:
+        locks = []
+        _set_locks(locks)
+    return locks
+
+
+def _set_locks(locks):
+    """Sets the list of UUIDs locked by this thread."""
+    _local.entry_transaction = locks
 
 
 def entry_transaction(func):
@@ -78,7 +94,18 @@ def entry_transaction(func):
     """
     def _synchronize(wrp_or_spec, *a1, **k1):
         """Returned method is synchronized on the object's UUID."""
+
         @lock.synchronized(wrp_or_spec.uuid)
+        def _locked_resolve_wrapper(wos, *a2, **k2):
+            try:
+                # The synchronized decorator will hold off other threads
+                # we just have to hold off lock attempts by methods further
+                # down the stack.
+                _get_locks().append(wrp_or_spec.uuid)
+                return _resolve_wrapper(wos, *a2, **k2)
+            finally:
+                _get_locks().remove(wrp_or_spec.uuid)
+
         def _resolve_wrapper(wos, *a2, **k2):
             """Returned method guaranteed to be called with a wrapper."""
             if isinstance(wos, ewrap.EntryWrapperGetter):
@@ -90,7 +117,16 @@ def entry_transaction(func):
                 """Retry as needed, refreshing its wrapper each time."""
                 return func(wrapper, *a3, **k3)
             return _retry_refresh(wos, *a2, **k2)
-        return _resolve_wrapper(wrp_or_spec, *a1, **k1)
+
+        def _lock_if_needed(wos, *a2, **k2):
+            # Check if this UUID is already locked
+            if wrp_or_spec.uuid in _get_locks():
+                # It's already locked by this thread, so skip the lock.
+                return _resolve_wrapper(wos, *a2, **k2)
+            else:
+                return _locked_resolve_wrapper(wos, *a2, **k2)
+
+        return _lock_if_needed(wrp_or_spec, *a1, **k1)
     return _synchronize
 
 
@@ -443,10 +479,17 @@ class WrapperTask(tf_task.BaseTask):
 class ContextThreadPoolExecutor(th.ThreadPoolExecutor):
     def submit(self, fn, *args, **kwargs):
         context = ctx.get_current()
+        # Get the list of locks held by this thread, we don't want sub
+        # processes locking the same thing!
+        held_locks = list(_get_locks())
 
         def wrapped():
+            # This is executed in the new thread.
             if context is not None:
                 context.update_store()
+            # Ensure the sub task knows about tha parents locks and doesn't
+            # block on them.
+            _set_locks(held_locks)
             return fn(*args, **kwargs)
         return super(ContextThreadPoolExecutor, self).submit(wrapped)
 

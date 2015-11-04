@@ -756,8 +756,8 @@ class TestFeedTask(twrap.TestWrapper):
             'post_exec_implicit': 'verify_rets_implicit_return',
             'post_exec_explicit': 'verify_rets_explicit_return'}, ret)
 
-    def test_context(self):
-        """Security context, if set, propagates to WrapperTask threads."""
+    def test_subtask_thread_local(self):
+        """Security context and locks, if set, propagates to WrapperTasks."""
         def verify_no_ctx(wrapper):
             self.assertIsNone(ctx.get_current())
         tx.FeedTask('test_no_context', lpar.LPAR.getter(
@@ -767,8 +767,15 @@ class TestFeedTask(twrap.TestWrapper):
             _context = ctx.get_current()
             self.assertIsNotNone(_context)
             self.assertEqual('123', _context.request_id)
+            # Copy the base set of locks to expect
+            our_locks = list(locks)
+            # Add our wrappers uuid since that will be set also.
+            our_locks.append(wrapper.uuid)
+            self.assertEqual(set(our_locks), set(tx._get_locks()))
 
         ctx.RequestContext(request_id='123')
+        locks = ['L123', 'L456', 'L789']
+        tx._set_locks(locks)
         tx.FeedTask('test_set_context', lpar.LPAR.getter(
             self.adpt)).add_functor_subtask(verify_ctx).execute()
 
