@@ -643,18 +643,30 @@ def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
     return ssp_wrap
 
 
-def _remove_orphan_maps(vwrap, type_str):
+def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
     """Remove orphan storage mappings (no client adapter) from a list.
 
     This works for both VSCSI and VFC mappings.
 
+    :param vwrap: VIOS wrapper containing the mappings to inspect.  If type_str
+                  is 'VFC', the VIOS wrapper must have been retrieved with the
+                  FC_MAPPING extended attribute group; if type_str is 'VSCSI',
+                  the SCSI_MAPPING extended attribute group must have been
+                  used.
     :param type_str: The type of mapping being removed.  Must be either 'VFC'
                      or 'VSCSI'.
+    :param lpar_id: (Optional) Only orphan mappings associated with the
+                    specified LPAR ID will be removed.  If None (the default),
+                    all LPARs' mappings will be considered.
     :return: The list of mappings removed.  May be empty.
     """
     # This will raise KeyError if type_str isn't one of 'VFC' or 'VSCSI'
     maps = dict(VSCSI=vwrap.scsi_mappings, VFC=vwrap.vfc_mappings)[type_str]
     msgargs = dict(vios_name=vwrap.name, stg_type=type_str)
+    # If requested, limit candidates to those matching the specified LPAR ID.
+    if lpar_id is not None:
+        maps = [mp for mp in maps if mp.server_adapter.lpar_id == lpar_id]
+    # Make a list of orphans first (since we can't remove while iterating).
     removals = [mp for mp in maps if mp.client_adapter is None]
     for rm_map in removals:
         maps.remove(rm_map)
@@ -869,17 +881,20 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     ftsk.add_post_execute(_RemoveStorage(tag))
 
 
-def add_orphan_storage_scrub_tasks(ftsk):
+def add_orphan_storage_scrub_tasks(ftsk, lpar_id=None):
     """Delete orphan mappings (no client adapter) and their storage elements.
 
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
                  The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+    :param lpar_id: (Optional) Only orphan mappings associated with the
+                    specified LPAR ID will be removed.  If None (the default),
+                    all LPARs' mappings will be considered.
     """
-    ftsk.add_functor_subtask(_remove_orphan_maps, 'VSCSI',
+    ftsk.add_functor_subtask(_remove_orphan_maps, 'VSCSI', lpar_id=lpar_id,
                              provides='vscsi_removals_orphans')
-    ftsk.add_functor_subtask(_remove_orphan_maps, 'VFC')
+    ftsk.add_functor_subtask(_remove_orphan_maps, 'VFC', lpar_id=lpar_id)
     ftsk.add_post_execute(_RemoveStorage('orphans'))
 
 
@@ -946,3 +961,32 @@ class ComprehensiveScrub(tx.FeedTask):
                                  provides='vscsi_removals_orphans')
         self.add_functor_subtask(_remove_orphan_maps, 'VFC')
         self.add_post_execute(_RemoveStorage('comprehensive'))
+
+
+class ScrubOrphanStorageForLpar(tx.FeedTask):
+    """Scrub orphan mappings and their storage for one specific LPAR."""
+    def __init__(self, adapter, lpar_id, host_uuid=None):
+        """Create the FeedTask to scrub orphan mappings/storage by LPAR ID.
+
+        :param adapter: A pypowervm.adapter.Adapter for REST API communication.
+        :param lpar_id: The integer short ID (not UUID) of the LPAR to be
+                        examined and scrubbed of orphan mappings and their
+                        storage.
+        :param host_uuid: (Optional) If specified, limit to VIOSes on this one
+                          host.  Otherwise, scrub across all VIOSes known to
+                          the adapter.
+        """
+        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING,
+                                 vios.VIOS.xags.SCSI_MAPPING]}
+        if host_uuid is not None:
+            getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
+                                 parent_uuid=host_uuid)
+        super(ScrubOrphanStorageForLpar, self).__init__(
+            'scrub_orphans_for_lpar_%d' % lpar_id, vios.VIOS.getter(
+                adapter, **getter_kwargs))
+
+        self.add_functor_subtask(_remove_orphan_maps, 'VSCSI', lpar_id=lpar_id,
+                                 provides='vscsi_removals_orphans_lpar_id_%d' %
+                                 lpar_id)
+        self.add_functor_subtask(_remove_orphan_maps, 'VFC', lpar_id=lpar_id)
+        self.add_post_execute(_RemoveStorage('orphans_for_lpar_%d' % lpar_id))
