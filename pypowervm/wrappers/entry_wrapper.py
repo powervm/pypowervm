@@ -702,8 +702,9 @@ class EntryWrapper(Wrapper):
                                                       parent_type, parent_uuid,
                                                       xag=xag))
         retlist = []
+        val = str(val)
         for entry in feedwrap:
-            entval = getattr(entry, key, None)
+            entval = str(getattr(entry, key, None))
             include = (entval != val) if negate else (entval == val)
             if include:
                 retlist.append(entry)
