@@ -787,12 +787,12 @@ class TestScrub3(testtools.TestCase):
         # Save the "before" sizes of the mapping lists
         vscsi_len = len(vwrap.scsi_mappings)
         vfc_len = len(vwrap.vfc_mappings)
-        # LPAR 24 has one orphan FC mapping, one legit FC mapping, and one
-        # orphan SCSI mapping (for a vopt).
+        # LPAR 24 has one orphan FC mapping, one portless FC mapping, one legit
+        # FC mapping, and one orphan SCSI mapping (for a vopt).
         ts.ScrubOrphanStorageForLpar(self.adpt, 24).execute()
         # The right number of maps remain.
         self.assertEqual(vscsi_len - 1, len(vwrap.scsi_mappings))
-        self.assertEqual(vfc_len - 1, len(vwrap.vfc_mappings))
+        self.assertEqual(vfc_len - 2, len(vwrap.vfc_mappings))
         self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
         self.assertEqual(1, mock_rm_vopts.call_count)
 

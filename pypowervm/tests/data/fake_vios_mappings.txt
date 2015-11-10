@@ -1713,6 +1713,44 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/0FB69DD7-4B93-4C09-8916-8BC9821ABAAC" rel="related"/>
+            <ClientAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kxe="false" kb="ROR">Client</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V14-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V14-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">24</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">false</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <ConnectingPartitionID kb="CUR" kxe="false">1</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">24</ConnectingVirtualSlotNumber>
+                <WWPNs kb="CUR" kxe="false">c05076065a7c02e0 c05076065a7c02e1</WWPNs>
+            </ClientAdapter>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kxe="false" kb="ROR">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V1-C24</DynamicReconfigurationConnectorName>
+                <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V1-C24</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">1</LocalPartitionID>
+                <RequiredAdapter kb="CUD" kxe="false">false</RequiredAdapter>
+                <VariedOn kb="CUD" kxe="true">true</VariedOn>
+                <VirtualSlotNumber kb="COD" kxe="false">24</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vfchost18</AdapterName>
+                <ConnectingPartitionID kb="CUR" kxe="false">24</ConnectingPartitionID>
+                <ConnectingVirtualSlotNumber kb="CUR" kxe="false">3</ConnectingVirtualSlotNumber>
+                <UniqueDeviceID kb="CUR" kxe="false">1dU8246.L2C.0604C7A-V1-C24</UniqueDeviceID>
+                <MapPort kb="CUR" kxe="false">fcs2</MapPort>
+            </ServerAdapter>
+        </VirtualFibreChannelMapping>
+        <VirtualFibreChannelMapping schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
             <Port kb="CUR" kxe="false" schemaVersion="V1_2_0">
                 <Metadata>
                     <Atom/>
