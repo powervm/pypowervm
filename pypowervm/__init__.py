@@ -23,7 +23,7 @@ ibmpowervm_opts = [
                     'collision'),
     cfg.IntOpt('pypowervm_job_request_timeout',
                default=1800,
-               help='Default timeout in seconds for PowerVM Job requests.'),
+               help='Default timeout in seconds for PowerVM Job requests.')
 ]
 
 CONF = cfg.CONF
