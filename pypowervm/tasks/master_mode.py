@@ -27,7 +27,6 @@ import pypowervm.wrappers.managed_system as ms
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
-CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
 _SUFFIX_PARM_REQUEST_MASTER = 'RequestMaster'
 _SUFFIX_PARM_RELEASE_MASTER = 'ReleaseMaster'
@@ -47,7 +46,7 @@ class MasterMode(object):
 
 @lgc.logcall
 def request_master(msys, mode=MasterMode.NORMAL,
-                   timeout=CONF.powervm_job_request_timeout):
+                   timeout=CONF.pypowervm_job_request_timeout):
     """Request master mode for the provided Managed System.
 
     :param msys: Managed System wrapper requesting master mode
@@ -68,7 +67,7 @@ def request_master(msys, mode=MasterMode.NORMAL,
 
 
 @lgc.logcall
-def release_master(msys, timeout=CONF.powervm_job_request_timeout):
+def release_master(msys, timeout=CONF.pypowervm_job_request_timeout):
     """Release master mode for the provided Managed System.
 
     :param msys: Managed System wrapper requesting master mode

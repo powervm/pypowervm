@@ -32,14 +32,7 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
 
-job_opts = [
-    cfg.IntOpt('powervm_job_request_timeout',
-               default=1800,
-               help='Default timeout in seconds for Job requests to the API')
-]
-
 CONF = cfg.CONF
-CONF.register_opts(job_opts)
 
 _JOBS = 'jobs'
 _REQ_OP = 'RequestedOperation'
@@ -303,7 +296,7 @@ class Job(ewrap.EntryWrapper):
         PollAndDeleteThread(self, sensitive).start()
         return False
 
-    def cancel_job(self, timeout=CONF.pypowervm_job_request_timeout,
+    def cancel_job(self, timeout=CONF.pypowervm_job_cancel_timeout,
                    sensitive=False):
         """Cancels and deletes incomplete/running jobs.
 
@@ -319,7 +312,8 @@ class Job(ewrap.EntryWrapper):
                                 suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
-        timed_out = self._monitor_job(timeout=timeout, sensitive=sensitive)
+        timed_out = self._monitor_job(timeout=timeout, sensitive=sensitive,
+                                      synchronuous=False)
         if timed_out:
             raise pvmex.Error(
                 _("Job %(job_id)s failed to cancel after %(timeout)d seconds.")

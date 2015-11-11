@@ -24,6 +24,10 @@ ibmpowervm_opts = [
     cfg.IntOpt('pypowervm_job_request_timeout',
                default=1800,
                help='Default timeout in seconds for PowerVM Job requests.'),
+    cfg.IntOpt('pypowervm_job_cancel_timeout',
+               default=120,
+               help='Default timeout in seconds for PowerVM Cancel Job '
+                    'requests.')
 ]
 
 CONF = cfg.CONF
