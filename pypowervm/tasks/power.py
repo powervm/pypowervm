@@ -31,7 +31,6 @@ import pypowervm.wrappers.managed_system as ms
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
-CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
 _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
@@ -90,7 +89,7 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
 
 @lgc.logcall
 def power_off(part, host_uuid, force_immediate=False, restart=False,
-              timeout=CONF.powervm_job_request_timeout, add_parms=None):
+              timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
@@ -108,7 +107,7 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
 
 
 def _power_on_off(part, suffix, host_uuid, force_immediate=False,
-                  restart=False, timeout=CONF.powervm_job_request_timeout,
+                  restart=False, timeout=CONF.pypowervm_job_request_timeout,
                   add_parms=None, synchronous=True):
     """Internal function to power on or off an instance.
 
@@ -180,7 +179,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                     # This has timed out, we loop again and attempt to
                     # force immediate now.  Should not re-hit this exception
                     # block
-                    timeout = CONF.powervm_job_request_timeout
+                    timeout = CONF.pypowervm_job_request_timeout
                     force_immediate = True
                 else:
                     emsg = six.text_type(error)
@@ -201,7 +200,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                         complete = True
                     # If failed because RMC is now down, retry with force
                     elif 'HSCL0DB4' in emsg and operation == 'osshutdown':
-                        timeout = CONF.powervm_job_request_timeout
+                        timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = True
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,

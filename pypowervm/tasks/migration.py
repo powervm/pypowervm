@@ -24,7 +24,6 @@ import pypowervm.wrappers.logical_partition as wlpar
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
-CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
 _SUFFIX_PARM_MIGRATE = 'Migrate'
 _SUFFIX_PARM_MIGRATE_VALIDATE = 'MigrateValidate'
@@ -44,7 +43,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                  tgt_mgmt_svr=None, tgt_mgmt_usr=None,
                  virtual_fc_mappings=None, virtual_scsi_mappings=None,
                  dest_msp_name=None, source_msp_name=None,
-                 timeout=CONF.powervm_job_request_timeout):
+                 timeout=CONF.pypowervm_job_request_timeout):
 
     """Method to migrate a logical partition.
 
@@ -139,7 +138,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
 
 
 def migrate_recover(lpar, force=False,
-                    timeout=CONF.powervm_job_request_timeout):
+                    timeout=CONF.pypowervm_job_request_timeout):
 
     """Method to recover a failed logical partition migration.
 
@@ -159,7 +158,7 @@ def migrate_recover(lpar, force=False,
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
 
 
-def migrate_abort(lpar, timeout=CONF.powervm_job_request_timeout):
+def migrate_abort(lpar, timeout=CONF.pypowervm_job_request_timeout):
 
     """Method to abort a logical partition migration.
 
