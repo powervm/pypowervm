@@ -777,5 +777,24 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(1, mock_rm_vopts.call_count)
         self.assertEqual(1, mock_rm_vdisks.call_count)
 
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_orphans_by_lpar_id(self, mock_wrap, mock_rm_vopts):
+        # Don't confuse the 'update' call count with the VG POST
+        mock_rm_vopts.return_value = None
+        mock_wrap.return_value = []
+        vwrap = self.vio_feed[0]
+        # Save the "before" sizes of the mapping lists
+        vscsi_len = len(vwrap.scsi_mappings)
+        vfc_len = len(vwrap.vfc_mappings)
+        # LPAR 24 has one orphan FC mapping, one legit FC mapping, and one
+        # orphan SCSI mapping (for a vopt).
+        ts.ScrubOrphanStorageForLpar(self.adpt, 24).execute()
+        # The right number of maps remain.
+        self.assertEqual(vscsi_len - 1, len(vwrap.scsi_mappings))
+        self.assertEqual(vfc_len - 1, len(vwrap.vfc_mappings))
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+        self.assertEqual(1, mock_rm_vopts.call_count)
+
 if __name__ == '__main__':
     unittest.main()

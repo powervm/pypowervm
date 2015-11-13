@@ -18,10 +18,11 @@ import unittest
 
 import mock
 
+from pypowervm import const as c
 from pypowervm import exceptions as e
 from pypowervm.tasks import vfc_mapper
-import pypowervm.tests.tasks.util as tju
-import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+from pypowervm.tests.tasks import util as tju
+from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FILE = 'fake_vios.txt'
@@ -32,18 +33,27 @@ FAKE_UUID = '42DF39A2-3A4A-4748-998F-25B15352E8A7'
 
 class TestVFCMapper(unittest.TestCase):
 
-    def test_build_wwpn_pair(self):
-        # By its nature, this is a random generation algorithm.  Run it
-        # several times...just to increase probability of issues.
-        i = 0
-        while i < 50:
-            wwpn_pair = vfc_mapper.build_wwpn_pair(None, None, i)
-            self.assertIsNotNone(wwpn_pair)
-            self.assertEqual(2 * i, len(wwpn_pair))
-            for elem in wwpn_pair:
-                self.assertEqual(16, len(elem))
-                int(elem, 16)  # Would throw ValueError if not hex.
-            i += 1
+    @mock.patch('pypowervm.wrappers.job.Job')
+    def test_build_wwpn_pair(self, mock_job):
+        mock_adpt = mock.MagicMock()
+        mock_adpt.read.return_value = mock.Mock()
+
+        # Mock out the job response
+        job_w = mock.MagicMock()
+        mock_job.wrap.return_value = job_w
+        job_w.get_job_results_as_dict.return_value = {'wwpnList':
+                                                      'a,b,c,d,e,f,g,h'}
+
+        # Invoke and validate
+        resp = vfc_mapper.build_wwpn_pair(mock_adpt, 'host_uuid', pair_count=4)
+        self.assertEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], resp)
+
+        # Make sure that the job was built properly
+        mock_adpt.read.assert_called_once_with(
+            'ManagedSystem', root_id='host_uuid', suffix_type=c.SUFFIX_TYPE_DO,
+            suffix_parm=vfc_mapper._GET_NEXT_WWPNS)
+        job_w.create_job_parameter.assert_called_once_with(
+            'numberPairsRequested', '4')
 
     def test_find_vios_for_wwpn(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
@@ -303,128 +313,6 @@ class TestPortMappings(twrap.TestWrapper):
         self.assertEqual(self.entries[1], vios)
         self.assertEqual('10000090FA53720A', vmap.backing_port.wwpn)
 
-    def test_add_port_mapping_multi_vios(self):
-        """Validates that the port mappings are added cross VIOSes."""
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-        vios2_name = vios_wraps[1].name
-        vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count + 5,
-                                 len(vios_w.vfc_mappings))
-                # Note the spacing cross VIOS per fabric.
-                self.ensure_has_wwpns(
-                    vios_w, ['0', '1', '4', '5', '8', '9', 'C', 'D', 'G', 'H'])
-            elif vios2_name == vios_w.name:
-                self.assertEqual(vios2_orig_map_count + 5,
-                                 len(vios_w.vfc_mappings))
-                # Note the spacing cross VIOS per fabric.
-                self.ensure_has_wwpns(
-                    vios_w, ['2', '3', '6', '7', 'A', 'B', 'E', 'F', 'I', 'J'])
-            else:
-                self.fail("Unknown VIOS!")
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        # Subset the WWPNs on that VIOS
-        fabric_A_wwpns = ['10000090FA5371f2', '10000090FA53720A']
-        fabric_B_wwpns = ['10000090FA5371F1', '10000090FA537209']
-
-        # Fake Virtual WWPNs.  Fabric B has an existing mapping that should
-        # just get re-used.
-        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        v_fabric_B_wwpns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                            'C05076079CFF045E', 'C05076079CFF045F']
-
-        # Get the mappings
-        fabric_A_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_A_wwpns,
-                                                   v_fabric_A_wwpns)
-        vios_wraps.reverse()
-        fabric_B_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_B_wwpns,
-                                                   v_fabric_B_wwpns)
-        full_map = fabric_A_maps + fabric_B_maps
-
-        # Now call the add action
-        resp = vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid',
-                                                 FAKE_UUID, full_map)
-
-        # The update should have been called twice.  Once for each VIOS.
-        self.assertEqual(2, self.adpt.update_by_path.call_count)
-
-        # Validate the responses.  These should not be in there because they
-        # were there already.  The first was explicitly added (see
-        # fabric_b_wwpns).  The second happens to already exist in the test
-        # data, but isn't part of the return.
-        e_resp = [('10000090FA5371F1', 'C05076079CFF045E C05076079CFF045F'),
-                  ('10000090FA53720A', 'C05076079CFF07BB C05076079CFF07BA')]
-        for needle in resp:
-            self.assertNotIn(needle, e_resp)
-
-        # NOTE - The newly added maps are verified in the update method.  But
-        # they aren't part of the response as that would require a new VIOS
-        # payload or extensive patching.  Since we know that the updates are
-        # called, this would provide little value.
-        self.assertEqual(2, self.adpt.update_by_path.call_count)
-
-    def test_add_port_mapping_single_vios(self):
-        """Validates that the port mappings are added on single VIOS.
-
-        Specifically ensures that the port mappings are not added to the second
-        VIOS.  No unnecessary VIOS updates...
-        """
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count + 10,
-                                 len(vios_w.vfc_mappings))
-                self.ensure_has_wwpns(
-                    vios_w, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
-            else:
-                self.fail("Unknown VIOS!")
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        # Subset the WWPNs on that VIOS
-        fabric_A_wwpns = ['10000090FA5371F2']
-        fabric_B_wwpns = ['10000090FA5371F1']
-
-        # Fake Virtual WWPNs.  Include some existing WWPNs to make sure they
-        # do NOT get added.  mock_update will ensure they don't get added.
-        v_fabric_A_wwpns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                            'c05076079cff0e56', 'c05076079cff0e57']
-
-        # Throw the existing into the front, to catch any edge cases.
-        v_fabric_B_wwpns = ['c05076079cff08da', 'c05076079cff08db',
-                            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-
-        # Get the mappings
-        fabric_A_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_A_wwpns,
-                                                   v_fabric_A_wwpns)
-        vios_wraps.reverse()
-        fabric_B_maps = vfc_mapper.derive_npiv_map(vios_wraps, fabric_B_wwpns,
-                                                   v_fabric_B_wwpns)
-        full_map = fabric_A_maps + fabric_B_maps
-
-        # Now call the add action
-        vfc_mapper.add_npiv_port_mappings(self.adpt, 'host_uuid', FAKE_UUID,
-                                          full_map)
-
-        # The update should have been called once.
-        self.assertEqual(1, self.adpt.update_by_path.call_count)
-
     def test_find_pfc_wwpn_by_name(self):
         vio_w = self.entries[0]
         self.assertEqual('10000090FA5371F1',
@@ -441,115 +329,6 @@ class TestPortMappings(twrap.TestWrapper):
             self.assertRaises(e.UnableToDerivePhysicalPortForNPIV,
                               vfc_mapper.add_map,
                               self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
-
-    def test_remove_port_mapping_multi_vios(self):
-        """Validates that the port mappings are removed cross VIOSes."""
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-        vios2_name = vios_wraps[1].name
-        vios2_orig_map_count = len(vios_wraps[1].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count - 1,
-                                 len(vios_w.vfc_mappings))
-            elif vios2_name == vios_w.name:
-                self.assertEqual(vios2_orig_map_count - 1,
-                                 len(vios_w.vfc_mappings))
-            else:
-                self.fail("Unknown VIOS!")
-
-            self.ensure_does_not_have_wwpns(
-                vios_w, ['C05076079CFF0E56', 'C05076079CFF0E57',
-                         'C05076079CFF0E58', 'C05076079CFF0E59'])
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        p_map_vio1 = ('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')
-        p_map_vio2 = ('10000090FA537209', 'C05076079CFF0E58 C05076079CFF0E59')
-        maps = [p_map_vio1, p_map_vio2]
-
-        # Now call the remove action
-        vfc_mapper.remove_npiv_port_mappings(
-            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
-            maps)
-
-        # The update should have been called twice.  Once for each VIOS.
-        self.assertEqual(2, self.adpt.update_by_path.call_count)
-
-    def test_remove_port_mapping_single_vios(self):
-        """Validates that the port mappings are removed on single VIOS.
-
-        Note: This indirectly calls the find_maps method via the
-        remove_npiv_port_mappings method.
-        """
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count - 1,
-                                 len(vios_w.vfc_mappings))
-            else:
-                self.fail("Unknown VIOS!")
-
-            self.ensure_does_not_have_wwpns(vios_w, ['C05076079CFF0E56',
-                                                     'C05076079CFF0E57'])
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        maps = [('10000090FA5371F2', 'C05076079CFF0E56 C05076079CFF0E57')]
-
-        # Now call the remove action
-        vfc_mapper.remove_npiv_port_mappings(
-            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
-            maps)
-
-        # The update should have been called once.
-        self.assertEqual(1, self.adpt.update_by_path.call_count)
-
-    def test_remove_port_mapping_single_vios_order_agnostic(self):
-        """Validates that the port mappings are removed with reverse order.
-
-        Note: This indirectly calls the find_maps method via the
-        remove_npiv_port_mappings method.
-        """
-        # Determine the vios original values
-        vios_wraps = self.entries
-        vios1_name = vios_wraps[0].name
-        vios1_orig_map_count = len(vios_wraps[0].vfc_mappings)
-
-        def mock_update(*kargs, **kwargs):
-            vios_w = pvm_vios.VIOS.wrap(kargs[0].entry)
-            if vios1_name == vios_w.name:
-                self.assertEqual(vios1_orig_map_count - 1,
-                                 len(vios_w.vfc_mappings))
-            else:
-                self.fail("Unknown VIOS!")
-
-            self.ensure_does_not_have_wwpns(vios_w, ['C05076079CFF0E56',
-                                                     'C05076079CFF0E57'])
-
-            return vios_w.entry
-        self.adpt.update_by_path.side_effect = mock_update
-
-        maps = [('10000090FA5371F2', 'C05076079CFF0E57 C05076079CFF0E56')]
-
-        # Now call the remove action
-        vfc_mapper.remove_npiv_port_mappings(
-            self.adpt, 'host_uuid', '3ADDED46-B3A9-4E12-B6EC-8223421AF49B',
-            maps)
-
-        # The update should have been called once.
-        self.assertEqual(1, self.adpt.update_by_path.call_count)
 
     def ensure_does_not_have_wwpns(self, vios_w, wwpns):
         for vfc_map in vios_w.vfc_mappings:

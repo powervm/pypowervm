@@ -50,6 +50,7 @@ class TestTraits(unittest.TestCase):
         self.assertTrue(t.dynamic_pvid)
         self.assertTrue(t.rmdev_job_available)
         self.assertTrue(t.has_high_slot)
+        self.assertTrue(t.vea_as_ibmi_console)
 
         # PVM MC, remote auth
         mock_sess.mc_type = 'PVM'
@@ -62,6 +63,7 @@ class TestTraits(unittest.TestCase):
         self.assertTrue(t.dynamic_pvid)
         self.assertTrue(t.rmdev_job_available)
         self.assertTrue(t.has_high_slot)
+        self.assertTrue(t.vea_as_ibmi_console)
 
         # HMC, remote auth
         mock_sess.mc_type = 'HMC'
@@ -74,6 +76,7 @@ class TestTraits(unittest.TestCase):
         self.assertFalse(t.dynamic_pvid)
         self.assertFalse(t.rmdev_job_available)
         self.assertFalse(t.has_high_slot)
+        self.assertFalse(t.vea_as_ibmi_console)
 
     @mock.patch('requests.Session.request')
     def test_traits_into_wrappers(self, mock_request):

@@ -651,8 +651,9 @@ class TestSearch(testtools.TestCase):
         nb = rets[0]
         self.assertIsInstance(nb, net.NetBridge)
         self.assertEqual('d648eb60-4d39-34ad-ae2b-928d8c9577ad', nb.uuid)
-        # Now do a search that returns more than one item
-        rets = net.NetBridge.search(self.adp, pvid=1)
+        # Now do a search that returns more than one item.
+        # Use a string for an int field to prove it works anyway.
+        rets = net.NetBridge.search(self.adp, pvid='1')
         self.assertEqual(2, len(rets))
         self.assertIsInstance(rets[0], net.NetBridge)
         self.assertIsInstance(rets[1], net.NetBridge)

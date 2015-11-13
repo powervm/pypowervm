@@ -16,6 +16,7 @@
 
 """EntryWrapper, constants, and enums around Job ('web' namespace)."""
 
+import threading
 import time
 
 from oslo_config import cfg
@@ -60,6 +61,22 @@ class JobStatus(object):
     COMPLETED_OK = 'COMPLETED_OK'
     COMPLETED_WITH_WARNINGS = 'COMPLETED_WITH_WARNINGS'
     COMPLETED_WITH_ERROR = 'COMPLETED_WITH_ERROR'
+
+
+class PollAndDeleteThread(threading.Thread):
+    def __init__(self, job, sensitive):
+        super(PollAndDeleteThread, self).__init__()
+        self.job = job
+        self.sensitive = sensitive
+
+    def run(self):
+        self.job.poll_while_status([JobStatus.RUNNING], 0, self.sensitive)
+        self.job.delete_job()
+        # If the Job failed, we still want to log it.
+        if self.job.job_status != JobStatus.COMPLETED_OK:
+            exc = pvmex.JobRequestFailed(
+                operation_name=self.job.op, error=self.job.get_job_message())
+            LOG.error(exc.args[0])
 
 
 @ewrap.EntryWrapper.pvm_type('Job', ns=pc.WEB_NS)
@@ -179,7 +196,7 @@ class Job(ewrap.EntryWrapper):
 
     def run_job(self, uuid, job_parms=None,
                 timeout=CONF.pypowervm_job_request_timeout,
-                sensitive=False):
+                sensitive=False, synchronous=True):
         """Invokes and polls a job.
 
         Adds job parameters to the job element if specified and calls the
@@ -189,23 +206,27 @@ class Job(ewrap.EntryWrapper):
         :param uuid: uuid of the target
         :param job_parms: list of JobParamters to add
         :param timeout: maximum number of seconds for job to complete
+        :param sensitive: If True, mask the Job payload in the logs.
+        :param synchronous: If True (the default), wait for the Job to complete
+                            or time out.  If False, return as soon as the Job
+                            starts.  Note that this may still involve polling
+                            (if the Job is waiting in queue to start), and may
+                            still time out (if the Job hasn't started within
+                            the requested timeout.)
         :raise JobRequestFailed: if the job did not complete successfully.
         :raise JobRequestTimedOut: if the job timed out.
         """
-        job = self.entry.element
-        entry_type = self._get_val_str(_JOB_GROUP_NAME)
         if job_parms:
             self.add_job_parameters_to_existing(*job_parms)
         try:
-            pvmresp = self.adapter.create_job(job, entry_type, uuid,
-                                              sensitive=sensitive)
-            self.entry = pvmresp.entry
+            self.entry = self.adapter.create_job(
+                self.entry.element, self._get_val_str(_JOB_GROUP_NAME), uuid,
+                sensitive=sensitive).entry
         except pvmex.Error as exc:
             LOG.exception(exc)
-            raise pvmex.JobRequestFailed(
-                operation_name=self.op, error=exc)
-        status, message, timed_out = self.monitor_job(timeout=timeout,
-                                                      sensitive=sensitive)
+            raise pvmex.JobRequestFailed(operation_name=self.op, error=exc)
+        timed_out = self._monitor_job(
+            timeout=timeout, sensitive=sensitive, synchronous=synchronous)
         if timed_out:
             try:
                 self.cancel_job()
@@ -213,51 +234,74 @@ class Job(ewrap.EntryWrapper):
                 LOG.warn(six.text_type(e))
             exc = pvmex.JobRequestTimedOut(
                 operation_name=self.op, seconds=timeout)
-            LOG.exception(exc)
+            LOG.error(exc.args[0])
             raise exc
-        if status != JobStatus.COMPLETED_OK:
-            self.delete_job()
-            exc = pvmex.JobRequestFailed(
-                operation_name=self.op, error=message)
-            LOG.exception(exc)
-            raise exc
+        if not synchronous:
+            # _monitor_job spawned a subthread that will delete_job when done.
+            return
         self.delete_job()
+        if self.job_status != JobStatus.COMPLETED_OK:
+            exc = pvmex.JobRequestFailed(
+                operation_name=self.op, error=self.get_job_message(''))
+            LOG.error(exc.args[0])
+            raise exc
 
-    def monitor_job(self, job_id=None,
-                    timeout=CONF.pypowervm_job_request_timeout,
-                    sensitive=False):
+    def poll_while_status(self, statuses, timeout, sensitive):
+        """Poll the Job as long as its status is in the specified list.
+
+        :param statuses: Iterable of JobStatus enum values.  This method
+                         continues to poll the Job as long as its status is
+                         in the specified list, or until the timeout is
+                         reached (whichever comes first).
+        :param timeout: Maximum number of seconds to keep checking job status.
+                        If zero, poll indefinitely.
+        :param sensitive: If True, mask the Job payload in the logs.
+        :return: timed_out: True if the timeout was reached before the Job
+                            left the specified set of states.
+        """
+        start_time = time.time()
+        while self.job_status in statuses:
+            if timeout:
+                # wait up to timeout seconds
+                if (time.time() - start_time) > timeout:
+                    return True
+            time.sleep(1)
+            self.entry = self.adapter.read_job(
+                self.job_id, sensitive=sensitive).entry
+        return False
+
+    def _monitor_job(self, timeout=CONF.pypowervm_job_request_timeout,
+                     sensitive=False, synchronous=True):
         """Polls a job.
 
         Waits on a job until it is no longer running.  If a timeout is given,
         it times out in the given amount of time.
 
-        :param job_id: job id
         :param timeout: maximum number of seconds to keep checking job status
-        :returns status: String containing the job status
-        :returns message: String containing the job results message
+        :param sensitive: If True, mask the Job payload in the logs.
+        :param synchronous: If True (the default), wait for the Job to complete
+                            or time out.  If False, return as soon as the Job
+                            starts.  Note that this may still involve polling
+                            (if the Job is waiting in queue to start), and may
+                            still time out (if the Job hasn't started within
+                            the requested timeout.)  If synchronous=True, the
+                            caller must delete the Job (self.delete_job()); if
+                            False, this method spawns a subthread that deletes
+                            it when it finishes.
         :returns timed_out: boolean True if timed out waiting for job
                             completion
         """
-        if job_id is None:
-            job_id = self.job_id
-        status = self.job_status
-        start_time = time.time()
-        timed_out = False
-        while status == JobStatus.RUNNING or status == JobStatus.NOT_ACTIVE:
-            if timeout:
-                # wait up to timeout seconds
-                if (time.time() - start_time) > timeout:
-                    timed_out = True
-                    break
-            time.sleep(1)
-            pvmresp = self.adapter.read_job(job_id, sensitive=sensitive)
-            self.entry = pvmresp.entry
-            status = self.job_status
+        if synchronous:
+            return self.poll_while_status(
+                [JobStatus.RUNNING, JobStatus.NOT_ACTIVE], timeout, sensitive)
 
-        message = ''
-        if not timed_out and status != JobStatus.COMPLETED_OK:
-            message = self.get_job_message()
-        return status, message, timed_out
+        # Asynchronous: wait for the Job to start, then spawn a thread to wait
+        # (indefinitely) for it to finish, and delete it when done.
+        if self.poll_while_status([JobStatus.NOT_ACTIVE], timeout, sensitive):
+            return True
+
+        PollAndDeleteThread(self, sensitive).start()
+        return False
 
     def cancel_job(self, timeout=CONF.pypowervm_job_request_timeout,
                    sensitive=False):
@@ -275,36 +319,24 @@ class Job(ewrap.EntryWrapper):
                                 suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
-        status, message, timed_out = self.monitor_job(timeout=timeout,
-                                                      sensitive=sensitive)
+        timed_out = self._monitor_job(timeout=timeout, sensitive=sensitive)
         if timed_out:
-            error = (_("Job %(job_id)s failed to cancel after %(timeout)s "
-                       "seconds.") % dict(job_id=job_id,
-                                          timeout=six.text_type(timeout)))
-            exc = pvmex.JobRequestFailed(error)
-            raise exc
-        self.delete_job(job_id, status)
+            raise pvmex.Error(
+                _("Job %(job_id)s failed to cancel after %(timeout)d seconds.")
+                % dict(job_id=job_id, timeout=timeout))
+        self.delete_job()
 
-    def delete_job(self, job_id=None, status=None):
-        """Cleans up completed jobs.
+    def delete_job(self):
+        """Cleans this Job off of the REST server, if it is completed.
 
-        JobRequestFailed exception sent if job is in running status.
-
-        :param job_id: job id
-        :param status: job status
         :raise JobRequestFailed: if the Job is detected to be running.
         """
-        if not job_id:
-            job_id = self.job_id
-        if not status:
-            status = self.job_status
-        if status == JobStatus.RUNNING:
+        if self.job_status == JobStatus.RUNNING:
             error = (_("Job %s not deleted. Job is in running state.")
-                     % job_id)
-            exc = pvmex.JobRequestFailed(error)
-            LOG.exception(exc)
-            raise exc
+                     % self.job_id)
+            LOG.error(error)
+            raise pvmex.Error(error)
         try:
-            self.adapter.delete(_JOBS, job_id)
+            self.adapter.delete(_JOBS, self.job_id)
         except pvmex.Error as exc:
             LOG.exception(exc)

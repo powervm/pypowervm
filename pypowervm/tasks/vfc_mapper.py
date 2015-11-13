@@ -17,13 +17,13 @@
 """Specialized tasks for NPIV World-Wide Port Names (WWPNs)."""
 
 from oslo_log import log as logging
-import random
 
+from pypowervm import const as c
 from pypowervm import exceptions as e
 from pypowervm.i18n import _
 from pypowervm import util as u
-from pypowervm.utils import transaction as tx
 from pypowervm.utils import uuid
+from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -32,31 +32,34 @@ LOG = logging.getLogger(__name__)
 
 _ANY_WWPN = '-1'
 _FUSED_ANY_WWPN = '-1 -1'
+_GET_NEXT_WWPNS = 'GetNextWWPNs'
 
 
 def build_wwpn_pair(adapter, host_uuid, pair_count=1):
     """Builds a WWPN pair that can be used for a VirtualFCAdapter.
 
-    TODO(IBM): Future implementation will interrogate the system for globally
-               unique WWPN.  For now, generate based off of random number
-               generation.  Likelihood of overlap is 1 in 281 trillion.
+    Note: The API will only generate up to 8 pairs at a time.  Any more will
+    cause the API to raise an error.
 
     :param adapter: The adapter to talk over the API.
     :param host_uuid: The host system for the generation.
     :param pair_count: (Optional, Default: 1) The number of WWPN pairs to
-                       generate
+                       generate.  Can not be more than 8 or else the API will
+                       fail.
     :return: Non-mutable WWPN Pairs (list)
     """
-    pairs = []
+    # Build up the job & invoke
+    resp = adapter.read(
+        pvm_ms.System.schema_type, root_id=host_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_GET_NEXT_WWPNS)
+    job_w = pvm_job.Job.wrap(resp)
+    job_p = [job_w.create_job_parameter('numberPairsRequested',
+                                        str(pair_count))]
+    job_w.run_job(host_uuid, job_parms=job_p)
 
-    for i in range(pair_count):
-        # Sonar refuses to go unless I do something with i...
-        del i
-        resp = "C0"
-        while len(resp) < 14:
-            resp += random.choice('0123456789ABCDEF')
-        pairs.extend([resp + "00", resp + "01"])
-    return pairs
+    # Get the job result, and parse the output.
+    job_result = job_w.get_job_results_as_dict()
+    return job_result['wwpnList'].split(',')
 
 
 def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
@@ -121,8 +124,8 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     This method is functionally similar to the derive_npiv_map.  However, the
     derive_npiv_map method assumes knowledge of the Virtual Fibre Channel
     mappings beforehand.  This method will generate a similar map, but when
-    sent to the add_npiv_port_mappings method, that method will allow the API
-    to generate the WWPNs rather than pre-seeding them.
+    sent to the add_map method, that method will allow the API to generate the
+    globally unique WWPNs rather than pre-seeding them.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
                        extended attribute group (xag) of FC_MAPPING.
@@ -328,75 +331,6 @@ def _find_map_port(potential_ports, mappings):
             high_avail_port = port
 
     return high_avail_port
-
-
-def add_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
-    # Build the feed task
-    vio_getter = pvm_vios.VIOS.getter(
-        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
-        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
-    npiv_ft = tx.FeedTask('add_npiv_port_mappings', vio_getter)
-
-    # Get the original VIOSes.
-    orig_maps = _get_port_map(npiv_ft.feed, lpar_uuid)
-
-    # Run the add actions
-    for npiv_port_map in npiv_port_maps:
-        npiv_ft.add_functor_subtask(add_map, host_uuid, lpar_uuid,
-                                    npiv_port_map, error_if_invalid=False)
-
-    # Execute the port map.
-    npiv_ft.execute()
-
-    # Find the new mappings.  Remove the originals and return.
-    new_maps = _get_port_map(npiv_ft.feed, lpar_uuid)
-    for old_map in orig_maps:
-        # Timing window may occur where an old map is no longer part of the
-        # original maps (between the get and update).
-        if old_map in new_maps:
-            new_maps.remove(old_map)
-    return new_maps
-
-
-def _get_port_map(vioses, lpar_uuid):
-    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
-    port_map = []
-    for vios in vioses:
-        vfc_mappings = find_maps(vios.vfc_mappings, lpar_uuid)
-        for vfc_mapping in vfc_mappings:
-            # Check if this is a 'stale' mapping.  If it is stale, do not
-            # consider it for the response.
-            if not (vfc_mapping.backing_port and vfc_mapping.client_adapter and
-                    vfc_mapping.client_adapter.wwpns):
-                LOG.warn(_("Detected a stale mapping for LPAR with UUID %s.") %
-                         lpar_uuid)
-                continue
-
-            # Found a matching mapping
-            p_wwpn = vfc_mapping.backing_port.wwpn
-            c_wwpns = vfc_mapping.client_adapter.wwpns
-
-            # Convert it to the standard mapping type.
-            mapping = (p_wwpn, _fuse_vfc_ports(c_wwpns)[0])
-            port_map.append(mapping)
-    return port_map
-
-
-def remove_npiv_port_mappings(adapter, host_uuid, lpar_uuid, npiv_port_maps):
-    """DEPRECATED - TO BE REMOVED - DO NOT USE."""
-    vio_getter = pvm_vios.VIOS.getter(
-        adapter, parent_class=pvm_ms.System, parent_uuid=host_uuid,
-        xag=[pvm_vios.VIOS.xags.FC_MAPPING, pvm_vios.VIOS.xags.STORAGE])
-    npiv_ft = tx.FeedTask('remove_npiv_port_mappings', vio_getter)
-
-    # Add the remove actions to the feed task
-    for npiv_port_map in npiv_port_maps:
-        npiv_ft.add_functor_subtask(remove_maps, lpar_uuid,
-                                    port_map=npiv_port_map)
-
-    # Execute the updates
-    npiv_ft.execute()
 
 
 def _find_ports_on_vio(vio_w, p_port_wwpns):

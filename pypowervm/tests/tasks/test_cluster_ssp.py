@@ -32,14 +32,17 @@ CREATE_CLUSTER = 'cluster_create_job_template.txt'
 class TestClusterSSP(unittest.TestCase):
 
     @mock.patch('pypowervm.wrappers.job.Job.delete_job')
-    @mock.patch('pypowervm.wrappers.job.Job.monitor_job')
+    @mock.patch('pypowervm.wrappers.job.Job._monitor_job')
+    @mock.patch('pypowervm.wrappers.job.Job.job_status')
     @mock.patch('pypowervm.adapter.Adapter')
-    def test_crt_cluster_ssp(self, mock_adp, mock_monitor_job, mock_del_job):
+    def test_crt_cluster_ssp(self, mock_adp, mock_status, mock_monitor_job,
+                             mock_del_job):
         # Load up GET Cluster/do/Create (job template)
         mock_adp.read.return_value = tju.load_file(CREATE_CLUSTER, mock_adp)
         # We'll pretend the job ran and completed successfully
-        mock_monitor_job.return_value = (jwrap.JobStatus.COMPLETED_OK, 'ok',
-                                         False)
+        mock_monitor_job.return_value = False
+        mock_status.__get__ = mock.Mock(
+            return_value=jwrap.JobStatus.COMPLETED_OK)
 
         # Mock Job.create_job to check job parameter values
         def create_job(job_el, entry_type, *args, **kwargs):

@@ -397,6 +397,10 @@ class BasePartition(ewrap.EntryWrapper):
         """Short ID (not UUID)."""
         return self._get_val_int(_BP_ID)
 
+    def _id(self, value):
+        """Set ID (not UUID). Only settable on creation of the partition."""
+        self.set_parm_value(_BP_ID, int(value))
+
     @property
     def env(self):
         """See the LPARType Enumeration.
@@ -490,6 +494,16 @@ class BasePartition(ewrap.EntryWrapper):
     def is_mgmt_partition(self):
         """Is this the management partition?  Default False if field absent."""
         return self._get_val_bool(_BP_MGT_PARTITION)
+
+    @property
+    def is_service_partition(self):
+        """Is this the service partition?  Default False if field absent."""
+        return self._get_val_bool(_BP_SVC_PARTITION)
+
+    @is_service_partition.setter
+    def is_service_partition(self, value):
+        """Set if this is the service partition."""
+        self.set_parm_value(_BP_SVC_PARTITION, u.sanitize_bool_for_api(value))
 
     @property
     def keylock_pos(self):
