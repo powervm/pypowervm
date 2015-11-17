@@ -679,32 +679,6 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
     return removals
 
 
-def _remove_portless_vfc_maps(vwrap, lpar_id=None):
-    """Remove non-logged-in VFC mappings (no Port) from a list.
-
-    :param vwrap: VIOS wrapper containing the mappings to inspect.  Must have
-                  been retrieved with the FC_MAPPING extended attribute group.
-    :param lpar_id: (Optional) Only port-less mappings associated with the
-                    specified LPAR ID will be removed.  If None (the default),
-                    all LPARs' mappings will be considered.
-    :return: The list of mappings removed.  May be empty.
-    """
-    # Make a list of removals first (since we can't remove while iterating).
-    # If requested, limit candidates to those matching the specified LPAR ID.
-    removals = [mp for mp in vwrap.vfc_mappings if mp.backing_port is None and
-                (lpar_id is None or mp.server_adapter.lpar_id == lpar_id)]
-    for rm_map in removals:
-        vwrap.vfc_mappings.remove(rm_map)
-    if removals:
-        LOG.warn(_("Removing %(num_maps)d port-less VFC mappings from "
-                   "VIOS %(vios_name)s."),
-                 dict(num_maps=len(removals), vios_name=vwrap.name))
-    else:
-        LOG.debug("No port-less VFC mappings found on VIOS %(vios_name)s.",
-                  dict(vios_name=vwrap.name))
-    return removals
-
-
 def _remove_lpar_maps(vwrap, lpar_ids, type_str):
     """Remove VFC or VSCSI mappings for the specified LPAR IDs.
 
@@ -1014,5 +988,4 @@ class ScrubOrphanStorageForLpar(tx.FeedTask):
                                  provides='vscsi_removals_orphans_lpar_id_%d' %
                                  lpar_id)
         self.add_functor_subtask(_remove_orphan_maps, 'VFC', lpar_id=lpar_id)
-        self.add_functor_subtask(_remove_portless_vfc_maps, lpar_id=lpar_id)
         self.add_post_execute(_RemoveStorage('orphans_for_lpar_%d' % lpar_id))
