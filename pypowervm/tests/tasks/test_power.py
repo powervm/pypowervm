@@ -15,6 +15,7 @@
 #    under the License.
 
 import mock
+import random
 import testtools
 
 import pypowervm.entities as ent
@@ -149,8 +150,11 @@ class TestPower(testtools.TestCase):
         """Validates a power off job request failure."""
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
+        rmc_err_prefix_index = random.randint(
+            0, len(power._OSSHUTDOWN_RMC_ERRS) - 1)
+        rmc_err_prefix = power._OSHUTDOWN_RMC_ERRS[rmc_err_prefix_index]
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL0DB4')
+            error='PowerOff', operation_name=rmc_err_prefix)
 
         # Invoke the run, should power off graceful, fail, then force off
         # and fail again.
@@ -168,7 +172,7 @@ class TestPower(testtools.TestCase):
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL1558')
+            error='PowerOff', operation_name='PVME04000005')
 
         # Invoke the run the job, but succeed because it is already powered off
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
@@ -184,7 +188,7 @@ class TestPower(testtools.TestCase):
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOn', operation_name='HSCL3681')
+            error='PowerOn', operation_name='PVME01042026')
 
         # Invoke the run the job, but succeed because it is already powered off
         power._power_on_off(mock_lpar, 'PowerOn', '1111')
@@ -265,8 +269,11 @@ class TestPower(testtools.TestCase):
         """Validates a power off job request failure."""
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
+        rmc_err_prefix_index = random.randint(
+            0, len(power._OSSHUTDOWN_RMC_ERRS) - 1)
+        rmc_err_prefix = power._OSHUTDOWN_RMC_ERRS[rmc_err_prefix_index]
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL0DB4')
+            error='PowerOff', operation_name=rmc_err_prefix)
 
         # Invoke the run, should power off graceful, fail, then force off
         # and fail again.
@@ -284,7 +291,7 @@ class TestPower(testtools.TestCase):
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL1558')
+            error='PowerOff', operation_name='PVME04000005')
 
         # Invoke the run the job, but succeed because it is already powered off
         power._power_on_off(mock_vios, 'PowerOff', '1111')
@@ -300,7 +307,7 @@ class TestPower(testtools.TestCase):
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
         mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOn', operation_name='HSCL3681')
+            error='PowerOn', operation_name='PVME01042026')
 
         # Invoke the run the job, but succeed because it is already powered off
         power._power_on_off(mock_vios, 'PowerOn', '1111')
