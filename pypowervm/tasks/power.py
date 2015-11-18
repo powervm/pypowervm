@@ -132,6 +132,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     complete = False
     uuid = part.uuid
     adapter = part.adapter
+    normal_vsp_power_off = False;
     try:
         while not complete:
             resp = adapter.read(part.schema_type, uuid,
@@ -140,18 +141,14 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
             job_wrapper = job.Job.wrap(resp.entry)
             job_parms = []
             if suffix == _SUFFIX_PARM_POWER_OFF:
-                operation = 'shutdown'
-                add_immediate = False
+                operation = 'osshutdown'
+                add_immediate = True
                 if force_immediate:
-                    add_immediate = True
-                elif part is not None:
-                    if part.rmc_state == bp.RMCState.ACTIVE:
-                        operation = 'osshutdown'
-                    elif (part.env == bp.LPARType.OS400 and
-                            part.ref_code == '00000000'):
-                        operation = 'osshutdown'
-                    else:
-                        add_immediate = True
+                    operation = 'shutdown'
+                elif (normal_vsp_power_off or part.rmc_state == bp.RMCState.ACTIVE or
+                      part.env == bp.LPARType.OS400):                  
+                    operation = 'shutdown'
+                    add_immediate = False
                 job_parms.append(
                     job_wrapper.create_job_parameter('operation', operation))
                 if add_immediate:
@@ -198,10 +195,16 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                     # don't send exception
                     if 'HSCL1558' in emsg and not restart:
                         complete = True
-                    # If failed because RMC is now down, retry with force
-                    elif 'HSCL0DB4' in emsg and operation == 'osshutdown':
+                    # If failed for other reasons, retry with normal vsp power off
+                    elif operation == 'osshutdown':
+                        timeout = CONF.pypowervm_job_request_timeout
+                        force_immediate = False
+                        normal_vsp_power_off = True
+                    # normal vsp power off did not work, try hard vsp power off
+                    elif normal_vsp_power_off:
                         timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = True
+                        normal_vsp_power_off = False                        
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=part.name)
