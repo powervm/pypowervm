@@ -1014,5 +1014,28 @@ class ScrubOrphanStorageForLpar(tx.FeedTask):
                                  provides='vscsi_removals_orphans_lpar_id_%d' %
                                  lpar_id)
         self.add_functor_subtask(_remove_orphan_maps, 'VFC', lpar_id=lpar_id)
-        self.add_functor_subtask(_remove_portless_vfc_maps, lpar_id=lpar_id)
         self.add_post_execute(_RemoveStorage('orphans_for_lpar_%d' % lpar_id))
+
+
+class ScrubPortlessVFCMaps(tx.FeedTask):
+    """Scrub virtual fibre channel mappings which have no backing port."""
+    def __init__(self, adapter, lpar_id=None, host_uuid=None):
+        """Create the FeedTask to scrub VFC mappings with no backing port.
+
+        :param adapter: A pypowervm.adapter.Adapter for REST API communication.
+        :param lpar_id: (Optional) The integer short ID (not UUID) of the LPAR
+                        to be examined and scrubbed of portless VFC mappings.
+                        If unspecified, all LPARs' mappings will be examined.
+        :param host_uuid: (Optional) If specified, limit to VIOSes on this one
+                          host.  Otherwise, scrub across all VIOSes known to
+                          the adapter.
+        """
+        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING]}
+        if host_uuid is not None:
+            getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
+                                 parent_uuid=host_uuid)
+        name = 'scrub_portless_vfc_maps_for_' + ('all_lpars' if lpar_id is None
+                                                 else 'lpar_%d' % lpar_id)
+        super(ScrubPortlessVFCMaps, self).__init__(
+            name, vios.VIOS.getter(adapter, **getter_kwargs))
+        self.add_functor_subtask(_remove_portless_vfc_maps, lpar_id=lpar_id)
