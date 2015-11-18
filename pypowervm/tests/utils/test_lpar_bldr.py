@@ -73,6 +73,13 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assertIsNotNone(new_lpar)
         self.assert_xml(new_lpar, self.sections['shared_lpar'])
+        self.assertEqual('TheName', new_lpar.name)
+
+        # Rebuild the same lpar with a different name
+        attr['name'] = 'NewName'
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        rbld_lpar = bldr.rebuild(new_lpar)
+        self.assertEqual('NewName', rbld_lpar.name)
 
         # Build the minimum attributes, Dedicated Procs
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
