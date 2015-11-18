@@ -69,7 +69,7 @@ SHARED_PROC_KEYS = (PROC_UNITS_KEYS, UNCAPPED_WEIGHT)
 MEM_LOW_BOUND = 128
 VCPU_LOW_BOUND = 1
 PROC_UNITS_LOW_BOUND = 0.05
-MAX_LPAR_NAME_LEN = 40  # TODO(IBM): validate this value.
+MAX_LPAR_NAME_LEN = 31
 
 LOG = logging.getLogger(__name__)
 
@@ -794,6 +794,7 @@ class LPARBuilder(object):
 
         # Update any general attributes
         std = self.stdz.general()
+        lpar_w.name = std[NAME]
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
         lpar_w.proc_compat_mode = std[PROC_COMPAT]
         # Host may not be capable of SRR, so only add it if it's in the
