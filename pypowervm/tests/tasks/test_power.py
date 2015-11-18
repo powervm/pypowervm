@@ -63,7 +63,8 @@ class TestPower(testtools.TestCase):
         # Try a power off
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
@@ -71,7 +72,8 @@ class TestPower(testtools.TestCase):
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
+        # The operation and immediate(no-delay) parameters are appended
+        self.assertEqual(2, mock_job_p.call_count)
         mock_lpar.reset_mock()
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
@@ -82,8 +84,12 @@ class TestPower(testtools.TestCase):
         mock_lpar.ref_code = '00000000'
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with('operation', 'osshutdown')
+        # The operation and immediate(no-delay) parameters are appended
+        self.assertEqual(2, mock_job_p.call_count)
+        mock_job_p.assert_has_calls([
+            mock.call('operation', 'osshutdown'),
+            mock.call('immediate', 'true')
+        ])
         mock_lpar.reset_mock()
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
@@ -157,8 +163,10 @@ class TestPower(testtools.TestCase):
         self.assertRaises(pexc.VMPowerOffFailure,
                           power._power_on_off, mock_lpar, 'PowerOff', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(2, mock_run_job.call_count)
+        # It should have been called three times: one for the os shutdown,
+        # one for vsp normal power off,
+        # and another for the immediate power off
+        self.assertEqual(3, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -209,7 +217,8 @@ class TestPower(testtools.TestCase):
         # Try a power off
         power._power_on_off(mock_vios, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
@@ -217,7 +226,8 @@ class TestPower(testtools.TestCase):
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
         power._power_on_off(mock_vios, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
+        # The operation and immediate(no-delay) parameters are appended
+        self.assertEqual(2, mock_job_p.call_count)
         mock_vios.reset_mock()
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
@@ -273,8 +283,10 @@ class TestPower(testtools.TestCase):
         self.assertRaises(pexc.VMPowerOffFailure,
                           power._power_on_off, mock_vios, 'PowerOff', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(2, mock_run_job.call_count)
+        # It should have been called three times: one for the os shutdown,
+        # one for vsp normal power off,
+        # and another for the immediate power off
+        self.assertEqual(3, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
