@@ -132,6 +132,8 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     complete = False
     uuid = part.uuid
     adapter = part.adapter
+    normal_vsp_power_off = False
+    add_immediate = part.env != bp.LPARType.OS400
     try:
         while not complete:
             resp = adapter.read(part.schema_type, uuid,
@@ -140,18 +142,17 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
             job_wrapper = job.Job.wrap(resp.entry)
             job_parms = []
             if suffix == _SUFFIX_PARM_POWER_OFF:
-                operation = 'shutdown'
-                add_immediate = False
+                operation = 'osshutdown'
                 if force_immediate:
+                    operation = 'shutdown'
                     add_immediate = True
-                elif part is not None:
-                    if part.rmc_state == bp.RMCState.ACTIVE:
-                        operation = 'osshutdown'
-                    elif (part.env == bp.LPARType.OS400 and
-                            part.ref_code == '00000000'):
-                        operation = 'osshutdown'
-                    else:
-                        add_immediate = True
+                # Do normal vsp shutdown if flag on or
+                # if RMC not active (for non-IBMi)
+                elif (normal_vsp_power_off or
+                      (part.env != bp.LPARType.OS400 and
+                       part.rmc_state != bp.RMCState.ACTIVE)):
+                    operation = 'shutdown'
+                    add_immediate = False
                 job_parms.append(
                     job_wrapper.create_job_parameter('operation', operation))
                 if add_immediate:
@@ -177,10 +178,13 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if (suffix == _SUFFIX_PARM_POWER_OFF and
                         operation == 'osshutdown'):
                     # This has timed out, we loop again and attempt to
-                    # force immediate now.  Should not re-hit this exception
-                    # block
+                    # force immediate vsp now except for IBM i where we try
+                    # immediate osshutdown first
                     timeout = CONF.pypowervm_job_request_timeout
-                    force_immediate = True
+                    if (part.env == bp.LPARType.OS400 and not add_immediate):
+                        add_immediate = True
+                    else:
+                        force_immediate = True
                 else:
                     emsg = six.text_type(error)
                     LOG.exception(_('Error: %s') % emsg)
@@ -198,10 +202,22 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                     # don't send exception
                     if 'HSCL1558' in emsg and not restart:
                         complete = True
-                    # If failed because RMC is now down, retry with force
-                    elif 'HSCL0DB4' in emsg and operation == 'osshutdown':
+                    # If failed for other reasons,
+                    # retry with normal vsp power off except for IBM i
+                    # where we try immediate osshutdown first
+                    elif operation == 'osshutdown':
+                        timeout = CONF.pypowervm_job_request_timeout
+                        if (part.env == bp.LPARType.OS400 and
+                                not add_immediate):
+                            add_immediate = True
+                        else:
+                            force_immediate = False
+                            normal_vsp_power_off = True
+                    # normal vsp power off did not work, try hard vsp power off
+                    elif normal_vsp_power_off:
                         timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = True
+                        normal_vsp_power_off = False
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=part.name)
