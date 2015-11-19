@@ -34,6 +34,12 @@ CONF = cfg.CONF
 
 _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
+# Error codes indicate osshutdown is not supported
+_OSSHUTDOWN_RMC_ERRS = ['HSCL0DB4', 'PVME01050905', 'PVME01050402']
+# Error codes indicate partition is already powered off
+_ALREADY_POWERED_OFF_ERRS = ['HSCL1558', 'PVME04000005']
+# Error codes indicate partition is already powered on
+_ALREADY_POWERED_ON_ERRS = ['HSCL3681', 'PVME01042026']
 
 
 class BootMode(object):
@@ -196,18 +202,23 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if suffix == _SUFFIX_PARM_POWER_OFF:
                     # If already powered off and not a reboot,
                     # don't send exception
-                    if 'HSCL1558' in emsg and not restart:
+                    if (any(err_prefix in emsg
+                            for err_prefix in _ALREADY_POWERED_OFF_ERRS)
+                            and not restart):
                         complete = True
                     # If failed because RMC is now down, retry with force
-                    elif 'HSCL0DB4' in emsg and operation == 'osshutdown':
-                        timeout = CONF.pypowervm_job_request_timeout
+                    elif (any(err_prefix in emsg
+                              for err_prefix in _OSSHUTDOWN_RMC_ERRS)
+                            and operation == 'osshutdown'):
+                        timeout = CONF.powervm_job_request_timeout
                         force_immediate = True
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=part.name)
                 else:
                     # If already powered on, don't send exception
-                    if 'HSCL3681' in emsg:
+                    if (any(err_prefix in emsg
+                            for err_prefix in _ALREADY_POWERED_ON_ERRS)):
                         complete = True
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,
