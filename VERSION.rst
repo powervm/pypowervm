@@ -1,6 +1,9 @@
 =============================
 pypowervm - Version Reference
 =============================
+Version 1.0.0.1
+---------------
+
 Version 1.0.0.0
 ---------------
 Initial stable release.  See the README.rst_ for details.
