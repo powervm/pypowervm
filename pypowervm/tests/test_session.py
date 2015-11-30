@@ -49,6 +49,7 @@ class TestAdapter(testtools.TestCase):
         self.assertTrue(sess.use_file_auth)
         self.assertIsNone(sess.password)
         self.assertTrue(sess.username.startswith('pypowervm_'))
+        self.assertEqual(3, len(sess.username.split('_')))
         self.assertEqual('localhost', sess.host)
         self.assertEqual('http', sess.protocol)
         self.assertEqual(12080, sess.port)
