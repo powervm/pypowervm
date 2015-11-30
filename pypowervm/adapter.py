@@ -70,6 +70,10 @@ register_namespace('uom', c.UOM_NS)
 class Session(object):
     """Responsible for PowerVM API session management."""
 
+    # Processwide monotonic counter to help ensure uniqueness of the auth file
+    # name.
+    _last_authfile_ext = 0
+
     def __init__(self, host='localhost', username=None, password=None,
                  auditmemento=None, protocol=None, port=None, timeout=1200,
                  certpath='/etc/ssl/certs/', certext='.crt'):
@@ -114,9 +118,17 @@ class Session(object):
         self.password = password
         if self.use_file_auth and not username:
             # Generate a username, which is used by the file auth mechanism
-            # only to name the file.  Username indicates the time (seconds
-            # since the epoch) of the instantiation of this Session instance.
-            username = 'pypowervm_%d' % int(time.mktime(time.gmtime()))
+            # only to name the file.  We ensure this is unique within any set
+            # of processes running at a given time by combining a synchronized
+            # monotonic counter (_last_authfile_ext) with the current thread
+            # ID.  The counter ensures that this thread doesn't collide with
+            # itself; and the thread ID ensures we don't collide with other
+            # threads on the system (even in other processes, which would have
+            # their own counters).
+            tid = threading.current_thread().ident
+            with locku.lock('AUTH_FILE_EXT'):
+                self._last_authfile_ext += 1
+                username = 'pypowervm_%d_%d' % (tid, self._last_authfile_ext)
         self.username = username
 
         if protocol is None:
@@ -491,7 +503,8 @@ class Session(object):
             if ioe.errno == errno.EACCES:
                 raise pvmex.AuthFileReadError(access_file=str(tokfile_path))
             else:
-                raise pvmex.AuthFileAccessError(access_file=str(tokfile_path))
+                raise pvmex.AuthFileAccessError(access_file=str(tokfile_path),
+                                                errno=ioe.errno)
         if not tok:
             # TODO(IBM): T9N
             msg = ("Token file %s didn't contain a readable session token." %

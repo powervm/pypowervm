@@ -39,6 +39,7 @@ msg_params = {
     "vios_state": "vios_state_param",
     "volume": "volume_param",
     "access_file": "testfile",
+    "errno": 2,
 }
 
 os.environ['LANG'] = 'en_US'
@@ -54,9 +55,9 @@ class2msg = {
     "The 'operation_name_param' operation failed. "
     "Failed to complete the task in 147 seconds.",
     pvmex.AuthFileReadError:
-    "OS unable to read file testfile.",
+    "OS denied access to file testfile.",
     pvmex.AuthFileAccessError:
-    "OS able to read file testfile, but encountered an access error.",
+    "OS encountered an I/O error attempting to read file testfile: errno=2.",
     pvmex.MigrationFailed:
     "The migration task failed. error_param"
 }

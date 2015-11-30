@@ -186,12 +186,12 @@ class FeedTaskEmptyFeed(AbstractMsgFmtError):
 
 
 class AuthFileReadError(AbstractMsgFmtError):
-    msg_fmt = _("OS unable to read file %(access_file)s.")
+    msg_fmt = _("OS denied access to file %(access_file)s.")
 
 
 class AuthFileAccessError(AbstractMsgFmtError):
-    msg_fmt = _("OS able to read file %(access_file)s, but encountered an "
-                "access error.")
+    msg_fmt = _("OS encountered an I/O error attempting to read file "
+                "%(access_file)s: errno=%(errno)d.")
 
 
 class MigrationFailed(AbstractMsgFmtError):
