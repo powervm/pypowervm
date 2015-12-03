@@ -140,6 +140,7 @@ _VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
 _VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
 _VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
 _VADPT_PVID = _PVID
+_VADPT_LOC_PART_ID = 'LocalPartitionID'
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
@@ -1058,6 +1059,11 @@ class CNA(ewrap.EntryWrapper):
 
     def _slot(self, sid):
         self.set_parm_value(_VADPT_SLOT_NUM, sid)
+
+    @property
+    def part_id(self):
+        """Returns the Local Partition ID for this adapter."""
+        return self._get_val_int(_VADPT_LOC_PART_ID)
 
     @property
     def _use_next_avail_slot_id(self):
