@@ -33,6 +33,7 @@ BODY{
     </Metadata>
     <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V24-C32</DynamicReconfigurationConnectorName>
     <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V24-C32</LocationCode>
+    <LocalPartitionID kxe="false" kb="CUR">3</LocalPartitionID>
     <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
     <VariedOn kb="CUD" kxe="true">true</VariedOn>
     <VirtualSlotNumber kb="COD" kxe="false">32</VirtualSlotNumber>
