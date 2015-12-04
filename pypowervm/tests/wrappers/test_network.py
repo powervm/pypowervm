@@ -688,9 +688,9 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.entries._trunk_pri(None)
         self.assertFalse(self.entries.is_trunk)
 
-    def test_part_id(self):
+    def test_lpar_id(self):
         """Test that we can get the local partition id."""
-        self.assertEqual(3, self.entries.part_id)
+        self.assertEqual(3, self.entries.lpar_id)
 
 if __name__ == "__main__":
     unittest.main()
