@@ -1061,7 +1061,7 @@ class CNA(ewrap.EntryWrapper):
         self.set_parm_value(_VADPT_SLOT_NUM, sid)
 
     @property
-    def part_id(self):
+    def lpar_id(self):
         """Returns the Local Partition ID for this adapter."""
         return self._get_val_int(_VADPT_LOC_PART_ID)
 
