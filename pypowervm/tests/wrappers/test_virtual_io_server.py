@@ -271,6 +271,19 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('a_link', vmap2.client_lpar_href)
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.PV)
 
+    def test_clone_scsi_mapping_no_storage(self):
+        """Clone a VSCSI mapping with no storage element."""
+        pv = pvm_stor.PV.bld(self.adpt, 'disk_name', 'udid')
+        vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
+                                     'client_lpar_uuid', pv)
+        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, None)
+        self.assertIsNotNone(vmap2)
+        self.assertIsNotNone(vmap2.element)
+        self.assertEqual('Client', vmap2.client_adapter.side)
+        self.assertEqual('Server', vmap2.server_adapter.side)
+        self.assertEqual('a_link', vmap2.client_lpar_href)
+        self.assertIsNone(vmap2.backing_storage)
+
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
 
