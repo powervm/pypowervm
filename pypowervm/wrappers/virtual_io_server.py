@@ -62,7 +62,6 @@ _VOL_UID = 'VolumeUniqueID'
 _VOL_NAME = 'VolumeName'
 _RESERVE_POLICY = 'ReservePolicy'
 
-_FREE_IO_ADPTS_LINK_AGG = 'FreeIOAdaptersForLinkAggregation'
 _IO_ADPT_CHOICE = 'IOAdapterChoice'
 _IO_ADPT = 'IOAdapter'
 _IO_LINK_AGG_ADPT_ID = 'AdapterID'
@@ -313,7 +312,8 @@ class VIOS(bp.BasePartition):
     @property
     def io_adpts_for_link_agg(self):
         es = ewrap.WrapperElemList(self._find_or_seed(
-            _FREE_IO_ADPTS_LINK_AGG), LinkAggrIOAdapterChoice)
+            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=self.xags.NETWORK.attrs),
+            LinkAggrIOAdapterChoice)
         return es
 
 

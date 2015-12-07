@@ -615,5 +615,24 @@ class TestIOAdapterChoices(twrap.TestWrapper):
         self.assertEqual(self.io_adpts[0].udid,
                          '13U78AB.001.WZSJBM3-P1-C7-T4')
 
+
+class TestFeed3(twrap.TestWrapper):
+    """Tests that specifically need fake_vios_feed3.txt"""
+    file = 'fake_vios_feed3.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def test_vivify_io_adpts_for_link_agg(self):
+        """Vivifying FreeIOAdaptersForLinkAggregation adds the Network xag."""
+        # The first VIOS doesn't have FreeIOAdapters...
+        vwrp = self.dwrap
+        self.assertIsNone(vwrp._find(vios._VIO_FREE_IO_ADPTS_FOR_LNAGG))
+        # Vivify it - should be empty
+        self.assertEqual([], vwrp.io_adpts_for_link_agg)
+        # Now it's in there
+        elem = vwrp._find(vios._VIO_FREE_IO_ADPTS_FOR_LNAGG)
+        self.assertIsNotNone(elem)
+        # Got the right xag
+        self.assertEqual(vios.VIOS.xags.NETWORK.name, elem.attrib['group'])
+
 if __name__ == "__main__":
     unittest.main()

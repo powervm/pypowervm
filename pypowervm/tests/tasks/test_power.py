@@ -63,7 +63,8 @@ class TestPower(testtools.TestCase):
         # Try a power off
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
@@ -71,7 +72,8 @@ class TestPower(testtools.TestCase):
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
+        # The operation and immediate(no-delay) parameters are appended
+        self.assertEqual(2, mock_job_p.call_count)
         mock_lpar.reset_mock()
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
@@ -82,6 +84,7 @@ class TestPower(testtools.TestCase):
         mock_lpar.ref_code = '00000000'
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
+        # Only the operation parameter is appended
         self.assertEqual(1, mock_job_p.call_count)
         mock_job_p.assert_called_with('operation', 'osshutdown')
         mock_lpar.reset_mock()
@@ -149,16 +152,21 @@ class TestPower(testtools.TestCase):
         """Validates a power off job request failure."""
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL0DB4')
+        for rmc_err_prefix in power._OSSHUTDOWN_RMC_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOff', operation_name=rmc_err_prefix)
 
-        # Invoke the run, should power off graceful, fail, then force off
-        # and fail again.
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+            # Invoke the run, should power off graceful, fail, then force off
+            # and fail again.
+            self.assertRaises(pexc.VMPowerOffFailure,
+                              power._power_on_off, mock_lpar, 'PowerOff',
+                              '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(2, mock_run_job.call_count)
+        # It should have been called three times: one for the os shutdown,
+        # one for vsp normal power off,
+        # and another for the immediate power off
+        self.assertEqual(3, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -167,14 +175,17 @@ class TestPower(testtools.TestCase):
         """Validates a power off job when system is already off."""
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL1558')
+        for err_prefix in power._ALREADY_POWERED_OFF_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOff', operation_name=err_prefix)
 
-        # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_lpar, 'PowerOff', '1111')
+            # Invoke the run the job, but succeed because it is already
+            # powered off
+            power._power_on_off(mock_lpar, 'PowerOff', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(1, mock_run_job.call_count)
+            # This specific error should cause a retry.
+            self.assertEqual(1, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -183,14 +194,17 @@ class TestPower(testtools.TestCase):
         """Validates a power on job when system is already on."""
         mock_lpar.adapter = self.adpt
         mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOn', operation_name='HSCL3681')
+        for err_prefix in power._ALREADY_POWERED_ON_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOn', operation_name=err_prefix)
 
-        # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_lpar, 'PowerOn', '1111')
+            # Invoke the run the job, but succeed because it is already
+            # powered on
+            power._power_on_off(mock_lpar, 'PowerOn', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(1, mock_run_job.call_count)
+            # This specific error should cause a retry.
+            self.assertEqual(1, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -209,7 +223,8 @@ class TestPower(testtools.TestCase):
         # Try a power off
         power._power_on_off(mock_vios, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
 
@@ -217,7 +232,8 @@ class TestPower(testtools.TestCase):
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
         power._power_on_off(mock_vios, 'PowerOff', '1111')
         self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
+        # The operation and immediate(no-delay) parameters are appended
+        self.assertEqual(2, mock_job_p.call_count)
         mock_vios.reset_mock()
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
@@ -265,16 +281,21 @@ class TestPower(testtools.TestCase):
         """Validates a power off job request failure."""
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL0DB4')
+        for rmc_err_prefix in power._OSSHUTDOWN_RMC_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOff', operation_name=rmc_err_prefix)
 
-        # Invoke the run, should power off graceful, fail, then force off
-        # and fail again.
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_vios, 'PowerOff', '1111')
+            # Invoke the run, should power off graceful, fail, then force off
+            # and fail again.
+            self.assertRaises(pexc.VMPowerOffFailure,
+                              power._power_on_off, mock_vios, 'PowerOff',
+                              '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(2, mock_run_job.call_count)
+        # It should have been called three times: one for the os shutdown,
+        # one for vsp normal power off,
+        # and another for the immediate power off
+        self.assertEqual(3, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -283,14 +304,17 @@ class TestPower(testtools.TestCase):
         """Validates a power off job when system is already off."""
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOff', operation_name='HSCL1558')
+        for err_prefix in power._ALREADY_POWERED_OFF_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOff', operation_name=err_prefix)
 
-        # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_vios, 'PowerOff', '1111')
+            # Invoke the run the job, but succeed because it is already
+            # powered off
+            power._power_on_off(mock_vios, 'PowerOff', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(1, mock_run_job.call_count)
+            # This specific error should cause a retry.
+            self.assertEqual(1, mock_run_job.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
@@ -299,11 +323,14 @@ class TestPower(testtools.TestCase):
         """Validates a power on job when system is already on."""
         mock_vios.adapter = self.adpt
         mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestFailed(
-            error='PowerOn', operation_name='HSCL3681')
+        for err_prefix in power._ALREADY_POWERED_ON_ERRS:
+            mock_run_job.reset_mock()
+            mock_run_job.side_effect = pexc.JobRequestFailed(
+                error='PowerOn', operation_name=err_prefix)
 
-        # Invoke the run the job, but succeed because it is already powered off
-        power._power_on_off(mock_vios, 'PowerOn', '1111')
+            # Invoke the run the job, but succeed because it is already
+            # powered on
+            power._power_on_off(mock_vios, 'PowerOn', '1111')
 
-        # This specific error should cause a retry.
-        self.assertEqual(1, mock_run_job.call_count)
+            # This specific error should cause a retry.
+            self.assertEqual(1, mock_run_job.call_count)

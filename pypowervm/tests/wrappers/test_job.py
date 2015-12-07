@@ -266,12 +266,13 @@ class TestJobEntryWrapper(testtools.TestCase):
         # "Infinite" timeout, status eventually becomes one not in the list
         mock_status.__get__.side_effect = ['a', 'b', 'c', 'd', 'e', 'f']
         mock_time.reset_mock()
+        mock_time.side_effect = [0, 1, 2, 3, 4, 5]
         mock_sleep.reset_mock()
         self.assertFalse(wrapper.poll_while_status(['a', 'b', 'c', 'd', 'e'],
                                                    0, False))
         self.assertEqual(5, mock_sleep.call_count)
         # Only the initial timer setup
-        self.assertEqual(1, mock_time.call_count)
+        self.assertEqual(6, mock_time.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.poll_while_status')
     @mock.patch('pypowervm.wrappers.job.Job.delete_job')
@@ -289,26 +290,35 @@ class TestJobEntryWrapper(testtools.TestCase):
         mock_poll.assert_called_once_with(['RUNNING'], 0, 'sens')
         mock_del.assert_called_once_with()
 
+    @mock.patch('pypowervm.wrappers.job.Job.poll_while_status')
+    @mock.patch('pypowervm.wrappers.job.Job.delete_job')
+    def test_cancel_job_thread(self, mock_del, mock_poll):
+        jwrap.CancelJobThread(self._ok_wrapper, 'sens').run()
+        mock_poll.assert_called_once_with(['RUNNING', 'NOT_STARTED'],
+                                          0, 'sens')
+        mock_del.assert_called_once_with()
+
+    @mock.patch('pypowervm.wrappers.job.CancelJobThread.start')
     @mock.patch('pypowervm.wrappers.job.Job.delete_job')
     @mock.patch('pypowervm.wrappers.job.Job._monitor_job')
-    def test_cancel_job(self, mock_monitor, mock_delete):
+    def test_cancel_job(self, mock_monitor, mock_delete, mock_start):
         wrapper = self._ok_wrapper
         self.adpt.update.side_effect = ex.Error('error')
-        mock_monitor.return_value = True
-        with self.assertLogs(jwrap.__name__, 'ERROR'):
-            self.assertRaises(ex.Error, wrapper.cancel_job)
+        mock_monitor.return_value = False
+        wrapper.cancel_job()
         self.adpt.update.assert_called_with(
             None, None, root_type='jobs', root_id=wrapper.job_id,
             suffix_type='cancel')
         self.assertEqual(0, mock_delete.call_count)
         self.adpt.update.reset_mock()
         self.adpt.update.side_effect = None
+        mock_start.reset_mock()
         mock_monitor.return_value = False
         wrapper.cancel_job()
         self.adpt.update.assert_called_with(
             None, None, root_type='jobs', root_id=wrapper.job_id,
             suffix_type='cancel')
-        self.assertEqual(1, mock_delete.call_count)
+        self.assertEqual(1, mock_start.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
     def test_delete_job(self, mock_status):

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Eric P. Fried <efried@us.ibm.com>
 Build-Depends: debhelper(>= 9)
 Standards-Version: 3.9.5
-Homepage: http://github.com/pypowervm/pypowervm
+Homepage: http://github.com/powervm/pypowervm
 
 Package: pypowervm
 Section: python

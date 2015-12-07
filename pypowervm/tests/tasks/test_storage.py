@@ -777,6 +777,51 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(1, mock_rm_vopts.call_count)
         self.assertEqual(1, mock_rm_vdisks.call_count)
 
+    @staticmethod
+    def count_maps_for_lpar(mappings, lpar_id):
+        """Count the mappings whose client side is the specified LPAR ID.
+
+        :param mappings: List of VFC or VSCSI mappings to search.
+        :param lpar_id: The client LPAR ID to search for.
+        :return: Integer - the number of mappings whose server_adapter.lpar_id
+                 matches the specified lpar_id.
+        """
+        return len([1 for amap in mappings
+                    if amap.server_adapter.lpar_id == lpar_id])
+
+    def test_remove_portless_vfc_maps1(self):
+        """Test _remove_portless_vfc_maps with no LPAR ID."""
+        vwrap = self.vio_feed[0]
+        # Save the "before" size of the VFC mapping list
+        vfc_len = len(vwrap.vfc_mappings)
+        # Count our target LPARs' mappings before
+        lpar24maps = self.count_maps_for_lpar(vwrap.vfc_mappings, 24)
+        lpar124maps = self.count_maps_for_lpar(vwrap.vfc_mappings, 124)
+        ts.ScrubPortlessVFCMaps(self.adpt).execute()
+        # Overall two fewer maps
+        self.assertEqual(vfc_len - 2, len(vwrap.vfc_mappings))
+        # ...and they were the right ones
+        self.assertEqual(lpar24maps - 1,
+                         self.count_maps_for_lpar(vwrap.vfc_mappings, 24))
+        self.assertEqual(lpar124maps - 1,
+                         self.count_maps_for_lpar(vwrap.vfc_mappings, 124))
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+
+    def test_remove_portless_vfc_maps2(self):
+        """Test _remove_portless_vfc_maps specifying an LPAR ID."""
+        vwrap = self.vio_feed[0]
+        # Save the "before" size of the VFC mapping list
+        vfc_len = len(vwrap.vfc_mappings)
+        # Count our target LPAR's mappings before
+        lpar24maps = self.count_maps_for_lpar(vwrap.vfc_mappings, 24)
+        ts.ScrubPortlessVFCMaps(self.adpt, lpar_id=24).execute()
+        # Overall one map was scrubbed
+        self.assertEqual(vfc_len - 1, len(vwrap.vfc_mappings))
+        # ...and it was the right one
+        self.assertEqual(lpar24maps - 1,
+                         self.count_maps_for_lpar(vwrap.vfc_mappings, 24))
+        self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
+
     @mock.patch('pypowervm.tasks.storage._rm_vopts')
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
     def test_orphans_by_lpar_id(self, mock_wrap, mock_rm_vopts):
@@ -787,8 +832,8 @@ class TestScrub3(testtools.TestCase):
         # Save the "before" sizes of the mapping lists
         vscsi_len = len(vwrap.scsi_mappings)
         vfc_len = len(vwrap.vfc_mappings)
-        # LPAR 24 has one orphan FC mapping, one legit FC mapping, and one
-        # orphan SCSI mapping (for a vopt).
+        # LPAR 24 has one orphan FC mapping, one portless FC mapping, one legit
+        # FC mapping, and one orphan SCSI mapping (for a vopt).
         ts.ScrubOrphanStorageForLpar(self.adpt, 24).execute()
         # The right number of maps remain.
         self.assertEqual(vscsi_len - 1, len(vwrap.scsi_mappings))

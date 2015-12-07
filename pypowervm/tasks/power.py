@@ -31,10 +31,15 @@ import pypowervm.wrappers.managed_system as ms
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
-CONF.import_opt('powervm_job_request_timeout', 'pypowervm.wrappers.job')
 
 _SUFFIX_PARM_POWER_ON = 'PowerOn'
 _SUFFIX_PARM_POWER_OFF = 'PowerOff'
+# Error codes indicate osshutdown is not supported
+_OSSHUTDOWN_RMC_ERRS = ['HSCL0DB4', 'PVME01050905', 'PVME01050402']
+# Error codes indicate partition is already powered off
+_ALREADY_POWERED_OFF_ERRS = ['HSCL1558', 'PVME04000005']
+# Error codes indicate partition is already powered on
+_ALREADY_POWERED_ON_ERRS = ['HSCL3681', 'PVME01042026']
 
 
 class BootMode(object):
@@ -90,7 +95,7 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
 
 @lgc.logcall
 def power_off(part, host_uuid, force_immediate=False, restart=False,
-              timeout=CONF.powervm_job_request_timeout, add_parms=None):
+              timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
@@ -108,7 +113,7 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
 
 
 def _power_on_off(part, suffix, host_uuid, force_immediate=False,
-                  restart=False, timeout=CONF.powervm_job_request_timeout,
+                  restart=False, timeout=CONF.pypowervm_job_request_timeout,
                   add_parms=None, synchronous=True):
     """Internal function to power on or off an instance.
 
@@ -133,6 +138,8 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     complete = False
     uuid = part.uuid
     adapter = part.adapter
+    normal_vsp_power_off = False
+    add_immediate = part.env != bp.LPARType.OS400
     try:
         while not complete:
             resp = adapter.read(part.schema_type, uuid,
@@ -141,18 +148,17 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
             job_wrapper = job.Job.wrap(resp.entry)
             job_parms = []
             if suffix == _SUFFIX_PARM_POWER_OFF:
-                operation = 'shutdown'
-                add_immediate = False
+                operation = 'osshutdown'
                 if force_immediate:
+                    operation = 'shutdown'
                     add_immediate = True
-                elif part is not None:
-                    if part.rmc_state == bp.RMCState.ACTIVE:
-                        operation = 'osshutdown'
-                    elif (part.env == bp.LPARType.OS400 and
-                            part.ref_code == '00000000'):
-                        operation = 'osshutdown'
-                    else:
-                        add_immediate = True
+                # Do normal vsp shutdown if flag on or
+                # if RMC not active (for non-IBMi)
+                elif (normal_vsp_power_off or
+                      (part.env != bp.LPARType.OS400 and
+                       part.rmc_state != bp.RMCState.ACTIVE)):
+                    operation = 'shutdown'
+                    add_immediate = False
                 job_parms.append(
                     job_wrapper.create_job_parameter('operation', operation))
                 if add_immediate:
@@ -178,10 +184,13 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if (suffix == _SUFFIX_PARM_POWER_OFF and
                         operation == 'osshutdown'):
                     # This has timed out, we loop again and attempt to
-                    # force immediate now.  Should not re-hit this exception
-                    # block
-                    timeout = CONF.powervm_job_request_timeout
-                    force_immediate = True
+                    # force immediate vsp now except for IBM i where we try
+                    # immediate osshutdown first
+                    timeout = CONF.pypowervm_job_request_timeout
+                    if (part.env == bp.LPARType.OS400 and not add_immediate):
+                        add_immediate = True
+                    else:
+                        force_immediate = True
                 else:
                     emsg = six.text_type(error)
                     LOG.exception(_('Error: %s') % emsg)
@@ -197,18 +206,33 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 if suffix == _SUFFIX_PARM_POWER_OFF:
                     # If already powered off and not a reboot,
                     # don't send exception
-                    if 'HSCL1558' in emsg and not restart:
+                    if (any(err_prefix in emsg
+                            for err_prefix in _ALREADY_POWERED_OFF_ERRS)
+                            and not restart):
                         complete = True
-                    # If failed because RMC is now down, retry with force
-                    elif 'HSCL0DB4' in emsg and operation == 'osshutdown':
-                        timeout = CONF.powervm_job_request_timeout
+                    # If failed for other reasons,
+                    # retry with normal vsp power off except for IBM i
+                    # where we try immediate osshutdown first
+                    elif operation == 'osshutdown':
+                        timeout = CONF.pypowervm_job_request_timeout
+                        if (part.env == bp.LPARType.OS400 and
+                                not add_immediate):
+                            add_immediate = True
+                        else:
+                            force_immediate = False
+                            normal_vsp_power_off = True
+                    # normal vsp power off did not work, try hard vsp power off
+                    elif normal_vsp_power_off:
+                        timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = True
+                        normal_vsp_power_off = False
                     else:
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=part.name)
                 else:
                     # If already powered on, don't send exception
-                    if 'HSCL3681' in emsg:
+                    if (any(err_prefix in emsg
+                            for err_prefix in _ALREADY_POWERED_ON_ERRS)):
                         complete = True
                     else:
                         raise pexc.VMPowerOnFailure(reason=emsg,

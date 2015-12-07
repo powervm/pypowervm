@@ -32,14 +32,7 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
 
-job_opts = [
-    cfg.IntOpt('powervm_job_request_timeout',
-               default=1800,
-               help='Default timeout in seconds for Job requests to the API')
-]
-
 CONF = cfg.CONF
-CONF.register_opts(job_opts)
 
 _JOBS = 'jobs'
 _REQ_OP = 'RequestedOperation'
@@ -77,6 +70,17 @@ class PollAndDeleteThread(threading.Thread):
             exc = pvmex.JobRequestFailed(
                 operation_name=self.job.op, error=self.job.get_job_message())
             LOG.error(exc.args[0])
+
+
+class CancelJobThread(threading.Thread):
+    def __init__(self, job, sensitive):
+        super(CancelJobThread, self).__init__()
+        self.job = job
+        self.sensitive = sensitive
+
+    def run(self):
+        self.job._monitor_job(timeout=0, sensitive=self.sensitive)
+        self.job.delete_job()
 
 
 @ewrap.EntryWrapper.pvm_type('Job', ns=pc.WEB_NS)
@@ -260,14 +264,21 @@ class Job(ewrap.EntryWrapper):
                             left the specified set of states.
         """
         start_time = time.time()
+        iteration_count = 1
         while self.job_status in statuses:
+            elapsed_time = time.time() - start_time
             if timeout:
                 # wait up to timeout seconds
-                if (time.time() - start_time) > timeout:
+                if elapsed_time > timeout:
                     return True
+            # Log a warning every 5 minutes
+            if not iteration_count % 300:
+                msg = _("Job %(job_id)s monitoring for %(time)i seconds.")
+                LOG.warn(msg, {'job_id': self.job_id, 'time': elapsed_time})
             time.sleep(1)
             self.entry = self.adapter.read_job(
                 self.job_id, sensitive=sensitive).entry
+            iteration_count += 1
         return False
 
     def _monitor_job(self, timeout=CONF.pypowervm_job_request_timeout,
@@ -303,28 +314,25 @@ class Job(ewrap.EntryWrapper):
         PollAndDeleteThread(self, sensitive).start()
         return False
 
-    def cancel_job(self, timeout=CONF.pypowervm_job_request_timeout,
-                   sensitive=False):
+    def cancel_job(self, sensitive=False):
         """Cancels and deletes incomplete/running jobs.
 
-        :param timeout: maximum number of seconds to keep checking job status
+        This method spawns a thread to monitor the job being cancelled
+        and delete it.
+
         :param sensitive: If True, payload will be hidden in the logs
-        :raise JobRequestFailed: if the job did not cancel within the
-        expected timeout.
         """
 
         job_id = self.job_id
+        msg = _("Issuing cancel request for job %(job_id)s. Will poll the "
+                "job indefinitely for termination.")
+        LOG.warn(msg, {'job_id': job_id})
         try:
             self.adapter.update(None, None, root_type=_JOBS, root_id=job_id,
                                 suffix_type='cancel')
         except pvmex.Error as exc:
             LOG.exception(exc)
-        timed_out = self._monitor_job(timeout=timeout, sensitive=sensitive)
-        if timed_out:
-            raise pvmex.Error(
-                _("Job %(job_id)s failed to cancel after %(timeout)d seconds.")
-                % dict(job_id=job_id, timeout=timeout))
-        self.delete_job()
+        CancelJobThread(self, sensitive).start()
 
     def delete_job(self):
         """Cleans this Job off of the REST server, if it is completed.
