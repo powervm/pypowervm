@@ -398,7 +398,14 @@ class VSCSIMapping(VStorageMapping):
 
     @classmethod
     def bld_from_existing(cls, existing_map, stg_ref):
-        """Clones the existing mapping, but swaps in the new storage elem."""
+        """Clones the existing mapping, but swaps in the new storage elem.
+
+        :param existing_map: The existing VSCSIMapping to clone.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.  If explicitly
+                        None, the new mapping is created with no storage.
+        :return: The newly-created VSCSIMapping.
+        """
         # We do NOT want the TargetDevice element, so we explicitly copy the
         # pieces we want from the original mapping.
         new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
@@ -408,7 +415,8 @@ class VSCSIMapping(VStorageMapping):
             new_map._client_adapter(copy.deepcopy(existing_map.client_adapter))
         if existing_map.server_adapter is not None:
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
-        new_map._backing_storage(copy.deepcopy(stg_ref))
+        if stg_ref is not None:
+            new_map._backing_storage(copy.deepcopy(stg_ref))
         return new_map
 
     @property
