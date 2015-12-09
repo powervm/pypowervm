@@ -43,7 +43,7 @@ class TestMgmtCon(testtools.TestCase):
 
     def test_add_auth_key(self):
         # Test adding a key ('4') to an existing list ('1', '2', '3')
-        self.cons_w.ssh_authorized_keys = tuple(['1', '2', '3'])
+        self.cons_w.ssh_authorized_keys = ('1', '2', '3')
         mc_task.add_authorized_key(mock.Mock(), '4')
         self.assertEqual(['1', '2', '3', '4'],
                          self.cons_w.ssh_authorized_keys)
@@ -67,3 +67,14 @@ class TestMgmtCon(testtools.TestCase):
         self.assertEqual(1, self.cons_w.refresh.call_count)
         # And that our update was called
         self.assertEqual(1, self.cons_w.update.call_count)
+
+    def test_get_auth_keys(self):
+        # Test adding a key ('4') to an existing list ('1', '2', '3')
+        self.cons_w.ssh_authorized_keys = ('1', '2', '3')
+        self.assertEqual(self.cons_w.ssh_authorized_keys,
+                         mc_task.get_authorized_keys(mock.Mock()))
+        mc_task.add_authorized_key(mock.Mock(), '4')
+        self.assertEqual(self.cons_w.ssh_authorized_keys,
+                         mc_task.get_authorized_keys(mock.Mock()))
+        self.assertEqual(mc_task.get_authorized_keys(mock.Mock()),
+                         ['1', '2', '3', '4'])
