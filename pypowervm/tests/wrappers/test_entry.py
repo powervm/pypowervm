@@ -68,6 +68,29 @@ class SubWrapper(ewrap.Wrapper):
             return None
 
 
+class TestElement(twrap.TestWrapper):
+    file = NET_BRIDGE_FILE
+    wrapper_class_to_test = net.NetBridge
+
+    def test_child_poaching(self):
+        """Creating an element with children of another existing element.
+
+        Ensure the existing element remains intact.
+        """
+        # How many load groups did we start with?
+        num_lg = len(self.dwrap.load_grps)
+        # Create a new element with a load group from the NetBridge as a child.
+        newel = ent.Element('foo', None,
+                            children=[self.dwrap.load_grps[0].element])
+        # Element creation did not poach the load group from the NetBridge.
+        self.assertEqual(num_lg, len(self.dwrap.load_grps))
+
+        # pypowervm.entities.Element.append (not to be confused with
+        # etree.Element.append or list.append) must behave the same way.
+        newel.append(self.dwrap.load_grps[1].element)
+        self.assertEqual(num_lg, len(self.dwrap.load_grps))
+
+
 class TestWrapper(unittest.TestCase):
     def test_get_val_str(self):
         w = SubWrapper(one='1', foo='foo', empty='')

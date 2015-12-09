@@ -214,7 +214,7 @@ class Element(object):
         if text:
             self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
-            self.element.append(c.element)
+            self.element.append(copy.deepcopy(c.element))
         self.adapter = adapter
 
     def __len__(self):
@@ -362,7 +362,7 @@ class Element(object):
 
     def append(self, subelement):
         """Adds subelement to the end of this element's list of subelements."""
-        self.element.append(subelement.element)
+        self.element.append(copy.deepcopy(subelement.element))
 
     def inject(self, subelement, ordering_list=(), replace=True):
         """Inserts subelement at the correct position in self's children.
