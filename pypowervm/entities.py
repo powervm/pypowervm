@@ -260,23 +260,21 @@ class Element(object):
         if len(one_children) != len(two_children):
             return False
 
-        # If there are no children, different set of tests
-        if len(one_children) == 0:
-            if one.text != two.text:
+        if one.text != two.text:
+            return False
+
+        if one.tag != two.tag:
+            return False
+
+        # Recursively validate
+        for one_child in one_children:
+            found = util.find_equivalent(one_child, two_children)
+            if found is None:
                 return False
 
-            if one.tag != two.tag:
-                return False
-        else:
-            # Recursively validate
-            for one_child in one_children:
-                found = util.find_equivalent(one_child, two_children)
-                if found is None:
-                    return False
-
-                # Found a match, remove it as it is no longer a valid match.
-                # Its equivalence was validated by the upper block.
-                two_children.remove(found)
+            # Found a match, remove it as it is no longer a valid match.
+            # Its equivalence was validated by the upper block.
+            two_children.remove(found)
 
         return True
 

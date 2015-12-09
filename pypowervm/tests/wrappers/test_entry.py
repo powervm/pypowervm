@@ -225,6 +225,19 @@ class TestElementWrapper(testtools.TestCase):
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
 
+    def test_unequal(self):
+        sea1 = self._find_seas(self.nb1.entry)[0]
+        sea2 = self._find_seas(self.nb2.entry)[0]
+        self.assertEqual(sea1, sea2)
+        # Different text makes 'em different
+        sea1.element.text = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
+        # reset
+        sea1.element.text = sea2.element.element.text
+        # Different tag makes 'em different
+        sea1.element.tag = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
+
     def _find_seas(self, entry):
         """Wrapper for the SEAs."""
         found = entry.element.find('SharedEthernetAdapters')
