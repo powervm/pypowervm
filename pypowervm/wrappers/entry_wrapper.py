@@ -978,7 +978,7 @@ class WrapperElemList(list):
                 self.child_class is not ElementWrapper):
             return self.root_elem.findall(self.child_class.schema_type)
         else:
-            return self.root_elem.getchildren()
+            return list(self.root_elem)
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -1039,7 +1039,7 @@ class WrapperElemList(list):
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
-        children = self.root_elem.getchildren()
+        children = list(self.root_elem)
         equiv = util.find_equivalent(elem.element, children)
         if equiv is None:
             raise ValueError(_('No such child element.'))
