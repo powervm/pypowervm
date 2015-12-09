@@ -214,7 +214,7 @@ class Element(object):
         if text:
             self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
-            self.element.append(c.element)
+            self.element.append(copy.deepcopy(c.element))
         self.adapter = adapter
 
     def __len__(self):
@@ -361,7 +361,17 @@ class Element(object):
         self.element.set(key, value)
 
     def append(self, subelement):
-        """Adds subelement to the end of this element's list of subelements."""
+        """Adds subelement to the end of this element's list of subelements.
+
+        Note: if subelement is a reference to an element within another XML
+        hierarchy, it will be *removed* from that hierarchy.  If you intend to
+        reuse the parent object, you should pass a copy.deepcopy of the
+        subelement to this method.
+        """
+        # TODO(IBM): We *should* deepcopy to prevent child poaching (see fourth
+        # bullet here: http://lxml.de/compatibility.html) - but this breaks the
+        # world.  Figure out why, and fix it.
+        # self.element.append(copy.deepcopy(subelement.element))
         self.element.append(subelement.element)
 
     def inject(self, subelement, ordering_list=(), replace=True):
