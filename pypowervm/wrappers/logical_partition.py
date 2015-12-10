@@ -183,14 +183,19 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         """
         return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
 
-    def can_lpm(self, host_w):
+    def can_lpm(self, host_w, migr_data=None):
         """Determines if a LPAR is ready for Live Partition Migration.
 
-        This check does not validate that the target system is capable of
-        handling the LPAR.  It simply validates that the LPAR has the
-        essential capabilities in place for a LPM operation.
+        This check validates that the target system is capable of
+        handling the LPAR if the LPAR is an IBMi.  It simply validates that
+        the LPAR has the essential capabilities in place for a LPM operation.
 
         :param host_w: The host wrapper for the system.
+        :param migr_data: The dictionary of migration data for the target host.
+                          If parameters are not passed in, a sensible default
+                          is used.
+                          The supported key today is:
+                          - ibmi_lpar_mobility_capable: Boolean
         :return capable: True if the LPAR is LPM capable.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of LPM.  If capable is True, the reason will
@@ -201,20 +206,27 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
             return False, _("LPAR is not in an active state.")
 
         if self.env == bp.LPARType.OS400:
-            # IBM i does not require RMC, but does need to check for
+            # IBM i does not require RMC, but does need to check for target
+            # host and source host are capable for IBMi mobility and
             # restricted I/O.
-            if not self.restrictedio:
-                return False, _('IBM i LPAR does not have restricted I/O.')
 
-            c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
-            if not c:
-                return False, _('Source system does not have the IBM i LPAR '
+            if migr_data is None:
+                return False, _('Target system does not have the IBM i LPAR '
                                 'Mobility Capability.')
+            else:
+                c = migr_data.get('ibmi_lpar_mobility_capable', False)
+                if not c:
+                    return False, _('Target system does not have the IBM i'
+                                    ' LPAR Mobility Capability.')
 
-            compat_mode = host_w.highest_compat_mode()
-            if compat_mode < 7:
-                return False, _('IBM i LPAR Live Migration is only supported '
-                                'on POWER7 and higher systems.')
+                if not self.restrictedio:
+                    return False, _('IBM i LPAR does not have restricted I/O.')
+
+                c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
+                if not c:
+                    return False, _('Source system does not have the IBM i'
+                                    ' LPAR Mobility Capability.')
+
         elif self.rmc_state != bp.RMCState.ACTIVE:
             return False, _('LPAR does not have an active RMC connection.')
 

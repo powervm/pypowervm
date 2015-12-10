@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import pprint
 import unittest
 
 from pypowervm.tests.test_utils import pvmhttp
@@ -243,6 +244,37 @@ class TestMSEntryWrapper(unittest.TestCase):
 
     def test_session_is_master(self):
         self.assertTrue(self.wrapper.session_is_master)
+
+    def test_migration_data(self):
+        expected_data = {'active_lpar_mobility_capable': True,
+                         'inactive_lpar_mobility_capable': True,
+                         'ibmi_lpar_mobility_capable': True,
+                         'custom_mac_addr_capable': True,
+                         'ibmi_restrictedio_capable': True,
+                         'simplified_remote_restart_capable': False,
+                         'aix_capable': False,
+                         'ibmi_capable': True,
+                         'linux_capable': False,
+                         'shared_processor_pool_capable': True,
+                         'max_migration_ops_supported': 9,
+                         'active_migrations_supported': 0,
+                         'inactive_migrations_supported': 5,
+                         'preferred_active_migrations_supported': 0,
+                         'preferred_inactive_migrations_supported': 5,
+                         'active_migrations_in_progress': 0,
+                         'inactive_migrations_in_progress': 0,
+                         'sys_name': _MS_NAME,
+                         'proc_compat': 'default,POWER5,POWER6,'
+                         'POWER6_Enhanced,POWER6_Plus_Enhanced,POWER7'
+                         }
+        result_data = self.wrapper.migration_data
+        self.assertEqual(result_data, expected_data,
+                         'The returned data did not match expected values: \n'
+                         'returned = \n%s\n\n'
+                         'expected = \n%s' %
+                         (pprint.PrettyPrinter(indent=1).pformat(result_data),
+                          pprint.PrettyPrinter(indent=2).
+                          pformat(expected_data)))
 
 
 class TestMTMS(unittest.TestCase):
