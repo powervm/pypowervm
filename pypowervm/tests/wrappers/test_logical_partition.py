@@ -338,10 +338,19 @@ class TestLogicalPartition(testtools.TestCase):
         # Set that it is IBM i
         wrap.set_parm_value(bp._BP_TYPE, bp.LPARType.OS400)
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        host_w = mock.MagicMock()
+
+        # Destination host is not capable for IBMi LPM
+        migr_data = {'ibmi_lpar_mobility_capable': False}
+        val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
+        self.assertFalse(val)
+        self.assertEqual(reason, 'Target system does not have the IBM i '
+                         'LPAR Mobility Capability.')
 
         # Check if restricted I/O is off.
+        migr_data = {'ibmi_lpar_mobility_capable': True}
         wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'False')
-        val, reason = wrap.can_lpm(mock.ANY)
+        val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
         self.assertFalse(val)
         self.assertIn('restricted I/O', reason)
 
@@ -350,18 +359,30 @@ class TestLogicalPartition(testtools.TestCase):
         host_w = mock.MagicMock()
         host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
                                                 False}
-
-        val, reason = wrap.can_lpm(host_w)
+        val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
         self.assertFalse(val)
-        self.assertIn('Mobility Capability', reason)
+        self.assertEqual(reason, 'Source system does not have the IBM i LPAR '
+                         'Mobility Capability.')
 
-        # Turn on mobility, but return a bad compat mode.
+        # Turn all required capabilities on
         host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
                                                 True}
-        host_w.highest_compat_mode.return_value = 6
+        wrap.capabilities.set_parm_value(bp._CAP_DLPAR_MEM_CAPABLE, True)
+        val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
+        self.assertTrue(val)
+        self.assertIsNone(reason)
+
+        # Turn all required capabilities on but migration data is empty
         val, reason = wrap.can_lpm(host_w)
-        self.assertFalse(val)
-        self.assertIn('POWER7', reason)
+        self.assertTrue(val)
+        self.assertIsNone(reason)
+
+        # Turn all required capabilities on but migration data doesn't contain
+        # the key 'ibmi_lpar_mobility_capable'
+        migr_data = {}
+        val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
+        self.assertTrue(val)
+        self.assertIsNone(reason)
 
     def test_capabilities(self):
         # PartitionCapabilities
