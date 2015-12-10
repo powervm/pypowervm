@@ -183,14 +183,17 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         """
         return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
 
-    def can_lpm(self, host_w):
+    def can_lpm(self, host_w, dest_cap_ibmi=False, dest_highest_mode=None):
         """Determines if a LPAR is ready for Live Partition Migration.
 
-        This check does not validate that the target system is capable of
-        handling the LPAR.  It simply validates that the LPAR has the
-        essential capabilities in place for a LPM operation.
+        This check does validate that the target system is capable of IBMi
+        mobility if the LPAR is an IBMi.  It also validates that the LPAR has
+        the essential capabilities in place for a LPM operation.
 
         :param host_w: The host wrapper for the system.
+        :param dest_cap_ibmi: Has the target host IBMi mobility been enabled.
+        :param dest_highest_mode: The highest processor compatible mode of
+                                  the target host.
         :return capable: True if the LPAR is LPM capable.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of LPM.  If capable is True, the reason will
@@ -203,6 +206,15 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         if self.env == bp.LPARType.OS400:
             # IBM i does not require RMC, but does need to check for
             # restricted I/O.
+
+            if not dest_cap_ibmi:
+                return False, _('Target system does not have the IBM i LPAR '
+                                'Mobility Capability.')
+
+            if dest_highest_mode < 7:
+                return False, _('IBM i LPAR Live Migration is only supported '
+                                'on POWER7 and higher systems.')
+
             if not self.restrictedio:
                 return False, _('IBM i LPAR does not have restricted I/O.')
 
