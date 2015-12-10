@@ -338,28 +338,57 @@ class TestLogicalPartition(testtools.TestCase):
         # Set that it is IBM i
         wrap.set_parm_value(bp._BP_TYPE, bp.LPARType.OS400)
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
+        host_w = mock.MagicMock()
+
+        # Destination host is not capable for IBMi LPM
+        val, reason = wrap.can_lpm(host_w)
+        self.assertFalse(val)
+        self.assertEqual(reason, 'Target system does not have the IBM i '
+                         'LPAR Mobility Capability.')
+
+        # Destination host is not capable for IBMi LPM
+        val, reason = wrap.can_lpm(host_w, False)
+        self.assertFalse(val)
+        self.assertEqual(reason, 'Target system does not have the IBM i '
+                         'LPAR Mobility Capability.')
+
+        # Destination host is not capable for IBMi LPM
+        val, reason = wrap.can_lpm(host_w, dest_highest_mode=7)
+        self.assertFalse(val)
+        self.assertEqual(reason, 'Target system does not have the IBM i '
+                         'LPAR Mobility Capability.')
+
+        # Destination host is capable for IBMi, but has bad compatible mode
+        val, reason = wrap.can_lpm(host_w, True)
+        self.assertFalse(val)
+        self.assertIn('POWER7', reason)
+
+        # Destination host is capable for IBMi, but has bad compatible mode
+        val, reason = wrap.can_lpm(host_w, True, 6)
+        self.assertFalse(val)
+        self.assertIn('POWER7', reason)
 
         # Check if restricted I/O is off.
         wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'False')
-        val, reason = wrap.can_lpm(mock.ANY)
+        val, reason = wrap.can_lpm(host_w, True, 7)
         self.assertFalse(val)
         self.assertIn('restricted I/O', reason)
 
         # Turn restricted I/O on, but get a host without the mobility cap
         wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'True')
-        host_w = mock.MagicMock()
         host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
                                                 False}
 
-        val, reason = wrap.can_lpm(host_w)
+        val, reason = wrap.can_lpm(host_w, True, 7)
         self.assertFalse(val)
-        self.assertIn('Mobility Capability', reason)
+        self.assertEqual(reason, 'Source system does not have the IBM i LPAR '
+                         'Mobility Capability.')
 
         # Turn on mobility, but return a bad compat mode.
         host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
                                                 True}
         host_w.highest_compat_mode.return_value = 6
-        val, reason = wrap.can_lpm(host_w)
+        val, reason = wrap.can_lpm(host_w, True, 7)
         self.assertFalse(val)
         self.assertIn('POWER7', reason)
 
