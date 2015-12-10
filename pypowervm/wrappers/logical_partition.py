@@ -183,14 +183,26 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         """
         return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
 
-    def can_lpm(self, host_w):
+    def can_lpm(self, host_w, dest_data=None):
         """Determines if a LPAR is ready for Live Partition Migration.
 
-        This check does not validate that the target system is capable of
-        handling the LPAR.  It simply validates that the LPAR has the
-        essential capabilities in place for a LPM operation.
+        This check does validate that the target system is capable of IBMi
+        mobility if the LPAR is an IBMi.  It also validates that the LPAR has
+        the essential capabilities in place for a LPM operation.
 
-        :param host_w: The host wrapper for the system.
+        :param host_w: The host wrapper for the system.i
+        :param dest_data: The dictionary including IBMi mobility capability
+                          of the target host.
+
+                          An exmaple is:
+
+                          dest_data = {'dest_ibmi_mobility_capable': True,
+                                      'dest_highest_mode': 7}
+
+                          dest_ibmi_mobility_capable stands for the capability
+                          for IBMi mobility. dest_highest_mode is the level
+                          of Power host. If the host is a Power 8, the value of
+                          dest_highest_mode is 8.
         :return capable: True if the LPAR is LPM capable.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of LPM.  If capable is True, the reason will
@@ -201,20 +213,37 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
             return False, _("LPAR is not in an active state.")
 
         if self.env == bp.LPARType.OS400:
-            # IBM i does not require RMC, but does need to check for
-            # restricted I/O.
-            if not self.restrictedio:
-                return False, _('IBM i LPAR does not have restricted I/O.')
+            # IBM i does not require RMC, but does need to check for target
+            # host capabilities, source host capabilities and restricted I/O.
 
-            c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
-            if not c:
-                return False, _('Source system does not have the IBM i LPAR '
+            if dest_data is None:
+                return False, _('Target system does not have the IBM i LPAR '
                                 'Mobility Capability.')
+            else:
+                dest_cap_ibmi = dest_data.get('dest_ibmi_mobility_capable',
+                                              False)
+                if not dest_cap_ibmi:
+                    return False, _('Target system does not have the IBM i'
+                                    ' LPAR Mobility Capability.')
 
-            compat_mode = host_w.highest_compat_mode()
-            if compat_mode < 7:
-                return False, _('IBM i LPAR Live Migration is only supported '
-                                'on POWER7 and higher systems.')
+                dest_compat_mode = dest_data.get('dest_highest_mode', 6)
+                if dest_compat_mode < 7:
+                    return False, _('IBM i LPAR Live Migration is only'
+                                    'supported on POWER7 and higher systems.')
+
+                if not self.restrictedio:
+                    return False, _('IBM i LPAR does not have restricted I/O.')
+
+                c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
+                if not c:
+                    return False, _('Source system does not have the IBM i'
+                                    ' LPAR Mobility Capability.')
+
+                compat_mode = host_w.highest_compat_mode()
+                if compat_mode < 7:
+                    return False, _('IBM i LPAR Live Migration is only '
+                                    'supported on POWER7 and higher systems.')
+
         elif self.rmc_state != bp.RMCState.ACTIVE:
             return False, _('LPAR does not have an active RMC connection.')
 
