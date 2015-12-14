@@ -235,7 +235,9 @@ class TestElementWrapper(testtools.TestCase):
         """Validates that two elements loaded from the same data is equal."""
         sea1 = self._find_seas(self.nb1.entry)[0]
         sea2 = self._find_seas(self.nb2.entry)[0]
+        sea2copy = copy.deepcopy(sea2)
         self.assertTrue(sea1 == sea2)
+        self.assertEqual(sea2, sea2copy)
 
         # Change the other SEA
         sea2.element.element.append(etree.Element('Bob'))
@@ -248,6 +250,19 @@ class TestElementWrapper(testtools.TestCase):
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
+
+    def test_unequal(self):
+        sea1 = self._find_seas(self.nb1.entry)[0]
+        sea2 = self._find_seas(self.nb2.entry)[0]
+        self.assertEqual(sea1, sea2)
+        # Different text makes 'em different
+        sea1.element.text = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
+        # reset
+        sea1.element.text = sea2.element.element.text
+        # Different tag makes 'em different
+        sea1.element.tag = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
 
     def _find_seas(self, entry):
         """Wrapper for the SEAs."""

@@ -431,7 +431,7 @@ class VSCSIMapping(VStorageMapping):
             return None
         # If backing storage exists, it comprises a single child of elem.  But
         # type is unknown immediately, so call all children and then wrap.
-        stor_elems = elem.getchildren()
+        stor_elems = list(elem)
         if len(stor_elems) != 1:
             return None
         # TODO(efried): parent_entry not needed once VIOS has pg83 in Events
