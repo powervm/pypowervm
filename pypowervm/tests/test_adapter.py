@@ -635,8 +635,10 @@ class TestElementInject(testtools.TestCase):
         :param parent: Parent adapter.Element
         :param children: Child adapter.Elements
         """
-        actual = list(parent.element)
-        expected = [child.element for child in expected_children]
+        # etree.Element doesn't implement __eq__, so different instances of the
+        # same Element aren't "equal".  Compare XML strings instead.
+        actual = [etree.tostring(elem) for elem in list(parent.element)]
+        expected = [etree.tostring(chld.element) for chld in expected_children]
         self.assertEqual(actual, expected)
 
     def test_no_children(self):
