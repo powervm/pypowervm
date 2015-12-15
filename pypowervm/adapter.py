@@ -178,6 +178,9 @@ class Session(object):
         # against clones created by deepcopy or other methods.
         self._init_by = id(self)
 
+        # PATCH for local2remote
+        self._setup_local_to_remote()
+
         self._logon(conn_tries=conn_tries)
 
         # HMC should never use file auth.  This should never happen - if it
@@ -188,6 +191,121 @@ class Session(object):
 
         # Set the API traits after logon.
         self.traits = pvm_traits.APITraits(self)
+
+    def _setup_local_to_remote(self):
+
+        # Turn off the urllib3 warnings that will FLOOD the logs with warnings
+        # about our request type.  This is a constrained env, so it is OK.
+        # Very short lived.
+        from requests.packages.urllib3 import disable_warnings as url_dw
+        from requests.packages.urllib3 import exceptions as url_exc
+        url_dw(url_exc.InsecureRequestWarning)
+        url_dw(url_exc.InsecurePlatformWarning)
+        url_dw(url_exc.SNIMissingWarning)
+
+        try:
+            # Look for an ini file with user / password
+            # The password should be base64 encoded
+            from configparser import ConfigParser
+            cfg = ConfigParser({'user': 'neo', 'password': 'bmVvMTIz'})
+            fname = os.environ['HOME'] + os.sep + 'pypowervm.ini'
+            cfg.read(fname)
+            self.username = cfg.get('config', 'user')
+            self.password = cfg.get('config', 'password').decode('base64')
+        except Exception:
+            self.username = 'neo'
+            self.password = 'bmVvMTIz'.decode('base64')
+
+        self.host = self._get_local_rmc_address()
+        self.protocol = 'https'
+        self.port = c.PORT_DEFAULT_BY_PROTO[self.protocol]
+        self.certpath = None
+        self.use_file_auth = False
+
+        # Support IPv6 addresses
+        if self.host[0] != '[' and ':' in self.host:
+            self.dest = '%s://[%s]:%i' % (self.protocol, self.host, self.port)
+        else:
+            self.dest = '%s://%s:%i' % (self.protocol, self.host, self.port)
+
+    def _run_cmd(self, cmd):
+        import subprocess
+        return subprocess.check_output(cmd, shell=True)
+
+    def _is_link_local(self, addr):
+        return addr.startswith('fe80')
+
+    def _check_ipv6(self, addr):
+        # Return the address if successful otherwise, None.
+        cmd = ("ip -6 link ls up | grep -o ' eth.:' | grep -o 'eth.'")
+        output = self._run_cmd(cmd)
+        infs = [inf for inf in re.split('\n', output) if inf]
+        for inf in infs:
+            if self._is_link_local(addr):
+                # TODO(IBM): 'requests' lib doesn't handle link local urls
+                # correctly, so we must skip those addresses for now.
+                # https://github.com/kennethreitz/requests/issues/1985
+                # If it's link local then must ping through a specific inf
+                # cmd = "ping6 -c 2 -I %s %s >/dev/null; echo $?" % (inf, addr)
+                continue
+            else:
+                # Not link local so any successful ping is good.
+                cmd = "ping6 -c 2 %s >/dev/null; echo $?" % addr
+            png_out = self._run_cmd(cmd)
+            LOG.info('Ping of %s, thru %s result: %s' % (addr, inf, png_out))
+            if png_out == '0\n':
+                # The ping worked.
+                if self._is_link_local(addr):
+                    return addr + '%' + inf
+                else:
+                    return addr
+        LOG.warn('Could not ping IPv6 address %s' % addr)
+        return None
+
+    def _check_ipv4(self, addr):
+        # Return the address if successful otherwise, None.
+        cmd = ("ip link ls up | grep -o ' eth.:' | grep -o 'eth.'")
+        output = self._run_cmd(cmd)
+        infs = [inf for inf in re.split('\n', output) if inf]
+        # If there is at least 1 ipv4 interface up
+        if infs:
+            cmd = "ping -c 2 %s >/dev/null; echo $?" % addr
+            png_out = self._run_cmd(cmd)
+            LOG.info('Ping of %s, result: %s' % (addr, png_out))
+            if png_out == '0\n':
+                # The ping worked.
+                return addr
+        LOG.warn('Could not ping IPv4 address %s' % addr)
+        return None
+
+    def _get_local_rmc_address(self):
+        cmd = ("sudo /usr/sbin/rsct/bin/getRTAS | grep HmcStat | "
+               "cut -d' ' -f2")
+        output = self._run_cmd(cmd)
+        fields = {}
+        for pair in re.split(';\s*', output):
+            if pair:
+                keyval = re.split('=', pair)
+                fields[keyval[0]] = keyval[1]
+
+        # Assemble list of addresses to check
+        addr_list = [fields['HscIPAddr']]
+        addr_list.extend(re.split(',', fields['HscAddIPs']))
+
+        # Find an address that we can use.
+        found_addr = None
+        for addr in addr_list:
+            if ':' in addr:
+                # This is IPv6
+                found_addr = self._check_ipv6(addr)
+            else:
+                found_addr = self._check_ipv4(addr)
+            if found_addr:
+                break
+
+        LOG.info('RMC fields parsed: %s' % fields)
+        LOG.info('Setting pypowervm host to: %s' % found_addr)
+        return found_addr
 
     def __del__(self):
         # Refuse to clean up clones.
