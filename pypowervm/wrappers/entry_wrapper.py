@@ -933,6 +933,14 @@ class ElementWrapper(Wrapper):
         """Tests equality."""
         return self.element == other.element
 
+    def __hash__(self):
+        """Hash value.
+
+        Necessary to be overwritten because of the side effect in Python 3.x
+        of overwriting the __eq__ method causing an object to be unhashable.
+        """
+        return super(ElementWrapper, self).__hash__()
+
 
 class WrapperElemList(list):
     """The wrappers can create complex Lists (from a Group from the response).
