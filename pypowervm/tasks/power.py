@@ -139,7 +139,14 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     uuid = part.uuid
     adapter = part.adapter
     normal_vsp_power_off = False
-    add_immediate = part.env != bp.LPARType.OS400
+    if part.env == bp.LPARType.OS400:
+        add_immediate = False
+        if add_parms is not None:
+            immediate = add_parms.get('immediate')
+            if immediate is not None and immediate == 'true':
+                add_immediate = True
+    else:
+        add_immediate = True
     try:
         while not complete:
             resp = adapter.read(part.schema_type, uuid,

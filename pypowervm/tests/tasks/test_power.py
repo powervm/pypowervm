@@ -79,10 +79,42 @@ class TestPower(testtools.TestCase):
         mock_job_p.reset_mock()
 
         # Try a power off of IBMi
-        mock_lpar.rmc_state = pvm_bp.RMCState.INACTIVE
         mock_lpar.env = pvm_bp.LPARType.OS400
-        mock_lpar.ref_code = '00000000'
         power._power_on_off(mock_lpar, 'PowerOff', '1111')
+        self.assertEqual(1, mock_run_job.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with('operation', 'osshutdown')
+        mock_lpar.reset_mock()
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        mock_lpar.env = pvm_bp.LPARType.OS400
+        mock_add_parms = dict(immediate='false')
+        power._power_on_off(mock_lpar, 'PowerOff', '1111',
+                            add_parms=mock_add_parms)
+        self.assertEqual(1, mock_run_job.call_count)
+        # Only the operation parameter is appended
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with('operation', 'osshutdown')
+        mock_lpar.reset_mock()
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        mock_lpar.env = pvm_bp.LPARType.OS400
+        mock_add_parms = dict(immediate='true')
+        power._power_on_off(mock_lpar, 'PowerOff', '1111',
+                            add_parms=mock_add_parms)
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(2, mock_job_p.call_count)
+        mock_lpar.reset_mock()
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        mock_lpar.env = pvm_bp.LPARType.OS400
+        mock_add_parms = dict(operation='true')
+        power._power_on_off(mock_lpar, 'PowerOff', '1111',
+                            add_parms=mock_add_parms)
         self.assertEqual(1, mock_run_job.call_count)
         # Only the operation parameter is appended
         self.assertEqual(1, mock_job_p.call_count)
