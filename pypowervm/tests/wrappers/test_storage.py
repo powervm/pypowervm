@@ -82,6 +82,11 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, vdisk.capacity)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.1',
                          vdisk.udid)
+        self.assertEqual(
+            "https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/14B854F7-42CE-"
+            "4FF0-BD57-1D117054E701/VolumeGroup/b6bdbf1f-eddf-3c81-8801-9859eb"
+            "6fedcb", vdisk.vg_uri)
+
         # Test setters
         vdisk.capacity = 2
         self.assertEqual(2, vdisk.capacity)

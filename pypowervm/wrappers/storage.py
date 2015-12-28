@@ -546,6 +546,10 @@ class VDisk(ewrap.ElementWrapper):
     def udid(self):
         return self._get_val_str(_DISK_UDID)
 
+    @property
+    def vg_uri(self):
+        return self.get_href(_DISK_VG, one_result=True)
+
 
 @ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
                                child_order=_LU_EL_ORDER)
