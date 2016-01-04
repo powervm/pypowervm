@@ -563,7 +563,7 @@ class TestScrub(testtools.TestCase):
         # Our data set has no VFC mappings and no VSCSI mappings with LPAR ID 1
         ts.add_lpar_storage_scrub_tasks([1], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
-        self.assertEqual(0, self.logfx.patchers['warn'].mock.call_count)
+        self.assertEqual(0, self.logfx.patchers['warning'].mock.call_count)
         for vname in (vwrap.name for vwrap in self.vio_feed):
             self.logfx.patchers['debug'].mock.assert_any_call(
                 mock.ANY, dict(stg_type='VSCSI', lpar_id=1, vios_name=vname))
@@ -582,10 +582,10 @@ class TestScrub(testtools.TestCase):
         mock_rm_vfc_maps.assert_has_calls(
             [mock.call(wrp, 32) for wrp in self.vio_feed], any_order=True)
         for vname in (vwrap.name for vwrap in self.vio_feed):
-            self.logfx.patchers['warn'].mock.assert_any_call(
+            self.logfx.patchers['warning'].mock.assert_any_call(
                 mock.ANY, dict(stg_type='VFC', num_maps=3, lpar_id=32,
                                vios_name=vname))
-        self.logfx.patchers['warn'].mock.assert_any_call(
+        self.logfx.patchers['warning'].mock.assert_any_call(
             mock.ANY, dict(stg_type='VSCSI', num_maps=1, lpar_id=32,
                            vios_name='nimbus-ch03-p2-vios1'))
         self.logfx.patchers['debug'].mock.assert_any_call(
@@ -693,7 +693,7 @@ class TestScrub2(testtools.TestCase):
         # in the same FeedTask (no duplicate 'provides' names).
         ts.add_lpar_storage_scrub_tasks([45], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
-        self.logfx.patchers['warn'].mock.assert_has_calls(
+        self.logfx.patchers['warning'].mock.assert_has_calls(
             warns, any_order=True)
 
     def test_find_stale_lpars(self):
@@ -727,7 +727,7 @@ class TestScrub3(testtools.TestCase):
         ts.add_orphan_storage_scrub_tasks(self.ftsk)
         ret = self.ftsk.execute()
         # One for vscsi maps, one for vfc maps, one for vopt storage
-        self.assertEqual(3, self.logfx.patchers['warn'].mock.call_count)
+        self.assertEqual(3, self.logfx.patchers['warning'].mock.call_count)
         # Pull out the WrapperTask returns from the (one) VIOS
         wtr = ret['wrapper_task_rets'].popitem()[1]
         vscsi_removals = wtr['vscsi_removals_orphans']

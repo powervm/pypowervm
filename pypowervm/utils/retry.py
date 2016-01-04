@@ -149,16 +149,16 @@ def retry(tries=3, delay_func=NO_DELAY,
                 return
 
             def _log_response_retry(try_, max_tries, uri, resp_code):
-                LOG.warn(_('Attempt %(retry)d of total %(total)d for URI '
-                           '%(uri)s.  Error was a known retry response code: '
-                           '%(resp_code)s'),
-                         {'retry': try_, 'total': max_tries, 'uri': uri,
-                          'resp_code': resp_code})
+                LOG.warning(_('Attempt %(retry)d of total %(total)d for URI '
+                              '%(uri)s.  Error was a known retry response '
+                              'code: %(resp_code)s'),
+                            {'retry': try_, 'total': max_tries, 'uri': uri,
+                             'resp_code': resp_code})
 
             def _log_exception_retry(try_, max_tries, exc):
-                LOG.warn(_('Attempt %(retry)d of %(total)d failed.  Will '
-                           'retry. The exception was:\n %(except)s.'),
-                         {'retry': try_, 'total': max_tries, 'except': exc})
+                LOG.warning(_('Attempt %(retry)d of %(total)d failed.  Will '
+                              'retry. The exception was:\n %(except)s.'),
+                            {'retry': try_, 'total': max_tries, 'except': exc})
 
             # Standardize input
             # For some reason, if we use the parms in an 'if' directly

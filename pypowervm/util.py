@@ -255,7 +255,7 @@ def validate_certificate(host, port, certpath, certext):
         not_after = validity.getComponentByName('notAfter').getComponent()
         not_after = dt.datetime.strptime(str(not_after), '%y%m%d%H%M%SZ')
         if dt.datetime.utcnow() >= not_after:
-            LOG.warn('certificate has expired')
+            LOG.warning(_('Certificate has expired.'))
             return False
     except Exception:
         LOG.exception('error parsing cert for expiration check')

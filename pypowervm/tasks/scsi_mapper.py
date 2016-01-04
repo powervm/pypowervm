@@ -34,7 +34,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 
     This is so that etag mismatches trigger a fresh GET.
     """
-    LOG.warn(_('Retrying modification of SCSI Mapping.'))
+    LOG.warning(_('Retrying modification of SCSI Mapping.'))
     argl = list(args)
     # Second argument is vios.
     if isinstance(argl[1], pvm_vios.VIOS):

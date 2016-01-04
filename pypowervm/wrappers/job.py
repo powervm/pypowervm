@@ -235,7 +235,7 @@ class Job(ewrap.EntryWrapper):
             try:
                 self.cancel_job()
             except pvmex.JobRequestFailed as e:
-                LOG.warn(six.text_type(e))
+                LOG.warning(six.text_type(e))
             exc = pvmex.JobRequestTimedOut(
                 operation_name=self.op, seconds=timeout)
             LOG.error(exc.args[0])
@@ -274,7 +274,7 @@ class Job(ewrap.EntryWrapper):
             # Log a warning every 5 minutes
             if not iteration_count % 300:
                 msg = _("Job %(job_id)s monitoring for %(time)i seconds.")
-                LOG.warn(msg, {'job_id': self.job_id, 'time': elapsed_time})
+                LOG.warning(msg, {'job_id': self.job_id, 'time': elapsed_time})
             time.sleep(1)
             self.entry = self.adapter.read_job(
                 self.job_id, sensitive=sensitive).entry
@@ -326,7 +326,7 @@ class Job(ewrap.EntryWrapper):
         job_id = self.job_id
         msg = _("Issuing cancel request for job %(job_id)s. Will poll the "
                 "job indefinitely for termination.")
-        LOG.warn(msg, {'job_id': job_id})
+        LOG.warning(msg, {'job_id': job_id})
         try:
             self.adapter.update(None, None, root_type=_JOBS, root_id=job_id,
                                 suffix_type='cancel')

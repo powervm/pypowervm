@@ -382,9 +382,10 @@ def _image_lu_in_use(ssp, image_lu):
             continue
         cloned_from = lu.cloned_from_udid
         if cloned_from is None:
-            LOG.warn(_("Linked clone Logical Unit %(luname)s (UDID %(udid)s) "
-                       "has no backing image LU.  It should probably be "
-                       "deleted."), {'luname': lu.name, 'udid': lu.udid})
+            LOG.warning(
+                _("Linked clone Logical Unit %(luname)s (UDID %(udid)s) has "
+                  "no backing image LU.  It should probably be deleted."),
+                {'luname': lu.name, 'udid': lu.udid})
             continue
         if cloned_from[2:] == image_udid:
             return True
@@ -475,13 +476,13 @@ def _rm_dev_by_udid(dev, devlist):
              device was not found by UDID.
     """
     if not dev.udid:
-        LOG.warn(_("Ignoring device because it lacks a UDID:\n%s"),
-                 dev.toxmlstring())
+        LOG.warning(_("Ignoring device because it lacks a UDID:\n%s"),
+                    dev.toxmlstring())
         return None
 
     matches = [realdev for realdev in devlist if realdev.udid == dev.udid]
     if len(matches) == 0:
-        LOG.warn(_("Device %s not found in list."), dev.name)
+        LOG.warning(_("Device %s not found in list."), dev.name)
         return None
     if len(matches) > 1:
         raise exc.FoundDevMultipleTimes(devname=dev.name, count=len(matches))
@@ -617,8 +618,8 @@ def _rm_lus(ssp_wrap, lus, del_unused_images=True):
                     changes.append(backing_image)
                 else:
                     # This would be wildly unexpected
-                    LOG.warn(_("Backing LU %(lu_name)s was not found in SSP "
-                               "%(ssp_name)s"), msg_args)
+                    LOG.warning(_("Backing LU %(lu_name)s was not found in "
+                                  "SSP %(ssp_name)s"), msg_args)
     return changes
 
 
@@ -670,9 +671,9 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
     for rm_map in removals:
         maps.remove(rm_map)
     if removals:
-        LOG.warn(_("Removing %(num_maps)d orphan %(stg_type)s mappings from "
-                   "VIOS %(vios_name)s."),
-                 dict(msgargs, num_maps=len(removals)))
+        LOG.warning(_("Removing %(num_maps)d orphan %(stg_type)s mappings "
+                      "from VIOS %(vios_name)s."),
+                    dict(msgargs, num_maps=len(removals)))
     else:
         LOG.debug("No orphan %(stg_type)s mappings found on VIOS "
                   "%(vios_name)s.", msgargs)
@@ -696,9 +697,9 @@ def _remove_portless_vfc_maps(vwrap, lpar_id=None):
     for rm_map in removals:
         vwrap.vfc_mappings.remove(rm_map)
     if removals:
-        LOG.warn(_("Removing %(num_maps)d port-less VFC mappings from "
-                   "VIOS %(vios_name)s."),
-                 dict(num_maps=len(removals), vios_name=vwrap.name))
+        LOG.warning(_("Removing %(num_maps)d port-less VFC mappings from "
+                      "VIOS %(vios_name)s."),
+                    dict(num_maps=len(removals), vios_name=vwrap.name))
     else:
         LOG.debug("No port-less VFC mappings found on VIOS %(vios_name)s.",
                   dict(vios_name=vwrap.name))
@@ -723,10 +724,10 @@ def _remove_lpar_maps(vwrap, lpar_ids, type_str):
         msgargs['lpar_id'] = lpar_id
         _removals = rm_maps(vwrap, lpar_id)
         if _removals:
-            LOG.warn(_("Removing %(num_maps)d %(stg_type)s mappings "
-                       "associated with LPAR ID %(lpar_id)d from VIOS "
-                       "%(vios_name)s."),
-                     dict(msgargs, num_maps=len(_removals)))
+            LOG.warning(_("Removing %(num_maps)d %(stg_type)s mappings "
+                          "associated with LPAR ID %(lpar_id)d from VIOS "
+                          "%(vios_name)s."),
+                        dict(msgargs, num_maps=len(_removals)))
             removals.extend(_removals)
         else:
             LOG.debug("No %(stg_type)s mappings found for LPAR ID "
@@ -789,22 +790,22 @@ class _RemoveStorage(tf_tsk.Task):
             vdisks_to_rm = []
             for stg in stg_els_to_remove:
                 if isinstance(stg, (stor.LU, stor.PV)):
-                    LOG.warn(_("Not removing storage %(stg_name)s of type "
-                               "%(stg_type)s because it cannot be determined "
-                               "whether it is still in use.  Manual "
-                               "verification and cleanup may be necessary."),
-                             {'stg_name': stg.name,
-                              'stg_type': stg.schema_type})
+                    LOG.warning(
+                        _("Not removing storage %(stg_name)s of type "
+                          "%(stg_type)s because it cannot be determined "
+                          "whether it is still in use.  Manual verification "
+                          "and cleanup may be necessary."),
+                        {'stg_name': stg.name, 'stg_type': stg.schema_type})
                 elif isinstance(stg, stor.VOptMedia):
                     vopts_to_rm.append(stg)
                 elif isinstance(stg, stor.VDisk):
                     vdisks_to_rm.append(stg)
                 else:
-                    LOG.warn(_("Storage scrub ignoring storage element "
-                               "%(stg_name)s because it is of unexpected type "
-                               "%(stg_type)s."),
-                             {'stg_name': stg.name,
-                              'stg_type': stg.schema_type})
+                    LOG.warning(
+                        _("Storage scrub ignoring storage element "
+                          "%(stg_name)s because it is of unexpected type "
+                          "%(stg_type)s."),
+                        {'stg_name': stg.name, 'stg_type': stg.schema_type})
 
             # Any storage to be deleted?
             if not any((vopts_to_rm, vdisks_to_rm)):
@@ -820,7 +821,7 @@ class _RemoveStorage(tf_tsk.Task):
                 parent_uuid=vwrap.uuid))
             if vdisks_to_rm:
                 vgftsk.add_functor_subtask(
-                    _rm_vdisks, vdisks_to_rm, logspec=(LOG.warn, _(
+                    _rm_vdisks, vdisks_to_rm, logspec=(LOG.warning, _(
                         "Scrubbing the following %(vdcount)d Virtual Disks "
                         "from VIOS %(vios)s: %(vdlist)s"), {
                         'vdcount': len(vdisks_to_rm), 'vios': vwrap.name,
@@ -828,7 +829,7 @@ class _RemoveStorage(tf_tsk.Task):
                                    in vdisks_to_rm]}))
             if vopts_to_rm:
                 vgftsk.add_functor_subtask(
-                    _rm_vopts, vopts_to_rm, logspec=(LOG.warn, _(
+                    _rm_vopts, vopts_to_rm, logspec=(LOG.warning, _(
                         "Scrubbing the following %(vocount)d Virtual Opticals "
                         "from VIOS %(vios)s: %(volist)s"), {
                         'vocount': len(vopts_to_rm), 'vios': vwrap.name,
@@ -892,11 +893,11 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
             # {the IDs of all the LPARs on the system}
             lpar_ids_to_preserve = lpar_id_set & ex_lpar_ids
             if lpar_ids_to_preserve:
-                LOG.warn(_("Skipping scrub of %(stg_type)s mappings from VIOS "
-                           "%(vios_name)s for the following LPAR IDs because "
-                           "those LPARs exist: %(lpar_ids)s"),
-                         dict(stg_type=stg_type, vios_name=vwrap.name,
-                              lpar_ids=list(lpar_ids_to_preserve)))
+                LOG.warning(_("Skipping scrub of %(stg_type)s mappings from "
+                              "VIOS %(vios_name)s for the following LPAR IDs "
+                              "because those LPARs exist: %(lpar_ids)s"),
+                            dict(stg_type=stg_type, vios_name=vwrap.name,
+                                 lpar_ids=list(lpar_ids_to_preserve)))
                 lpar_id_set -= lpar_ids_to_preserve
         return _remove_lpar_maps(vwrap, lpar_id_set, stg_type)
 
