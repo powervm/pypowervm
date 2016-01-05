@@ -299,6 +299,7 @@ class System(ewrap.EntryWrapper):
         pref_inact_migr_sup = inact_migr_sup
         act_migr_prog = self._get_val_int(_ACTIVE_MIGR_RUNNING)
         inact_migr_prog = self._get_val_int(_INACTIVE_MIGR_RUNNING)
+        proc_compat = (','.join(self.proc_compat_modes))
 
         migr_data = {'max_migration_ops_supported': max_migr_sup,
                      'active_migrations_supported': act_migr_sup,
@@ -309,7 +310,14 @@ class System(ewrap.EntryWrapper):
                      pref_inact_migr_sup,
                      'active_migrations_in_progress': act_migr_prog,
                      'inactive_migrations_in_progress': inact_migr_prog,
+                     'proc_compat': proc_compat,
                      }
+
+        # Copy get_capabilities() dictionary into migration_data in case
+        # sometimes we need validate the host is capable for mobility.
+        cap_data = self.get_capabilities()
+        migr_data.update(cap_data)
+
         return migr_data
 
     @property
