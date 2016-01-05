@@ -810,6 +810,19 @@ class TrunkAdapter(ewrap.ElementWrapper):
         """Returns the VariedOn property."""
         return self._get_val_bool(_TA_VARIED_ON)
 
+    @property
+    def loc_code(self):
+        """Returns the LocationCode property."""
+        return self._get_val_str(_TA_LOC_CODE)
+
+    @property
+    def vios_id(self):
+        """Determines and returns the VIOS ID from the loc_code.
+
+        :return: int representing the short ID of the associated VIOS.
+        """
+        return u.part_id_by_loc_code(self.loc_code)
+
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
 class LoadGroup(ewrap.ElementWrapper):

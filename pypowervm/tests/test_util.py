@@ -315,3 +315,9 @@ class TestUtil(unittest.TestCase):
 
     # Tests for check_and_apply_xag covered by
     # test_adapter.TestAdapter.test_extended_path
+
+    def test_part_id_by_loc_code(self):
+        test_loc = 'U8247.22L.2125D6A-V2-C3'
+        fail_loc = 'abc1234'
+        self.assertEqual(util.part_id_by_loc_code(test_loc), 2)
+        self.assertIsNone(util.part_id_by_loc_code(fail_loc))

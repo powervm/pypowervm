@@ -301,6 +301,9 @@ class TestNetwork(twrap.TestWrapper):
         self.assertIsNotNone(prim_ld_grp)
         self.assertEqual(1, prim_ld_grp.pvid)
         self.assertEqual(1, len(prim_ld_grp.trunk_adapters))
+        self.assertEqual('U8246.L2C.0604C7A-V4-C2',
+                         prim_ld_grp.trunk_adapters[0].loc_code)
+        self.assertEqual(4, prim_ld_grp.trunk_adapters[0].vios_id)
 
         addl_ld_grps = self.dwrap.load_grps[1:]
         self.assertIsNotNone(addl_ld_grps)
