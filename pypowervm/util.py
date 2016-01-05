@@ -459,3 +459,15 @@ def find_wrapper(haystack, needle_uuid):
 def xpath(*toks):
     """Constructs an XPath out of the passed-in string components."""
     return XPATH_DELIM.join(toks)
+
+
+def part_id_by_loc_code(loc_code):
+    """Get a partition short ID for a provided virtual device location code.
+
+    All location codes on a virtual device are of the form:
+    <MachineType>.<Model>.<Serial>-V<PartID>-C<SlotNumber>
+
+    :return: An int of the associated partition short ID.
+    """
+    id_match = re.search('.*-V(.+?)-.*', loc_code)
+    return int(id_match.group(1)) if id_match else None
