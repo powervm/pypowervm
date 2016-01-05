@@ -19,6 +19,7 @@
 import copy
 
 from oslo_log import log as logging
+import re
 
 import pypowervm.const as c
 import pypowervm.entities as ent
@@ -181,6 +182,18 @@ def _order_by_pvid(adapters, pvid):
             # Otherwise, throw it on the back
             resp_list.append(adapter)
     return resp_list
+
+
+def part_id_by_loc_code(loc_code):
+    """Takes a trunk adapter location code and returns its partition ID.
+
+    All location codes on a trunk adapter are of the form:
+    <MachineType>.<Model>.<Serial>-V<PartID>-C<SlotNumber>
+
+    This function takes that code and returns the associated partition id.
+    """
+    id_match = re.search('.*-V(.+?)-.*', loc_code)
+    return id_match.group(1) if id_match else None
 
 
 @ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True,
@@ -809,6 +822,15 @@ class TrunkAdapter(ewrap.ElementWrapper):
     def varied_on(self):
         """Returns the VariedOn property."""
         return self._get_val_bool(_TA_VARIED_ON)
+
+    @property
+    def loc_code(self):
+        """Returns the LocationCode property."""
+        return self._get_val_str(_TA_LOC_CODE)
+
+    @property
+    def part_id(self):
+        return part_id_by_loc_code(self.loc_code)
 
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
