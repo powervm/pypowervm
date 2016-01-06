@@ -144,6 +144,56 @@ class TestPower(testtools.TestCase):
         # It should have been called twice, once for the elegant power
         # off, and another for the immediate power off
         self.assertEqual(2, mock_run_job.call_count)
+        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
+                                     mock.call('immediate', 'true'),
+                                     mock.call('operation', 'shutdown'),
+                                     mock.call('immediate', 'true')])
+
+        # Try a timedout only for the 2nd and 3rd job
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+        rmc_error = power._OSSHUTDOWN_RMC_ERRS[0]
+        mock_run_job.side_effect = [
+            pexc.JobRequestFailed(error='PowerOff',
+                                  operation_name=rmc_error),
+            pexc.JobRequestTimedOut(operation_name='PowerOff', seconds=60),
+            pexc.JobRequestTimedOut(operation_name='PowerOff', seconds=60)]
+
+        self.assertRaises(pexc.VMPowerOffFailure,
+                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+
+        # It should have been called three times,
+        # once for the immediate os shutdown, once for vsp normal,
+        # and another time for vsp hard
+        self.assertEqual(3, mock_run_job.call_count)
+        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
+                                     mock.call('immediate', 'true'),
+                                     mock.call('operation', 'shutdown'),
+                                     mock.call('operation', 'shutdown'),
+                                     mock.call('immediate', 'true')])
+        # Try IBMi
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+        mock_lpar.rmc_state = pvm_bp.RMCState.INACTIVE
+        mock_lpar.env = pvm_bp.LPARType.OS400
+        mock_lpar.ref_code = '00000000'
+        mock_run_job.side_effect = pexc.JobRequestTimedOut(
+            operation_name='PowerOff', seconds=60)
+
+        self.assertRaises(pexc.VMPowerOffFailure,
+                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+
+        # It should have been called four times,
+        # once for the normal os shutdown,
+        # once for the immediate os shutdown, once for vsp normal,
+        # and another time for vsp hard
+        self.assertEqual(4, mock_run_job.call_count)
+        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
+                                     mock.call('operation', 'osshutdown'),
+                                     mock.call('immediate', 'true'),
+                                     mock.call('operation', 'shutdown'),
+                                     mock.call('operation', 'shutdown'),
+                                     mock.call('immediate', 'true')])
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
