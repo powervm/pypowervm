@@ -181,25 +181,35 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                                     synchronous=synchronous)
                 complete = True
             except pexc.JobRequestTimedOut as error:
-                if (suffix == _SUFFIX_PARM_POWER_OFF and
-                        operation == 'osshutdown'):
-                    # This has timed out, we loop again and attempt to
-                    # force immediate vsp now except for IBM i where we try
-                    # immediate osshutdown first
-                    timeout = CONF.pypowervm_job_request_timeout
-                    if (part.env == bp.LPARType.OS400 and not add_immediate):
-                        add_immediate = True
-                    else:
+                if suffix == _SUFFIX_PARM_POWER_OFF:
+                    if operation == 'osshutdown':
+                        # This has timed out, we loop again and attempt to
+                        # force immediate vsp now except for IBM i where we try
+                        # immediate osshutdown and vsp normal first
+                        timeout = CONF.pypowervm_job_request_timeout
+                        if part.env == bp.LPARType.OS400:
+                            if not add_immediate:
+                                add_immediate = True
+                            else:
+                                normal_vsp_power_off = True
+                        else:
+                            force_immediate = True
+                    # normal vsp power off did not work, try hard vsp power off
+                    elif normal_vsp_power_off:
+                        timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = True
-                else:
-                    emsg = six.text_type(error)
-                    LOG.exception(_('Error: %s') % emsg)
-                    if suffix == _SUFFIX_PARM_POWER_OFF:
+                        normal_vsp_power_off = False
+                    else:
+                        emsg = six.text_type(error)
+                        LOG.exception(_('Error: %s') % emsg)
                         raise pexc.VMPowerOffFailure(reason=emsg,
                                                      lpar_nm=part.name)
-                    else:
-                        raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=part.name)
+                else:
+                    # Power On timed out
+                    emsg = six.text_type(error)
+                    LOG.exception(_('Error: %s') % emsg)
+                    raise pexc.VMPowerOnFailure(reason=emsg,
+                                                lpar_nm=part.name)
             except pexc.JobRequestFailed as error:
                 emsg = six.text_type(error)
                 LOG.exception(_('Error: %s') % emsg)
