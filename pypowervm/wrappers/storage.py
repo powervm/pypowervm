@@ -477,9 +477,9 @@ class PV(ewrap.ElementWrapper):
             return base64.b64decode(encoded).decode(
                 'utf-8') if encoded else None
         except (TypeError, binascii.Error) as te:
-            LOG.warn(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but it '
-                       'failed to decode (%(type_error)s).'),
-                     {'pg83_raw': encoded, 'type_error': te.args[0]})
+            LOG.warning(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but '
+                          'it failed to decode (%(type_error)s).'),
+                        {'pg83_raw': encoded, 'type_error': te.args[0]})
         return None
 
 

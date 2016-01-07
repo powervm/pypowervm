@@ -422,11 +422,11 @@ class LoggingFx(SimplePatchingFx):
     """Fixture for LOG.*, not to be confused with Logger/LoggingPatcher.
 
     Provides patches and mocks for LOG.x for x in
-    ('info', 'warn', 'debug', 'error', 'exception')
+    ('info', 'warning', 'debug', 'error', 'exception')
     """
     def __init__(self):
         """Create the fixture for the various logging methods."""
         super(LoggingFx, self).__init__()
         self.add_patchers(
             *(SimplePatcher(self, x, 'oslo_log.log.BaseLoggerAdapter.%s' % x)
-                for x in ('info', 'warn', 'debug', 'error', 'exception')))
+                for x in ('info', 'warning', 'debug', 'error', 'exception')))

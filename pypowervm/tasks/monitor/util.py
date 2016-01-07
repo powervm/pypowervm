@@ -377,8 +377,8 @@ def vm_metrics(phyp, vioses):
     # If the metrics just started, there may not be data yet.  Log this, but
     # return no data
     if phyp is None:
-        LOG.warn(_("Metric data is not available.  This may be due to "
-                   "the metrics being recently initialized."))
+        LOG.warning(_("Metric data is not available.  This may be due to "
+                      "the metrics being recently initialized."))
         return {}
 
     vm_data = {}

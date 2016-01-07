@@ -140,8 +140,8 @@ class Session(object):
         self.host = host
 
         if host != 'localhost' and protocol == 'http':
-            LOG.warn('Unencrypted communication with PowerVM! ' +
-                     'Revert configuration to https.')
+            LOG.warning('Unencrypted communication with PowerVM! Revert '
+                        'configuration to https.')
 
         if port is None:
             port = c.PORT_DEFAULT_BY_PROTO[self.protocol]
@@ -154,8 +154,8 @@ class Session(object):
                 try:
                     auditmemento = pwd.getpwuid(os.getuid())[0]
                 except Exception:
-                    LOG.warn("Calculating default audit memento failed, using "
-                             "'default'.")
+                    LOG.warning("Calculating default audit memento failed, "
+                                "using 'default'.")
         self.auditmemento = auditmemento
 
         # Support IPv6 addresses
@@ -288,15 +288,15 @@ class Session(object):
                                            headers=headers, timeout=timeout)
         except rqex.SSLError as e:
             msg = '%s for %s %s: %s' % (e.__class__.__name__, method, url, e)
-            LOG.warn(msg)
+            LOG.warning(msg)
             raise pvmex.SSLError(msg)
         except rqex.ConnectionError as e:
             msg = '%s for %s %s: %s' % (e.__class__.__name__, method, url, e)
-            LOG.warn(msg)
+            LOG.warning(msg)
             raise pvmex.ConnectionError(msg)
         except rqex.Timeout as e:
             msg = '%s for %s %s: %s' % (e.__class__.__name__, method, url, e)
-            LOG.warn(msg)
+            LOG.warning(msg)
             raise pvmex.TimeoutError(msg)
         except Exception as e:
             LOG.exception('Unexpected error for %s %s' % (method, url))
@@ -336,8 +336,8 @@ class Session(object):
                 if not relogin:
                     LOG.debug('Requester specified no re-login')
                 elif self._relogin_unsafe:
-                    LOG.warn('Re-login has been deemed unsafe. ' +
-                             'This Session instance should no longer be used.')
+                    LOG.warning('Re-login has been deemed unsafe. This '
+                                'Session instance should no longer be used.')
                 else:
                     if self._sessToken != sess_token_try:
                         LOG.debug('Someone else handled re-login for %s'
@@ -355,15 +355,17 @@ class Session(object):
                                     # can't continue re-login attempts lest we
                                     # lock the account
                                     self._relogin_unsafe = True
-                                    LOG.warn('Re-login 401, response body:\n%s'
-                                             % e.response.body)
+                                    LOG.warning(
+                                        'Re-login 401, response body:\n%s'
+                                        % e.response.body)
                                 else:
                                     # safe to try re-login again in this case
-                                    LOG.warn('Re-login failed, resp body:\n%s'
-                                             % e.response.body)
+                                    LOG.warning(
+                                        'Re-login failed, resp body:\n%s'
+                                        % e.response.body)
                             else:
                                 # safe to try re-login again in this case
-                                LOG.warn('Re-login failed:\n%s' % str(e))
+                                LOG.warning('Re-login failed:\n%s' % str(e))
                             e.orig_response = Response(
                                 method, path, response.status_code,
                                 response.reason, response.headers,
@@ -381,9 +383,9 @@ class Session(object):
                             # This is a special case... normally on a 401 we
                             # would retry login, but we won't here because
                             # we just did that... Handle it specially.
-                            LOG.warn('Re-attempt failed with another 401, ' +
-                                     'response body:\n%s' % e.response.body)
-                            raise pvmex.Error('suspicious HTTP 401 response ' +
+                            LOG.warning('Re-attempt failed with another 401, '
+                                        'response body:\n%s' % e.response.body)
+                            raise pvmex.Error('suspicious HTTP 401 response '
                                               'for %s %s: token is brand new' %
                                               (method, path))
                         raise

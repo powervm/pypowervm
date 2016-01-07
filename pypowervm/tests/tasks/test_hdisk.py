@@ -123,19 +123,19 @@ class TestHDisk(unittest.TestCase):
 
         hdisk._log_lua_status(hdisk.LUAStatus.FOUND_ITL_ERR,
                               'dev_name', 'message')
-        self.assertEqual(1, mock_log.warn.call_count)
+        self.assertEqual(1, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_IN_USE,
                               'dev_name', 'message')
-        self.assertEqual(2, mock_log.warn.call_count)
+        self.assertEqual(2, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
                               'dev_name', 'message')
-        self.assertEqual(3, mock_log.warn.call_count)
+        self.assertEqual(3, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.INCORRECT_ITL,
                               'dev_name', 'message')
-        self.assertEqual(4, mock_log.warn.call_count)
+        self.assertEqual(4, mock_log.warning.call_count)
 
     @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')

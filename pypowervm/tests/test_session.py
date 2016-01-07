@@ -58,7 +58,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
-        self.assertEqual(0, logfx.patchers['warn'].mock.call_count)
+        self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
 
         # Ensure proper protocol, port, and certpath defaulting when remote
         sess = adp.Session(host='host', username='user', password='pass')
@@ -73,7 +73,7 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('/etc/ssl/certs/', sess.certpath)
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay
-        self.assertEqual(0, logfx.patchers['warn'].mock.call_count)
+        self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
 
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init_remote_http(self, mock_logon):
