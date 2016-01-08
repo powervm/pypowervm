@@ -66,7 +66,7 @@ BODY{
     </PhysicalVolumes>
     <Capacity kxe="false" kb="CUR">49.88</Capacity>
     <FreeSpace kxe="false" kb="CUR">48.98</FreeSpace>
-    <OverCommitSpace kb="CUR" kxe="false">0.000000</OverCommitSpace>
+    <OverCommitSpace kb="CUR" kxe="false">1.234567</OverCommitSpace>
     <TotalLogicalUnitSize kb="CUR" kxe="false">1</TotalLogicalUnitSize>
     <AlertThreshold kxe="false" kb="CUD">35%</AlertThreshold>
     <StoragePoolName kb="CUR" kxe="false">neossp1</StoragePoolName>
