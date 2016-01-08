@@ -226,6 +226,9 @@ class TestSharedStoragePool(twrap.TestWrapper):
     def test_free_space(self):
         self.assertAlmostEqual(self.dwrap.free_space, 48.98, 3)
 
+    def test_over_commit_space(self):
+        self.assertAlmostEqual(self.dwrap.over_commit_space, 0.00, 3)
+
     def test_total_lu_size(self):
         self.assertAlmostEqual(self.dwrap.total_lu_size, 1, 1)
 

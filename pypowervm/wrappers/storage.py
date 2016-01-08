@@ -130,6 +130,7 @@ _SSP_FREE_SPACE = 'FreeSpace'
 _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
 _SSP_LU = 'LogicalUnit'
+_SSP_OCS = 'OverCommitSpace'
 _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
@@ -705,6 +706,11 @@ class SSP(ewrap.EntryWrapper):
     def free_space(self):
         """Free space in GB as a float."""
         return self._get_val_float(_SSP_FREE_SPACE)
+
+    @property
+    def over_commit_space(self):
+        """Over commit space in GB as a float."""
+        return self._get_val_float(_SSP_OCS)
 
     @property
     def total_lu_size(self):
