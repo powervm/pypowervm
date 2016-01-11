@@ -662,6 +662,10 @@ class LU(ewrap.ElementWrapper):
     def _cloned_from_udid(self, val):
         self.set_parm_value(_LU_CLONED_FROM, val)
 
+    @property
+    def in_use(self):
+        return self._get_val_bool(_LU_IN_USE, default=None)
+
 
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')
 class SSP(ewrap.EntryWrapper):

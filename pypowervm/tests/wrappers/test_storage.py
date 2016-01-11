@@ -252,6 +252,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertTrue(lu.is_thin)
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
+        self.assertEqual(lu.in_use, True)
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):

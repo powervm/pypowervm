@@ -43,6 +43,7 @@ BODY{
             <UniqueDeviceID kxe="false" kb="ROR">27cfc907d2abf511e4b2d540f2e95daf301a02b0904778d755df5a46fe25e500d8</UniqueDeviceID>
             <UnitCapacity kb="COR" kxe="false">1</UnitCapacity>
             <LogicalUnitType kb="COD" kxe="false">VirtualIO_Disk</LogicalUnitType>
+            <InUse kb="ROR" kxe="false">true</InUse>
             <UnitName kb="CUR" kxe="false">neolu1</UnitName>
         </LogicalUnit>
     </LogicalUnits>
