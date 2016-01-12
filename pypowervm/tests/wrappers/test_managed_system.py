@@ -225,7 +225,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'aix_capable': False,
                     'ibmi_capable': True,
                     'linux_capable': False,
-                    'shared_processor_pool_capable': True
+                    'shared_processor_pool_capable': True,
+                    'active_memory_expansion_capable': True
                     }
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
@@ -236,7 +237,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'aix_capable': True,
                    'ibmi_capable': False,
                    'linux_capable': True,
-                   'shared_processor_pool_capable': False
+                   'shared_processor_pool_capable': False,
+                   'active_memory_expansion_capable': False
                    }
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
@@ -255,6 +257,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'ibmi_capable': True,
                          'linux_capable': False,
                          'shared_processor_pool_capable': True,
+                         'active_memory_expansion_capable': True,
                          'max_migration_ops_supported': 9,
                          'active_migrations_supported': 0,
                          'inactive_migrations_supported': 5,
