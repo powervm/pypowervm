@@ -150,11 +150,15 @@ _DPC_MAX_PROCS = 'MaximumProcessors'
 _DPC_MIN_PROCS = 'MinimumProcessors'
 
 # Partition Memory Configuration (_MEM)
-_MEM_CUR = 'CurrentMemory'
 _MEM_DES = 'DesiredMemory'
+_MEM_EXP_FACTOR = 'ExpansionFactor'
 _MEM_MAX = 'MaximumMemory'
 _MEM_MIN = 'MinimumMemory'
+_MEM_CUR = 'CurrentMemory'
+_MEM_AME_ENABLED = 'MemoryExpansionEnabled'
 _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
+_MEM_EL_ORDER = (_MEM_DES, _MEM_EXP_FACTOR, _MEM_MAX, _MEM_MIN,
+                 _MEM_CUR, _MEM_AME_ENABLED, _MEM_SHARED_MEM_ENABLED)
 
 # Partition I/O Configuration (_IO)
 IO_CFG_ROOT = _BP_IO_CFG
@@ -692,7 +696,8 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
         self.element.replace(elem, dpc.element)
 
 
-@ewrap.ElementWrapper.pvm_type(_BP_MEM_CFG, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_BP_MEM_CFG, has_metadata=True,
+                               child_order=_MEM_EL_ORDER)
 class PartitionMemoryConfiguration(ewrap.ElementWrapper):
     """Represents the partitions Memory Configuration."""
 
@@ -753,6 +758,38 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         # The default is None instead of False so that the caller
         # can know if the value is not set
         return self._get_val_bool(_MEM_SHARED_MEM_ENABLED, None)
+
+    @property
+    def ame_enabled(self):
+        return self._get_val_bool(_MEM_AME_ENABLED)
+
+    @ame_enabled.setter
+    def ame_enabled(self, ame_enabled):
+        self.set_parm_value(_MEM_AME_ENABLED,
+                            u.sanitize_bool_for_api(ame_enabled))
+
+    @property
+    def exp_factor(self):
+        """The Active Memory Expansion Factor
+
+        The expansion factor represents the target memory multiplier.
+        e.g. An LPAR with EF = 2 which has 4 GB of memory will have a target
+        expansion memory of 8 GB.
+
+        """
+        return self._get_val_float(_MEM_EXP_FACTOR)
+
+    @exp_factor.setter
+    def exp_factor(self, exp_factor):
+        """The Active Memory Expansion Factor
+
+        :param exp_factor: The expansion factor value. Setting this to 0 will
+                           turn/keep AME off. The valid values are
+                           1.0 <= x <= 10.0 up to 2 decimal places.
+
+        """
+        self.set_parm_value(_MEM_EXP_FACTOR,
+                            u.sanitize_float_for_api(exp_factor))
 
 
 @ewrap.ElementWrapper.pvm_type(_PC_SHR_PROC_CFG, has_metadata=True,
