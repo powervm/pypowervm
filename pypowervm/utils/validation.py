@@ -184,6 +184,7 @@ class MemValidator(BaseValidator):
         self.des_mem = mem_cfg.desired
         self.max_mem = mem_cfg.max
         self.min_mem = mem_cfg.min
+        self.exp_fact = mem_cfg.exp_factor
         self.avail_mem = self.host_w.memory_free
         self.res_name = _('memory')
 
@@ -192,6 +193,7 @@ class MemValidator(BaseValidator):
         deltas = self._calculate_resize_deltas()
         self.delta_des_mem = deltas['delta_mem']
         self.delta_max_mem = deltas['delta_max_mem']
+        self.delta_exp_fact = deltas['delta_exp_factor']
 
     def _validate_deploy(self):
         """Enforce validation rules specific to LPAR deployment."""
@@ -210,6 +212,12 @@ class MemValidator(BaseValidator):
                      "machine %s and try again.") % self.cur_lpar_w.name)
             raise ValidatorException(msg)
         # Common validations for both active & inactive resizes.
+        if self.delta_exp_fact != 0:
+            msg = (_("The virtual machine must be powered off before changing "
+                     "the expansion factor. Power off virtual machine %s and "
+                     "try again.") % self.cur_lpar_w.name)
+            LOG.error(msg)
+            raise ValidatorException(msg)
         self._validate_resize_common()
 
     def _validate_inactive_resize(self):
@@ -248,10 +256,12 @@ class MemValidator(BaseValidator):
         curr_mem_cfg = self.cur_lpar_w.mem_config
         curr_des_mem = curr_mem_cfg.desired
         curr_max_mem = curr_mem_cfg.max
+        curr_exp_fact = curr_mem_cfg.exp_factor
 
         # Calculate memory deltas
         deltas['delta_mem'] = self.des_mem - curr_des_mem
         deltas['delta_max_mem'] = self.max_mem - curr_max_mem
+        deltas['delta_exp_factor'] = self.exp_fact - curr_exp_fact
         return deltas
 
 

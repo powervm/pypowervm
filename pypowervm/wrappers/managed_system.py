@@ -46,6 +46,7 @@ _IBMi_RESTRICTEDIO_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IBMiRestrictedIOModeCapable')
 _SIMP_REMOTE_RESTART_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
+_AME_CAP = u.xpath(_SYS_CAPABILITIES, 'ActiveMemoryExpansionCapable')
 _AIX_CAP = u.xpath(_SYS_CAPABILITIES, 'AIXCapable')
 _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
@@ -242,6 +243,8 @@ class System(ewrap.EntryWrapper):
         # to match old Power server behaviors.
         cap_data = {'active_lpar_mobility_capable':
                     self._get_val_bool(_ACTIVE_LPM_CAP),
+                    'active_memory_expansion_capable':
+                    self._get_val_bool(_AME_CAP),
                     'inactive_lpar_mobility_capable':
                     self._get_val_bool(_INACTIVE_LPM_CAP),
                     'ibmi_lpar_mobility_capable':
