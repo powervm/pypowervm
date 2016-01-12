@@ -38,7 +38,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.sections = xml_sections.load_xml_sections(LPAR_BLDR_DATA)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
-        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame):
+        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -47,23 +47,17 @@ class TestLPARBuilder(testtools.TestCase):
                 mock.PropertyMock(return_value=mem_reg))
             capabilities = {
                 'simplified_remote_restart_capable': srr,
-                'ibmi_restrictedio_capable': True,
-                'active_memory_expansion_capable': ame
+                'ibmi_restrictedio_capable': True
             }
             mngd_sys.get_capabilities.return_value = capabilities
             type(mngd_sys).proc_compat_modes = (
                 mock.PropertyMock(return_value=pcm))
             return mngd_sys
 
-        self.mngd_sys = _bld_mgd_sys(20.0, 128, True,
-                                     bp.LPARCompat.ALL_VALUES, False)
-        self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False, ['POWER6'],
-                                            False)
-        self.mngd_sys_ame = _bld_mgd_sys(20.0, 128, True,
-                                         bp.LPARCompat.ALL_VALUES, True)
+        self.mngd_sys = _bld_mgd_sys(20.0, 128, True, bp.LPARCompat.ALL_VALUES)
+        self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False, ['POWER6'])
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
-        self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
 
     def assert_xml(self, entry, string):
         self.assertEqual(entry.element.toxmlstring(),
@@ -208,18 +202,6 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)
 
-        # AME not supported on host
-        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
-                    ame_expansion_factor='1.5')
-        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
-        self.assertRaises(ValueError, bldr.build)
-
-        # AME outside valid range
-        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
-                    ame_expansion_factor='0.5')
-        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
-        self.assertRaises(ValueError, bldr.build)
-
         # Desired vcpu outside min
         attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=1,
                     min_vcpu=2)
@@ -349,7 +331,7 @@ class TestLPARBuilder(testtools.TestCase):
 
     def test_IBMi(self):
         attr = dict(name='TheName', env=bp.LPARType.OS400, memory=1024,
-                    vcpu=1, ame_expansion_factor=False)
+                    vcpu=1, 'ame_expansion_factor'=False)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertIsNotNone(bldr)
 
