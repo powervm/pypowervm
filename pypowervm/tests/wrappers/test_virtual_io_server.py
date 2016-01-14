@@ -525,7 +525,7 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertNotIn(deleted_slot, self.dwrap.io_config.io_slots)
 
     def test_io_adpt(self):
-        self.assertIsNotNone(self.io_slot.adapter)
+        self.assertEqual('553713674', self.io_slot.io_adapter.id)
 
     def test_bld(self):
         new_slot = bp.IOSlot.bld(self.adpt, True, 12345678)
@@ -541,7 +541,7 @@ class TestGenericIOAdapter(twrap.TestWrapper):
 
     def setUp(self):
         super(TestGenericIOAdapter, self).setUp()
-        self.io_adpt = self.dwrap.io_config.io_slots[0].adapter
+        self.io_adpt = self.dwrap.io_config.io_slots[0].io_adapter
 
     def test_attrs(self):
         self.assertEqual('553713674', self.io_adpt.id)
@@ -561,7 +561,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
 
     def setUp(self):
         super(TestPhysFCAdapter, self).setUp()
-        self.io_adpt = self.dwrap.io_config.io_slots[2].adapter
+        self.io_adpt = self.dwrap.io_config.io_slots[2].io_adapter
 
     def test_attrs(self):
         desc = '8 Gigabit PCI Express Dual Port Fibre Channel Adapter'
@@ -585,8 +585,8 @@ class TestPhysFCPort(twrap.TestWrapper):
 
     def setUp(self):
         super(TestPhysFCPort, self).setUp()
-        self.io_port1 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[0]
-        self.io_port2 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[1]
+        self.io_port1 = self.dwrap.io_config.io_slots[2].io_adapter.fc_ports[0]
+        self.io_port2 = self.dwrap.io_config.io_slots[2].io_adapter.fc_ports[1]
 
     def test_attrs(self):
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2-T2', self.io_port1.loc_code)

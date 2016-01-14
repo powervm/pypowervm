@@ -1247,7 +1247,7 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('pci_subsys_drc_name')
 
     @property
-    def adapter(self):
+    def io_adapter(self):
         """Returns the physical I/O Adapter for this slot.
 
         This will be one of two types.  Either a generic I/O Adapter or
