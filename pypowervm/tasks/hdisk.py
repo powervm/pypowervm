@@ -80,10 +80,11 @@ class ITL(object):
         """
         self.initiator = initiator.lower().replace(':', '')
         self.target = target.lower().replace(':', '')
-        # PowerVM keeps LUN identifiers in hex format.  Python conversion to
+        # PowerVM keeps LUN identifiers in hex format. LUN Identifier
+        # should be max of 8 bytes. Python conversion to
         # hex adds a 0x at beginning (thus the [2:] to strip that off).
         # Identifier on end is always the 0's.
-        self.lun = hex(int(lun))[2:] + "000000000000"
+        self.lun = (hex(int(lun))[2:]).ljust(16, '0')
 
     def __eq__(self, other):
         if other is None or not isinstance(other, ITL):
