@@ -1247,6 +1247,15 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('pci_subsys_drc_name')
 
     @property
+    def adapter(self):
+        """DEPRECATED - use 'io_adapter' method instead."""
+        import warnings
+        warnings.warn(
+            _("IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."),
+            DeprecationWarning)
+        return self.io_adapter
+
+    @property
     def io_adapter(self):
         """Returns the physical I/O Adapter for this slot.
 
