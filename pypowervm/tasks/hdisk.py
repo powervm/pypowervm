@@ -62,6 +62,27 @@ class LUAStatus(object):
     FOUND_ITL_ERR = '8'
 
 
+def get_LUN(scsi_id):
+    """Normalize the scsi-id and returns the LUN Identifier
+
+    :param lun: scsi-id.
+    :return: LUN id as per the RFC 4455
+    """
+    # PowerVM keeps LUN identifiers in hex format.  Python conversion to
+    # hex adds a 0x at beginning (thus the [2:] to strip that off).
+    # Identifier on end is always the 0's.
+    lun = '%x' % int(scsi_id)
+    # For drivers which support complex LUA lun-id exceeding more than 2
+    # bytes in such cases we need to append 8 zeros else 12 zeros to
+    # pass 8 byte lun-id
+    if len(lun) == 8:
+        lun += "00000000"
+    else:
+        lun += "000000000000"
+
+    return lun
+
+
 class ITL(object):
     """The Nexus ITL.
 
@@ -80,10 +101,7 @@ class ITL(object):
         """
         self.initiator = initiator.lower().replace(':', '')
         self.target = target.lower().replace(':', '')
-        # PowerVM keeps LUN identifiers in hex format.  Python conversion to
-        # hex adds a 0x at beginning (thus the [2:] to strip that off).
-        # Identifier on end is always the 0's.
-        self.lun = hex(int(lun))[2:] + "000000000000"
+        self.lun = get_LUN(lun)
 
     def __eq__(self, other):
         if other is None or not isinstance(other, ITL):
