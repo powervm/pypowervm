@@ -578,7 +578,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
                          self.io_adpt.drc_name)
         self.assertEqual('C2', self.io_adpt.phys_loc_code)
-        self.assertTrue(isinstance(self.io_adpt, bp.PhysFCAdapter))
+        self.assertIsInstance(self.io_adpt, bp.PhysFCAdapter)
 
     def test_fc_ports(self):
         self.assertEqual(2, len(self.io_adpt.fc_ports))
