@@ -34,7 +34,11 @@ class TestHDisk(unittest.TestCase):
         itl = hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)
         self.assertEqual('aabbccddeeff0011', itl.initiator)
         self.assertEqual('00112233445566ee', itl.target)
-        self.assertEqual('ee000000000000', itl.lun)
+        self.assertEqual('ee00000000000000', itl.lun)
+        # Test Lun-ID length for max 8 bytes
+        itl = hdisk.ITL('AABBC11', '00:11:22:33:44:55:66:EE', 1074872357)
+        self.assertEqual('4011402500000000', itl.lun)
+        self.assertEqual(16, len(itl.lun))
 
     def test_build_itls(self):
         """Tests that the ITL combinations can be built out."""
@@ -63,17 +67,17 @@ class TestHDisk(unittest.TestCase):
                    '<deviceList><device><vendor>OTHER</vendor><deviceTag>'
                    '1</deviceTag><itlList><number>6</number><itl>'
                    '<Iwwpn>0011223344556677</Iwwpn><Twwpn>1111223344556677'
-                   '</Twwpn><lua>ee000000000000</lua></itl><itl><Iwwpn>'
+                   '</Twwpn><lua>ee00000000000000</lua></itl><itl><Iwwpn>'
                    '0011223344556677</Iwwpn><Twwpn>1111223344556678</Twwpn>'
-                   '<lua>ee000000000000</lua></itl><itl><Iwwpn>'
+                   '<lua>ee00000000000000</lua></itl><itl><Iwwpn>'
                    '0011223344556677</Iwwpn><Twwpn>1111223344556679</Twwpn>'
-                   '<lua>ee000000000000</lua></itl><itl><Iwwpn>'
+                   '<lua>ee00000000000000</lua></itl><itl><Iwwpn>'
                    '0011223344556678</Iwwpn><Twwpn>1111223344556677</Twwpn>'
-                   '<lua>ee000000000000</lua></itl><itl><Iwwpn>'
+                   '<lua>ee00000000000000</lua></itl><itl><Iwwpn>'
                    '0011223344556678</Iwwpn><Twwpn>1111223344556678</Twwpn>'
-                   '<lua>ee000000000000</lua></itl><itl><Iwwpn>'
+                   '<lua>ee00000000000000</lua></itl><itl><Iwwpn>'
                    '0011223344556678</Iwwpn><Twwpn>1111223344556679</Twwpn>'
-                   '<lua>ee000000000000</lua></itl></itlList></device>'
+                   '<lua>ee00000000000000</lua></itl></itlList></device>'
                    '</deviceList></XML_LIST>')
 
         self.assertEqual(lua_xml, hdisk._lua_recovery_xml(all_itls, None))
