@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -13,6 +13,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+# Sonar reasonableness
+# pylint: disable=I0011,E1120
 
 import errno
 
@@ -601,6 +604,32 @@ class TestElement(testtools.TestCase):
         self.assertEqual(el.tag, 'gat')
         el.namespace = 'foo'
         self.assertEqual(el.namespace, 'foo')
+
+
+class TestAdapterShutdown(testtools.TestCase):
+    def test_shutdown(self):
+        """Test garbage collection of the session.
+
+        Ensures the Session can be properly garbage collected.
+        """
+
+        @mock.patch.object(adp.Session, '_logoff')
+        @mock.patch.object(adp.Session, '_logon')
+        def run_test(mock_logon, mock_logoff):
+            # Get a session
+            sess = adp.Session()
+            # Use the session so pep8 doesn't complain
+            self.assertIsInstance(sess, adp.Session)
+            # It should have logged on but not off.
+            self.assertTrue(mock_logon.called)
+            self.assertFalse(mock_logoff.called)
+
+            # Remove the reference and be sure it's garbage collected.
+            sess = None
+            # It should now be garbage collected and logged off.
+            self.assertTrue(mock_logoff.called)
+
+        run_test()
 
 
 class TestElementInject(testtools.TestCase):
