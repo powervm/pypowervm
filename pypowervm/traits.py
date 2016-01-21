@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -15,6 +15,8 @@
 #    under the License.
 
 """Identify behavioral traits specific to a PowerVM server type/version."""
+
+import weakref
 
 
 class APITraits(object):
@@ -35,8 +37,15 @@ class APITraits(object):
     """
 
     def __init__(self, session):
-        self.session = session
-        self._is_hmc = self.session.mc_type == 'HMC'
+        # Avoid circular references to the session by using a weak reference.
+        # Circular references prevent garabage collection.
+        self._sess_ref = weakref.ref(session)
+        self._is_hmc = session.mc_type == 'HMC'
+
+    @property
+    def session(self):
+        # Get the session through the weak reference
+        return self._sess_ref()
 
     @property
     def vnet_aware(self):

@@ -3,7 +3,8 @@
 # W0511: TODOs in code comments are fine.
 # W0142: *args and **kwargs are fine.
 # W0622: Redefining id is fine.
-disable=C0111,W0511,W0142,W0622
+# E1120: no-value-for-parameter error.  Mock decorators cause the error.
+disable=C0111,W0511,W0142,W0622,I0011,E1120
 
 [Basic]
 # Variable names can be 1 to 31 characters long, with lowercase and underscores
