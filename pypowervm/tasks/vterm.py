@@ -16,6 +16,7 @@
 
 """Manage LPAR virtual terminals."""
 
+import re
 import select
 import socket
 import subprocess
@@ -115,8 +116,7 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
 
 
 def open_remotable_vnc_vterm(
-        adapter, lpar_uuid, local_ip, remote_ips=None, validation_check=None,
-        validation_success=None, validation_fail=None):
+        adapter, lpar_uuid, local_ip, remote_ips=None, vnc_path=None):
     """Opens a VNC vTerm to a given LPAR.  Wraps in some validation.
 
     Must run on the management partition.
@@ -129,37 +129,20 @@ def open_remotable_vnc_vterm(
                        clients that are from a specific list of IP addresses
                        through. Default is None, and therefore will allow any
                        remote IP to connect.
-    :param validation_check: (Optional, Default: None) A special string that
-                             can be used to validate the beginning of the VNC
-                             request.  The first bytes passed in on the VNC
-                             socket would have to equal this validation_check
-                             in order to allow a connection.
+    :param vnc_path: (Optional, Default: None) If provided, the vnc client must
+                     pass in this path (in HTTP format) to connect to the
+                     VNC server.
 
-                             NOTE: This is clear text.  It is not a password,
-                             nor should it be.  This is just to help solidify
-                             that only certain clients are allowed through.
+                     The path is in HTTP format.  So if the vnc_path is 'Test'
+                     the first packet request into the VNC must be:
+                     "CONNECT Test HTTP/1.1\r\n\r\n"
 
-    :param validation_success: (Optional, Default: None) Should be specified
-                               if the validation_check is.  Will be sent back
-                               to the invoker if the validation check matches
-                               when a request comes in.  No-op if
-                               validation_check is not specified.
+                     If the client passes in an invalid request, a 400 Bad
+                     Request will be returned.  If the client sends in the
+                     correct path a 200 OK will be returned.
 
-                               NOTE: This is clear text.  It is not a password,
-                               nor should it be.  This is just to help
-                               solidify that only certain clients are allowed
-                               through.
-
-    :param validation_fail: (Optional, Default: None) Should be specified if
-                            the validation_check is.  Will be sent back to the
-                            invoker if the validation check does not match.
-                            The socket will also be closed.  No-op if
-                            validation_check is not specified.
-
-                            NOTE: This is clear text.  It is not a password,
-                            nor should it be.  This is just to help solidify
-                            that only certain clients are allowed through.
-
+                     If no vnc_path is specified, then no path is expected
+                     to be passed in by the VNC client.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -177,9 +160,7 @@ def open_remotable_vnc_vterm(
         if vnc_port not in _LOCAL_VNC_SERVERS:
             repeater = _VNCRepeaterServer(
                 lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
-                validation_check=validation_check,
-                validation_fail=validation_fail,
-                validation_success=validation_success)
+                vnc_path=vnc_path)
             _LOCAL_VNC_SERVERS[vnc_port] = repeater
             _LOCAL_VNC_UUID_TO_PORT[lpar_uuid] = vnc_port
 
@@ -230,8 +211,7 @@ class _VNCRepeaterServer(threading.Thread):
     """
 
     def __init__(self, lpar_uuid, local_ip, port, remote_ips=None,
-                 validation_check=None, validation_success=None,
-                 validation_fail=None):
+                 vnc_path=None):
         """Creates the repeater.
 
         :param lpar_uuid: Partition UUID.
@@ -241,36 +221,27 @@ class _VNCRepeaterServer(threading.Thread):
                            clients that are from a specific list of IP
                            addresses through. Default is None, and therefore
                            will allow any remote IP to connect.
-        :param validation_check: (Optional, Default: None) A special string
-                                 that can be used to validate the beginning of
-                                 the VNC request.  The first bytes passed in on
-                                 the VNC socket would have to equal this
-                                 validation_check in order to allow a
-                                 connection.
-                                 NOTE: This is clear text.  It is not a
-                                 password, nor should it be.  This is just to
-                                 help solidify that only certain clients are
-                                 allowed through.
-        :param validation_success: (Optional, Default: None) Should be
-                                   specified if the validation_check is.  Will
-                                   be sent back to the invoker if the
-                                   validation check matches when a request
-                                   comes in.  No-op if validation_check is not
-                                   specified.
-        :param validation_fail: (Optional, Default: None) Should be specified
-                                if the validation_check is.  Will be sent back
-                                to the invoker if the validation check does not
-                                match. The socket will also be closed.  No-op
-                                if validation_check is not specified.
+        :param vnc_path: (Optional, Default: None) If provided, the vnc client
+                         must pass in this path (in HTTP format) to connect to
+                         the VNC server.
+
+                         The path is in HTTP format.  So if the vnc_path is
+                         'Test' the first packet request into the VNC must be:
+                         "CONNECT Test HTTP/1.1\r\n\r\n"
+
+                         If the client passes in an invalid request, a 400 Bad
+                         Request will be returned.  If the client sends in the
+                         correct path a 200 OK will be returned.
+
+                         If no vnc_path is specified, then no path is expected
+                         to be passed in by the VNC client.
         """
         super(_VNCRepeaterServer, self).__init__()
 
         self.lpar_uuid = lpar_uuid
         self.local_ip = local_ip
         self.port = port
-        self.validation_check = validation_check
-        self.validation_success = validation_success
-        self.validation_fail = validation_fail
+        self.vnc_path = vnc_path
         self.remote_ips = remote_ips
 
         self.alive = True
@@ -293,7 +264,7 @@ class _VNCRepeaterServer(threading.Thread):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind((self.local_ip, self.port))
-        LOG.info("VNCRepeater Server Listening on ip=%(ip)s port=%(port)s" %
+        LOG.info(_("VNCRepeater Server Listening on ip=%(ip)s port=%(port)s") %
                  {'ip': self.local_ip, 'port': self.port})
         server.listen(10)
         # The list of peers keeps track of the client and the server.  This
@@ -367,26 +338,30 @@ class _VNCRepeaterServer(threading.Thread):
             return
 
         # If the client socket has a validation string.
-        if self.validation_check is not None:
+        if self.vnc_path is not None:
             # Check to ensure that there is output waiting.
             c_input = select.select([client_socket], [], [], 1)[0]
 
             # If no input, then just assume a close.  We waited a second.
             if not c_input:
-                client_socket.sendall(self.validation_fail)
+                # Assume HTTP 1.1.  All clients should support.  We have no
+                # input, so we don't know what protocol they would like.
+                client_socket.sendall("HTTP/1.1 400 Bad Request\r\n\r\n")
                 client_socket.close()
                 return
 
-            # We know we had data waiting.  Receive (at max) the validation
-            # check string.  All data after this validation string is the
+            # We know we had data waiting.  Receive (at max) the vnc_path
+            # string.  All data after this validation string is the
             # actual VNC data.
-            data = client_socket.recv(len(self.validation_check))
-            if data == self.validation_check:
+            correct_path, http_code = self._check_http_connect(client_socket,
+                                                               self.vnc_path)
+            if correct_path:
                 # Send back the success message.
-                client_socket.sendall(self.validation_success)
+                client_socket.sendall("HTTP/%s 200 OK\r\n\r\n" % http_code)
             else:
                 # Was not a success, exit.
-                client_socket.sendall(self.validation_fail)
+                client_socket.sendall("HTTP/%s 400 Bad Request\r\n\r\n" %
+                                      http_code)
                 client_socket.close()
                 return
 
@@ -399,6 +374,27 @@ class _VNCRepeaterServer(threading.Thread):
         # Set them up as peers in the dictionary.  They will now be considered
         # as input sources.
         peers[fwd], peers[client_socket] = client_socket, fwd
+
+    def _check_http_connect(self, client_socket, vnc_path):
+        """Determines if the vnc_path matches the HTTP connect string.
+
+        :param client_socket: The client socket sending the data.
+        :param vnc_path: The path for the HTTP Connect Request.
+        :returns correct_path: True if the client sent the expected path.
+                               False otherwise.
+        :returns http_code: The HTTP Connection code used for the client
+                            connection.
+        """
+        # Get the expected header.
+        header_len = len("CONNECT %s HTTP/1.1\r\n\r\n" % vnc_path)
+        value = client_socket.recv(header_len)
+
+        # Find the HTTP Code (if you can...)
+        pat = "^CONNECT\s+(\S+)\s+HTTP/(.*)\r\n\r\n$"
+        res = re.match(pat, value)
+        path_match = res and res.groups()[0] == vnc_path
+        http_code = res.groups()[1] if res else '1.1'
+        return path_match, http_code
 
     def _close_client(self, s_input, peers):
         """Closes down a client.
