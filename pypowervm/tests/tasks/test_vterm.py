@@ -95,9 +95,7 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.adpt = self.useFixture(
             fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
         self.srv = vterm._VNCRepeaterServer(
-            'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'],
-            validation_check='check', validation_success='success',
-            validation_fail='fail')
+            'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'], vnc_path='path')
 
     def test_stop(self):
         self.assertTrue(self.srv.alive)
@@ -112,15 +110,38 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_sock.return_value = mock_s_sock
         mock_select.return_value = [mock_c_sock], None, None
         mock_srv.accept.return_value = mock_c_sock, ['1.2.3.5']
-        mock_c_sock.recv.return_value = 'check'
+        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
         peers = {}
 
         self.srv._new_client(mock_srv, peers)
 
-        mock_c_sock.sendall.assert_called_once_with('success')
+        mock_c_sock.sendall.assert_called_once_with(
+            "HTTP/1.8 200 OK\r\n\r\n")
         mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
         self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
                          peers)
+
+    def test_check_http_connect(self):
+        # Test a string that has no HTTP coding at all
+        sock = mock.MagicMock()
+        sock.recv.return_value = "INVALID"
+        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
+        self.assertFalse(correct_path)
+        self.assertEqual('1.1', http_code)
+
+        # Test a string that has an HTTP code, but doesn't match the path
+        sock.reset_mock()
+        sock.recv.return_value = 'CONNECT test HTTP/1.8\r\n\r\n'
+        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
+        self.assertFalse(correct_path)
+        self.assertEqual('1.8', http_code)
+
+        # Test a good string
+        sock.reset_mock()
+        sock.recv.return_value = 'CONNECT test HTTP/2.0\r\n\r\n'
+        correct_path, http_code = self.srv._check_http_connect(sock, 'test')
+        self.assertTrue(correct_path)
+        self.assertEqual('2.0', http_code)
 
     def test_new_client_bad_ip(self):
         """Tests that a new client will be rejected if a bad IP."""
@@ -145,7 +166,8 @@ class TestVNCRepeaterServer(testtools.TestCase):
         # This mock has no 'socket ready'.
         self.srv._new_client(mock_srv, peers)
         self.assertEqual(peers, {})
-        mock_c_sock.sendall.assert_called_with('fail')
+        mock_c_sock.sendall.assert_called_with(
+            "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
 
         # Reset the select so that the validation check fails
@@ -154,7 +176,8 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_c_sock.recv.return_value = 'bad_check'
         self.srv._new_client(mock_srv, peers)
         self.assertEqual(peers, {})
-        mock_c_sock.sendall.assert_called_with('fail')
+        mock_c_sock.sendall.assert_called_with(
+            "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
 
     def test_close_client(self):
