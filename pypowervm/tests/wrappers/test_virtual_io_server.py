@@ -17,7 +17,6 @@
 import copy
 import mock
 import unittest
-import warnings
 
 import pypowervm.adapter as adpt
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
@@ -524,14 +523,12 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(old_len - 1, len(self.dwrap.io_config.io_slots))
         self.assertNotIn(deleted_slot, self.dwrap.io_config.io_slots)
 
-    def test_io_adpt(self):
+    @mock.patch('warnings.warn')
+    def test_io_adpt(self, mock_warn):
         self.assertEqual('553713674', self.io_slot.io_adapter.id)
         # Verify deprecation warning on IOSlot.adapter
-        with warnings.catch_warnings(record=True) as wrng:
-            warnings.simplefilter('always')
-            self.assertEqual('553713674', self.io_slot.adapter.id)
-            self.assertEqual(1, len(wrng))
-            self.assertTrue(issubclass(wrng[0].category, DeprecationWarning))
+        self.assertEqual('553713674', self.io_slot.adapter.id)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
     def test_bld(self):
         new_slot = bp.IOSlot.bld(self.adpt, True, 12345678)
