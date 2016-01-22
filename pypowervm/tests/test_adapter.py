@@ -611,7 +611,8 @@ class TestAdapterShutdown(testtools.TestCase):
         """
 
         with mock.patch.object(adp.Session, '_logoff') as mock_logoff, \
-                mock.patch.object(adp.Session, '_logon') as mock_logon:
+                mock.patch.object(adp.Session, '_logon') as mock_logon, \
+                mock.patch.object(adp.EventListener, 'getevents') as m_events:
             # Get a session
             sess = adp.Session()
             # Use the session so pep8 doesn't complain
@@ -619,6 +620,16 @@ class TestAdapterShutdown(testtools.TestCase):
             # It should have logged on but not off.
             self.assertTrue(mock_logon.called)
             self.assertFalse(mock_logoff.called)
+
+            # Mock the session token like we logged on
+            sess._sessToken = 'token'.encode('utf-8')
+            m_events.return_value = {'general': 'init'}
+            # Get an event listener to test the weak references
+            event_listen = sess.get_event_listener()
+
+            # Test the circular reference (but one link is weak)
+            sess.hello = 'hello'
+            self.assertEqual(sess.hello, event_listen.adp.session.hello)
 
             # Remove the reference and be sure it's garbage collected.
             sess = None

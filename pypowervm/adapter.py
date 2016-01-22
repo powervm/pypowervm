@@ -42,6 +42,7 @@ from oslo_log import log as logging
 import requests
 import requests.exceptions as rqex
 import six
+import weakref
 
 from pypowervm import cache
 from pypowervm import const as c
@@ -199,21 +200,8 @@ class Session(object):
 
     def get_event_listener(self):
         if not self._eventlistener:
-            # spawn a separate session for listening to events. If we used the
-            # same session, Session.__del__() would never be called
-            # TODO(IBM): investigate whether we can find a way to share the
-            # session
             LOG.info("setting up event listener for %s" % self.host)
-            listen_session = Session(self.host,
-                                     self.username,
-                                     self.password,
-                                     auditmemento=self.auditmemento,
-                                     protocol=self.protocol,
-                                     port=self.port,
-                                     timeout=self.timeout,
-                                     certpath=self.certpath,
-                                     certext=self.certext)
-            self._eventlistener = EventListener(listen_session)
+            self._eventlistener = EventListener(self)
         return self._eventlistener
 
     def request(self, method, path, headers=None, body='', sensitive=False,
@@ -1378,8 +1366,11 @@ class EventListener(object):
         self._lock = threading.RLock()
         self.handlers = []
         self._pthread = None
+        self.host = session.host
         try:
-            self.adp = Adapter(session, use_cache=False)
+            # Establish a weak reference proxy to the session.  This is needed
+            # because we don't want a circular reference to the session.
+            self.adp = Adapter(weakref.proxy(session), use_cache=False)
             # initialize
             allevents = self.getevents()
         except pvmex.Error as e:
@@ -1414,13 +1405,11 @@ class EventListener(object):
                 self._pthread = None
 
     def shutdown(self):
-        host = self.adp.session.host
-        LOG.info('Shutting down EventListener for %s' % host)
+        LOG.info('Shutting down EventListener for %s' % self.host)
         with self._lock:
             for handler in self.handlers:
                 self.unsubscribe(handler)
-            self.adp = None
-        LOG.info('EventListener shutdown complete for %s' % host)
+        LOG.info('EventListener shutdown complete for %s' % self.host)
 
     def getevents(self):
 
