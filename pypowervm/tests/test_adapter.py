@@ -15,6 +15,7 @@
 #    under the License.
 
 import errno
+import fixtures
 import gc
 from lxml import etree
 import six
@@ -604,39 +605,118 @@ class TestElement(testtools.TestCase):
 
 
 class TestAdapterShutdown(testtools.TestCase):
-    def test_shutdown(self):
+    def setUp(self):
+        super(TestAdapterShutdown, self).setUp()
+        self.mock_logoff = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logoff')).mock
+        self.mock_logon = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logon')).mock
+        self.mock_events = self.useFixture(
+            fixtures.MockPatchObject(adp._EventListener, 'getevents')).mock
+        # Mock the initial events coming in on start
+        self.mock_events.return_value = {'general': 'init'}
+
+    def test_shutdown_session(self):
         """Test garbage collection of the session.
 
         Ensures the Session can be properly garbage collected.
         """
+        # Get a session
+        sess = adp.Session()
+        sess._sessToken = 'token'.encode('utf-8')
+        # It should have logged on but not off.
+        self.assertTrue(self.mock_logon.called)
+        self.assertFalse(self.mock_logoff.called)
 
-        with mock.patch.object(adp.Session, '_logoff') as mock_logoff, \
-                mock.patch.object(adp.Session, '_logon') as mock_logon, \
-                mock.patch.object(adp.EventListener, 'getevents') as m_events:
-            # Get a session
-            sess = adp.Session()
-            # Use the session so pep8 doesn't complain
-            self.assertIsInstance(sess, adp.Session)
-            # It should have logged on but not off.
-            self.assertTrue(mock_logon.called)
-            self.assertFalse(mock_logoff.called)
+        # Mock the session token like we logged on
+        # Get an event listener to test the weak references
+        event_listen = sess.get_event_listener()
 
-            # Mock the session token like we logged on
-            sess._sessToken = 'token'.encode('utf-8')
-            m_events.return_value = {'general': 'init'}
-            # Get an event listener to test the weak references
-            event_listen = sess.get_event_listener()
+        # Test the circular reference (but one link is weak)
+        sess.hello = 'hello'
+        self.assertEqual(sess.hello, event_listen.adp.session.hello)
 
-            # Test the circular reference (but one link is weak)
-            sess.hello = 'hello'
-            self.assertEqual(sess.hello, event_listen.adp.session.hello)
+        # Remove the reference and be sure it's garbage collected.
+        sess = None
+        # Run garbage collection just to be safer.
+        gc.collect()
+        # It should now be garbage collected and logged off.
+        self.assertTrue(self.mock_logoff.called)
 
-            # Remove the reference and be sure it's garbage collected.
-            sess = None
-            # Run garbage collection just to be safer.
-            gc.collect()
-            # It should now be garbage collected and logged off.
-            self.assertTrue(mock_logoff.called)
+    def test_shutdown_event_listener(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the Session sticks around when we just have a reference to
+        the EventListener.
+        """
+        # Get a session
+        sess = adp.Session()
+        sess._sessToken = 'token'.encode('utf-8')
+        # Now get the EventListener
+        event_listen = adp.EventListener(sess)
+        # Remove our reference to the session.
+        sess = None
+        # Run garbage collection just to be safer.
+        gc.collect()
+        # Session has not been garbage collected.
+        self.assertFalse(self.mock_logoff.called)
+        # The adapter session is still intact
+        self.assertIsNotNone(event_listen.adp.session)
+        # Both event listener and adapter point to the same session.
+        event_listen._sess_anchor.hello = 'hello'
+        self.assertEqual(event_listen._sess_anchor.hello,
+                         event_listen.adp.session.hello)
+
+        # Now remove our reference to the listener
+        event_listen.shutdown()
+        event_listen = None
+        gc.collect()
+        # The session should be logged off now.
+        self.assertTrue(self.mock_logoff.called)
+
+    def test_shutdown_adapter(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter, implicit session and
+        EventListener.
+        """
+        # Get Adapter, implicit session
+        adapter = adp.Adapter()
+        adapter.session._sessToken = 'token'.encode('utf-8')
+        # Get construct and event listener
+        adapter.session.get_event_listener()
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+        adapter = None
+        gc.collect()
+        # The session should be logged off now.
+        self.assertTrue(self.mock_logoff.called)
+
+    def test_shutdown_adapter_cache(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter w/caching, implicit session and
+        EventListener.
+        """
+        # Get Adapter, implicit session
+        adapter = adp.Adapter(use_cache=True)
+        adapter.session._sessToken = 'token'.encode('utf-8')
+        # Get construct and event listener
+        adapter.session.get_event_listener()
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+        adapter = None
+        gc.collect()
+        # The session should be logged off now.
+        self.assertTrue(self.mock_logoff.called)
 
 
 class TestElementInject(testtools.TestCase):
