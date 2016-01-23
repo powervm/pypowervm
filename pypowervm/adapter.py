@@ -193,16 +193,28 @@ class Session(object):
 
     def __del__(self):
         try:
-            if self._eventlistener:
+            # deleting the session will shutdown the event listener
+            if self.has_event_listener:
                 self._eventlistener.shutdown()
         finally:
             self._logoff()
 
     def get_event_listener(self):
-        if not self._eventlistener:
+        if not self.has_event_listener:
             LOG.info("setting up event listener for %s" % self.host)
-            self._eventlistener = EventListener(self)
+            EventListener(self)
+            self._eventlistener._unanchor()
         return self._eventlistener
+
+    @property
+    def has_event_listener(self):
+        return self._eventlistener is not None
+
+    def register_event_listener(self, listener):
+        if not self._eventlistener:
+            self._eventlistener = listener
+        else:
+            ValueError('Event listener already set.')
 
     def request(self, method, path, headers=None, body='', sensitive=False,
                 verify=False, timeout=-1, auditmemento=None, relogin=True,
@@ -540,25 +552,26 @@ class Adapter(object):
         """
         self.session = session if session else Session()
         self._cache = None
-        self._eventlistener = None
         self._refreshtime4path = {}
         self._helpers = self._standardize_helper_list(helpers)
+        self._cache_handler = None
         if use_cache:
-            self._cache = cache._PVMCache(session.host)
+            self._cache = cache._PVMCache(self.session.host)
             # Events may not always be sent when they should, but they should
             # be trustworthy when they are sent.
             try:
-                self._eventlistener = session.get_event_listener()
+                self.session.get_event_listener()
             except Exception:
                 LOG.exception('Failed to register for events.  Events will '
                               'not be used.')
-            if self._eventlistener is not None:
-                self._evthandler = _CacheEventHandler(self._cache)
-                self._eventlistener.subscribe(self._evthandler)
+            if self.session.has_event_listener:
+                self._cache_handler = _CacheEventHandler(self._cache)
+                self.session.get_event_listener().subscribe(
+                    self._cache_handler)
 
     def __del__(self):
-        if self._eventlistener is not None:
-            self._eventlistener.unsubscribe(self._evthandler)
+        if self._cache_handler is not None:
+            self.session.get_event_listener().unsubscribe(self._cache_handler)
 
     @staticmethod
     def _standardize_helper_list(helpers):
@@ -804,7 +817,7 @@ class Adapter(object):
 
         if is_cacheable:
             # Attempt to retrieve from cache
-            max_age = util.get_max_age(path, self._eventlistener is not None,
+            max_age = util.get_max_age(path, self._cache_handler is not None,
                                        self.session.schema_version)
             if age == -1 or age > max_age:
                 age = max_age
@@ -1360,6 +1373,9 @@ class EventListener(object):
     def __init__(self, session, timeout=-1, interval=15):
         if session is None:
             raise ValueError('session must not be None')
+        if session.has_event_listener:
+            raise ValueError('An event listener is already active on the '
+                             'session.')
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
         self.interval = interval
@@ -1369,7 +1385,8 @@ class EventListener(object):
         self.host = session.host
         try:
             # Establish a weak reference proxy to the session.  This is needed
-            # because we don't want a circular reference to the session.
+            # because we don't want a circular reference to the session, if it
+            # was created by the session.
             self.adp = Adapter(weakref.proxy(session), use_cache=False)
             # initialize
             allevents = self.getevents()
@@ -1379,6 +1396,15 @@ class EventListener(object):
         if not allevents.get('general') == 'init':
             # Something else is sharing this feed!
             raise ValueError('Application id "%s" is not unique' % self.appid)
+        session.register_event_listener(self)
+        # Since this class uses a weakref to the Session, we need to
+        # anchor it here for the legacy case of creating an EventListener
+        # outside of the Session.  If the session is creating this listener
+        # internally, then it will unanchor the session.
+        self._sess_anchor = session
+
+    def _unanchor(self):
+        self._sess_anchor = None
 
     def subscribe(self, handler):
         if not isinstance(handler, EventHandler):
@@ -1410,6 +1436,7 @@ class EventListener(object):
             for handler in self.handlers:
                 self.unsubscribe(handler)
         LOG.info('EventListener shutdown complete for %s' % self.host)
+        self._unanchor()
 
     def getevents(self):
 
