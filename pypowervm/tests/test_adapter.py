@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import errno
 import fixtures
 import gc
@@ -110,6 +111,99 @@ class TestAdapter(testtools.TestCase):
         """Tear down the Session instance."""
         self.sess = None
         super(TestAdapter, self).tearDown()
+
+    def test_event_listener(self):
+
+        with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
+                mock.patch.object(adp, '_EventPollThread') as mock_poll:
+            # With some fake events, event listener can be initialized
+            self.sess._sessToken = 'token'.encode('utf-8')
+            m_events.return_value = {'general': 'init'}, []
+            event_listen = self.sess.get_event_listener()
+            self.assertIsNotNone(event_listen)
+
+            # Register the fake handlers and ensure they are called
+            evh = mock.Mock(spec=adp.EventHandler, autospec=True)
+            raw_evh = mock.Mock(spec=adp.RawEventHandler, autospec=True)
+            event_listen.subscribe(evh)
+            event_listen.subscribe(raw_evh)
+            events, raw_events = event_listen._get_events()
+            event_listen._dispatch_events(events, raw_events)
+            self.assertTrue(evh.process.called)
+            self.assertTrue(raw_evh.process.called)
+            self.assertTrue(mock_poll.return_value.start.called)
+
+            # Ensure getevents() gets legacy events
+            self.assertEqual({'general': 'init'}, event_listen.getevents())
+
+        # Outside our patching of _get_events, get the formatted events
+        with mock.patch.object(event_listen, '_format_events') as mock_format,\
+                mock.patch.object(event_listen.adp, 'read') as mock_read:
+
+            # Fabricate some mock entries, so format gets called.
+            mock_read.return_value.feed.entries = (['entry'])
+
+            self.assertEqual(({}, []), event_listen._get_events())
+            self.assertTrue(mock_read.called)
+            self.assertTrue(mock_format.called)
+
+        # Test _format_events
+        event_data = [
+            {
+                'EventType': 'NEW_CLIENT',
+                'EventData': 'href1',
+                'EventID': '1',
+                'EventDetail': 'detail',
+            },
+            {
+                'EventType': 'CACHE_CLEARED',
+                'EventData': 'href2',
+                'EventID': '2',
+                'EventDetail': 'detail2',
+            },
+            {
+                'EventType': 'ADD_URI',
+                'EventData': 'LPAR1',
+                'EventID': '3',
+                'EventDetail': 'detail3',
+            },
+            {
+                'EventType': 'DELETE_URI',
+                'EventData': 'LPAR1',
+                'EventID': '4',
+                'EventDetail': 'detail4',
+            },
+            {
+                'EventType': 'INVALID_URI',
+                'EventData': 'LPAR1',
+                'EventID': '4',
+                'EventDetail': 'detail4',
+            },
+        ]
+
+        # Setup a side effect that returns events from the test data.
+        def get_event_data(item):
+            data = event_data[0][item]
+            if item == 'EventDetail':
+                event_data.pop(0)
+            return data
+
+        # Raw events returns a sequence the same as the test data
+        raw_result = copy.deepcopy(event_data)
+        # Legacy events overwrites some events.
+        dict_result = {'general': 'invalidate', 'LPAR1': 'delete'}
+
+        # Build a mock entry
+        entry = mock.Mock()
+        entry.element.findtext.side_effect = get_event_data
+        events = {}
+        raw_events = []
+        x = len(raw_result)
+        while x:
+            x -= 1
+            event_listen._format_events(entry, events, raw_events)
+        self.assertEqual(raw_result, raw_events)
+        self.assertEqual(dict_result, events)
 
     @mock.patch('pypowervm.adapter.Session')
     def test_empty_init(self, mock_sess):
@@ -612,9 +706,9 @@ class TestAdapterClasses(testtools.TestCase):
         self.mock_logon = self.useFixture(
             fixtures.MockPatchObject(adp.Session, '_logon')).mock
         self.mock_events = self.useFixture(
-            fixtures.MockPatchObject(adp._EventListener, 'getevents')).mock
+            fixtures.MockPatchObject(adp._EventListener, '_get_events')).mock
         # Mock the initial events coming in on start
-        self.mock_events.return_value = {'general': 'init'}
+        self.mock_events.return_value = {'general': 'init'}, []
 
     def test_instantiation(self):
         """Direct instantiation of EventListener is not allowed."""

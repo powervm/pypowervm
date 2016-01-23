@@ -1419,16 +1419,18 @@ class _EventListener(EventListener):
             # because we don't want a circular reference to the session.
             self.adp = Adapter(weakref.proxy(session), use_cache=False)
             # initialize
-            allevents = self.getevents()
+            events, raw_events = self._get_events()
         except pvmex.Error as e:
             raise pvmex.Error('Failed to initialize event feed listener: %s'
                               % e)
-        if not allevents.get('general') == 'init':
+        if not events.get('general') == 'init':
             # Something else is sharing this feed!
             raise ValueError('Application id "%s" is not unique' % self.appid)
+        # No errors initializing, so dispatch what we recieved.
+        self._dispatch_events(events, raw_events)
 
     def subscribe(self, handler):
-        if not isinstance(handler, EventHandler):
+        if not isinstance(handler, _EventHandler):
             raise ValueError('Handler must be an EventHandler')
         if self.adp is None:
             raise Exception('Shutting down')
@@ -1441,7 +1443,7 @@ class _EventListener(EventListener):
                 self._pthread.start()
 
     def unsubscribe(self, handler):
-        if not isinstance(handler, EventHandler):
+        if not isinstance(handler, _EventHandler):
             raise ValueError('Handler must be an EventHandler')
         with self._lock:
             if handler not in self.handlers:
@@ -1459,8 +1461,15 @@ class _EventListener(EventListener):
         LOG.info('EventListener shutdown complete for %s' % self.host)
 
     def getevents(self):
+        all_events = self._get_events()
+        # Legacy method returned just the events.
+        return all_events[0]
 
+    def _get_events(self):
+        """Gets the events and formats them into 'events' and 'raw_events'."""
         events = {}
+        raw_events = []
+        resp = None
 
         # Read event feed
         try:
@@ -1470,40 +1479,85 @@ class _EventListener(EventListener):
         except pvmex.Error:
             # TODO(IBM): improve error handling
             LOG.exception('error while getting PowerVM events')
-            return events
 
-        # Parse event feed
-        for entry in resp.feed.entries:
-            etype = entry.element.findtext('EventType')
-            href = entry.element.findtext('EventData')
-            if etype == 'NEW_CLIENT':
-                events['general'] = 'init'
-            elif etype in ['CACHE_CLEARED', 'MISSING_EVENTS']:
-                events = {'general': 'invalidate'}
-                break
-            elif etype == 'ADD_URI':
-                events[href] = 'add'
-            elif etype == 'DELETE_URI':
-                events[href] = 'delete'
-            elif etype in ['MODIFY_URI', 'INVALID_URI', 'HIDDEN_URI']:
-                if href not in events:
-                    events[href] = 'invalidate'
-            elif etype not in ['VISIBLE_URI']:
-                LOG.error('unexpected EventType=%s' % etype)
+        if resp:
+            # Parse event feed
+            for entry in resp.feed.entries:
+                self._format_events(entry, events, raw_events)
+
+        return events, raw_events
+
+    def _format_events(self, entry, events, raw_events):
+        """Formats an event Entry into events and raw events.
+
+        This method operates on the events and raw_events lists themselves.
+        It does not pass back the results.
+
+        :param entry: The event entry to format for the list of events.
+        :param events: A dictionary of events to add, remove, or update.
+        :param raw_events: A dictionary of raw events to add to.
+        """
+        etype = entry.element.findtext('EventType')
+        href = entry.element.findtext('EventData')
+        if etype == 'NEW_CLIENT':
+            events['general'] = 'init'
+        elif etype in ['CACHE_CLEARED', 'MISSING_EVENTS']:
+            # Clears all prior events
+            keys = [k for k in events]
+            for k in keys:
+                del events[k]
+            events['general'] = 'invalidate'
+        elif etype == 'ADD_URI':
+            events[href] = 'add'
+        elif etype == 'DELETE_URI':
+            events[href] = 'delete'
+        elif etype in ['MODIFY_URI', 'INVALID_URI', 'HIDDEN_URI']:
+            if href not in events:
+                events[href] = 'invalidate'
+        elif etype not in ['VISIBLE_URI']:
+            LOG.error('unexpected EventType=%s' % etype)
+
+        # Now format the event for the raw handlers
+        eid = entry.element.findtext('EventID')
+        edetail = entry.element.findtext('EventDetail')
+        raw_events.append({'EventType': etype, 'EventData': href,
+                           'EventID': eid, 'EventDetail': edetail})
+
+    def _dispatch_events(self, events, raw_events):
+
+        def call_handlers():
+            try:
+                if isinstance(h, RawEventHandler):
+                    h.process(raw_events)
+                else:
+                    h.process(events)
+            except Exception:
+                LOG.exception('error while processing PowerVM events')
 
         # Notify subscribers
         with self._lock:
             for h in self.handlers:
-                try:
-                    h.process(events)
-                except Exception:
-                    LOG.exception('error while processing PowerVM events')
-
-        return events
+                call_handlers()
 
 
 @six.add_metaclass(abc.ABCMeta)
-class EventHandler(object):
+class _EventHandler(object):
+    """Common class for all Event handlers.
+
+    Event handlers are called to process events from the EventListener.
+    """
+
+    @abc.abstractmethod
+    def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: Events from the API.
+        """
+        pass
+
+
+@six.add_metaclass(abc.ABCMeta)
+class EventHandler(_EventHandler):
     """Used to handle events from the API.
 
     The session can poll for events back from the API.  An event will give a
@@ -1535,6 +1589,37 @@ class EventHandler(object):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
+class RawEventHandler(_EventHandler):
+    """Used to handle raw events from the API.
+
+    With this handler, no processing is done on the events. The events
+    will be passed as a sequence of dicts.
+
+    Implement this class and add it to the Session's event listener to process
+    events back from the API.
+    """
+
+    @abc.abstractmethod
+    def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: A sequence of event dicts that has come back from the
+                       system.
+
+                       Format:
+                       [
+                            {
+                               'EventType': <type>,
+                               'EventID': <id>,
+                               'EventData': <data>,
+                               'EventDetail': <detail>
+                            },
+                       ]
+        """
+        pass
+
+
 class _EventPollThread(threading.Thread):
     def __init__(self, eventlistener, interval):
         threading.Thread.__init__(self)
@@ -1545,7 +1630,8 @@ class _EventPollThread(threading.Thread):
 
     def run(self):
         while not self.done:
-            self.eventlistener.getevents()
+            events, raw_events = self.eventlistener._get_events()
+            self.eventlistener._dispatch_events(events, raw_events)
             interval = self.interval
             while interval > 0 and not self.done:
                 time.sleep(1)
