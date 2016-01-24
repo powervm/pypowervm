@@ -109,7 +109,7 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_s_sock, mock_c_sock = mock.MagicMock(), mock.MagicMock()
         mock_sock.return_value = mock_s_sock
         mock_select.return_value = [mock_c_sock], None, None
-        mock_srv.accept.return_value = mock_c_sock, ['1.2.3.5']
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
         mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
         peers = {}
 
@@ -147,7 +147,7 @@ class TestVNCRepeaterServer(testtools.TestCase):
         """Tests that a new client will be rejected if a bad IP."""
         mock_srv = mock.MagicMock()
         mock_c_sock = mock.MagicMock()
-        mock_srv.accept.return_value = mock_c_sock, ['1.2.3.4']
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.8', '40675')
         peers = {}
 
         self.srv._new_client(mock_srv, peers)
@@ -160,7 +160,7 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_srv = mock.MagicMock()
         mock_c_sock = mock.MagicMock()
         mock_select.return_value = None, None, None
-        mock_srv.accept.return_value = mock_c_sock, ['1.2.3.5']
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
         peers = {}
 
         # This mock has no 'socket ready'.

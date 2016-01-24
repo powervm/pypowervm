@@ -328,7 +328,7 @@ class _VNCRepeaterServer(threading.Thread):
         # This is the socket FROM the client side.  client_addr is a tuple
         # of format ('1.2.3.4', '5678') - ip and port.
         client_socket, client_addr = server.accept()
-        LOG.debug("New Client socket accepted client_addr=%s" % client_addr)
+        LOG.debug("New Client socket accepted client_addr=%s" % client_addr[0])
 
         # If only select IPs are allowed through, validate
         if (self.remote_ips is not None and
