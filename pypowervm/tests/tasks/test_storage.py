@@ -520,6 +520,8 @@ class TestLULinkedClone(testtools.TestCase):
     def test_image_lu_for_clone(self):
         self.assertEqual(self.img_lu2,
                          ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+        self.dsk_lu3._cloned_from_udid(None)
+        self.assertIsNone(ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
 
     def test_rm_ssp_storage(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)

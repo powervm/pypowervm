@@ -357,6 +357,9 @@ def _image_lu_for_clone(ssp, clone_lu):
     :return: The LU EntryWrapper representing the Image LU backing the
              clone_lu.  None if no such Image LU can be found.
     """
+    # Check if the clone never happened
+    if clone_lu.cloned_from_udid is None:
+        return None
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = clone_lu.cloned_from_udid[2:]
     for lu in ssp.logical_units:
