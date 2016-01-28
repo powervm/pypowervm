@@ -128,6 +128,12 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(lpar_bldr.LPARBuilderException, bldr.build)
 
+        # LPAR name having special character
+        attr = dict(name='lpar()$[', memory=1024, env=bp.LPARType.AIXLINUX,
+                    vcpu=1)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertRaises(lpar_bldr.LPARBuilderException, bldr.build)
+
         # Test setting uuid
         uuid1 = pvm_uuid.convert_uuid_to_pvm(str(uuid.uuid4()))
         attr = dict(name='lpar', memory=1024, uuid=uuid1, vcpu=1)

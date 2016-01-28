@@ -17,6 +17,7 @@
 """Construction and basic validation of an LPAR or VIOS EntryWrapper."""
 
 import abc
+import re
 import six
 
 from oslo_log import log as logging
@@ -71,6 +72,7 @@ MEM_LOW_BOUND = 128
 VCPU_LOW_BOUND = 1
 PROC_UNITS_LOW_BOUND = 0.05
 MAX_LPAR_NAME_LEN = 31
+INVALID_LPAR_NAME_CHARS = '[()\<>*&$?|\\"`\[\]]'
 
 LOG = logging.getLogger(__name__)
 
@@ -199,15 +201,27 @@ class DefaultStandardize(Standardize):
         if val is not None:
             attr[prop] = convert_func(val)
 
+    def _validate_lpar_name(self, name):
+        """Validates if the passed LPAR name is valid."""
+        # First check the name length
+        if len(name) < 1 or len(name) > MAX_LPAR_NAME_LEN:
+            msg = _LE("Logical partition name has invalid length."
+                      " Name: %s") % name
+            raise LPARBuilderException(msg)
+        # Check if the name contains invalid characters
+        LOG.info("Chhavi LPAR name =%s" % name)
+        if re.search(INVALID_LPAR_NAME_CHARS, name):
+            values = dict(name=name, invalid=INVALID_LPAR_NAME_CHARS)
+            msg = _LE("Logical partition name %(name)s contains invalid"
+                      "characters [%(invalid)s]") % values
+            raise LPARBuilderException(msg)
+
     def _validate_general(self, attrs=None, partial=False):
         if attrs is None:
             attrs = self.attr
-        name_len = len(attrs[NAME])
-        if name_len < 1 or name_len > MAX_LPAR_NAME_LEN:
 
-            msg = _LE("Logical partition name has invalid length."
-                      " Name: %s") % attrs[NAME]
-            raise LPARBuilderException(msg)
+        self._validate_lpar_name(attrs[NAME])
+
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
         AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
