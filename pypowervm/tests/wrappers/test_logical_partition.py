@@ -588,6 +588,8 @@ class TestMemCfg(twrap.TestWrapper):
         self.assertEqual(512, mem_wrap.min)
         self.assertEqual(1024, mem_wrap.desired)
         self.assertEqual(2048, mem_wrap.max)
+        self.assertEqual(0, mem_wrap.exp_factor)
+        self.assertEqual(False, mem_wrap.ame_enabled)
 
     def test_current_mem(self):
         self.assertEqual(512, self.mem_config.current)

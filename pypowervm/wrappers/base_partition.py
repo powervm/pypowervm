@@ -776,7 +776,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         e.g. An LPAR with EF = 2 which has 4 GB of memory will have a target
         expansion memory of 8 GB.
         """
-        return self._get_val_float(_MEM_EXP_FACTOR)
+        return self._get_val_float(_MEM_EXP_FACTOR, default=0)
 
     @exp_factor.setter
     def exp_factor(self, exp_factor):
