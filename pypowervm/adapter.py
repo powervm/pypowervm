@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -48,6 +48,7 @@ from pypowervm import cache
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
+from pypowervm.i18n import _
 from pypowervm import traits as pvm_traits
 from pypowervm import util
 
@@ -135,14 +136,14 @@ class Session(object):
         if protocol is None:
             protocol = 'http' if self.use_file_auth else 'https'
         if protocol not in c.PORT_DEFAULT_BY_PROTO.keys():
-            raise ValueError('Invalid protocol "%s"' % protocol)
+            raise ValueError(_('Invalid protocol "%s"') % protocol)
         self.protocol = protocol
 
         self.host = host
 
         if host != 'localhost' and protocol == 'http':
-            LOG.warning('Unencrypted communication with PowerVM! Revert '
-                        'configuration to https.')
+            LOG.warning(_('Unencrypted communication with PowerVM! Revert '
+                          'configuration to https.'))
 
         if port is None:
             port = c.PORT_DEFAULT_BY_PROTO[self.protocol]
@@ -155,8 +156,8 @@ class Session(object):
                 try:
                     auditmemento = pwd.getpwuid(os.getuid())[0]
                 except Exception:
-                    LOG.warning("Calculating default audit memento failed, "
-                                "using 'default'.")
+                    LOG.warning(_("Calculating default audit memento failed, "
+                                  "using 'default'."))
         self.auditmemento = auditmemento
 
         # Support IPv6 addresses
@@ -186,7 +187,7 @@ class Session(object):
         # does, it indicates that we got a bad Logon response, or processed it
         # incorrectly.
         if self.use_file_auth and self.mc_type == 'HMC':
-            raise pvmex.Error("Local authentication not supported on HMC.")
+            raise pvmex.Error(_("Local authentication not supported on HMC."))
 
         # Set the API traits after logon.
         self.traits = pvm_traits.APITraits(self)
@@ -201,7 +202,7 @@ class Session(object):
 
     def get_event_listener(self):
         if not self.has_event_listener:
-            LOG.info("setting up event listener for %s" % self.host)
+            LOG.info(_("Setting up event listener for %s"), self.host)
             self._eventlistener = _EventListener(self)
         return self._eventlistener
 
@@ -240,15 +241,15 @@ class Session(object):
             elif method in ['GET']:
                 isdownload = True
             else:
-                raise ValueError('unexpected filehandle on %s request'
+                raise ValueError(_('Unexpected filehandle on %s request')
                                  % method)
 
         if isupload:
-            LOG.debug('sending %s %s headers=%s body=<file contents>' %
+            LOG.debug('sending %s %s headers=%s body=<file contents>',
                       (method, url,
                        headers if not sensitive else "<sensitive>"))
         else:
-            LOG.debug('sending %s %s headers=%s body=%s' %
+            LOG.debug('sending %s %s headers=%s body=%s',
                       (method, url,
                        headers if not sensitive else "<sensitive>",
                        body if not sensitive else "<sensitive>"))
@@ -280,6 +281,7 @@ class Session(object):
                 response = session.request(method, url, data=body,
                                            headers=headers, timeout=timeout)
         except rqex.SSLError as e:
+            # TODO(IBM) Get better responses here...this isn't good.
             msg = '%s for %s %s: %s' % (e.__class__.__name__, method, url, e)
             LOG.warning(msg)
             raise pvmex.SSLError(msg)
@@ -292,9 +294,12 @@ class Session(object):
             LOG.warning(msg)
             raise pvmex.TimeoutError(msg)
         except Exception as e:
-            LOG.exception('Unexpected error for %s %s' % (method, url))
-            raise pvmex.Error('Unexpected error: %s for %s %s: %s' %
-                              (e.__class__.__name__, method, url, e))
+            LOG.exception(_('Unexpected error for %(meth)s %(url)s'),
+                          {'meth': method, 'url': url})
+            raise pvmex.Error(_('Unexpected error: %(class)s for %(method)s '
+                                '%(url)s: %(excp)s') %
+                              {'class': e.__class__.__name__, 'method': method,
+                               'url': url, 'excp': str(e)})
         finally:
             session.close()
 
@@ -307,9 +312,9 @@ class Session(object):
                 # TODO(IBM): why does this happen and what else may result?
                 pass
 
-        LOG.debug('result: %s (%s) for %s %s' %
+        LOG.debug('result: %s (%s) for %s %s',
                   (response.status_code, response.reason, method, url))
-        LOG.debug('response headers: %s' %
+        LOG.debug('response headers: %s',
                   (response.headers if not sensitive else "<sensitive>"))
 
         if response.status_code in [c.HTTPStatus.OK_NO_CONTENT,
@@ -318,7 +323,7 @@ class Session(object):
                             response.reason, response.headers,
                             reqheaders=headers, reqbody=body)
         else:
-            LOG.debug('response body:\n%s' %
+            LOG.debug('response body:\n%s',
                       (response.text if not sensitive else "<sensitive>"))
 
         # re-login processing
@@ -329,16 +334,17 @@ class Session(object):
                 if not relogin:
                     LOG.debug('Requester specified no re-login')
                 elif self._relogin_unsafe:
-                    LOG.warning('Re-login has been deemed unsafe. This '
-                                'Session instance should no longer be used.')
+                    LOG.warning(_('Re-login has been deemed unsafe. This '
+                                  'Session instance should no longer be '
+                                  'used.'))
                 else:
                     if self._sessToken != sess_token_try:
-                        LOG.debug('Someone else handled re-login for %s'
-                                  % self.host)
+                        LOG.debug('Someone else handled re-login for %s',
+                                  self.host)
                     else:
                         self._logged_in = False
 
-                        LOG.info('Attempting re-login %s' % self.host)
+                        LOG.info(_('Attempting re-login %s'), self.host)
                         try:
                             self._logon()
                         except pvmex.Error as e:
@@ -349,16 +355,16 @@ class Session(object):
                                     # lock the account
                                     self._relogin_unsafe = True
                                     LOG.warning(
-                                        'Re-login 401, response body:\n%s'
-                                        % e.response.body)
+                                        _('Re-login 401, response body:\n%s'),
+                                        e.response.body)
                                 else:
                                     # safe to try re-login again in this case
                                     LOG.warning(
-                                        'Re-login failed, resp body:\n%s'
-                                        % e.response.body)
+                                        _('Re-login failed, resp body:\n%s'),
+                                        e.response.body)
                             else:
                                 # safe to try re-login again in this case
-                                LOG.warning('Re-login failed:\n%s' % str(e))
+                                LOG.warning(_('Re-login failed:\n%s'), e)
                             e.orig_response = Response(
                                 method, path, response.status_code,
                                 response.reason, response.headers,
@@ -376,11 +382,13 @@ class Session(object):
                             # This is a special case... normally on a 401 we
                             # would retry login, but we won't here because
                             # we just did that... Handle it specially.
-                            LOG.warning('Re-attempt failed with another 401, '
-                                        'response body:\n%s' % e.response.body)
-                            raise pvmex.Error('suspicious HTTP 401 response '
-                                              'for %s %s: token is brand new' %
-                                              (method, path))
+                            LOG.warning(
+                                _('Re-attempt failed with another 401, '
+                                  'response body:\n%s'), e.response.body)
+                            raise pvmex.Error(
+                                _('suspicious HTTP 401 response for '
+                                  '%(method)s %(path)s: token is brand new'),
+                                {'method': method, 'path': path})
                         raise
 
         resp = None
@@ -410,7 +418,7 @@ class Session(object):
             raise pvmex.HttpError(resp)
 
     def _logon(self):
-        LOG.info("Session logging on %s" % self.host)
+        LOG.info(_("Session logging on %s"), self.host)
         headers = {
             'Accept': c.TYPE_TEMPLATE % ('web', 'LogonResponse'),
             'Content-Type': c.TYPE_TEMPLATE % ('web', 'LogonRequest')
@@ -472,8 +480,9 @@ class Session(object):
         tok = root.findtext('{%s}X-API-Session' % c.WEB_NS)
         if not tok:
             resp.reqbody = "<sensitive>"
-            msg = "Failed to parse a session token from the PowerVM response."
-            LOG.error((msg + ' body= %s') % resp.body)
+            msg = _("Failed to parse a session token from the PowerVM "
+                    "response.")
+            LOG.error(msg + (_(' Body= %s'), resp.body))
             raise pvmex.Error(msg, response=resp)
         return tok
 
@@ -487,9 +496,9 @@ class Session(object):
         """
         tokfile_path = root.findtext('{%s}X-API-SessionFile' % c.WEB_NS)
         if not tokfile_path:
-            msg = ("Failed to parse a session file path from the PowerVM "
-                   "response.")
-            LOG.error((msg + ' body= %s') % resp.body)
+            msg = _("Failed to parse a session file path from the PowerVM "
+                    "response.")
+            LOG.error(msg + (_(' Body= %s'), resp.body))
             raise pvmex.Error(msg, response=resp)
         try:
             with open(tokfile_path, 'r') as tokfile:
@@ -502,8 +511,8 @@ class Session(object):
                                                 error=os.strerror(ioe.errno))
         if not tok:
             # TODO(IBM): T9N
-            msg = ("Token file %s didn't contain a readable session token." %
-                   tokfile_path)
+            msg = _("Token file %s didn't contain a readable session "
+                    "token.") % tokfile_path
             LOG.error(msg)
             raise pvmex.Error(msg, response=resp)
         return tok
@@ -512,12 +521,12 @@ class Session(object):
         with self._lock:
             if not self._logged_in:
                 return
-            LOG.info("Session logging off %s" % self.host)
+            LOG.info(_("Session logging off %s"), self.host)
             try:
                 # relogin=False to prevent multiple attempts
                 self.request('DELETE', c.LOGON_PATH, relogin=False)
             except Exception:
-                LOG.exception('Problem logging off.  Ignoring.')
+                LOG.exception(_('Problem logging off.  Ignoring.'))
 
             self._logged_in = False
             # this should only ever be called when Session has gone out of
@@ -555,8 +564,8 @@ class Adapter(object):
             try:
                 self.session.get_event_listener()
             except Exception:
-                LOG.exception('Failed to register for events.  Events will '
-                              'not be used.')
+                LOG.exception(_('Failed to register for events.  Events will '
+                                'not be used.'))
             if self.session.has_event_listener:
                 self._cache_handler = _CacheEventHandler(self._cache)
                 self.session.get_event_listener().subscribe(
@@ -636,11 +645,11 @@ class Adapter(object):
                    child_id=None, timeout=-1, auditmemento=None,
                    sensitive=False, helpers=None):
         if not job.tag == 'JobRequest':
-            raise ValueError('job must be a JobRequest element')
+            raise ValueError(_('job must be a JobRequest element'))
 
         op = job.findtext('RequestedOperation/OperationName')
         if not op:
-            raise ValueError('JobRequest is missing OperationName')
+            raise ValueError(_('JobRequest is missing OperationName'))
 
         return self.create(job, root_type, root_id, child_type, child_id,
                            suffix_type='do', suffix_parm=op,
@@ -654,7 +663,8 @@ class Adapter(object):
         path = util.dice_href(path)
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
-            raise ValueError('path=%s is not a PowerVM API reference' % path)
+            raise ValueError(_('path=%s is not a PowerVM API reference') %
+                             path)
         if not content_service:
             content_service = m.group(1)
 
@@ -734,7 +744,7 @@ class Adapter(object):
         o = urlparse.urlparse(href)
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
         if hostname_mismatch or o.port != self.session.port:
-            LOG.debug('href=%s will be modified to use %s:%s' %
+            LOG.debug('href=%s will be modified to use %s:%s',
                       (href, self.session.host, self.session.port))
         path = self.extend_path(util.dice_href(href), suffix_type, suffix_parm,
                                 detail, xag=xag)
@@ -859,7 +869,8 @@ class Adapter(object):
                       helpers=None):
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
-            raise ValueError('path=%s is not a PowerVM API reference' % path)
+            raise ValueError(_('path=%s is not a PowerVM API reference') %
+                             path)
         headers = {}
         json_search_str = (c.UUID_REGEX + '/quick$' + '|/quick/' + r'|\.json$')
         if re.search(json_search_str, util.dice_href(path, include_query=False,
@@ -919,7 +930,7 @@ class Adapter(object):
         try:
             m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
             if not m:
-                raise ValueError('path=%s is not a PowerVM API reference' %
+                raise ValueError(_('path=%s is not a PowerVM API reference') %
                                  path)
             headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
             if m.group(1) == 'pcm':
@@ -1015,7 +1026,8 @@ class Adapter(object):
     def _delete_by_path(self, path, etag, timeout, auditmemento, helpers=None):
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
-            raise ValueError('path=%s is not a PowerVM API reference' % path)
+            raise ValueError(_('path=%s is not a PowerVM API reference') %
+                             path)
         headers = {}
         if etag:
             headers['If-Match'] = etag
@@ -1029,7 +1041,7 @@ class Adapter(object):
             fileid = filedescr.findtext('FileUUID')
             mediatype = filedescr.findtext('InternetMediaType')
         except Exception:
-            raise ValueError('Invalid file descriptor')
+            raise ValueError(_('Invalid file descriptor'))
 
         path = c.API_BASE_PATH + 'web/File/contents/' + fileid
         headers = {'Accept': 'application/vnd.ibm.powervm.web+xml',
@@ -1046,7 +1058,7 @@ class Adapter(object):
             fileid = filedescr.findtext('FileUUID')
             mediatype = filedescr.findtext('InternetMediaType')
         except Exception:
-            raise ValueError('Invalid file descriptor')
+            raise ValueError(_('Invalid file descriptor'))
 
         path = c.API_BASE_PATH + 'web/File/contents/' + fileid
         headers = {'Accept': mediatype}
@@ -1109,7 +1121,7 @@ class Adapter(object):
                     # if there is no entry etag and etag is specified,
                     # just return
                     return
-                LOG.debug('built entry from cached feed etag=%s body=%s' %
+                LOG.debug('Built entry from cached feed etag=%s body=%s',
                           (entry_etag, entry_body))
 
         return resp
@@ -1171,51 +1183,55 @@ class Adapter(object):
                   detail=None):
         # 'detail' param currently unused
         if child_type and not root_id:
-            raise ValueError('Expected root_id')
+            raise ValueError(_('Expected root_id'))
         if child_id and not child_type:
-            raise ValueError('Expected child_type')
+            raise ValueError(_('Expected child_type'))
         if req_method == 'create':
             if suffix_type:
                 if suffix_type != 'do':
-                    raise ValueError('Unexpected suffix_type=%s' % suffix_type)
+                    raise ValueError(_('Unexpected suffix_type=%s') %
+                                     suffix_type)
                 if not suffix_parm:
-                    raise ValueError('Expected suffix_parm')
+                    raise ValueError(_('Expected suffix_parm'))
                 if child_type and not child_id:
-                    raise ValueError('Expected child_id')
+                    raise ValueError(_('Expected child_id'))
             else:
                 if child_id:
-                    raise ValueError('Unexpected child_id')
+                    raise ValueError(_('Unexpected child_id'))
                 if root_id and not child_type:
-                    raise ValueError('Unexpected root_id')
+                    raise ValueError(_('Unexpected root_id'))
         elif req_method == 'read':
             # no read-specific validation at this time
             pass
         elif req_method == 'update':
             if 'preferences' in [root_type, child_type]:
                 if child_id:
-                    raise ValueError('Unexpected child_id')
+                    raise ValueError(_('Unexpected child_id'))
                 if root_id and not child_type:
-                    raise ValueError('Unexpected root_id')
+                    raise ValueError(_('Unexpected root_id'))
             else:
                 if not root_id:
-                    raise ValueError('Expected root_id')
+                    raise ValueError(_('Expected root_id'))
                 if child_type and not child_id:
-                    raise ValueError('Expected child_id')
+                    raise ValueError(_('Expected child_id'))
                 if suffix_type is not None and suffix_type != 'cancel':
-                    raise ValueError('Unexpected suffix_type=%s' % suffix_type)
+                    raise ValueError(_('Unexpected suffix_type=%s') %
+                                     suffix_type)
         elif req_method == 'delete':
             if suffix_type:
                 if suffix_type != 'jobs':
-                    raise ValueError('Unexpected suffix_type=%s' % suffix_type)
+                    raise ValueError(_('Unexpected suffix_type=%s') %
+                                     suffix_type)
                 if not suffix_parm:
-                    raise ValueError('Expected suffix_parm')
+                    raise ValueError(_('Expected suffix_parm'))
             else:
                 if not root_id:
-                    raise ValueError('Expected root_id')
+                    raise ValueError(_('Expected root_id'))
                 if child_type and not child_id:
-                    raise ValueError('Expected child_id')
+                    raise ValueError(_('Expected child_id'))
         else:
-            raise ValueError('Unexpected req_method=%s' % req_method)
+            raise ValueError(_('Unexpected req_method=%s') %
+                             req_method)
 
     def _get_resp_from_cache(self, path, age=-1, etag=None):
         """Extract Response from cached data (either entry or feed)."""
@@ -1225,7 +1241,7 @@ class Adapter(object):
             uuid, xag_str = util.get_uuid_xag_from_path(path)
             if uuid:
                 feed_paths = self._cache.get_feed_paths(path)
-                LOG.debug('Checking cached feeds %s for uuid %s %s' %
+                LOG.debug('Checking cached feeds %s for uuid %s %s',
                           (feed_paths, uuid, xag_str))
                 for f_path in feed_paths:
                     cached_resp = self._build_entry_resp(f_path, uuid, etag,
@@ -1233,7 +1249,7 @@ class Adapter(object):
                     if cached_resp is not None:
                         break
         else:
-            LOG.debug('Found cached entry for path %s' % path)
+            LOG.debug('Found cached entry for path %s', path)
 
         return cached_resp
 
@@ -1329,8 +1345,8 @@ class Response(object):
             try:
                 root = etree.fromstring(self.body)
             except Exception as e:
-                err_reason = ('Error parsing XML response from PowerVM: %s' %
-                              str(e))
+                err_reason = (_('Error parsing XML response from PowerVM: '
+                                '%s') % str(e))
             if root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'feed')):
                 self.feed = ent.Feed.unmarshal_atom_feed(root, self)
@@ -1338,11 +1354,11 @@ class Response(object):
                     etree.QName(c.ATOM_NS, 'entry')):
                 self.entry = ent.Entry.unmarshal_atom_entry(root, self)
             elif err_reason is None:
-                err_reason = 'response is not an Atom feed/entry'
+                err_reason = _('Response is not an Atom feed/entry')
         elif self.reqmethod == 'GET':
             if self.status == c.HTTPStatus.OK_NO_CONTENT:
                 if util.is_instance_path(self.reqpath):
-                    err_reason = 'unexpected HTTP 204 for request'
+                    err_reason = _('Unexpected HTTP 204 for request')
                 else:
                     # PowerVM returns HTTP 204 (No Content) when you
                     # ask for a feed that has no entries.
@@ -1350,21 +1366,21 @@ class Response(object):
             elif self.status == c.HTTPStatus.NO_CHANGE:
                 pass
             else:
-                err_reason = 'unexpectedly empty response body'
+                err_reason = _('Unexpectedly empty response body')
 
         if err_reason is not None:
-            LOG.error(('%(err_reason)s:\n'
-                       'request headers: %(reqheaders)s\n\n'
-                       'request body: %(reqbody)s\n\n'
-                       'response headers: %(respheaders)s\n\n'
-                       'response body: %(respbody)s')
-                      % {'err_reason': err_reason,
-                         'reqheaders': self.reqheaders,
-                         'reqbody': self.reqbody,
-                         'respheaders': self.headers,
-                         'respbody': self.body})
-            raise pvmex.AtomError('Atom error for %s %s: %s'
-                                  % (self.reqmethod, self.reqpath, err_reason),
+            LOG.error(_('%(err_reason)s:\n'
+                        'request headers: %(reqheaders)s\n\n'
+                        'request body: %(reqbody)s\n\n'
+                        'response headers: %(respheaders)s\n\n'
+                        'response body: %(respbody)s'),
+                      {'err_reason': err_reason,
+                       'reqheaders': self.reqheaders, 'reqbody': self.reqbody,
+                       'respheaders': self.headers, 'respbody': self.body})
+            raise pvmex.AtomError(_('Atom error for %(method)s %(path)s: '
+                                    '%(reason)s') %
+                                  {'method': self.reqmethod,
+                                   'path': self.reqpath, 'reason': err_reason},
                                   self)
 
 
@@ -1403,10 +1419,10 @@ class _EventListener(EventListener):
         :param interval: How often to query for events.
         """
         if session is None:
-            raise ValueError('session must not be None')
+            raise ValueError(_('Session must not be None'))
         if session.has_event_listener:
-            raise ValueError('An event listener is already active on the '
-                             'session.')
+            raise ValueError(_('An event listener is already active on the '
+                               'session.'))
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
         self.interval = interval
@@ -1421,11 +1437,12 @@ class _EventListener(EventListener):
             # initialize
             events, raw_events = self._get_events()
         except pvmex.Error as e:
-            raise pvmex.Error('Failed to initialize event feed listener: %s'
-                              % e)
+            raise pvmex.Error(_('Failed to initialize event feed listener: '
+                                '%s') % e)
         if not events.get('general') == 'init':
             # Something else is sharing this feed!
-            raise ValueError('Application id "%s" is not unique' % self.appid)
+            raise ValueError(_('Application id "%s" is not unique') %
+                             self.appid)
         # No errors initializing, so dispatch what we recieved.
         self._dispatch_events(events, raw_events)
 
@@ -1433,10 +1450,10 @@ class _EventListener(EventListener):
         if not isinstance(handler, _EventHandler):
             raise ValueError('Handler must be an EventHandler')
         if self.adp is None:
-            raise Exception('Shutting down')
+            raise Exception(_('Shutting down'))
         with self._lock:
             if handler in self.handlers:
-                raise ValueError('This handler is already subscribed')
+                raise ValueError(_('This handler is already subscribed'))
             self.handlers.append(handler)
             if not self._pthread:
                 self._pthread = _EventPollThread(self, self.interval)
@@ -1444,21 +1461,22 @@ class _EventListener(EventListener):
 
     def unsubscribe(self, handler):
         if not isinstance(handler, _EventHandler):
-            raise ValueError('Handler must be an EventHandler')
+            raise ValueError(_('Handler must be an EventHandler'))
         with self._lock:
             if handler not in self.handlers:
-                raise ValueError('This handler not found in subscriber list')
+                raise ValueError(_('This handler not found in subscriber '
+                                   'list'))
             self.handlers.remove(handler)
             if not self.handlers:
                 self._pthread.stop()
                 self._pthread = None
 
     def shutdown(self):
-        LOG.info('Shutting down EventListener for %s' % self.host)
+        LOG.info(_('Shutting down EventListener for %s'), self.host)
         with self._lock:
             for handler in self.handlers:
                 self.unsubscribe(handler)
-        LOG.info('EventListener shutdown complete for %s' % self.host)
+        LOG.info(_('EventListener shutdown complete for %s'), self.host)
 
     def getevents(self):
         all_events = self._get_events()
@@ -1478,7 +1496,7 @@ class _EventListener(EventListener):
                                  % self.appid, timeout=self.timeout)
         except pvmex.Error:
             # TODO(IBM): improve error handling
-            LOG.exception('error while getting PowerVM events')
+            LOG.exception(_('Error while getting PowerVM events'))
 
         if resp:
             # Parse event feed
@@ -1515,7 +1533,7 @@ class _EventListener(EventListener):
             if href not in events:
                 events[href] = 'invalidate'
         elif etype not in ['VISIBLE_URI']:
-            LOG.error('unexpected EventType=%s' % etype)
+            LOG.error(_('Unexpected EventType=%s'), etype)
 
         # Now format the event for the raw handlers
         eid = entry.element.findtext('EventID')
@@ -1532,7 +1550,7 @@ class _EventListener(EventListener):
                 else:
                     h.process(events)
             except Exception:
-                LOG.exception('error while processing PowerVM events')
+                LOG.exception(_('Error while processing PowerVM events'))
 
         # Notify subscribers
         with self._lock:

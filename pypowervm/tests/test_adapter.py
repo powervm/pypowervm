@@ -606,7 +606,7 @@ class TestAdapter(testtools.TestCase):
         # Run the actual test
         self.assertRaises(pvmex.HttpError, adapter.create, element,
                           root_type, root_id, child_type)
-        mock_log.warning.assert_called_once_with(mock.ANY)
+        self.assertEqual(1, mock_log.warning.call_count)
 
     def test_element_iter(self):
         """Test the ETElement iter() method found in the Adapter class."""
