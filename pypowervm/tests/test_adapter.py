@@ -15,6 +15,7 @@
 #    under the License.
 
 import errno
+import fixtures
 import gc
 from lxml import etree
 import six
@@ -603,40 +604,97 @@ class TestElement(testtools.TestCase):
         self.assertEqual(el.namespace, 'foo')
 
 
-class TestAdapterShutdown(testtools.TestCase):
-    def test_shutdown(self):
+class TestAdapterClasses(testtools.TestCase):
+    def setUp(self):
+        super(TestAdapterClasses, self).setUp()
+        self.mock_logoff = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logoff')).mock
+        self.mock_logon = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logon')).mock
+        self.mock_events = self.useFixture(
+            fixtures.MockPatchObject(adp._EventListener, 'getevents')).mock
+        # Mock the initial events coming in on start
+        self.mock_events.return_value = {'general': 'init'}
+
+    def test_instantiation(self):
+        """Direct instantiation of EventListener is not allowed."""
+        # Get a session
+        sess = adp.Session()
+        # Now get the EventListener
+        self.assertRaises(TypeError, adp.EventListener, sess)
+
+        # Mock the session token like we logged on
+        sess._sessToken = 'token'.encode('utf-8')
+        # Ensure we get an EventListener
+        self.assertIsInstance(sess.get_event_listener(), adp.EventListener)
+
+    def test_shutdown_session(self):
         """Test garbage collection of the session.
 
         Ensures the Session can be properly garbage collected.
         """
+        # Get a session
+        sess = adp.Session()
+        # Mock the session token like we logged on
+        sess._sessToken = 'token'.encode('utf-8')
+        # It should have logged on but not off.
+        self.assertTrue(self.mock_logon.called)
+        self.assertFalse(self.mock_logoff.called)
 
-        with mock.patch.object(adp.Session, '_logoff') as mock_logoff, \
-                mock.patch.object(adp.Session, '_logon') as mock_logon, \
-                mock.patch.object(adp.EventListener, 'getevents') as m_events:
-            # Get a session
-            sess = adp.Session()
-            # Use the session so pep8 doesn't complain
-            self.assertIsInstance(sess, adp.Session)
-            # It should have logged on but not off.
-            self.assertTrue(mock_logon.called)
-            self.assertFalse(mock_logoff.called)
+        # Get an event listener to test the weak references
+        event_listen = sess.get_event_listener()
 
-            # Mock the session token like we logged on
-            sess._sessToken = 'token'.encode('utf-8')
-            m_events.return_value = {'general': 'init'}
-            # Get an event listener to test the weak references
-            event_listen = sess.get_event_listener()
+        # Test the circular reference (but one link is weak)
+        sess.hello = 'hello'
+        self.assertEqual(sess.hello, event_listen.adp.session.hello)
 
-            # Test the circular reference (but one link is weak)
-            sess.hello = 'hello'
-            self.assertEqual(sess.hello, event_listen.adp.session.hello)
+        # There should be 1 reference to the session (ours)
+        self.assertEqual(1, len(gc.get_referrers(sess)))
 
-            # Remove the reference and be sure it's garbage collected.
-            sess = None
-            # Run garbage collection just to be safer.
-            gc.collect()
-            # It should now be garbage collected and logged off.
-            self.assertTrue(mock_logoff.called)
+    def test_shutdown_adapter(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter, implicit session and
+        EventListener.
+        """
+        # Get Adapter, implicit session
+        adapter = adp.Adapter()
+        adapter.session._sessToken = 'token'.encode('utf-8')
+        # Get construct and event listener
+        adapter.session.get_event_listener()
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+
+        # The only thing that refers the adapter is our reference
+        self.assertEqual(1, len(gc.get_referrers(adapter)))
+
+    def test_shutdown_cache_adapter(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter w/caching, and EventListener.
+        """
+
+        # Get a session, we need to patch the session
+        sess = adp.Session()
+        sess._sessToken = 'token'.encode('utf-8')
+
+        # Get Adapter
+        adapter = adp.Adapter(sess, use_cache=True)
+        # Done with the session
+        sess = None
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+
+        # The only thing that refers the adapter is our reference
+        self.assertEqual(1, len(gc.get_referrers(adapter)))
 
 
 class TestElementInject(testtools.TestCase):

@@ -193,16 +193,21 @@ class Session(object):
 
     def __del__(self):
         try:
-            if self._eventlistener:
+            # deleting the session will shutdown the event listener
+            if self.has_event_listener:
                 self._eventlistener.shutdown()
         finally:
             self._logoff()
 
     def get_event_listener(self):
-        if not self._eventlistener:
+        if not self.has_event_listener:
             LOG.info("setting up event listener for %s" % self.host)
-            self._eventlistener = EventListener(self)
+            self._eventlistener = _EventListener(self)
         return self._eventlistener
+
+    @property
+    def has_event_listener(self):
+        return self._eventlistener is not None
 
     def request(self, method, path, headers=None, body='', sensitive=False,
                 verify=False, timeout=-1, auditmemento=None, relogin=True,
@@ -540,25 +545,32 @@ class Adapter(object):
         """
         self.session = session if session else Session()
         self._cache = None
-        self._eventlistener = None
         self._refreshtime4path = {}
         self._helpers = self._standardize_helper_list(helpers)
+        self._cache_handler = None
         if use_cache:
-            self._cache = cache._PVMCache(session.host)
+            self._cache = cache._PVMCache(self.session.host)
             # Events may not always be sent when they should, but they should
             # be trustworthy when they are sent.
             try:
-                self._eventlistener = session.get_event_listener()
+                self.session.get_event_listener()
             except Exception:
                 LOG.exception('Failed to register for events.  Events will '
                               'not be used.')
-            if self._eventlistener is not None:
-                self._evthandler = _CacheEventHandler(self._cache)
-                self._eventlistener.subscribe(self._evthandler)
+            if self.session.has_event_listener:
+                self._cache_handler = _CacheEventHandler(self._cache)
+                self.session.get_event_listener().subscribe(
+                    self._cache_handler)
 
     def __del__(self):
-        if self._eventlistener is not None:
-            self._eventlistener.unsubscribe(self._evthandler)
+        if self._cache_handler is not None:
+            # Depending on the order of garbage collection we can get errors
+            # from unsubscribing if the EventListener was shutdown first.
+            try:
+                self.session.get_event_listener().unsubscribe(
+                    self._cache_handler)
+            except ValueError:
+                pass
 
     @staticmethod
     def _standardize_helper_list(helpers):
@@ -804,7 +816,7 @@ class Adapter(object):
 
         if is_cacheable:
             # Attempt to retrieve from cache
-            max_age = util.get_max_age(path, self._eventlistener is not None,
+            max_age = util.get_max_age(path, self._cache_handler is not None,
                                        self.session.schema_version)
             if age == -1 or age > max_age:
                 age = max_age
@@ -1356,10 +1368,45 @@ class Response(object):
                                   self)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class EventListener(object):
+
+    @abc.abstractmethod
+    def subscribe(self, handler):
+        """Subscribe an EvenHandler to receive events.
+
+        :param handler: EventHandler
+        """
+
+    @abc.abstractmethod
+    def unsubscribe(self, handler):
+        """Unubscribe an EvenHandler from receiving events.
+
+        :param handler: EventHandler
+        """
+
+    @abc.abstractmethod
+    def shutdown(self):
+        """Shutdown this EventListener."""
+
+
+class _EventListener(EventListener):
     def __init__(self, session, timeout=-1, interval=15):
+        """The event listener associated with a Session.
+
+        This class should not be instantiated directly.  Instead construct
+        a Session and use get_event_listener() to create it.
+
+        :param session: The Session this listener is to use.
+        :param timeout: How long to wait for any events to be returned.
+            -1 = wait indefinitely
+        :param interval: How often to query for events.
+        """
         if session is None:
             raise ValueError('session must not be None')
+        if session.has_event_listener:
+            raise ValueError('An event listener is already active on the '
+                             'session.')
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
         self.interval = interval
