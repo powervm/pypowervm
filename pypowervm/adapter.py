@@ -194,18 +194,17 @@ class Session(object):
     def __del__(self):
         try:
             # deleting the session will shutdown the event listener
-            if self.has_event_listener:
+            if self.has_event_listener():
                 self._eventlistener.shutdown()
         finally:
             self._logoff()
 
     def get_event_listener(self):
-        if not self.has_event_listener:
+        if not self.has_event_listener():
             LOG.info("setting up event listener for %s" % self.host)
             self._eventlistener = _EventListener(self)
         return self._eventlistener
 
-    @property
     def has_event_listener(self):
         return self._eventlistener is not None
 
@@ -557,7 +556,7 @@ class Adapter(object):
             except Exception:
                 LOG.exception('Failed to register for events.  Events will '
                               'not be used.')
-            if self.session.has_event_listener:
+            if self.session.has_event_listener():
                 self._cache_handler = _CacheEventHandler(self._cache)
                 self.session.get_event_listener().subscribe(
                     self._cache_handler)
@@ -1404,7 +1403,7 @@ class _EventListener(EventListener):
         """
         if session is None:
             raise ValueError('session must not be None')
-        if session.has_event_listener:
+        if session.has_event_listener():
             raise ValueError('An event listener is already active on the '
                              'session.')
         self.appid = hashlib.md5(session._sessToken).hexdigest()
