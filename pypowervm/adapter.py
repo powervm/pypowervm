@@ -128,8 +128,9 @@ class Session(object):
             # their own counters).
             tid = threading.current_thread().ident
             with locku.lock('AUTH_FILE_EXT'):
-                self._last_authfile_ext += 1
-                username = 'pypowervm_%d_%d' % (tid, self._last_authfile_ext)
+                self.__class__._last_authfile_ext += 1
+                username = 'pypowervm_%d_%d' %\
+                           (tid, self.__class__._last_authfile_ext)
         self.username = username
 
         if protocol is None:
