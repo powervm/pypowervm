@@ -22,6 +22,7 @@ import datetime as dt
 import errno
 import hashlib
 import os
+import uuid
 
 if os.name == 'posix':
     import pwd
@@ -71,10 +72,6 @@ register_namespace('uom', c.UOM_NS)
 class Session(object):
     """Responsible for PowerVM API session management."""
 
-    # Processwide monotonic counter to help ensure uniqueness of the auth file
-    # name.
-    _last_authfile_ext = 0
-
     def __init__(self, host='localhost', username=None, password=None,
                  auditmemento=None, protocol=None, port=None, timeout=1200,
                  certpath='/etc/ssl/certs/', certext='.crt'):
@@ -118,18 +115,8 @@ class Session(object):
         self.use_file_auth = password is None
         self.password = password
         if self.use_file_auth and not username:
-            # Generate a username, which is used by the file auth mechanism
-            # only to name the file.  We ensure this is unique within any set
-            # of processes running at a given time by combining a synchronized
-            # monotonic counter (_last_authfile_ext) with the current thread
-            # ID.  The counter ensures that this thread doesn't collide with
-            # itself; and the thread ID ensures we don't collide with other
-            # threads on the system (even in other processes, which would have
-            # their own counters).
-            tid = threading.current_thread().ident
-            with locku.lock('AUTH_FILE_EXT'):
-                self._last_authfile_ext += 1
-                username = 'pypowervm_%d_%d' % (tid, self._last_authfile_ext)
+            # Generate a unique username, used by the file auth mechanism
+            username = 'pypowervm_%s' % uuid.uuid4()
         self.username = username
 
         if protocol is None:

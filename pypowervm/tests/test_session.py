@@ -49,7 +49,6 @@ class TestAdapter(testtools.TestCase):
         self.assertTrue(sess.use_file_auth)
         self.assertIsNone(sess.password)
         self.assertTrue(sess.username.startswith('pypowervm_'))
-        self.assertEqual(3, len(sess.username.split('_')))
         self.assertEqual('localhost', sess.host)
         self.assertEqual('http', sess.protocol)
         self.assertEqual(12080, sess.port)
@@ -59,6 +58,10 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
         self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
+
+        # Verify unique session names
+        sess2 = adp.Session()
+        self.assertNotEqual(sess.username, sess2.username)
 
         # Ensure proper protocol, port, and certpath defaulting when remote
         sess = adp.Session(host='host', username='user', password='pass')
