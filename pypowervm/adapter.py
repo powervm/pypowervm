@@ -168,6 +168,10 @@ class Session(object):
         self.schema_version = None
         self.traits = None
 
+        # Record which object initialized the session.  This is to protect
+        # against clones created by deepcopy or other methods.
+        self._init_by = id(self)
+
         self._logon()
 
         # HMC should never use file auth.  This should never happen - if it
@@ -180,6 +184,10 @@ class Session(object):
         self.traits = pvm_traits.APITraits(self)
 
     def __del__(self):
+        # Refuse to clean up clones.
+        if self._init_by != id(self):
+            return
+
         try:
             # deleting the session will shutdown the event listener
             if self.has_event_listener:

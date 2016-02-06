@@ -14,10 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+import copy
+import gc
 import mock
 import requests.models as req_mod
 import requests.structures as req_struct
+import six
+import subunit
 import testtools
 
 import pypowervm.adapter as adp
@@ -29,8 +32,8 @@ _logon_response_password = testlib.file2b("logon.xml")
 _logon_response_file = testlib.file2b("logon_file.xml")
 
 
-class TestAdapter(testtools.TestCase):
-    """Test cases to test the Adapter classes and methods."""
+class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
+    """Test cases to test the Session classes and methods."""
 
     def test_Session(self):
         """This test is just meant to ensure Session can be instantiated."""
@@ -84,6 +87,44 @@ class TestAdapter(testtools.TestCase):
         with self.assertLogs(adp.__name__, 'WARNING'):
             sess = adp.Session(host='host', protocol='http')
         self.assertEqual(12080, sess.port)
+
+    @mock.patch.object(adp.Session, '_logon')
+    @mock.patch.object(adp.Session, '_logoff')
+    def test_session_clone(self, mock_logoff, mock_logon):
+
+        sess = adp.Session()
+        # Ensure the id that created the object is recorded.
+        self.assertTrue(hasattr(sess, '_init_by'))
+
+        # Create a shallow clone and ensure the _init_by does not match the id
+        sess_clone = copy.copy(sess)
+        self.assertTrue(hasattr(sess_clone, '_init_by'))
+        self.assertNotEqual(sess._init_by, id(sess_clone))
+
+        # Now test what happens when the clone is garbage collected.
+        self.assertFalse(mock_logoff.called)
+        sess_clone = None
+        gc.collect()
+        # The clone was not logged off
+        self.assertFalse(mock_logoff.called)
+
+        if six.PY2:
+            # Ensure deep copies raise an exception.
+            self.assertRaises(TypeError, copy.deepcopy, sess)
+        else:
+            # Or if works, it is not logged off
+            sess_deepclone = copy.deepcopy(sess)
+            # Make pep8 happy, use the clone
+            self.assertIsNotNone(sess_deepclone)
+            sess_deepclone = None
+            gc.collect()
+            # The clone was not logged off
+            self.assertFalse(mock_logoff.called)
+
+        sess = None
+        gc.collect()
+        # The original session was logged off
+        self.assertTrue(mock_logoff.called)
 
     @mock.patch('pypowervm.util.validate_certificate')
     @mock.patch('requests.Session')

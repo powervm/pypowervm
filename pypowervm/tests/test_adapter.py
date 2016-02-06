@@ -20,6 +20,7 @@ import fixtures
 import gc
 from lxml import etree
 import six
+import subunit
 
 if six.PY2:
     import __builtin__ as builtins
@@ -698,7 +699,7 @@ class TestElement(testtools.TestCase):
         self.assertEqual(el.namespace, 'foo')
 
 
-class TestAdapterClasses(testtools.TestCase):
+class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
     def setUp(self):
         super(TestAdapterClasses, self).setUp()
         self.mock_logoff = self.useFixture(
