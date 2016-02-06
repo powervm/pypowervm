@@ -18,12 +18,13 @@
 import mock
 import testtools
 
-import pypowervm.adapter as adp
+from pypowervm import adapter as adp
+from pypowervm import exceptions as exc
 from pypowervm.tasks import cna
-import pypowervm.tests.tasks.util as tju
-import pypowervm.tests.test_fixtures as fx
+from pypowervm.tests.tasks import util as tju
+from pypowervm.tests import test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
-import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import entry_wrapper as ewrap
 from pypowervm.wrappers import network as pvm_net
 
 VSWITCH_FILE = 'fake_vswitch_feed.txt'
@@ -88,9 +89,8 @@ class TestCNA(testtools.TestCase):
         self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(0, mock_vnet_find.call_count)
 
-    @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    def test_crt_cna_new_vswitch(self, mock_vnet_find):
-        """Validates the create will also create the vSwitch."""
+    def test_find_or_create_vswitch(self):
+        """Validates that a vswitch can be created."""
         # First need to load in the various test responses.
         vs = tju.load_file(VSWITCH_FILE)
         self.adpt.read.return_value = vs
@@ -99,23 +99,21 @@ class TestCNA(testtools.TestCase):
         # call.
         def validate_of_create(*kargs, **kwargs):
             self.assertIsNotNone(kargs[0])
-            if 'LogicalPartition' == kargs[1]:
-                self.assertEqual('LogicalPartition', kargs[1])
-                self.assertEqual('fake_lpar', kwargs.get('root_id'))
-                self.assertEqual('ClientNetworkAdapter',
-                                 kwargs.get('child_type'))
-                return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
-            else:
-                # Is the vSwitch create
-                self.assertEqual('ManagedSystem', kargs[1])
-                self.assertEqual('VirtualSwitch', kwargs.get('child_type'))
-                # Return a previously created vSwitch...
-                return pvm_net.VSwitch.wrap(vs)[0].entry
+            # Is the vSwitch create
+            self.assertEqual('ManagedSystem', kargs[1])
+            self.assertEqual('VirtualSwitch', kwargs.get('child_type'))
+            # Return a previously created vSwitch...
+            return pvm_net.VSwitch.wrap(vs)[0].entry
         self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5,
-                            vswitch='Temp', crt_vswitch=True)
-        self.assertIsNotNone(n_cna)
+        vswitch_w = cna._find_or_create_vswitch(self.adpt, 'fake_host',
+                                                'Temp', True)
+        self.assertIsNotNone(vswitch_w)
+
+        # Make sure that if the create flag is set to false, an error is thrown
+        # when the vswitch can't be found.
+        self.assertRaises(exc.Error, cna._find_or_create_vswitch, self.adpt,
+                          'fake_host', 'Temp', False)
 
     def test_find_or_create_vnet(self):
         """Tests that the virtual network can be found/created."""
