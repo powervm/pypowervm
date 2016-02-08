@@ -604,10 +604,9 @@ class SEA(ewrap.ElementWrapper):
     @property
     def primary_adpt(self):
         """Returns the primary TrunkAdapter for this Shared Ethernet Adapter.
-
-        Can not be None.
         """
-        return self._get_trunks()[0]
+        all_trunks = self._get_trunks()
+        return all_trunks[0] if all_trunks else None
 
     def _primary_adpt(self, value):
         new_list = [value]
