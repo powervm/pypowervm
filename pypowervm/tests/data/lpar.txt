@@ -174,6 +174,7 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/089FFB20-5D19-4A8C-BB80-13650627D985/VirtualSCSIClientAdapter/fc37013c-6fdd-36c7-aa3b-d3f39b903b9b" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">A12e334BGT</PartitionNVRAM>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -3187,6 +3188,7 @@ BODY{
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
+    <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">A12e334BGT</PartitionNVRAM>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>

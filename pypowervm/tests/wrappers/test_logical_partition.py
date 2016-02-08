@@ -484,6 +484,38 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter("proc_config.dedicated_proc_cfg.min",
                                 3, 0, use_dedicated=True)
 
+    def test_nvram(self):
+        self.assertEqual("A12e334BGT", self._dedicated_wrapper.nvram)
+        self._dedicated_wrapper.nvram = "ABCDEF"
+        self.assertEqual("ABCDEF", self._dedicated_wrapper.nvram)
+
+    def test_bld_nvram(self):
+        lp_w = lpar.LPAR.bld(self.adpt, "TestNVRAM",
+                             bp.PartitionMemoryConfiguration.bld(self.adpt, 0),
+                             bp.PartitionProcessorConfiguration.bld_dedicated(
+                                 self.adpt, 0),
+                             bp.LPARType.AIXLINUX, None, nvram='ABCDEF')
+        result = (
+            '<uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/system'
+            's/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metad'
+            'ata><uom:Atom/></uom:Metadata><uom:PartitionMemoryConfiguration s'
+            'chemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:'
+            'DesiredMemory>0</uom:DesiredMemory><uom:MaximumMemory>0</uom:Maxi'
+            'mumMemory><uom:MinimumMemory>0</uom:MinimumMemory>'
+            '</uom:PartitionMemoryConfiguration><uom:PartitionName>'
+            'TestNVRAM</uom:PartitionName><uom:PartitionProcessorConfiguration'
+            ' schemaVersion="V1_0"><uom:Metadata><uom:Atom/>'
+            '</uom:Metadata><uom:DedicatedProcessorConfiguration '
+            'schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metada'
+            'ta><uom:DesiredProcessors>0</uom:DesiredProcessors><uom:MaximumPr'
+            'ocessors>0</uom:MaximumProcessors><uom:MinimumProcessors>0</uom:M'
+            'inimumProcessors></uom:DedicatedProcessorConfiguration><uom:HasDe'
+            'dicatedProcessors>true</uom:HasDedicatedProcessors><uom:SharingMo'
+            'de>sre idle proces</uom:SharingMode></uom:PartitionProcessorConfi'
+            'guration><uom:PartitionType>AIX/Linux</uom:PartitionType><uom:Par'
+            'titionNVRAM>ABCDEF</uom:PartitionNVRAM></uom:LogicalPartition>')
+        self.assertEqual(result.encode('utf-8'), lp_w.toxmlstring())
+
 
 class TestIBMiSpecific(twrap.TestWrapper):
     """IBMi-specific tests, requiring a test file from an IBMi partition."""
