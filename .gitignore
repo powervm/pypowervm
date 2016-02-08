@@ -11,3 +11,5 @@ cover/
 *.*~
 .gitreview
 .sonar/
+.project
+.pydevproject
