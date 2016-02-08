@@ -735,7 +735,6 @@ class LPARBuilder(object):
         # Determine AME enabled boolean value from expansion factor value
         if self.attr.get(AME_FACTOR) is not None:
             exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
-            mem_wrap.ame_enabled = True if exp_fact_float != 0 else False
             mem_wrap.exp_factor = exp_fact_float
         return mem_wrap
 

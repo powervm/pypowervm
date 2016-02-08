@@ -85,7 +85,6 @@ class TestValidator(testtools.TestCase):
             lpar_w.mem_config.desired = des_mem
             lpar_w.mem_config.min = min_mem
             lpar_w.mem_config.max = max_mem
-            lpar_w.mem_config.ame_enabled = ame_enabled
             lpar_w.mem_config.exp_factor = exp_factor
             # Can Modify
             if (state != bp.LPARState.NOT_ACTIVATED
