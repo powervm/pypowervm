@@ -16,6 +16,7 @@
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
 
+import pypowervm.entities as ent
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -71,6 +72,7 @@ _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
+_BP_NVRAM = 'PartitionNVRAM'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -85,7 +87,7 @@ BP_EL_ORDER = (
     _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
     _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION, _BP_AUTO_START,
     _BP_BOOT_MODE, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS,
-    _BP_DESC
+    _BP_DESC, _BP_NVRAM
 )
 
 # Partition Capabilities (_CAP)
@@ -354,9 +356,11 @@ class BasePartition(ewrap.EntryWrapper):
     """
 
     search_keys = dict(name=_BP_NAME, id=_BP_ID)
+    xags = None
 
     @classmethod
-    def _bld_base(cls, adapter, name, mem_cfg, proc_cfg, env, io_cfg=None):
+    def _bld_base(cls, adapter, name, mem_cfg, proc_cfg, env, io_cfg=None,
+                  nvram=None):
         """Creates a BasePartition wrapper.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -365,6 +369,8 @@ class BasePartition(ewrap.EntryWrapper):
         :param proc_cfg: The processor configuration wrapper
         :param env: The type of partition, taken from LPARType
         :param io_cfg: The I/O configuration wrapper
+        :param nvram: NVRAM data for an existing LPAR. If NVRAM data is passed
+         it means that existing LPAR needs to be re-created.
 
         :returns: New BasePartition wrapper
         """
@@ -376,7 +382,8 @@ class BasePartition(ewrap.EntryWrapper):
         partition.name = name
         partition.proc_config = proc_cfg
         partition._env(env)
-
+        if nvram:
+            partition.nvram = nvram
         return partition
 
     @property
@@ -574,6 +581,17 @@ class BasePartition(ewrap.EntryWrapper):
         """The Partition Processor Configuration for the LPAR."""
         elem = self._find_or_seed(_BP_PROC_CFG)
         self.element.replace(elem, proc_config.element)
+
+    @property
+    def nvram(self):
+        """The Partition NVRAM data. """
+        return self._get_val_str(_BP_NVRAM)
+
+    @nvram.setter
+    def nvram(self, value):
+        self.xags = ent.XAG(NVRAM='NVRAM')
+        attrib = self.xags.NVRAM.attrs
+        self.set_parm_value(_BP_NVRAM, value, attrib)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
@@ -776,7 +794,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         e.g. An LPAR with EF = 2 which has 4 GB of memory will have a target
         expansion memory of 8 GB.
         """
-        return self._get_val_float(_MEM_EXP_FACTOR)
+        return self._get_val_float(_MEM_EXP_FACTOR, default=0)
 
     @exp_factor.setter
     def exp_factor(self, exp_factor):
