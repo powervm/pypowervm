@@ -763,8 +763,7 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
     def ame_enabled(self):
         return self._get_val_bool(_MEM_AME_ENABLED)
 
-    @ame_enabled.setter
-    def ame_enabled(self, ame_enabled):
+    def _ame_enabled(self, ame_enabled):
         self.set_parm_value(_MEM_AME_ENABLED,
                             u.sanitize_bool_for_api(ame_enabled))
 
