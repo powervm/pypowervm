@@ -16,6 +16,7 @@
 
 from oslo_log import log as logging
 
+from pypowervm import const
 from pypowervm.i18n import _
 from pypowervm.wrappers import entry_wrapper
 from pypowervm.wrappers import mtms as mtms_wrapper
@@ -87,7 +88,7 @@ class Pool(entry_wrapper.EntryWrapper):
         """The compliance state of the enterprise pool."""
         return self._get_val_str(_P_COMPLIANCE_STATE)
 
-    @property
+    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
     def compliance_hours_left(self):
         """Integer num of hours until the pool is considered out of compliance.
 
@@ -193,7 +194,7 @@ class PoolMember(entry_wrapper.EntryWrapper):
         """Integer amount of unreturned mobile CoD memory (GB) on the sys."""
         return self._get_val_int(_UNRET_MOBILE_MEM)
 
-    @property
+    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
     def proc_compliance_hours_left(self):
         """Integer num of proc compliance hours remaining.
 
@@ -205,7 +206,7 @@ class PoolMember(entry_wrapper.EntryWrapper):
         """
         return self._get_val_int(_PM_PROC_COMPLIANCE_HOURS_LEFT, default=0)
 
-    @property
+    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
     def mem_compliance_hours_left(self):
         """Integer num of memory compliance hours remaining.
 
