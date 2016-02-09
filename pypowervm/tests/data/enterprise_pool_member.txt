@@ -1,0 +1,56 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh enterprise_pool_member.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': 'passw0rd', 'reason': 'OK', 'host': 'localhost', 'user': 'neo', 'path': 'PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/7e3ddc7f-6426-33d9-9f10-ef925d0386c2?group=None'}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '2691', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000Dpn0nRiRQmfusqaGy3Zkz8R:44ae1077-95b8-46ac-9bab-6ba92c1af191; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Wed, 10 Feb 2016 17:53:45 GMT', 'X-Transaction-ID': 'XT10001945', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Wed, 10 Feb 2016 17:53:45 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': 'cc6b692e-0b76-49d4-82f8-f0d6024bd827', 'ETag': '1063371592'}
+END OF SECTION}
+BODY{
+
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>7e3ddc7f-6426-33d9-9f10-ef925d0386c2</id>
+    <title>PowerEnterprisePoolMember</title>
+    <published>2016-02-10T12:53:45.021-05:00</published>
+    <link rel="SELF" href="https://localhost:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/7e3ddc7f-6426-33d9-9f10-ef925d0386c2?group=None"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1063371592</etag:etag>
+    <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+        <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7e3ddc7f-6426-33d9-9f10-ef925d0386c2</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kxe="false" kb="UOR">4</MobileCoDProcUnits>
+    <MobileCoDMemory kxe="false" kb="UOR">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">2</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kb="ROR" kxe="false">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">Server-8284-22A-SN21B63CV</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kb="ROR" kxe="false">20</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kxe="false" kb="ROR">524288</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8284</MachineType>
+        <Model kxe="false" kb="CUR">22A</Model>
+        <SerialNumber kxe="false" kb="CUR">21B63CV</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kxe="false" kb="ROO" href="https://localhost:12443/rest/api/uom/ManagedSystem/59d74d49-66cc-3dd1-8ca3-65fa08aa75e3" rel="related"/>
+    <State kb="ROR" kxe="false">operating</State>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+    </content>
+</entry>
+
+END OF SECTION}
