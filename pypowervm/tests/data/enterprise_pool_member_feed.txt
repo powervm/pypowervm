@@ -1,0 +1,324 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh enterprise_pool_member_feed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': 'passw0rd', 'reason': 'OK', 'host': '9.1.1.1', 'user': 'hscroot', 'path': 'PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember?group=None'}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '19826', 'X-Powered-By': 'Servlet/3.0', 'Set-Cookie': 'JSESSIONID=0000kMB0YZq8tb2O6W7Y5_lxwNb:d267b17c-b62e-4995-9b98-8d02db2ef3a6; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_4_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Tue, 09 Feb 2016 08:41:14 GMT', 'X-Transaction-ID': 'XT10269852', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Tue, 09 Feb 2016 08:41:14 GMT', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': '757d1f13-f0e1-434b-81e2-3d02d4f0049c', 'ETag': '854006941'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>a4a8884e-0f87-3dd8-8832-11e07d50e311</id>
+    <updated>2016-02-09T03:41:14.984-05:00</updated>
+    <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember?group=None"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.1.1:12443/rest/api/uom/ManagementConsole/4a586e2f-896d-3389-a430-8117d4890a60"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>d8a95d37-1dbd-37bf-9caa-756f60056000</id>
+        <title>PowerEnterprisePoolMember</title>
+        <published>2016-02-09T03:41:15.014-05:00</published>
+        <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/d8a95d37-1dbd-37bf-9caa-756f60056000?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1726386882</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+            <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d8a95d37-1dbd-37bf-9caa-756f60056000</AtomID>
+            <AtomCreated>1454750306859</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kb="UOR" kxe="false">0</MobileCoDProcUnits>
+    <MobileCoDMemory kb="UOR" kxe="false">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">6</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">V7R2_14</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kxe="false" kb="ROR">16</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kb="ROR" kxe="false">262144</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8246</MachineType>
+        <Model kxe="false" kb="CUR">L2D</Model>
+        <SerialNumber kxe="false" kb="CUR">100854A</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.1.1:12443/rest/api/uom/ManagedSystem/627f4e39-8a67-3b6f-8ab8-1bb119a1682a/ManagedSystem/627f4e39-8a67-3b6f-8ab8-1bb119a1682a" rel="related"/>
+    <ManagedSystemState ksv="V1_4_0" kb="ROO" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles ksv="V1_4_0" kxe="false" kb="ROR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_4_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-1-1</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kb="UOR" kxe="false" schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <ManagementConsoleIPAddress ksv="V1_4_0" kxe="false" kb="COD">9.1.1.1</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+        </content>
+    </entry>
+    <entry>
+        <id>7e3ddc7f-6426-33d9-9f10-ef925d0386c2</id>
+        <title>PowerEnterprisePoolMember</title>
+        <published>2016-02-09T03:41:15.015-05:00</published>
+        <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/7e3ddc7f-6426-33d9-9f10-ef925d0386c2?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">247925918</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+            <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7e3ddc7f-6426-33d9-9f10-ef925d0386c2</AtomID>
+            <AtomCreated>1454750307052</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kb="UOR" kxe="false">3</MobileCoDProcUnits>
+    <MobileCoDMemory kb="UOR" kxe="false">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">3</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">Server-8284-22A-SN21B63CV</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kxe="false" kb="ROR">20</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kb="ROR" kxe="false">524288</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8284</MachineType>
+        <Model kxe="false" kb="CUR">22A</Model>
+        <SerialNumber kxe="false" kb="CUR">21B63CV</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.1.1:12443/rest/api/uom/ManagedSystem/59d74d49-66cc-3dd1-8ca3-65fa08aa75e3/ManagedSystem/59d74d49-66cc-3dd1-8ca3-65fa08aa75e3" rel="related"/>
+    <ManagedSystemState ksv="V1_4_0" kb="ROO" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles ksv="V1_4_0" kxe="false" kb="ROR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_4_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-1-1</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kb="UOR" kxe="false" schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <ManagementConsoleIPAddress ksv="V1_4_0" kxe="false" kb="COD">9.1.1.1</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+        </content>
+    </entry>
+    <entry>
+        <id>c40a7d74-6dd1-3fdf-897a-3c627891ebfc</id>
+        <title>PowerEnterprisePoolMember</title>
+        <published>2016-02-09T03:41:15.016-05:00</published>
+        <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/c40a7d74-6dd1-3fdf-897a-3c627891ebfc?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-941208126</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+            <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c40a7d74-6dd1-3fdf-897a-3c627891ebfc</AtomID>
+            <AtomCreated>1454750307052</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kb="UOR" kxe="false">0</MobileCoDProcUnits>
+    <MobileCoDMemory kb="UOR" kxe="false">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">6</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">Server-8284-22A-SN21B63DV</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kxe="false" kb="ROR">20</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kb="ROR" kxe="false">524288</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8284</MachineType>
+        <Model kxe="false" kb="CUR">22A</Model>
+        <SerialNumber kxe="false" kb="CUR">21B63DV</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.1.1:12443/rest/api/uom/ManagedSystem/c31c0c39-0e4c-322e-ac4a-00505c247211/ManagedSystem/c31c0c39-0e4c-322e-ac4a-00505c247211" rel="related"/>
+    <ManagedSystemState ksv="V1_4_0" kb="ROO" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles ksv="V1_4_0" kxe="false" kb="ROR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_4_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-1-1</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kb="UOR" kxe="false" schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <ManagementConsoleIPAddress ksv="V1_4_0" kxe="false" kb="COD">9.1.1.1</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+        </content>
+    </entry>
+    <entry>
+        <id>c2278015-5887-339d-8b0a-6397e4e1c1bd</id>
+        <title>PowerEnterprisePoolMember</title>
+        <published>2016-02-09T03:41:15.017-05:00</published>
+        <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/c2278015-5887-339d-8b0a-6397e4e1c1bd?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1772567448</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+            <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c2278015-5887-339d-8b0a-6397e4e1c1bd</AtomID>
+            <AtomCreated>1454750307053</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kb="UOR" kxe="false">0</MobileCoDProcUnits>
+    <MobileCoDMemory kb="UOR" kxe="false">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">6</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">V7R2_15</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kxe="false" kb="ROR">16</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kb="ROR" kxe="false">262144</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8246</MachineType>
+        <Model kxe="false" kb="CUR">L2D</Model>
+        <SerialNumber kxe="false" kb="CUR">10085AA</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.1.1:12443/rest/api/uom/ManagedSystem/bc38e4ee-60fc-31a3-8dc4-8f759943c11a/ManagedSystem/bc38e4ee-60fc-31a3-8dc4-8f759943c11a" rel="related"/>
+    <ManagedSystemState ksv="V1_4_0" kb="ROO" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles ksv="V1_4_0" kxe="false" kb="ROR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_4_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-1-1</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kb="UOR" kxe="false" schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <ManagementConsoleIPAddress ksv="V1_4_0" kxe="false" kb="COD">9.1.1.1</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+        </content>
+    </entry>
+    <entry>
+        <id>0de35e7b-278e-3e44-a44d-8a36779757ac</id>
+        <title>PowerEnterprisePoolMember</title>
+        <published>2016-02-09T03:41:15.017-05:00</published>
+        <link rel="SELF" href="https://9.1.1.1:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66/PowerEnterprisePoolMember/0de35e7b-278e-3e44-a44d-8a36779757ac?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2135863620</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePoolMember">
+            <PowerEnterprisePoolMember:PowerEnterprisePoolMember xmlns:PowerEnterprisePoolMember="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0de35e7b-278e-3e44-a44d-8a36779757ac</AtomID>
+            <AtomCreated>1454750307053</AtomCreated>
+        </Atom>
+    </Metadata>
+    <MobileCoDProcUnits kb="UOR" kxe="false">0</MobileCoDProcUnits>
+    <MobileCoDMemory kb="UOR" kxe="false">0</MobileCoDMemory>
+    <InactiveProcUnits kb="ROR" kxe="false">6</InactiveProcUnits>
+    <InactiveMemory kb="ROR" kxe="false">0</InactiveMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kxe="false" kb="ROR">0</UnreturnedMobileCoDMemory>
+    <ManagedSystemName kb="ROR" kxe="false">V7R2_13</ManagedSystemName>
+    <ManagedSystemInstalledProcUnits kxe="false" kb="ROR">16</ManagedSystemInstalledProcUnits>
+    <ManagedSystemInstalledMemory kb="ROR" kxe="false">262144</ManagedSystemInstalledMemory>
+    <ManagedSystemMachineTypeModelSerialNumber kb="ROR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kxe="false" kb="CUR">8246</MachineType>
+        <Model kxe="false" kb="CUR">L2D</Model>
+        <SerialNumber kxe="false" kb="CUR">100857A</SerialNumber>
+    </ManagedSystemMachineTypeModelSerialNumber>
+    <AssociatedManagedSystem kb="ROO" kxe="false" href="https://9.1.1.1:12443/rest/api/uom/ManagedSystem/0687a309-11c2-3de0-8fa2-d484e09ef90a/ManagedSystem/0687a309-11c2-3de0-8fa2-d484e09ef90a" rel="related"/>
+    <ManagedSystemState ksv="V1_4_0" kb="ROO" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles ksv="V1_4_0" kxe="false" kb="ROR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_4_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-1-1</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kb="UOR" kxe="false" schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <ManagementConsoleIPAddress ksv="V1_4_0" kxe="false" kb="COD">9.1.1.1</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePoolMember:PowerEnterprisePoolMember>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
