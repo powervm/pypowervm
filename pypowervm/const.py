@@ -99,3 +99,19 @@ class MaxLen(object):
     FILENAME_DEFAULT = 79
     VOPT_NAME = 37
     VDISK_NAME = 15
+
+
+class XAG(object):
+    """Enumeration of all extended attribute group strings."""
+    ALL = 'All'
+    NONE = 'None'
+    ADV = 'Advanced'
+    ENERGY = 'EnergyManagement'
+    HYP = 'Hypervisor'
+    SYS_NET = 'SystemNetwork'
+    TIER_THRESH = 'TierThreshold'
+    VIO_FMAP = 'ViosFCMapping'
+    VIO_NET = 'ViosNetwork'
+    VIO_SMAP = 'ViosSCSIMapping'
+    VIO_STOR = 'ViosStorage'
+    VNIC = 'VNIC'
