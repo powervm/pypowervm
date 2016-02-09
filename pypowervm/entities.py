@@ -27,44 +27,71 @@ from pypowervm import const
 from pypowervm import util
 
 
+@functools.total_ordering
 class XAG(object):
-    """Extended Attribute Groups enumeration for an EntryWrapper subclass.
+    """Handler for a single extended attribute group name.
 
-    Intended use: Within an EntryWrapper subclass, define a class variable xags
-    of type XAG, initialized with the names of the extended attribute groups
-    supported by the corresponding PowerVM REST object.  The keys may be any
-    value convenient for use in the consuming code.
+    When accessed in string context, simply translates to the REST API name of
+    the extended attribute group, as expected by the ?group= query string in
+    the URI.
 
-    Extended attribute groups 'All' and 'None' are supplied for you.
+    Also provides 'attrs', comprising the XML attributes required on a property
+    associated with that extended attribute group.
     """
-    @functools.total_ordering
-    class _Handler(object):
-        def __init__(self, name):
-            self.name = name
+    def __init__(self, name):
+        self.name = name
 
-        def __str__(self):
-            return self.name
+    def __str__(self):
+        return self.name
 
-        def __eq__(self, other):
-            return self.name == other.name
+    def __eq__(self, other):
+        return self.name == other.name
 
-        def __lt__(self, other):
-            return self.name < other.name
+    def __lt__(self, other):
+        return self.name < other.name
 
-        def __hash__(self):
-            return hash(self.name)
+    def __hash__(self):
+        return hash(self.name)
 
-        @property
-        def attrs(self):
-            schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
-            schema['group'] = self.name
-            return schema
+    @property
+    def attrs(self):
+        """XML attributes appropriate to a property belonging to this XAG."""
+        schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
+        schema['group'] = self.name
+        return schema
 
-    def __init__(self, **kwargs):
-        self.NONE = self._Handler('None')
-        self.ALL = self._Handler('All')
-        for key, val in kwargs.items():
-            setattr(self, key, self._Handler(val))
+
+class XAGBase(object):
+    """Superclass for Extended Attribute Groups enumerations.
+
+    Intended use: Define a subclass with the extended attribute groups specific
+    to a particular REST object type.  The subclass should simply contain a
+    member definition for each extended attribute group of the form:
+
+        NAME = XAG('StringName')
+
+    ...where 'StringName' is the name expected by the REST API in the ?group=
+    querystring.
+
+    Optionally, within an EntryWrapper subclass, define a class variable xags
+    which points to that subclass.
+
+    Extended attribute group NONE ('None') is supplied via the base class.
+    """
+    NONE = XAG(const.XAG.NONE)
+
+
+class VIOSXAGs(XAGBase):
+    """Extended attribute groups relevant to Virtual I/O Server."""
+    NETWORK = XAG(const.XAG.VIO_NET)
+    STORAGE = XAG(const.XAG.VIO_STOR)
+    SCSI_MAPPING = XAG(const.XAG.VIO_SMAP)
+    FC_MAPPING = XAG(const.XAG.VIO_FMAP)
+
+
+class PoolXAGs(XAGBase):
+    """Extended attribute groups relevant to Enterprise Pools."""
+    COMPLIANCE_HRS_LEFT = XAG(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
 
 
 class Atom(object):
