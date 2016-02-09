@@ -19,9 +19,8 @@
 import abc
 import base64
 import binascii
-import six
-
 from oslo_log import log as logging
+import six
 
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _

@@ -86,7 +86,7 @@ def check_and_apply_xag(path, xag):
     If xag is None, use group=None.
     If xag is [] (the empty list), omit the group= query param entirely.
     Otherwise the group= value is a sorted, comma-separated string of the
-    xag list.  E.g. for xag=['b', 'c', 'a'], yield 'group=a,b,c'.
+    xag list.  E.g. for xag=['b', 'c', 'a'], produce 'group=a,b,c'.
 
     :param path: Input path or href, which may or may not contain a query
                  string, which may or may not contain a group=*.  (Multiple
@@ -98,7 +98,7 @@ def check_and_apply_xag(path, xag):
              group= query param's value will be alpha sorted.
     """
     parsed = urlparse.urlsplit(path)
-    # parse_qs yields { 'key': ['value'], ... }
+    # parse_qs returns { 'key': ['value'], ... }
     qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
     path_xag = qparms.pop('group', ['None'])[0]
     if xag is None:
@@ -290,7 +290,7 @@ def get_req_path_uuid(path, preserve_case=False, root=False):
 def get_uuid_xag_from_path(path):
     uuid = get_req_path_uuid(path)
     parsed = urlparse.urlsplit(path)
-    # parse_qs yields { 'key': ['value'], ... }
+    # parse_qs returns { 'key': ['value'], ... }
     qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
     return uuid.lower(), qparms.get('group', [None])[0]
 
