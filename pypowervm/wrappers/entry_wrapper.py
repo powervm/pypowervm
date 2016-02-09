@@ -51,6 +51,11 @@ class Wrapper(object):
     # E.g. { 'SharedEthernetAdapter': pypowervm.wrappers.network.SEA, ... }
     _pvm_object_registry = {}
 
+    # Maps a property name to its extended attribute group.  Should be sparse -
+    # if a property is not associated with a xag, it can (should) be absent
+    # from this dict.
+    _xag_registry = {}
+
     @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
                  attrib=pc.DEFAULT_SCHEMA_ATTR, child_order=None):
@@ -88,8 +93,59 @@ class Wrapper(object):
                     co.insert(0, 'Metadata')
                 class_._child_order = tuple(co)
             Wrapper._pvm_object_registry[schema_type] = class_
+            # @xag_property registers with Wrapper._xag_registry because
+            # class_ hasn't been created yet.  Transfer the created registry
+            # to the class_, and clear Wrapper's so it doesn't pollute the next
+            # class_.
+            class_._xag_registry = Wrapper._xag_registry
+            Wrapper._xag_registry = {}
             return class_
         return inner
+
+    @classmethod
+    def xag_property(cls, xag):
+        """Decorator to tag a @property with an extended attribute group.
+
+        Use this decorator in place of (not in addition to) @property.  Within
+        class Foo:
+
+            @xag_property('bar')
+            def some_prop(self):
+                ...
+
+        confers the same property-ness on 'some_prop' as would
+
+            @property
+            def some_prop(self):
+                ...
+
+        but it also associates some_prop with extended attribute group name
+        'bar' such that Foo.get_xag_for_prop('some_prop') returns the value
+        'bar'.
+
+        :param xag: String name of the extended attribute group with which the
+                    decorated property is associated.  May either be one of the
+                    pypowervm.const.XAG enum values; or a dynamically-generated
+                    pypowervm.entities.XAG member (for example, see
+                    pypowervm.wrappers.virtual_io_server.phys_vols).
+        """
+        def wrap(func):
+            cls._xag_registry[func.__name__] = str(xag)
+            return property(func)
+        return wrap
+
+    @classmethod
+    def get_xag_for_prop(cls, propname):
+        """The extended attribute group name for a property of this Wrapper.
+
+        :param propname: Short (unqualified) name of a property of this
+                         Wrapper, as a string.
+        :return: String indicating the name of the extended attribute group for
+                 the given property.  Should be a pypowervm.const.XAG enum
+                 value.  None (not 'None') if there is no xag associated with
+                 the specified property.
+        """
+        return cls._xag_registry.get(propname, None)
 
     @property
     def child_order(self):
@@ -206,7 +262,7 @@ class Wrapper(object):
 
         - Gigabyte.Type can't handle more than 6dp.
         - Floating point representation issues can mean that e.g. 0.1 + 0.2
-        yields 0.30000000000000004.
+        produces 0.30000000000000004.
         - str() rounds to 12dp.
 
         So this method converts a float (or float string) to a string with
