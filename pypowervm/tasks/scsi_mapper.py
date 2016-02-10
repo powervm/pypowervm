@@ -110,7 +110,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
               'stg_name': storage_elem.name,
               'vios_name': vios_w.name,
               'lpar_uuid': lpar_uuid})
-    return vios_w.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    return vios_w.update()
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
@@ -314,7 +314,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
 
     # Update the VIOS, but only if we actually removed mappings
     if resp_list:
-        vios = vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+        vios = vios.update()
 
     # return the (possibly updated) VIOS and the list of removed backing
     # storage elements.
