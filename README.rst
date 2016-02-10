@@ -112,3 +112,6 @@ Developer Notes
   the ``pypowervm.base_partition.IOSlot.io_adapter`` property.  Removal will
   break compatibility with PowerVC 1.3.0.0 and 1.3.0.1.  The issue is resolved
   as of PowerVC 1.3.0.2.
+
+- The ``xag`` argument to the ``pypowervm.wrappers.entry_wrapper.EntryWrapper.update``
+  method is deprecated and will be removed no sooner than January 1st, 2017.

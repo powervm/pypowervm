@@ -779,16 +779,24 @@ class EntryWrapper(Wrapper):
         """Performs an adapter.delete (REST API DELETE) with this wrapper."""
         self.adapter.delete_by_href(self.href, etag=self.etag)
 
-    def update(self, xag=None, timeout=-1):
+    # TODO(IBM): Remove deprecated xag parameter
+    def update(self, xag='__DEPRECATED__', timeout=-1):
         """Performs adapter.update of this wrapper.
 
-        :param xag: List of extended attribute group names.
+        :param xag: DEPRECATED - do not use.
         :param timeout: (Optional) Integer number of seconds after which to
                         time out the POST request.  -1, the default, causes the
                         request to use the timeout value configured on the
                         Session belonging to the Adapter.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
+        if xag != '__DEPRECATED__':
+            import warnings
+            warnings.warn(
+                _("The 'xag' parameter to EntryWrapper.update is deprecated!  "
+                  "At best, using it will result in a no-op.  At worst, it "
+                  "will give you incurable etag mismatch errors."),
+                DeprecationWarning)
         if timeout == -1:
             # Override default timeout to 60 minutes unless the Session is
             # configured for longer already.
@@ -797,8 +805,6 @@ class EntryWrapper(Wrapper):
         # adapter.update_by_path expects the path (e.g.
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
-        # No-op if xag is empty/None
-        path = self.adapter.extend_path(path, xag=xag)
         return self.wrap(self.adapter.update_by_path(self, self.etag, path,
                                                      timeout=timeout))
 
