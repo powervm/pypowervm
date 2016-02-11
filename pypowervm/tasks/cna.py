@@ -60,9 +60,8 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
 
     # Find the appropriate virtual switch.
     vswitch_w = None
-    vswitch_resp = adapter.read(ms.System.schema_type, root_id=host_uuid,
-                                child_type=network.VSwitch.schema_type)
-    vswitch_wraps = network.VSwitch.wrap(vswitch_resp)
+    vswitch_wraps = network.VSwitch.get(adapter, parent_type=ms.System,
+                                        parent_uuid=host_uuid)
     for vs_w in vswitch_wraps:
         if vs_w.name == vswitch:
             vswitch_w = vs_w
