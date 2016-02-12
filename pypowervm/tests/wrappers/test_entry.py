@@ -35,6 +35,7 @@ import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
+import pypowervm.wrappers.virtual_io_server as vios
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
@@ -604,19 +605,86 @@ class TestActionableList(unittest.TestCase):
         self.assertEqual(5, function.call_count)
 
 
-class TestGet(twrap.TestWrapper):
+class TestGet(testtools.TestCase):
     """Tests for EntryWrapper.get()."""
-    file = LPAR_FILE
-    wrapper_class_to_test = lpar.LPAR
 
-    def test_get(self):
-        self.adpt.read.return_value = self.resp
-        ret = lpar.LPAR.get(self.adpt, foo='bar', baz=123)
+    def setUp(self):
+        super(TestGet, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.wrap')
+    def test_get_root(self, mock_wrap):
+        """Various permutations of EntryWrapper.get on a ROOT object."""
+        # Happy path - feed.  Ensure misc args are passed through.
+        lpar.LPAR.get(self.adpt, foo='bar', baz=123)
         self.adpt.read.assert_called_with(lpar.LPAR.schema_type, foo='bar',
                                           baz=123)
-        # Ensure that LPAR.wrap was called on the result
-        self.assertIsInstance(ret, list)
-        self.assertIsInstance(ret[0], lpar.LPAR)
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'uuid'
+        lpar.LPAR.get(self.adpt, uuid='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'root_id'
+        lpar.LPAR.get(self.adpt, root_id='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+
+    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
+    def test_get_child(self, mock_wrap):
+        """Various permutations of EntryWrapper.get on a CHILD object."""
+        # Happy path - feed.  Parent specified as class
+        net.CNA.get(self.adpt, parent_type=lpar.LPAR, parent_uuid='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123',
+                                          child_type=net.CNA.schema_type)
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'uuid'.
+        net.CNA.get(
+            self.adpt, parent_type=lpar.LPAR, parent_uuid='123', uuid='456')
+        self.adpt.read.assert_called_with(
+            lpar.LPAR.schema_type, root_id='123',
+            child_type=net.CNA.schema_type, child_id='456')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'child_id'.  Parent specified as string.
+        net.CNA.get(self.adpt, parent_type=lpar.LPAR.schema_type,
+                    parent_uuid='123', child_id='456')
+        self.adpt.read.assert_called_with(
+            lpar.LPAR.schema_type, root_id='123',
+            child_type=net.CNA.schema_type, child_id='456')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_get_errors(self, mock_wrap):
+        """Error paths in EntryWrapper.get."""
+        # parent_type specified, parent_uuid not.
+        self.assertRaises(ValueError,
+                          net.CNA.get, self.adpt, parent_type=lpar.LPAR)
+        # CHILD mode forbids 'root_id' (must use 'parent_uuid').
+        self.assertRaises(ValueError, net.CNA.get, self.adpt,
+                          parent_type=lpar.LPAR, parent_uuid='1', root_id='2')
+        # CHILD mode can't have both 'uuid' and 'child_id'.
+        self.assertRaises(ValueError, net.CNA.get, self.adpt,
+                          parent_type=lpar.LPAR, parent_uuid='12', uuid='34',
+                          child_id='56')
+        # ROOT mode forbids parent_uuid.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, parent_uuid='123')
+        # ROOT mode forbids child_type.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, child_type=net.CNA)
+        # ROOT mode forbids child_id.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, child_id='123')
+        # ROOT mode can't have both 'uuid' and 'root_id'.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, uuid='12', root_id='34')
+        # Nothing was ever wrapped
+        mock_wrap.assert_not_called()
 
 
 class TestSearch(testtools.TestCase):
@@ -778,8 +846,8 @@ class TestSearch(testtools.TestCase):
         # Set up the first mock_read in the chain
         mock_read.side_effect = validate_feed_get
 
-        # Do the search
-        wraps = net.VNet.search(self.adp, parent_type=parent_type, tagged=True)
+        # Do the search (with class as parent_type)
+        wraps = net.VNet.search(self.adp, parent_type=vios.VIOS, tagged=True)
         # Make sure we got the right networks
         for wrap, expected_vlanid in zip(wraps, (1234, 2, 1001, 1000)):
             self.assertIsInstance(wrap, net.VNet)
