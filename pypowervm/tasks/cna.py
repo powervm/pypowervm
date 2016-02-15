@@ -224,3 +224,45 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                                              parent_uuid=src_io_host_uuid))
         trunk_pri += 1
     return client_adpt, trunk_adpts
+
+
+def find_trunks(adapter, cna_w):
+    """Returns the Trunk Adapters associated with the CNA.
+
+    :param adapter: The pypowervm adapter to perform the update through.
+    :param cna_w: The Client Network Adapter to find the Trunk Adapters for.
+    :return: A list of Trunk Adapters (sorted by Trunk Priority) that host
+             the Client Network Adapter.
+    """
+    # VIOS and Management Partitions can host Trunk Adapters.
+    vios_wraps = pvm_vios.VIOS.get(adapter)
+    mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+
+    # Find the corresponding trunk adapters.
+    trunk_list = []
+    for vios_w in vios_wraps:
+        trunk = _find_trunks_on_lpar(adapter, pvm_vios.VIOS, vios_w.uuid,
+                                     cna_w.pvid)
+        if trunk:
+            trunk_list.append(trunk)
+    for mgmt_w in mgmt_wraps:
+        trunk = _find_trunks_on_lpar(adapter, lpar.LPAR, mgmt_w.uuid,
+                                     cna_w.pvid)
+        if trunk:
+            trunk_list.append(trunk)
+
+    # Sort by the trunk priority
+    trunk_list.sort(key=lambda x: x.trunk_pri)
+    return trunk_list
+
+
+def _find_trunks_on_lpar(adapter, parent_type, parent_uuid, client_pvid):
+    cna_wraps = pvm_net.CNA.get(adapter, parent_type=parent_type,
+                                parent_uuid=parent_uuid)
+    for cna in cna_wraps:
+        if not cna.is_trunk:
+            continue
+        if not cna.pvid == client_pvid:
+            continue
+        return cna
+    return None
