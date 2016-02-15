@@ -247,3 +247,48 @@ class TestCNA(testtools.TestCase):
             parent_type=pvm_lpar.LPAR, parent_uuid='src_io_host_uuid')
         mock_trunk2.create.assert_called_once_with(
             parent_type=pvm_vios.VIOS, parent_uuid='vios_uuid2')
+
+    @mock.patch('pypowervm.wrappers.network.CNA.get')
+    def test_find_trunk_on_lpar(self, mock_cna_get):
+        parent_wrap = mock.MagicMock()
+
+        m1 = mock.Mock(is_trunk=True, pvid=2)
+        m2 = mock.Mock(is_trunk=False, pvid=3)
+        m3 = mock.Mock(is_trunk=True, pvid=3)
+
+        mock_cna_get.return_value = [m1, m2]
+        self.assertIsNone(cna._find_trunk_on_lpar(self.adpt, parent_wrap, 3))
+        self.assertTrue(mock_cna_get.called)
+
+        mock_cna_get.reset_mock()
+        mock_cna_get.return_value = [m1, m2, m3]
+        self.assertEqual(m3, cna._find_trunk_on_lpar(self.adpt, parent_wrap,
+                                                     3))
+        self.assertTrue(mock_cna_get.called)
+
+    @mock.patch('pypowervm.tasks.cna._find_trunk_on_lpar')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.search')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    def test_find_trunks(self, mock_vios_get, mock_lpar_search,
+                         mock_find_trunk):
+        # Mocked responses can be simple, since they are just fed into the
+        # _find_trunk_on_lpar
+        mock_vios_get.return_value = [1, 2]
+        mock_lpar_search.return_value = [3, 4]
+
+        # The responses back from the find trunk.  Have a None to make sure
+        # we don't have LPARs without trunks added to the response list.
+        # Also, make it an odd trunk priority ordering.
+        v1, v2 = None, mock.Mock(trunk_pri=3)
+        c1, c2 = mock.Mock(trunk_pri=1), mock.Mock(trunk_pri=2)
+        mock_find_trunk.side_effect = [v1, v2, c1, c2]
+
+        # Invoke the method.
+        resp = cna.find_trunks(self.adpt, mock.Mock(pvid=2))
+
+        # Make sure four calls to the find trunk
+        self.assertEqual(4, mock_find_trunk.call_count)
+
+        # Order of the response is important.  Should be based off of trunk
+        # priority
+        self.assertEqual([c1, c2, v2], resp)

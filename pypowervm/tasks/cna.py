@@ -224,3 +224,40 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                                              parent_uuid=src_io_host_uuid))
         trunk_pri += 1
     return client_adpt, trunk_adpts
+
+
+def find_trunks(adapter, cna_w):
+    """Returns the Trunk Adapters associated with the CNA.
+
+    :param adapter: The pypowervm adapter to perform the search with.
+    :param cna_w: The Client Network Adapter to find the Trunk Adapters for.
+    :return: A list of Trunk Adapters (sorted by Trunk Priority) that host
+             the Client Network Adapter.
+    """
+    # VIOS and Management Partitions can host Trunk Adapters.
+    vios_wraps = pvm_vios.VIOS.get(adapter)
+    mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+    host_wraps = vios_wraps + mgmt_wraps
+
+    # Find the corresponding trunk adapters.
+    trunk_list = []
+    for host_wrap in host_wraps:
+        trunk = _find_trunk_on_lpar(adapter, host_wrap, cna_w.pvid)
+        if trunk:
+            trunk_list.append(trunk)
+
+    # Sort by the trunk priority
+    trunk_list.sort(key=lambda x: x.trunk_pri)
+    return trunk_list
+
+
+def _find_trunk_on_lpar(adapter, parent_wrap, client_pvid):
+    cna_wraps = pvm_net.CNA.get(adapter, parent_type=parent_wrap.schema_type,
+                                parent_uuid=parent_wrap.uuid)
+    for cna in cna_wraps:
+        if not cna.is_trunk:
+            continue
+        if cna.pvid != client_pvid:
+            continue
+        return cna
+    return None
