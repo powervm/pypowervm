@@ -89,11 +89,6 @@ class VIOSXAGs(_XAGEnum):
     FC_MAPPING = _XAG(const.XAG.VIO_FMAP)
 
 
-class PoolXAGs(_XAGEnum):
-    """Extended attribute groups relevant to Enterprise Pools."""
-    COMPLIANCE_HRS_LEFT = _XAG(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
-
-
 class Atom(object):
     def __init__(self, properties):
         self.properties = properties

@@ -139,3 +139,14 @@ class TestPoolMemberFile(test_wrapper_abc.TestWrapper):
 
     def test_sys_state(self):
         self.assertEqual('operating', self.dwrap.sys_state)
+
+    def test_mgmt_consoles(self):
+        self.assertIsInstance(self.dwrap.mgmt_consoles,
+                              entry_wrapper.WrapperElemList)
+        self.assertEqual(1, len(self.dwrap.mgmt_consoles))
+        console = self.dwrap.mgmt_consoles[0]
+        self.assertIsInstance(console, ep.PoolMgmtConsole)
+        self.assertEqual('ip9-1-2-3', console.name)
+        self.assertEqual('7042-CR7*10B6EDC', console.mtms.mtms_str)
+        self.assertTrue(console.is_master_console)
+        self.assertEqual('9.1.2.3', console.ip_addr)
