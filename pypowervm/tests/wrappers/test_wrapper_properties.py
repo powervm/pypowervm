@@ -65,13 +65,12 @@ class TestXAGs(testtools.TestCase):
                 })
             elif wcls is epool.Pool:
                 self.verify_xags(wcls, {
-                    'compliance_hours_left': c.XAG.POOL_COMPLIANCE_HRS_LEFT
+                    'compliance_hours_left': c.XAG.ADV
                 })
             elif wcls is epool.PoolMember:
                 self.verify_xags(wcls, {
-                    'proc_compliance_hours_left':
-                        c.XAG.POOL_COMPLIANCE_HRS_LEFT,
-                    'mem_compliance_hours_left': c.XAG.POOL_COMPLIANCE_HRS_LEFT
+                    'proc_compliance_hours_left': c.XAG.ADV,
+                    'mem_compliance_hours_left': c.XAG.ADV
                 })
             elif wcls in (bp.BasePartition, lpar.LPAR):
                 self.verify_xags(wcls, {

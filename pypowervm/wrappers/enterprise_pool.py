@@ -50,15 +50,15 @@ _PM_INACTIVE_MEM = 'InactiveMemory'
 _PM_SYS_NAME = 'ManagedSystemName'
 _PM_SYS_INSTALLED_PROCS = 'ManagedSystemInstalledProcUnits'
 _PM_SYS_INSTALLED_MEM = 'ManagedSystemInstalledMemory'
-_SYS_MTMS = 'ManagedSystemMachineTypeModelSerialNumber'
-_PM_SYS_STATE = 'State'
+_PM_SYS_MTMS = 'ManagedSystemMachineTypeModelSerialNumber'
+_PM_SYS_STATE = 'ManagedSystemState'
 
-_P_MGMT_CONSOLES = 'PowerEnterprisePoolManagementConsoles'
-_P_MGMT_CONSOLE = 'PowerEnterprisePoolManagementConsole'
-_P_MGMT_CONSOLE_NAME = 'ManagementConsoleName'
-_P_MGMT_CONSOLE_MTMS = 'ManagementConsoleMachineTypeModelSerialNumber'
-_P_MGMT_CONSOLE_IS_MASTER_CONSOLE = 'IsMasterConsole'
-_P_MGMT_CONSOLE_IP_ADDR = 'ManagementConsoleIPAddress'
+_MGMT_CONSOLES = 'PowerEnterprisePoolManagementConsoles'
+_MGMT_CONSOLE = 'PowerEnterprisePoolManagementConsole'
+_MGMT_CONSOLE_NAME = 'ManagementConsoleName'
+_MGMT_CONSOLE_MTMS = 'ManagementConsoleMachineTypeModelSerialNumber'
+_MGMT_CONSOLE_IS_MASTER_CONSOLE = 'IsMasterConsole'
+_MGMT_CONSOLE_IP_ADDR = 'ManagementConsoleIPAddress'
 
 
 class ComplianceState(object):
@@ -88,12 +88,11 @@ class Pool(entry_wrapper.EntryWrapper):
         """The compliance state of the enterprise pool."""
         return self._get_val_str(_P_COMPLIANCE_STATE)
 
-    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
+    @entry_wrapper.Wrapper.xag_property(const.XAG.ADV)
     def compliance_hours_left(self):
         """Integer num of hours until the pool is considered out of compliance.
 
-        Note: will only be included in the response if xag is specified to be
-        ComplianceRemainingHours. Return default of 0 if it is not found.
+        Return default of 0 if it is not found.
         """
         return self._get_val_int(_P_COMPLIANCE_REMAINING_HOURS, default=0)
 
@@ -130,7 +129,7 @@ class Pool(entry_wrapper.EntryWrapper):
     @property
     def mgmt_consoles(self):
         """Returns a WrapperElemList of PoolMgmtConsole's."""
-        elem = self._find_or_seed(_P_MGMT_CONSOLES)
+        elem = self._find_or_seed(_MGMT_CONSOLES)
         return entry_wrapper.WrapperElemList(
             elem, PoolMgmtConsole)
 
@@ -146,7 +145,7 @@ class Pool(entry_wrapper.EntryWrapper):
                     '%(identifier)s because no %(param)s was marked as the '
                     'master console for the pool.') %
                   {'identifier': self._type_and_uuid,
-                   'param': _P_MGMT_CONSOLE})
+                   'param': _MGMT_CONSOLE})
 
         return None
 
@@ -194,27 +193,25 @@ class PoolMember(entry_wrapper.EntryWrapper):
         """Integer amount of unreturned mobile CoD memory (GB) on the sys."""
         return self._get_val_int(_UNRET_MOBILE_MEM)
 
-    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
+    @entry_wrapper.Wrapper.xag_property(const.XAG.ADV)
     def proc_compliance_hours_left(self):
         """Integer num of proc compliance hours remaining.
 
         Number of hours remaining until the system is considered out of
         compliance in terms of mobile procs.
 
-        Note: will only be included in the response if xag is specified to be
-        ComplianceRemainingHours. Return default of 0 if it is not found.
+        Return default of 0 if it is not found.
         """
         return self._get_val_int(_PM_PROC_COMPLIANCE_HOURS_LEFT, default=0)
 
-    @entry_wrapper.Wrapper.xag_property(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
+    @entry_wrapper.Wrapper.xag_property(const.XAG.ADV)
     def mem_compliance_hours_left(self):
         """Integer num of memory compliance hours remaining.
 
         Number of hours remaining until the system is considered out of
         compliance in terms of mobile memory.
 
-        Note: will only be included in the response if xag is specified to be
-        ComplianceRemainingHours. Return default of 0 if it is not found.
+        Return default of 0 if it is not found.
         """
         return self._get_val_int(_PM_MEM_COMPLIANCE_HOURS_LEFT, default=0)
 
@@ -236,7 +233,7 @@ class PoolMember(entry_wrapper.EntryWrapper):
     @property
     def sys_mtms(self):
         """The MTMS (machine type, model, serial number) of the system."""
-        sys_mtms_element = self._find(_SYS_MTMS)
+        sys_mtms_element = self._find(_PM_SYS_MTMS)
         return mtms_wrapper.MTMS.wrap(sys_mtms_element)
 
     @property
@@ -244,8 +241,15 @@ class PoolMember(entry_wrapper.EntryWrapper):
         """The state of the system."""
         return self._get_val_str(_PM_SYS_STATE)
 
+    @property
+    def mgmt_consoles(self):
+        """Returns a WrapperElemList of PoolMgmtConsole's."""
+        elem = self._find_or_seed(_MGMT_CONSOLES)
+        return entry_wrapper.WrapperElemList(
+            elem, PoolMgmtConsole)
 
-@entry_wrapper.ElementWrapper.pvm_type(_P_MGMT_CONSOLE,
+
+@entry_wrapper.ElementWrapper.pvm_type(_MGMT_CONSOLE,
                                        has_metadata=True)
 class PoolMgmtConsole(entry_wrapper.ElementWrapper):
     """Wraps the PoolMgmtConsole elements."""
@@ -253,19 +257,19 @@ class PoolMgmtConsole(entry_wrapper.ElementWrapper):
     @property
     def name(self):
         """String value for the name of the management console."""
-        return self._get_val_str(_P_MGMT_CONSOLE_NAME)
+        return self._get_val_str(_MGMT_CONSOLE_NAME)
 
     @property
     def mtms(self):
         """The MTMS (machine type, model, serial number) of the console."""
-        return mtms_wrapper.MTMS.wrap(self.element.find(_P_MGMT_CONSOLE_MTMS))
+        return mtms_wrapper.MTMS.wrap(self.element.find(_MGMT_CONSOLE_MTMS))
 
     @property
     def is_master_console(self):
         """Boolean for whether or not this console is master for the pool."""
-        return self._get_val_bool(_P_MGMT_CONSOLE_IS_MASTER_CONSOLE)
+        return self._get_val_bool(_MGMT_CONSOLE_IS_MASTER_CONSOLE)
 
     @property
     def ip_addr(self):
         """String value for the IP address of the console."""
-        return self._get_val_str(_P_MGMT_CONSOLE_IP_ADDR)
+        return self._get_val_str(_MGMT_CONSOLE_IP_ADDR)
