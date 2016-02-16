@@ -108,7 +108,6 @@ class XAG(object):
     ADV = 'Advanced'
     ENERGY = 'EnergyManagement'
     HYP = 'Hypervisor'
-    POOL_COMPLIANCE_HRS_LEFT = 'ComplianceRemainingHours'
     SYS_NET = 'SystemNetwork'
     TIER_THRESH = 'TierThreshold'
     VIO_FMAP = 'ViosFCMapping'
