@@ -827,17 +827,17 @@ class _RemoveStorage(tf_tsk.Task):
                     _rm_vdisks, vdisks_to_rm, logspec=(LOG.warning, _(
                         "Scrubbing the following %(vdcount)d Virtual Disks "
                         "from VIOS %(vios)s: %(vdlist)s"), {
-                        'vdcount': len(vdisks_to_rm), 'vios': vwrap.name,
-                        'vdlist': ["%s (%s)" % (vd.name, vd.udid) for vd
-                                   in vdisks_to_rm]}))
+                            'vdcount': len(vdisks_to_rm), 'vios': vwrap.name,
+                            'vdlist': ["%s (%s)" % (vd.name, vd.udid) for vd
+                                       in vdisks_to_rm]}))
             if vopts_to_rm:
                 vgftsk.add_functor_subtask(
                     _rm_vopts, vopts_to_rm, logspec=(LOG.warning, _(
                         "Scrubbing the following %(vocount)d Virtual Opticals "
                         "from VIOS %(vios)s: %(volist)s"), {
-                        'vocount': len(vopts_to_rm), 'vios': vwrap.name,
-                        'volist': ["%s (%s)" % (vo.name, vo.udid) for vo
-                                   in vopts_to_rm]}))
+                            'vocount': len(vopts_to_rm), 'vios': vwrap.name,
+                            'volist': ["%s (%s)" % (vo.name, vo.udid) for vo
+                                       in vopts_to_rm]}))
             rmtasks.append(vgftsk)
 
         # We only created removal Tasks if we found something to remove.
@@ -885,10 +885,9 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
         lpar_id_set = set(lpar_ids)
         if not lpars_exist:
             # Restrict scrubbing to LPARs that don't exist on the system.
-            ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(
-                vwrap.adapter.read(sys.System.schema_type,
-                                   root_id=vwrap.assoc_sys_uuid,
-                                   child_type=lpar.LPAR.schema_type))}
+            ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.get(
+                vwrap.adapter, parent_type=sys.System,
+                parent_uuid=vwrap.assoc_sys_uuid)}
             # The list of IDs of the LPARs whose mappings (and storage) are to
             # be preserved (not scrubbed) is the intersection of
             # {the IDs we we were asked to scrub}
@@ -941,9 +940,9 @@ def find_stale_lpars(vios_w):
     :return: List of LPAR IDs (integer short IDs, not UUIDs) which don't exist
              on the system.  The list is guaranteed to contain no duplicates.
     """
-    ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.wrap(vios_w.adapter.read(
-        sys.System.schema_type, root_id=vios_w.assoc_sys_uuid,
-        child_type=lpar.LPAR.schema_type))}
+    ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.get(
+        vios_w.adapter, parent_type=sys.System,
+        parent_uuid=vios_w.assoc_sys_uuid)}
     map_lpar_ids = {smp.server_adapter.lpar_id for smp in
                     (list(vios_w.scsi_mappings) + list(vios_w.vfc_mappings))}
     return list(map_lpar_ids - ex_lpar_ids)
