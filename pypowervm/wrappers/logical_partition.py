@@ -18,6 +18,7 @@
 
 from oslo_log import log as logging
 
+from pypowervm import const
 import pypowervm.const as pc
 from pypowervm.i18n import _
 import pypowervm.util as u
@@ -273,6 +274,14 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     def srr_enabled(self, value):
         self.set_parm_value(_LPAR_SRR, u.sanitize_bool_for_api(value),
                             attrib=pc.ATTR_SCHEMA120)
+
+    @ewrap.Wrapper.xag_property(const.XAG.NVRAM)
+    def nvram_data(self):
+        return self.get_val_str(bp._BP_NVRAM, None)
+
+    @nvram_data.setter
+    def nvram_data(self, nvram):
+        super(LPAR, self).nvram_data(nvram)
 
     @property
     def restrictedio(self):
