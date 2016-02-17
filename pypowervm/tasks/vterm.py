@@ -246,7 +246,6 @@ class _VNCRepeaterServer(threading.Thread):
 
         self.alive = True
 
-    @lock.synchronized('powervm_vnc_term')
     def stop(self):
         """Stops the repeater from running."""
         # This will stop listening for all clients
