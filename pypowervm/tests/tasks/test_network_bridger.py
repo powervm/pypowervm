@@ -23,6 +23,7 @@ from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import network_bridger as net_br
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
+from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
 
 MGR_NET_BR_FAILOVER_FILE = 'nbbr_network_bridge_failover.txt'
@@ -109,13 +110,6 @@ class TestNetworkBridger(testtools.TestCase):
         self.assertEqual(4092, bridger._find_new_arbitrary_vid(nbs,
                                                                others=[4093]))
 
-    def test_find_vswitch(self):
-        self.adpt.read.return_value = self.mgr_vsw_resp
-        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
-        v = bridger._find_vswitch('0')
-        self.assertIsNotNone(v)
-        self.assertEqual(0, v.switch_id)
-
     def test_remove_vlan_from_nb_bad_vid(self):
         """Attempt to remove a VID that can't be taken off NB."""
         # Mock Data
@@ -133,9 +127,8 @@ class TestNetworkBridger(testtools.TestCase):
         self.assertEqual(0, self.adpt.update.call_count)
 
     def _setup_reassign_arbitrary_vid(self):
-        vsw_p = mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
-                           '_find_vswitch')
-        mock_vsw = vsw_p.start()
+        vsw_p = mock.patch('pypowervm.wrappers.network.VSwitch.search')
+        self.mock_vsw = vsw_p.start()
         self.addCleanup(vsw_p.stop)
         vnet = pvm_net.VNet._bld(self.adpt).entry
         resp1 = adpt.Response('reqmethod', 'reqpath', 'status', 'reason', {})
@@ -148,7 +141,7 @@ class TestNetworkBridger(testtools.TestCase):
         self.adpt.update.return_value = resp2
 
         vsw = pvm_net.VSwitch.wrap(self.mgr_vsw_resp)[0]
-        mock_vsw.return_value = vsw
+        self.mock_vsw.return_value = vsw
         return nb
 
     def test_build_orphan_map(self):
@@ -368,6 +361,9 @@ class TestNetworkBridgerVNet(TestNetworkBridger):
         bridger._reassign_arbitrary_vid(4094, 4093, nb)
 
         # Make sure the mocks were called
+        self.mock_vsw.assert_called_with(self.adpt, parent_type=pvm_ms.System,
+                                         parent_uuid=self.host_uuid,
+                                         one_result=True, switch_id=0)
         self.assertEqual(1, mock_find_vnet.call_count)
         self.assertEqual(2, self.adpt.update_by_path.call_count)
 

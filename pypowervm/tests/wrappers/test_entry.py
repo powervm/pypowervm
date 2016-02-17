@@ -705,6 +705,12 @@ class TestSearch(testtools.TestCase):
 
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_good(self, mock_rq):
+        def validate_result(clwrap):
+            self.assertIsInstance(clwrap, clust.Cluster)
+            self.assertEqual(clwrap.name, 'cl1')
+            self.assertEqual(clwrap.repos_pv.name, 'hdisk1')
+            self.assertEqual(clwrap.nodes[0].hostname, 'vios1')
+
         mock_rq.side_effect = self._validate_request(
             "/rest/api/uom/Cluster/search/(ClusterName=='cl1')?group=None",
             clust.Cluster.bld(self.adp, 'cl1', stor.PV.bld(self.adp, 'hdisk1',
@@ -714,11 +720,10 @@ class TestSearch(testtools.TestCase):
 
         clwraps = clust.Cluster.search(self.adp, name='cl1')
         self.assertEqual(len(clwraps), 1)
-        cl = clwraps[0]
-        self.assertIsInstance(cl, clust.Cluster)
-        self.assertEqual(cl.name, 'cl1')
-        self.assertEqual(cl.repos_pv.name, 'hdisk1')
-        self.assertEqual(cl.nodes[0].hostname, 'vios1')
+        validate_result(clwraps[0])
+        # Test one_result on a registered key with a single hit
+        validate_result(clust.Cluster.search(self.adp, one_result=True,
+                                             name='cl1'))
 
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_negate(self, mock_rq):
@@ -726,6 +731,9 @@ class TestSearch(testtools.TestCase):
             "/rest/api/uom/Cluster/search/(ClusterName!='cl1')?group=None")
         clwraps = clust.Cluster.search(self.adp, negate=True, name='cl1')
         self.assertEqual(clwraps, [])
+        # Test one_result with no hits
+        self.assertIsNone(clust.Cluster.search(self.adp, negate=True,
+                                               one_result=True, name='cl1'))
 
     def test_no_such_search_key(self):
         """Ensure an invalid search key gives ValueError."""
@@ -758,6 +766,10 @@ class TestSearch(testtools.TestCase):
         nb = rets[0]
         self.assertIsInstance(nb, net.NetBridge)
         self.assertEqual('d648eb60-4d39-34ad-ae2b-928d8c9577ad', nb.uuid)
+        # Test one_result down the no-search-key path
+        nb = net.NetBridge.search(self.adp, one_result=True, vswitch_id=0)
+        self.assertEqual('d648eb60-4d39-34ad-ae2b-928d8c9577ad', nb.uuid)
+
         # Now do a search that returns more than one item.
         # Use a string for an int field to prove it works anyway.
         rets = net.NetBridge.search(self.adp, pvid='1')
@@ -767,6 +779,9 @@ class TestSearch(testtools.TestCase):
         self.assertEqual({'d648eb60-4d39-34ad-ae2b-928d8c9577ad',
                           '764f3423-04c5-3b96-95a3-4764065400bd'},
                          {nb.uuid for nb in rets})
+        # Ensure one_result returns the first hit
+        self.assertEqual(rets[0].uuid, net.NetBridge.search(
+            self.adp, one_result=True, pvid=1).uuid)
 
     @mock.patch('pypowervm.adapter.Adapter.read')
     def test_search_with_xag(self, mock_read):

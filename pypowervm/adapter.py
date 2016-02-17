@@ -505,7 +505,6 @@ class Session(object):
                 raise pvmex.AuthFileAccessError(access_file=str(tokfile_path),
                                                 error=os.strerror(ioe.errno))
         if not tok:
-            # TODO(IBM): T9N
             msg = _("Token file %s didn't contain a readable session "
                     "token.") % tokfile_path
             LOG.error(msg)

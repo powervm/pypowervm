@@ -317,21 +317,6 @@ class NetworkBridger(object):
                 return i
         return None
 
-    # TODO(IBM): Remove this method; callers should use VSwitch.search()
-    def _find_vswitch(self, vswitch_id):
-        """Gathers the VSwitch wrapper from the system.
-
-        :param vswitch_id: The identifier (not uuid) for the vswitch.
-        :return: Wrapper for the corresponding VirtualSwitch.
-        """
-        vswitches = pvm_net.VSwitch.get(
-            self.adapter, parent_type=pvm_ms.System,
-            parent_uuid=self.host_uuid)
-        for vswitch in vswitches:
-            if vswitch.switch_id == int(vswitch_id):
-                return vswitch
-        return None
-
     @staticmethod
     def _find_peer_nbs(nb_wraps, nb, include_self=False):
         """Finds all of the peer (same vSwitch) Network Bridges.
@@ -526,7 +511,10 @@ class NetworkBridgerVNET(NetworkBridger):
         """
         # At this point, all of the new VLANs that need to be added are in the
         # new_vlans list.  Now we need to put them on load groups.
-        vswitch_w = self._find_vswitch(req_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=req_nb.vswitch_id)
         vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
                                  parent_uuid=self.host_uuid)
 
@@ -589,7 +577,7 @@ class NetworkBridgerVNET(NetworkBridger):
             vnet_uri = self._find_vnet_uri_from_lg(matching_lg, vlan_id)
             matching_lg.vnet_uri_list.remove(vnet_uri)
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         :param old_vid: The original arbitrary VLAN ID.
@@ -605,7 +593,10 @@ class NetworkBridgerVNET(NetworkBridger):
 
         # For the _find_or_create_vnet, we need to query all the virtual
         # networks
-        vswitch_w = self._find_vswitch(impacted_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=impacted_nb.vswitch_id)
         vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
                                  parent_uuid=self.host_uuid)
 
@@ -782,7 +773,10 @@ class NetworkBridgerTA(NetworkBridger):
         """
         # At this point, all of the new VLANs that need to be added are in the
         # new_vlans list.  Now we need to put them on trunk adapters.
-        vswitch_w = self._find_vswitch(req_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=req_nb.vswitch_id)
         for vlan_id in new_vlans:
             trunks = self._find_available_trunks(req_nb)
 
