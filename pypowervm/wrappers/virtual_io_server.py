@@ -335,6 +335,7 @@ class VIOS(bp.BasePartition):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
 class VStorageMapping(ewrap.ElementWrapper):
     """Base class for VSCSIMapping and VFCMapping."""
 

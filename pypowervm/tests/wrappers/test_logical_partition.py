@@ -484,6 +484,13 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter("proc_config.dedicated_proc_cfg.min",
                                 3, 0, use_dedicated=True)
 
+    def test_nvram(self):
+        self.assertEqual("TheNVRAMis20KofBASE64encodedDATA",
+                         self._dedicated_wrapper.nvram)
+        self._dedicated_wrapper.nvram = "RRNVRAMis20KofBASE64encodedDATA"
+        self.assertEqual("RRNVRAMis20KofBASE64encodedDATA",
+                         self._dedicated_wrapper.nvram)
+
 
 class TestIBMiSpecific(twrap.TestWrapper):
     """IBMi-specific tests, requiring a test file from an IBMi partition."""
