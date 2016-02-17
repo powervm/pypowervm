@@ -57,6 +57,37 @@ class Wrapper(object):
     _xag_registry = {}
 
     @classmethod
+    def base_pvm_type(cls, cls_):
+        """Decorator/method to register a PowerVM base class.
+
+        Use this instead of @pvm_type on Wrapper subclasses which are not to be
+        instantiated, but are themselves bases for real Wrappers.  For example,
+        use @base_pvm_type for BasePartition; and @pvm_type for
+        LogicalPartition and VirtualIOServer.
+
+        Use as a decorator with no arguments:
+
+        @Wrapper.base_pvm_type
+        class SomeBaseClass(Wrapper):
+            ...
+
+        Or use as a method to register a base class explicitly after it has
+        been defined:
+
+        Wrapper.base_pvm_type(SomeBaseClass)
+
+        :param cls_: The Wrapper subclass to be decorated/registered.
+        :return: cls_
+        """
+        # @xag_property registers with Wrapper._xag_registry because
+        # cls_ hasn't been created yet.  Transfer the created registry to the
+        # cls_, merging with any already registered by its bases, and clear
+        # Wrapper's registry so it doesn't pollute the next cls_.
+        cls_._xag_registry = dict(cls_._xag_registry, **Wrapper._xag_registry)
+        Wrapper._xag_registry = {}
+        return cls_
+
+    @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
                  attrib=pc.DEFAULT_SCHEMA_ATTR, child_order=None):
         """Decorator for {Entry|Element}Wrappers of PowerVM objects.
@@ -80,6 +111,8 @@ class Wrapper(object):
                             order-agnostic construction/setting of values.
         """
         def inner(class_):
+            # Base stuff first (e.g. register extended attribute groups).
+            cls.base_pvm_type(class_)
             class_.schema_type = schema_type
             if has_metadata is not None:
                 class_.has_metadata = has_metadata
@@ -93,12 +126,6 @@ class Wrapper(object):
                     co.insert(0, 'Metadata')
                 class_._child_order = tuple(co)
             Wrapper._pvm_object_registry[schema_type] = class_
-            # @xag_property registers with Wrapper._xag_registry because
-            # class_ hasn't been created yet.  Transfer the created registry
-            # to the class_, and clear Wrapper's so it doesn't pollute the next
-            # class_.
-            class_._xag_registry = Wrapper._xag_registry
-            Wrapper._xag_registry = {}
             return class_
         return inner
 
