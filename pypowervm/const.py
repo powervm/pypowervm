@@ -108,6 +108,7 @@ class XAG(object):
     ADV = 'Advanced'
     ENERGY = 'EnergyManagement'
     HYP = 'Hypervisor'
+    NVRAM = 'NVRAM'
     POOL_COMPLIANCE_HRS_LEFT = 'ComplianceRemainingHours'
     SYS_NET = 'SystemNetwork'
     TIER_THRESH = 'TierThreshold'

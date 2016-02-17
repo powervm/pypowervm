@@ -739,6 +739,7 @@ class SSP(ewrap.EntryWrapper):
         self.replace_list(_SSP_PVS, pvs)
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VStorageAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VStorageAdapter{Element|Entry}."""
 
@@ -771,6 +772,7 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
         return self._get_val_str(_LOCATION_CODE)
 
 
+# base_pvm_type by _VStorageAdapterMethods
 @six.add_metaclass(abc.ABCMeta)
 class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
@@ -791,6 +793,7 @@ class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
         return adp
 
 
+# base_pvm_type by _VStorageAdapterMethods
 @six.add_metaclass(abc.ABCMeta)
 class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
@@ -811,6 +814,7 @@ class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
         return adp
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
     @classmethod
@@ -923,6 +927,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         return self._get_val_int(_VADPT_SLOT_NUM)
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VFCClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with VFCClientAdapter(Element)."""
     def _wwpns(self, value):
