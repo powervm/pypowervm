@@ -16,6 +16,7 @@
 
 """Pervasive/commonly-used utilities."""
 
+import copy
 import datetime as dt
 import hashlib
 import math
@@ -471,3 +472,9 @@ def part_id_by_loc_code(loc_code):
     """
     id_match = re.search('.*-V(.+?)-.*', loc_code)
     return int(id_match.group(1)) if id_match else None
+
+
+def xag_attrs(name):
+    schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
+    schema['group'] = name
+    return schema
