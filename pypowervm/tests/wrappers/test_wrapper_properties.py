@@ -21,6 +21,7 @@ import testtools
 import pypowervm.const as c
 from pypowervm.utils import wrappers as wutil
 from pypowervm.wrappers import enterprise_pool as epool
+from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import virtual_io_server as vios
 
 
@@ -57,7 +58,7 @@ class TestXAGs(testtools.TestCase):
                     'seas': c.XAG.VIO_NET,
                     'trunk_adapters': c.XAG.VIO_NET,
                     'phys_vols': c.XAG.VIO_STOR,
-                    'io_adpts_for_link_agg': c.XAG.VIO_NET
+                    'io_adpts_for_link_agg': c.XAG.VIO_NET,
                 })
             elif wcls is epool.Pool:
                 self.verify_xags(wcls, {
@@ -69,6 +70,9 @@ class TestXAGs(testtools.TestCase):
                         c.XAG.POOL_COMPLIANCE_HRS_LEFT,
                     'mem_compliance_hours_left': c.XAG.POOL_COMPLIANCE_HRS_LEFT
                 })
+            elif wcls is lpar.LPAR:
+                self.verify_xags(wcls, {
+                    'nvram_data': c.XAG.NVRAM})
             # Include an elif for each Wrapper subclass that has xags defined.
             else:
                 self.verify_xags(wcls, {})
