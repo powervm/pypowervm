@@ -728,7 +728,7 @@ class EntryWrapper(Wrapper):
 
     @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
-               parent_uuid=None, **kwargs):
+               parent_uuid=None, one_result=False, **kwargs):
         """Performs a REST API search.
 
         Searches for object(s) of the type indicated by cls having (or not
@@ -763,17 +763,36 @@ class EntryWrapper(Wrapper):
                             parent_type is specified, but parent_uuid is None,
                             all parents of the ROOT type will be searched.
                             This may result in a slow response time.
+        :param one_result: Use when expecting (at most) one search result.  If
+                           True, this method will return the first element of
+                           the search result list, or None if the search
+                           produced no results.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
                        in cls.search_keys and/or the name of a getter @property
                        on the EntryWrapper subclass.  Due to limitations of
                        the REST API, if specifying xags or searching for a
                        CHILD, the key must be the name of a getter @property.
                        The value is the value to match.
-        :return: A list of instances of the cls.  The list may be empty
-                 (no results were found).  It may contain more than one
-                 instance (e.g. for a negated search, or for one where the key
-                 does not represent a unique property of the object).
+        :return: If one_result=False (the default), a list of instances of the
+                 cls.  The list may be empty (no results were found).  It may
+                 contain more than one instance (e.g. for a negated search, or
+                 for one where the key does not represent a unique property of
+                 the object).  If one_result=True, returns a single instance of
+                 cls, or None if the search produced no results.
         """
+        def list_or_single(results, single):
+            """Returns either the results list or its first entry.
+
+            :param results: The list of results from the search.  May be empty.
+                            Must not be None.
+            :param single: If False, return results unchanged.  If True, return
+                           only the first entry in the results list, or None if
+                           results is empty.
+            """
+            if not single:
+                return results
+            return results[0] if results else None
+
         # parent_uuid makes no sense without parent_type
         if parent_type is None and parent_uuid is not None:
             raise ValueError(_('Parent UUID specified without parent type.'))
@@ -795,18 +814,20 @@ class EntryWrapper(Wrapper):
             search_key = cls.search_keys[key]
         except (AttributeError, KeyError):
             # Fallback search by [GET feed] + loop
-            return cls._search_by_feed(adapter, cls.schema_type, negate, key,
-                                       val, xag, parent_type, parent_uuid)
+            return list_or_single(
+                cls._search_by_feed(adapter, cls.schema_type, negate, key, val,
+                                    xag, parent_type, parent_uuid), one_result)
 
         op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
         search_parm = "(%s%s'%s')" % (search_key, op, quote(str(val), safe=''))
         # Let this throw HttpError if the caller got it wrong.
         # Note that this path will only be hit for ROOTs.
-        resp = cls._read_parent_or_child(adapter, cls.schema_type, parent_type,
-                                         parent_uuid, suffix_type='search',
-                                         suffix_parm=search_parm)
-        return cls.wrap(resp)
+        return list_or_single(
+            cls.wrap(cls._read_parent_or_child(
+                adapter, cls.schema_type, parent_type, parent_uuid,
+                suffix_type='search', suffix_parm=search_parm)),
+            one_result)
 
     @classmethod
     def _search_by_feed(cls, adapter, target_type, negate, key, val, xag,
