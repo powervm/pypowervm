@@ -94,6 +94,11 @@ class PoolXAGs(_XAGEnum):
     COMPLIANCE_HRS_LEFT = _XAG(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
 
 
+class LPARXAGs(_XAGEnum):
+    """Extended attribute groups relevant to Logical Partition."""
+    NVRAM = _XAG(const.XAG.NVRAM)
+
+
 class Atom(object):
     def __init__(self, properties):
         self.properties = properties
