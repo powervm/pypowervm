@@ -104,14 +104,9 @@ def _find_or_create_vswitch(adapter, host_uuid, vs_name, crt_vswitch):
                         found, the system should attempt to create one (with
                         the default parameters - ex: Veb mode).
     """
-    # TODO(IBM): Change this over to .search()
-    vswitch_w = None
-    vswitch_wraps = pvm_net.VSwitch.get(adapter, parent_type=pvm_ms.System,
-                                        parent_uuid=host_uuid)
-    for vs_w in vswitch_wraps:
-        if vs_w.name == vs_name:
-            vswitch_w = vs_w
-            break
+    vswitch_w = pvm_net.VSwitch.search(adapter, parent_type=pvm_ms.System,
+                                       parent_uuid=host_uuid, one_result=True,
+                                       name=vs_name)
 
     if vswitch_w is None:
         if crt_vswitch:

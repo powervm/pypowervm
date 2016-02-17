@@ -109,13 +109,6 @@ class TestNetworkBridger(testtools.TestCase):
         self.assertEqual(4092, bridger._find_new_arbitrary_vid(nbs,
                                                                others=[4093]))
 
-    def test_find_vswitch(self):
-        self.adpt.read.return_value = self.mgr_vsw_resp
-        bridger = net_br.NetworkBridgerVNET(self.adpt, self.host_uuid)
-        v = bridger._find_vswitch('0')
-        self.assertIsNotNone(v)
-        self.assertEqual(0, v.switch_id)
-
     def test_remove_vlan_from_nb_bad_vid(self):
         """Attempt to remove a VID that can't be taken off NB."""
         # Mock Data
@@ -133,8 +126,7 @@ class TestNetworkBridger(testtools.TestCase):
         self.assertEqual(0, self.adpt.update.call_count)
 
     def _setup_reassign_arbitrary_vid(self):
-        vsw_p = mock.patch('pypowervm.tasks.network_bridger.NetworkBridgerTA.'
-                           '_find_vswitch')
+        vsw_p = mock.patch('pypowervm.wrappers.network.VSwitch.search')
         mock_vsw = vsw_p.start()
         self.addCleanup(vsw_p.stop)
         vnet = pvm_net.VNet._bld(self.adpt).entry

@@ -16,14 +16,12 @@
 
 
 import mock
-import testtools
 
 from pypowervm import adapter as adp
 from pypowervm import exceptions as exc
 from pypowervm.tasks import cna
-from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
-from pypowervm.tests.test_utils import pvmhttp
+from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 from pypowervm.wrappers import entry_wrapper as ewrap
 from pypowervm.wrappers import logical_partition as pvm_lpar
 from pypowervm.wrappers import network as pvm_net
@@ -33,22 +31,15 @@ VSWITCH_FILE = 'fake_vswitch_feed.txt'
 VNET_FILE = 'fake_virtual_network_feed.txt'
 
 
-class TestCNA(testtools.TestCase):
+class TestCNA(twrap.TestWrapper):
     """Unit Tests for creating Client Network Adapters."""
-
-    def setUp(self):
-        super(TestCNA, self).setUp()
-        # Adapter with HMCish Traits
-        self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemoteHMCTraits))
-        self.adpt = self.adptfx.adpt
+    mock_adapter_fx_args = {'traits': fx.RemoteHMCTraits}
+    file = VSWITCH_FILE
+    wrapper_class_to_test = pvm_net.VSwitch
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
     def test_crt_cna(self, mock_vnet_find):
         """Tests the creation of Client Network Adapters."""
-        # First need to load in the various test responses.
-        vs = tju.load_file(VSWITCH_FILE)
-        self.adpt.read.return_value = vs
-
         # Create a side effect that can validate the input into the create
         # call.
         def validate_of_create(*kargs, **kwargs):
@@ -58,6 +49,7 @@ class TestCNA(testtools.TestCase):
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
             return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
         self.adpt.create.side_effect = validate_of_create
+        self.adpt.read.return_value = self.resp
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
@@ -70,11 +62,10 @@ class TestCNA(testtools.TestCase):
 
         The virtual network creation shouldn't be done in this flow.
         """
-        # First need to load in the various test responses.
-        vs = tju.load_file(VSWITCH_FILE)
-        self.adpt.read.return_value = vs
         # PVMish Traits
         self.adptfx.set_traits(fx.LocalPVMTraits)
+
+        self.adpt.read.return_value = self.resp
 
         # Create a side effect that can validate the input into the create
         # call.
@@ -93,10 +84,7 @@ class TestCNA(testtools.TestCase):
 
     def test_find_or_create_vswitch(self):
         """Validates that a vswitch can be created."""
-        # First need to load in the various test responses.
-        vs = tju.load_file(VSWITCH_FILE)
-        self.adpt.read.return_value = vs
-
+        self.adpt.read.return_value = self.resp
         # Test that it finds the right vSwitch
         vswitch_w = cna._find_or_create_vswitch(self.adpt, 'fake_host',
                                                 'ETHERNET0', True)
@@ -109,7 +97,7 @@ class TestCNA(testtools.TestCase):
             self.assertEqual('ManagedSystem', kargs[1])
             self.assertEqual('VirtualSwitch', kwargs.get('child_type'))
             # Return a previously created vSwitch...
-            return pvm_net.VSwitch.wrap(vs)[0].entry
+            return self.dwrap.entry
         self.adpt.create.side_effect = validate_of_create
 
         # Test the create
@@ -123,11 +111,15 @@ class TestCNA(testtools.TestCase):
         self.assertRaises(exc.Error, cna._find_or_create_vswitch, self.adpt,
                           'fake_host', 'Temp', False)
 
+
+class TestVNET(twrap.TestWrapper):
+    mock_adapter_fx_args = {'traits': fx.RemoteHMCTraits}
+    file = VNET_FILE
+    wrapper_class_to_test = pvm_net.VNet
+
     def test_find_or_create_vnet(self):
         """Tests that the virtual network can be found/created."""
-        vn = pvmhttp.load_pvm_resp(VNET_FILE).get_response()
-        self.adpt.read.return_value = vn
-
+        self.adpt.read.return_value = self.resp
         fake_vs = mock.Mock()
         fake_vs.switch_id = 0
         fake_vs.name = 'ETHERNET0'
@@ -156,9 +148,7 @@ class TestCNA(testtools.TestCase):
 
     def test_find_free_vlan(self):
         """Tests that a free VLAN can be found."""
-        vn = pvmhttp.load_pvm_resp(VNET_FILE).get_response()
-        self.adpt.read.return_value = vn
-
+        self.adpt.read.return_value = self.resp
         # Mock data specific to the VNET File
         host_uuid = '67dca605-3923-34da-bd8f-26a378fc817f'
         fake_vs = mock.Mock()
