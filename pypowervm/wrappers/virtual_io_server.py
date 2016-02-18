@@ -23,7 +23,9 @@ import six
 
 from oslo_log import log as logging
 
+import pypowervm.const as c
 import pypowervm.entities as ent
+from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -100,11 +102,32 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
     _VIO_VNIC_BACKDEVS)
 
 
+class _VIOSXAGs(object):
+    """Extended attribute groups relevant to Virtual I/O Server.
+
+    DEPRECATED.  Use pypowervm.const.XAG and pypowervm.util.xag_attrs().
+    """
+    _vals = dict(
+        NETWORK=c.XAG.VIO_NET,
+        STORAGE=c.XAG.VIO_STOR,
+        SCSI_MAPPING=c.XAG.VIO_SMAP,
+        FC_MAPPING=c.XAG.VIO_FMAP)
+
+    def __getattr__(self, item):
+        if item in self._vals:
+            import warnings
+            warnings.warn(_("The 'xags' property of the VIOS EntryWrapper "
+                            "class is deprecated!  Please use values from "
+                            "pypowervm.const.XAG instead."),
+                          DeprecationWarning)
+            return self._vals[item]
+
+
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer', child_order=_VIOS_EL_ORDER)
 class VIOS(bp.BasePartition):
 
-    # Extended Attribute Groups
-    xags = ent.VIOSXAGs()
+    # DEPRECATED.  Use pypowervm.const.XAG and pypowervm.util.xag_attrs().
+    xags = _VIOSXAGs()
 
     @classmethod
     def bld(cls, adapter, name, mem_cfg, proc_cfg, io_cfg=None):
@@ -112,7 +135,7 @@ class VIOS(bp.BasePartition):
         return super(VIOS, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env=bp.LPARType.VIOS, io_cfg=io_cfg)
 
-    @ewrap.Wrapper.xag_property(xags.STORAGE)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_STOR)
     def media_repository(self):
         return self.element.find(_VIRT_MEDIA_REPOSITORY_PATH)
 
@@ -208,7 +231,7 @@ class VIOS(bp.BasePartition):
     def is_mover_service_partition(self):
         return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.
 
@@ -231,47 +254,42 @@ class VIOS(bp.BasePartition):
 
         return tuple(ip_list)
 
-    @ewrap.Wrapper.xag_property(xags.FC_MAPPING)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_FMAP)
     def vfc_mappings(self):
         """Returns a WrapperElemList of the VFCMapping objects."""
-        def_attrib = self.xags.FC_MAPPING.attrs
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_VFC_MAPPINGS, attrib=def_attrib),
-            VFCMapping)
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_VFC_MAPPINGS, attrib=u.xag_attrs(c.XAG.VIO_FMAP)), VFCMapping)
         return es
 
     @vfc_mappings.setter
     def vfc_mappings(self, new_mappings):
         self.replace_list(_VIO_VFC_MAPPINGS, new_mappings,
-                          attrib=self.xags.FC_MAPPING.attrs)
+                          attrib=u.xag_attrs(c.XAG.VIO_FMAP))
 
-    @ewrap.Wrapper.xag_property(xags.SCSI_MAPPING)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_SMAP)
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
-        def_attrib = self.xags.SCSI_MAPPING.attrs
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_VSCSI_MAPPINGS, attrib=def_attrib),
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_VSCSI_MAPPINGS, attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
             VSCSIMapping, parent_entry=self)
         return es
 
     @scsi_mappings.setter
     def scsi_mappings(self, new_mappings):
         self.replace_list(_VIO_VSCSI_MAPPINGS, new_mappings,
-                          attrib=self.xags.SCSI_MAPPING.attrs)
+                          attrib=u.xag_attrs(c.XAG.VIO_SMAP))
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def seas(self):
-        def_attrib = self.xags.NETWORK.attrs
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_SEAS, attrib=def_attrib), net.SEA)
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_SEAS, attrib=u.xag_attrs(c.XAG.VIO_NET)), net.SEA)
         return es
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def trunk_adapters(self):
-        def_attrib = self.xags.NETWORK.attrs
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_TRUNK_ADPTS, attrib=def_attrib),
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_TRUNK_ADPTS, attrib=u.xag_attrs(c.XAG.VIO_NET)),
             net.TrunkAdapter)
         return es
 
@@ -295,7 +313,7 @@ class VIOS(bp.BasePartition):
                     break
         return orphan_trunks
 
-    @ewrap.Wrapper.xag_property(xags.STORAGE)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_STOR)
     def phys_vols(self):
         """Will return a list of physical volumes attached to this VIOS.
 
@@ -303,15 +321,15 @@ class VIOS(bp.BasePartition):
         """
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
         es = ewrap.WrapperElemList(
-            self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
+            self._find_or_seed(stor.PVS, attrib=u.xag_attrs(c.XAG.VIO_STOR)),
             stor.PV, parent_entry=self)
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def io_adpts_for_link_agg(self):
         es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=self.xags.NETWORK.attrs),
+            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=u.xag_attrs(c.XAG.VIO_NET)),
             LinkAggrIOAdapterChoice)
         return es
 

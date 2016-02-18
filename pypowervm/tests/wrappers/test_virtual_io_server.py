@@ -19,6 +19,7 @@ import mock
 import unittest
 
 import pypowervm.adapter as adpt
+import pypowervm.const as c
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.storage as pvm_stor
@@ -29,14 +30,6 @@ class TestVIOSWrapper(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
     wrapper_class_to_test = vios.VIOS
-
-    def test_xag_hash(self):
-        self.assertEqual(hash('ViosNetwork'), hash(vios.VIOS.xags.NETWORK))
-        self.assertEqual(hash('ViosStorage'), hash(vios.VIOS.xags.STORAGE))
-        self.assertEqual(hash('ViosSCSIMapping'),
-                         hash(vios.VIOS.xags.SCSI_MAPPING))
-        self.assertEqual(hash('ViosFCMapping'),
-                         hash(vios.VIOS.xags.FC_MAPPING))
 
     def test_update_timeout(self):
         self.adpt.update_by_path.return_value = self.dwrap.entry
@@ -648,7 +641,33 @@ class TestFeed3(twrap.TestWrapper):
         elem = vwrp._find(vios._VIO_FREE_IO_ADPTS_FOR_LNAGG)
         self.assertIsNotNone(elem)
         # Got the right xag
-        self.assertEqual(vios.VIOS.xags.NETWORK.name, elem.attrib['group'])
+        self.assertEqual(c.XAG.VIO_NET, elem.attrib['group'])
+
+    @mock.patch('warnings.warn')
+    def test_xags(self, mock_warn):
+        """Test deprecated extented attribute groups on the VIOS class.
+
+        This can be removed once VIOS.xags is removed.
+        """
+        expected = dict(NETWORK=c.XAG.VIO_NET, STORAGE=c.XAG.VIO_STOR,
+                        SCSI_MAPPING=c.XAG.VIO_SMAP, FC_MAPPING=c.XAG.VIO_FMAP)
+
+        for key, val in expected.items():
+            # Test class accessor
+            self.assertEqual(val, getattr(vios.VIOS.xags, key))
+            mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
+            mock_warn.reset_mock()
+            # Test instance accessor
+            self.assertEqual(val, getattr(self.dwrap.xags, key))
+            mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
+            mock_warn.reset_mock()
+
+        # And in case getattr(foo, 'bar') actually differs from foo.bar...
+        self.assertEqual(c.XAG.VIO_NET, vios.VIOS.xags.NETWORK)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
+        mock_warn.reset_mock()
+        self.assertEqual(c.XAG.VIO_NET, self.dwrap.xags.NETWORK)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
 if __name__ == "__main__":
     unittest.main()

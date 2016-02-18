@@ -471,3 +471,14 @@ def part_id_by_loc_code(loc_code):
     """
     id_match = re.search('.*-V(.+?)-.*', loc_code)
     return int(id_match.group(1)) if id_match else None
+
+
+def xag_attrs(xagstr):
+    """Produce XML attributes for a property using extended attribute groups.
+
+    :param xagstr: Extended attribute group name (from pypowervm.const.XAG).
+    :return: Dict of XML attributes suitable for the 'attrib' kwarg of a
+             (pypowervm.entities or etree) Element constructor.
+    """
+    base = const.DEFAULT_SCHEMA_ATTR
+    return dict(base, group=xagstr) if xagstr else base

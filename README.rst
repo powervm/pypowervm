@@ -115,3 +115,7 @@ Developer Notes
 
 - The ``xag`` argument to the ``pypowervm.wrappers.entry_wrapper.EntryWrapper.update``
   method is deprecated and will be removed no sooner than January 1st, 2017.
+
+- The ``xags`` member of the ``pypowervm.wrappers.virtual_io_server.VIOS``
+  class is deprecated and will be removed no sooner than January 1st, 2017.
+  Please use the members of ``pypowervm.const.XAG`` instead.

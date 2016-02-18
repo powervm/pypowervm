@@ -321,3 +321,9 @@ class TestUtil(unittest.TestCase):
         fail_loc = 'abc1234'
         self.assertEqual(util.part_id_by_loc_code(test_loc), 2)
         self.assertIsNone(util.part_id_by_loc_code(fail_loc))
+
+    def test_xag_attrs(self):
+        base = const.DEFAULT_SCHEMA_ATTR
+        self.assertEqual(dict(base), util.xag_attrs(''))
+        self.assertEqual(dict(base), util.xag_attrs(None))
+        self.assertEqual(dict(base, group='foo'), util.xag_attrs('foo'))

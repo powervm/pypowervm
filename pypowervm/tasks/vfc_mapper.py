@@ -128,7 +128,7 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     globally unique WWPNs rather than pre-seeding them.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
-                       extended attribute group (xag) of FC_MAPPING.
+                       extended attribute group (xag) of VIO_FMAP.
     :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
                          map the ports to.  These WWPNs should reside on
                          Physical FC Ports on the VIOS wrappers that were
@@ -167,7 +167,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     v_port_wwpn pairs exceed the total number of p_port_wwpns.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
-                       extended attribute group (xag) of FC_MAPPING.
+                       extended attribute group (xag) of VIO_FMAP.
     :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
                          map the ports to.  These WWPNs should reside on
                          Physical FC Ports on the VIOS wrappers that were
@@ -548,7 +548,7 @@ def has_client_wwpns(vios_wraps, client_wwpn_pair):
     """Returns the vios wrapper and vfc map if the client WWPNs already exist.
 
     :param vios_wraps: The VIOS wrappers.  Should be queried with the
-                       FC_MAPPING extended attribute.
+                       VIO_FMAP extended attribute.
     :param client_wwpn_pair: The pair (list or set) of the client WWPNs.
     :return vios_w: The VIOS wrapper containing the wwpn pair.  None if none
                     of the wrappers contain the pair.
@@ -584,7 +584,7 @@ def build_migration_mappings_for_fabric(vios_wraps, p_port_wwpns,
     It is typically input back to the source server for the migration call.
 
     :param vios_wraps: The VIOS wrappers for the target system.  Must
-                       have the VFC_MAPPING xag specified.
+                       have the VIO_FMAP xag specified.
     :param p_port_wwpns: The physical port WWPNs that can be used for
                          this specific fabric.  May span multiple VIOSes,
                          but each must be part of the vios_wraps.
