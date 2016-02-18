@@ -46,7 +46,6 @@ import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import storage as pvm_stor
-from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 logon_text = testlib.file2b("logon.xml")
 
@@ -415,7 +414,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.VIOS.xags.FC_MAPPING])
+                                   xag=[c.XAG.VIO_FMAP])
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping')
@@ -425,8 +424,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag={pvm_vios.VIOS.xags.FC_MAPPING,
-                                        pvm_vios.VIOS.xags.NETWORK})
+                                   xag={c.XAG.VIO_FMAP, c.XAG.VIO_NET})
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
@@ -436,8 +434,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.VIOS.xags.NETWORK,
-                                        pvm_vios.VIOS.xags.FC_MAPPING])
+                                   xag=[c.XAG.VIO_NET, c.XAG.VIO_FMAP])
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')

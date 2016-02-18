@@ -19,6 +19,7 @@
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
 
+from pypowervm import const as c
 from pypowervm.i18n import _
 from pypowervm import util
 from pypowervm.utils import retry as pvm_retry
@@ -78,7 +79,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     if not isinstance(vios, pvm_vios.VIOS):
         vios_w = pvm_vios.VIOS.wrap(
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
-                         xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
+                         xag=[c.XAG.VIO_SMAP]))
     else:
         vios_w = vios
 
@@ -308,7 +309,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     if not isinstance(vios, pvm_vios.VIOS):
         vios = pvm_vios.VIOS.wrap(
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
-                         xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
+                         xag=[c.XAG.VIO_SMAP]))
 
     resp_list = remove_maps(vios, client_lpar_id, match_func=match_func)
 

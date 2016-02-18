@@ -870,7 +870,7 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
-                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+                 The feed/getter must use the VIO_SMAP and VIO_FMAP xags.
     :param lpars_exist: (Optional) If set to False (the default), storage
                         artifacts associated with an extant LPAR will be
                         ignored (NOT scrubbed).  Otherwise, we will scrub
@@ -915,7 +915,7 @@ def add_orphan_storage_scrub_tasks(ftsk, lpar_id=None):
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
-                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+                 The feed/getter must use the VIO_SMAP and VIO_FMAP xags.
     :param lpar_id: (Optional) Only orphan mappings associated with the
                     specified LPAR ID will be removed.  If None (the default),
                     all LPARs' mappings will be considered.
@@ -966,8 +966,7 @@ class ComprehensiveScrub(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING,
-                                 vios.VIOS.xags.SCSI_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP, c.XAG.VIO_SMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)
@@ -1004,8 +1003,7 @@ class ScrubOrphanStorageForLpar(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING,
-                                 vios.VIOS.xags.SCSI_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP, c.XAG.VIO_SMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)
@@ -1033,7 +1031,7 @@ class ScrubPortlessVFCMaps(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)

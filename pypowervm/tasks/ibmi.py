@@ -18,6 +18,7 @@
 
 from oslo_log import log as logging
 
+import pypowervm.const as c
 import pypowervm.exceptions as pvmex
 from pypowervm import i18n
 import pypowervm.tasks.scsi_mapper as pvm_smap
@@ -68,10 +69,7 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
         msg = _LI("Setting Virtual Fibre Channel slot as load source for VM "
                   "%s") % lpar_w.name
         LOG.info(msg)
-        vios_wraps = pvm_vios.VIOS.wrap(adapter.read(
-            pvm_vios.VIOS.schema_type,
-            xag=[pvm_vios.VIOS.xags.FC_MAPPING]))
-        for vios_wrap in vios_wraps:
+        for vios_wrap in pvm_vios.VIOS.get(adapter, xag=[c.XAG.VIO_FMAP]):
             existing_maps = pvm_vfcmap.find_maps(
                 vios_wrap.vfc_mappings, lpar_w.id)
             client_adapters.extend([vfcmap.client_adapter
@@ -82,10 +80,7 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
         msg = _LI("Setting Virtual SCSI slot slot as load source for VM "
                   "%s") % lpar_w.name
         LOG.info(msg)
-        vios_wraps = pvm_vios.VIOS.wrap(adapter.read(
-            pvm_vios.VIOS.schema_type,
-            xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
-        for vios_wrap in vios_wraps:
+        for vios_wrap in pvm_vios.VIOS.get(adapter, xag=[c.XAG.VIO_SMAP]):
             existing_maps = pvm_smap.find_maps(
                 vios_wrap.scsi_mappings, lpar_w.id)
             client_adapters.extend([smap.client_adapter

@@ -21,6 +21,7 @@ import copy
 
 import six
 
+from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
 from pypowervm.utils import retry as pvm_retry
@@ -437,7 +438,7 @@ class NetworkBridger(object):
         # Loop through all the VIOSes.
         vios_wraps = pvm_vios.VIOS.get(self.adapter, parent_type=pvm_ms.System,
                                        parent_uuid=self.host_uuid,
-                                       xag=[pvm_vios.VIOS.xags.NETWORK])
+                                       xag=[c.XAG.VIO_NET])
 
         for vios_w in vios_wraps:
             # List all of the trunk adapters that are not part of the SEAs
