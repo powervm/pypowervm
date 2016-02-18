@@ -190,7 +190,7 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.utils.transaction.FeedTask')
     @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
     @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.get')
     def test_discover_hdisk(self, mock_ewget, mock_fsl, mock_alsst, mock_ftsk,
                             mock_luar):
         def set_luar_side_effect(_stat, _dev):

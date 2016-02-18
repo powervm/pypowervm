@@ -188,9 +188,8 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
                                          vendor=vendor)
     # Do we need to scrub and retry?
     if not good_discovery(status, devname):
-        vwrap = pvm_vios.VIOS.getter(adapter, entry_uuid=vios_uuid,
-                                     xag=(pvm_vios.VIOS.xags.SCSI_MAPPING,
-                                          pvm_vios.VIOS.xags.FC_MAPPING)).get()
+        vwrap = pvm_vios.VIOS.get(adapter, uuid=vios_uuid,
+                                  xag=(c.XAG.VIO_SMAP, c.XAG.VIO_FMAP))
 
         scrub_ids = tsk_stg.find_stale_lpars(vwrap)
         if scrub_ids:

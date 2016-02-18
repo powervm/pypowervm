@@ -18,80 +18,12 @@
 
 import collections
 import copy
-import functools
 import re
 
 from lxml import etree
 
 from pypowervm import const
 from pypowervm import util
-
-
-@functools.total_ordering
-class _XAG(object):
-    """Handler for a single extended attribute group name.
-
-    When accessed in string context, simply translates to the REST API name of
-    the extended attribute group, as expected by the ?group= query string in
-    the URI.
-
-    Also provides 'attrs', comprising the XML attributes required on a property
-    associated with that extended attribute group.
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return self.name
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __lt__(self, other):
-        return self.name < other.name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    @property
-    def attrs(self):
-        """XML attributes appropriate to a property belonging to this XAG."""
-        schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
-        schema['group'] = self.name
-        return schema
-
-
-class _XAGEnum(object):
-    """Superclass for Extended Attribute Groups enumerations.
-
-    Intended use: Define a subclass with the extended attribute groups specific
-    to a particular REST object type.  The subclass should simply contain a
-    member definition for each extended attribute group of the form:
-
-        NAME = XAG('StringName')
-
-    ...where 'StringName' is the name expected by the REST API in the ?group=
-    querystring.
-
-    Optionally, within an EntryWrapper subclass, define a class variable xags
-    which points to that subclass.
-
-    Extended attribute group NONE ('None') is supplied via the base class.
-    """
-    NONE = _XAG(const.XAG.NONE)
-
-
-class VIOSXAGs(_XAGEnum):
-    """Extended attribute groups relevant to Virtual I/O Server."""
-    NETWORK = _XAG(const.XAG.VIO_NET)
-    STORAGE = _XAG(const.XAG.VIO_STOR)
-    SCSI_MAPPING = _XAG(const.XAG.VIO_SMAP)
-    FC_MAPPING = _XAG(const.XAG.VIO_FMAP)
-
-
-class PoolXAGs(_XAGEnum):
-    """Extended attribute groups relevant to Enterprise Pools."""
-    COMPLIANCE_HRS_LEFT = _XAG(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
 
 
 class Atom(object):
