@@ -569,7 +569,7 @@ class LU(ewrap.ElementWrapper):
                  prior to update.
         """
         lu = super(LU, cls)._bld(adapter)
-        lu._name(name)
+        lu.name = name
         lu._capacity(capacity)
         if thin is not None:
             lu._is_thin(thin)
@@ -589,7 +589,7 @@ class LU(ewrap.ElementWrapper):
         :returns: An Element that can be used for a PhysicalVolume create.
         """
         lu = super(LU, cls)._bld(adapter)
-        lu._name(name)
+        lu.name = name
         lu._udid(udid)
         return lu
 
@@ -619,15 +619,16 @@ class LU(ewrap.ElementWrapper):
     def name(self):
         return self._get_val_str(_LU_NAME)
 
-    def _name(self, value):
-        return self.set_parm_value(_LU_NAME, value)
+    @name.setter
+    def name(self, value):
+        self.set_parm_value(_LU_NAME, value)
 
     @property
     def udid(self):
         return self._get_val_str(_LU_UDID)
 
     def _udid(self, value):
-        return self.set_parm_value(_LU_UDID, value)
+        self.set_parm_value(_LU_UDID, value)
 
     @property
     def capacity(self):
