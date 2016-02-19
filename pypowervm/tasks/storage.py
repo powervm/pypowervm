@@ -180,20 +180,43 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
 
     ssp, new_lu = crt_lu(ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
 
+    maybe_file = upload_lu(v_uuid, new_lu, d_stream, f_size,
+                           sha_chksum=sha_chksum)
+    return new_lu, maybe_file
+
+
+def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
+    """Uploads a data stream to an existing SSP Logical Unit.
+
+    :param v_uuid: The UUID of the Virtual I/O Server through which to perform
+                   the upload.
+    :param lu: LU Wrapper representing the Logical Unit to which to upload the
+               data.  The LU must already exist in the SSP.
+    :param d_stream: The data stream (either a file handle or stream) to
+                     upload.  Must have the 'read' method that returns a chunk
+                     of bytes.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+                       integrity checks.
+    :return: Normally the return value will be None, indicating that the image
+             was uploaded without issue.  If for some reason the File metadata
+             for the VIOS was not cleaned up, the return value is the LU
+             EntryWrapper.  This is simply a marker to be later used to retry
+             the cleanup.
+    """
     # The file type.  If local API server, then we can use the coordinated
     # file path.  Otherwise standard upload.
     file_type = (vf.FileType.DISK_IMAGE_COORDINATED
-                 if ssp.adapter.traits.local_api
+                 if lu.adapter.traits.local_api
                  else vf.FileType.DISK_IMAGE)
 
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        ssp.adapter, lu_name, file_type, v_uuid, f_size=f_size,
-        tdev_udid=new_lu.udid, sha_chksum=sha_chksum)
+        lu.adapter, lu.name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=lu.udid, sha_chksum=sha_chksum)
 
-    maybe_file = _upload_stream(vio_file, d_stream)
-    return new_lu, maybe_file
+    return _upload_stream(vio_file, d_stream)
 
 
 def _upload_stream(vio_file, d_stream):
