@@ -106,6 +106,15 @@ class TestVSwitch(twrap.TestWrapper):
         self.assertTrue(net.VSwitch.has_metadata)
         self.assertEqual(net.VSwitch.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
+    def test_set_mode(self):
+        """Tests that the vSwitch element can have the mode set."""
+        vs = net.VSwitch.bld(None, 'Test')
+        self.assertEqual(net.VSwitchMode.VEB, vs.mode)
+        vs.mode = net.VSwitchMode.VEPA
+        self.assertEqual(net.VSwitchMode.VEPA, vs.mode)
+        vs.mode = net.VSwitchMode.VEB
+        self.assertEqual(net.VSwitchMode.VEB, vs.mode)
+
 
 class TestLoadGroup(unittest.TestCase):
     def test_wrapper_class(self):

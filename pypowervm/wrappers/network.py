@@ -206,7 +206,7 @@ class VSwitch(ewrap.EntryWrapper):
         """
         vswitch = super(VSwitch, cls)._bld(adapter)
         vswitch.name = name
-        vswitch._mode(switch_mode)
+        vswitch.mode = switch_mode
         vswitch.vnet_uri_list = []
         return vswitch
 
@@ -236,7 +236,8 @@ class VSwitch(ewrap.EntryWrapper):
         """
         return self._get_val_str(_VSW_MODE)
 
-    def _mode(self, new_mode):
+    @mode.setter
+    def mode(self, new_mode):
         self.set_parm_value(_VSW_MODE, new_mode)
 
     @property
