@@ -298,7 +298,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
 
     def test_lu_ordering(self):
         lu = stor.LU._bld(None)
-        lu._name('lu_name')
+        lu.name = 'lu_name'
         lu._udid('lu_udid')
         lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
         lu._capacity(123)
@@ -323,7 +323,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
         lu2._udid('another_udid')
         self.assertNotEqual(lu1, lu2)
         lu2._udid('lu_udid')
-        lu1._name('another_lu')
+        lu1.name = 'another_lu'
         self.assertNotEqual(lu1, lu2)
 
     def test_lu_hash(self):
