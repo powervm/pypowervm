@@ -240,7 +240,16 @@ class TestSharedStoragePool(twrap.TestWrapper):
             pv.udid,
             '01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDAwMw==')
         self.assertEqual(pv.name, 'hdisk3')
-        # TODO(IBM): test setter
+        # Test setter
+        self.dwrap.physical_volumes = []
+        pvs = self.dwrap.physical_volumes
+        self.assertEqual(0, len(pvs))
+        self.dwrap.physical_volumes = [stor.PV.bld(None, 'pv1', udid='udid1'),
+                                       stor.PV.bld(None, 'pv2', udid='udid2')]
+        pvs = self.dwrap.physical_volumes
+        self.assertEqual(2, len(pvs))
+        self.assertEqual(dict(pv1='udid1', pv2='udid2'),
+                         {pv.name: pv.udid for pv in pvs})
 
     def test_logical_units(self):
         lus = self.dwrap.logical_units
@@ -253,7 +262,16 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
         self.assertEqual(lu.in_use, True)
-        # TODO(IBM): test setter
+        # Test setter
+        self.dwrap.logical_units = []
+        lus = self.dwrap.logical_units
+        self.assertEqual(0, len(lus))
+        self.dwrap.logical_units = [stor.LU.bld(None, 'lu1', 1),
+                                    stor.LU.bld(None, 'lu2', 2)]
+        lus = self.dwrap.logical_units
+        self.assertEqual(2, len(lus))
+        self.assertEqual(dict(lu1=1, lu2=2),
+                         {lu.name: lu.capacity for lu in lus})
 
     def test_fresh_ssp(self):
         ssp = stor.SSP.bld(None, 'myssp', [
