@@ -1117,7 +1117,7 @@ class IOSlot(ewrap.ElementWrapper):
             """
             new_slot = super(IOSlot.AssociatedIOSlot, cls)._bld(adapter)
             new_slot._bus_grp_required(bus_grp_required)
-            new_slot._pci_subsys_drc_index(drc_index)
+            new_slot._drc_index(drc_index)
 
             return new_slot
 
@@ -1170,14 +1170,14 @@ class IOSlot(ewrap.ElementWrapper):
             return self._get_val_int(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
 
         @property
-        def pci_subsys_drc_index(self):
+        def drc_index(self):
             return self._get_val_int(_ASSOC_IO_SLOT_DRC_INDEX)
 
-        def _pci_subsys_drc_index(self, val):
+        def _drc_index(self, val):
             self.set_parm_value(_ASSOC_IO_SLOT_DRC_INDEX, val)
 
         @property
-        def pci_subsys_drc_name(self):
+        def drc_name(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DRC_NAME)
 
         @property
@@ -1269,12 +1269,12 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('pci_subsys_vendor_id')
 
     @property
-    def pci_subsys_drc_index(self):
-        return self.__get_prop('pci_subsys_drc_index')
+    def drc_index(self):
+        return self.__get_prop('drc_index')
 
     @property
-    def pci_subsys_drc_name(self):
-        return self.__get_prop('pci_subsys_drc_name')
+    def drc_name(self):
+        return self.__get_prop('drc_name')
 
     @property
     def adapter(self):
