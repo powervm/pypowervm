@@ -653,20 +653,20 @@ class TestFeed3(twrap.TestWrapper):
                         SCSI_MAPPING=c.XAG.VIO_SMAP, FC_MAPPING=c.XAG.VIO_FMAP)
 
         for key, val in expected.items():
-            # Test class accessor
-            self.assertEqual(val, getattr(vios.VIOS.xags, key))
+            # Test class accessor, ensure '.name' works.
+            self.assertEqual(val, getattr(vios.VIOS.xags, key).name)
             mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
             mock_warn.reset_mock()
-            # Test instance accessor
-            self.assertEqual(val, getattr(self.dwrap.xags, key))
+            # Test instance accessor, ensure str() works.
+            self.assertEqual(val, str(getattr(self.dwrap.xags, key)))
             mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
             mock_warn.reset_mock()
 
         # And in case getattr(foo, 'bar') actually differs from foo.bar...
-        self.assertEqual(c.XAG.VIO_NET, vios.VIOS.xags.NETWORK)
+        self.assertEqual(c.XAG.VIO_NET, str(vios.VIOS.xags.NETWORK))
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
         mock_warn.reset_mock()
-        self.assertEqual(c.XAG.VIO_NET, self.dwrap.xags.NETWORK)
+        self.assertEqual(c.XAG.VIO_NET, self.dwrap.xags.NETWORK.name)
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@
 
 import abc
 import copy
+import functools
 import re
 import six
 
@@ -107,11 +108,30 @@ class _VIOSXAGs(object):
 
     DEPRECATED.  Use pypowervm.const.XAG and pypowervm.util.xag_attrs().
     """
+
+    @functools.total_ordering
+    class _Handler(object):
+        def __init__(self, name):
+            self.name = name
+            self.attrs = u.xag_attrs(name)
+
+        def __str__(self):
+            return self.name
+
+        def __eq__(self, other):
+            return self.name == other.name
+
+        def __lt__(self, other):
+            return self.name < other.name
+
+        def __hash__(self):
+            return hash(self.name)
+
     _vals = dict(
-        NETWORK=c.XAG.VIO_NET,
-        STORAGE=c.XAG.VIO_STOR,
-        SCSI_MAPPING=c.XAG.VIO_SMAP,
-        FC_MAPPING=c.XAG.VIO_FMAP)
+        NETWORK=_Handler(c.XAG.VIO_NET),
+        STORAGE=_Handler(c.XAG.VIO_STOR),
+        SCSI_MAPPING=_Handler(c.XAG.VIO_SMAP),
+        FC_MAPPING=_Handler(c.XAG.VIO_FMAP))
 
     def __getattr__(self, item):
         if item in self._vals:
