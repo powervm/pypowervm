@@ -654,19 +654,19 @@ class TestFeed3(twrap.TestWrapper):
 
         for key, val in expected.items():
             # Test class accessor
-            self.assertEqual(val, getattr(vios.VIOS.xags, key))
+            self.assertEqual(val, str(getattr(vios.VIOS.xags, key)))
             mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
             mock_warn.reset_mock()
             # Test instance accessor
-            self.assertEqual(val, getattr(self.dwrap.xags, key))
+            self.assertEqual(val, str(getattr(self.dwrap.xags, key)))
             mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
             mock_warn.reset_mock()
 
         # And in case getattr(foo, 'bar') actually differs from foo.bar...
-        self.assertEqual(c.XAG.VIO_NET, vios.VIOS.xags.NETWORK)
+        self.assertEqual(c.XAG.VIO_NET, str(vios.VIOS.xags.NETWORK))
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
         mock_warn.reset_mock()
-        self.assertEqual(c.XAG.VIO_NET, self.dwrap.xags.NETWORK)
+        self.assertEqual(c.XAG.VIO_NET, str(self.dwrap.xags.NETWORK))
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
 if __name__ == "__main__":
