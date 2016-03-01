@@ -501,9 +501,9 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(1, self.io_slot.pci_rev_id)
         self.assertEqual(4116, self.io_slot.pci_vendor_id)
         self.assertEqual(4116, self.io_slot.pci_subsys_vendor_id)
-        self.assertEqual(553713674, self.io_slot.pci_subsys_drc_index)
+        self.assertEqual(553713674, self.io_slot.drc_index)
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
-                         self.io_slot.pci_subsys_drc_name)
+                         self.io_slot.drc_name)
         self.assertEqual(False, self.io_slot.bus_grp_required)
         self.assertEqual(False, self.io_slot.required)
 
@@ -527,7 +527,7 @@ class TestIOSlots(twrap.TestWrapper):
         new_slot = bp.IOSlot.bld(self.adpt, True, 12345678)
         self.assertEqual(False, new_slot.required)
         self.assertEqual(True, new_slot.bus_grp_required)
-        self.assertEqual(12345678, new_slot.pci_subsys_drc_index)
+        self.assertEqual(12345678, new_slot.drc_index)
 
 
 class TestGenericIOAdapter(twrap.TestWrapper):
