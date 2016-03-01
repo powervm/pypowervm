@@ -516,7 +516,12 @@ class Session(object):
         with self._lock:
             if not self._logged_in:
                 return
-            LOG.info(_("Session logging off %s"), self.host)
+            try:
+                LOG.info(_("Session logging off %s"), self.host)
+            except TypeError:
+                # TODO: This is in place because LOG.info may come back as
+                #       None.
+                pass
             try:
                 # relogin=False to prevent multiple attempts
                 self.request('DELETE', c.LOGON_PATH, relogin=False)
