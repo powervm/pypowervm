@@ -589,7 +589,7 @@ class NetworkBridgerVNET(NetworkBridger):
             vnet_uri = self._find_vnet_uri_from_lg(matching_lg, vlan_id)
             matching_lg.vnet_uri_list.remove(vnet_uri)
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         :param old_vid: The original arbitrary VLAN ID.
