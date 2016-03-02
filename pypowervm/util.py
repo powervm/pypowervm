@@ -473,12 +473,14 @@ def part_id_by_loc_code(loc_code):
     return int(id_match.group(1)) if id_match else None
 
 
-def xag_attrs(xagstr):
+def xag_attrs(xagstr, base=const.DEFAULT_SCHEMA_ATTR):
     """Produce XML attributes for a property using extended attribute groups.
 
     :param xagstr: Extended attribute group name (from pypowervm.const.XAG).
+    :param base: The dict of attributes to which to add the extended attribute
+                 group.  Usually one of the pypowervm.const values near
+                 DEFAULT_SCHEMA_ATTR (the default).
     :return: Dict of XML attributes suitable for the 'attrib' kwarg of a
              (pypowervm.entities or etree) Element constructor.
     """
-    base = const.DEFAULT_SCHEMA_ATTR
     return dict(base, group=xagstr) if xagstr else base

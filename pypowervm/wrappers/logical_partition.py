@@ -272,7 +272,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @srr_enabled.setter
     def srr_enabled(self, value):
         self.set_parm_value(_LPAR_SRR, u.sanitize_bool_for_api(value),
-                            attrib=pc.ATTR_SCHEMA120)
+                            attrib=pc.ATTR_KSV120)
 
     @property
     def restrictedio(self):
