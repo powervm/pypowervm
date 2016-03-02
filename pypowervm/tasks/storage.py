@@ -513,7 +513,7 @@ def _rm_dev_by_udid(dev, devlist):
     if len(matches) > 1:
         raise exc.FoundDevMultipleTimes(devname=dev.name, count=len(matches))
 
-    LOG.debug("Removing %s from devlist.", dev.name)
+    LOG.debug("Removing %s from devlist." % dev.name)
     match = matches[0]
     devlist.remove(match)
     return match
@@ -702,7 +702,7 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
                     dict(msgargs, num_maps=len(removals)))
     else:
         LOG.debug("No orphan %(stg_type)s mappings found on VIOS "
-                  "%(vios_name)s.", msgargs)
+                  "%(vios_name)s." % msgargs)
     return removals
 
 
@@ -727,7 +727,7 @@ def _remove_portless_vfc_maps(vwrap, lpar_id=None):
                       "VIOS %(vios_name)s."),
                     dict(num_maps=len(removals), vios_name=vwrap.name))
     else:
-        LOG.debug("No port-less VFC mappings found on VIOS %(vios_name)s.",
+        LOG.debug("No port-less VFC mappings found on VIOS %(vios_name)s." %
                   dict(vios_name=vwrap.name))
     return removals
 
@@ -757,7 +757,7 @@ def _remove_lpar_maps(vwrap, lpar_ids, type_str):
             removals.extend(_removals)
         else:
             LOG.debug("No %(stg_type)s mappings found for LPAR ID "
-                      "%(lpar_id)d on VIOS %(vios_name)s.", msgargs)
+                      "%(lpar_id)d on VIOS %(vios_name)s." % msgargs)
     return removals
 
 
