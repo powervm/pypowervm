@@ -241,13 +241,13 @@ class Session(object):
 
         if isupload:
             LOG.debug('sending %s %s headers=%s body=<file contents>',
-                      (method, url,
-                       headers if not sensitive else "<sensitive>"))
+                      method, url,
+                      headers if not sensitive else "<sensitive>")
         else:
             LOG.debug('sending %s %s headers=%s body=%s',
-                      (method, url,
-                       headers if not sensitive else "<sensitive>",
-                       body if not sensitive else "<sensitive>"))
+                      method, url,
+                      headers if not sensitive else "<sensitive>",
+                      body if not sensitive else "<sensitive>")
 
         # Add X-API-Session header after above so it's not printed in log
         sess_token_try = None
@@ -307,10 +307,10 @@ class Session(object):
                 # TODO(IBM): why does this happen and what else may result?
                 pass
 
-        LOG.debug('result: %s (%s) for %s %s',
-                  (response.status_code, response.reason, method, url))
+        LOG.debug('result: %s (%s) for %s %s', response.status_code,
+                  response.reason, method, url)
         LOG.debug('response headers: %s',
-                  (response.headers if not sensitive else "<sensitive>"))
+                  response.headers if not sensitive else "<sensitive>")
 
         if response.status_code in [c.HTTPStatus.OK_NO_CONTENT,
                                     c.HTTPStatus.NO_CHANGE]:
@@ -319,7 +319,7 @@ class Session(object):
                             reqheaders=headers, reqbody=body)
         else:
             LOG.debug('response body:\n%s',
-                      (response.text if not sensitive else "<sensitive>"))
+                      response.text if nlot sensitive else "<sensitive>")
 
         # re-login processing
         if response.status_code == c.HTTPStatus.UNAUTHORIZED:
@@ -740,7 +740,7 @@ class Adapter(object):
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
         if hostname_mismatch or o.port != self.session.port:
             LOG.debug('href=%s will be modified to use %s:%s',
-                      (href, self.session.host, self.session.port))
+                      href, self.session.host, self.session.port)
         path = self.extend_path(util.dice_href(href), suffix_type, suffix_parm,
                                 detail, xag=xag)
         return self.read_by_path(path, etag=etag, timeout=timeout,
@@ -915,8 +915,7 @@ class Adapter(object):
             if not resp or etag == resp.etag:
                 # need to invalidate this in the cache
                 self._cache.remove(feed_path)
-                LOG.debug('Invalidate feed %s for uuid %s' %
-                          (feed_path, uuid))
+                LOG.debug('Invalidate feed %s for uuid %s', feed_path, uuid)
 
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
                        sensitive=False, helpers=None):
@@ -990,8 +989,8 @@ class Adapter(object):
         o = urlparse.urlparse(href)
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
         if hostname_mismatch or o.port != self.session.port:
-            LOG.debug('href=%s will be modified to use %s:%s' %
-                      (href, self.session.host, self.session.port))
+            LOG.debug('href=%s will be modified to use %s:%s', href,
+                      self.session.host, self.session.port)
         return self.delete_by_path(o.path, etag=etag, timeout=timeout,
                                    auditmemento=auditmemento, helpers=helpers)
 
@@ -1117,7 +1116,7 @@ class Adapter(object):
                     # just return
                     return
                 LOG.debug('Built entry from cached feed etag=%s body=%s',
-                          (entry_etag, entry_body))
+                          entry_etag, entry_body)
 
         return resp
 
@@ -1237,7 +1236,7 @@ class Adapter(object):
             if uuid:
                 feed_paths = self._cache.get_feed_paths(path)
                 LOG.debug('Checking cached feeds %s for uuid %s %s',
-                          (feed_paths, uuid, xag_str))
+                          feed_paths, uuid, xag_str)
                 for f_path in feed_paths:
                     cached_resp = self._build_entry_resp(f_path, uuid, etag,
                                                          age)
