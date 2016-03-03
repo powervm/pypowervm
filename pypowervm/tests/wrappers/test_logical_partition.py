@@ -490,6 +490,10 @@ class TestLogicalPartition(testtools.TestCase):
         self._dedicated_wrapper.nvram = "RRNVRAMis20KofBASE64encodedDATA"
         self.assertEqual("RRNVRAMis20KofBASE64encodedDATA",
                          self._dedicated_wrapper.nvram)
+        # Test setting one that's absent
+        self.assertIsNone(self._shared_wrapper.nvram)
+        self._shared_wrapper.nvram = 'SomeOtherValue'
+        self.assertEqual('SomeOtherValue', self._shared_wrapper.nvram)
 
 
 class TestIBMiSpecific(twrap.TestWrapper):

@@ -327,3 +327,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(dict(base), util.xag_attrs(''))
         self.assertEqual(dict(base), util.xag_attrs(None))
         self.assertEqual(dict(base, group='foo'), util.xag_attrs('foo'))
+        # Test other bases
+        self.assertEqual(dict(one=2), util.xag_attrs(None, base=dict(one=2)))
+        self.assertEqual(dict(one=2, group='foo'),
+                         util.xag_attrs('foo', base=dict(one=2)))

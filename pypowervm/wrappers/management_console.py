@@ -89,7 +89,7 @@ class ManagementConsole(ewrap.EntryWrapper):
         """Sets the keys given a list of key strings."""
         self.replace_list(
             _AUTH_KEYS, [AuthorizedKey.bld(self.adapter, key) for key in keys],
-            attrib=c.ATTR_SCHEMA130)
+            attrib=c.ATTR_SCHEMA_KSV130)
 
 
 @ewrap.ElementWrapper.pvm_type(_AUTH_KEY, attrib={})

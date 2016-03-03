@@ -585,7 +585,8 @@ class BasePartition(ewrap.EntryWrapper):
     @nvram.setter
     def nvram(self, nvram):
         self.set_parm_value(_BP_NVRAM, nvram,
-                            u.xag_attrs(const.XAG.NVRAM))
+                            attrib=u.xag_attrs(const.XAG.NVRAM,
+                                               base=const.ATTR_KSV130))
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,

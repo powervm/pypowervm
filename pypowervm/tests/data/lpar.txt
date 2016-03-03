@@ -168,7 +168,6 @@ BODY{
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
     <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
     <BootMode kxe="false" kb="ROR">Normal</BootMode>
-    <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">TheNVRAMis20KofBASE64encodedDATA</PartitionNVRAM>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable kb="COD" kxe="false">true</SimplifiedRemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
