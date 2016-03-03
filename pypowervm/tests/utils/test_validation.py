@@ -143,7 +143,7 @@ class TestValidator(testtools.TestCase):
                                            name='srr_disabled')
         self.lpar_1_proc_ded_inactive = _bld_lpar(has_dedicated=True,
                                                   name='1_proc_ded_inactive',
-                                                  state='shutdown')
+                                                  state='not activated')
         self.lpar_22_procs = _bld_lpar(proc_units=22.0, name='lpar_22_procs')
         self.lpar_4_proc_ded = _bld_lpar(proc_units=4.0,
                                          has_dedicated=True, name='4_proc_ded')
@@ -248,21 +248,21 @@ class TestValidator(testtools.TestCase):
         vldr = vldn.LPARWrapperValidator(self.lpar_ame_2, self.mngd_sys,
                                          cur_lpar_w=self.lpar_1_proc)
         self.assertRaises(vldn.ValidatorException, vldr.validate_all)
-        # Test resizing lpar from defaultSPP to non-defaultSPP fails
+        # Test resizing lpar from defaultSPP to non-defaultSPP passes
         vldr = vldn.LPARWrapperValidator(self.lpar_non_default_spp,
                                          self.mngd_sys,
                                          cur_lpar_w=self.lpar_default_spp)
-        self.assertRaises(vldn.ValidatorException, vldr.validate_all)
-        # Test resizing lpar from non-defaultSPP to defaultSPP fails
+        vldr.validate_all()
+        # Test resizing lpar from non-defaultSPP to defaultSPP passes
         vldr = vldn.LPARWrapperValidator(self.lpar_default_spp,
                                          self.mngd_sys,
                                          cur_lpar_w=self.lpar_non_default_spp)
-        self.assertRaises(vldn.ValidatorException, vldr.validate_all)
-        # Test changing from dedicated to non-defaultSPP fails
+        vldr.validate_all()
+        # Test changing from dedicated to non-defaultSPP passes
         vldr = vldn.LPARWrapperValidator(self.lpar_non_default_spp,
                                          self.mngd_sys,
                                          self.lpar_1_proc_ded_inactive)
-        self.assertRaises(vldn.ValidatorException, vldr.validate_all)
+        vldr.validate_all()
         # Test changing processor mode (shared -> ded) fails for active resize
         vldr = vldn.LPARWrapperValidator(self.lpar_1_proc_ded,
                                          self.mngd_sys,
