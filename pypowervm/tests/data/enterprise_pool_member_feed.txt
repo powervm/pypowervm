@@ -53,7 +53,29 @@ BODY{
         <SerialNumber kxe="false" kb="CUR">21B63CV</SerialNumber>
     </ManagedSystemMachineTypeModelSerialNumber>
     <AssociatedManagedSystem kxe="false" kb="ROO" href="https://localhost:12443/rest/api/uom/ManagedSystem/59d74d49-66cc-3dd1-8ca3-65fa08aa75e3" rel="related"/>
-    <State kb="ROR" kxe="false">operating</State>
+    <ManagedSystemState kb="ROR" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
 </PowerEnterprisePoolMember:PowerEnterprisePoolMember>
         </content>
     </entry>
@@ -91,7 +113,29 @@ BODY{
         <Model kxe="false" kb="CUR">L2D</Model>
         <SerialNumber kxe="false" kb="CUR">100854A</SerialNumber>
     </ManagedSystemMachineTypeModelSerialNumber>
-    <State kb="ROR" kxe="false">operating</State>
+    <ManagedSystemState kb="ROR" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
 </PowerEnterprisePoolMember:PowerEnterprisePoolMember>
         </content>
     </entry>
@@ -129,7 +173,29 @@ BODY{
         <Model kxe="false" kb="CUR">22A</Model>
         <SerialNumber kxe="false" kb="CUR">21B63DV</SerialNumber>
     </ManagedSystemMachineTypeModelSerialNumber>
-    <State kb="ROR" kxe="false">operating</State>
+    <ManagedSystemState kb="ROR" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
 </PowerEnterprisePoolMember:PowerEnterprisePoolMember>
         </content>
     </entry>
@@ -167,7 +233,29 @@ BODY{
         <Model kxe="false" kb="CUR">L2D</Model>
         <SerialNumber kxe="false" kb="CUR">10085AA</SerialNumber>
     </ManagedSystemMachineTypeModelSerialNumber>
-    <State kb="ROR" kxe="false">operating</State>
+    <ManagedSystemState kb="ROR" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
 </PowerEnterprisePoolMember:PowerEnterprisePoolMember>
         </content>
     </entry>
@@ -205,7 +293,29 @@ BODY{
         <Model kxe="false" kb="CUR">L2D</Model>
         <SerialNumber kxe="false" kb="CUR">100857A</SerialNumber>
     </ManagedSystemMachineTypeModelSerialNumber>
-    <State kb="ROR" kxe="false">operating</State>
+    <ManagedSystemState kb="ROR" kxe="false">operating</ManagedSystemState>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
 </PowerEnterprisePoolMember:PowerEnterprisePoolMember>
         </content>
     </entry>
