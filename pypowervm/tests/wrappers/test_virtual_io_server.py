@@ -496,7 +496,7 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(825, self.io_slot.pc_adpt_id)
         self.assertEqual(260, self.io_slot.pci_class)
         self.assertEqual(825, self.io_slot.pci_dev_id)
-        self.assertEqual(825, self.io_slot.pci_subsys_dev_id)
+        self.assertEqual(826, self.io_slot.pci_subsys_dev_id)
         self.assertEqual(4116, self.io_slot.pci_mfg_id)
         self.assertEqual(1, self.io_slot.pci_rev_id)
         self.assertEqual(4116, self.io_slot.pci_vendor_id)

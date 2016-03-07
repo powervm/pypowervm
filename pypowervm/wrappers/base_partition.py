@@ -190,6 +190,7 @@ _ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
 _ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
 _ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
 _ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
+_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID = 'PCISubsystemDeviceID'
 _ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
 _ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
 _ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
@@ -1164,7 +1165,7 @@ class IOSlot(ewrap.ElementWrapper):
 
         @property
         def pci_subsys_dev_id(self):
-            return self._get_val_int(_ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID)
 
         @property
         def pci_mfg_id(self):
