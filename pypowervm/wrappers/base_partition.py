@@ -190,6 +190,7 @@ _ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
 _ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
 _ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
 _ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
+_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID = 'PCISubsystemDeviceID'
 _ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
 _ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
 _ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
@@ -206,10 +207,11 @@ _IO_SLOT_ORDER = (ASSOC_IO_SLOT_ROOT, _IO_SLOT_REQ)
 _AIO_ORDER = (_ASSOC_IO_SLOT_BUS_GRP, _ASSOC_IO_SLOT_DESC,
               _ASSOC_IO_SLOT_FEAT_CODES, _ASSOC_IO_SLOT_PHYS_LOC,
               _ASSOC_IO_SLOT_ADPT_ID, _ASSOC_IO_SLOT_PCI_CLASS,
-              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_MFG_ID,
-              _ASSOC_IO_SLOT_PCI_REV_ID, _ASSOC_IO_SLOT_PCI_VENDOR_ID,
-              _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID, RELATED_IO_ADPT_ROOT,
-              _ASSOC_IO_SLOT_DRC_INDEX, _ASSOC_IO_SLOT_DRC_NAME)
+              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID,
+              _ASSOC_IO_SLOT_PCI_MFG_ID, _ASSOC_IO_SLOT_PCI_REV_ID,
+              _ASSOC_IO_SLOT_PCI_VENDOR_ID, _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID,
+              RELATED_IO_ADPT_ROOT, _ASSOC_IO_SLOT_DRC_INDEX,
+              _ASSOC_IO_SLOT_DRC_NAME)
 
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
@@ -1164,7 +1166,7 @@ class IOSlot(ewrap.ElementWrapper):
 
         @property
         def pci_subsys_dev_id(self):
-            return self._get_val_int(_ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID)
 
         @property
         def pci_mfg_id(self):
