@@ -444,23 +444,6 @@ class ProcValidator(BaseValidator):
         Helper method to enforce validation rules that are common for
         both active and inactive resizes.
         """
-        curr_has_dedicated = self.cur_lpar_w.proc_config.has_dedicated
-        curr_proc_pool_id = self.cur_lpar_w.proc_config.shared_proc_cfg.pool_id
-        if curr_has_dedicated and not self.has_dedicated:
-            # Resize from Dedicated Mode to Shared Mode
-            if self.pool_id != 0:
-                msg = (_("The shared processor pool for %s must be "
-                         "DefaultPool.") % self.cur_lpar_w.name)
-                raise ValidatorException(msg)
-
-        if not self.has_dedicated and not curr_has_dedicated:
-            curr_proc_pool_id = self.cur_lpar_w.proc_config.\
-                shared_proc_cfg.pool_id
-            if curr_proc_pool_id != self.pool_id:
-                msg = (_("The shared processor pool for %s cannot be changed.")
-                       % self.cur_lpar_w.name)
-                raise ValidatorException(msg)
-
         self._validate_host_has_available_res(self.delta_des_vcpus,
                                               self.procs_avail,
                                               self.res_name)
