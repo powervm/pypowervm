@@ -213,3 +213,14 @@ class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
 class FoundDevMultipleTimes(AbstractMsgFmtError):
     msg_fmt = _("Found device %(devname)s %(count)d times; expected to find "
                 "it at most once.")
+
+
+class MultipleExceptionsInFeedTask(Exception):
+    """Exception containing tracebacks in WrappedFailure exceptions.
+
+    Exception raised when a pypowervm.utils.transaction.FeedTask run raises a
+    tasflow.exceptions.WrappedFailure containing more than one exception.  The
+    message string is a concatenation of the tracebacks of the wrapped
+    exceptions.
+    """
+    pass
