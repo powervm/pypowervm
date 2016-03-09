@@ -17,7 +17,6 @@
 """Tests for pypoowervm.utils.transaction."""
 
 import copy
-
 import mock
 import oslo_concurrency.lockutils as lock
 import oslo_context.context as ctx
@@ -25,6 +24,7 @@ from taskflow import engines as tf_eng
 from taskflow import exceptions as tf_ex
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
+import unittest
 
 import pypowervm.const as c
 import pypowervm.exceptions as ex
@@ -792,3 +792,43 @@ class TestFeedTask(twrap.TestWrapper):
         tf_eng.run(
             tf_uf.Flow('subthread_flow').add(ft1, ft2), engine='parallel',
             executor=tx.ContextThreadPoolExecutor(2))
+
+
+class TestExceptions(unittest.TestCase):
+    def test_exceptions(self):
+        def bad1(wrapper, s):
+            bad2(s)
+
+        def bad2(s):
+            bad3()
+
+        def bad3():
+            raise IOError("this is an exception!")
+
+        # With one entry in the feed, one exception should be raised, and it
+        # should bubble up as normal.
+        feed = [mock.Mock(spec=lpar.LPAR)]
+        ft = tx.FeedTask('ft', feed).add_functor_subtask(bad1, 'this is bad')
+
+        flow = tf_uf.Flow('the flow')
+        flow.add(ft)
+        self.assertRaises(IOError, tf_eng.run, flow)
+
+        # With multiple entries in the feed, TaskFlow will wrap the exceptions
+        # in a WrappedFailure.  We should repackage it, and the message in the
+        # resulting MultipleExceptionsInFeedTask should contain the right stack
+        # elements.
+        feed.append(mock.Mock(spec=lpar.LPAR))
+        ft = tx.FeedTask('ft', feed).add_functor_subtask(bad1, 'this is bad')
+
+        flow = tf_uf.Flow('the flow')
+        flow.add(ft)
+        with self.assertRaises(ex.MultipleExceptionsInFeedTask) as mult_ex:
+            tf_eng.run(flow)
+
+        # Make sure the WrappedFailure tag and all the methods in the stack
+        # show up in the exception.
+        self.assertIn('WrappedFailure', mult_ex.exception.args[0])
+        self.assertIn('bad1', mult_ex.exception.args[0])
+        self.assertIn('bad2', mult_ex.exception.args[0])
+        self.assertIn('bad3', mult_ex.exception.args[0])
