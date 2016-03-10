@@ -254,3 +254,37 @@ def _find_trunk_on_lpar(adapter, parent_wrap, client_vea):
                 cna.vswitch_id == client_vea.vswitch_id):
             return cna
     return None
+
+
+def find_cnas(trunk_w, cna_wraps=None):
+    """Returns the CNAs associated with the Trunk Adapter.
+
+    :param trunk_w: The Trunk Adapter to find the Client Network Adapters for.
+    :param cna_wraps: Optional param for passing in the list of CNA wraps
+                      to search.  If the list is none, queries will be done
+                      to build the list.
+    :return: A list of Client Network Adapters that are hosted by the Trunk
+             Adapter.
+    """
+    adapter = trunk_w.adapter
+
+    # Find all the CNAs on the system
+    if cna_wraps is None:
+
+        # All lpars should be searched, including VIOSes
+        lpar_wraps = lpar.LPAR.get(adapter)
+        lpar_wraps.extend(pvm_vios.VIOS.get(adapter))
+
+        for lpar_wrap in lpar_wraps:
+            cna_wraps = pvm_net.CNA.get(adapter,
+                                        parent_type=lpar_wrap.schema_type,
+                                        parent_uuid=lpar_wrap.uuid)
+
+    # Search the CNA wraps for matching CNAs
+    cna_list = []
+    for cna in cna_wraps:
+        if ((not cna.uuid == trunk_w.uuid) and cna.pvid == trunk_w.pvid and
+                cna.vswitch_id == trunk_w.vswitch_id):
+            cna_list.append(cna)
+
+    return cna_list
