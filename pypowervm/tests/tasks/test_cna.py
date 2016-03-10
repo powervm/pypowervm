@@ -283,3 +283,24 @@ class TestVNET(twrap.TestWrapper):
         # Order of the response is important.  Should be based off of trunk
         # priority
         self.assertEqual([c1, c2, v2], resp)
+
+    @mock.patch('pypowervm.wrappers.network.CNA.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    def test_find_cnas(self, mock_lpar_get, mock_vios_get, mock_cna_get):
+        # Mocked responses are simple since they are only used for
+        # pvm_net.CNA.get
+        mock_lpar_get.return_value = [mock.MagicMock()]
+        mock_vios_get.return_value = [mock.MagicMock()]
+
+        # Mocked cna_wraps
+        m1 = mock.Mock(uuid=2, pvid=2, vswitch_id=2)
+        m2 = mock.Mock(uuid=3, pvid=1, vswitch_id=1)
+        m3 = mock.Mock(uuid=1, pvid=1, vswitch_id=1)
+
+        mock_cna_get.return_value = [m1, m2, m3]
+        mock_trunk = mock.Mock(adapter=self.adpt, uuid=1, pvid=1, vswitch_id=1)
+        self.assertEqual([m2], cna.find_cnas(mock_trunk))
+
+        mock_cna_get.return_value = [m1, m3]
+        self.assertEqual([], cna.find_cnas(mock_trunk))
