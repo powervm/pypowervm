@@ -251,6 +251,12 @@ class VIOS(bp.BasePartition):
     def is_mover_service_partition(self):
         return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
+    @is_mover_service_partition.setter
+    def is_mover_service_partition(self, value):
+        """Set if this is a mover service partition."""
+        self.set_parm_value(_VIO_MVR_SVC_PARTITION,
+                            u.sanitize_bool_for_api(value))
+
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.
@@ -290,9 +296,9 @@ class VIOS(bp.BasePartition):
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
-        es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_VSCSI_MAPPINGS, attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
-            VSCSIMapping, parent_entry=self)
+        es = ewrap.WrapperElemList(self._find_or_seed(_VIO_VSCSI_MAPPINGS,
+                                   attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
+                                   VSCSIMapping, parent_entry=self)
         return es
 
     @scsi_mappings.setter
@@ -309,8 +315,9 @@ class VIOS(bp.BasePartition):
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def trunk_adapters(self):
         es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_TRUNK_ADPTS, attrib=u.xag_attrs(c.XAG.VIO_NET)),
-            net.TrunkAdapter)
+                                   _VIO_TRUNK_ADPTS,
+                                   attrib=u.xag_attrs(c.XAG.VIO_NET)),
+                                   net.TrunkAdapter)
         return es
 
     def derive_orphan_trunk_adapters(self):
@@ -349,8 +356,9 @@ class VIOS(bp.BasePartition):
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def io_adpts_for_link_agg(self):
         es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=u.xag_attrs(c.XAG.VIO_NET)),
-            LinkAggrIOAdapterChoice)
+                                   _VIO_FREE_IO_ADPTS_FOR_LNAGG,
+                                   attrib=u.xag_attrs(c.XAG.VIO_NET)),
+                                   LinkAggrIOAdapterChoice)
         return es
 
 
