@@ -251,6 +251,16 @@ class VIOS(bp.BasePartition):
     def is_mover_service_partition(self):
         return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
+    @is_mover_service_partition.setter
+    def is_mover_service_partition(self, value):
+        """Set the Mover Service Partition designation.
+
+        :param value: Boolean indicating whether the VIOS should be designated
+                      as a Mover Service Partition.
+        """
+        self.set_parm_value(_VIO_MVR_SVC_PARTITION,
+                            u.sanitize_bool_for_api(value))
+
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.

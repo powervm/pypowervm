@@ -54,6 +54,11 @@ class TestVIOSWrapper(twrap.TestWrapper):
         expected_ips = ('9.1.2.4', '10.10.10.5')
         self.assertEqual(expected_ips, self.dwrap.ip_addresses)
 
+    def test_mover_service_partition(self):
+        self.assertTrue(self.dwrap.is_mover_service_partition)
+        self.dwrap.is_mover_service_partition = False
+        self.assertFalse(self.dwrap.is_mover_service_partition)
+
     def test_rmc_ip(self):
         self.assertEqual('9.1.2.5', self.dwrap.rmc_ip)
 
