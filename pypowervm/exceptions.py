@@ -224,3 +224,15 @@ class MultipleExceptionsInFeedTask(Exception):
     exceptions.
     """
     pass
+
+
+class ManagementPartitionNotFoundException(AbstractMsgFmtError):
+    """Couldn't find exactly one management partition on the system."""
+    msg_fmt = _("Expected to find exactly one management partition; found "
+                "%(count)d.")
+
+
+class ThisPartitionNotFoundException(AbstractMsgFmtError):
+    """Couldn't find exactly one partition with the local VM's short ID."""
+    msg_fmt = _("Expected to find exactly one partition with ID %(lpar_id)d; "
+                "found %(count)d.")

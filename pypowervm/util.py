@@ -22,6 +22,7 @@ import math
 import re
 import socket
 import ssl
+import struct
 try:
     import urlparse
 except ImportError:
@@ -484,3 +485,13 @@ def xag_attrs(xagstr, base=const.DEFAULT_SCHEMA_ATTR):
              (pypowervm.entities or etree) Element constructor.
     """
     return dict(base, group=xagstr) if xagstr else base
+
+
+def my_partition_id():
+    """Return the short ID (not UUID) of the current partition, as an int."""
+    with open('/sys/firmware/devicetree/base/ibm,partition-no', 'rb') as pnof:
+        # Binary
+        my_id_bin = pnof.read()
+    # struct.unpack returns a tuple (in this case, with one member)
+    my_id_int, = struct.unpack('>I', my_id_bin)
+    return my_id_int

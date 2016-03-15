@@ -15,6 +15,12 @@
 #    under the License.
 
 import mock
+import six
+
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
 
 import unittest
 
@@ -331,3 +337,10 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(dict(one=2), util.xag_attrs(None, base=dict(one=2)))
         self.assertEqual(dict(one=2, group='foo'),
                          util.xag_attrs('foo', base=dict(one=2)))
+
+    @mock.patch.object(builtins, 'open')
+    def test_my_partition_id(self, mock_open):
+        """Test my_partition_id."""
+        mock_open.return_value.__enter__.return_value.read.return_value = (
+            b'\x00\x00\x00\x04')
+        self.assertEqual(4, util.my_partition_id())
