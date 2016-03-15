@@ -484,3 +484,11 @@ def xag_attrs(xagstr, base=const.DEFAULT_SCHEMA_ATTR):
              (pypowervm.entities or etree) Element constructor.
     """
     return dict(base, group=xagstr) if xagstr else base
+
+
+def my_partition_id():
+    """Return the short ID (not UUID) of the current partition, as an int."""
+    with open('/proc/ppc64/lparcfg') as lparcfg:
+        for line in lparcfg:
+            if line.startswith('partition_id='):
+                return int(line.split('=')[1].rstrip())
