@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -15,6 +15,12 @@
 #    under the License.
 
 import mock
+import six
+
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
 
 import unittest
 
@@ -331,3 +337,12 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(dict(one=2), util.xag_attrs(None, base=dict(one=2)))
         self.assertEqual(dict(one=2, group='foo'),
                          util.xag_attrs('foo', base=dict(one=2)))
+
+    @mock.patch.object(builtins, 'open')
+    def test_my_partition_id(self, m_open):
+        """Test my_partition_id."""
+        def rit():
+            for line in ('foo=bar\n', 'partition_id=1234\n', '\n', 'a=b\n'):
+                yield line
+        m_open.return_value.__enter__.return_value.__iter__.side_effect = rit
+        self.assertEqual(1234, util.my_partition_id())
