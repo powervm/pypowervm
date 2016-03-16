@@ -1346,6 +1346,10 @@ class Response(object):
             elif root is not None and root.tag == str(
                     etree.QName(c.ATOM_NS, 'entry')):
                 self.entry = ent.Entry.unmarshal_atom_entry(root, self)
+            elif root is not None and '/Debug/' in self.reqpath:
+                # Special case for Debug URIs - caller is expected to make use
+                # of self.body only, and understand how it's formatted.
+                pass
             elif err_reason is None:
                 err_reason = _('Response is not an Atom feed/entry')
         elif self.reqmethod == 'GET':
