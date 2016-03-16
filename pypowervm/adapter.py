@@ -1331,23 +1331,38 @@ class Response(object):
     def atom(self):
         return self.feed if self.feed else self.entry
 
+    def _extract_atom(self):
+        """Unmarshal my body and set my feed or entry accordingly.
+
+        :return: A message indicating the reason for the error, or None if no
+                 error occurred.
+        """
+        err_reason = None
+        root = None
+        try:
+            root = etree.fromstring(self.body)
+        except Exception as e:
+            err_reason = (_('Error parsing XML response from PowerVM: '
+                            '%s') % str(e))
+        if root is not None and root.tag == str(
+                etree.QName(c.ATOM_NS, 'feed')):
+            self.feed = ent.Feed.unmarshal_atom_feed(root, self)
+        elif root is not None and root.tag == str(
+                etree.QName(c.ATOM_NS, 'entry')):
+            self.entry = ent.Entry.unmarshal_atom_entry(root, self)
+        elif root is not None and '/Debug/' in self.reqpath:
+            # Special case for Debug URIs - caller is expected to make use
+            # of self.body only, and understand how it's formatted.
+            pass
+        elif err_reason is None:
+            err_reason = _('Response is not an Atom feed/entry')
+
+        return err_reason
+
     def _unmarshal_atom(self):
         err_reason = None
         if self.body:
-            root = None
-            try:
-                root = etree.fromstring(self.body)
-            except Exception as e:
-                err_reason = (_('Error parsing XML response from PowerVM: '
-                                '%s') % str(e))
-            if root is not None and root.tag == str(
-                    etree.QName(c.ATOM_NS, 'feed')):
-                self.feed = ent.Feed.unmarshal_atom_feed(root, self)
-            elif root is not None and root.tag == str(
-                    etree.QName(c.ATOM_NS, 'entry')):
-                self.entry = ent.Entry.unmarshal_atom_entry(root, self)
-            elif err_reason is None:
-                err_reason = _('Response is not an Atom feed/entry')
+            err_reason = self._extract_atom()
         elif self.reqmethod == 'GET':
             if self.status == c.HTTPStatus.OK_NO_CONTENT:
                 if util.is_instance_path(self.reqpath):

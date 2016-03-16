@@ -651,6 +651,49 @@ class TestAdapter(testtools.TestCase):
         # Get only the top
         self.assertEqual(_count_elem(top_element, 'Top'), 1)
 
+    @mock.patch('pypowervm.entities.Feed.unmarshal_atom_feed')
+    @mock.patch('pypowervm.entities.Entry.unmarshal_atom_entry')
+    @mock.patch('lxml.etree.fromstring')
+    def test_extract_atom(self, mock_fromstring, mock_unm_ent, mock_unm_feed):
+        resp = adp.Response('meth', '/rest/api/uom/Debug/SetLoggingLevel',
+                            'status', 'reason', 'headers', body='body')
+        feed_ret = mock.Mock(tag=etree.QName(c.ATOM_NS, 'feed'))
+        entry_ret = mock.Mock(tag=etree.QName(c.ATOM_NS, 'entry'))
+
+        # Empty content; "Response is not an Atom feed/entry"
+        mock_fromstring.return_value = None
+        self.assertIsNotNone(resp._extract_atom())
+        mock_fromstring.assert_called_with('body')
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
+
+        # Unmarshal feed (returns None)
+        mock_fromstring.return_value = feed_ret
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_feed.assert_called_once_with(feed_ret, resp)
+        mock_unm_ent.assert_not_called()
+        mock_unm_feed.reset_mock()
+
+        # Unmarshal entry (returns None)
+        mock_fromstring.return_value = entry_ret
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_ent.assert_called_once_with(entry_ret, resp)
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.reset_mock()
+
+        # Unmarshal a 'Debug' response (returns None)
+        mock_fromstring.return_value = mock.Mock(tag='debug output')
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
+
+        # 'fromstring' raises.  Make sure the return message came from the
+        # right place (will include the exception text)
+        mock_fromstring.side_effect = Exception("test_extract_atom")
+        self.assertIn("test_extract_atom", resp._extract_atom())
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
+
 
 class TestElement(testtools.TestCase):
     def setUp(self):
