@@ -119,9 +119,13 @@ class _VIOSXAGs(object):
             return self.name
 
         def __eq__(self, other):
+            if type(other) is str:
+                return self.name == other
             return self.name == other.name
 
         def __lt__(self, other):
+            if type(other) is str:
+                return self.name < other
             return self.name < other.name
 
         def __hash__(self):
