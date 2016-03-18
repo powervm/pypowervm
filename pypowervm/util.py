@@ -86,7 +86,7 @@ def check_and_apply_xag(path, xag):
     If xag is None, use group=None.
     If xag is [] (the empty list), omit the group= query param entirely.
     Otherwise the group= value is a sorted, comma-separated string of the
-    xag list.  E.g. for xag=['b', 'c', 'a'], yield 'group=a,b,c'.
+    xag list.  E.g. for xag=['b', 'c', 'a'], produce 'group=a,b,c'.
 
     :param path: Input path or href, which may or may not contain a query
                  string, which may or may not contain a group=*.  (Multiple
@@ -98,7 +98,7 @@ def check_and_apply_xag(path, xag):
              group= query param's value will be alpha sorted.
     """
     parsed = urlparse.urlsplit(path)
-    # parse_qs yields { 'key': ['value'], ... }
+    # parse_qs returns { 'key': ['value'], ... }
     qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
     path_xag = qparms.pop('group', ['None'])[0]
     if xag is None:
@@ -255,7 +255,7 @@ def validate_certificate(host, port, certpath, certext):
         not_after = validity.getComponentByName('notAfter').getComponent()
         not_after = dt.datetime.strptime(str(not_after), '%y%m%d%H%M%SZ')
         if dt.datetime.utcnow() >= not_after:
-            LOG.warn('certificate has expired')
+            LOG.warning(_('Certificate has expired.'))
             return False
     except Exception:
         LOG.exception('error parsing cert for expiration check')
@@ -290,7 +290,7 @@ def get_req_path_uuid(path, preserve_case=False, root=False):
 def get_uuid_xag_from_path(path):
     uuid = get_req_path_uuid(path)
     parsed = urlparse.urlsplit(path)
-    # parse_qs yields { 'key': ['value'], ... }
+    # parse_qs returns { 'key': ['value'], ... }
     qparms = urlparse.parse_qs(parsed.query) if parsed.query else {}
     return uuid.lower(), qparms.get('group', [None])[0]
 
@@ -459,3 +459,15 @@ def find_wrapper(haystack, needle_uuid):
 def xpath(*toks):
     """Constructs an XPath out of the passed-in string components."""
     return XPATH_DELIM.join(toks)
+
+
+def part_id_by_loc_code(loc_code):
+    """Get a partition short ID for a provided virtual device location code.
+
+    All location codes on a virtual device are of the form:
+    <MachineType>.<Model>.<Serial>-V<PartID>-C<SlotNumber>
+
+    :return: An int of the associated partition short ID.
+    """
+    id_match = re.search('.*-V(.+?)-.*', loc_code)
+    return int(id_match.group(1)) if id_match else None

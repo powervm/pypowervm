@@ -23,6 +23,10 @@ import six
 
 from pypowervm import traits as trt
 
+# An anchor for traits we construct artificially so the session isn't
+# garbage collected.
+_mk_traits_sessions = []
+
 
 def _mk_traits(local, hmc):
     """Mock a single APITraits configuration.
@@ -35,6 +39,12 @@ def _mk_traits(local, hmc):
     _sess = mock.Mock()
     _sess.use_file_auth = local
     _sess.mc_type = 'HMC' if hmc else 'PVM'
+
+    # Traits use a weak ref to the session to avoid a circular reference
+    # so anchor the mock session globally otherwise it'll be gone
+    # right after we return it.
+    global _mk_traits_sessions
+    _mk_traits_sessions.append(_sess)
     return trt.APITraits(_sess)
 
 LocalPVMTraits = _mk_traits(local=True, hmc=False)
@@ -422,11 +432,11 @@ class LoggingFx(SimplePatchingFx):
     """Fixture for LOG.*, not to be confused with Logger/LoggingPatcher.
 
     Provides patches and mocks for LOG.x for x in
-    ('info', 'warn', 'debug', 'error', 'exception')
+    ('info', 'warning', 'debug', 'error', 'exception')
     """
     def __init__(self):
         """Create the fixture for the various logging methods."""
         super(LoggingFx, self).__init__()
         self.add_patchers(
             *(SimplePatcher(self, x, 'oslo_log.log.BaseLoggerAdapter.%s' % x)
-                for x in ('info', 'warn', 'debug', 'error', 'exception')))
+                for x in ('info', 'warning', 'debug', 'error', 'exception')))

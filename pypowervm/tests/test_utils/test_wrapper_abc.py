@@ -62,7 +62,7 @@ class TestWrapper(testtools.TestCase):
 
     @abc.abstractproperty
     def wrapper_class_to_test(self):
-        """Indicates the type (Wrapper subclass) yielded by self.dwrap."""
+        """Indicates the type (Wrapper subclass) produced by self.dwrap."""
         return None
 
     # Arguments to test_fixtures.AdapterFx(), used to create a mock adapter.

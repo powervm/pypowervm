@@ -77,7 +77,7 @@ _VIRT_MEDIA_REPOSITORY_PATH = u.xpath(_VIO_MEDIA_REPOS,
 _IF_ADDR = u.xpath('IPInterface', 'IPAddress')
 _ETHERNET_BACKING_DEVICE = u.xpath(_VIO_FREE_ETH_BACKDEVS_FOR_SEA,
                                    'IOAdapterChoice', net.ETH_BACK_DEV)
-_SEA_PATH = u.xpath(net.NB_SEAS, net.SHARED_ETH_ADPT)
+_SEA_PATH = u.xpath(_VIO_SEAS, net.SHARED_ETH_ADPT)
 
 # Mapping Constants
 _MAP_STORAGE = 'Storage'
@@ -104,10 +104,7 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
 class VIOS(bp.BasePartition):
 
     # Extended Attribute Groups
-    xags = ent.XAG(NETWORK='ViosNetwork',
-                   STORAGE='ViosStorage',
-                   SCSI_MAPPING='ViosSCSIMapping',
-                   FC_MAPPING='ViosFCMapping')
+    xags = ent.VIOSXAGs()
 
     @classmethod
     def bld(cls, adapter, name, mem_cfg, proc_cfg, io_cfg=None):
@@ -115,7 +112,7 @@ class VIOS(bp.BasePartition):
         return super(VIOS, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env=bp.LPARType.VIOS, io_cfg=io_cfg)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.STORAGE)
     def media_repository(self):
         return self.element.find(_VIRT_MEDIA_REPOSITORY_PATH)
 
@@ -125,6 +122,8 @@ class VIOS(bp.BasePartition):
         The response is a List of Lists.
         Ex. (('c05076065a8b005a', 'c05076065a8b005b'),
              ('c05076065a8b0060', 'c05076065a8b0061'))
+
+        Note: ViosFCMapping extended attribute is required.
         """
         return set([frozenset(x.split()) for x in
                     self._get_vals(_WWPNS_PATH)])
@@ -209,7 +208,7 @@ class VIOS(bp.BasePartition):
     def is_mover_service_partition(self):
         return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.NETWORK)
     def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.
 
@@ -232,7 +231,7 @@ class VIOS(bp.BasePartition):
 
         return tuple(ip_list)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.FC_MAPPING)
     def vfc_mappings(self):
         """Returns a WrapperElemList of the VFCMapping objects."""
         def_attrib = self.xags.FC_MAPPING.attrs
@@ -246,7 +245,7 @@ class VIOS(bp.BasePartition):
         self.replace_list(_VIO_VFC_MAPPINGS, new_mappings,
                           attrib=self.xags.FC_MAPPING.attrs)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.SCSI_MAPPING)
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
         def_attrib = self.xags.SCSI_MAPPING.attrs
@@ -261,18 +260,18 @@ class VIOS(bp.BasePartition):
         self.replace_list(_VIO_VSCSI_MAPPINGS, new_mappings,
                           attrib=self.xags.SCSI_MAPPING.attrs)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.NETWORK)
     def seas(self):
         def_attrib = self.xags.NETWORK.attrs
         es = ewrap.WrapperElemList(
-            self._find_or_seed(net.NB_SEAS, attrib=def_attrib), net.SEA)
+            self._find_or_seed(_VIO_SEAS, attrib=def_attrib), net.SEA)
         return es
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.NETWORK)
     def trunk_adapters(self):
         def_attrib = self.xags.NETWORK.attrs
         es = ewrap.WrapperElemList(
-            self._find_or_seed(net.SEA_TRUNKS, attrib=def_attrib),
+            self._find_or_seed(_VIO_TRUNK_ADPTS, attrib=def_attrib),
             net.TrunkAdapter)
         return es
 
@@ -296,7 +295,7 @@ class VIOS(bp.BasePartition):
                     break
         return orphan_trunks
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.STORAGE)
     def phys_vols(self):
         """Will return a list of physical volumes attached to this VIOS.
 
@@ -309,7 +308,7 @@ class VIOS(bp.BasePartition):
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
-    @property
+    @ewrap.Wrapper.xag_property(xags.NETWORK)
     def io_adpts_for_link_agg(self):
         es = ewrap.WrapperElemList(self._find_or_seed(
             _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=self.xags.NETWORK.attrs),
@@ -398,7 +397,14 @@ class VSCSIMapping(VStorageMapping):
 
     @classmethod
     def bld_from_existing(cls, existing_map, stg_ref):
-        """Clones the existing mapping, but swaps in the new storage elem."""
+        """Clones the existing mapping, but swaps in the new storage elem.
+
+        :param existing_map: The existing VSCSIMapping to clone.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.  If explicitly
+                        None, the new mapping is created with no storage.
+        :return: The newly-created VSCSIMapping.
+        """
         # We do NOT want the TargetDevice element, so we explicitly copy the
         # pieces we want from the original mapping.
         new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
@@ -408,7 +414,8 @@ class VSCSIMapping(VStorageMapping):
             new_map._client_adapter(copy.deepcopy(existing_map.client_adapter))
         if existing_map.server_adapter is not None:
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
-        new_map._backing_storage(copy.deepcopy(stg_ref))
+        if stg_ref is not None:
+            new_map._backing_storage(copy.deepcopy(stg_ref))
         return new_map
 
     @property
@@ -423,7 +430,7 @@ class VSCSIMapping(VStorageMapping):
             return None
         # If backing storage exists, it comprises a single child of elem.  But
         # type is unknown immediately, so call all children and then wrap.
-        stor_elems = elem.getchildren()
+        stor_elems = list(elem)
         if len(stor_elems) != 1:
             return None
         # TODO(efried): parent_entry not needed once VIOS has pg83 in Events

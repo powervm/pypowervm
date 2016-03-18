@@ -225,7 +225,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'aix_capable': False,
                     'ibmi_capable': True,
                     'linux_capable': False,
-                    'shared_processor_pool_capable': True
+                    'shared_processor_pool_capable': True,
+                    'active_memory_expansion_capable': True
                     }
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
@@ -236,13 +237,40 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'aix_capable': True,
                    'ibmi_capable': False,
                    'linux_capable': True,
-                   'shared_processor_pool_capable': False
+                   'shared_processor_pool_capable': False,
+                   'active_memory_expansion_capable': False
                    }
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
     def test_session_is_master(self):
         self.assertTrue(self.wrapper.session_is_master)
+
+    def test_migration_data(self):
+        expected_data = {'active_lpar_mobility_capable': True,
+                         'inactive_lpar_mobility_capable': True,
+                         'ibmi_lpar_mobility_capable': True,
+                         'custom_mac_addr_capable': True,
+                         'ibmi_restrictedio_capable': True,
+                         'simplified_remote_restart_capable': False,
+                         'aix_capable': False,
+                         'ibmi_capable': True,
+                         'linux_capable': False,
+                         'shared_processor_pool_capable': True,
+                         'active_memory_expansion_capable': True,
+                         'max_migration_ops_supported': 9,
+                         'active_migrations_supported': 0,
+                         'inactive_migrations_supported': 5,
+                         'preferred_active_migrations_supported': 0,
+                         'preferred_inactive_migrations_supported': 5,
+                         'active_migrations_in_progress': 0,
+                         'inactive_migrations_in_progress': 0,
+                         'proc_compat': 'default,POWER5,POWER6,'
+                         'POWER6_Enhanced,POWER6_Plus_Enhanced,POWER7'
+                         }
+        result_data = self.wrapper.migration_data
+        self.assertEqual(result_data, expected_data,
+                         'The returned data did not match expected values')
 
 
 class TestMTMS(unittest.TestCase):

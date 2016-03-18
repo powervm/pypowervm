@@ -82,6 +82,11 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, vdisk.capacity)
         self.assertEqual('0300f8d6de00004b000000014a54555cd9.1',
                          vdisk.udid)
+        self.assertEqual(
+            "https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/14B854F7-42CE-"
+            "4FF0-BD57-1D117054E701/VolumeGroup/b6bdbf1f-eddf-3c81-8801-9859eb"
+            "6fedcb", vdisk.vg_uri)
+
         # Test setters
         vdisk.capacity = 2
         self.assertEqual(2, vdisk.capacity)
@@ -221,6 +226,9 @@ class TestSharedStoragePool(twrap.TestWrapper):
     def test_free_space(self):
         self.assertAlmostEqual(self.dwrap.free_space, 48.98, 3)
 
+    def test_over_commit_space(self):
+        self.assertEqual(self.dwrap.over_commit_space, 1.234567)
+
     def test_total_lu_size(self):
         self.assertAlmostEqual(self.dwrap.total_lu_size, 1, 1)
 
@@ -244,6 +252,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertTrue(lu.is_thin)
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
+        self.assertEqual(lu.in_use, True)
         # TODO(IBM): test setter
 
     def test_fresh_ssp(self):

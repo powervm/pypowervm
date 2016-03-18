@@ -27,44 +27,71 @@ from pypowervm import const
 from pypowervm import util
 
 
-class XAG(object):
-    """Extended Attribute Groups enumeration for an EntryWrapper subclass.
+@functools.total_ordering
+class _XAG(object):
+    """Handler for a single extended attribute group name.
 
-    Intended use: Within an EntryWrapper subclass, define a class variable xags
-    of type XAG, initialized with the names of the extended attribute groups
-    supported by the corresponding PowerVM REST object.  The keys may be any
-    value convenient for use in the consuming code.
+    When accessed in string context, simply translates to the REST API name of
+    the extended attribute group, as expected by the ?group= query string in
+    the URI.
 
-    Extended attribute groups 'All' and 'None' are supplied for you.
+    Also provides 'attrs', comprising the XML attributes required on a property
+    associated with that extended attribute group.
     """
-    @functools.total_ordering
-    class _Handler(object):
-        def __init__(self, name):
-            self.name = name
+    def __init__(self, name):
+        self.name = name
 
-        def __str__(self):
-            return self.name
+    def __str__(self):
+        return self.name
 
-        def __eq__(self, other):
-            return self.name == other.name
+    def __eq__(self, other):
+        return self.name == other.name
 
-        def __lt__(self, other):
-            return self.name < other.name
+    def __lt__(self, other):
+        return self.name < other.name
 
-        def __hash__(self):
-            return hash(self.name)
+    def __hash__(self):
+        return hash(self.name)
 
-        @property
-        def attrs(self):
-            schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
-            schema['group'] = self.name
-            return schema
+    @property
+    def attrs(self):
+        """XML attributes appropriate to a property belonging to this XAG."""
+        schema = copy.copy(const.DEFAULT_SCHEMA_ATTR)
+        schema['group'] = self.name
+        return schema
 
-    def __init__(self, **kwargs):
-        self.NONE = self._Handler('None')
-        self.ALL = self._Handler('All')
-        for key, val in kwargs.items():
-            setattr(self, key, self._Handler(val))
+
+class _XAGEnum(object):
+    """Superclass for Extended Attribute Groups enumerations.
+
+    Intended use: Define a subclass with the extended attribute groups specific
+    to a particular REST object type.  The subclass should simply contain a
+    member definition for each extended attribute group of the form:
+
+        NAME = XAG('StringName')
+
+    ...where 'StringName' is the name expected by the REST API in the ?group=
+    querystring.
+
+    Optionally, within an EntryWrapper subclass, define a class variable xags
+    which points to that subclass.
+
+    Extended attribute group NONE ('None') is supplied via the base class.
+    """
+    NONE = _XAG(const.XAG.NONE)
+
+
+class VIOSXAGs(_XAGEnum):
+    """Extended attribute groups relevant to Virtual I/O Server."""
+    NETWORK = _XAG(const.XAG.VIO_NET)
+    STORAGE = _XAG(const.XAG.VIO_STOR)
+    SCSI_MAPPING = _XAG(const.XAG.VIO_SMAP)
+    FC_MAPPING = _XAG(const.XAG.VIO_FMAP)
+
+
+class PoolXAGs(_XAGEnum):
+    """Extended attribute groups relevant to Enterprise Pools."""
+    COMPLIANCE_HRS_LEFT = _XAG(const.XAG.POOL_COMPLIANCE_HRS_LEFT)
 
 
 class Atom(object):
@@ -214,7 +241,11 @@ class Element(object):
         if text:
             self.element.text = etree.CDATA(text) if cdata else text
         for c in children:
-            self.element.append(c.element)
+            # Use a deep copy, else, c.element gets *removed* from its parent
+            # hierarchy (see fourth bullet: http://lxml.de/compatibility.html).
+            # Doing the deepcopy here means the caller doesn't have to worry
+            # about it.
+            self.element.append(copy.deepcopy(c.element))
         self.adapter = adapter
 
     def __len__(self):
@@ -255,35 +286,33 @@ class Element(object):
         """
 
         # Make sure that the children length is equal
-        one_children = one.getchildren()
-        two_children = two.getchildren()
+        one_children = list(one)
+        two_children = list(two)
         if len(one_children) != len(two_children):
             return False
 
-        # If there are no children, different set of tests
-        if len(one_children) == 0:
-            if one.text != two.text:
+        if one.text != two.text:
+            return False
+
+        if one.tag != two.tag:
+            return False
+
+        # Recursively validate
+        for one_child in one_children:
+            found = util.find_equivalent(one_child, two_children)
+            if found is None:
                 return False
 
-            if one.tag != two.tag:
-                return False
-        else:
-            # Recursively validate
-            for one_child in one_children:
-                found = util.find_equivalent(one_child, two_children)
-                if found is None:
-                    return False
-
-                # Found a match, remove it as it is no longer a valid match.
-                # Its equivalence was validated by the upper block.
-                two_children.remove(found)
+            # Found a match, remove it as it is no longer a valid match.
+            # Its equivalence was validated by the upper block.
+            two_children.remove(found)
 
         return True
 
-    def getchildren(self):
+    def __iter__(self):
         """Returns the children as a list of Elements."""
-        return [Element.wrapelement(i, self.adapter)
-                for i in self.element.getchildren()]
+        return iter([Element.wrapelement(i, self.adapter)
+                     for i in list(self.element)])
 
     @classmethod
     def wrapelement(cls, element, adapter):
@@ -361,7 +390,17 @@ class Element(object):
         self.element.set(key, value)
 
     def append(self, subelement):
-        """Adds subelement to the end of this element's list of subelements."""
+        """Adds subelement to the end of this element's list of subelements.
+
+        Note: if subelement is a reference to an element within another XML
+        hierarchy, it will be *removed* from that hierarchy.  If you intend to
+        reuse the parent object, you should pass a copy.deepcopy of the
+        subelement to this method.
+        """
+        # TODO(IBM): We *should* deepcopy to prevent child poaching (see fourth
+        # bullet here: http://lxml.de/compatibility.html) - but this breaks the
+        # world.  Figure out why, and fix it.
+        # self.element.append(copy.deepcopy(subelement.element))
         self.element.append(subelement.element)
 
     def inject(self, subelement, ordering_list=(), replace=True):

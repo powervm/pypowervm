@@ -19,9 +19,8 @@
 import abc
 import base64
 import binascii
-import six
-
 from oslo_log import log as logging
+import six
 
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
@@ -130,6 +129,7 @@ _SSP_FREE_SPACE = 'FreeSpace'
 _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
 _SSP_LU = 'LogicalUnit'
+_SSP_OCS = 'OverCommitSpace'
 _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
@@ -477,9 +477,9 @@ class PV(ewrap.ElementWrapper):
             return base64.b64decode(encoded).decode(
                 'utf-8') if encoded else None
         except (TypeError, binascii.Error) as te:
-            LOG.warn(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but it '
-                       'failed to decode (%(type_error)s).'),
-                     {'pg83_raw': encoded, 'type_error': te.args[0]})
+            LOG.warning(_('PV had encoded pg83 descriptor "%(pg83_raw)s", but '
+                          'it failed to decode (%(type_error)s).'),
+                        {'pg83_raw': encoded, 'type_error': te.args[0]})
         return None
 
 
@@ -545,6 +545,10 @@ class VDisk(ewrap.ElementWrapper):
     @property
     def udid(self):
         return self._get_val_str(_DISK_UDID)
+
+    @property
+    def vg_uri(self):
+        return self.get_href(_DISK_VG, one_result=True)
 
 
 @ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
@@ -623,7 +627,7 @@ class LU(ewrap.ElementWrapper):
         return self._get_val_str(_LU_UDID)
 
     def _udid(self, value):
-        return self.set_parm_value(_LU_UDID, value)
+        self.set_parm_value(_LU_UDID, value)
 
     @property
     def capacity(self):
@@ -656,6 +660,10 @@ class LU(ewrap.ElementWrapper):
 
     def _cloned_from_udid(self, val):
         self.set_parm_value(_LU_CLONED_FROM, val)
+
+    @property
+    def in_use(self):
+        return self._get_val_bool(_LU_IN_USE, default=None)
 
 
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')
@@ -701,6 +709,11 @@ class SSP(ewrap.EntryWrapper):
     def free_space(self):
         """Free space in GB as a float."""
         return self._get_val_float(_SSP_FREE_SPACE)
+
+    @property
+    def over_commit_space(self):
+        """Over commit space in GB as a float."""
+        return self._get_val_float(_SSP_OCS)
 
     @property
     def total_lu_size(self):

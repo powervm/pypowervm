@@ -35,6 +35,10 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual('aabbccddeeff0011', itl.initiator)
         self.assertEqual('00112233445566ee', itl.target)
         self.assertEqual('ee000000000000', itl.lun)
+        # Test Lun-ID length for max 8 bytes
+        itl = hdisk.ITL('AABBC11', '00:11:22:33:44:55:66:EE', 1074872357)
+        self.assertEqual('4011402500000000', itl.lun)
+        self.assertEqual(16, len(itl.lun))
 
     def test_build_itls(self):
         """Tests that the ITL combinations can be built out."""
@@ -123,19 +127,19 @@ class TestHDisk(unittest.TestCase):
 
         hdisk._log_lua_status(hdisk.LUAStatus.FOUND_ITL_ERR,
                               'dev_name', 'message')
-        self.assertEqual(1, mock_log.warn.call_count)
+        self.assertEqual(1, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_IN_USE,
                               'dev_name', 'message')
-        self.assertEqual(2, mock_log.warn.call_count)
+        self.assertEqual(2, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
                               'dev_name', 'message')
-        self.assertEqual(3, mock_log.warn.call_count)
+        self.assertEqual(3, mock_log.warning.call_count)
 
         hdisk._log_lua_status(hdisk.LUAStatus.INCORRECT_ITL,
                               'dev_name', 'message')
-        self.assertEqual(4, mock_log.warn.call_count)
+        self.assertEqual(4, mock_log.warning.call_count)
 
     @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
@@ -288,3 +292,10 @@ class TestHDisk(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
+
+    def test_normalize_lun(self):
+        lun = hdisk.normalize_lun(12)
+        self.assertEqual('c000000000000', lun)
+        # Test when lun exceeds len 8
+        lun = hdisk.normalize_lun(1074872357)
+        self.assertEqual('4011402500000000', lun)

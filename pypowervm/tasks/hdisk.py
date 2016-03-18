@@ -62,6 +62,25 @@ class LUAStatus(object):
     FOUND_ITL_ERR = '8'
 
 
+def normalize_lun(scsi_id):
+    """Normalize the lun id to Big Endian
+
+    :param scsi_id: Volume lun id
+    :return: Converted LUN id in Big Endian as per the RFC 4455
+    """
+    # PowerVM keeps LUN identifiers in hex format.
+    lun = '%x' % int(scsi_id)
+    # For drivers which support complex LUA lun-id exceeding more than 2
+    # bytes in such cases we need to append 8 zeros else 12 zeros to
+    # pass 8 byte lun-id
+    if len(lun) == 8:
+        lun += "00000000"
+    else:
+        lun += "000000000000"
+
+    return lun
+
+
 class ITL(object):
     """The Nexus ITL.
 
@@ -80,10 +99,7 @@ class ITL(object):
         """
         self.initiator = initiator.lower().replace(':', '')
         self.target = target.lower().replace(':', '')
-        # PowerVM keeps LUN identifiers in hex format.  Python conversion to
-        # hex adds a 0x at beginning (thus the [2:] to strip that off).
-        # Identifier on end is always the 0's.
-        self.lun = hex(int(lun))[2:] + "000000000000"
+        self.lun = normalize_lun(lun)
 
     def __eq__(self, other):
         if other is None or not isinstance(other, ITL):
@@ -179,8 +195,8 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
         scrub_ids = tsk_stg.find_stale_lpars(vwrap)
         if scrub_ids:
             # Detailed warning message by _log_lua_status
-            LOG.warn(_("hdisk discovery failed; will scrub stale storage for "
-                       "LPAR IDs %s and retry."), scrub_ids)
+            LOG.warning(_("hdisk discovery failed; will scrub stale storage "
+                          "for LPAR IDs %s and retry."), scrub_ids)
             # Scrub from just the VIOS in question.
             scrub_task = tx.FeedTask('scrub_vios_%s' % vios_uuid, [vwrap])
             tsk_stg.add_lpar_storage_scrub_tasks(scrub_ids, scrub_task)
@@ -325,13 +341,13 @@ def _log_lua_status(status, dev_name, message):
                  dev_name)
     elif status == LUAStatus.FOUND_ITL_ERR:
         # Message is already set.
-        LOG.warn(_("ITL Error encountered: %s"), message)
+        LOG.warning(_("ITL Error encountered: %s"), message)
     elif status == LUAStatus.DEVICE_IN_USE:
-        LOG.warn(_("%s Device is currently in use."), dev_name)
+        LOG.warning(_("%s Device is currently in use."), dev_name)
     elif status == LUAStatus.FOUND_DEVICE_UNKNOWN_UDID:
-        LOG.warn(_("%s Device discovered with unknown UDID."), dev_name)
+        LOG.warning(_("%s Device discovered with unknown UDID."), dev_name)
     elif status == LUAStatus.INCORRECT_ITL:
-        LOG.warn(_("Failed to Discover the Device : %s"), dev_name)
+        LOG.warning(_("Failed to Discover the Device : %s"), dev_name)
 
 
 def remove_hdisk(adapter, host_name, dev_name, vios_uuid):
@@ -401,7 +417,7 @@ def _remove_hdisk_classic(adapter, host_name, dev_name, vios_uuid):
         job_wrapper.run_job(None, job_parms=job_parms)
         return job_wrapper.job_status()
     except pexc.JobRequestFailed as error:
-        LOG.warn(_('CLIRunner Error: %s') % error)
+        LOG.warning(_('CLIRunner Error: %s') % error)
 
 
 def get_pg83_via_job(adapter, vios_uuid, udid):
@@ -433,8 +449,8 @@ def get_pg83_via_job(adapter, vios_uuid, udid):
     # The result may push to StdOut or to OutputXML (different versions push
     # to different locations).
     if not result or not any((k in result for k in ('OutputXML', 'StdOut'))):
-        LOG.warn(_('QUERY_INVENTORY LUARecovery Job succeeded, but result '
-                   'contained neither OutputXML nor StdOut.'))
+        LOG.warning(_('QUERY_INVENTORY LUARecovery Job succeeded, but result '
+                      'contained neither OutputXML nor StdOut.'))
         return None
     xml_resp = result.get('OutputXML', result.get('StdOut'))
     LOG.debug('QUERY_INVENTORY result: %s' % xml_resp)
@@ -447,13 +463,14 @@ def get_pg83_via_job(adapter, vios_uuid, udid):
         try:
             parsed = etree.fromstring(chunk)
         except etree.XMLSyntaxError as e:
-            LOG.warn(_('QUERY_INVENTORY produced invalid chunk of XML '
-                       '(%(chunk)s).  Error: %(err)s'),
-                     {'chunk': chunk, 'err': e.args[0]})
+            LOG.warning(_('QUERY_INVENTORY produced invalid chunk of XML '
+                          '(%(chunk)s).  Error: %(err)s'),
+                        {'chunk': chunk, 'err': e.args[0]})
             continue
         for elem in parsed.getiterator():
             if (etree.QName(elem.tag).localname == 'PhysicalVolume_base' and
                     elem.attrib.get('desType') == "NAA"):
                 return elem.attrib.get('descriptor')
-    LOG.warn(_('Failed to find pg83 descriptor in XML output:\n%s'), xml_resp)
+    LOG.warning(_('Failed to find pg83 descriptor in XML output:\n%s'),
+                xml_resp)
     return None

@@ -51,10 +51,14 @@ class TestSCSIMapper(testtools.TestCase):
         self.mock_delay = mock_delay_p.start()
         self.addCleanup(mock_delay_p.stop)
 
+        self.v1resp = tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)
+        self.v1wrap = pvm_vios.VIOS.wrap(self.v1resp)
+        self.v2resp = tju.load_file(VIO_MULTI_MAP_FILE2, self.adpt)
+        self.v2wrap = pvm_vios.VIOS.wrap(self.v2resp)
+
     def test_mapping(self):
         # Mock Data
-        vio_resp = tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)
-        self.adpt.read.return_value = vio_resp
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
@@ -81,10 +85,9 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.read.call_count)
 
         # Now do it again, but passing the vios wrapper
-        vios_wrap = pvm_vios.VIOS.wrap(vio_resp)
         self.adpt.update_by_path.reset_mock()
         self.adpt.read.reset_mock()
-        scsi_mapper.add_vscsi_mapping('host_uuid', vios_wrap, LPAR_UUID, pv)
+        scsi_mapper.add_vscsi_mapping('host_uuid', self.v1wrap, LPAR_UUID, pv)
         # Since the mapping already existed, our update mock was not called
         self.assertEqual(0, self.adpt.update_by_path.call_count)
         # And the VIOS was not "looked up"
@@ -130,8 +133,7 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_mapping_new_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was added to existing
         def validate_update(*kargs, **kwargs):
@@ -160,39 +162,35 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_add_map(self):
         """Tests the add_map method."""
-        vio_resp = tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)
-        vio_w = pvm_vios.VIOS.wrap(vio_resp)
-
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
-        scsi_map = scsi_mapper.build_vscsi_mapping('host_uuid', vio_w,
+        scsi_map = scsi_mapper.build_vscsi_mapping('host_uuid', self.v1wrap,
                                                    LPAR_UUID, pv)
 
         # Get the original count
-        orig_mappings = len(vio_w.scsi_mappings)
+        orig_mappings = len(self.v1wrap.scsi_mappings)
 
         # Add the actual mapping
-        resp1 = scsi_mapper.add_map(vio_w, scsi_map)
+        resp1 = scsi_mapper.add_map(self.v1wrap, scsi_map)
         self.assertIsNotNone(resp1)
         self.assertIsInstance(resp1, pvm_vios.VSCSIMapping)
 
         # The mapping should return as None, as it is already there.
-        resp2 = scsi_mapper.add_map(vio_w, scsi_map)
+        resp2 = scsi_mapper.add_map(self.v1wrap, scsi_map)
         self.assertIsNone(resp2)
 
         # Make sure only one was added.
-        self.assertEqual(orig_mappings + 1, len(vio_w.scsi_mappings))
+        self.assertEqual(orig_mappings + 1, len(self.v1wrap.scsi_mappings))
 
         # Now make sure the mapping added can be found
-        found = scsi_mapper.find_maps(vio_w.scsi_mappings, LPAR_UUID,
+        found = scsi_mapper.find_maps(self.v1wrap.scsi_mappings, LPAR_UUID,
                                       stg_elem=pv)
         self.assertEqual(1, len(found))
         self.assertEqual(scsi_map, found[0])
 
     def test_remove_storage_vopt(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -229,8 +227,7 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_vopt_no_name_specified(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -290,8 +287,7 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_vdisk(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -312,8 +308,7 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_storage_lu(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
         def validate_update(*kargs, **kwargs):
@@ -334,8 +329,7 @@ class TestSCSIMapper(testtools.TestCase):
 
     def test_remove_pv_mapping(self):
         # Mock Data
-        self.adpt.read.return_value = tju.load_file(VIO_MULTI_MAP_FILE,
-                                                    self.adpt)
+        self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed to existing
         def validate_update(*kargs, **kwargs):
@@ -354,10 +348,54 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.PV)
 
+    def test_detach_storage(self):
+        """Detach storage from some mappings."""
+        # In v1wrap, all five maps are associated with LPAR 2
+        num_matches = 5
+        self.assertEqual(num_matches, len(self.v1wrap.scsi_mappings))
+        # Beforehand, four of them have storage and one does not.
+        self.assertEqual(4, len(
+            [sm.backing_storage for sm in self.v1wrap.scsi_mappings
+             if sm.backing_storage is not None]))
+        removals = scsi_mapper.detach_storage(self.v1wrap, 2)
+        # The number of mappings is the same afterwards.
+        self.assertEqual(num_matches, len(self.v1wrap.scsi_mappings))
+        # But now the mappings have no storage
+        for smap in self.v1wrap.scsi_mappings:
+            self.assertIsNone(smap.backing_storage)
+        # The return list contains all the mappings
+        self.assertEqual(num_matches, len(removals))
+        # The return list members contain the storage (the four that had it
+        # beforehand).
+        self.assertEqual(4, len([sm.backing_storage for sm in removals
+                                 if sm .backing_storage is not None]))
+
+        # In v2wrap, there are four VOptMedia mappings
+        num_matches = 4
+        match_class = pvm_stor.VOptMedia
+        # Number of mappings should be the same before and after.
+        len_before = len(self.v2wrap.scsi_mappings)
+        self.assertEqual(
+            num_matches, len([1 for sm in self.v2wrap.scsi_mappings
+                              if isinstance(sm.backing_storage, match_class)]))
+        removals = scsi_mapper.detach_storage(
+            self.v2wrap, None, match_func=scsi_mapper.gen_match_func(
+                match_class))
+        self.assertEqual(num_matches, len(removals))
+        # The number of mappings is the same as beforehand.
+        self.assertEqual(len_before, len(self.v2wrap.scsi_mappings))
+        # Now there should be no mappings with VOptMedia
+        self.assertEqual(
+            0, len([1 for sm in self.v2wrap.scsi_mappings
+                    if isinstance(sm.backing_storage, match_class)]))
+        # The removals contain the storage
+        self.assertEqual(
+            num_matches, len([1 for sm in removals
+                              if isinstance(sm.backing_storage, match_class)]))
+
     def test_find_maps(self):
         """find_maps() tests not covered elsewhere."""
-        maps = pvm_vios.VIOS.wrap(
-            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt)).scsi_mappings
+        maps = self.v1wrap.scsi_mappings
         # Specifying both match_func and stg_elem raises ValueError
         self.assertRaises(ValueError, scsi_mapper.find_maps, maps, 1,
                           match_func=isinstance, stg_elem='foo')
@@ -393,8 +431,7 @@ class TestSCSIMapper(testtools.TestCase):
 
         # All the mappings in VIO_MULTI_MAP_FILE are "complete".  Now play with
         # some that aren't.
-        maps = pvm_vios.VIOS.wrap(
-            tju.load_file(VIO_MULTI_MAP_FILE2, self.adpt)).scsi_mappings
+        maps = self.v2wrap.scsi_mappings
         # Map 0 has only a server adapter.  We should find it if we specify the
         # LPAR ID...
         matches = scsi_mapper.find_maps(maps, 27, include_orphans=True)
@@ -417,23 +454,19 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(maps[26], matches[1])
 
     def test_separate_mappings(self):
-        vios_wrap = pvm_vios.VIOS.wrap(tju.load_file(VIO_MULTI_MAP_FILE2,
-                                                     self.adpt))
         client_href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                        '726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/'
                        '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
-        sep = scsi_mapper._separate_mappings(vios_wrap, client_href)
+        sep = scsi_mapper._separate_mappings(self.v2wrap, client_href)
         self.assertEqual(2, len(sep))
         self.assertEqual(
             {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
             set(sep.keys()))
         self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
-                         vios_wrap.scsi_mappings[-1])
+                         self.v2wrap.scsi_mappings[-1])
 
     def test_index_mappings(self):
-        vwrap = pvm_vios.VIOS.wrap(tju.load_file(VIO_MULTI_MAP_FILE2,
-                                                 self.adpt))
-        idx = scsi_mapper.index_mappings(vwrap.scsi_mappings)
+        idx = scsi_mapper.index_mappings(self.v2wrap.scsi_mappings)
 
         self.assertEqual({
             'by-lpar-id', 'by-lpar-uuid', 'by-storage-udid'}, set(idx.keys()))

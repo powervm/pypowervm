@@ -15,9 +15,8 @@
 #    under the License.
 
 import copy
-import unittest
-
 import mock
+import unittest
 
 import pypowervm.adapter as adpt
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
@@ -271,6 +270,19 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('a_link', vmap2.client_lpar_href)
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.PV)
 
+    def test_clone_scsi_mapping_no_storage(self):
+        """Clone a VSCSI mapping with no storage element."""
+        pv = pvm_stor.PV.bld(self.adpt, 'disk_name', 'udid')
+        vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
+                                     'client_lpar_uuid', pv)
+        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, None)
+        self.assertIsNotNone(vmap2)
+        self.assertIsNotNone(vmap2.element)
+        self.assertEqual('Client', vmap2.client_adapter.side)
+        self.assertEqual('Server', vmap2.server_adapter.side)
+        self.assertEqual('a_link', vmap2.client_lpar_href)
+        self.assertIsNone(vmap2.backing_storage)
+
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
 
@@ -496,9 +508,9 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(1, self.io_slot.pci_rev_id)
         self.assertEqual(4116, self.io_slot.pci_vendor_id)
         self.assertEqual(4116, self.io_slot.pci_subsys_vendor_id)
-        self.assertEqual(553713674, self.io_slot.pci_subsys_drc_index)
+        self.assertEqual(553713674, self.io_slot.drc_index)
         self.assertEqual('U78AB.001.WZSJBM3-P1-T9',
-                         self.io_slot.pci_subsys_drc_name)
+                         self.io_slot.drc_name)
         self.assertEqual(False, self.io_slot.bus_grp_required)
         self.assertEqual(False, self.io_slot.required)
 
@@ -511,14 +523,18 @@ class TestIOSlots(twrap.TestWrapper):
         self.assertEqual(old_len - 1, len(self.dwrap.io_config.io_slots))
         self.assertNotIn(deleted_slot, self.dwrap.io_config.io_slots)
 
-    def test_io_adpt(self):
-        self.assertIsNotNone(self.io_slot.adapter)
+    @mock.patch('warnings.warn')
+    def test_io_adpt(self, mock_warn):
+        self.assertEqual('553713674', self.io_slot.io_adapter.id)
+        # Verify deprecation warning on IOSlot.adapter
+        self.assertEqual('553713674', self.io_slot.adapter.id)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
     def test_bld(self):
         new_slot = bp.IOSlot.bld(self.adpt, True, 12345678)
         self.assertEqual(False, new_slot.required)
         self.assertEqual(True, new_slot.bus_grp_required)
-        self.assertEqual(12345678, new_slot.pci_subsys_drc_index)
+        self.assertEqual(12345678, new_slot.drc_index)
 
 
 class TestGenericIOAdapter(twrap.TestWrapper):
@@ -528,7 +544,7 @@ class TestGenericIOAdapter(twrap.TestWrapper):
 
     def setUp(self):
         super(TestGenericIOAdapter, self).setUp()
-        self.io_adpt = self.dwrap.io_config.io_slots[0].adapter
+        self.io_adpt = self.dwrap.io_config.io_slots[0].io_adapter
 
     def test_attrs(self):
         self.assertEqual('553713674', self.io_adpt.id)
@@ -548,7 +564,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
 
     def setUp(self):
         super(TestPhysFCAdapter, self).setUp()
-        self.io_adpt = self.dwrap.io_config.io_slots[2].adapter
+        self.io_adpt = self.dwrap.io_config.io_slots[2].io_adapter
 
     def test_attrs(self):
         desc = '8 Gigabit PCI Express Dual Port Fibre Channel Adapter'
@@ -559,7 +575,7 @@ class TestPhysFCAdapter(twrap.TestWrapper):
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2',
                          self.io_adpt.drc_name)
         self.assertEqual('C2', self.io_adpt.phys_loc_code)
-        self.assertTrue(isinstance(self.io_adpt, bp.PhysFCAdapter))
+        self.assertIsInstance(self.io_adpt, bp.PhysFCAdapter)
 
     def test_fc_ports(self):
         self.assertEqual(2, len(self.io_adpt.fc_ports))
@@ -572,8 +588,8 @@ class TestPhysFCPort(twrap.TestWrapper):
 
     def setUp(self):
         super(TestPhysFCPort, self).setUp()
-        self.io_port1 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[0]
-        self.io_port2 = self.dwrap.io_config.io_slots[2].adapter.fc_ports[1]
+        self.io_port1 = self.dwrap.io_config.io_slots[2].io_adapter.fc_ports[0]
+        self.io_port2 = self.dwrap.io_config.io_slots[2].io_adapter.fc_ports[1]
 
     def test_attrs(self):
         self.assertEqual('U78AB.001.WZSJBM3-P1-C2-T2', self.io_port1.loc_code)

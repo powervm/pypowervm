@@ -51,6 +51,11 @@ class Wrapper(object):
     # E.g. { 'SharedEthernetAdapter': pypowervm.wrappers.network.SEA, ... }
     _pvm_object_registry = {}
 
+    # Maps a property name to its extended attribute group.  Should be sparse -
+    # if a property is not associated with a xag, it can (should) be absent
+    # from this dict.
+    _xag_registry = {}
+
     @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
                  attrib=pc.DEFAULT_SCHEMA_ATTR, child_order=None):
@@ -88,8 +93,59 @@ class Wrapper(object):
                     co.insert(0, 'Metadata')
                 class_._child_order = tuple(co)
             Wrapper._pvm_object_registry[schema_type] = class_
+            # @xag_property registers with Wrapper._xag_registry because
+            # class_ hasn't been created yet.  Transfer the created registry
+            # to the class_, and clear Wrapper's so it doesn't pollute the next
+            # class_.
+            class_._xag_registry = Wrapper._xag_registry
+            Wrapper._xag_registry = {}
             return class_
         return inner
+
+    @classmethod
+    def xag_property(cls, xag):
+        """Decorator to tag a @property with an extended attribute group.
+
+        Use this decorator in place of (not in addition to) @property.  Within
+        class Foo:
+
+            @xag_property('bar')
+            def some_prop(self):
+                ...
+
+        confers the same property-ness on 'some_prop' as would
+
+            @property
+            def some_prop(self):
+                ...
+
+        but it also associates some_prop with extended attribute group name
+        'bar' such that Foo.get_xag_for_prop('some_prop') returns the value
+        'bar'.
+
+        :param xag: String name of the extended attribute group with which the
+                    decorated property is associated.  May either be one of the
+                    pypowervm.const.XAG enum values; or a member of one of the
+                    pypowervm.entities.*XAGs collections (for example, see
+                    pypowervm.wrappers.virtual_io_server.phys_vols).
+        """
+        def wrap(func):
+            cls._xag_registry[func.__name__] = str(xag)
+            return property(func)
+        return wrap
+
+    @classmethod
+    def get_xag_for_prop(cls, propname):
+        """The extended attribute group name for a property of this Wrapper.
+
+        :param propname: Short (unqualified) name of a property of this
+                         Wrapper, as a string.
+        :return: String indicating the name of the extended attribute group for
+                 the given property.  Should be a pypowervm.const.XAG enum
+                 value.  None (not 'None') if there is no xag associated with
+                 the specified property.
+        """
+        return cls._xag_registry.get(propname, None)
 
     @property
     def child_order(self):
@@ -206,7 +262,7 @@ class Wrapper(object):
 
         - Gigabyte.Type can't handle more than 6dp.
         - Floating point representation issues can mean that e.g. 0.1 + 0.2
-        yields 0.30000000000000004.
+        produces 0.30000000000000004.
         - str() rounds to 12dp.
 
         So this method converts a float (or float string) to a string with
@@ -254,12 +310,11 @@ class Wrapper(object):
             try:
                 return converter(text)
             except ValueError:
-                message = (
-                    _("Cannot convert %(property_name)s='%(value)s' "
-                      "in object %(pvmobject)s") % {
-                        "property_name": property_name,
-                        "value": text,
-                        "pvmobject": self._type_and_uuid})
+                message = (_(
+                    "Cannot convert %(property_name)s='%(value)s' in object "
+                    "%(pvmobject)s") % {"property_name": property_name,
+                                        "value": text,
+                                        "pvmobject": self._type_and_uuid})
 
                 LOG.error(message)
                 return default
@@ -333,12 +388,9 @@ class Wrapper(object):
         return self.__get_val(property_name, default=default, converter=None)
 
     def log_missing_value(self, param):
-        error_message = (
-            _('The expected parameter of %(param)s was not found in '
-              '%(identifier)s') % {
-                "param": param,
-                "identifier": self._type_and_uuid})
-        LOG.debug(error_message)
+        LOG.debug('The expected parameter of %(param)s was not found in '
+                  '%(identifier)s' % {"param": param,
+                                      "identifier": self._type_and_uuid})
 
     def get_href(self, propname, one_result=False):
         """Returns the hrefs from AtomLink elements.
@@ -593,27 +645,86 @@ class EntryWrapper(Wrapper):
         return self.wrap(resp)
 
     @classmethod
-    def get(cls, adapter, **read_kwargs):
+    def get(cls, adapter, uuid=None, parent_type=None, parent_uuid=None,
+            **read_kwargs):
         """GET and wrap an entry or feed of this type.
 
         Shortcut to EntryWrapper.wrap(adapter.read(...)).
-        For example:
+        For example, retrieving a ROOT object:
             resp = adapter.read(VIOS.schema_type, root_id=v_uuid, xag=xags)
             vwrap = VIOS.wrap(resp)
         Becomes:
-            vwrap = VIOS.get(adapter, root_id=v_uuid, xag=xags)
+            vwrap = VIOS.get(adapter, uuid=v_uuid, xag=xags)
+
+        Or retrieving a CHILD feed:
+            resp = adapter.read(System.schema_type, root_id=sys_uuid,
+                                child_type=VSwitch.schema_type)
+            vswfeed = VSwitch.wrap(resp)
+        Becomes:
+            vswfeed = VSwitch.get(adapter, parent_type=System,
+                                  parent_uuid=sys_uuid)
 
         :param cls: A subclass of EntryWrapper.  Its schema_type will be used
                     as the first argument to adapter.read()
         :param adapter: The pypowervm.adapter.Adapter instance through which to
                         perform the GET.
+        :param uuid: If retrieving a single entry, specify its string UUID.
+                     For ROOT objects, you may specify either uuid or root_id;
+                     for CHILD objects, you may specify either uuid or
+                     child_id.
+        :param parent_type: Required if the invoking class represents a CHILD
+                            object. Specify the schema type of the parent ROOT
+                            object. May be either the string or the
+                            EntryWrapper subclass itself.
+        :param parent_uuid: Required if the invoking class represents a CHILD
+                            object. Specify the UUID of the parent ROOT object.
+                            Do not use the root_id parameter.
         :param read_kwargs: Any arguments to be passed directly through to
                             Adapter.read().
         :return: An EntryWrapper (or list thereof) around the requested REST
                  object.  (Note that this may not be of the type from which the
                  method was invoked, e.g. if the child_type parameter is used.)
         """
-        return cls.wrap(adapter.read(cls.schema_type, **read_kwargs))
+        if parent_type is not None:
+            # CHILD mode
+            resp = cls._read_child(adapter, parent_type, parent_uuid, uuid,
+                                   read_kwargs)
+        else:
+            # ROOT mode
+            if parent_uuid is not None or any(k in read_kwargs for k in
+                                              ('child_type', 'child_id')):
+                raise ValueError(_("Specify 'parent_type' and 'parent_uuid' "
+                                   "to retrieve a CHILD object."))
+            if uuid is not None:
+                if 'root_id' in read_kwargs:
+                    raise ValueError(_("Specify either 'uuid' or 'root_id' "
+                                       "when requesting a ROOT object."))
+                read_kwargs['root_id'] = uuid
+            resp = adapter.read(cls.schema_type, **read_kwargs)
+        return cls.wrap(resp)
+
+    @classmethod
+    def _read_child(cls, adapter, parent_type, parent_uuid, uuid, read_kwargs):
+        """Helper method for 'get' to read CHILD feed or entry Response.
+
+        Params are as described in the 'get' method.
+        """
+        if parent_uuid is None:
+            raise ValueError(_("Both parent_type and parent_uuid are required "
+                               "when retrieving a CHILD feed or entry."))
+        if 'root_id' in read_kwargs:
+            raise ValueError(_("Specify the parent's UUID via the parent_uuid "
+                               "parameter."))
+        if uuid is not None:
+            if 'child_id' in read_kwargs:
+                raise ValueError(_("Specify either 'uuid' or 'child_id' when "
+                                   "requesting a CHILD object."))
+            read_kwargs['child_id'] = uuid
+        # Accept parent_type as either EntryWrapper subclass or string
+        if not isinstance(parent_type, str):
+            parent_type = parent_type.schema_type
+        return adapter.read(parent_type, root_id=parent_uuid,
+                            child_type=cls.schema_type, **read_kwargs)
 
     @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
@@ -644,8 +755,9 @@ class EntryWrapper(Wrapper):
                        the search value.
         :param xag: List of extended attribute group names.
         :param parent_type: If searching for CHILD objects, this parameter must
-                            specify the REST schema type of the parent ROOT
-                            object.
+                            indicate the parent ROOT object.  It may be either
+                            the string schema type or the corresponding
+                            EntryWrapper subclass.
         :param parent_uuid: If searching for CHILD objects, this parameter may
                             specify the UUID of the parent ROOT object.  If
                             parent_type is specified, but parent_uuid is None,
@@ -669,6 +781,11 @@ class EntryWrapper(Wrapper):
         if len(kwargs) != 1:
             raise ValueError(_('The search() method requires exactly one '
                                'key=value argument.'))
+
+        # Convert parent_type to string if necessary
+        if parent_type and not isinstance(parent_type, str):
+            parent_type = parent_type.schema_type
+
         key, val = kwargs.popitem()
         try:
             # search API does not support xag or CHILD
@@ -779,16 +896,24 @@ class EntryWrapper(Wrapper):
         """Performs an adapter.delete (REST API DELETE) with this wrapper."""
         self.adapter.delete_by_href(self.href, etag=self.etag)
 
-    def update(self, xag=None, timeout=-1):
+    # TODO(IBM): Remove deprecated xag parameter
+    def update(self, xag='__DEPRECATED__', timeout=-1):
         """Performs adapter.update of this wrapper.
 
-        :param xag: List of extended attribute group names.
+        :param xag: DEPRECATED - do not use.
         :param timeout: (Optional) Integer number of seconds after which to
                         time out the POST request.  -1, the default, causes the
                         request to use the timeout value configured on the
                         Session belonging to the Adapter.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
+        if xag != '__DEPRECATED__':
+            import warnings
+            warnings.warn(
+                _("The 'xag' parameter to EntryWrapper.update is deprecated!  "
+                  "At best, using it will result in a no-op.  At worst, it "
+                  "will give you incurable etag mismatch errors."),
+                DeprecationWarning)
         if timeout == -1:
             # Override default timeout to 60 minutes unless the Session is
             # configured for longer already.
@@ -797,8 +922,6 @@ class EntryWrapper(Wrapper):
         # adapter.update_by_path expects the path (e.g.
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
-        # No-op if xag is empty/None
-        path = self.adapter.extend_path(path, xag=xag)
         return self.wrap(self.adapter.update_by_path(self, self.etag, path,
                                                      timeout=timeout))
 
@@ -933,6 +1056,14 @@ class ElementWrapper(Wrapper):
         """Tests equality."""
         return self.element == other.element
 
+    def __hash__(self):
+        """Hash value.
+
+        Necessary to be overwritten because of the side effect in Python 3.x
+        of overwriting the __eq__ method causing an object to be unhashable.
+        """
+        return super(ElementWrapper, self).__hash__()
+
 
 class WrapperElemList(list):
     """The wrappers can create complex Lists (from a Group from the response).
@@ -978,7 +1109,7 @@ class WrapperElemList(list):
                 self.child_class is not ElementWrapper):
             return self.root_elem.findall(self.child_class.schema_type)
         else:
-            return self.root_elem.getchildren()
+            return list(self.root_elem)
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -1039,7 +1170,7 @@ class WrapperElemList(list):
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
-        children = self.root_elem.getchildren()
+        children = list(self.root_elem)
         equiv = util.find_equivalent(elem.element, children)
         if equiv is None:
             raise ValueError(_('No such child element.'))

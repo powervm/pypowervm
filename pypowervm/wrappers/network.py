@@ -140,6 +140,7 @@ _VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
 _VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
 _VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
 _VADPT_PVID = _PVID
+_VADPT_LOC_PART_ID = 'LocalPartitionID'
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
@@ -205,7 +206,7 @@ class VSwitch(ewrap.EntryWrapper):
         """
         vswitch = super(VSwitch, cls)._bld(adapter)
         vswitch.name = name
-        vswitch._mode(switch_mode)
+        vswitch.mode = switch_mode
         vswitch.vnet_uri_list = []
         return vswitch
 
@@ -235,7 +236,8 @@ class VSwitch(ewrap.EntryWrapper):
         """
         return self._get_val_str(_VSW_MODE)
 
-    def _mode(self, new_mode):
+    @mode.setter
+    def mode(self, new_mode):
         self.set_parm_value(_VSW_MODE, new_mode)
 
     @property
@@ -602,11 +604,9 @@ class SEA(ewrap.ElementWrapper):
 
     @property
     def primary_adpt(self):
-        """Returns the primary TrunkAdapter for this Shared Ethernet Adapter.
-
-        Can not be None.
-        """
-        return self._get_trunks()[0]
+        """Returns the primary TrunkAdapter for this SEA. """
+        all_trunks = self._get_trunks()
+        return all_trunks[0] if all_trunks else None
 
     def _primary_adpt(self, value):
         new_list = [value]
@@ -808,6 +808,19 @@ class TrunkAdapter(ewrap.ElementWrapper):
     def varied_on(self):
         """Returns the VariedOn property."""
         return self._get_val_bool(_TA_VARIED_ON)
+
+    @property
+    def loc_code(self):
+        """Returns the LocationCode property."""
+        return self._get_val_str(_TA_LOC_CODE)
+
+    @property
+    def vios_id(self):
+        """Determines and returns the VIOS ID from the loc_code.
+
+        :return: int representing the short ID of the associated VIOS.
+        """
+        return u.part_id_by_loc_code(self.loc_code)
 
 
 @ewrap.ElementWrapper.pvm_type('LoadGroup', has_metadata=True)
@@ -1058,6 +1071,11 @@ class CNA(ewrap.EntryWrapper):
 
     def _slot(self, sid):
         self.set_parm_value(_VADPT_SLOT_NUM, sid)
+
+    @property
+    def lpar_id(self):
+        """Returns the Local Partition ID for this adapter."""
+        return self._get_val_int(_VADPT_LOC_PART_ID)
 
     @property
     def _use_next_avail_slot_id(self):

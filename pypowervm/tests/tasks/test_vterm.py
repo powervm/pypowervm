@@ -24,7 +24,7 @@ import pypowervm.tests.test_fixtures as fx
 
 
 class TestVterm(testtools.TestCase):
-    """Unit Tests for Close LPAR vterm."""
+    """Unit Tests for LPAR vterm."""
 
     def setUp(self):
         super(TestVterm, self).setUp()
@@ -49,10 +49,13 @@ class TestVterm(testtools.TestCase):
         mock_run_job.reset_mock()
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('subprocess.check_output')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
     def test_open_vnc_vterm(self, mock_run_proc, mock_get_lpar_id):
         mock_get_lpar_id.return_value = '4'
-        mock_run_proc.return_value = '5903\n'
+        std_out = '5903'
+        std_err = ('VNC is started on port 5903 for localhost access '
+                   'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (std_out, std_err)
 
         resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
 
@@ -61,14 +64,169 @@ class TestVterm(testtools.TestCase):
         self.assertEqual(5903, resp)
 
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
-    @mock.patch('subprocess.check_output')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_open_vnc_vterm_second_pass(self, mock_run_proc, mock_get_lpar_id):
+        """Validates the output from the mkvterm if a vterm is active."""
+        mock_get_lpar_id.return_value = '4'
+        std_out = '5903'
+        std_err = ('\nVNC server is already started on port 5903. Use '
+                   '\'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (std_out, std_err)
+
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
+
+        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
+                                               '--local'])
+        self.assertEqual(5903, resp)
+
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
     def test_close_vterm_local(self, mock_run_proc, mock_get_lpar_id):
         mock_get_lpar_id.return_value = '2'
         vterm._close_vterm_local(self.adpt, '5')
         mock_run_proc.assert_called_once_with(['rmvterm', '--id', '2'])
 
-    def proc(self, cmdline, terminal=None):
-        process = mock.MagicMock()
-        process.cmdline = cmdline
-        process.terminal = terminal
-        return process
+
+class TestVNCRepeaterServer(testtools.TestCase):
+    """Unit Tests for _VNCRepeaterServer vterm."""
+
+    def setUp(self):
+        super(TestVNCRepeaterServer, self).setUp()
+        self.adpt = self.useFixture(
+            fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
+        self.srv = vterm._VNCRepeaterServer(
+            'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'], vnc_path='path')
+
+    def test_stop(self):
+        self.assertTrue(self.srv.alive)
+        self.srv.stop()
+        self.assertFalse(self.srv.alive)
+
+    @mock.patch('select.select')
+    @mock.patch('socket.socket')
+    def test_new_client(self, mock_sock, mock_select):
+        mock_srv = mock.MagicMock()
+        mock_s_sock, mock_c_sock = mock.MagicMock(), mock.MagicMock()
+        mock_sock.return_value = mock_s_sock
+        mock_select.return_value = [mock_c_sock], None, None
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
+        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
+        peers = {}
+
+        self.srv._new_client(mock_srv, peers)
+
+        mock_c_sock.sendall.assert_called_once_with(
+            "HTTP/1.8 200 OK\r\n\r\n")
+        mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
+        self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
+                         peers)
+
+    def test_check_http_connect(self):
+        # Test a string that has no HTTP coding at all
+        sock = mock.MagicMock()
+        sock.recv.return_value = "INVALID"
+        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
+        self.assertFalse(correct_path)
+        self.assertEqual('1.1', http_code)
+
+        # Test a string that has an HTTP code, but doesn't match the path
+        sock.reset_mock()
+        sock.recv.return_value = 'CONNECT test HTTP/1.8\r\n\r\n'
+        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
+        self.assertFalse(correct_path)
+        self.assertEqual('1.8', http_code)
+
+        # Test a good string
+        sock.reset_mock()
+        sock.recv.return_value = 'CONNECT test HTTP/2.0\r\n\r\n'
+        correct_path, http_code = self.srv._check_http_connect(sock, 'test')
+        self.assertTrue(correct_path)
+        self.assertEqual('2.0', http_code)
+
+    def test_new_client_bad_ip(self):
+        """Tests that a new client will be rejected if a bad IP."""
+        mock_srv = mock.MagicMock()
+        mock_c_sock = mock.MagicMock()
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.8', '40675')
+        peers = {}
+
+        self.srv._new_client(mock_srv, peers)
+
+        self.assertEqual(peers, {})
+        self.assertEqual(1, mock_c_sock.close.call_count)
+
+    @mock.patch('select.select')
+    def test_new_client_validation_checks(self, mock_select):
+        mock_srv = mock.MagicMock()
+        mock_c_sock = mock.MagicMock()
+        mock_select.return_value = None, None, None
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
+        peers = {}
+
+        # This mock has no 'socket ready'.
+        self.srv._new_client(mock_srv, peers)
+        self.assertEqual(peers, {})
+        mock_c_sock.sendall.assert_called_with(
+            "HTTP/1.1 400 Bad Request\r\n\r\n")
+        self.assertEqual(1, mock_c_sock.close.call_count)
+
+        # Reset the select so that the validation check fails
+        mock_c_sock.reset_mock()
+        mock_select.return_value = [mock_c_sock], None, None
+        mock_c_sock.recv.return_value = 'bad_check'
+        self.srv._new_client(mock_srv, peers)
+        self.assertEqual(peers, {})
+        mock_c_sock.sendall.assert_called_with(
+            "HTTP/1.1 400 Bad Request\r\n\r\n")
+        self.assertEqual(1, mock_c_sock.close.call_count)
+
+    def test_close_client(self):
+        client, server = mock.Mock(), mock.Mock()
+        peers = {client: server, server: client}
+
+        self.srv._close_client(client, peers)
+
+        self.assertTrue(client.close.called)
+        self.assertTrue(server.close.called)
+        self.assertEqual({}, peers)
+
+    @mock.patch('pypowervm.tasks.vterm._VNCRepeaterServer._new_client')
+    @mock.patch('select.select')
+    @mock.patch('socket.socket')
+    def test_run_new_client(self, mock_socket, mock_select, mock_new_client):
+        mock_server = mock.MagicMock()
+        mock_socket.return_value = mock_server
+        mock_client_peer, mock_server_peer = mock.MagicMock(), mock.MagicMock()
+        mock_client_peer.recv.return_value = 'data'
+
+        # Used to make sure we don't loop indefinitely.
+        bad_select = mock.MagicMock()
+        bad_select.recv.side_effect = Exception('Invalid Loop Call')
+
+        # Mocks how data is received.  First is a new client.  Second is data
+        # from client.  Last should never happen.
+        mock_select.side_effect = [([mock_server], [], []),
+                                   ([mock_client_peer], [], []),
+                                   ([bad_select], [], [])]
+
+        def new_client(server, peers):
+            peers[mock_client_peer] = mock_server_peer
+            peers[mock_server_peer] = mock_client_peer
+
+        mock_new_client.side_effect = new_client
+
+        def send_data(data):
+            self.assertEqual('data', data)
+            self.srv.alive = False
+
+        mock_server_peer.send.side_effect = send_data
+
+        # If this runs...we've pretty much validated.  Because it will end.
+        # If it doesn't end...the fail in the 'select' side effect shoudl catch
+        # it.
+        self.srv.run()
+
+        # Make sure the close was called on all of the sockets.
+        self.assertTrue(mock_server.close.called)
+        self.assertTrue(mock_client_peer.close.called)
+        self.assertTrue(mock_server_peer.close.called)

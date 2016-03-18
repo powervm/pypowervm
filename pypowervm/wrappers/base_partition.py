@@ -150,11 +150,15 @@ _DPC_MAX_PROCS = 'MaximumProcessors'
 _DPC_MIN_PROCS = 'MinimumProcessors'
 
 # Partition Memory Configuration (_MEM)
-_MEM_CUR = 'CurrentMemory'
 _MEM_DES = 'DesiredMemory'
+_MEM_EXP_FACTOR = 'ExpansionFactor'
 _MEM_MAX = 'MaximumMemory'
 _MEM_MIN = 'MinimumMemory'
+_MEM_CUR = 'CurrentMemory'
+_MEM_AME_ENABLED = 'MemoryExpansionEnabled'
 _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
+_MEM_EL_ORDER = (_MEM_DES, _MEM_EXP_FACTOR, _MEM_MAX, _MEM_MIN,
+                 _MEM_CUR, _MEM_AME_ENABLED, _MEM_SHARED_MEM_ENABLED)
 
 # Partition I/O Configuration (_IO)
 IO_CFG_ROOT = _BP_IO_CFG
@@ -692,7 +696,8 @@ class PartitionProcessorConfiguration(ewrap.ElementWrapper):
         self.element.replace(elem, dpc.element)
 
 
-@ewrap.ElementWrapper.pvm_type(_BP_MEM_CFG, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(_BP_MEM_CFG, has_metadata=True,
+                               child_order=_MEM_EL_ORDER)
 class PartitionMemoryConfiguration(ewrap.ElementWrapper):
     """Represents the partitions Memory Configuration."""
 
@@ -753,6 +758,31 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         # The default is None instead of False so that the caller
         # can know if the value is not set
         return self._get_val_bool(_MEM_SHARED_MEM_ENABLED, None)
+
+    @property
+    def ame_enabled(self):
+        return self._get_val_bool(_MEM_AME_ENABLED)
+
+    @property
+    def exp_factor(self):
+        """The Active Memory Expansion Factor
+
+        The expansion factor represents the target memory multiplier.
+        e.g. An LPAR with EF = 2 which has 4 GB of memory will have a target
+        expansion memory of 8 GB.
+        """
+        return self._get_val_float(_MEM_EXP_FACTOR, default=0)
+
+    @exp_factor.setter
+    def exp_factor(self, exp_factor):
+        """The Active Memory Expansion Factor
+
+        :param exp_factor: The expansion factor value. Setting this to 0 will
+                           turn/keep AME off. The valid values are
+                           1.0 <= x <= 10.0 up to 2 decimal places.
+        """
+        self.set_parm_value(_MEM_EXP_FACTOR,
+                            u.sanitize_float_for_api(exp_factor))
 
 
 @ewrap.ElementWrapper.pvm_type(_PC_SHR_PROC_CFG, has_metadata=True,
@@ -1087,7 +1117,7 @@ class IOSlot(ewrap.ElementWrapper):
             """
             new_slot = super(IOSlot.AssociatedIOSlot, cls)._bld(adapter)
             new_slot._bus_grp_required(bus_grp_required)
-            new_slot._pci_subsys_drc_index(drc_index)
+            new_slot._drc_index(drc_index)
 
             return new_slot
 
@@ -1140,14 +1170,14 @@ class IOSlot(ewrap.ElementWrapper):
             return self._get_val_int(_ASSOC_IO_SLOT_SUBSYS_VENDOR_ID)
 
         @property
-        def pci_subsys_drc_index(self):
+        def drc_index(self):
             return self._get_val_int(_ASSOC_IO_SLOT_DRC_INDEX)
 
-        def _pci_subsys_drc_index(self, val):
+        def _drc_index(self, val):
             self.set_parm_value(_ASSOC_IO_SLOT_DRC_INDEX, val)
 
         @property
-        def pci_subsys_drc_name(self):
+        def drc_name(self):
             return self._get_val_str(_ASSOC_IO_SLOT_DRC_NAME)
 
         @property
@@ -1239,15 +1269,24 @@ class IOSlot(ewrap.ElementWrapper):
         return self.__get_prop('pci_subsys_vendor_id')
 
     @property
-    def pci_subsys_drc_index(self):
-        return self.__get_prop('pci_subsys_drc_index')
+    def drc_index(self):
+        return self.__get_prop('drc_index')
 
     @property
-    def pci_subsys_drc_name(self):
-        return self.__get_prop('pci_subsys_drc_name')
+    def drc_name(self):
+        return self.__get_prop('drc_name')
 
     @property
     def adapter(self):
+        """DEPRECATED - use 'io_adapter' method instead."""
+        import warnings
+        warnings.warn(
+            _("IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."),
+            DeprecationWarning)
+        return self.io_adapter
+
+    @property
+    def io_adapter(self):
         """Returns the physical I/O Adapter for this slot.
 
         This will be one of two types.  Either a generic I/O Adapter or

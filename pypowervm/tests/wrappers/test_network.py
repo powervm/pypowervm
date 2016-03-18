@@ -106,6 +106,15 @@ class TestVSwitch(twrap.TestWrapper):
         self.assertTrue(net.VSwitch.has_metadata)
         self.assertEqual(net.VSwitch.default_attrib, pc.DEFAULT_SCHEMA_ATTR)
 
+    def test_set_mode(self):
+        """Tests that the vSwitch element can have the mode set."""
+        vs = net.VSwitch.bld(None, 'Test')
+        self.assertEqual(net.VSwitchMode.VEB, vs.mode)
+        vs.mode = net.VSwitchMode.VEPA
+        self.assertEqual(net.VSwitchMode.VEPA, vs.mode)
+        vs.mode = net.VSwitchMode.VEB
+        self.assertEqual(net.VSwitchMode.VEB, vs.mode)
+
 
 class TestLoadGroup(unittest.TestCase):
     def test_wrapper_class(self):
@@ -301,6 +310,9 @@ class TestNetwork(twrap.TestWrapper):
         self.assertIsNotNone(prim_ld_grp)
         self.assertEqual(1, prim_ld_grp.pvid)
         self.assertEqual(1, len(prim_ld_grp.trunk_adapters))
+        self.assertEqual('U8246.L2C.0604C7A-V4-C2',
+                         prim_ld_grp.trunk_adapters[0].loc_code)
+        self.assertEqual(4, prim_ld_grp.trunk_adapters[0].vios_id)
 
         addl_ld_grps = self.dwrap.load_grps[1:]
         self.assertIsNotNone(addl_ld_grps)
@@ -687,6 +699,10 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertTrue(self.entries.is_trunk)
         self.entries._trunk_pri(None)
         self.assertFalse(self.entries.is_trunk)
+
+    def test_lpar_id(self):
+        """Test that we can get the local partition id."""
+        self.assertEqual(3, self.entries.lpar_id)
 
 if __name__ == "__main__":
     unittest.main()

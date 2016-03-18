@@ -157,10 +157,9 @@ class NetworkBridger(object):
         vlan_ids = [int(x) for x in vlan_ids]
 
         # Get the updated feed of NetworkBridges
-        nb_feed = self.adapter.read(pvm_ms.System.schema_type,
-                                    root_id=self.host_uuid,
-                                    child_type=pvm_net.NetBridge.schema_type)
-        nb_wraps = pvm_net.NetBridge.wrap(nb_feed)
+        nb_wraps = pvm_net.NetBridge.get(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid)
 
         # Find the appropriate Network Bridge
         req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -238,10 +237,9 @@ class NetworkBridger(object):
             nb_wraps = existing_nbs
         else:
             # Get the updated feed of NetworkBridges
-            nb_feed = self.adapter.read(
-                pvm_ms.System.schema_type, root_id=self.host_uuid,
-                child_type=pvm_net.NetBridge.schema_type)
-            nb_wraps = pvm_net.NetBridge.wrap(nb_feed)
+            nb_wraps = pvm_net.NetBridge.get(
+                self.adapter, parent_type=pvm_ms.System,
+                parent_uuid=self.host_uuid)
 
         # Find our Network Bridge
         req_nb = pvm_util.find_wrapper(nb_wraps, nb_uuid)
@@ -319,22 +317,23 @@ class NetworkBridger(object):
                 return i
         return None
 
+    # TODO(IBM): Remove this method; callers should use VSwitch.search()
     def _find_vswitch(self, vswitch_id):
         """Gathers the VSwitch wrapper from the system.
 
         :param vswitch_id: The identifier (not uuid) for the vswitch.
         :return: Wrapper for the corresponding VirtualSwitch.
         """
-        resp_feed = self.adapter.read(
-            pvm_ms.System.schema_type, root_id=self.host_uuid,
-            child_type=pvm_net.VSwitch.schema_type)
-        vswitches = pvm_net.VSwitch.wrap(resp_feed)
+        vswitches = pvm_net.VSwitch.get(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid)
         for vswitch in vswitches:
             if vswitch.switch_id == int(vswitch_id):
                 return vswitch
         return None
 
-    def _find_peer_nbs(self, nb_wraps, nb, include_self=False):
+    @staticmethod
+    def _find_peer_nbs(nb_wraps, nb, include_self=False):
         """Finds all of the peer (same vSwitch) Network Bridges.
 
         :param nb_wraps: List of pypowervm NetBridge wrappers.
@@ -436,11 +435,9 @@ class NetworkBridger(object):
         orphan_map = {}
 
         # Loop through all the VIOSes.
-        vios_feed = self.adapter.read(
-            pvm_ms.System.schema_type, root_id=self.host_uuid,
-            child_type=pvm_vios.VIOS.schema_type,
-            xag=[pvm_vios.VIOS.xags.NETWORK])
-        vios_wraps = pvm_vios.VIOS.wrap(vios_feed)
+        vios_wraps = pvm_vios.VIOS.get(self.adapter, parent_type=pvm_ms.System,
+                                       parent_uuid=self.host_uuid,
+                                       xag=[pvm_vios.VIOS.xags.NETWORK])
 
         for vios_w in vios_wraps:
             # List all of the trunk adapters that are not part of the SEAs
@@ -530,10 +527,8 @@ class NetworkBridgerVNET(NetworkBridger):
         # At this point, all of the new VLANs that need to be added are in the
         # new_vlans list.  Now we need to put them on load groups.
         vswitch_w = self._find_vswitch(req_nb.vswitch_id)
-        vnet_resp_feed = self.adapter.read(pvm_ms.System.schema_type,
-                                           root_id=self.host_uuid,
-                                           child_type=pvm_net.VNet.schema_type)
-        vnets = pvm_net.VNet.wrap(vnet_resp_feed)
+        vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
+                                 parent_uuid=self.host_uuid)
 
         for vlan_id in new_vlans:
             ld_grp = self._find_available_ld_grp(req_nb)
@@ -594,7 +589,7 @@ class NetworkBridgerVNET(NetworkBridger):
             vnet_uri = self._find_vnet_uri_from_lg(matching_lg, vlan_id)
             matching_lg.vnet_uri_list.remove(vnet_uri)
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         :param old_vid: The original arbitrary VLAN ID.
@@ -611,10 +606,8 @@ class NetworkBridgerVNET(NetworkBridger):
         # For the _find_or_create_vnet, we need to query all the virtual
         # networks
         vswitch_w = self._find_vswitch(impacted_nb.vswitch_id)
-        vnet_resp_feed = self.adapter.read(
-            pvm_ms.System.schema_type, root_id=self.host_uuid,
-            child_type=pvm_net.VNet.schema_type)
-        vnets = pvm_net.VNet.wrap(vnet_resp_feed)
+        vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
+                                 parent_uuid=self.host_uuid)
 
         # Read the old virtual network
         old_uri = self._find_vnet_uri_from_lg(impacted_lg, old_vid)

@@ -51,3 +51,14 @@ def add_authorized_key(adapter, public_key):
             console.update()
 
     run_update(console_w)
+
+
+def get_authorized_keys(adapter):
+    """Get all authorized keys on the management console.
+
+    :param adapter: The adapter for the pypowervm API.
+    """
+    console_w = mc.ManagementConsole.wrap(
+        adapter.read(mc.ManagementConsole.schema_type))[0]
+
+    return console_w.ssh_authorized_keys

@@ -46,6 +46,7 @@ _IBMi_RESTRICTEDIO_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IBMiRestrictedIOModeCapable')
 _SIMP_REMOTE_RESTART_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
+_AME_CAP = u.xpath(_SYS_CAPABILITIES, 'ActiveMemoryExpansionCapable')
 _AIX_CAP = u.xpath(_SYS_CAPABILITIES, 'AIXCapable')
 _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
@@ -242,6 +243,8 @@ class System(ewrap.EntryWrapper):
         # to match old Power server behaviors.
         cap_data = {'active_lpar_mobility_capable':
                     self._get_val_bool(_ACTIVE_LPM_CAP),
+                    'active_memory_expansion_capable':
+                    self._get_val_bool(_AME_CAP, False),
                     'inactive_lpar_mobility_capable':
                     self._get_val_bool(_INACTIVE_LPM_CAP),
                     'ibmi_lpar_mobility_capable':
@@ -299,6 +302,7 @@ class System(ewrap.EntryWrapper):
         pref_inact_migr_sup = inact_migr_sup
         act_migr_prog = self._get_val_int(_ACTIVE_MIGR_RUNNING)
         inact_migr_prog = self._get_val_int(_INACTIVE_MIGR_RUNNING)
+        proc_compat = (','.join(self.proc_compat_modes))
 
         migr_data = {'max_migration_ops_supported': max_migr_sup,
                      'active_migrations_supported': act_migr_sup,
@@ -309,7 +313,14 @@ class System(ewrap.EntryWrapper):
                      pref_inact_migr_sup,
                      'active_migrations_in_progress': act_migr_prog,
                      'inactive_migrations_in_progress': inact_migr_prog,
+                     'proc_compat': proc_compat,
                      }
+
+        # Copy get_capabilities() dictionary into migration_data in case
+        # sometimes we need validate the host is capable for mobility.
+        cap_data = self.get_capabilities()
+        migr_data.update(cap_data)
+
         return migr_data
 
     @property

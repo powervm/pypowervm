@@ -34,7 +34,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 
     This is so that etag mismatches trigger a fresh GET.
     """
-    LOG.warn(_('Retrying modification of SCSI Mapping.'))
+    LOG.warning(_('Retrying modification of SCSI Mapping.'))
     argl = list(args)
     # Second argument is vios.
     if isinstance(argl[1], pvm_vios.VIOS):
@@ -110,7 +110,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
               'stg_name': storage_elem.name,
               'vios_name': vios_w.name,
               'lpar_uuid': lpar_uuid})
-    return vios_w.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+    return vios_w.update()
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
@@ -254,6 +254,35 @@ def remove_maps(vwrap, client_lpar_id, match_func=None, include_orphans=True):
     return resp_list
 
 
+def detach_storage(vwrap, client_lpar_id, match_func=None):
+    """Detach the storage from all matching SCSI mappings.
+
+    We do this by removing the Storage and TargetDevice child elements.  This
+    method only updates the vwrap.  It does not POST back to the REST server.
+    It does not lock.
+
+    :param vwrap: VIOS EntryWrapper representing the Virtual I/O Server whose
+                  SCSI mappings are to be updated.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param match_func: (Optional) Matching function suitable for passing to
+                       find_maps.  See that method's match_func parameter.
+                       Defaults to None (match only on client_lpar_id).
+    :return: The list of SCSI mappings which were modified, in their original
+             (storage-attached) form.
+    """
+    # Rather than modifying the matching mappings themselves, we remove them
+    # and recreate them without storage.
+    resp_list = []
+    for match in find_maps(
+            vwrap.scsi_mappings, client_lpar_id=client_lpar_id,
+            match_func=match_func, include_orphans=True):
+        vwrap.scsi_mappings.remove(match)
+        resp_list.append(match)
+        vwrap.scsi_mappings.append(
+            pvm_vios.VSCSIMapping.bld_from_existing(match, None))
+    return resp_list
+
+
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(argmod_func=_argmod)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
@@ -285,7 +314,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
 
     # Update the VIOS, but only if we actually removed mappings
     if resp_list:
-        vios = vios.update(xag=[pvm_vios.VIOS.xags.SCSI_MAPPING])
+        vios = vios.update()
 
     # return the (possibly updated) VIOS and the list of removed backing
     # storage elements.

@@ -1,0 +1,76 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh enterprise_pool_feed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'status': 200, 'pw': 'passw0rd', 'reason': 'OK', 'host': 'localhost', 'user': 'neo', 'path': 'PowerEnterprisePool?group=None'}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '3725', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000hpIms97XPzHUl4K1JmfMKnD:44ae1077-95b8-46ac-9bab-6ba92c1af191; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Wed, 10 Feb 2016 17:54:26 GMT', 'X-Transaction-ID': 'XT10001956', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Wed, 10 Feb 2016 17:54:26 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': 'e25c118f-9669-4a59-84f9-bdfb02fa19f7', 'ETag': '-1118621103'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>031e997b-1b00-3ca3-884e-9812178e106b</id>
+    <updated>2016-02-10T12:54:26.872-05:00</updated>
+    <link rel="SELF" href="https://localhost:12443/rest/api/uom/PowerEnterprisePool?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>e0bc50d4-196a-3d8b-87b9-5ca694c2eb66</id>
+        <title>PowerEnterprisePool</title>
+        <published>2016-02-10T12:54:26.935-05:00</published>
+        <link rel="SELF" href="https://localhost:12443/rest/api/uom/PowerEnterprisePool/e0bc50d4-196a-3d8b-87b9-5ca694c2eb66?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1118621134</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=PowerEnterprisePool">
+            <PowerEnterprisePool:PowerEnterprisePool xmlns:PowerEnterprisePool="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>e0bc50d4-196a-3d8b-87b9-5ca694c2eb66</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <PoolID kb="ROR" kxe="false">0328</PoolID>
+    <PoolName kxe="false" kb="UOR">FVT_pool1</PoolName>
+    <SequenceNumber kb="ROR" kxe="false">40</SequenceNumber>
+    <TotalMobileCoDProcUnits kb="ROR" kxe="false">20</TotalMobileCoDProcUnits>
+    <TotalMobileCoDMemory kxe="false" kb="ROR">0</TotalMobileCoDMemory>
+    <AvailableMobileCoDProcUnits kxe="false" kb="ROR">16</AvailableMobileCoDProcUnits>
+    <AvailableMobileCoDMemory kxe="false" kb="ROR">0</AvailableMobileCoDMemory>
+    <UnreturnedMobileCoDProcUnits kxe="false" kb="ROR">0</UnreturnedMobileCoDProcUnits>
+    <UnreturnedMobileCoDMemory kb="ROR" kxe="false">0</UnreturnedMobileCoDMemory>
+    <ComplianceState kb="ROR" kxe="false">InCompliance</ComplianceState>
+    <PowerEnterprisePoolMasterManagementConsole kb="UOR" kxe="false" href="https://localhost:12443/rest/api/uom/ManagementConsole/59d74d49-66cc-3dd1-8ca3-65fa08aa75e3" rel="related"/>
+    <PowerEnterprisePoolManagementConsoles kb="ROR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerEnterprisePoolManagementConsole schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ManagementConsoleName kb="UOR" kxe="false">ip9-1-2-3</ManagementConsoleName>
+            <ManagementConsoleMachineTypeModelSerialNumber kxe="false" kb="UOR" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <MachineType kxe="false" kb="CUR">7042</MachineType>
+                <Model kxe="false" kb="CUR">CR7</Model>
+                <SerialNumber kxe="false" kb="CUR">10B6EDC</SerialNumber>
+            </ManagementConsoleMachineTypeModelSerialNumber>
+            <IsMasterConsole kb="UOR" kxe="false">true</IsMasterConsole>
+            <IsBackupMasterConsole kxe="false" kb="UOR">false</IsBackupMasterConsole>
+            <ManagementConsoleIPAddress kxe="false" kb="ROR">9.1.2.3</ManagementConsoleIPAddress>
+        </PowerEnterprisePoolManagementConsole>
+    </PowerEnterprisePoolManagementConsoles>
+</PowerEnterprisePool:PowerEnterprisePool>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

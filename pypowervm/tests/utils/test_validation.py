@@ -56,7 +56,8 @@ class TestValidator(testtools.TestCase):
                       mem_dlpar=True, proc_dlpar=True, state='running',
                       env='AIX/Linux', proc_compat='Default', srr_enabled=True,
                       min_vcpus=1, des_vcpus=2, max_vcpus=4,
-                      min_proc_units=0.1, max_proc_units=1.0, pool_id=None):
+                      min_proc_units=0.1, max_proc_units=1.0, pool_id=None,
+                      exp_factor=0.0, ame_enabled=False):
             lpar_w = mock.MagicMock()
             # name, states, env, etc.
             lpar_w.name = name
@@ -84,6 +85,7 @@ class TestValidator(testtools.TestCase):
             lpar_w.mem_config.desired = des_mem
             lpar_w.mem_config.min = min_mem
             lpar_w.mem_config.max = max_mem
+            lpar_w.mem_config.exp_factor = exp_factor
             # Can Modify
             if (state != bp.LPARState.NOT_ACTIVATED
                and rmc_state != bp.RMCState.ACTIVE):
@@ -158,6 +160,10 @@ class TestValidator(testtools.TestCase):
                                             state='not activated')
         self.lpar_running = _bld_lpar(name='lpar_running', state='running')
         self.lpar_starting = _bld_lpar(name='lpar_starting', state='starting')
+        self.lpar_ame_2 = _bld_lpar(name='ame_2', exp_factor=2.0,
+                                    ame_enabled=True)
+        self.lpar_ame_3 = _bld_lpar(name='ame_3', exp_factor=3.0,
+                                    ame_enabled=True)
 
     def test_validator(self):
         # Test desired proc units > host avail proc units fails for shared
@@ -233,6 +239,14 @@ class TestValidator(testtools.TestCase):
         # Test changing max memory fails for active resize
         vldr = vldn.LPARWrapperValidator(self.lpar_8g_max_mem, self.mngd_sys,
                                          cur_lpar_w=self.lpar_6g_max_mem)
+        self.assertRaises(vldn.ValidatorException, vldr.validate_all)
+        # Test changing AME expansion factor from 2 to 3 fails active resize
+        vldr = vldn.LPARWrapperValidator(self.lpar_ame_3, self.mngd_sys,
+                                         cur_lpar_w=self.lpar_ame_2)
+        self.assertRaises(vldn.ValidatorException, vldr.validate_all)
+        # Test toggling AME fails for active resize
+        vldr = vldn.LPARWrapperValidator(self.lpar_ame_2, self.mngd_sys,
+                                         cur_lpar_w=self.lpar_1_proc)
         self.assertRaises(vldn.ValidatorException, vldr.validate_all)
         # Test resizing lpar from defaultSPP to non-defaultSPP fails
         vldr = vldn.LPARWrapperValidator(self.lpar_non_default_spp,

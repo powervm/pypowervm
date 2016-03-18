@@ -511,9 +511,9 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     if new_vios_w is None:
         if error_if_invalid:
             # Log the payload in the response.
-            LOG.warn(_("Unable to find appropriate VIOS.  The payload "
-                       "provided was likely insufficient.  The payload data "
-                       "is:\n %s)"), vios_w.toxmlstring())
+            LOG.warning(_("Unable to find appropriate VIOS.  The payload "
+                          "provided was likely insufficient.  The payload "
+                          "data is:\n %s)"), vios_w.toxmlstring())
             raise e.UnableToDerivePhysicalPortForNPIV(wwpn=port_map[0],
                                                       vio_uri=vios_w.href)
         else:

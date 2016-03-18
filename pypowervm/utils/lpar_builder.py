@@ -35,6 +35,7 @@ ID = 'id'
 MEM = 'memory'
 MAX_MEM = 'max_mem'
 MIN_MEM = 'min_mem'
+AME_FACTOR = 'ame_factor'
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -225,7 +226,10 @@ class DefaultStandardize(Standardize):
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
             attrs = self.attr
+        host_ame_cap = self.mngd_sys.get_capabilities()[
+            'active_memory_expansion_capable']
         mem = Memory(attrs.get(MIN_MEM), attrs.get(MEM), attrs.get(MAX_MEM),
+                     attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
         mem.validate()
 
@@ -552,8 +556,8 @@ class MinDesiredMaxField(object):
 class Memory(MinDesiredMaxField):
     _name = 'Memory'
 
-    def __init__(self, min_value, desired_value, max_value, lmb_size,
-                 allow_none=True):
+    def __init__(self, min_value, desired_value, max_value,
+                 ame_ef, host_ame_cap, lmb_size, allow_none=True):
         super(Memory, self).__init__(
             IntBoundField, 'Minimum Memory', 'Desired Memory',
             'Maximum Memory', min_value, desired_value, max_value,
@@ -563,9 +567,15 @@ class Memory(MinDesiredMaxField):
         self.min_field._min_bound = MEM_LOW_BOUND
         # Don't allow the desired memory to not be specified.
         self.des_field.allow_none = False
+        self.ame_ef = ame_ef
+        self.host_ame_cap = host_ame_cap
 
     def validate(self):
         super(Memory, self).validate()
+        self._validate_lmb_size()
+        self._validate_ame()
+
+    def _validate_lmb_size(self):
         # Validate against the LMB size
         if self.lmb_size is not None:
             # For each value, make sure it's a multiple
@@ -577,8 +587,26 @@ class Memory(MinDesiredMaxField):
                     msg = _LE("Memory value is not a multiple of the "
                               "logical memory block size (%(lmb_size)s) of "
                               " the host.  Value: %(value)s") % values
-                    LOG.error(msg)
                     raise ValueError(msg)
+
+    def _validate_ame(self):
+        # Validate the expansion factor value
+        if self.ame_ef is not None:
+            exp_fact_float = round(float(self.ame_ef), 2)
+            values = dict(value=self.ame_ef)
+            if not self.host_ame_cap and exp_fact_float != 0:
+                msg = _LE("The managed system does not support active memory "
+                          "expansion. The expansion factor value '%(value)s' "
+                          "is not valid.") % values
+                raise ValueError(msg)
+            if (exp_fact_float != 0 and exp_fact_float < 1 or
+                    exp_fact_float > 10):
+                msg = _LE("Active memory expansion value must be greater "
+                          "than or equal to 1.0 and less than or equal to "
+                          "10.0. A value of 0 is also valid and indicates "
+                          "that AME is off. '%(value)s' is not "
+                          "valid.") % values
+                raise ValueError(msg)
 
 
 class VCpu(MinDesiredMaxField):
@@ -704,6 +732,10 @@ class LPARBuilder(object):
         std = self.stdz.memory()
         mem_wrap = bp.PartitionMemoryConfiguration.bld(
             self.adapter, std[MEM], min_mem=std[MIN_MEM], max_mem=std[MAX_MEM])
+        # Determine AME enabled boolean value from expansion factor value
+        if self.attr.get(AME_FACTOR) is not None:
+            exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
+            mem_wrap.exp_factor = exp_fact_float
         return mem_wrap
 
     def _shared_proc_keys_specified(self):

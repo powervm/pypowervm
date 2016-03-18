@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -14,10 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import errno
-
+import fixtures
+import gc
 from lxml import etree
 import six
+import subunit
 
 if six.PY2:
     import __builtin__ as builtins
@@ -109,6 +112,99 @@ class TestAdapter(testtools.TestCase):
         """Tear down the Session instance."""
         self.sess = None
         super(TestAdapter, self).tearDown()
+
+    def test_event_listener(self):
+
+        with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
+                mock.patch.object(adp, '_EventPollThread') as mock_poll:
+            # With some fake events, event listener can be initialized
+            self.sess._sessToken = 'token'.encode('utf-8')
+            m_events.return_value = {'general': 'init'}, []
+            event_listen = self.sess.get_event_listener()
+            self.assertIsNotNone(event_listen)
+
+            # Register the fake handlers and ensure they are called
+            evh = mock.Mock(spec=adp.EventHandler, autospec=True)
+            raw_evh = mock.Mock(spec=adp.RawEventHandler, autospec=True)
+            event_listen.subscribe(evh)
+            event_listen.subscribe(raw_evh)
+            events, raw_events = event_listen._get_events()
+            event_listen._dispatch_events(events, raw_events)
+            self.assertTrue(evh.process.called)
+            self.assertTrue(raw_evh.process.called)
+            self.assertTrue(mock_poll.return_value.start.called)
+
+            # Ensure getevents() gets legacy events
+            self.assertEqual({'general': 'init'}, event_listen.getevents())
+
+        # Outside our patching of _get_events, get the formatted events
+        with mock.patch.object(event_listen, '_format_events') as mock_format,\
+                mock.patch.object(event_listen.adp, 'read') as mock_read:
+
+            # Fabricate some mock entries, so format gets called.
+            mock_read.return_value.feed.entries = (['entry'])
+
+            self.assertEqual(({}, []), event_listen._get_events())
+            self.assertTrue(mock_read.called)
+            self.assertTrue(mock_format.called)
+
+        # Test _format_events
+        event_data = [
+            {
+                'EventType': 'NEW_CLIENT',
+                'EventData': 'href1',
+                'EventID': '1',
+                'EventDetail': 'detail',
+            },
+            {
+                'EventType': 'CACHE_CLEARED',
+                'EventData': 'href2',
+                'EventID': '2',
+                'EventDetail': 'detail2',
+            },
+            {
+                'EventType': 'ADD_URI',
+                'EventData': 'LPAR1',
+                'EventID': '3',
+                'EventDetail': 'detail3',
+            },
+            {
+                'EventType': 'DELETE_URI',
+                'EventData': 'LPAR1',
+                'EventID': '4',
+                'EventDetail': 'detail4',
+            },
+            {
+                'EventType': 'INVALID_URI',
+                'EventData': 'LPAR1',
+                'EventID': '4',
+                'EventDetail': 'detail4',
+            },
+        ]
+
+        # Setup a side effect that returns events from the test data.
+        def get_event_data(item):
+            data = event_data[0][item]
+            if item == 'EventDetail':
+                event_data.pop(0)
+            return data
+
+        # Raw events returns a sequence the same as the test data
+        raw_result = copy.deepcopy(event_data)
+        # Legacy events overwrites some events.
+        dict_result = {'general': 'invalidate', 'LPAR1': 'delete'}
+
+        # Build a mock entry
+        entry = mock.Mock()
+        entry.element.findtext.side_effect = get_event_data
+        events = {}
+        raw_events = []
+        x = len(raw_result)
+        while x:
+            x -= 1
+            event_listen._format_events(entry, events, raw_events)
+        self.assertEqual(raw_result, raw_events)
+        self.assertEqual(dict_result, events)
 
     @mock.patch('pypowervm.adapter.Session')
     def test_empty_init(self, mock_sess):
@@ -511,7 +607,7 @@ class TestAdapter(testtools.TestCase):
         # Run the actual test
         self.assertRaises(pvmex.HttpError, adapter.create, element,
                           root_type, root_id, child_type)
-        mock_log.warn.assert_called_once_with(mock.ANY)
+        self.assertEqual(1, mock_log.warning.call_count)
 
     def test_element_iter(self):
         """Test the ETElement iter() method found in the Adapter class."""
@@ -603,6 +699,99 @@ class TestElement(testtools.TestCase):
         self.assertEqual(el.namespace, 'foo')
 
 
+class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
+    def setUp(self):
+        super(TestAdapterClasses, self).setUp()
+        self.mock_logoff = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logoff')).mock
+        self.mock_logon = self.useFixture(
+            fixtures.MockPatchObject(adp.Session, '_logon')).mock
+        self.mock_events = self.useFixture(
+            fixtures.MockPatchObject(adp._EventListener, '_get_events')).mock
+        # Mock the initial events coming in on start
+        self.mock_events.return_value = {'general': 'init'}, []
+
+    def test_instantiation(self):
+        """Direct instantiation of EventListener is not allowed."""
+        # Get a session
+        sess = adp.Session()
+        # Now get the EventListener
+        self.assertRaises(TypeError, adp.EventListener, sess)
+
+        # Mock the session token like we logged on
+        sess._sessToken = 'token'.encode('utf-8')
+        # Ensure we get an EventListener
+        self.assertIsInstance(sess.get_event_listener(), adp.EventListener)
+
+    def test_shutdown_session(self):
+        """Test garbage collection of the session.
+
+        Ensures the Session can be properly garbage collected.
+        """
+        # Get a session
+        sess = adp.Session()
+        # Mock the session token like we logged on
+        sess._sessToken = 'token'.encode('utf-8')
+        # It should have logged on but not off.
+        self.assertTrue(self.mock_logon.called)
+        self.assertFalse(self.mock_logoff.called)
+
+        # Get an event listener to test the weak references
+        event_listen = sess.get_event_listener()
+
+        # Test the circular reference (but one link is weak)
+        sess.hello = 'hello'
+        self.assertEqual(sess.hello, event_listen.adp.session.hello)
+
+        # There should be 1 reference to the session (ours)
+        self.assertEqual(1, len(gc.get_referrers(sess)))
+
+    def test_shutdown_adapter(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter, implicit session and
+        EventListener.
+        """
+        # Get Adapter, implicit session
+        adapter = adp.Adapter()
+        adapter.session._sessToken = 'token'.encode('utf-8')
+        # Get construct and event listener
+        adapter.session.get_event_listener()
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+
+        # The only thing that refers the adapter is our reference
+        self.assertEqual(1, len(gc.get_referrers(adapter)))
+
+    def test_shutdown_cache_adapter(self):
+        """Test garbage collection of the session, event listener.
+
+        Ensures the proper shutdown of the session and event listener when
+        we start with constructing an Adapter w/caching, and EventListener.
+        """
+
+        # Get a session, we need to patch the session
+        sess = adp.Session()
+        sess._sessToken = 'token'.encode('utf-8')
+
+        # Get Adapter
+        adapter = adp.Adapter(sess, use_cache=True)
+        # Done with the session
+        sess = None
+
+        # Turn off the event listener
+        adapter.session.get_event_listener().shutdown()
+        # Session is still active
+        self.assertFalse(self.mock_logoff.called)
+
+        # The only thing that refers the adapter is our reference
+        self.assertEqual(1, len(gc.get_referrers(adapter)))
+
+
 class TestElementInject(testtools.TestCase):
 
     def setUp(self):
@@ -635,8 +824,10 @@ class TestElementInject(testtools.TestCase):
         :param parent: Parent adapter.Element
         :param children: Child adapter.Elements
         """
-        actual = list(parent.element)
-        expected = [child.element for child in expected_children]
+        # etree.Element doesn't implement __eq__, so different instances of the
+        # same Element aren't "equal".  Compare XML strings instead.
+        actual = [etree.tostring(elem) for elem in list(parent.element)]
+        expected = [etree.tostring(chld.element) for chld in expected_children]
         self.assertEqual(actual, expected)
 
     def test_no_children(self):

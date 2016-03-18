@@ -35,6 +35,7 @@ import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
+import pypowervm.wrappers.virtual_io_server as vios
 
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
@@ -66,6 +67,30 @@ class SubWrapper(ewrap.Wrapper):
             return self.data[prop_name]
         except KeyError:
             return None
+
+
+class TestElement(twrap.TestWrapper):
+    file = NET_BRIDGE_FILE
+    wrapper_class_to_test = net.NetBridge
+
+    def test_child_poaching(self):
+        """Creating an element with children of another existing element.
+
+        Ensure the existing element remains intact.
+        """
+        # How many load groups did we start with?
+        num_lg = len(self.dwrap.load_grps)
+        # Create a new element with a load group from the NetBridge as a child.
+        newel = ent.Element('foo', None,
+                            children=[self.dwrap.load_grps[0].element])
+        # Element creation did not poach the load group from the NetBridge.
+        self.assertEqual(num_lg, len(self.dwrap.load_grps))
+
+        # pypowervm.entities.Element.append (not to be confused with
+        # etree.Element.append or list.append) should behave the same way.
+        newel.append(self.dwrap.load_grps[1].element)
+        # TODO(IBM): ...but it doesn't.  See comment in that method.
+        # self.assertEqual(num_lg, len(self.dwrap.load_grps))
 
 
 class TestWrapper(unittest.TestCase):
@@ -211,7 +236,9 @@ class TestElementWrapper(testtools.TestCase):
         """Validates that two elements loaded from the same data is equal."""
         sea1 = self._find_seas(self.nb1.entry)[0]
         sea2 = self._find_seas(self.nb2.entry)[0]
+        sea2copy = copy.deepcopy(sea2)
         self.assertTrue(sea1 == sea2)
+        self.assertEqual(sea2, sea2copy)
 
         # Change the other SEA
         sea2.element.element.append(etree.Element('Bob'))
@@ -224,6 +251,19 @@ class TestElementWrapper(testtools.TestCase):
         pvid = sea_trunk.find('PortVLANID')
         pvid.text = '1'
         self.assertFalse(sea1 == sea2)
+
+    def test_unequal(self):
+        sea1 = self._find_seas(self.nb1.entry)[0]
+        sea2 = self._find_seas(self.nb2.entry)[0]
+        self.assertEqual(sea1, sea2)
+        # Different text makes 'em different
+        sea1.element.text = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
+        # reset
+        sea1.element.text = sea2.element.element.text
+        # Different tag makes 'em different
+        sea1.element.tag = 'Bogus'
+        self.assertNotEqual(sea1, sea2)
 
     def _find_seas(self, entry):
         """Wrapper for the SEAs."""
@@ -565,19 +605,86 @@ class TestActionableList(unittest.TestCase):
         self.assertEqual(5, function.call_count)
 
 
-class TestGet(twrap.TestWrapper):
+class TestGet(testtools.TestCase):
     """Tests for EntryWrapper.get()."""
-    file = LPAR_FILE
-    wrapper_class_to_test = lpar.LPAR
 
-    def test_get(self):
-        self.adpt.read.return_value = self.resp
-        ret = lpar.LPAR.get(self.adpt, foo='bar', baz=123)
+    def setUp(self):
+        super(TestGet, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.wrap')
+    def test_get_root(self, mock_wrap):
+        """Various permutations of EntryWrapper.get on a ROOT object."""
+        # Happy path - feed.  Ensure misc args are passed through.
+        lpar.LPAR.get(self.adpt, foo='bar', baz=123)
         self.adpt.read.assert_called_with(lpar.LPAR.schema_type, foo='bar',
                                           baz=123)
-        # Ensure that LPAR.wrap was called on the result
-        self.assertIsInstance(ret, list)
-        self.assertIsInstance(ret[0], lpar.LPAR)
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'uuid'
+        lpar.LPAR.get(self.adpt, uuid='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'root_id'
+        lpar.LPAR.get(self.adpt, root_id='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+
+    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
+    def test_get_child(self, mock_wrap):
+        """Various permutations of EntryWrapper.get on a CHILD object."""
+        # Happy path - feed.  Parent specified as class
+        net.CNA.get(self.adpt, parent_type=lpar.LPAR, parent_uuid='123')
+        self.adpt.read.assert_called_with(lpar.LPAR.schema_type, root_id='123',
+                                          child_type=net.CNA.schema_type)
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'uuid'.
+        net.CNA.get(
+            self.adpt, parent_type=lpar.LPAR, parent_uuid='123', uuid='456')
+        self.adpt.read.assert_called_with(
+            lpar.LPAR.schema_type, root_id='123',
+            child_type=net.CNA.schema_type, child_id='456')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+        # Happy path - entry with 'child_id'.  Parent specified as string.
+        net.CNA.get(self.adpt, parent_type=lpar.LPAR.schema_type,
+                    parent_uuid='123', child_id='456')
+        self.adpt.read.assert_called_with(
+            lpar.LPAR.schema_type, root_id='123',
+            child_type=net.CNA.schema_type, child_id='456')
+        mock_wrap.assert_called_with(self.adpt.read.return_value)
+        mock_wrap.reset_mock()
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_get_errors(self, mock_wrap):
+        """Error paths in EntryWrapper.get."""
+        # parent_type specified, parent_uuid not.
+        self.assertRaises(ValueError,
+                          net.CNA.get, self.adpt, parent_type=lpar.LPAR)
+        # CHILD mode forbids 'root_id' (must use 'parent_uuid').
+        self.assertRaises(ValueError, net.CNA.get, self.adpt,
+                          parent_type=lpar.LPAR, parent_uuid='1', root_id='2')
+        # CHILD mode can't have both 'uuid' and 'child_id'.
+        self.assertRaises(ValueError, net.CNA.get, self.adpt,
+                          parent_type=lpar.LPAR, parent_uuid='12', uuid='34',
+                          child_id='56')
+        # ROOT mode forbids parent_uuid.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, parent_uuid='123')
+        # ROOT mode forbids child_type.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, child_type=net.CNA)
+        # ROOT mode forbids child_id.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, child_id='123')
+        # ROOT mode can't have both 'uuid' and 'root_id'.
+        self.assertRaises(ValueError,
+                          lpar.LPAR.get, self.adpt, uuid='12', root_id='34')
+        # Nothing was ever wrapped
+        mock_wrap.assert_not_called()
 
 
 class TestSearch(testtools.TestCase):
@@ -739,8 +846,8 @@ class TestSearch(testtools.TestCase):
         # Set up the first mock_read in the chain
         mock_read.side_effect = validate_feed_get
 
-        # Do the search
-        wraps = net.VNet.search(self.adp, parent_type=parent_type, tagged=True)
+        # Do the search (with class as parent_type)
+        wraps = net.VNet.search(self.adp, parent_type=vios.VIOS, tagged=True)
         # Make sure we got the right networks
         for wrap, expected_vlanid in zip(wraps, (1234, 2, 1001, 1000)):
             self.assertIsInstance(wrap, net.VNet)
@@ -849,26 +956,27 @@ class TestUpdate(testtools.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update()
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path + '?group=None',
-            timeout=3600)
+            self.cl, self.clust_etag, self.clust_path, timeout=3600)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
-    def test_update_xag(self, mock_ubp):
+    @mock.patch('warnings.warn')
+    def test_update_xag(self, mock_warn, mock_ubp):
         new_etag = '456'
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
         newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=123)
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
-            timeout=123)
+            self.cl, self.clust_etag, self.clust_path, timeout=123)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
-    def test_update_with_get_xag(self, mock_ubp):
+    @mock.patch('warnings.warn')
+    def test_update_with_get_xag(self, mock_warn, mock_ubp):
         # Update the entry with the new properties
         get_href = self.clust_href + "?group=one,three,two"
         props = {'id': self.clust_uuid, 'links': {'SELF': [get_href]}}
@@ -878,12 +986,13 @@ class TestUpdate(testtools.TestCase):
         resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
         resp.entry = self.cl.entry
         mock_ubp.return_value = resp
-        newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=-1)
+        newcl = self.cl.update(xag=['should', 'be', 'ignored'], timeout=-1)
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
             timeout=3600)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
+        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
 
 class TestDelete(testtools.TestCase):
