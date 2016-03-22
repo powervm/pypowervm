@@ -41,6 +41,26 @@ _SHARED_EL_ORDER = (_ASSIGNED_PARTITIONS, _CURR_RSRV_PROC_UNITS,
 @ewrap.EntryWrapper.pvm_type('SharedProcessorPool',
                              child_order=_SHARED_EL_ORDER)
 class SharedProcPool(ewrap.EntryWrapper):
+    @classmethod
+    def bld(cls, adapter, spp_id, name, max_proc_units=0,
+            pend_rsrv_proc_units=0):
+        """Creates a SharedProcPool that can be used for a create operation.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param spp_id: The positive int ID for the proc pool.  Must be unique.
+        :param name: The name for the proc pool.  Must be unique.
+        :param max_proc_units: Floating point number of the max processing
+                               units (Default 0).
+        :param pend_rsrv_proc_units: Floating point number of pending reserved
+                                     proc units (Default 0).
+        :returns: The ElementWrapper that represents the new SharedProcPool.
+        """
+        spp = super(SharedProcPool, cls)._bld(adapter)
+        spp.set_parm_value(_POOL_ID, spp_id)
+        spp.name = name
+        spp.max_proc_units = max_proc_units
+        spp.pend_rsrv_proc_units = pend_rsrv_proc_units
+        return spp
 
     @property
     def id(self):
