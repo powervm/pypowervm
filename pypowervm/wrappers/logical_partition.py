@@ -246,20 +246,29 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
     @property
     def rr_enabled(self):
-        """Remote Restart capable?"""
-        return self._get_val_bool(_LPAR_RR, False)
+        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
+        import warnings
+        warnings.warn(_("This is not the property you are looking for.  Use "
+                        "srr_enabled in a NovaLink environment."),
+                      DeprecationWarning)
+        return None
 
     @rr_enabled.setter
     def rr_enabled(self, value):
-        """Turn Remote Restart on or off.
-
-        LPAR must be powered off.
-        """
-        self.set_parm_value(_LPAR_RR, u.sanitize_bool_for_api(value))
+        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
+        import warnings
+        warnings.warn(_("This is not the property you are looking for.  Use "
+                        "srr_enabled in a NovaLink environment."),
+                      DeprecationWarning)
 
     @property
     def rr_state(self):
-        return self._get_val_str(_LPAR_RR_STATE)
+        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
+        import warnings
+        warnings.warn(_("This is not the property you are looking for.  Use "
+                        "srr_enabled in a NovaLink environment."),
+                      DeprecationWarning)
+        return None
 
     @property
     def srr_enabled(self):

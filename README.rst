@@ -119,3 +119,9 @@ Developer Notes
 - The ``xags`` member of the ``pypowervm.wrappers.virtual_io_server.VIOS``
   class is deprecated and will be removed no sooner than January 1st, 2017.
   Please use the members of ``pypowervm.const.XAG`` instead.
+
+- Remote Restart in a NovaLink environment is handled by the consuming
+  management layer, not by NovaLink itself.  As such, the properties
+  ``rr_enabled`` and ``rr_state`` of ``pypowervm.wrappers.logical_partition.LPAR``
+  should not be used.  These properties are now deprecated and will be removed
+  no sooner than January 1st, 2017.  Use the ``srr_enabled`` property instead.
