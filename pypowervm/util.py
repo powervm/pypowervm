@@ -401,12 +401,12 @@ def sanitize_partition_name_for_api(name, trunc_ok=True):
     """Sanitize a string to be suitable for use as a partition name.
 
     PowerVM's partition name restrictions are:
-    - Between 1 and 31 characters, inclusive;
-    - Containing ASCII characters between 0x20 (space) and 0x7E (~), inclusive,
-      except ()\<>*$&?|[]'"`
+    - Between 1 and 31 ASCII characters, inclusive;
+    - Containing ASCII characters consisting of letters, numbers, and
+      : (colon) ; (semicolon) = @ ^ { } _ (underscore) ~ (tilde) - (hyphen)
 
     :param name: The name to scrub.  Invalid characters will be replaced with
-                 '_'.
+                 '_' (underscore).
     :param trunc_ok: If True, and name exceeds 31 characters, it is truncated.
                      If False, and name exceeds 31 characters, ValueError is
                      raised.
@@ -421,7 +421,7 @@ def sanitize_partition_name_for_api(name, trunc_ok=True):
     if not trunc_ok and len(name) > max_len:
         raise ValueError(_("The name parameter must not exceed %d characters "
                            "when trunk_ok is False."), max_len)
-    return re.sub(r'[^- !#%+,./0-9:;=@A-Z^_a-z{}]', '_', name)[:max_len]
+    return re.sub(r'[^-0-9A-Za-z:;=@^{}_~]', '_', name)[:max_len]
 
 
 def find_equivalent(elem, find_list):

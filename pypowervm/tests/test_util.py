@@ -294,13 +294,13 @@ class TestUtil(unittest.TestCase):
         self.assertEqual('foo', util.sanitize_partition_name_for_api('foo'))
         self.assertEqual('_______________________________',
                          util.sanitize_partition_name_for_api(allc))
-        self.assertEqual('_ !_#_%_____+,-./0123456789:;_=',
+        self.assertEqual('______________-__0123456789:;_=',
                          util.sanitize_partition_name_for_api(allc[31:]))
         self.assertEqual('__@ABCDEFGHIJKLMNOPQRSTUVWXYZ__',
                          util.sanitize_partition_name_for_api(allc[62:]))
         self.assertEqual('_^__abcdefghijklmnopqrstuvwxyz{',
                          util.sanitize_partition_name_for_api(allc[93:]))
-        self.assertEqual('_}_____________________________',
+        self.assertEqual('_}~____________________________',
                          util.sanitize_partition_name_for_api(allc[124:]))
         for start in (155, 186, 217):
             self.assertEqual(
@@ -308,7 +308,7 @@ class TestUtil(unittest.TestCase):
                 util.sanitize_partition_name_for_api(allc[start:]))
         self.assertEqual('________',
                          util.sanitize_partition_name_for_api(allc[248:]))
-        self.assertEqual('I _ _________',
+        self.assertEqual('I____________',
                          util.sanitize_partition_name_for_api(
                              u'I \u611B \u01A4\u0177\u03C1\uFF4F\u05E9\u5DF3'
                              u'\u5C3A\uFF56\uFF4D'))
