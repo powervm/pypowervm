@@ -54,13 +54,3 @@ class TestShrPrcPoolTestCase(twrap.TestWrapper):
 
         self.dwrap.pend_rsrv_proc_units = 4.3
         self.assertEqual(4.3, self.dwrap.pend_rsrv_proc_units)
-
-    def test_bld(self):
-        spp_new = spp.SharedProcPool.bld(
-            self.adpt, 42, 'new_spp', max_proc_units=12.34,
-            pend_rsrv_proc_units=56.78)
-
-        self.assertEqual(spp_new.id, 42)
-        self.assertEqual(spp_new.name, 'new_spp')
-        self.assertEqual(spp_new.max_proc_units, 12.34)
-        self.assertEqual(spp_new.pend_rsrv_proc_units, 56.78)
