@@ -1,0 +1,77 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'rest/api/pcm/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/RawMetrics/LongTermMonitor/LTM_8247-22L*2125D4A_lpar_20160328T031000-0400.json'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '1878', 'x-powered-by': 'Servlet/3.0', 'last-modified': 'Thu, 30 Apr 2015 03:53:05 GMT', 'etag': '1430365985674', 'date': 'Thu, 30 Apr 2015 03:53:04 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+{
+    "lparUtil":
+    [
+        {
+            "uuid": "7DEBA66A-0C4F-4998-A2FE-E38BFE3E60DB",
+            "id": "21",
+            "name": "test_vm1",
+            "memory":
+            {
+                "pctRealMemFree": 61,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 25,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "5536C020-C995-4508-A010-5292CD21F307",
+            "id": "13",
+            "name": "test_vm2",
+            "memory":
+            {
+                "pctRealMemFree": 62,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 94,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "3B8B95E8-4D85-4599-803E-E2B3CD193033",
+            "id": "8",
+            "name": "test_vm3",
+            "memory":
+            {
+                "pctRealMemFree": 60,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 0,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "7C478B9C-64C6-4CD4-B6F8-3C9BBAA1CFD5",
+            "id": "15",
+            "name": "test_vm4",
+            "memory":
+            {
+                "pctRealMemFree": 62,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 80,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        }
+    ]
+}
+
+END OF SECTION}
