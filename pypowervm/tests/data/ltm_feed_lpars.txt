@@ -1,0 +1,57 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'RawMetrics/LongTermMonitor'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '1878', 'x-powered-by': 'Servlet/3.0', 'last-modified': 'Thu, 30 Apr 2015 03:53:05 GMT', 'etag': '1430365985674', 'date': 'Thu, 30 Apr 2015 03:53:04 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>98498bed-c78a-3a4f-b90a-4b715418fcb6</id>
+    <updated>2015-04-30T03:53:00.000Z</updated>
+    <title type="text">LongTermMetrics</title>
+    <subtitle type="text">ManagedSystem 98498bed-c78a-3a4f-b90a-4b715418fcb6</subtitle>
+    <link rel="self" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor"/>
+    <generator uri="IBM Power Systems Management Console" version="1"/>
+    <entry>
+        <id>15161241-b72f-41d5-8154-557ff699fb75</id>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
+        <title type="text">LTM_8247-22L*1111111_vios_2_20150430T035300+0000.json</title>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_vios_2_20160328T022600-0400.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="vios_2"/>
+    </entry>
+    <entry>
+        <id>cf8bf632-b702-4f4f-9029-5ffc8934e886</id>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
+        <title type="text">LTM_8247-22L*1111111_phyp_20150430T035300+0000.json</title>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_phyp_20160328T022600-0400.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="phyp"/>
+    </entry>
+    <entry>
+        <id>aa05223a-0141-467e-86a5-4d57ede44ab8</id>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
+        <title type="text">LTM_8247-22L*1111111_lpar_20160328T022600-0400.json</title>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_lpar_20160328T022600-0400.json"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <category term="lpar"/>
+    </entry>
+</feed>
+
+END OF SECTION}
