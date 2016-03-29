@@ -29,6 +29,7 @@ from pypowervm.i18n import _
 from pypowervm.tasks.monitor import lpar as lpar_mon
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import monitor as pvm_mon
+from pypowervm.wrappers.pcm import lpar as lpar_pcm
 from pypowervm.wrappers.pcm import phyp as phyp_mon
 from pypowervm.wrappers.pcm import vios as vios_mon
 
@@ -74,8 +75,10 @@ class MetricCache(object):
         self.include_vio = include_vio
 
         # Ensure these elements are defined up front.
-        self.cur_date, self.cur_phyp, self.cur_vioses = None, None, None
-        self.prev_date, self.prev_phyp, self.prev_vioses = None, None, None
+        self.cur_date, self.cur_phyp, self.cur_vioses, self.cur_lpars = (
+            None, None, None, None)
+        self.prev_date, self.prev_phyp, self.prev_vioses = (
+            None, None, None)
 
         # Run a refresh up front.
         self._refresh_if_needed()
@@ -100,7 +103,7 @@ class MetricCache(object):
         self.prev_date, self.prev_phyp, self.prev_vioses = (
             self.cur_date, self.cur_phyp, self.cur_vioses)
 
-        self.cur_date, self.cur_phyp, self.cur_vioses = (
+        self.cur_date, self.cur_phyp, self.cur_vioses, self.cur_lpars = (
             latest_stats(self.adapter, self.host_uuid,
                          include_vio=self.include_vio))
 
@@ -236,7 +239,8 @@ class LparMetricCache(MetricCache):
 
     def _update_internal_metric(self):
         self.prev_metric = self.cur_metric
-        self.cur_metric = vm_metrics(self.cur_phyp, self.cur_vioses)
+        self.cur_metric = vm_metrics(self.cur_phyp, self.cur_vioses,
+                                     self.cur_lpars)
 
 
 def latest_stats(adapter, host_uuid, include_vio=True):
@@ -252,6 +256,11 @@ def latest_stats(adapter, host_uuid, include_vio=True):
     :return: vios_datas - The list of ViosInfo objects.  May be empty if the
              metrics are unavailable or if the include_vio flag is False.  Is
              a list as the system may have many Virtual I/O Servers.
+    :return: lpar_metrics - The list of Lpar metrics received from querying
+             IBM.Host Resource Manager via RMC. It may be empty is the
+             metrics are unavailable or if the include_lpars flag is False.
+             lpar_metrics are generally collected once every two minutes, as
+             opposed to the other data which is collected every 30 seconds.
     """
     ltm_metrics = query_ltm_feed(adapter, host_uuid)
 
@@ -268,7 +277,7 @@ def latest_stats(adapter, host_uuid, include_vio=True):
 
     # If there is no current metric, return None.
     if latest_phyp is None:
-        return datetime.datetime.now(), None, None
+        return datetime.datetime.now(), None, None, None
 
     phyp_json = adapter.read_by_href(latest_phyp.link, xag=[]).body
     phyp_metric = phyp_mon.PhypInfo(phyp_json)
@@ -289,7 +298,37 @@ def latest_stats(adapter, host_uuid, include_vio=True):
     else:
         vios_metrics = []
 
-    return datetime.datetime.now(), phyp_metric, vios_metrics
+    # Now find the corresponding LPAR metrics for this.
+    lpar_metrics = get_lpar_metrics(ltm_metrics, adapter)
+
+    return datetime.datetime.now(), phyp_metric, vios_metrics, lpar_metrics
+
+
+def get_lpar_metrics(ltm_metrics, adapter):
+    """This method returns LPAR metrics of type LparInfo
+
+    :param ltm_metrics: The LTM metrics
+    :param adapter: The pypowervm adapter.
+    :return: LparInfo object representing the LPAR metrics. None is returned
+             if there are no LTM metrics collected.
+    """
+    latest_lpar = None
+    for metric in ltm_metrics:
+        # The Lpar metrics have category lpar
+        if metric.category != 'lpar':
+            continue
+
+        if (latest_lpar is None or
+                latest_lpar.updated_datetime < metric.updated_datetime):
+            latest_lpar = metric
+
+    # If there is no current metric, return None for lpar metrics.
+    lpar_metrics = None
+    if latest_lpar is not None:
+        lpar_json = adapter.read_by_href(latest_lpar.link, xag=[]).body
+        lpar_metrics = lpar_pcm.LparInfo(lpar_json)
+
+    return lpar_metrics
 
 
 def query_ltm_feed(adapter, host_uuid):
@@ -351,7 +390,7 @@ def ensure_ltm_monitors(adapter, host_uuid, override_to_default=False,
                    child_type=pvm_mon.PREFERENCES, service=pvm_mon.PCM_SERVICE)
 
 
-def vm_metrics(phyp, vioses):
+def vm_metrics(phyp, vioses, lpars):
     """Reduces the metrics to a per VM basis.
 
     The metrics returned by PCM are on a global level.  The anchor points are
@@ -365,6 +404,8 @@ def vm_metrics(phyp, vioses):
     :param phyp: The PhypInfo for the metrics.
     :param vioses: A list of the ViosInfos for the Virtual I/O Server
                    components.
+    :param lpars: The LparInfo object representing Lpar metrics collected
+                  via RMC.
     :return vm_data: A dictionary where the UUID is the client LPAR UUID, but
                      the data is a LparMetric for that VM.
 
@@ -389,7 +430,9 @@ def vm_metrics(phyp, vioses):
         lpar_metric.processor = lpar_mon.LparProc(lpar_sample.processor)
 
         # Fill in the Memory data.
-        lpar_metric.memory = lpar_mon.LparMemory(lpar_sample.memory)
+        memory_metric = lpars.find(lpar_sample.uuid) if lpars else None
+        lpar_metric.memory = lpar_mon.LparMemory(
+            lpar_sample.memory, memory_metric)
 
         # All partitions require processor and memory.  They may not have
         # storage (ex. network boot) or they may not have network.  Therefore
