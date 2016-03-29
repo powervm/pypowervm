@@ -229,6 +229,50 @@ class TestUploadLV(testtools.TestCase):
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNone(f_wrap)
 
+    @mock.patch('pypowervm.util.convert_bytes_to_gb')
+    @mock.patch('pypowervm.tasks.storage.crt_lu')
+    @mock.patch('pypowervm.tasks.storage.upload_lu')
+    def test_upload_new_lu_calls(self, mock_upl, mock_crt, mock_b2g):
+        """Various permutations of how to call upload_new_lu."""
+        mock_crt.return_value = 'ssp_out', 'new_lu'
+        f_size = 10
+
+        # No optionals
+        self.assertEqual(('new_lu', mock_upl.return_value), ts.upload_new_lu(
+            'v_uuid', 'ssp_in', 'd_stream', 'lu_name', f_size))
+        mock_b2g.assert_called_with(f_size, dp=2)
+        mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
+                                    typ=stor.LUType.IMAGE)
+        mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
+                                    sha_chksum=None)
+        mock_b2g.reset_mock()
+        mock_crt.reset_mock()
+        mock_upl.reset_mock()
+
+        # d_size < f_size; sha_chksum specified
+        self.assertEqual(('new_lu', mock_upl.return_value), ts.upload_new_lu(
+            'v_uuid', 'ssp_in', 'd_stream', 'lu_name', f_size, d_size=1,
+            sha_chksum='sha_chksum'))
+        mock_b2g.assert_called_with(10, dp=2)
+        mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
+                                    typ=stor.LUType.IMAGE)
+        mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
+                                    sha_chksum='sha_chksum')
+        mock_b2g.reset_mock()
+        mock_crt.reset_mock()
+        mock_upl.reset_mock()
+
+        # d_size > f_size; return_ssp specified
+        self.assertEqual(('ssp_out', 'new_lu', mock_upl.return_value),
+                         ts.upload_new_lu(
+                             'v_uuid', 'ssp_in', 'd_stream', 'lu_name', f_size,
+                             d_size=100, return_ssp=True))
+        mock_b2g.assert_called_with(100, dp=2)
+        mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
+                                    typ=stor.LUType.IMAGE)
+        mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
+                                    sha_chksum=None)
+
     def test_create_file(self):
         """Validates that the _create_file builds the Element properly."""
         def validate_in(*args, **kwargs):

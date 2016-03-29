@@ -147,8 +147,16 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
 
 
 def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
-                  sha_chksum=None):
+                  sha_chksum=None, return_ssp=False):
     """Creates a new SSP Logical Unit and uploads a data stream to it.
+
+    Note: return spec varies based on the return_ssp parameter:
+
+        # Default/legacy behavior
+        new_lu, maybe_file = upload_new_lu(..., return_ssp=False)
+
+        # With return_ssp=True
+        ssp, new_lu, maybe_file = upload_new_lu(..., return_ssp=True)
 
     :param v_uuid: The UUID of the Virtual I/O Server through which to perform
                    the upload.  (Note that the new LU will be visible from any
@@ -165,13 +173,21 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
                    file.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :return: The first return value is an LU EntryWrapper corresponding to the
-             Logical Unit into which the file was uploaded.
-    :return: Normally the second return value will be None, indicating that the
-             LU was created and the image was uploaded without issue.  If for
-             some reason the File metadata for the VIOS was not cleaned up, the
-             return value is the LU EntryWrapper.  This is simply a marker to
-             be later used to retry the cleanup.
+    :param return_ssp: (OPTIONAL) If True, the return value of the method is a
+                       three-member tuple whose third value is the updated SSP
+                       EntryWrapper.  If False (the default), the method
+                       returns a two-member tuple.
+    :return: If the return_ssp parameter is True, the first return value is the
+             updated SSP EntryWrapper, containing the newly-created and
+             -uploaded LU.  If return_ssp is False, this return value is absent
+             - only the below two values are returned.
+    :return: An LU EntryWrapper corresponding to the Logical Unit into which
+             the file was uploaded.
+    :return: Normally None, indicating that the LU was created and the image
+             was uploaded without issue.  If for some reason the File metadata
+             for the VIOS was not cleaned up, the return value is the File
+             EntryWrapper.  This is simply a marker to be later used to retry
+             the cleanup.
     """
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
@@ -182,7 +198,7 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
 
     maybe_file = upload_lu(v_uuid, new_lu, d_stream, f_size,
                            sha_chksum=sha_chksum)
-    return new_lu, maybe_file
+    return (ssp, new_lu, maybe_file) if return_ssp else (new_lu, maybe_file)
 
 
 def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
