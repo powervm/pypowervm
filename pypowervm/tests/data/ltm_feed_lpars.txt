@@ -21,10 +21,10 @@ BODY{
     <generator uri="IBM Power Systems Management Console" version="1"/>
     <entry>
         <id>15161241-b72f-41d5-8154-557ff699fb75</id>
-        <updated>2015-04-30T03:53:00.000Z</updated>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
         <title type="text">LTM_8247-22L*1111111_vios_2_20150430T035300+0000.json</title>
-        <published>2015-04-30T03:53:00.000Z</published>
-        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_vios_2_20150430T035300+0000.json"/>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_vios_2_20160328T022600-0400.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>
@@ -32,10 +32,10 @@ BODY{
     </entry>
     <entry>
         <id>cf8bf632-b702-4f4f-9029-5ffc8934e886</id>
-        <updated>2015-04-30T03:53:00.000Z</updated>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
         <title type="text">LTM_8247-22L*1111111_phyp_20150430T035300+0000.json</title>
-        <published>2015-04-30T03:53:00.000-05:00</published>
-        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_phyp_20150430T035300+0000.json"/>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_phyp_20160328T022600-0400.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>
@@ -43,10 +43,10 @@ BODY{
     </entry>
     <entry>
         <id>aa05223a-0141-467e-86a5-4d57ede44ab8</id>
-        <updated>2015-04-30T03:53:00.000Z</updated>
-        <title type="text">LTM_8247-22L*1111111_lpar_20150430T035300+0000.json</title>
-        <published>2015-04-30T03:53:00.000Z</published>
-        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_lpar_20150430T035300+0000.json"/>
+        <updated>2016-03-28T02:26:00.000-04:00</updated>
+        <title type="text">LTM_8247-22L*1111111_lpar_20160328T022600-0400.json</title>
+        <published>2016-03-28T02:26:00.000-04:00</published>
+        <link type="application/vnd.ibm.powervm.pcm.json" href="https://9.1.2.3:12443/rest/api/pcm/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/RawMetrics/LongTermMonitor/LTM_8247-22L*1111111_lpar_20160328T022600-0400.json"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>

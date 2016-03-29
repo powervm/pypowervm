@@ -64,18 +64,31 @@ class PropertyWrapper(object):
         return getattr(self.elem, attr)
 
 
-class LparMemory(PropertyWrapper):
+class LparMemory(object):
     """Represents the memory for a given LPAR.
 
-    Requires the PhypLparMemory raw metric as input.
+    Requires the following as inputs:
+      - the PhypLparMemory raw metric.
+      - LparInfo.LparUtil object
 
     The supported metrics are as follows:
       - logical_mem: The amount of memory on the LPAR.
       - backed_physical_mem: The amount of backing physical memory used by
                              the LPAR.
+      - pct_real_mem_free: Percentage of real page frames that are currently
+                           available on the VMM free list. This is
+                           got from IBM.Host Resource Manager through RMC.
     """
 
-    _supported_metrics = ('logical_mem', 'backed_physical_mem')
+    def __init__(self, lpar_mem_phyp, lpar_mem_pcm):
+        self.logical_mem = lpar_mem_phyp.logical_mem
+        self.backed_physical_mem = lpar_mem_phyp.backed_physical_mem
+        # Its possible that for the lpar_sample, the memory metric was not
+        # collected. If the metric is not available,
+        # then assume 0 i.e. all memory is being utilized.
+        self.pct_real_mem_free = (
+            lpar_mem_pcm.memory.pct_real_mem_free
+            if lpar_mem_pcm else 0)
 
 
 class LparProc(PropertyWrapper):
