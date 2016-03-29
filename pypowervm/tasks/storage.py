@@ -173,6 +173,26 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
              return value is the LU EntryWrapper.  This is simply a marker to
              be later used to retry the cleanup.
     """
+    ssp, lu, maybe_file = upload_new_lu2(
+        v_uuid, ssp, d_stream, lu_name, f_size, d_size=d_size,
+        sha_chksum=sha_chksum)
+    return lu, maybe_file
+
+
+def upload_new_lu2(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
+                   sha_chksum=None):
+    """Identical to upload_new_lu with an extra return value.
+
+    :return: The updated SSP EntryWrapper, containing the newly-created and
+             -uploaded LU.
+    :return: The second return value is an LU EntryWrapper corresponding to the
+             Logical Unit into which the file was uploaded.
+    :return: Normally the third return value will be None, indicating that the
+             LU was created and the image was uploaded without issue.  If for
+             some reason the File metadata for the VIOS was not cleaned up, the
+             return value is the LU EntryWrapper.  This is simply a marker to
+             be later used to retry the cleanup.
+    """
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
         d_size = f_size
@@ -182,7 +202,7 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
 
     maybe_file = upload_lu(v_uuid, new_lu, d_stream, f_size,
                            sha_chksum=sha_chksum)
-    return new_lu, maybe_file
+    return ssp, new_lu, maybe_file
 
 
 def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
