@@ -20,6 +20,7 @@ import testtools
 import pypowervm.adapter as adp
 import pypowervm.exceptions as exc
 import pypowervm.tasks.storage as ts
+import pypowervm.tasks.storage_helpers as sh
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.utils.transaction as tx
@@ -66,7 +67,7 @@ class TestUploadLV(testtools.TestCase):
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
 
-    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage_helpers._create_file')
     def test_upload_new_vopt(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
 
@@ -102,7 +103,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsInstance(vopt, stor.VOptMedia)
         self.assertEqual('test2', v_opt.media_name)
 
-    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage_helpers._create_file')
     def test_upload_new_vdisk(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
 
@@ -134,7 +135,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
-    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage_helpers._create_file')
     def test_upload_new_vdisk_coordinated(self, mock_create_file):
         """Tests the uploads of a virtual disk using the coordinated path."""
 
@@ -168,7 +169,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
-    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage_helpers._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
         """Tests the failure path for uploading of the virtual disks."""
 
@@ -193,7 +194,7 @@ class TestUploadLV(testtools.TestCase):
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNotNone(f_wrap)
 
-    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage_helpers._create_file')
     def test_upload_new_lu(self, mock_create_file):
         """Tests create/upload of SSP LU."""
 
@@ -292,7 +293,7 @@ class TestUploadLV(testtools.TestCase):
             return ret
         self.adpt.create.side_effect = validate_in
 
-        ts._create_file(self.adpt, 'f_name', 'f_type', 'v_uuid', 'chk', 50,
+        sh._create_file(self.adpt, 'f_name', 'f_type', 'v_uuid', 'chk', 50,
                         'tdev_uuid')
         self.assertTrue(self.adpt.create.called)
 
@@ -342,16 +343,16 @@ class TestRMSTorage(testtools.TestCase):
     def test_rm_dev_by_udid(self):
         dev1 = mock.Mock(udid=None)
         # dev doesn't have a UDID
-        with self.assertLogs(ts.__name__, 'WARNING'):
-            self.assertIsNone(ts._rm_dev_by_udid(dev1, None))
+        with self.assertLogs(sh.__name__, 'WARNING'):
+            self.assertIsNone(sh._rm_dev_by_udid(dev1, None))
             dev1.toxmlstring.assert_called_with()
         # Remove from empty list returns None, and warns (like not-found)
         dev1.udid = 123
-        with self.assertLogs(ts.__name__, 'WARNING'):
-            self.assertIsNone(ts._rm_dev_by_udid(dev1, []))
+        with self.assertLogs(sh.__name__, 'WARNING'):
+            self.assertIsNone(sh._rm_dev_by_udid(dev1, []))
         # Works when exact same dev is in the list,
         devlist = [dev1]
-        self.assertEqual(dev1, ts._rm_dev_by_udid(dev1, devlist))
+        self.assertEqual(dev1, sh._rm_dev_by_udid(dev1, devlist))
         self.assertEqual([], devlist)
         # Works when matching-but-not-same dev is in the list.  Return is the
         # one that was in the list, not the one that was passed in.
@@ -359,17 +360,17 @@ class TestRMSTorage(testtools.TestCase):
         dev2 = mock.Mock(udid=123)
         # Two different mocks are not equal
         self.assertNotEqual(dev1, dev2)
-        self.assertEqual(dev1, ts._rm_dev_by_udid(dev2, devlist))
+        self.assertEqual(dev1, sh._rm_dev_by_udid(dev2, devlist))
         self.assertEqual([], devlist)
         # Error when multiples found
         devlist = [dev1, dev2, dev1]
-        self.assertRaises(exc.FoundDevMultipleTimes, ts._rm_dev_by_udid, dev1,
+        self.assertRaises(exc.FoundDevMultipleTimes, sh._rm_dev_by_udid, dev1,
                           devlist)
         # One more good path with a longer list
         dev3 = mock.Mock()
         dev4 = mock.Mock(udid=456)
         devlist = [dev3, dev2, dev4]
-        self.assertEqual(dev2, ts._rm_dev_by_udid(dev1, devlist))
+        self.assertEqual(dev2, sh._rm_dev_by_udid(dev1, devlist))
         self.assertEqual([dev3, dev4], devlist)
 
     @mock.patch('pypowervm.adapter.Adapter.update_by_path')
@@ -557,15 +558,15 @@ class TestLULinkedClone(testtools.TestCase):
     def test_image_lu_in_use(self):
         # The orphan will trigger a warning as we cycle through all the LUs
         # without finding any backed by this image.
-        with self.assertLogs(ts.__name__, 'WARNING'):
-            self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu2))
+        with self.assertLogs(sh.__name__, 'WARNING'):
+            self.assertFalse(sh._image_lu_in_use(self.ssp, self.img_lu1))
+        self.assertTrue(sh._image_lu_in_use(self.ssp, self.img_lu2))
 
     def test_image_lu_for_clone(self):
         self.assertEqual(self.img_lu2,
-                         ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+                         sh._image_lu_for_clone(self.ssp, self.dsk_lu3))
         self.dsk_lu3._cloned_from_udid(None)
-        self.assertIsNone(ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+        self.assertIsNone(sh._image_lu_for_clone(self.ssp, self.dsk_lu3))
 
     def test_rm_ssp_storage(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)
@@ -581,12 +582,12 @@ class TestLULinkedClone(testtools.TestCase):
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove the disk LU but *not* the image LU, even
         # though it's now unused.
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertTrue(sh._image_lu_in_use(self.ssp, self.img_lu5))
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu6],
                                 del_unused_images=False)
         lu_names.remove(self.dsk_lu6.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
-        self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertFalse(sh._image_lu_in_use(self.ssp, self.img_lu5))
 
         # No update if no change
         self.adpt.update_by_path = lambda *a, **k: self.fail()
@@ -603,7 +604,7 @@ class TestScrub(testtools.TestCase):
         self.logfx = self.useFixture(fx.LoggingFx())
         self.ftsk = tx.FeedTask('scrub', self.vio_feed)
 
-    @mock.patch('pypowervm.tasks.storage._RemoveStorage.execute')
+    @mock.patch('pypowervm.tasks.storage_helpers._RemoveStorage.execute')
     def test_no_matches(self, mock_rm_stg):
         """When removals have no hits, log debug messages, but no warnings."""
         # Our data set has no VFC mappings and no VSCSI mappings with LPAR ID 1
@@ -699,9 +700,9 @@ class TestScrub2(testtools.TestCase):
         self.logfx = self.useFixture(fx.LoggingFx())
         self.ftsk = tx.FeedTask('scrub', self.vio_feed)
 
-    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
-    @mock.patch('pypowervm.tasks.storage._rm_vopts')
-    @mock.patch('pypowervm.tasks.storage._rm_lus')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_lus')
     def test_lu_vopt_vdisk(self, mock_rm_lu, mock_rm_vopt, mock_rm_vd):
         def verify_rm_stg_call(exp_list):
             def _rm_stg(wrapper, stglist, *a, **k):
@@ -759,7 +760,7 @@ class TestScrub3(testtools.TestCase):
         self.logfx = self.useFixture(fx.LoggingFx())
         self.ftsk = tx.FeedTask('scrub', self.vio_feed)
 
-    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vopts')
     def test_orphan(self, mock_rm_vopts):
         """Scrub orphan VSCSI and VFC mappings."""
         def validate_rm_vopts(vgwrap, vopts, **kwargs):
@@ -797,8 +798,8 @@ class TestScrub3(testtools.TestCase):
         # _RemoveStorage invoked _rm_vopts
         self.assertEqual(1, mock_rm_vopts.call_count)
 
-    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
-    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vopts')
     @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
     def test_comprehensive_scrub(self, mock_wrap, mock_stale_lids,
@@ -868,7 +869,7 @@ class TestScrub3(testtools.TestCase):
                          self.count_maps_for_lpar(vwrap.vfc_mappings, 24))
         self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
 
-    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage_helpers._rm_vopts')
     @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
     def test_orphans_by_lpar_id(self, mock_wrap, mock_rm_vopts):
         # Don't confuse the 'update' call count with the VG POST
