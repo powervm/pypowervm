@@ -557,11 +557,14 @@ class VDisk(ewrap.ElementWrapper):
         return self.get_href(_DISK_VG, one_result=True)
 
 
-@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
-                               child_order=_LU_EL_ORDER)
-class LU(ewrap.ElementWrapper):
-    """A Logical Unit (usually part of a SharedStoragePool)."""
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
+class _LUBase(ewrap.Wrapper):
+    """Mixin for a Logical Unit EntryWrapper or ElementWrapper.
 
+    A Logical Unit is either a DETAIL object, part of a SharedStoragePool; or
+    it is a CHILD of Tier.
+    """
     @classmethod
     def bld(cls, adapter, name, capacity, thin=None, typ=None):
         """Build a fresh wrapper for LU creation within an SSP.
@@ -574,7 +577,7 @@ class LU(ewrap.ElementWrapper):
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
-        lu = super(LU, cls)._bld(adapter)
+        lu = super(_LUBase, cls)._bld(adapter)
         lu._name(name)
         lu._capacity(capacity)
         if thin is not None:
@@ -594,7 +597,7 @@ class LU(ewrap.ElementWrapper):
         :param udid: Universal Disk Identifier.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
-        lu = super(LU, cls)._bld(adapter)
+        lu = super(_LUBase, cls)._bld(adapter)
         lu._name(name)
         lu._udid(udid)
         return lu
@@ -670,6 +673,19 @@ class LU(ewrap.ElementWrapper):
     @property
     def in_use(self):
         return self._get_val_bool(_LU_IN_USE, default=None)
+
+
+@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
+                               child_order=_LU_EL_ORDER)
+class LU(_LUBase, ewrap.ElementWrapper):
+    """ElementWrapper representing a LogicalUnit within a SharedStoragePool."""
+    pass
+
+
+@ewrap.EntryWrapper.pvm_type('LogicalUnit', child_order=_LU_EL_ORDER)
+class LUEnt(_LUBase, ewrap.EntryWrapper):
+    """EntryWrapper representing a LogicalUnit CHILD REST object."""
+    pass
 
 
 @ewrap.EntryWrapper.pvm_type('Tier')

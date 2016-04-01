@@ -49,6 +49,10 @@ class Wrapper(object):
     # Registers PowerVM object wrappers by their schema type.
     # { schema_type_string: wrapper_class, ... }
     # E.g. { 'SharedEthernetAdapter': pypowervm.wrappers.network.SEA, ... }
+    # If we have both an EntryWrapper and an ElementWrapper for a given schema
+    # type (because it may double as a ROOT/CHILD object and a DETAIL within a
+    # ROOT/CHILD), the value is instead a dict like:
+    # {'entry': EntryWrapperSubclass, 'element': ElementWrapperSubclass}
     _pvm_object_registry = {}
 
     # Maps a property name to its extended attribute group.  Should be sparse -
@@ -93,6 +97,20 @@ class Wrapper(object):
         return cls_
 
     @classmethod
+    def _register_schema_type(cls, schema_type, class_):
+        """Register this class according to its schema_type."""
+        if schema_type in Wrapper._pvm_object_registry:
+            # Need to split the value into element/entry dict
+            ent_or_el = ('entry' if issubclass(class_, EntryWrapper)
+                         else 'element')
+            Wrapper._pvm_object_registry[schema_type] = {
+                'entry' if ent_or_el is 'element' else 'element':
+                    Wrapper._pvm_object_registry[schema_type],
+                ent_or_el: class_}
+        else:
+            Wrapper._pvm_object_registry[schema_type] = class_
+
+    @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
                  attrib=pc.DEFAULT_SCHEMA_ATTR, child_order=None):
         """Decorator for {Entry|Element}Wrappers of PowerVM objects.
@@ -130,7 +148,7 @@ class Wrapper(object):
                 if class_.has_metadata and co[0] != 'Metadata':
                     co.insert(0, 'Metadata')
                 class_._child_order = tuple(co)
-            Wrapper._pvm_object_registry[schema_type] = class_
+            cls._register_schema_type(schema_type, class_)
             return class_
         return inner
 
@@ -260,8 +278,7 @@ class Wrapper(object):
 
         self.inject(new_elem)
 
-    @property
-    @abc.abstractmethod
+    @abc.abstractproperty
     def _type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
@@ -540,7 +557,16 @@ class Wrapper(object):
         schema_type = element.tag
         # Is it a registered wrapper class?
         try:
-            return Wrapper._pvm_object_registry[schema_type]
+            # We may have both an ElementWrapper and an EntryWrapper for a
+            # given REST type.  If so, the registry contains a dict like
+            # {'entry': EntryWrapperSubclass,
+            #  'element': ElementWrapperSubclass}
+            val = Wrapper._pvm_object_registry[schema_type]
+            if not isinstance(val, dict):
+                return val
+            if issubclass(cls, EntryWrapper):
+                return val['entry']
+            return val['element']
         except KeyError:
             return cls
 
