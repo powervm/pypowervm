@@ -121,6 +121,12 @@ class LUType(object):
     IMAGE = "VirtualIO_Image"
     AMS = "VirtualIO_Active_Memory_Sharing"
 
+# Tier Constants
+_TIER_NAME = 'Name'
+_TIER_UDID = UDID
+_TIER_IS_DEFAULT = 'IsDefault'
+_TIER_ASSOC_SSP = 'AssociatedSharedStoragePool'
+
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
 _SSP_UDID = UDID
@@ -664,6 +670,29 @@ class LU(ewrap.ElementWrapper):
     @property
     def in_use(self):
         return self._get_val_bool(_LU_IN_USE, default=None)
+
+
+@ewrap.EntryWrapper.pvm_type('Tier')
+class Tier(ewrap.EntryWrapper):
+    """A storage grouping within a SharedStoragePool."""
+
+    @property
+    def name(self):
+        return self._get_val_str(_TIER_NAME)
+
+    @property
+    def udid(self):
+        return self._get_val_str(_TIER_UDID)
+
+    @property
+    def is_default(self):
+        return self._get_val_bool(_TIER_IS_DEFAULT)
+
+    @property
+    def ssp(self):
+        """The SSP EntryWrapper of this Tier's parent SharedStoragePool."""
+        return SSP.wrap(self.adapter.read_by_href(
+            self.get_href(_TIER_ASSOC_SSP, one_result=True)))
 
 
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')

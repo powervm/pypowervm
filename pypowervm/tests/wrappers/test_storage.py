@@ -208,6 +208,27 @@ class TestVolumeGroup(twrap.TestWrapper):
             'mes></uom:VolumeGroup>'.encode('utf-8'))
 
 
+class TestTier(twrap.TestWrapper):
+    file = 'tier.txt'
+    wrapper_class_to_test = stor.Tier
+
+    @mock.patch('pypowervm.adapter.Adapter.read_by_href')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_props(self, mock_wrap, mock_rbh):
+        self.assertEqual(1, len(self.entries))
+        tier = self.dwrap
+        self.assertEqual('SYSTEM', tier.name)
+        self.assertEqual('256c097502d44311e58004000040f2e95d7d95846d854f9f38',
+                         tier.udid)
+        self.assertTrue(tier.is_default)
+        self.assertEqual(mock_wrap.return_value, tier.ssp)
+        mock_wrap.assert_called_with(mock_rbh.return_value)
+        mock_rbh.assert_called_with(
+            'https://9.1.2.3:12443/rest/api/uom/Cluster/765dee79-62bb-32ba-ba0'
+            '3-b57100da7993/SharedStoragePool/535e1e51-50a6-3722-b6ed-907ff011'
+            'a535')
+
+
 class TestSharedStoragePool(twrap.TestWrapper):
 
     file = 'ssp.txt'
