@@ -1,0 +1,141 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh tier.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'Tier', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '8090', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000l3vwKPVRqZanwEG7adGoK1E:c83b267d-dc99-4d51-b4fd-a9b2013da3f6; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Fri, 01 Apr 2016 17:52:51 GMT', 'X-Transaction-ID': 'XT10054584', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Fri, 01 Apr 2016 17:52:53 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': '9612a8fd-7733-4da3-89ea-461ab72288fe', 'ETag': '2124537305'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>11ab724b-f199-35fd-8f0f-035794b4c912</id>
+    <updated>2016-04-01T13:52:51.986-04:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>c390432c-f139-3e7f-a168-e76f8c1cbc98</id>
+        <title>Tier</title>
+        <published>2016-04-01T13:52:53.218-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2124537274</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Tier">
+            <Tier:Tier xmlns:Tier="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c390432c-f139-3e7f-a168-e76f8c1cbc98</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <Name ksv="V1_3_0" kxe="false" kb="CUR">SYSTEM</Name>
+    <UniqueDeviceID ksv="V1_3_0" kxe="false" kb="ROR">256c097502d44311e58004000040f2e95d7d95846d854f9f38</UniqueDeviceID>
+    <Type ksv="V1_3_0" kxe="false" kb="CUD">UnrestrictedSystemTier</Type>
+    <IsDefault ksv="V1_3_0" kxe="false" kb="CUD">true</IsDefault>
+    <Capacity ksv="V1_3_0" kxe="false" kb="ROR">3071.25</Capacity>
+    <MirrorState ksv="V1_3_0" kb="ROR" kxe="false">NotMirrored</MirrorState>
+    <FailureGroups ksv="V1_3_0" kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <FailureGroup schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Name ksv="V1_3_0" kxe="false" kb="CUR">Default</Name>
+            <UniqueDeviceID ksv="V1_3_0" kb="ROR" kxe="false">266c097502d44311e58004000040f2e95db5acdeee517e4afe</UniqueDeviceID>
+            <Capacity ksv="V1_3_0" kxe="false" kb="ROR">3071.63</Capacity>
+            <State ksv="V1_3_0" kxe="false" kb="ROR">Online</State>
+            <PhysicalVolumes ksv="V1_3_0" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwQg==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk3</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Yy</StorageLabel>
+                </PhysicalVolume>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwQQ==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk2</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Yx</StorageLabel>
+                </PhysicalVolume>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwQw==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk6</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Yz</StorageLabel>
+                </PhysicalVolume>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwRA==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk7</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Y0</StorageLabel>
+                </PhysicalVolume>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwRg==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk9</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Y2</StorageLabel>
+                </PhysicalVolume>
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kxe="false" kb="CUD">MPIO IBM 2076 FC Disk</Description>
+                    <UniqueDeviceID kxe="false" kb="ROR">01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyN0YwNjFEODgwMDAwMDAwMDAwMTMwRQ==</UniqueDeviceID>
+                    <VolumeCapacity kb="CUR" kxe="false">524288</VolumeCapacity>
+                    <VolumeName kxe="false" kb="CUR">hdisk8</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">true</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">Tm92YUxpbmtfT1NfQ0lfU1NQX3Y1</StorageLabel>
+                </PhysicalVolume>
+            </PhysicalVolumes>
+        </FailureGroup>
+    </FailureGroups>
+    <AssociatedSharedStoragePool ksv="V1_3_0" kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/Cluster/765dee79-62bb-32ba-ba03-b57100da7993/SharedStoragePool/535e1e51-50a6-3722-b6ed-907ff011a535" rel="related"/>
+</Tier:Tier>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
