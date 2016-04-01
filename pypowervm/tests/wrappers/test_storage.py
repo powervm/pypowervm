@@ -208,6 +208,106 @@ class TestVolumeGroup(twrap.TestWrapper):
             'mes></uom:VolumeGroup>'.encode('utf-8'))
 
 
+class TestLUEnt(twrap.TestWrapper):
+    file = 'lufeed.txt'
+    wrapper_class_to_test = stor.LUEnt
+
+    def test_logical_units(self):
+        lus = self.entries
+        self.assertEqual(len(lus), 22)
+        lu = lus[0]
+        self.assertEqual('a2b11d20-322d-3dcc-84ee-74fce7e90310', lu.uuid)
+        self.assertEqual(lu.udid, '276c097502d44311e58004000040f2e95dc4a789dfd'
+                                  '63464654319f89c04aa5382')
+        self.assertEqual(lu.name, 'boot_pvm3_tempest_ser_a73d7083')
+        self.assertTrue(lu.is_thin)
+        self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
+        self.assertAlmostEqual(lu.capacity, 1, 1)
+        self.assertFalse(lu.in_use)
+
+    def test_lu_bld(self):
+        lu = stor.LUEnt.bld(None, 'lu_name', 123)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:UnitCapacity>123.000000</uom:UnitCap'
+            'acity><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            encode('utf-8'))
+        lu = stor.LUEnt.bld(None, 'lu_name', 1.2345678, thin=True)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
+            ':UnitCapacity>1.234568</uom:UnitCapacity><uom:UnitName>lu_name</u'
+            'om:UnitName></uom:LogicalUnit>'.encode('utf-8'))
+        lu = stor.LUEnt.bld(None, 'lu_name', .12300019999, thin=False)
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>false</uom:ThinDevice><uo'
+            'm:UnitCapacity>0.123000</uom:UnitCapacity><uom:UnitName>lu_name</'
+            'uom:UnitName></uom:LogicalUnit>'.encode('utf-8'))
+
+    def test_lu_ordering(self):
+        lu = stor.LUEnt._bld(None)
+        lu._name('lu_name')
+        lu._udid('lu_udid')
+        lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
+        lu._capacity(123)
+        lu.set_parm_value(stor._LU_THIN, 'true')
+        self.assertEqual(
+            lu.toxmlstring(),
+            '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
+            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
+            ':UniqueDeviceID>lu_udid</uom:UniqueDeviceID><uom:UnitCapacity>123'
+            '.000000</uom:UnitCapacity><uom:ClonedFrom>cloned_from</uom:Cloned'
+            'From><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
+            encode('utf-8'))
+
+    def test_lu_equality(self):
+        # We can equate LUEnt and LU that represent the same LogicalUnit
+        lu1 = stor.LUEnt.bld(None, 'mylu', 1)
+        lu2 = stor.LU.bld(None, 'mylu', 2)
+        self.assertEqual(lu1, lu2)
+        lu1._udid('lu_udid')
+        lu2._udid('lu_udid')
+        self.assertEqual(lu1, lu2)
+        lu2._udid('another_udid')
+        self.assertNotEqual(lu1, lu2)
+        lu2._udid('lu_udid')
+        lu1._name('another_lu')
+        self.assertNotEqual(lu1, lu2)
+
+    def test_lu_hash(self):
+        udid1 = ('27cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        # Only prefix differs.  Should fail == but hash equal
+        udid2 = ('29cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        # Last bit differs
+        udid3 = ('27cfc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d9')
+        # First bit differs
+        udid4 = ('274fc907d2abf511e4b2d540f2e95daf3'
+                 '01a02b0904778d755df5a46fe25e500d8')
+        lu1 = stor.LUEnt.bld(None, 'mylu', 1)
+        lu2 = stor.LUEnt.bld(None, 'mylu', 2)
+        lu1._udid(udid1)
+        lu2._udid(udid1)
+        self.assertEqual({lu1}, {lu2})
+        lu2._udid(udid2)
+        self.assertNotEqual({lu1}, {lu2})
+        self.assertEqual(hash(lu1), hash(lu2))
+        lu2._udid(udid3)
+        self.assertNotEqual({lu1}, {lu2})
+        lu2._udid(udid4)
+        self.assertNotEqual({lu1}, {lu2})
+
+
 class TestTier(twrap.TestWrapper):
     file = 'tier.txt'
     wrapper_class_to_test = stor.Tier
@@ -275,7 +375,7 @@ class TestSharedStoragePool(twrap.TestWrapper):
         self.assertTrue(lu.is_thin)
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
-        self.assertEqual(lu.in_use, True)
+        self.assertTrue(lu.in_use)
         # Test setter
         self.dwrap.logical_units = []
         lus = self.dwrap.logical_units
