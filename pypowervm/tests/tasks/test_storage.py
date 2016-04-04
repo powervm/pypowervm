@@ -194,34 +194,30 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(f_wrap)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_new_lu(self, mock_create_file):
+    @mock.patch('pypowervm.tasks.storage.crt_lu')
+    def test_upload_new_lu(self, mock_crt_lu, mock_create_file):
         """Tests create/upload of SSP LU."""
-
         # traits are already set to use the REST API upload
-
-        ssp_in = stor.SSP.bld(self.adpt, 'ssp1', [])
-        ssp_in.entry.properties = {'links': {'SELF': [
-            '/rest/api/uom/SharedStoragePool/ssp_uuid']}}
-        self.adpt.update_by_path.side_effect = _mock_update_by_path
+        ssp = mock.Mock()
+        interim_lu = mock.Mock(adapter=self.adpt)
         mock_create_file.return_value = self._fake_meta()
+        mock_crt_lu.return_value = ssp, interim_lu
         size_b = 1224067890
 
         new_lu, f_wrap = ts.upload_new_lu(
-            self.v_uuid, ssp_in, None, 'lu1', size_b, d_size=25,
+            self.v_uuid, ssp, None, 'lu1', size_b, d_size=25,
             sha_chksum='abc123')
 
-        # Check the new LU's properties
-        self.assertEqual(new_lu.name, 'lu1')
+        # The LU created by crt_lu was returned
+        self.assertEqual(interim_lu, new_lu)
+        # crt_lu was called properly
         # 1224067890 / 1GB = 1.140002059; round up to 2dp
-        self.assertEqual(new_lu.capacity, 1.15)
-        self.assertTrue(new_lu.is_thin)
-        self.assertEqual(new_lu.lu_type, stor.LUType.IMAGE)
+        mock_crt_lu.assert_called_with(ssp, 'lu1', 1.15, typ=stor.LUType.IMAGE)
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
-            self.adpt, 'lu1', vf.FileType.DISK_IMAGE, self.v_uuid,
-            f_size=size_b, tdev_udid='udid_lu1',
-            sha_chksum='abc123')
+            self.adpt, interim_lu.name, vf.FileType.DISK_IMAGE, self.v_uuid,
+            f_size=size_b, tdev_udid=interim_lu.udid, sha_chksum='abc123')
 
         # Ensure cleanup was called after the upload
         self.adpt.delete.assert_called_once_with(
@@ -451,30 +447,49 @@ class TestLU(testtools.TestCase):
             'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
         self.ssp._etag = 'before'
 
-    def test_crt_lu(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10)
-        self.assertEqual(lu.name, 'lu5')
-        self.assertEqual(lu.udid, 'udid_lu5')
-        self.assertTrue(lu.is_thin)
-        self.assertEqual(lu.lu_type, stor.LUType.DISK)
-        self.assertEqual(ssp.etag, 'after')
-        self.assertIn(lu, ssp.logical_units)
+    @mock.patch('pypowervm.wrappers.storage.LUEnt.bld')
+    @mock.patch('pypowervm.wrappers.storage.Tier.search')
+    def test_crt_lu(self, mock_tier_srch, mock_lu_bld):
+        ssp = mock.Mock(spec=stor.SSP)
+        tier = mock.Mock(spec=stor.Tier)
 
-    def test_crt_lu_thin(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=True)
-        self.assertTrue(lu.is_thin)
+        def validate(ret, use_ssp, thin, typ):
+            self.assertEqual(ssp.refresh.return_value if use_ssp else tier,
+                             ret[0])
+            self.assertEqual(mock_lu_bld.return_value.create.return_value,
+                             ret[1])
+            if use_ssp:
+                mock_tier_srch.assert_called_with(
+                    ssp.adapter, parent_type=stor.SSP, parent_uuid=ssp.uuid,
+                    is_default=True, one_result=True)
+            mock_lu_bld.assert_called_with(
+                ssp.adapter if use_ssp else tier.adapter, 'lu5', 10, thin=thin,
+                typ=typ)
+            mock_lu_bld.return_value.create.assert_called_with(
+                parent_type=stor.Tier,
+                parent_uuid=mock_tier_srch.return_value.uuid if use_ssp else
+                tier.uuid)
+            mock_lu_bld.reset_mock()
 
-    def test_crt_lu_thick(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=False)
-        self.assertFalse(lu.is_thin)
+        # No optionals
+        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None)
+        validate(ts.crt_lu(ssp, 'lu5', 10), True, None, None)
 
-    def test_crt_lu_type_image(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, typ=stor.LUType.IMAGE)
-        self.assertEqual(lu.lu_type, stor.LUType.IMAGE)
+        # Thin
+        validate(ts.crt_lu(tier, 'lu5', 10, thin=True), False, True, None)
+        validate(ts.crt_lu(ssp, 'lu5', 10, thin=True), True, True, None)
 
-    def test_crt_lu_name_conflict(self):
-        self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.ssp, 'lu1',
-                          5)
+        # Type
+        validate(ts.crt_lu(tier, 'lu5', 10, typ=stor.LUType.IMAGE), False,
+                 None, stor.LUType.IMAGE)
+        validate(ts.crt_lu(ssp, 'lu5', 10, typ=stor.LUType.IMAGE), True, None,
+                 stor.LUType.IMAGE)
+
+        # Exception path
+        mock_tier_srch.return_value = None
+        self.assertRaises(exc.NoDefaultTierFoundOnSSP, ts.crt_lu, ssp, '5', 10)
+        # But that doesn't happen if specifying tier
+        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None)
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
@@ -529,10 +544,13 @@ class TestLULinkedClone(testtools.TestCase):
         return lu
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    def test_crt_lu_linked_clone(self, mock_run_job):
+    @mock.patch('pypowervm.tasks.storage.crt_lu')
+    def test_crt_lu_linked_clone(self, mock_crt_lu, mock_run_job):
         clust1 = clust.Cluster.wrap(tju.load_file(CLUSTER, self.adpt))
+        src_lu = self.ssp.logical_units[0]
         self.adpt.read.return_value = tju.load_file(LU_LINKED_CLONE_JOB,
                                                     self.adpt)
+        mock_crt_lu.return_value = self.ssp, mock.Mock(udid='udid_linked_lu')
 
         def verify_run_job(uuid, job_parms):
             self.assertEqual(clust1.uuid, uuid)
@@ -551,8 +569,9 @@ class TestLULinkedClone(testtools.TestCase):
                 encode('utf-8'),
                 job_parms[1].toxmlstring())
         mock_run_job.side_effect = verify_run_job
-        ts.crt_lu_linked_clone(self.ssp, clust1, self.ssp.logical_units[0],
-                               'linked_lu')
+        ts.crt_lu_linked_clone(self.ssp, clust1, src_lu, 'linked_lu')
+        mock_crt_lu.assert_called_with(self.ssp, 'linked_lu', src_lu.capacity,
+                                       thin=True, typ=stor.LUType.DISK)
 
     def test_image_lu_in_use(self):
         # The orphan will trigger a warning as we cycle through all the LUs

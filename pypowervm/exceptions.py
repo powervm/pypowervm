@@ -236,3 +236,9 @@ class ThisPartitionNotFoundException(AbstractMsgFmtError):
     """Couldn't find exactly one partition with the local VM's short ID."""
     msg_fmt = _("Expected to find exactly one partition with ID %(lpar_id)d; "
                 "found %(count)d.")
+
+
+class NoDefaultTierFoundOnSSP(AbstractMsgFmtError):
+    """Looked for a default Tier on the SSP, but didn't find it."""
+    msg_fmt = _("Couldn't find the default Tier on Shared Storage Pool "
+                "%(ssp_name)s")

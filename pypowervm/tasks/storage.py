@@ -587,35 +587,42 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
-@tx.entry_transaction
-def crt_lu(ssp, name, size, thin=None, typ=None):
-    """Create a Logical Unit on the specified Shared Storage Pool.
+def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
+    """Create a Logical Unit on the specified Tier.
 
-    :param ssp: SSP EntryWrapper denoting the Shared Storage Pool on which to
-                create the LU.
+    :param tier_or_ssp: Tier or SSP EntryWrapper denoting the Tier or Shared
+                        Storage Pool on which to create the LU.  If an SSP is
+                        supplied, the LU is created on the default Tier.
     :param name: Name for the new Logical Unit.
     :param size: LU size in GB with decimal precision.
     :param thin: Provision the new LU as Thin (True) or Thick (False).  If
                  unspecified, use the server default.
     :param typ: The type of LU to create, one of the LUType values.  If
                 unspecified, use the server default.
-    :return: The updated SSP wrapper.  (It will contain the new LU and have a
-             new etag.)
+    :return: If the tier_or_ssp argument is an SSP, the updated SSP wrapper
+             (containing the new LU and with a new etag) is returned.
+             Otherwise, the first return value is the Tier.
     :return: LU ElementWrapper representing the Logical Unit just created.
     """
-    # Refuse to add with duplicate name
-    if name in [lu.name for lu in ssp.logical_units]:
-        raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
+    use_ssp = isinstance(tier_or_ssp, stor.SSP)
+    if use_ssp:
+        # Find the default Tier on this SSP
+        tier = stor.Tier.search(tier_or_ssp.adapter, parent_type=stor.SSP,
+                                parent_uuid=tier_or_ssp.uuid, is_default=True,
+                                one_result=True)
+        if tier is None:
+            raise exc.NoDefaultTierFoundOnSSP(ssp_name=tier_or_ssp.name)
+    else:
+        tier = tier_or_ssp
 
-    lu = stor.LU.bld(ssp.adapter, name, size, thin=thin, typ=typ)
-    ssp.logical_units.append(lu)
-    ssp = ssp.update()
-    newlu = None
-    for lu in ssp.logical_units:
-        if lu.name == name:
-            newlu = lu
-            break
-    return ssp, newlu
+    lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ)
+    lu = lu.create(parent_type=stor.Tier, parent_uuid=tier.uuid)
+
+    if use_ssp:
+        # Refresh the SSP to pick up the new LU and etag
+        return tier_or_ssp.refresh(), lu
+
+    return tier_or_ssp, lu
 
 
 def _rm_lus(ssp_wrap, lus, del_unused_images=True):
