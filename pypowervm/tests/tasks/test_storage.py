@@ -451,30 +451,43 @@ class TestLU(testtools.TestCase):
             'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
         self.ssp._etag = 'before'
 
-    def test_crt_lu(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10)
-        self.assertEqual(lu.name, 'lu5')
-        self.assertEqual(lu.udid, 'udid_lu5')
-        self.assertTrue(lu.is_thin)
-        self.assertEqual(lu.lu_type, stor.LUType.DISK)
-        self.assertEqual(ssp.etag, 'after')
-        self.assertIn(lu, ssp.logical_units)
+    @mock.patch('pypowervm.wrappers.storage.LUEnt.bld')
+    @mock.patch('pypowervm.wrappers.storage.Tier.search')
+    def test_crt_lu(self, mock_tier_srch, mock_lu_bld):
+        ssp = mock.Mock(spec=stor.SSP)
+        tier = mock.Mock(spec=stor.Tier)
 
-    def test_crt_lu_thin(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=True)
-        self.assertTrue(lu.is_thin)
+        def validate(ret, use_ssp, thin, typ):
+            self.assertEqual(ssp.refresh.return_value if use_ssp else tier,
+                             ret[0])
+            self.assertEqual(mock_lu_bld.return_value.create.return_value,
+                             ret[1])
+            if use_ssp:
+                mock_tier_srch.assert_called_with(
+                    ssp.adapter, parent_type=stor.SSP, parent_uuid=ssp.uuid,
+                    is_default=True, one_result=True)
+            mock_lu_bld.assert_called_with(
+                ssp.adapter if use_ssp else tier.adapter, 'lu5', 10, thin=thin,
+                typ=typ)
+            mock_lu_bld.return_value.create.assert_called_with(
+                parent_type=stor.Tier,
+                parent_uuid=mock_tier_srch.return_value.uuid if use_ssp else
+                tier.uuid)
+            mock_lu_bld.reset_mock()
 
-    def test_crt_lu_thick(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=False)
-        self.assertFalse(lu.is_thin)
+        # No optionals
+        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None)
+        validate(ts.crt_lu(ssp, 'lu5', 10), True, None, None)
 
-    def test_crt_lu_type_image(self):
-        ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, typ=stor.LUType.IMAGE)
-        self.assertEqual(lu.lu_type, stor.LUType.IMAGE)
+        # Thin
+        validate(ts.crt_lu(tier, 'lu5', 10, thin=True), False, True, None)
+        validate(ts.crt_lu(ssp, 'lu5', 10, thin=True), True, True, None)
 
-    def test_crt_lu_name_conflict(self):
-        self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.ssp, 'lu1',
-                          5)
+        # Type
+        validate(ts.crt_lu(tier, 'lu5', 10, typ=stor.LUType.IMAGE), False,
+                 None, stor.LUType.IMAGE)
+        validate(ts.crt_lu(ssp, 'lu5', 10, typ=stor.LUType.IMAGE), True, None,
+                 stor.LUType.IMAGE)
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
