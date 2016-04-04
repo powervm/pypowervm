@@ -451,7 +451,49 @@ class TestLU(testtools.TestCase):
             'links': {'SELF': ['/rest/api/uom/SharedStoragePool/123']}}
         self.ssp._etag = 'before'
 
-    def test_crt_lu(self):
+        self.tier = mock.Mock(spec=stor.Tier, uuid='tier_uuid')
+
+    def test_find_lus_in_ssp(self):
+        """Test find_lu[s]_in_ssp."""
+        # Minimal args
+        lus = ts.find_lus_in_ssp(self.ssp, 'lu4')
+        self.assertEqual(1, len(lus))
+        self.assertEqual('udid_lu4', lus[0].udid)
+        lu = ts.find_lu_in_ssp(self.ssp, 'lu4')
+        self.assertEqual('udid_lu4', lu.udid)
+
+        # Include type
+        self.ssp.logical_units[3]._lu_type(stor.LUType.DISK)
+        self.ssp.logical_units[4]._lu_type(stor.LUType.DISK)
+        lus = ts.find_lus_in_ssp(self.ssp, 'lu4', lu_type=stor.LUType.DISK)
+        self.assertEqual(1, len(lus))
+        self.assertEqual('udid_lu4', lus[0].udid)
+        lu = ts.find_lu_in_ssp(self.ssp, 'lu4', lu_type=stor.LUType.DISK)
+        self.assertEqual('udid_lu4', lu.udid)
+        # Wrong type
+        lus = ts.find_lus_in_ssp(self.ssp, 'lu4', lu_type=stor.LUType.IMAGE)
+        self.assertEqual(0, len(lus))
+        lu = ts.find_lu_in_ssp(self.ssp, 'lu4', lu_type=stor.LUType.IMAGE)
+        self.assertIsNone(lu)
+
+        # Default whole_name=False
+        lus = ts.find_lus_in_ssp(self.ssp, 'u')
+        self.assertEqual(5, len(lus))
+        self.assertEqual({'udid_lu%d' % i for i in range(5)},
+                         {lu.udid for lu in lus})
+        # Include type
+        lus = ts.find_lus_in_ssp(self.ssp, 'u', lu_type=stor.LUType.DISK)
+        self.assertEqual(2, len(lus))
+        self.assertEqual({'udid_lu3', 'udid_lu4'}, {lu.udid for lu in lus})
+
+        # Whole name
+        lus = ts.find_lus_in_ssp(self.ssp, 'lu4', whole_name=True)
+        self.assertEqual(1, len(lus))
+        self.assertEqual('udid_lu4', lus[0].udid)
+        lus = ts.find_lus_in_ssp(self.ssp, 'u', whole_name=True)
+        self.assertEqual(0, len(lus))
+
+    def test_crt_lu_ssp(self):
         ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10)
         self.assertEqual(lu.name, 'lu5')
         self.assertEqual(lu.udid, 'udid_lu5')
@@ -460,21 +502,50 @@ class TestLU(testtools.TestCase):
         self.assertEqual(ssp.etag, 'after')
         self.assertIn(lu, ssp.logical_units)
 
-    def test_crt_lu_thin(self):
+    def test_crt_lu_ssp_thin(self):
         ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=True)
         self.assertTrue(lu.is_thin)
 
-    def test_crt_lu_thick(self):
+    def test_crt_lu_ssp_thick(self):
         ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, thin=False)
         self.assertFalse(lu.is_thin)
 
-    def test_crt_lu_type_image(self):
+    def test_crt_lu_ssp_type_image(self):
         ssp, lu = ts.crt_lu(self.ssp, 'lu5', 10, typ=stor.LUType.IMAGE)
         self.assertEqual(lu.lu_type, stor.LUType.IMAGE)
 
-    def test_crt_lu_name_conflict(self):
+    def test_crt_lu_ssp_name_conflict(self):
         self.assertRaises(exc.DuplicateLUNameError, ts.crt_lu, self.ssp, 'lu1',
                           5)
+
+    @mock.patch('pypowervm.wrappers.storage.LUEnt.bld')
+    def test_crt_lu_tier(self, mock_lu_bld):
+        tier, lu = ts.crt_lu(self.tier, 'lu5', 10)
+        self.assertEqual(self.tier, tier)
+        mock_lu_bld.assert_called_with(self.tier.adapter, 'lu5', 10, thin=None,
+                                       typ=None)
+        mock_lu_bld.return_value.create.assert_called_with(
+            parent_type=stor.Tier, parent_uuid=self.tier.uuid)
+
+        mock_lu_bld.reset_mock()
+
+        # Thin
+        tier, lu = ts.crt_lu(self.tier, 'lu5', 10, thin=True)
+        self.assertEqual(self.tier, tier)
+        mock_lu_bld.assert_called_with(self.tier.adapter, 'lu5', 10, thin=True,
+                                       typ=None)
+        mock_lu_bld.return_value.create.assert_called_with(
+            parent_type=stor.Tier, parent_uuid=self.tier.uuid)
+
+        mock_lu_bld.reset_mock()
+
+        # Type
+        tier, lu = ts.crt_lu(self.tier, 'lu5', 10, typ=stor.LUType.IMAGE)
+        self.assertEqual(self.tier, tier)
+        mock_lu_bld.assert_called_with(self.tier.adapter, 'lu5', 10, thin=None,
+                                       typ=stor.LUType.IMAGE)
+        mock_lu_bld.return_value.create.assert_called_with(
+            parent_type=stor.Tier, parent_uuid=self.tier.uuid)
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
