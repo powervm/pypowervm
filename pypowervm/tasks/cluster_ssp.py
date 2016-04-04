@@ -71,36 +71,6 @@ def crt_cluster_ssp(clust_name, ssp_name, repos_pv, first_node, data_pv_list):
     return jwrap
 
 
-def _find_lu(ssp, lu_name, lu_type, whole_name=True, find_all=False):
-    """Find a specified lu by name and type.
-
-    :param ssp: SSP wrapper to search for the LU.
-    :param lu_name: The name of the LU to find.
-    :param lu_type: The type of the LU to find.
-    :param whole_name: (Optional) If True (the default), the lu_name must
-                       match exactly.  If False, match any name containing
-                       lu_name as a substring.
-    :param find_all: (Optional) If False (the default), the first matching
-                     LU is returned, or None if none were found.  If True,
-                     the return is always a list, containing zero or more
-                     matching LUs.
-    :return: If find_all=False, the wrapper of the first matching LU, or
-             None if not found.  If find_all=True, a list of zero or more
-             matching LU wrappers.
-    """
-    matches = []
-    for lu in ssp.logical_units:
-        if lu.lu_type != lu_type:
-            continue
-        if lu_name not in lu.name:
-            continue
-        if not whole_name or lu.name == lu_name:
-            matches.append(lu)
-    if find_all:
-        return matches
-    return matches[0] if matches else None
-
-
 def _upload_in_progress(lus, luname, first):
     """Detect whether another host has an upload is in progress.
 
@@ -203,7 +173,7 @@ def _stream_upload(ssp, luname, vios_uuid, stream_func, b_size):
         # It's possible the LU creation succeeded, but the upload
         # failed.  If so, we need to remove the LU so it doesn't block
         # others attempting to use the same one.
-        lu = _find_lu(ssp, luname, stor.LUType.IMAGE)
+        lu = tsk_stg.find_lu_in_ssp(ssp, luname, lu_type=stor.LUType.IMAGE)
         if lu:
             LOG.exception(_('Removing failed LU %s.'), luname)
             tsk_stg.rm_ssp_storage(ssp, [lu])
@@ -257,7 +227,8 @@ def get_or_upload_image_lu(ssp, luname, vios_uuid, stream_func, b_size):
         # virtually nothing.)
         ssp = ssp.refresh()
         # Look for all LUs containing the right name.
-        lus = _find_lu(ssp, luname, imgtyp, whole_name=False, find_all=True)
+        lus = tsk_stg.find_lu_in_ssp(ssp, luname, lu_type=imgtyp,
+                                     whole_name=False, find_all=True)
         # Does the LU already exist in its final, uploaded form?  If so,
         # then only that LU will exist, with an exact name match.
         if len(lus) == 1 and lus[0].name == luname:
@@ -282,8 +253,8 @@ def get_or_upload_image_lu(ssp, luname, vios_uuid, stream_func, b_size):
             # host) hit the above line at the same time, there could be
             # multiple marker LUs out there.  We all use the next chunk to
             # decide which one of us gets to do the upload.
-            lus = _find_lu(ssp, luname, imgtyp, whole_name=False,
-                           find_all=True)
+            lus = tsk_stg.find_lu_in_ssp(ssp, luname, lu_type=imgtyp,
+                                         whole_name=False, find_all=True)
 
             # Did someone else race us here, and win?
             if _upload_conflict(lus, luname, mkr_luname):

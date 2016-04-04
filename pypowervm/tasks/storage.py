@@ -587,9 +587,69 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
+def find_lu_in_ssp(ssp, lu_name, lu_type=None, whole_name=True,
+                   find_all=False):
+    """Find a specified LU within an SSP by name and possibly type.
+
+    :param ssp: SSP wrapper to search for the LU.
+    :param lu_name: The name of the LU to find.
+    :param lu_type: (Optional) The type of the LU to find.  If unspecified,
+                    only the name is considered.
+    :param whole_name: (Optional) If True (the default), the lu_name must
+                       match exactly.  If False, match any name containing
+                       lu_name as a substring.
+    :param find_all: (Optional) If False (the default), the first matching
+                     LU is returned, or None if none were found.  If True,
+                     the return is always a list, containing zero or more
+                     matching LUs.
+    :return: If find_all=False, the wrapper of the first matching LU, or
+             None if not found.  If find_all=True, a list of zero or more
+             matching LU wrappers.
+    """
+    matches = []
+    for lu in ssp.logical_units:
+        if lu_type is not None and lu.lu_type != lu_type:
+            continue
+        if lu_name not in lu.name:
+            continue
+        if not whole_name or lu.name == lu_name:
+            matches.append(lu)
+    if find_all:
+        return matches
+    return matches[0] if matches else None
+
+
+def crt_lu(ssp_or_tier, name, size, thin=None, typ=None):
+    """Create a Logical Unit on the specified Shared Storage Pool or Tier.
+
+    :param ssp_or_tier: SSP or Tier EntryWrapper denoting the Shared Storage
+                        Pool or Tier on which to create the LU.
+    :param name: Name for the new Logical Unit.
+    :param size: LU size in GB with decimal precision.
+    :param thin: Provision the new LU as Thin (True) or Thick (False).  If
+                 unspecified, use the server default.
+    :param typ: The type of LU to create, one of the LUType values.  If
+                unspecified, use the server default.
+    :return: The Tier (unchanged) or the updated SSP wrapper (containing the
+             new LU and with a new etag.)
+    :return: LU ElementWrapper representing the Logical Unit just created.
+    :raise: DuplicateLUNameError if ssp_or_tier is an SSP and an LU of the
+            specified name already exists in the SSP.  This check is NOT
+            performed on Tier.
+    """
+
+    if isinstance(ssp_or_tier, stor.SSP):
+        return _crt_lu_on_ssp(ssp_or_tier, name, size, thin=thin, typ=typ)
+    elif isinstance(ssp_or_tier, stor.Tier):
+        return _crt_lu_on_tier(ssp_or_tier, name, size, thin=thin, typ=typ)
+    else:
+        raise NotImplementedError(_("Can't create an LU on an object of type "
+                                    "%s") % ssp_or_tier.__class__)
+
+
 @tx.entry_transaction
-def crt_lu(ssp, name, size, thin=None, typ=None):
-    """Create a Logical Unit on the specified Shared Storage Pool.
+def _crt_lu_on_ssp(ssp, name, size, thin=None, typ=None):
+    """Create a LogicalUnit on the specified Shared Storage Pool.
 
     :param ssp: SSP EntryWrapper denoting the Shared Storage Pool on which to
                 create the LU.
@@ -599,23 +659,37 @@ def crt_lu(ssp, name, size, thin=None, typ=None):
                  unspecified, use the server default.
     :param typ: The type of LU to create, one of the LUType values.  If
                 unspecified, use the server default.
-    :return: The updated SSP wrapper.  (It will contain the new LU and have a
-             new etag.)
+    :return: The SSP wrapper, as updated, with the new LU and a new etag.
     :return: LU ElementWrapper representing the Logical Unit just created.
+    :raise: DuplicateLUNameError if an LU of the specified name already exists
+            in the SSP.
     """
     # Refuse to add with duplicate name
     if name in [lu.name for lu in ssp.logical_units]:
         raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
 
     lu = stor.LU.bld(ssp.adapter, name, size, thin=thin, typ=typ)
+
     ssp.logical_units.append(lu)
     ssp = ssp.update()
-    newlu = None
-    for lu in ssp.logical_units:
-        if lu.name == name:
-            newlu = lu
-            break
-    return ssp, newlu
+    return ssp, find_lu_in_ssp(ssp, name)
+
+
+def _crt_lu_on_tier(tier, name, size, thin=None, typ=None):
+    """Create a LogicalUnit on the specified Tier.
+
+    :param tier: Tier EntryWrapper denoting the Tier on which to create the LU.
+    :param name: Name for the new Logical Unit.
+    :param size: LU size in GB with decimal precision.
+    :param thin: Provision the new LU as Thin (True) or Thick (False).  If
+                 unspecified, use the server default.
+    :param typ: The type of LU to create, one of the LUType values.  If
+                unspecified, use the server default.
+    :return: The Tier, unchanged.
+    :return: LU ElementWrapper representing the Logical Unit just created.
+    """
+    lu = stor.LUEnt.bld(tier.adapter, name, size, thin=thin, typ=typ)
+    return tier, lu.create(parent_type=stor.Tier, parent_uuid=tier.uuid)
 
 
 def _rm_lus(ssp_wrap, lus, del_unused_images=True):
