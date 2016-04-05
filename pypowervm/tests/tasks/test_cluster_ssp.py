@@ -20,7 +20,6 @@ import unittest
 import uuid
 
 import pypowervm.entities as ent
-import pypowervm.exceptions as ex
 import pypowervm.tasks.cluster_ssp as cs
 import pypowervm.tests.tasks.util as tju
 from pypowervm.tests.test_utils import test_wrapper_abc as twrap
@@ -101,58 +100,74 @@ class TestClusterSSP(unittest.TestCase):
 
 
 class TestGetOrUploadImageLU(twrap.TestWrapper):
-    file = 'ssp.txt'
-    wrapper_class_to_test = stor.SSP
+    file = 'lufeed.txt'
+    wrapper_class_to_test = stor.LUEnt
 
     def setUp(self):
         super(TestGetOrUploadImageLU, self).setUp()
-        self.ssp = self.dwrap
+        self.tier = mock.Mock(spec=stor.Tier)
+        self.mock_luent_srch = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.storage.LUEnt.search')).mock
+        self.mock_luent_srch.side_effect = self.luent_search
         self.useFixture(fixtures.MockPatch(
             'uuid.uuid4')).mock.return_value = uuid.UUID('1234abcd-1234-1234-1'
                                                          '234-abcdbcdecdef')
-        self.mock_ssp_refresh = self.useFixture(fixtures.MockPatch(
-            'pypowervm.wrappers.storage.SSP.refresh')).mock
-        self.mock_ssp_refresh.return_value = self.ssp
-        self.mock_rm_ssp_stg = self.useFixture(fixtures.MockPatch(
-            'pypowervm.tasks.storage.rm_ssp_storage')).mock
-        self.mock_rm_ssp_stg.side_effect = self.rm_ssp_storage
         self.mock_crt_lu = self.useFixture(fixtures.MockPatch(
             'pypowervm.tasks.storage.crt_lu')).mock
-        self.mock_upload_new_lu = self.useFixture(fixtures.MockPatch(
-            'pypowervm.tasks.storage.upload_new_lu')).mock
+        self.mock_upload_lu = self.useFixture(fixtures.MockPatch(
+            'pypowervm.tasks.storage.upload_lu')).mock
+        self.mock_upload_lu.side_effect = self.upload_lu
         self.mock_sleep = self.useFixture(fixtures.MockPatch(
             'time.sleep')).mock
         self.mock_sleep.side_effect = self.sleep_conflict_finishes
         self.vios_uuid = 'vios_uuid'
         self.mock_stream_func = mock.Mock()
-        gb_size = 123
-        self.b_size = gb_size * 1024 * 1024 * 1024
+        self.gb_size = 123
+        self.b_size = self.gb_size * 1024 * 1024 * 1024
         # The image LU with the "real" content
         luname = 'lu_name'
-        self.img_lu = stor.LU.bld(None, luname, gb_size, typ=stor.LUType.IMAGE)
+        self.img_lu = self.bld_lu(luname, self.gb_size)
         # The marker LU used by *this* thread
         mkrname = 'part1234abcd' + luname
-        self.mkr_lu = stor.LU.bld(None, mkrname, 0.001, typ=stor.LUType.IMAGE)
+        self.mkr_lu = self.bld_lu(mkrname, cs.MKRSZ)
         # Marker LU used by a conflicting thread.  This one will lose the bid.
         confl_luname_lose = 'part5678cdef' + luname
-        self.confl_mkr_lu_lose = stor.LU.bld(None, confl_luname_lose, 0.001,
-                                             typ=stor.LUType.IMAGE)
-        self.confl_mkr_lu_lose._udid('conflict_img_lu_udid_lose')
+        self.confl_mkr_lu_lose = self.bld_lu(confl_luname_lose, cs.MKRSZ)
         # Marker LU used by a conflicting thread.  This one will win the bid.
         confl_luname_win = 'part0123abcd' + luname
-        self.confl_mkr_lu_win = stor.LU.bld(None, confl_luname_win, 0.001,
-                                            typ=stor.LUType.IMAGE)
-        self.confl_mkr_lu_win._udid('conflict_img_lu_udid_win')
+        self.confl_mkr_lu_win = self.bld_lu(confl_luname_win, cs.MKRSZ)
         # Always expect to finish with exactly one more LU than we started with
-        self.exp_num_lus = len(self.ssp.logical_units) + 1
+        self.exp_num_lus = len(self.entries) + 1
 
-    def crt_mkr_lu_mock(self, conflicting_mkr_lu=None):
-        """Generate a mock side effect for crt_lu of the marker LU.
+    def bld_lu(self, luname, gb_size):
+        lu = stor.LUEnt.bld(None, luname, gb_size, typ=cs.IMGTYP)
+        lu._udid('udid_' + luname)
+        lu.delete = mock.Mock()
+        lu.delete.side_effect = lambda: self.entries.remove(lu)
+        return lu
 
-        Always creates "my" marker LU.  If a conflicting_mkr_lu is specified,
-        also creates that marker LU (to simulate simultaneous attempts from
-        separate hosts).
+    def luent_search(self, adapter, parent_type=None, parent_uuid=None,
+                     lu_type=None):
+        """Mock side effect for LUEnt.search, validating arguments.
 
+        :return: self.entries (the LUEnt feed)
+        """
+        self.assertEqual(self.tier.adapter, adapter)
+        self.assertEqual(stor.Tier, parent_type)
+        self.assertEqual(self.tier.uuid, parent_uuid)
+        self.assertEqual(cs.IMGTYP, lu_type)
+        return self.entries
+
+    def setup_crt_lu_mock(self, crt_img_lu_se, conflicting_mkr_lu=None):
+        """Set up the mock side effect for crt_lu calls.
+
+        The marker LU side always creates "my" marker LU.  If a
+        conflicting_mkr_lu is specified, also creates that marker LU (to
+        simulate simultaneous attempts from separate hosts).
+
+        The image LU side behaves as indicated by the crt_img_lu_se parameter.
+
+        :param crt_img_lu_se: Side effect for crt_lu of the image LU.
         :param conflicting_mkr_lu: If specified, the resulting mock pretends
                                    that some other host created the specified
                                    marker LU at the same time we're creating
@@ -160,134 +175,142 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         :return: A callable suitable for assigning to
                  self.mock_crt_lu.side_effect.
         """
-        def crt_mkr_lu(ssp1, luname, lu_gb, typ=None):
-            self.assertEqual(self.ssp, ssp1)
+        def crt_mkr_lu(tier, luname, lu_gb, typ=None):
+            self.assertEqual(self.tier, tier)
             self.assertEqual(self.mkr_lu.name, luname)
             self.assertEqual(self.mkr_lu.capacity, lu_gb)
-            self.assertEqual(stor.LUType.IMAGE, typ)
-            ssp1.logical_units.append(self.mkr_lu)
+            self.assertEqual(cs.IMGTYP, typ)
+            self.entries.append(self.mkr_lu)
             if conflicting_mkr_lu is not None:
-                ssp1.logical_units.append(conflicting_mkr_lu)
-            return ssp1, self.mkr_lu
-        return crt_mkr_lu
+                self.entries.append(conflicting_mkr_lu)
+            # Second time through, creation of the image LU
+            self.mock_crt_lu.side_effect = crt_img_lu_se
+            return tier, self.mkr_lu
 
-    def upload_new_lu_mock(self, crt_raise, upl_raise):
-        """Generate a mock side effect for upload_new_lu.
+        # First time through, creation of the marker LU
+        self.mock_crt_lu.side_effect = crt_mkr_lu
 
-        :param crt_raise: Exception to be raised by the (simulated) crt_lu of
-                          the img_lu.  If None, the img_lu is created (added to
-                          the SSP).
-        :param upl_raise: Exception to be raised by the (simulated) upload_lu
-                          part of upload_new_lu.  If None, the upload
-                          "succeeds" and we return (ssp, img_lu, None). Ignored
-                          if crt_raise is not None.
-        :return: A callable suitable for assigning to
-                 self.mock_upload_new_lu.side_effect.
-    """
-        def upload_new_lu(vios_uuid, ssp1, stream, luname, b_size, return_ssp):
-            self.assertEqual(self.vios_uuid, vios_uuid)
-            self.assertEqual(self.ssp, ssp1)
-            self.assertEqual(self.mock_stream_func.return_value, stream)
-            self.assertEqual(self.img_lu.name, luname)
-            self.assertEqual(self.b_size, b_size)
-            self.assertTrue(return_ssp)
-            if crt_raise is None:
-                ssp1.logical_units.append(self.img_lu)
-            else:
-                raise crt_raise
-            if upl_raise is not None:
-                raise upl_raise
-            return ssp1, self.img_lu, None
-        return upload_new_lu
+    def crt_img_lu(self, tier, luname, lu_gb, typ=None):
+        """Mock side effect for crt_lu of the image LU."""
+        self.assertEqual(self.tier, tier)
+        self.assertEqual(self.img_lu.name, luname)
+        self.assertEqual(self.img_lu.capacity, lu_gb)
+        self.assertEqual(cs.IMGTYP, typ)
+        self.entries.append(self.img_lu)
+        return tier, self.img_lu
 
-    @staticmethod
-    def rm_ssp_storage(ssp1, lus):
-        """Mock for rm_ssp_storage."""
-        for lu in lus:
-            ssp1.logical_units.remove(lu)
-        return ssp1
+    def upload_lu(self, vios_uuid, new_lu, stream, b_size):
+        self.assertEqual(self.vios_uuid, vios_uuid)
+        self.assertEqual(self.mock_stream_func.return_value, stream)
+        self.assertEqual(self.b_size, b_size)
 
     def sleep_conflict_finishes(self, sec):
         """Pretend the conflicting LU finishes while we sleep."""
-        self.assertIsInstance(sec, int)
+        self.assertEqual(3, sec)
         # We may have used either conflict marker LU
-        if self.confl_mkr_lu_lose in self.ssp.logical_units:
-            self.ssp.logical_units.remove(self.confl_mkr_lu_lose)
-        if self.confl_mkr_lu_win in self.ssp.logical_units:
-            self.ssp.logical_units.remove(self.confl_mkr_lu_win)
-        if self.img_lu not in self.ssp.logical_units:
-            self.ssp.logical_units.append(self.img_lu)
+        if self.confl_mkr_lu_lose in self.entries:
+            self.entries.remove(self.confl_mkr_lu_lose)
+        if self.confl_mkr_lu_win in self.entries:
+            self.entries.remove(self.confl_mkr_lu_win)
+        if self.img_lu not in self.entries:
+            self.entries.append(self.img_lu)
+
+    def test_already_exists(self):
+        """The image LU is already there."""
+        self.entries.append(self.img_lu)
+
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+            self.b_size))
+
+        # We only searched once
+        self.assertEqual(1, self.mock_luent_srch.call_count)
+        # We didn't create anything
+        self.mock_crt_lu.assert_not_called()
+        # We didn't upload anything
+        self.mock_upload_lu.assert_not_called()
+        # We didn't delete anything
+        self.mkr_lu.delete.assert_not_called()
+        self.img_lu.delete.assert_not_called()
+        # We didn't sleep
+        self.mock_sleep.assert_not_called()
+        # Stream func not invoked
+        self.mock_stream_func.assert_not_called()
+        # Right number of LUs
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
     def test_upload_no_conflict(self):
         """Upload a new LU - no conflict."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock()
-        self.mock_upload_new_lu.side_effect = self.upload_new_lu_mock(
-            None, None)
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+        self.setup_crt_lu_mock(self.crt_img_lu)
+
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
-        # Created marker LU
-        self.assertEqual(1, self.mock_crt_lu.call_count)
+
         # Invoked the stream func
         self.mock_stream_func.assert_called_once_with()
         # Uploaded content
-        self.assertEqual(1, self.mock_upload_new_lu.call_count)
+        self.assertEqual(1, self.mock_upload_lu.call_count)
         # Removed marker LU
-        self.mock_rm_ssp_stg.assert_called_once_with(self.ssp, [self.mkr_lu])
-        # I only refreshed the first time through
-        self.assertEqual(1, self.mock_ssp_refresh.call_count)
+        self.mkr_lu.delete.assert_called_once_with()
+        # Did not delete image LU
+        self.img_lu.delete.assert_not_called()
+        # I pulled the feed the first time through, and for _upload_conflict
+        self.assertEqual(2, self.mock_luent_srch.call_count)
         # Right number of LUs
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
     def test_conflict_not_started(self):
         """Another upload is about to start when we get there."""
         # Note that the conflicting process wins, even though its marker LU
         # name would lose to ours - because we don't get around to creating
         # ours.
-        self.ssp.logical_units.append(self.confl_mkr_lu_lose)
+        self.entries.append(self.confl_mkr_lu_lose)
 
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
 
         # I "waited" for the other guy to complete
         self.assertEqual(1, self.mock_sleep.call_count)
-        # I did not create, upload, or remove
+        # I did not create, upload, or remove anything
         self.mock_crt_lu.assert_not_called()
-        self.mock_upload_new_lu.assert_not_called()
-        self.mock_rm_ssp_stg.assert_not_called()
-        # I refreshed the first time through, and once after the sleep
-        self.assertEqual(2, self.mock_ssp_refresh.call_count)
+        self.mock_upload_lu.assert_not_called()
+        self.mkr_lu.delete.assert_not_called()
+        self.img_lu.delete.assert_not_called()
+        # I pulled the feed the first time through, and once after the sleep
+        self.assertEqual(2, self.mock_luent_srch.call_count)
         # Right number of LUs
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
     def test_conflict_started(self):
         """Another upload is in progress when we get there."""
-        self.ssp.logical_units.append(self.confl_mkr_lu_lose)
-        self.ssp.logical_units.append(self.img_lu)
+        self.entries.append(self.confl_mkr_lu_lose)
+        self.entries.append(self.img_lu)
 
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
 
         # I "waited" for the other guy to complete
         self.assertEqual(1, self.mock_sleep.call_count)
-        # I did not create, upload, or remove
+        # I did not create, upload, or remove anything
         self.mock_crt_lu.assert_not_called()
-        self.mock_upload_new_lu.assert_not_called()
-        self.mock_rm_ssp_stg.assert_not_called()
-        # I refreshed the first time through, and once after the sleep
-        self.assertEqual(2, self.mock_ssp_refresh.call_count)
+        self.mock_upload_lu.assert_not_called()
+        self.mkr_lu.delete.assert_not_called()
+        self.img_lu.delete.assert_not_called()
+        # I searched the first time through, and once after the sleep
+        self.assertEqual(2, self.mock_luent_srch.call_count)
         # Right number of LUs
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
     def test_conflict_I_lose(self):
         """We both bid at the same time; and I lose."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_win)
+        self.setup_crt_lu_mock(self.fail,
+                               conflicting_mkr_lu=self.confl_mkr_lu_win)
 
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
 
         # I tried creating mine because his wasn't there at the start
@@ -295,138 +318,87 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         # I "slept", waiting for the other guy to finish
         self.assertEqual(1, self.mock_sleep.call_count)
         # I didn't upload
-        self.mock_upload_new_lu.assert_not_called()
+        self.mock_upload_lu.assert_not_called()
         # I did remove my marker from the SSP
-        self.mock_rm_ssp_stg.assert_called_with(mock.ANY, [self.mkr_lu])
-        # I refreshed the first time through, and once after the sleep
-        self.assertEqual(2, self.mock_ssp_refresh.call_count)
+        self.mkr_lu.delete.assert_called_once_with()
+        # I didn't remove the image LU (because I didn't create it)
+        self.img_lu.delete.assert_not_called()
+        # I searched the first time through, once in _upload_conflict, and once
+        # after the sleep
+        self.assertEqual(3, self.mock_luent_srch.call_count)
         # Right number of LUs
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
     def test_conflict_I_win(self):
         """We both bid at the same time; and I win."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_lose)
-        self.mock_upload_new_lu.side_effect = self.upload_new_lu_mock(
-            None, None)
+        self.setup_crt_lu_mock(self.crt_img_lu,
+                               conflicting_mkr_lu=self.confl_mkr_lu_lose)
 
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
+        self.assertEqual(self.img_lu, cs.get_or_upload_image_lu(
+            self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
 
-        # I tried creating mine because his wasn't there at the start
-        self.assertEqual(1, self.mock_crt_lu.call_count)
+        # I tried creating mine because his wasn't there at the start; and I
+        # also created the image LU.
+        self.assertEqual(2, self.mock_crt_lu.call_count)
         # Since I won, I did the upload
-        self.assertEqual(1, self.mock_upload_new_lu.call_count)
-        # I removed my marker from the SSP
-        self.mock_rm_ssp_stg.assert_called_with(mock.ANY, [self.mkr_lu])
+        self.assertEqual(1, self.mock_upload_lu.call_count)
+        # I did remove my marker from the SSP
+        self.mkr_lu.delete.assert_called_once_with()
+        # I didn't remove the image LU (because I won)
+        self.img_lu.delete.assert_not_called()
         # I never slept
         self.mock_sleep.assert_not_called()
-        # I only refreshed the first time through
-        self.assertEqual(1, self.mock_ssp_refresh.call_count)
+        # I searched the first time through, and in _upload_conflict
+        self.assertEqual(2, self.mock_luent_srch.call_count)
         # IRL, the other guy will have removed his marker LU at some point.
         # Here, we can expect it to remain, so there's one "extra".
-        self.assertEqual(self.exp_num_lus + 1, len(self.ssp.logical_units))
+        self.assertEqual(self.exp_num_lus + 1, len(self.entries))
 
-    def test_upload_raises_non_dup_on_crt(self):
-        """Upload raises non-DuplicateLUNameError during crt_lu."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_lose)
-        self.mock_upload_new_lu.side_effect = self.upload_new_lu_mock(
-            IOError('crt_lu raises non-DuplicateLUNameError within '
-                    'upload_new_lu'), None)
+    def test_crt_img_lu_raises(self):
+        """Exception during crt_lu of the image LU."""
+        self.setup_crt_lu_mock(IOError('crt_lu raises on the image LU'),
+                               conflicting_mkr_lu=self.confl_mkr_lu_lose)
 
-        self.assertRaises(IOError, cs.get_or_upload_image_lu, self.ssp,
+        self.assertRaises(IOError, cs.get_or_upload_image_lu, self.tier,
                           self.img_lu.name, self.vios_uuid,
                           self.mock_stream_func, self.b_size)
 
-        # I tried creating mine because his wasn't there at the start
-        self.assertEqual(1, self.mock_crt_lu.call_count)
-        # Since I won, I tried the upload
-        self.assertEqual(1, self.mock_upload_new_lu.call_count)
+        # I didn't get to the upload
+        self.mock_upload_lu.assert_not_called()
         # I never slept
         self.mock_sleep.assert_not_called()
-        # I removed my marker only - the real LU wasn't there.
-        self.mock_rm_ssp_stg.assert_called_once_with(mock.ANY, [self.mkr_lu])
-        # I only refreshed the first time through
-        self.assertEqual(1, self.mock_ssp_refresh.call_count)
-        # ...thus leaving the SSP as it was (plus the other guy's extra, which
-        # would actually be removed normally).
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        # I removed my marker
+        self.mkr_lu.delete.assert_called_once_with()
+        # I didn't remove the image LU (because I failed to create it)
+        self.img_lu.delete.assert_not_called()
+        # I searched the first time through, and in _upload_conflict
+        self.assertEqual(2, self.mock_luent_srch.call_count)
+        # We left the SSP as it was (plus the other guy's extra, which would
+        # actually be removed normally).
+        self.assertEqual(self.exp_num_lus, len(self.entries))
 
-    def test_upload_raises_dup_on_crt(self):
-        """Upload raises DuplicateLUNameError during crt_lu."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_lose)
-        self.mock_upload_new_lu.side_effect = self.upload_new_lu_mock(
-            ex.DuplicateLUNameError(lu_name=self.img_lu.name,
-                                    ssp_name=self.ssp.name), None)
+    def test_upload_raises(self):
+        """I win; upload_lu raises after crt_lu of the image LU."""
+        self.setup_crt_lu_mock(self.crt_img_lu,
+                               conflicting_mkr_lu=self.confl_mkr_lu_lose)
+        self.mock_upload_lu.side_effect = IOError('upload_lu raises.')
 
-        self.assertEqual((self.ssp, self.img_lu), cs.get_or_upload_image_lu(
-            self.ssp, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
-            self.b_size))
-
-        # I tried creating mine because his wasn't there at the start
-        self.assertEqual(1, self.mock_crt_lu.call_count)
-        # Since I won, I tried the upload
-        self.assertEqual(1, self.mock_upload_new_lu.call_count)
-        # I "slept", waiting for the other guy to finish
-        self.assertEqual(1, self.mock_sleep.call_count)
-        # I did remove my marker from the SSP
-        self.mock_rm_ssp_stg.assert_called_with(mock.ANY, [self.mkr_lu])
-        # I refreshed the first time through, once after the exception, and
-        # again after the sleep.
-        self.assertEqual(3, self.mock_ssp_refresh.call_count)
-        # Right number of LUs
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
-
-    def test_upload_raises_on_upload(self):
-        """I win; upload_new_lu raises after crt_lu (during upload_lu)."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_lose)
-        self.mock_upload_new_lu.side_effect = self.upload_new_lu_mock(
-            None, IOError('upload_lu raises within upload_new_lu after '
-                          'crt_lu'))
-
-        self.assertRaises(IOError, cs.get_or_upload_image_lu, self.ssp,
+        self.assertRaises(IOError, cs.get_or_upload_image_lu, self.tier,
                           self.img_lu.name, self.vios_uuid,
                           self.mock_stream_func, self.b_size)
 
-        # I tried creating mine because his wasn't there at the start
-        self.assertEqual(1, self.mock_crt_lu.call_count)
+        # I created my marker and the image LU
+        self.assertEqual(2, self.mock_crt_lu.call_count)
         # Since I won, I tried the upload
-        self.assertEqual(1, self.mock_upload_new_lu.call_count)
+        self.assertEqual(1, self.mock_upload_lu.call_count)
         # I never slept
         self.mock_sleep.assert_not_called()
         # I removed both the real LU and my marker
-        self.mock_rm_ssp_stg.assert_has_calls([
-            mock.call(mock.ANY, [self.img_lu]),
-            mock.call(mock.ANY, [self.mkr_lu])])
-        # ...thus leaving the SSP as it was (plus the other guy's extra, which
-        # would actually be removed normally).
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
-
-    def test_raise_before_upload(self):
-        """I win; but something raises before we even get to the upload."""
-        self.mock_crt_lu.side_effect = self.crt_mkr_lu_mock(
-            conflicting_mkr_lu=self.confl_mkr_lu_lose)
-        self.mock_stream_func.side_effect = KeyboardInterrupt(
-            'Problem before upload.')
-
-        self.assertRaises(KeyboardInterrupt, cs.get_or_upload_image_lu,
-                          self.ssp, self.img_lu.name, self.vios_uuid,
-                          self.mock_stream_func, self.b_size)
-
-        # I tried creating mine because his wasn't there at the start
-        self.assertEqual(1, self.mock_crt_lu.call_count)
-        # I didn't get to the upload
-        self.mock_upload_new_lu.assert_not_called()
-        # I never slept
-        self.mock_sleep.assert_not_called()
-        # I only refreshed the first time through
-        self.assertEqual(1, self.mock_ssp_refresh.call_count)
-        # I removed my marker only - the real LU wasn't there yet.
-        self.mock_rm_ssp_stg.assert_called_once_with(mock.ANY, [self.mkr_lu])
-        # ...thus leaving the SSP as it was (plus the other guy's extra, which
-        # would actually be removed normally).
-        self.assertEqual(self.exp_num_lus, len(self.ssp.logical_units))
+        self.mkr_lu.delete.assert_called_once_with()
+        self.img_lu.delete.assert_called_once_with()
+        # I searched the first time through, and in _upload_conflict
+        self.assertEqual(2, self.mock_luent_srch.call_count)
+        # We left the SSP as it was (plus the other guy's extra, which would
+        # actually be removed normally).
+        self.assertEqual(self.exp_num_lus, len(self.entries))
