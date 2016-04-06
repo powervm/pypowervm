@@ -1004,7 +1004,7 @@ class CNA(ewrap.EntryWrapper):
 
     @classmethod
     def bld(cls, adapter, pvid, vswitch_href, slot_num=None, mac_addr=None,
-            addl_tagged_vlans=None, trunk_pri=None):
+            addl_tagged_vlans=None, trunk_pri=None, dev_name=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a partition.  This can be PUT
@@ -1031,6 +1031,11 @@ class CNA(ewrap.EntryWrapper):
                                   Note: The limit is ~18 additional VLANs
         :param trunk_pri: Optional TrunkPriority integer that, if specified,
                           will create this wrapper as a trunk.
+        :param dev_name: (Optional, Default: None) Can only be set if the CNA
+                         is being created against the Management VM.  Can be
+                         used to specify what the device name should be for the
+                         CNA on the Management VM.  Ignored for all other LPAR
+                         types.
         :returns: A CNA EntryWrapper that can be used for create.
         """
         cna = super(CNA, cls)._bld(adapter)
@@ -1055,6 +1060,10 @@ class CNA(ewrap.EntryWrapper):
 
         # vSwitch URI
         cna.vswitch_uri = vswitch_href
+
+        # Set the device name if not None
+        if dev_name:
+            cna._dev_name(dev_name)
 
         # If a trunk priority is specified, set it. It will make this CNA
         # build out a trunk adapter. However, if it is not specified, we
@@ -1193,6 +1202,16 @@ class CNA(ewrap.EntryWrapper):
         If RMC is down, will not be available.
         """
         return self._get_val_str(_VADPT_DEV_NAME, 'Unknown')
+
+    def _dev_name(self, value):
+        """Sets the device name.
+
+        This is only available for devices running on the Management VM.  If
+        set for any other LPARs, it will be ignored.
+
+        :param value: The device name.
+        """
+        self.set_parm_value(_VADPT_DEV_NAME, value)
 
     @property
     def trunk_pri(self):
