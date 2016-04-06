@@ -608,75 +608,75 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_attrs(self):
         """Test getting the attributes."""
-        self.assertEqual(32, self.entries.slot)
-        self.assertEqual("FAD4433ED120", self.entries.mac)
-        self.assertEqual(100, self.entries.pvid)
+        self.assertEqual(32, self.dwrap.slot)
+        self.assertEqual("FAD4433ED120", self.dwrap.mac)
+        self.assertEqual(100, self.dwrap.pvid)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/'
                          '0A68CFAB-F62B-46D4-A6A0-F4EBE0264AD5/'
                          'ClientNetworkAdapter/'
                          '6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8',
-                         self.entries.href)
+                         self.dwrap.href)
         self.assertEqual('U8246.L2C.0604C7A-V24-C32',
-                         self.entries.loc_code)
-        self.assertEqual([53, 54, 55], self.entries.tagged_vlans)
-        self.assertTrue(self.entries.is_tagged_vlan_supported)
+                         self.dwrap.loc_code)
+        self.assertEqual([53, 54, 55], self.dwrap.tagged_vlans)
+        self.assertTrue(self.dwrap.is_tagged_vlan_supported)
         self.assertEqual('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                          '726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/'
                          '9e42d4a9-9725-3007-9932-d85374ebf5cf',
-                         self.entries.vswitch_uri)
-        self.assertEqual(0, self.entries.vswitch_id)
-        self.assertEqual('VSITID', self.entries.vsi_type_id)
-        self.assertEqual('77.99', self.entries.vsi_type_version)
-        self.assertEqual('VSIMID', self.entries.vsi_type_manager_id)
+                         self.dwrap.vswitch_uri)
+        self.assertEqual(0, self.dwrap.vswitch_id)
+        self.assertEqual('VSITID', self.dwrap.vsi_type_id)
+        self.assertEqual('77.99', self.dwrap.vsi_type_version)
+        self.assertEqual('VSIMID', self.dwrap.vsi_type_manager_id)
 
     def test_tagged_vlan_modification(self):
         """Tests that the tagged vlans can be modified."""
         # Update via getter and Actionable List
-        tags = self.entries.tagged_vlans
+        tags = self.dwrap.tagged_vlans
         tags.append(56)
-        self.assertEqual(4, len(self.entries.tagged_vlans))
+        self.assertEqual(4, len(self.dwrap.tagged_vlans))
         tags.remove(56)
-        self.assertEqual(3, len(self.entries.tagged_vlans))
+        self.assertEqual(3, len(self.dwrap.tagged_vlans))
 
         # Update via setter
-        self.entries.tagged_vlans = [1, 2, 3]
-        self.assertEqual([1, 2, 3], self.entries.tagged_vlans)
-        self.entries.tagged_vlans = []
-        self.assertEqual([], self.entries.tagged_vlans)
-        self.entries.tagged_vlans = [53, 54, 55]
+        self.dwrap.tagged_vlans = [1, 2, 3]
+        self.assertEqual([1, 2, 3], self.dwrap.tagged_vlans)
+        self.dwrap.tagged_vlans = []
+        self.assertEqual([], self.dwrap.tagged_vlans)
+        self.dwrap.tagged_vlans = [53, 54, 55]
 
         # Try the tagged vlan support
-        self.entries.is_tagged_vlan_supported = False
-        self.assertFalse(self.entries.is_tagged_vlan_supported)
-        self.entries.is_tagged_vlan_supported = True
+        self.dwrap.is_tagged_vlan_supported = False
+        self.assertFalse(self.dwrap.is_tagged_vlan_supported)
+        self.dwrap.is_tagged_vlan_supported = True
 
     def test_mac_set(self):
-        orig_mac = self.entries.mac
+        orig_mac = self.dwrap.mac
         mac = "AA:bb:CC:dd:ee:ff"
-        self.entries.mac = mac
-        self.assertEqual("AABBCCDDEEFF", self.entries.mac)
-        self.entries.mac = orig_mac
+        self.dwrap.mac = mac
+        self.assertEqual("AABBCCDDEEFF", self.dwrap.mac)
+        self.dwrap.mac = orig_mac
 
     def test_get_slot(self):
         """Test getting the VirtualSlotID."""
-        self.assertEqual(32, self.entries.slot)
+        self.assertEqual(32, self.dwrap.slot)
 
     def test_get_mac(self):
         """Test that we can get the mac address."""
-        self.assertEqual("FAD4433ED120", self.entries.mac)
+        self.assertEqual("FAD4433ED120", self.dwrap.mac)
 
     def test_pvid(self):
         """Test that the PVID returns properly."""
-        self.assertEqual(100, self.entries.pvid)
-        self.entries.pvid = 101
-        self.assertEqual(101, self.entries.pvid)
-        self.entries.pvid = 100
+        self.assertEqual(100, self.dwrap.pvid)
+        self.dwrap.pvid = 101
+        self.assertEqual(101, self.dwrap.pvid)
+        self.dwrap.pvid = 100
 
     def test_vswitch_uri(self):
-        orig_uri = self.entries.vswitch_uri
-        self.entries.vswitch_uri = 'test'
-        self.assertEqual('test', self.entries.vswitch_uri)
-        self.entries.vswitch_uri = orig_uri
+        orig_uri = self.dwrap.vswitch_uri
+        self.dwrap.vswitch_uri = 'test'
+        self.assertEqual('test', self.dwrap.vswitch_uri)
+        self.dwrap.vswitch_uri = orig_uri
 
     def test_wrapper_class(self):
         self.assertEqual(net.CNA.schema_type, 'ClientNetworkAdapter')
@@ -686,23 +686,29 @@ class TestCNAWrapper(twrap.TestWrapper):
 
     def test_get_trunk_pri(self):
         """Test that we can get the trunk priority."""
-        self.assertEqual(1, self.entries.trunk_pri)
+        self.assertEqual(1, self.dwrap.trunk_pri)
 
     def test_set_trunk_pri(self):
         """Test that we can set the trunk priority."""
-        self.assertEqual(1, self.entries.trunk_pri)
-        self.entries._trunk_pri(2)
-        self.assertEqual(2, self.entries.trunk_pri)
+        self.assertEqual(1, self.dwrap.trunk_pri)
+        self.dwrap._trunk_pri(2)
+        self.assertEqual(2, self.dwrap.trunk_pri)
 
     def test_is_trunk(self):
         """Test that we can get if this adapter is a trunk."""
-        self.assertTrue(self.entries.is_trunk)
-        self.entries._trunk_pri(None)
-        self.assertFalse(self.entries.is_trunk)
+        self.assertTrue(self.dwrap.is_trunk)
+        self.dwrap._trunk_pri(None)
+        self.assertFalse(self.dwrap.is_trunk)
 
     def test_lpar_id(self):
         """Test that we can get the local partition id."""
-        self.assertEqual(3, self.entries.lpar_id)
+        self.assertEqual(3, self.dwrap.lpar_id)
+
+    def test_set_dev_name(self):
+        """Test that we can set the device name."""
+        self.assertEqual('Unknown', self.dwrap.dev_name)
+        self.dwrap._dev_name('tap-01234')
+        self.assertEqual('tap-01234', self.dwrap.dev_name)
 
 if __name__ == "__main__":
     unittest.main()
