@@ -704,5 +704,11 @@ class TestCNAWrapper(twrap.TestWrapper):
         """Test that we can get the local partition id."""
         self.assertEqual(3, self.entries.lpar_id)
 
+    def test_set_dev_name(self):
+        """Test that we can set the device name."""
+        self.assertEqual('Unknown', self.entries.dev_name)
+        self.entries._dev_name('tap-01234')
+        self.assertEqual('tap-01234', self.entries.dev_name)
+
 if __name__ == "__main__":
     unittest.main()
