@@ -146,7 +146,7 @@ def _find_free_vlan(adapter, host_uuid, vswitch_w):
 
 
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
-                crt_vswitch=True, mac_addr=None):
+                crt_vswitch=True, mac_addr=None, dev_name=None):
     """Creates a 'point-to-point' Client Network Adapter.
 
     A point to point connection is one that has a VLAN that is shared only
@@ -186,6 +186,11 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                         ex: Veb mode).
     :param mac_addr: (Optional, Default: None) The mac address.  If not
                      specified, one will be auto generated.
+    :param dev_name: (Optional, Default: None) The device name.  Only valid
+                     if the src_io_host_uuids is a single entity and the
+                     uuid matches the mgmt lpar UUID.  Otherwise leave as
+                     None.  If set, the trunk adapter created on the mgmt lpar
+                     will be set to this value.
     :return: The CNA Wrapper that was created.
     :return: The TrunkAdapters that were created.  Match the order that the
              src_io_host_uuids were passed in.
@@ -214,7 +219,8 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
         lpar_type = (pvm_vios.VIOS if src_io_host_uuid in vios_uuids
                      else lpar.LPAR)
         trunk_adpt = pvm_net.CNA.bld(
-            adapter, vlan, vswitch_w.related_href, trunk_pri=trunk_pri)
+            adapter, vlan, vswitch_w.related_href, trunk_pri=trunk_pri,
+            dev_name=dev_name)
         trunk_adpts.append(trunk_adpt.create(parent_type=lpar_type,
                                              parent_uuid=src_io_host_uuid))
         trunk_pri += 1
