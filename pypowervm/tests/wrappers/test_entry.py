@@ -641,17 +641,19 @@ class TestGet(testtools.TestCase):
                                           child_type=net.CNA.schema_type)
         mock_wrap.assert_called_with(self.adpt.read.return_value)
         mock_wrap.reset_mock()
-        # Happy path - entry with 'uuid'.
+        # Happy path - entry with 'uuid'.  Parent specified as string.
         net.CNA.get(
-            self.adpt, parent_type=lpar.LPAR, parent_uuid='123', uuid='456')
+            self.adpt, parent_type=lpar.LPAR.schema_type, parent_uuid='123',
+            uuid='456')
         self.adpt.read.assert_called_with(
             lpar.LPAR.schema_type, root_id='123',
             child_type=net.CNA.schema_type, child_id='456')
         mock_wrap.assert_called_with(self.adpt.read.return_value)
         mock_wrap.reset_mock()
-        # Happy path - entry with 'child_id'.  Parent specified as string.
-        net.CNA.get(self.adpt, parent_type=lpar.LPAR.schema_type,
-                    parent_uuid='123', child_id='456')
+        # Happy path - entry with 'child_id'.  Parent specified as instance.
+        parent = mock.Mock(spec=lpar.LPAR, schema_type=lpar.LPAR.schema_type,
+                           uuid='123')
+        net.CNA.get(self.adpt, parent=parent, child_id='456')
         self.adpt.read.assert_called_with(
             lpar.LPAR.schema_type, root_id='123',
             child_type=net.CNA.schema_type, child_id='456')
@@ -869,6 +871,19 @@ class TestSearch(testtools.TestCase):
             self.assertTrue(wrap.tagged)
             self.assertEqual(expected_vlanid, wrap.vlan)
 
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_child_with_parent_spec(self, mock_read):
+        """Test CHILD search using a parent instance."""
+        def validate_read(root_type, root_id, child_type, xag):
+            self.assertEqual('st', root_type)
+            self.assertEqual('uuid', root_id)
+            self.assertEqual('Cluster', child_type)
+            self.assertIsNone(xag)
+            return pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
+        mock_read.side_effect = validate_read
+        parent = mock.Mock(spec=clust.Cluster, schema_type='st', uuid='uuid')
+        clust.Cluster.search(self.adp, id=0, parent=parent)
+
 
 class TestRefresh(testtools.TestCase):
     """Tests for Adapter.refresh()."""
@@ -1065,6 +1080,10 @@ class TestCreate(testtools.TestCase):
         vswitch.create(parent_type=net.NetBridge, parent_uuid='SomeUUID')
         # ...or a string
         vswitch.create(parent_type='NetworkBridge', parent_uuid='SomeUUID')
+        # Or an instance
+        parent = mock.Mock(spec=net.NetBridge, schema_type='NetworkBridge',
+                           uuid='SomeUUID')
+        vswitch.create(parent=parent)
 
     def test_create_other_service(self):
         """Ensure non-UOM service goes through."""
@@ -1214,21 +1233,41 @@ class TestGetters(twrap.TestWrapper):
             'VirtualDisk', 'parent_uuid', child_type='LogicalPartition',
             child_id='lpar_uuid', xag=['one', 'two'])
 
+        # With string parent_class
+        getter = lpar.LPAR.getter(
+            self.adpt, 'lpar_uuid', parent_class='VirtualDisk',
+            parent_uuid='parent_uuid', xag=['one', 'two'])
+        self.assertIsInstance(getter, ewrap.EntryWrapperGetter)
+        self.assertEqual('lpar_uuid', getter.uuid)
+        lwrap = getter.get()
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.adpt.read.assert_called_with(
+            'VirtualDisk', 'parent_uuid', child_type='LogicalPartition',
+            child_id='lpar_uuid', xag=['one', 'two'])
+
+        # With parent instance
+        parent = mock.Mock(spec=stor.VDisk, schema_type='st', uuid='uuid')
+        getter = lpar.LPAR.getter(self.adpt, 'lpar_uuid', parent=parent)
+        self.assertIsInstance(getter, ewrap.EntryWrapperGetter)
+        self.assertEqual('lpar_uuid', getter.uuid)
+        lwrap = getter.get()
+        self.assertIsInstance(lwrap, lpar.LPAR)
+        self.adpt.read.assert_called_with(
+            'st', 'uuid', child_type='LogicalPartition', child_id='lpar_uuid',
+            xag=None)
+
         # parent type & uuid must both be specified
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_class=stor.VDisk)
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_uuid='parent_uuid')
-        # entry_class/parent_class must be Wrapper subtypes
+        # entry_class must be a Wrapper subtype
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt, 's',
                           'lpar_uuid')
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           None, 'lpar_uuid')
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           ewrap.EntryWrapperGetter, 'lpar_uuid')
-        self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
-                          lpar.LPAR, 'lpar_uuid', parent_class='s',
-                          parent_uuid='parent_uuid')
         self.assertRaises(ValueError, ewrap.EntryWrapperGetter, self.adpt,
                           lpar.LPAR, 'lpar_uuid', parent_class=None,
                           parent_uuid='parent_uuid')
@@ -1283,13 +1322,33 @@ class TestGetters(twrap.TestWrapper):
             'VirtualDisk', 'p_uuid', child_type='LogicalPartition',
             child_id=None, xag=['one', 'two'])
 
-        # entry_class/parent_class must be Wrapper subtypes
+        # CHILD, parent_class as string schema type
+        getter = lpar.LPAR.getter(self.adpt, parent_class='VirtualDisk',
+                                  parent_uuid='p_uuid', xag=['one', 'two'])
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_called_with(
+            'VirtualDisk', 'p_uuid', child_type='LogicalPartition',
+            child_id=None, xag=['one', 'two'])
+
+        # CHILD, parent instance
+        parent = mock.Mock(spec=stor.VDisk, schema_type='st', uuid='uuid')
+        getter = lpar.LPAR.getter(self.adpt, parent=parent)
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(21, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_called_with(
+            'st', 'uuid', child_type='LogicalPartition', child_id=None,
+            xag=None)
+
+        # entry_class must be a Wrapper subtype
         self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, 's')
         self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, None)
         self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt,
                           ewrap.EntryWrapperGetter)
-        self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
-                          parent_class='s', parent_uuid='parent_uuid')
         self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
                           parent_class=None, parent_uuid='parent_uuid')
         self.assertRaises(ValueError, ewrap.FeedGetter, self.adpt, lpar.LPAR,
@@ -1302,7 +1361,8 @@ class TestGetters(twrap.TestWrapper):
         # Mock return separate entries per read.  Need multiple copies for
         # multiple calls.
         read_iter = iter(wrp.entry for wrp in (
-            self.entries[:3] + self.entries[:3] + self.entries[:3]))
+            self.entries[:3] + self.entries[:3] + self.entries[:3] +
+            self.entries[:3]))
         self.adpt.read.side_effect = lambda *a, **k: next(read_iter)
         # Separate iterator for refreshes
         refresh_iter = iter(self.entries[:3])
@@ -1351,6 +1411,19 @@ class TestGetters(twrap.TestWrapper):
         self.adpt.read.assert_has_calls([mock.call(
             stor.VDisk.schema_type, 'p_uuid', child_type=lpar.LPAR.schema_type,
             child_id=uuid, xag=['one', 'two']) for uuid in uuids])
+
+        # With parent instance
+        parent = mock.Mock(spec=stor.VDisk, schema_type='st', uuid='uuid')
+        getter = ewrap.UUIDFeedGetter(
+            self.adpt, lpar.LPAR, uuids, parent=parent)
+        self.assertIsInstance(getter, ewrap.FeedGetter)
+        lfeed = getter.get()
+        self.assertEqual(3, len(lfeed))
+        self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', lfeed[0].uuid)
+        self.adpt.read.assert_has_calls(
+            [mock.call('st', 'uuid', child_type=lpar.LPAR.schema_type,
+                       child_id=uuid, xag=None) for uuid in uuids])
+
 
 if __name__ == '__main__':
     unittest.main()

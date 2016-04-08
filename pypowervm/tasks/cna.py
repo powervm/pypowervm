@@ -247,8 +247,7 @@ def find_trunks(adapter, cna_w):
 
 
 def _find_trunk_on_lpar(adapter, parent_wrap, client_vea):
-    cna_wraps = pvm_net.CNA.get(adapter, parent_type=parent_wrap.schema_type,
-                                parent_uuid=parent_wrap.uuid)
+    cna_wraps = pvm_net.CNA.get(adapter, parent=parent_wrap)
     for cna in cna_wraps:
         if (cna.is_trunk and cna.pvid == client_vea.pvid and
                 cna.vswitch_id == client_vea.vswitch_id):
@@ -276,9 +275,7 @@ def find_cnas(trunk_w, cna_wraps=None):
         lpar_wraps.extend(pvm_vios.VIOS.get(adapter))
 
         for lpar_wrap in lpar_wraps:
-            cna_wraps = pvm_net.CNA.get(adapter,
-                                        parent_type=lpar.LPAR,
-                                        parent_uuid=lpar_wrap.uuid)
+            cna_wraps = pvm_net.CNA.get(adapter, parent=lpar_wrap)
 
     # Search the CNA wraps for matching CNAs
     cna_list = []

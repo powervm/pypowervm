@@ -460,15 +460,12 @@ class TestLU(testtools.TestCase):
                              ret[1])
             if use_ssp:
                 mock_tier_srch.assert_called_with(
-                    ssp.adapter, parent_type=stor.SSP, parent_uuid=ssp.uuid,
-                    is_default=True, one_result=True)
+                    ssp.adapter, parent=ssp, is_default=True, one_result=True)
             mock_lu_bld.assert_called_with(
                 ssp.adapter if use_ssp else tier.adapter, 'lu5', 10, thin=thin,
                 typ=typ)
             mock_lu_bld.return_value.create.assert_called_with(
-                parent_type=stor.Tier,
-                parent_uuid=mock_tier_srch.return_value.uuid if use_ssp else
-                tier.uuid)
+                parent=mock_tier_srch.return_value if use_ssp else tier)
             mock_lu_bld.reset_mock()
 
         # No optionals

@@ -607,16 +607,15 @@ def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
     use_ssp = isinstance(tier_or_ssp, stor.SSP)
     if use_ssp:
         # Find the default Tier on this SSP
-        tier = stor.Tier.search(tier_or_ssp.adapter, parent_type=stor.SSP,
-                                parent_uuid=tier_or_ssp.uuid, is_default=True,
-                                one_result=True)
+        tier = stor.Tier.search(tier_or_ssp.adapter, parent=tier_or_ssp,
+                                is_default=True, one_result=True)
         if tier is None:
             raise exc.NoDefaultTierFoundOnSSP(ssp_name=tier_or_ssp.name)
     else:
         tier = tier_or_ssp
 
     lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ)
-    lu = lu.create(parent_type=stor.Tier, parent_uuid=tier.uuid)
+    lu = lu.create(parent=tier)
 
     if use_ssp:
         # Refresh the SSP to pick up the new LU and etag
@@ -865,8 +864,7 @@ class _RemoveStorage(tf_tsk.Task):
             # all of them.  POST will only be done on VGs which actually need
             # updating.
             vgftsk = tx.FeedTask('scrub_vg_vios_%s' % vuuid, stor.VG.getter(
-                vwrap.adapter, parent_class=vwrap.__class__,
-                parent_uuid=vwrap.uuid))
+                vwrap.adapter, parent=vwrap))
             if vdisks_to_rm:
                 vgftsk.add_functor_subtask(
                     _rm_vdisks, vdisks_to_rm, logspec=(LOG.warning, _(

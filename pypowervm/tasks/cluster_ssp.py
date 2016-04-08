@@ -82,8 +82,7 @@ def _find_lus(tier, luname):
     :return: All LUs in the tier a) of type image; and b) whose names contain
              luname.
     """
-    lufeed = stor.LUEnt.search(tier.adapter, parent_type=stor.Tier,
-                               parent_uuid=tier.uuid, lu_type=IMGTYP)
+    lufeed = stor.LUEnt.search(tier.adapter, parent=tier, lu_type=IMGTYP)
     return [lu for lu in lufeed if luname in lu.name]
 
 
