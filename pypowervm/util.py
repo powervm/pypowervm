@@ -492,3 +492,36 @@ def my_partition_id():
         for line in lparcfg:
             if line.startswith('partition_id='):
                 return int(line.split('=')[1].rstrip())
+
+
+def parent_spec(parent, parent_type, parent_uuid):
+    """Produce a canonical parent type and UUID suitable for read().
+
+    :param parent: EntryWrapper representing the parent.  If specified,
+                   parent_type and parent_uuid are ignored.
+    :param parent_type: EntryWrapper class or schema_type string representing
+                        the schema type of the parent.
+    :param parent_uuid: String UUID of the parent.
+    :return parent_type: String schema type of the parent.  The parent_type and
+                         parent_uuid returns are both None or both valid
+                         strings.
+    :return parent_uuid: String UUID of the parent.  The parent_type and
+                         parent_uuid returns are both None or both valid
+                         strings.
+    :raise ValueError: If parent is None and parent_type xor parent_uuid is
+                       specified.
+    """
+    if all(param is None for param in (parent, parent_type, parent_uuid)):
+        return None, None
+    if parent is not None:
+        return parent.schema_type, parent.uuid
+    if any(param is None for param in (parent_type, parent_uuid)):
+        # parent_type xor parent_uuid specified
+        raise ValueError(_("Developer error: partial parent specification."))
+    # Allow either string or class for parent_type
+    if hasattr(parent_type, 'schema_type'):
+        parent_type = parent_type.schema_type
+    elif type(parent_type) is not str:
+        raise ValueError(_("Developer error: parent_type must be either a "
+                           "string schema type or a Wrapper subclass."))
+    return parent_type, parent_uuid

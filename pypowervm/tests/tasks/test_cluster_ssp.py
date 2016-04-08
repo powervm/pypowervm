@@ -146,15 +146,13 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         lu.delete.side_effect = lambda: self.entries.remove(lu)
         return lu
 
-    def luent_search(self, adapter, parent_type=None, parent_uuid=None,
-                     lu_type=None):
+    def luent_search(self, adapter, parent=None, lu_type=None):
         """Mock side effect for LUEnt.search, validating arguments.
 
         :return: self.entries (the LUEnt feed)
         """
         self.assertEqual(self.tier.adapter, adapter)
-        self.assertEqual(stor.Tier, parent_type)
-        self.assertEqual(self.tier.uuid, parent_uuid)
+        self.assertEqual(self.tier, parent)
         self.assertEqual(cs.IMGTYP, lu_type)
         return self.entries
 
