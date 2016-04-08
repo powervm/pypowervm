@@ -349,6 +349,22 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
                        f_size=f_size, tdev_udid=tdev_udid).create()
 
 
+def default_tier_for_ssp(ssp):
+    """Find the default Tier for the given Shared Storage Pool.
+
+    :param ssp: The SSP EntryWrapper whose default Tier is to be retrieved.
+    :return: Tier EntryWrapper representing ssp's default Tier.
+    :raise NoDefaultTierFoundOnSSP: If no default Tier is found on the
+                                    specified Shared Storage Pool.
+    """
+    tier = stor.Tier.search(ssp.adapter, parent_type=stor.SSP,
+                            parent_uuid=ssp.uuid, is_default=True,
+                            one_result=True)
+    if tier is None:
+        raise exc.NoDefaultTierFoundOnSSP(ssp_name=ssp.name)
+    return tier
+
+
 def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     """Create a new LU as a linked clone to a backing image LU.
 

@@ -431,6 +431,19 @@ class TestRMSTorage(testtools.TestCase):
         self.assertEqual(0, len(vg_wrap.vmedia_repos[0].optical_media))
 
 
+class TestTier(testtools.TestCase):
+    @mock.patch('pypowervm.wrappers.storage.Tier.search')
+    def test_default_tier_for_ssp(self, mock_srch):
+        ssp = mock.Mock()
+        self.assertEqual(mock_srch.return_value, ts.default_tier_for_ssp(ssp))
+        mock_srch.assert_called_with(ssp.adapter, parent_type=stor.SSP,
+                                     parent_uuid=ssp.uuid, is_default=True,
+                                     one_result=True)
+        mock_srch.return_value = None
+        self.assertRaises(exc.NoDefaultTierFoundOnSSP,
+                          ts.default_tier_for_ssp, ssp)
+
+
 class TestLU(testtools.TestCase):
 
     def setUp(self):
