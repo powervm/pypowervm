@@ -319,6 +319,7 @@ class TestTier(twrap.TestWrapper):
         self.assertEqual('256c097502d44311e58004000040f2e95d7d95846d854f9f38',
                          tier.udid)
         self.assertTrue(tier.is_default)
+        self.assertAlmostEqual(3071.25, tier.capacity)
         self.assertEqual('535e1e51-50a6-3722-b6ed-907ff011a535', tier.ssp_uuid)
 
 

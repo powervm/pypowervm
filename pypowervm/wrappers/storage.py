@@ -121,16 +121,19 @@ class LUType(object):
     IMAGE = "VirtualIO_Image"
     AMS = "VirtualIO_Active_Memory_Sharing"
 
+_CAPACITY = 'Capacity'
+
 # Tier Constants
 _TIER_NAME = 'Name'
 _TIER_UDID = UDID
 _TIER_IS_DEFAULT = 'IsDefault'
+_TIER_CAPACITY = _CAPACITY
 _TIER_ASSOC_SSP = 'AssociatedSharedStoragePool'
 
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
 _SSP_UDID = UDID
-_SSP_CAPACITY = 'Capacity'
+_SSP_CAPACITY = _CAPACITY
 _SSP_FREE_SPACE = 'FreeSpace'
 _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
@@ -715,6 +718,10 @@ class Tier(ewrap.EntryWrapper):
     @property
     def is_default(self):
         return self._get_val_bool(_TIER_IS_DEFAULT)
+
+    @property
+    def capacity(self):
+        return self._get_val_float(_TIER_CAPACITY)
 
     @property
     def ssp_uuid(self):
