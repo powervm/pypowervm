@@ -436,8 +436,7 @@ class TestTier(testtools.TestCase):
     def test_default_tier_for_ssp(self, mock_srch):
         ssp = mock.Mock()
         self.assertEqual(mock_srch.return_value, ts.default_tier_for_ssp(ssp))
-        mock_srch.assert_called_with(ssp.adapter, parent_type=stor.SSP,
-                                     parent_uuid=ssp.uuid, is_default=True,
+        mock_srch.assert_called_with(ssp.adapter, parent=ssp, is_default=True,
                                      one_result=True)
         mock_srch.return_value = None
         self.assertRaises(exc.NoDefaultTierFoundOnSSP,
@@ -587,14 +586,18 @@ class TestLULinkedClone(testtools.TestCase):
         # The orphan will trigger a warning as we cycle through all the LUs
         # without finding any backed by this image.
         with self.assertLogs(ts.__name__, 'WARNING'):
-            self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu2))
+            self.assertFalse(ts._image_lu_in_use(self.ssp.logical_units,
+                                                 self.img_lu1))
+        self.assertTrue(ts._image_lu_in_use(self.ssp.logical_units,
+                                            self.img_lu2))
 
     def test_image_lu_for_clone(self):
         self.assertEqual(self.img_lu2,
-                         ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+                         ts._image_lu_for_clone(self.ssp.logical_units,
+                                                self.dsk_lu3))
         self.dsk_lu3._cloned_from_udid(None)
-        self.assertIsNone(ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+        self.assertIsNone(ts._image_lu_for_clone(self.ssp.logical_units,
+                                                 self.dsk_lu3))
 
     def test_rm_ssp_storage(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)
@@ -610,12 +613,14 @@ class TestLULinkedClone(testtools.TestCase):
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove the disk LU but *not* the image LU, even
         # though it's now unused.
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertTrue(ts._image_lu_in_use(self.ssp.logical_units,
+                                            self.img_lu5))
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu6],
                                 del_unused_images=False)
         lu_names.remove(self.dsk_lu6.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
-        self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertFalse(ts._image_lu_in_use(self.ssp.logical_units,
+                                             self.img_lu5))
 
         # No update if no change
         self.adpt.update_by_path = lambda *a, **k: self.fail()
