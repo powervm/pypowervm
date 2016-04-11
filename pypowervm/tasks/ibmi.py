@@ -58,8 +58,7 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
         msg = _LI("Setting Virtual Ethernet Adapter slot as console type for "
                   "VM %s") % lpar_w.name
         LOG.info(msg)
-        cna_wrap = pvm_net.CNA.get(adapter, parent_type=pvm_lpar.LPAR,
-                                   parent_uuid=lpar_w.partition_uuid)
+        cna_wrap = pvm_net.CNA.get(adapter, parent=lpar_w)
         cna_slot_nums = set(cna.slot for cna in cna_wrap)
         cna_slot_nums = list(cna_slot_nums)
         cna_slot_nums.sort()

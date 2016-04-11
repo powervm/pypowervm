@@ -346,3 +346,25 @@ class TestUtil(unittest.TestCase):
                 yield line
         m_open.return_value.__enter__.return_value.__iter__.side_effect = rit
         self.assertEqual(1234, util.my_partition_id())
+
+    def test_parent_spec(self):
+        """Test parent_spec."""
+        # All params are None (ROOT request)
+        self.assertEqual((None, None), util.parent_spec(None, None, None))
+        # Get values from parent
+        parent = mock.Mock(schema_type='schema_type', uuid='uuid')
+        self.assertEqual(('schema_type', 'uuid'), util.parent_spec(
+            parent, None, None))
+        # Parent overrides parent_type/parent_uuid
+        self.assertEqual(('schema_type', 'uuid'), util.parent_spec(
+            parent, 'something', 'else'))
+        # ValueError if type xor uuid specified
+        self.assertRaises(ValueError, util.parent_spec, None, 'one', None)
+        self.assertRaises(ValueError, util.parent_spec, None, None, 'two')
+        # Non-wrapper, non-string parent type raises ValueError
+        self.assertRaises(ValueError, util.parent_spec, None, 42, 'foo')
+        # parent_type can be wrapper or string
+        self.assertEqual(('schema_type', 'uuid2'), util.parent_spec(
+            None, parent, 'uuid2'))
+        self.assertEqual(('schema_type2', 'uuid2'), util.parent_spec(
+            None, 'schema_type2', 'uuid2'))

@@ -698,7 +698,7 @@ class LUEnt(_LUBase, ewrap.EntryWrapper):
     LogicalUnit exists as a CHILD REST object under Tier.  This class provides
     the ability to perform e.g.
 
-        LUEnt.get(adapter, parent_type=Tier, parent_uuid=tier.uuid)
+        LUEnt.get(adapter, parent=tier)
     """
     pass
 
