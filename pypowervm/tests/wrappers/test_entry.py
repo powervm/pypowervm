@@ -1126,7 +1126,7 @@ class TestSetUUIDMixin(testtools.TestCase):
                     self.assertEqual(uuid, wrap.entry.properties['id'])
             else:
                 self.assertFalse(hasattr(wrap, 'entry'))
-            self.assertEqual(uuid, wrap._get_val_str('Metadata/Atom/AtomID'))
+            self.assertEqual(uuid, wrap.uuid)
 
         @ewrap.EntryWrapper.pvm_type('SomeEntry')
         class SomeEntry(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
