@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fixtures
 import mock
 import testtools
 
@@ -22,14 +23,13 @@ import pypowervm.exceptions as exc
 import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
 import pypowervm.wrappers.virtual_io_server as vios
-
-import unittest
 
 CLUSTER = "cluster.txt"
 LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
@@ -40,6 +40,7 @@ VIOS_FEED = 'fake_vios_feed.txt'
 VIOS_ENTRY = 'fake_vios_ssp_npiv.txt'
 VIOS_ENTRY2 = 'fake_vios_mappings.txt'
 LPAR_FEED = 'lpar.txt'
+LU_FEED = 'lufeed.txt'
 
 
 def _mock_update_by_path(ssp, etag, path, timeout=-1):
@@ -436,16 +437,88 @@ class TestTier(testtools.TestCase):
     def test_default_tier_for_ssp(self, mock_srch):
         ssp = mock.Mock()
         self.assertEqual(mock_srch.return_value, ts.default_tier_for_ssp(ssp))
-        mock_srch.assert_called_with(ssp.adapter, parent_type=stor.SSP,
-                                     parent_uuid=ssp.uuid, is_default=True,
+        mock_srch.assert_called_with(ssp.adapter, parent=ssp, is_default=True,
                                      one_result=True)
         mock_srch.return_value = None
         self.assertRaises(exc.NoDefaultTierFoundOnSSP,
                           ts.default_tier_for_ssp, ssp)
 
 
-class TestLU(testtools.TestCase):
+class TestLUEnt(twrap.TestWrapper):
+    file = LU_FEED
+    wrapper_class_to_test = stor.LUEnt
 
+    def setUp(self):
+        super(TestLUEnt, self).setUp()
+        self.mock_feed_get = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.storage.LUEnt.get')).mock
+        self.mock_feed_get.return_value = self.entries
+        self.tier = mock.Mock(spec=stor.Tier, get=mock.Mock(
+            return_value=self.entries))
+        # Mock out each LUEnt's .delete so I can know I called the right ones.
+        for luent in self.entries:
+            luent.delete = mock.Mock()
+        # This image LU...
+        self.img_lu = self.entries[4]
+        # ...backs these three linked clones
+        self.clone1 = self.entries[9]
+        self.clone2 = self.entries[11]
+        self.clone3 = self.entries[21]
+        self.orig_len = len(self.entries)
+
+    def test_rm_tier_storage_errors(self):
+        """Test rm_tier_storage ValueErrors."""
+        # Neither tier nor lufeed provided
+        self.assertRaises(ValueError, ts.rm_tier_storage, self.entries)
+        # Invalid lufeed provided
+        self.assertRaises(ValueError, ts.rm_tier_storage,
+                          self.entries, lufeed=[1, 2])
+        # Same, even if tier provided
+        self.assertRaises(ValueError, ts.rm_tier_storage,
+                          self.entries, tier=self.tier, lufeed=[1, 2])
+
+    @mock.patch('pypowervm.tasks.storage._rm_lus')
+    def test_rm_tier_storage_feed_get(self, mock_rm_lus):
+        """Verify rm_tier_storage does a feed GET if lufeed not provided."""
+        # Empty return from _rm_lus so the loop doesn't run
+        mock_rm_lus.return_value = []
+        lus_to_rm = [mock.Mock()]
+        ts.rm_tier_storage(lus_to_rm, tier=self.tier)
+        self.mock_feed_get.assert_called_once_with(self.tier.adapter,
+                                                   parent=self.tier)
+        mock_rm_lus.assert_called_once_with(self.entries, lus_to_rm,
+                                            del_unused_images=True)
+        self.mock_feed_get.reset_mock()
+        mock_rm_lus.reset_mock()
+        # Now ensure we don't do the feed get if a valid lufeed is provided.
+        lufeed = [mock.Mock(spec=stor.LUEnt)]
+        # Also test del_unused_images=False
+        ts.rm_tier_storage(lus_to_rm, lufeed=lufeed, del_unused_images=False)
+        self.mock_feed_get.assert_not_called()
+        mock_rm_lus.assert_called_once_with(lufeed, lus_to_rm,
+                                            del_unused_images=False)
+
+    def test_rm_tier_storage1(self):
+        """Verify rm_tier_storage removes what it oughtta."""
+        # Should be able to use either LUEnt or LU
+        clone1 = stor.LU.bld(None, self.clone1.name, 1)
+        clone1._udid(self.clone1.udid)
+        # HttpError doesn't prevent everyone from deleting.
+        clone1.side_effect = exc.HttpError(mock.Mock())
+        ts.rm_tier_storage([clone1, self.clone2], lufeed=self.entries)
+        self.clone1.delete.assert_called_once_with()
+        self.clone2.delete.assert_called_once_with()
+        # Backing image should not be removed because clone3 still linked.  So
+        # final result should be just the two removed.
+        self.assertEqual(self.orig_len - 2, len(self.entries))
+        # Now if we remove the last clone, the image LU should go too.
+        ts.rm_tier_storage([self.clone3], lufeed=self.entries)
+        self.clone3.delete.assert_called_once_with()
+        self.img_lu.delete.assert_called_once_with()
+        self.assertEqual(self.orig_len - 4, len(self.entries))
+
+
+class TestLU(testtools.TestCase):
     def setUp(self):
         super(TestLU, self).setUp()
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
@@ -587,14 +660,18 @@ class TestLULinkedClone(testtools.TestCase):
         # The orphan will trigger a warning as we cycle through all the LUs
         # without finding any backed by this image.
         with self.assertLogs(ts.__name__, 'WARNING'):
-            self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu1))
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu2))
+            self.assertFalse(ts._image_lu_in_use(self.ssp.logical_units,
+                                                 self.img_lu1))
+        self.assertTrue(ts._image_lu_in_use(self.ssp.logical_units,
+                                            self.img_lu2))
 
     def test_image_lu_for_clone(self):
         self.assertEqual(self.img_lu2,
-                         ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+                         ts._image_lu_for_clone(self.ssp.logical_units,
+                                                self.dsk_lu3))
         self.dsk_lu3._cloned_from_udid(None)
-        self.assertIsNone(ts._image_lu_for_clone(self.ssp, self.dsk_lu3))
+        self.assertIsNone(ts._image_lu_for_clone(self.ssp.logical_units,
+                                                 self.dsk_lu3))
 
     def test_rm_ssp_storage(self):
         lu_names = set(lu.name for lu in self.ssp.logical_units)
@@ -610,12 +687,14 @@ class TestLULinkedClone(testtools.TestCase):
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
         # This one should remove the disk LU but *not* the image LU, even
         # though it's now unused.
-        self.assertTrue(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertTrue(ts._image_lu_in_use(self.ssp.logical_units,
+                                            self.img_lu5))
         ssp = ts.rm_ssp_storage(self.ssp, [self.dsk_lu6],
                                 del_unused_images=False)
         lu_names.remove(self.dsk_lu6.name)
         self.assertEqual(lu_names, set(lu.name for lu in ssp.logical_units))
-        self.assertFalse(ts._image_lu_in_use(self.ssp, self.img_lu5))
+        self.assertFalse(ts._image_lu_in_use(self.ssp.logical_units,
+                                             self.img_lu5))
 
         # No update if no change
         self.adpt.update_by_path = lambda *a, **k: self.fail()
@@ -915,6 +994,3 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(vfc_len - 1, len(vwrap.vfc_mappings))
         self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
         self.assertEqual(1, mock_rm_vopts.call_count)
-
-if __name__ == '__main__':
-    unittest.main()

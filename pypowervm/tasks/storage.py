@@ -357,8 +357,7 @@ def default_tier_for_ssp(ssp):
     :raise NoDefaultTierFoundOnSSP: If no default Tier is found on the
                                     specified Shared Storage Pool.
     """
-    tier = stor.Tier.search(ssp.adapter, parent_type=stor.SSP,
-                            parent_uuid=ssp.uuid, is_default=True,
+    tier = stor.Tier.search(ssp.adapter, parent=ssp, is_default=True,
                             one_result=True)
     if tier is None:
         raise exc.NoDefaultTierFoundOnSSP(ssp_name=ssp.name)
@@ -403,10 +402,10 @@ def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     return ssp, dst_lu
 
 
-def _image_lu_for_clone(ssp, clone_lu):
+def _image_lu_for_clone(lus, clone_lu):
     """Given a Disk LU linked clone, find the Image LU to which it is linked.
 
-    :param ssp: The SSP EntryWrapper to search.
+    :param lus: List of LUs (LU or LUEnt) to search.
     :param clone_lu: The LU EntryWrapper representing the Disk LU linked clone
                      whose backing Image LU is to be found.
     :return: The LU EntryWrapper representing the Image LU backing the
@@ -417,7 +416,7 @@ def _image_lu_for_clone(ssp, clone_lu):
         return None
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = clone_lu.cloned_from_udid[2:]
-    for lu in ssp.logical_units:
+    for lu in lus:
         if lu.lu_type != stor.LUType.IMAGE:
             continue
         if lu.udid[2:] == image_udid:
@@ -425,25 +424,26 @@ def _image_lu_for_clone(ssp, clone_lu):
     return None
 
 
-def _image_lu_in_use(ssp, image_lu):
+def _image_lu_in_use(lus, image_lu):
     """Determine whether an Image LU still has any Disk LU linked clones.
 
-    :param ssp: The SSP EntryWrapper to search.
+    :param lus: List of all the LUs in the SSP/Tier.  They must have UDIDs
+                (i.e. must have been retrieved from the server, not created
+                locally).
     :param image_lu: LU EntryWrapper representing the Image LU.
     :return: True if the SSP contains any Disk LU linked clones backed by the
              image_lu; False otherwise.
     """
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = image_lu.udid[2:]
-    for lu in ssp.logical_units:
+    for lu in lus:
         if lu.lu_type != stor.LUType.DISK:
             continue
         cloned_from = lu.cloned_from_udid
         if cloned_from is None:
             LOG.warning(
-                _("Linked clone Logical Unit %(luname)s (UDID %(udid)s) has "
-                  "no backing image LU.  It should probably be deleted."),
-                {'luname': lu.name, 'udid': lu.udid})
+                _("Disk Logical Unit %(luname)s has no backing image LU.  "
+                  "(UDID: %(udid)s) "), {'luname': lu.name, 'udid': lu.udid})
             continue
         if cloned_from[2:] == image_udid:
             return True
@@ -620,71 +620,104 @@ def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
              Otherwise, the first return value is the Tier.
     :return: LU ElementWrapper representing the Logical Unit just created.
     """
-    use_ssp = isinstance(tier_or_ssp, stor.SSP)
-    if use_ssp:
-        # Find the default Tier on this SSP
-        tier = stor.Tier.search(tier_or_ssp.adapter, parent=tier_or_ssp,
-                                is_default=True, one_result=True)
-        if tier is None:
-            raise exc.NoDefaultTierFoundOnSSP(ssp_name=tier_or_ssp.name)
-    else:
-        tier = tier_or_ssp
+    is_ssp = isinstance(tier_or_ssp, stor.SSP)
+    tier = default_tier_for_ssp(tier_or_ssp) if is_ssp else tier_or_ssp
 
     lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ)
     lu = lu.create(parent=tier)
 
-    if use_ssp:
+    if is_ssp:
         # Refresh the SSP to pick up the new LU and etag
-        return tier_or_ssp.refresh(), lu
+        tier_or_ssp = tier_or_ssp.refresh()
 
     return tier_or_ssp, lu
 
 
-def _rm_lus(ssp_wrap, lus, del_unused_images=True):
-    ssp_lus = ssp_wrap.logical_units
+def _rm_lus(all_lus, lus_to_rm, del_unused_images=True):
     changes = []
     backing_images = set()
 
-    for lu in lus:
+    for lu in lus_to_rm:
         # Is it a linked clone?  (We only care if del_unused_images.)
         if del_unused_images and lu.lu_type == stor.LUType.DISK:
             # Note: This can add None to the set
-            backing_images.add(_image_lu_for_clone(ssp_wrap, lu))
-        msg_args = dict(lu_name=lu.name, ssp_name=ssp_wrap.name)
-        removed = _rm_dev_by_udid(lu, ssp_lus)
+            backing_images.add(_image_lu_for_clone(all_lus, lu))
+        msgargs = {'lu_name': lu.name, 'lu_udid': lu.udid}
+        removed = _rm_dev_by_udid(lu, all_lus)
         if removed:
-            LOG.info(_("Removing LU %(lu_name)s from SSP %(ssp_name)s"),
-                     msg_args)
-            changes.append(lu)
+            LOG.debug(_("Removing LU %(lu_name)s (UDID %(lu_udid)s)"), msgargs)
+            changes.append(removed)
         else:
             # It's okay if the LU was already absent.
-            LOG.info(_("LU %(lu_name)s was not found in SSP %(ssp_name)s"),
-                     msg_args)
+            LOG.info(_("LU %(lu_name)s was not found - it may have been "
+                       "deleted out of band.  (UDID: %(lu_udid)s)"), msgargs)
 
     # Now remove any unused backing images.  This set will be empty if
     # del_unused_images=False
-    for backing_image in backing_images:
-        # Ignore None, which could have appeared in the unusual event that a
-        # clone existed with no backing image.
-        if backing_image is not None:
-            msg_args = dict(lu_name=backing_image.name, ssp_name=ssp_wrap.name)
-            # Only remove backing images that are not in use.
-            if _image_lu_in_use(ssp_wrap, backing_image):
-                LOG.debug("Not removing Image LU %(lu_name)s from SSP "
-                          "%(ssp_name)s because it is still in use." %
-                          msg_args)
+    for back_img in backing_images:
+        # Ignore None, which could have appeared if a clone existed with no
+        # backing image.
+        if back_img is None:
+            continue
+        msgargs = {'lu_name': back_img.name, 'lu_udid': back_img.udid}
+        # Only remove backing images that are not in use.
+        if _image_lu_in_use(all_lus, back_img):
+            LOG.debug("Not removing Image LU %(lu_name)s because it is still "
+                      "in use.  (UDID: %(lu_udid)s)", msgargs)
+        else:
+            removed = _rm_dev_by_udid(back_img, all_lus)
+            if removed:
+                LOG.info(_("Removing Image LU %(lu_name)s because it is no "
+                           "longer in use.  (UDID: %(lu_udid)s)"), msgargs)
+                changes.append(removed)
             else:
-                removed = _rm_dev_by_udid(backing_image, ssp_lus)
-                if removed:
-                    LOG.info(_("Removing Image LU %(lu_name)s from SSP "
-                               "%(ssp_name)s because it is no longer in use."),
-                             msg_args)
-                    changes.append(backing_image)
-                else:
-                    # This would be wildly unexpected
-                    LOG.warning(_("Backing LU %(lu_name)s was not found in "
-                                  "SSP %(ssp_name)s"), msg_args)
+                # This would be wildly unexpected
+                LOG.warning(_("Backing LU %(lu_name)s was not found.  "
+                              "(UDID: %(lu_udid)s)"), msgargs)
     return changes
+
+
+def rm_tier_storage(lus_to_rm, tier=None, lufeed=None, del_unused_images=True):
+    """Remove Logical Units from a Shared Storage Pool Tier.
+
+    :param lus_to_rm: Iterable of LU ElementWrappers or LUEnt EntryWrappers
+                      representing the LogicalUnits to delete.
+    :param tier: Tier EntryWrapper representing the SSP Tier on which the
+                 lus_to_rm (and their backing images) reside. Either tier or
+                 lufeed is required.  If both are specified, tier is ignored.
+    :param lufeed: Pre-fetched list of LUEnt (i.e. result of a GET of
+                   Tier/{uuid}/LogicalUnit) where we expect to find the
+                   lus_to_rm (and their backing images).  Either tier or lufeed
+                   is required.  If both are specified, tier is ignored.
+    :param del_unused_images: If True, and a removed Disk LU was the last one
+                              linked to its backing Image LU, the backing Image
+                              LU is also removed.
+    :raise ValueError: - If neither tier nor lufeed was supplied.
+                       - If lufeed was supplied but doesn't contain LUEnt
+                         EntryWrappers (e.g. the caller provided
+                         SSP.logical_units).
+    """
+    if all(param is None for param in (tier, lufeed)):
+        raise ValueError(_("Developer error: Either tier or lufeed is "
+                           "required."))
+    if lufeed is None:
+        lufeed = stor.LUEnt.get(tier.adapter, parent=tier)
+    elif any(not isinstance(lu, stor.LUEnt) for lu in lufeed):
+        raise ValueError(_("Developer error: The lufeed parameter must "
+                           "comprise LUEnt EntryWrappers."))
+
+    # Figure out which LUs to delete and delete them; _rm_lus returns a list of
+    # LUEnt, so they can be removed directly.
+    for dlu in _rm_lus(lufeed, lus_to_rm, del_unused_images=del_unused_images):
+        msg_args = dict(lu_name=dlu.name, lu_udid=dlu.udid)
+        LOG.info(_("Deleting LU %(lu_name)s (UDID: %(lu_udid)s)"), msg_args)
+        try:
+            dlu.delete()
+        except exc.HttpError as he:
+            LOG.warning(he)
+            LOG.warning(_("Ignoring HttpError for LU %(lu_name)s may have "
+                          "been deleted out of band.  (UDID: %(lu_udid)s)"),
+                        msg_args)
 
 
 @tx.entry_transaction
@@ -695,14 +728,15 @@ def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
 
     :param ssp_wrap: SSP EntryWrapper representing the SharedStoragePool to
     modify.
-    :param lus: Iterable of LU EntryWrappers representing the LogicalUnits to
-                delete.
+    :param lus: Iterable of LU ElementWrappers or LUEnt EntryWrappers
+                representing the LogicalUnits to delete.
     :param del_unused_images: If True, and a removed Disk LU was the last one
                               linked to its backing Image LU, the backing Image
                               LU is also removed.
     :return: The (possibly) modified SSP wrapper.
     """
-    if _rm_lus(ssp_wrap, lus, del_unused_images=del_unused_images):
+    if _rm_lus(ssp_wrap.logical_units, lus,
+               del_unused_images=del_unused_images):
         # Flush changes
         ssp_wrap = ssp_wrap.update()
     return ssp_wrap
