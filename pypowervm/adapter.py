@@ -52,6 +52,7 @@ import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
 from pypowervm import traits as pvm_traits
 from pypowervm import util
+from pypowervm.utils import retry
 
 # Preserve CDATA on the way in (also ensures it is not mucked with on the way
 # out)
@@ -75,7 +76,7 @@ class Session(object):
 
     def __init__(self, host='localhost', username=None, password=None,
                  auditmemento=None, protocol=None, port=None, timeout=1200,
-                 certpath='/etc/ssl/certs/', certext='.crt'):
+                 certpath='/etc/ssl/certs/', certext='.crt', await_rest=None):
         """Persistent authenticated session with the REST API server.
 
         Two authentication modes are supported: password- and file-based.
@@ -106,6 +107,18 @@ class Session(object):
                          '/etc/ssl/certs/localhost.crt'.  This is ignored if
                          protocol is http.
         :param certext: Certificate file extension.
+        :param await_rest: If None (the default), ConnectionError on initial
+                           login (usually the result of the REST service being
+                           down) will be reraised, resulting in immediate
+                           failure to initialize the Session.  If await_rest is
+                           specified, the value should be a tuple representing
+                             (interval_s, num_retries)
+                           When thus specified, ConnectionError on initial
+                           login will result in a retry loop, waiting
+                           interval_s seconds between retries, for a total of
+                           num_retries retries, for the login request to stop
+                           raising ConnectionError.  (Other exceptions are
+                           still reraised as normal.)
         :return: A logged-on session suitable for passing to the Adapter
                  constructor.
         """
@@ -172,7 +185,23 @@ class Session(object):
         # against clones created by deepcopy or other methods.
         self._init_by = id(self)
 
-        self._logon()
+        if await_rest is None:
+            self._logon()
+        else:
+            delay, tries = await_rest
+
+            def delay_func(try_num, max_tries, *args, *kwargs):
+                LOG.warning(_("Failed to connect to REST server - is the "
+                              "pvm-rest service started?  Retrying "
+                              "%(try_num)d of %(max_tries)d after %(delay)d "
+                              "seconds."), dict(try_num=try_num,
+                                                max_tries=max_tries,
+                                                delay=delay))
+                time.sleep(delay)
+            logon_request = retry.retry(
+                tries=tries, delay_func=delay_func,
+                retry_except=[pvmex.ConnectionError])(self._logon_request)
+            self._logon(logon_request=logon_request)
 
         # HMC should never use file auth.  This should never happen - if it
         # does, it indicates that we got a bad Logon response, or processed it
@@ -412,7 +441,13 @@ class Session(object):
                                 body=errtext)
             raise pvmex.HttpError(resp)
 
-    def _logon(self):
+    def _logon_request(self, headers, body, verify):
+        # relogin=False to prevent multiple attempts with same credentials
+        return self.request('PUT', c.LOGON_PATH, headers=headers, body=body,
+                            sensitive=True, verify=verify, relogin=False,
+                            login=True)
+
+    def _logon(self, logon_request=_logon_request):
         LOG.info(_("Session logging on %s"), self.host)
         headers = {
             'Accept': c.TYPE_TEMPLATE % ('web', 'LogonResponse'),
@@ -441,10 +476,7 @@ class Session(object):
             # Have the requests module validate the certificate
             verify = True
         try:
-            # relogin=False to prevent multiple attempts with same credentials
-            resp = self.request('PUT', c.LOGON_PATH, headers=headers,
-                                body=body, sensitive=True, verify=verify,
-                                relogin=False, login=True)
+            resp = logon_request(headers, body, verify)
         except pvmex.Error as e:
             if e.response:
                 # strip out sensitive data
