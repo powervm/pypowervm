@@ -87,8 +87,8 @@ def retry(tries=3, delay_func=NO_DELAY,
             - the arguments to the decorated method
             - the keyword arguments to the decorated method
         No return value is expected.
-    :param retry_except: A list of exceptions to retry if received.
-        Defaults to no exceptions besides the HttpError which is
+    :param retry_except: An exception class (or tuple thereof) to retry if
+        received.  Defaults to no exceptions besides the HttpError which is
         handled separately by the http_codes parameter.
     :param http_codes: A list of http response codes to retry if received.
         Default is to not handle any specific http codes.

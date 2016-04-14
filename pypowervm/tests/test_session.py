@@ -35,13 +35,20 @@ _logon_response_file = testlib.file2b("logon_file.xml")
 class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
     """Test cases to test the Session classes and methods."""
 
-    def test_Session(self):
-        """This test is just meant to ensure Session can be instantiated."""
+    @mock.patch('time.sleep')
+    def test_Session(self, mock_sleep):
+        """Ensure Session can be instantiated, and test logon retries."""
         # Passing in 0.0.0.0 will raise a ConnectionError or SSLError, but only
         # if it gets past all the __init__ setup since _logon is the last
         # statement.
         self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
                           '0.0.0.0', 'uid', 'pwd')
+        mock_sleep.assert_not_called()
+        # Now set up a retry
+        self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
+                          '0.0.0.0', 'uid', 'pwd', conn_tries=5)
+        # 5 tries = 4 sleeps
+        mock_sleep.assert_has_calls([mock.call(2)] * 4)
 
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init(self, mock_logon):
