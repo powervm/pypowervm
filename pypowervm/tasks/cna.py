@@ -230,9 +230,7 @@ def find_trunks(adapter, cna_w):
              the Client Network Adapter.
     """
     # VIOS and Management Partitions can host Trunk Adapters.
-    vios_wraps = pvm_vios.VIOS.get(adapter)
-    mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
-    host_wraps = vios_wraps + mgmt_wraps
+    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
 
     # Find the corresponding trunk adapters.
     trunk_list = []
@@ -247,6 +245,7 @@ def find_trunks(adapter, cna_w):
 
 
 def _find_trunk_on_lpar(adapter, parent_wrap, client_vea):
+
     cna_wraps = pvm_net.CNA.get(adapter, parent=parent_wrap)
     for cna in cna_wraps:
         if (cna.is_trunk and cna.pvid == client_vea.pvid and
@@ -255,7 +254,51 @@ def _find_trunk_on_lpar(adapter, parent_wrap, client_vea):
     return None
 
 
-def find_cnas(trunk_w, cna_wraps=None):
+def _find_all_trunks_on_lpar(adapter, parent_wrap, vswitch_id=None):
+    """Returns all trunk adapters on a given vswitch.
+
+    :param adapter: The pypowervm adapter to perform the search with.
+    :param vswitch_id: The id of the vswitch to search for orphaned trunks
+                       on.
+    :return: A list of trunk adapters that are associated with the given
+             vswitch_id.
+    """
+    cna_wraps = pvm_net.CNA.get(adapter, parent=parent_wrap)
+    trunk_list = []
+    for cna in cna_wraps:
+        if (cna.is_trunk and (vswitch_id is None
+                              or cna.vswitch_id == vswitch_id)):
+            trunk_list.append(cna)
+    return trunk_list
+
+
+def _find_cna_wraps(adapter, vswitch_id=None):
+    """Returns all CNAs.
+
+    :param adapter: The pypowervm adapter to perform the search with.
+    :param vswitch_id: This param is optional. If specified, the method will
+                       only return CNAs associated with the given vswitch.
+    :return: A list of CNAs that are optionally associated with the given
+             vswitch_id.
+    """
+    # All lpars should be searched, including VIOSes
+    lpar_wraps = get_all_lpars(adapter)
+
+    cna_wraps = []
+    filtered_cna_wraps = []
+    for lpar_wrap in lpar_wraps:
+        cna_wraps.extend(pvm_net.CNA.get(adapter, parent=lpar_wrap))
+
+    # If a vswitch_id is passed in then filter to only cnas on that vswitch
+    if (vswitch_id):
+        for cna in cna_wraps:
+            if(cna.vswitch_id == vswitch_id):
+                filtered_cna_wraps.append(cna)
+        cna_wraps = filtered_cna_wraps
+    return cna_wraps
+
+
+def find_cnas_on_trunk(trunk_w, cna_wraps=None):
     """Returns the CNAs associated with the Trunk Adapter.
 
     :param trunk_w: The Trunk Adapter to find the Client Network Adapters for.
@@ -269,13 +312,7 @@ def find_cnas(trunk_w, cna_wraps=None):
 
     # Find all the CNAs on the system
     if cna_wraps is None:
-
-        # All lpars should be searched, including VIOSes
-        lpar_wraps = lpar.LPAR.get(adapter)
-        lpar_wraps.extend(pvm_vios.VIOS.get(adapter))
-
-        for lpar_wrap in lpar_wraps:
-            cna_wraps = pvm_net.CNA.get(adapter, parent=lpar_wrap)
+        cna_wraps = _find_cna_wraps(adapter)
 
     # Search the CNA wraps for matching CNAs
     cna_list = []
@@ -285,3 +322,63 @@ def find_cnas(trunk_w, cna_wraps=None):
             cna_list.append(cna)
 
     return cna_list
+
+
+def get_all_lpars(adapter, mgmt_partitions=False):
+    """Gets all lpars and VIOSes.
+
+    :param adapter: The pypowervm adapter to perform the search with.
+    :param mgmt_partitions: This is optional. If True, will search for
+                            mgmt_partitions only, otherwise it will return all
+                            lpars and VIOSes.
+    :return: A list of all the lpars.
+    """
+    vios_wraps = pvm_vios.VIOS.get(adapter)
+    if mgmt_partitions:
+        mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+        if mgmt_wraps[0].uuid in [x.uuid for x in vios_wraps]:
+            host_wraps = vios_wraps
+        else:
+            host_wraps = vios_wraps + mgmt_wraps
+    else:
+        lpar_wraps = lpar.LPAR.get(adapter)
+        host_wraps = vios_wraps + lpar_wraps
+    return host_wraps
+
+
+def find_orphaned_trunks(adapter, vswitch_name):
+    """Returns all orphaned trunk adapters on a given vswitch.
+
+    An orphaned trunk is a trunk adapter that does not have any associated
+    CNAs.
+
+    :param adapter: The pypowervm adapter to perform the search with.
+    :param vswitch_name: The name of the vswitch to search for orphaned trunks
+                         on.
+    :return: A list of trunk adapters that do not have any associated CNAs
+    """
+
+    # VIOS and Management Partitions can host Trunk Adapters.
+    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
+
+    vswitch_id = pvm_net.VSwitch.search(
+        adapter, parent_type=pvm_ms.System, one_result=True,
+        name=vswitch_name).switch_id
+
+    # Get all the CNA wraps on the vswitch
+    cna_wraps = _find_cna_wraps(adapter, vswitch_id=vswitch_id)
+
+    # Find all trunk adapters on the vswitch.
+    trunk_list = []
+    for host_wrap in host_wraps:
+        trunks = _find_all_trunks_on_lpar(adapter, parent_wrap=host_wrap,
+                                          vswitch_id=vswitch_id)
+        trunk_list.extend(trunks)
+
+    # Check if the trunk adapters are orphans
+    orphaned_trunk_list = []
+    for trunk in trunk_list:
+        if not find_cnas_on_trunk(trunk, cna_wraps=cna_wraps):
+            orphaned_trunk_list.append(trunk)
+
+    return orphaned_trunk_list
