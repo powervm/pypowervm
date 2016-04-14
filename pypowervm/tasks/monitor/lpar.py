@@ -78,6 +78,18 @@ class LparMemory(object):
       - pct_real_mem_free: Percentage of real page frames that are currently
                            available on the VMM free list. This is
                            got from IBM.Host Resource Manager through RMC.
+      - vm_pg_in_rate: Represents the rate (in pages per second) that the VMM
+                           is reading both persistent and working pages from
+                           disk storage.
+      - vm_pg_out_rate: Represents the rate (in pages per second) that the VMM
+                           is writing both persistent and working pages to
+                           disk storage.
+      - vm_pg_swap_in_rate: Represents the rate (in pages per second) that the
+                           VMM is reading working pages from paging-space
+                           disk storage.
+      - vm_pg_swap_out_rate: Represents the rate (in pages per second) that the
+                           VMM is writing working pages to paging-space
+                           disk storage.
     """
 
     def __init__(self, lpar_mem_phyp, lpar_mem_pcm):
@@ -86,9 +98,18 @@ class LparMemory(object):
         # Its possible that for the lpar_sample, the memory metric was not
         # collected. If the metric is not available,
         # then assume 0 i.e. all memory is being utilized.
-        self.pct_real_mem_free = (
-            lpar_mem_pcm.memory.pct_real_mem_free
-            if lpar_mem_pcm else 0)
+        if lpar_mem_pcm:
+            self.pct_real_mem_free = lpar_mem_pcm.memory.pct_real_mem_free
+            self.vm_pg_in_rate = lpar_mem_pcm.memory.vm_pg_in_rate
+            self.vm_pg_out_rate = lpar_mem_pcm.memory.vm_pg_out_rate
+            self.vm_pg_swap_in_rate = lpar_mem_pcm.memory.vm_pg_swap_in_rate
+            self.vm_pg_swap_out_rate = lpar_mem_pcm.memory.vm_pg_swap_out_rate
+        else:
+            self.pct_real_mem_free = 0
+            self.vm_pg_in_rate = None
+            self.vm_pg_out_rate = None
+            self.vm_pg_swap_in_rate = None
+            self.vm_pg_swap_out_rate = None
 
 
 class LparProc(PropertyWrapper):
