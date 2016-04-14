@@ -264,8 +264,8 @@ class TestVNET(twrap.TestWrapper):
                          mock_find_trunk):
         # Mocked responses can be simple, since they are just fed into the
         # _find_trunk_on_lpar
-        mock_vios_get.return_value = [1, 2]
-        mock_lpar_search.return_value = [3, 4]
+        mock_vios_get.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_lpar_search.return_value = [mock.MagicMock(), mock.MagicMock()]
 
         # The responses back from the find trunk.  Have a None to make sure
         # we don't have LPARs without trunks added to the response list.
@@ -285,9 +285,30 @@ class TestVNET(twrap.TestWrapper):
         self.assertEqual([c1, c2, v2], resp)
 
     @mock.patch('pypowervm.wrappers.network.CNA.get')
+    def test_find_all_trunks_on_lpar(self, mock_cna_get):
+        parent_wrap = mock.MagicMock()
+
+        m1 = mock.Mock(is_trunk=True, vswitch_id=2)
+        m2 = mock.Mock(is_trunk=False, vswitch_id=2)
+        m3 = mock.Mock(is_trunk=True, vswitch_id=1)
+        m4 = mock.Mock(is_trunk=True, vswitch_id=2)
+
+        mock_cna_get.return_value = [m1, m2, m3, m4]
+        returnVal = [m1, m3, m4]
+        self.assertEqual(returnVal, cna._find_all_trunks_on_lpar(self.adpt,
+                                                                 parent_wrap))
+
+        mock_cna_get.reset_mock()
+        mock_cna_get.return_value = [m1, m2, m3, m4]
+        self.assertEqual([m3],
+                         cna._find_all_trunks_on_lpar(self.adpt,
+                                                      parent_wrap=parent_wrap,
+                                                      vswitch_id=1))
+
+    @mock.patch('pypowervm.wrappers.network.CNA.get')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
-    def test_find_cnas(self, mock_lpar_get, mock_vios_get, mock_cna_get):
+    def test_find_cna_wraps(self, mock_lpar_get, mock_vios_get, mock_cna_get):
         # Mocked responses are simple since they are only used for
         # pvm_net.CNA.get
         mock_lpar_get.return_value = [mock.MagicMock()]
@@ -298,9 +319,48 @@ class TestVNET(twrap.TestWrapper):
         m2 = mock.Mock(uuid=3, pvid=1, vswitch_id=1)
         m3 = mock.Mock(uuid=1, pvid=1, vswitch_id=1)
 
-        mock_cna_get.return_value = [m1, m2, m3]
+        mock_cna_get.side_effect = [[m1, m2], [m3]]
         mock_trunk = mock.Mock(adapter=self.adpt, uuid=1, pvid=1, vswitch_id=1)
-        self.assertEqual([m2], cna.find_cnas(mock_trunk))
+        self.assertEqual([m1, m2, m3], cna._find_cna_wraps(mock_trunk))
 
-        mock_cna_get.return_value = [m1, m3]
-        self.assertEqual([], cna.find_cnas(mock_trunk))
+        mock_cna_get.side_effect = [[m1, m2], [m3]]
+        self.assertEqual([m2, m3], cna._find_cna_wraps(mock_trunk, 1))
+
+    @mock.patch('pypowervm.tasks.cna._find_cna_wraps')
+    def test_find_cnas_on_trunk(self, mock_find_wraps):
+
+        # Mocked cna_wraps
+        m1 = mock.Mock(uuid=2, pvid=2, vswitch_id=2)
+        m2 = mock.Mock(uuid=3, pvid=1, vswitch_id=1)
+        m3 = mock.Mock(uuid=1, pvid=1, vswitch_id=1)
+
+        mock_find_wraps.return_value = [m1, m2, m3]
+        mock_trunk = mock.Mock(adapter=self.adpt, uuid=1, pvid=1, vswitch_id=1)
+        self.assertEqual([m2], cna.find_cnas_on_trunk(mock_trunk))
+
+        mock_find_wraps.return_value = [m1, m3]
+        self.assertEqual([], cna.find_cnas_on_trunk(mock_trunk))
+        mock_trunk = mock.Mock(adapter=self.adpt, uuid=3, pvid=3, vswitch_id=3)
+        self.assertEqual([], cna.find_cnas_on_trunk(mock_trunk))
+
+    @mock.patch('pypowervm.tasks.cna._find_cna_wraps')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.search')
+    @mock.patch('pypowervm.tasks.cna._find_all_trunks_on_lpar')
+    @mock.patch('pypowervm.wrappers.network.VSwitch.search')
+    def test_find_orphaned_trunks(self, mock_vswitch, mock_trunks,
+                                  mock_lpar_search, mock_vios_get, mock_wraps):
+
+        mock_vswitch.return_value = mock.MagicMock(switch_id=1)
+        mock_lpar_search.return_value = [mock.MagicMock()]
+        mock_vios_get.return_value = [mock.MagicMock()]
+        # Mocked cna_wraps
+        m1 = mock.Mock(is_trunk=True, uuid=2, pvid=2, vswitch_id=1)
+        m2 = mock.Mock(is_trunk=False, uuid=3, pvid=3, vswitch_id=1)
+        m3 = mock.Mock(is_trunk=True, uuid=1, pvid=1, vswitch_id=1)
+        m4 = mock.Mock(is_trunk=False, uuid=4, pvid=1, vswitch_id=1)
+        mock_wraps.return_value = [m1, m2, m3, m4]
+        mock_trunks.side_effect = [[m1, m3], []]
+
+        self.assertEqual([m1], cna.find_orphaned_trunks(self.adpt,
+                                                        mock.MagicMock))
