@@ -17,10 +17,10 @@
 """Base classes for all wrapper classes in the pypowervm.wrappers package."""
 
 import abc
+from oslo_log import log as logging
 import six
 import urllib
 
-from oslo_log import log as logging
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
@@ -217,6 +217,30 @@ class Wrapper(object):
     @property
     def traits(self):
         return self.adapter.traits
+
+    @property
+    def uuid(self):
+        """Returns the uuid of the entry or element."""
+        # The following should only apply to EntryWrappers
+        if getattr(self, 'entry', None) is not None:
+            return self.entry.uuid
+
+        # Anything with Metadata may have a UUID.  Could do has_metadata check,
+        # but that doesn't really add anything.  This will return None if not
+        # found.
+        return self._get_val_str(pc.UUID_XPATH)
+
+    @uuid.setter
+    def uuid(self, value):
+        """Sets the UUID (if supported).
+
+        :param value: A valid PowerVM UUID value in either uuid format
+                      or string format
+        """
+        if isinstance(self, WrapperSetUUIDMixin):
+            self.set_uuid(value)
+        else:
+            raise AttributeError(_('Cannot set uuid.'))
 
     def inject(self, subelement, replace=True):
         """Injects subelement as a child element, possibly replacing it.
@@ -1059,26 +1083,6 @@ class EntryWrapper(Wrapper):
         temp_href = self.href
         return util.dice_href(temp_href, include_scheme_netloc=True,
                               include_query=False, include_fragment=False)
-
-    @property
-    def uuid(self):
-        """Returns the uuid of the entry."""
-        if self.entry is None:
-            return None
-
-        return self.entry.uuid
-
-    @uuid.setter
-    def uuid(self, value):
-        """Sets the UUID (if supported).
-
-        :param value: A valid PowerVM UUID value in either uuid format
-                      or string format
-        """
-        if isinstance(self, WrapperSetUUIDMixin):
-            self.set_uuid(value)
-        else:
-            raise AttributeError(_('Cannot set uuid.'))
 
     @property
     def _type_and_uuid(self):

@@ -69,6 +69,8 @@ UUID_REGEX = '%(x)s{8}-%(x)s{4}-%(x)s{4}-%(x)s{4}-%(x)s{12}' % {
     'x': '[A-Fa-f0-9]'}
 # Entire search string must be a UUID and nothing more
 UUID_REGEX_WORD = '^%s$' % UUID_REGEX
+# XPath to the UUID of a metadata-having XML object
+UUID_XPATH = 'Metadata/Atom/AtomID'
 
 SUFFIX_TYPE_DO = 'do'
 LINK = 'link'
