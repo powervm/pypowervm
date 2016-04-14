@@ -55,7 +55,11 @@ class LparInfo(object):
             self, error_code, lpar_metrics_rsct):
         if error_code == '6001':
             # If LPAR is powered off, then no memory is being used.
-            memory = dict(pctRealMemFree=100)
+            memory = dict(pctRealMemFree=100,
+                          vmPgInRate=0,
+                          vmPgOutRate=0,
+                          vmPgSpInRate=0,
+                          vmPgSpOutRate=0)
         elif error_code == '6003':
             # If LPAR has inactive RMC, then assume all memory is being used.
             memory = dict(pctRealMemFree=0)
@@ -119,8 +123,8 @@ class LparMemory(object):
 
     @property
     def vm_pg_swap_in_rate(self):
-        return self.vm_pg_swap_in_rate
+        return self._vm_pg_swap_in_rate
 
     @property
     def vm_pg_swap_out_rate(self):
-        return self.vm_pg_swap_out_rate
+        return self._vm_pg_swap_out_rate
