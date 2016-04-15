@@ -35,13 +35,31 @@ _logon_response_file = testlib.file2b("logon_file.xml")
 class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
     """Test cases to test the Session classes and methods."""
 
-    def test_Session(self):
-        """This test is just meant to ensure Session can be instantiated."""
+    @mock.patch('time.sleep')
+    @mock.patch('lxml.etree.fromstring', new=mock.Mock())
+    @mock.patch('pypowervm.adapter.Session._get_auth_tok_from_file',
+                new=mock.Mock())
+    def test_Session(self, mock_sleep):
+        """Ensure Session can be instantiated, and test logon retries."""
         # Passing in 0.0.0.0 will raise a ConnectionError or SSLError, but only
         # if it gets past all the __init__ setup since _logon is the last
         # statement.
         self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
                           '0.0.0.0', 'uid', 'pwd')
+        mock_sleep.assert_not_called()
+        # Now set up a retry
+        self.assertRaises((pvmex.ConnectionError, pvmex.SSLError), adp.Session,
+                          '0.0.0.0', 'uid', 'pwd', conn_tries=5)
+        # 5 tries = 4 sleeps
+        mock_sleep.assert_has_calls([mock.call(2)] * 4)
+        # Ensure 404 on the logon URI also retries
+        mock_sleep.reset_mock()
+        with mock.patch('requests.Session.request') as mock_rq:
+            mock_rq.side_effect = [mock.Mock(status_code=404),
+                                   mock.Mock(status_code=204)]
+            adp.Session(conn_tries=5)
+            # Only retried once, after the 404
+            mock_sleep.assert_called_once_with(2)
 
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init(self, mock_logon):
@@ -143,14 +161,14 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         my_response.reason = 'OK'
         dict_headers = {'content-length': '576',
                         'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA' +
-                        '3wR1nj:759878cb-4f9a-4b05-a09a-3357abfea3b4; ' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
+                        'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA3wR1nj:'
+                                      '759878cb-4f9a-4b05-a09a-3357abfea3b4; P'
+                                      'ath=/; Secure; HttpOnly, CCFWSESSION=E4'
+                                      'C0FFBE9130431DBF1864171ECC6A6E; Path=/;'
+                                      ' Secure; HttpOnly',
                         'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
                         'x-transaction-id': 'XT10000073',
-                        'cache-control': 'no-cache="set-cookie, ' +
-                                         'set-cookie2"',
+                        'cache-control': 'no-cache="set-cookie, set-cookie2"',
                         'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
                         'content-type': 'application/vnd.ibm.powervm' +
                                         '.web+xml; type=LogonResponse'}
