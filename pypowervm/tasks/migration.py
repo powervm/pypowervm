@@ -44,7 +44,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                  tgt_mgmt_svr=None, tgt_mgmt_usr=None,
                  virtual_fc_mappings=None, virtual_scsi_mappings=None,
                  dest_msp_name=None, source_msp_name=None, spp_id=None,
-                 timeout=CONF.pypowervm_job_request_timeout):
+                 timeout=CONF.pypowervm_job_request_timeout * 4):
 
     """Method to migrate a logical partition.
 
