@@ -32,7 +32,7 @@ import pypowervm.wrappers.http_error as he
 SLEEP = time.sleep
 
 
-def vios_busy_retry_helper(func, max_retries=3, delay=5):
+def vios_busy_retry_helper(func, max_retries=6, delay=5):
     """This helper retries the request if the resource is busy.
 
     Args:
