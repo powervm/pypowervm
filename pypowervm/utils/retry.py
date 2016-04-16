@@ -73,14 +73,14 @@ def refresh_wrapper(trynum, maxtries, *args, **kwargs):
     return arglist, kwargs
 
 
-def retry(tries=3, delay_func=NO_DELAY,
+def retry(tries=6, delay_func=STEPPED_DELAY,
           retry_except=None, http_codes=DFT_RETRY_CODES, test_func=None,
           resp_checker=NO_CHECKER, limit_except=None, argmod_func=NO_ARGMOD):
     """Retry method decorator.
 
     :param tries: The max number of calls to the wrapped method.
     :param delay_func: A method to delay before retrying.
-        Defaults to no delay.
+        Defaults to a STEPPED_DELAY.  A NO_DELAY function is also available.
         The parameters that are sent are:
             - the number of the current try
             - the maximum number of tries
