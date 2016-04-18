@@ -87,8 +87,8 @@ def retry(tries=6, delay_func=STEPPED_DELAY,
             - the arguments to the decorated method
             - the keyword arguments to the decorated method
         No return value is expected.
-    :param retry_except: A list of exceptions to retry if received.
-        Defaults to no exceptions besides the HttpError which is
+    :param retry_except: An exception class (or tuple thereof) to retry if
+        received.  Defaults to no exceptions besides the HttpError which is
         handled separately by the http_codes parameter.
     :param http_codes: A list of http response codes to retry if received.
         Default is to not handle any specific http codes.
@@ -185,8 +185,8 @@ def retry(tries=6, delay_func=STEPPED_DELAY,
                 try:
                     resp = func(*args, **kwds)
                     # No exception raised, call the response checker
-                    # If we're on the last iteration, we return the response
-                    # the response checker should raise an exception if
+                    # If we're on the last iteration, we return the response.
+                    # The response checker should raise an exception if
                     # it doesn't want this behavior.
                     if (not _resp_checker(resp, try_, _tries, *args, **kwds)
                             or try_ == _tries):
