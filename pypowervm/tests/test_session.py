@@ -143,17 +143,17 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         my_response.reason = 'OK'
         dict_headers = {'content-length': '576',
                         'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA' +
-                        '3wR1nj:759878cb-4f9a-4b05-a09a-3357abfea3b4; ' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
+                        'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA3wR1nj:'
+                                      '759878cb-4f9a-4b05-a09a-3357abfea3b4; P'
+                                      'ath=/; Secure; HttpOnly, CCFWSESSION=E4'
+                                      'C0FFBE9130431DBF1864171ECC6A6E; Path=/;'
+                                      ' Secure; HttpOnly',
                         'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
                         'x-transaction-id': 'XT10000073',
-                        'cache-control': 'no-cache="set-cookie, ' +
-                                         'set-cookie2"',
+                        'cache-control': 'no-cache="set-cookie, set-cookie2"',
                         'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
-                        'content-type': 'application/vnd.ibm.powervm' +
-                                        '.web+xml; type=LogonResponse'}
+                        'content-type': 'application/vnd.ibm.powervm.web+xml; '
+                                        'type=LogonResponse'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
         my_response._content = _logon_response_password
 
