@@ -170,8 +170,8 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
                         'x-transaction-id': 'XT10000073',
                         'cache-control': 'no-cache="set-cookie, set-cookie2"',
                         'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
-                        'content-type': 'application/vnd.ibm.powervm' +
-                                        '.web+xml; type=LogonResponse'}
+                        'content-type': 'application/vnd.ibm.powervm.web+xml; '
+                                        'type=LogonResponse'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
         my_response._content = _logon_response_password
 

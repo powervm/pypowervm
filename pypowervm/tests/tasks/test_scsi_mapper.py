@@ -211,6 +211,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
         # And the VIOS was "looked up"
         self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
         # Now do it again, but passing the vios wrapper and the client UUID
         vios_wrap = pvm_vios.VIOS.wrap(
@@ -224,6 +225,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
         # But the VIOS was not "looked up"
         self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(vios_wrap.entry, vios.entry)
 
     def test_remove_storage_vopt_no_name_specified(self):
         # Mock Data
@@ -245,6 +247,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_storage_vopt_retry(self):
         """Tests removing the storage vOpt with multiple retries."""
@@ -276,8 +279,8 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Run the code
         media_name = 'bldr1_dfe05349_kyleh_config.iso'
-        vios, remel = scsi_mapper.remove_vopt_mapping(
-            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)
+        remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)[1]
 
         # Make sure that our validation code above was invoked
         self.assertEqual(3, self.adpt.update_by_path.call_count)
@@ -305,6 +308,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VDisk)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_storage_lu(self):
         # Mock Data
@@ -326,6 +330,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.LU)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_pv_mapping(self):
         # Mock Data
@@ -347,6 +352,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.PV)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_detach_storage(self):
         """Detach storage from some mappings."""

@@ -93,7 +93,7 @@ _MAX_VCPUS_PER_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'MaximumAllowedVirtualProcessorsPerPartition')
 
 _MAX_VCPUS_PER_AIX_LINUX_PARTITION = u.xpath(
-    _SYS_PROC_CONFIG,  'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
+    _SYS_PROC_CONFIG, 'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
 
 _VIOS_LINK = u.xpath("AssociatedVirtualIOServers", c.LINK)
 
@@ -261,8 +261,7 @@ class System(ewrap.EntryWrapper):
                     'linux_capable':
                     self._get_val_bool(_LINUX_CAP, True),
                     'shared_processor_pool_capable':
-                    self._get_val_bool(_SHR_PROC_POOL_CAP, False)
-                    }
+                    self._get_val_bool(_SHR_PROC_POOL_CAP, False)}
         return cap_data
 
     @property
@@ -313,8 +312,7 @@ class System(ewrap.EntryWrapper):
                      pref_inact_migr_sup,
                      'active_migrations_in_progress': act_migr_prog,
                      'inactive_migrations_in_progress': inact_migr_prog,
-                     'proc_compat': proc_compat,
-                     }
+                     'proc_compat': proc_compat}
 
         # Copy get_capabilities() dictionary into migration_data in case
         # sometimes we need validate the host is capable for mobility.

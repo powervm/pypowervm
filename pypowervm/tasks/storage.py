@@ -53,8 +53,8 @@ _LOCK_VOL_GRP = 'vol_grp_lock'
 _UPLOAD_SEM = threading.Semaphore(3)
 
 
-def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
-                     d_name, f_size, d_size=None, sha_chksum=None):
+def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
+                     d_size=None, sha_chksum=None):
     """Creates a new Virtual Disk and uploads a data stream to it.
 
     :param adapter: The adapter to talk over the API.
@@ -146,7 +146,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return reference, f_uuid
 
 
-def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
+def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
                   sha_chksum=None, return_ssp=False):
     """Creates a new SSP Logical Unit and uploads a data stream to it.
 
