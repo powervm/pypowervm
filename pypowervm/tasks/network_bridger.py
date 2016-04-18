@@ -462,7 +462,7 @@ class NetworkBridger(object):
             vio_part[dev_name] = []
         vio_part[dev_name].extend(vlan_ids)
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         Should perform the actual update to the API.
@@ -738,7 +738,7 @@ class NetworkBridgerVNET(NetworkBridger):
 class NetworkBridgerTA(NetworkBridger):
     """The Trunk Adapter aware NetworkBridger."""
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         Should perform the actual update to the API.

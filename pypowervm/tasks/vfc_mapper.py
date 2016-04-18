@@ -140,7 +140,7 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
              the WWPN.
     """
     # Double the count of the markers.  Should result in -1 -1 as the WWPN.
-    v_port_markers = [_ANY_WWPN for x in range(0, v_port_count * 2)]
+    v_port_markers = [_ANY_WWPN] * v_port_count * 2
     return derive_npiv_map(vios_wraps, p_port_wwpns, v_port_markers)
 
 
@@ -195,7 +195,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     # Detect if any mappings already exist on the system.  If so, preserve them
     for fused_v_wwpn in fused_v_port_wwpns:
         # If the mapping already exists, then add it to the existing maps.
-        vios_w, vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))
+        vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))[1]
         if vfc_map is not None:
             mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
             existing_maps.append(mapping)

@@ -61,7 +61,7 @@ class TestLogHelper(testtools.TestCase):
         # Test that we limit the number of entries
         mock_log.reset_mock()
         for x in range(0, 30):
-            adpt._request('method1', 'path', body='the body')
+            adpt._request('method1', 'path', body='the body %d' % x)
         log_hlp._write_thread_log()
         # Each req/resp pair is 2 log entries but headers and body
         # are logged separately, so with maxlogs=5, it's 5 * 2 * 2.

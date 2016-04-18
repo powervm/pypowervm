@@ -236,6 +236,7 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual([
             'get', 'lock', 'LparNameAndMem_z3-9-5-126-127-00000001', 'unlock'],
             txfx.get_log())
+        self.assertEqual({}, subtask_rets)
 
         txfx.reset_log()
         # These subtasks do change the name.
@@ -256,6 +257,7 @@ class TestWrapperTask(twrap.TestWrapper):
             'lock', 'LparNameAndMem_z3-9-5-126-127-00000001',
             'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
             'LparNameAndMem_newer_name', 'update', 'unlock'], txfx.get_log())
+        self.assertEqual({}, subtask_rets)
 
         # Test 'cloning' the subtask list
         txfx.reset_log()
@@ -274,6 +276,7 @@ class TestWrapperTask(twrap.TestWrapper):
             'LparNameAndMem_new_name', 'LparNameAndMem_newer_name',
             'LparNameAndMem_newer_name', 'LparNameAndMem_newest_name',
             'update', 'unlock'], txfx.get_log())
+        self.assertEqual({}, subtask_rets)
 
     def test_logspec(self):
         txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))

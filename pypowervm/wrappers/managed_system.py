@@ -93,7 +93,7 @@ _MAX_VCPUS_PER_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'MaximumAllowedVirtualProcessorsPerPartition')
 
 _MAX_VCPUS_PER_AIX_LINUX_PARTITION = u.xpath(
-    _SYS_PROC_CONFIG,  'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
+    _SYS_PROC_CONFIG, 'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
 
 _VIOS_LINK = u.xpath("AssociatedVirtualIOServers", c.LINK)
 
