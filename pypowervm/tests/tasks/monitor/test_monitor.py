@@ -153,6 +153,7 @@ class TestMonitors(testtools.TestCase):
         self.assertEqual(20480, metric.memory.logical_mem)
         self.assertEqual(20480, metric.memory.backed_physical_mem)
         self.assertEqual(61, metric.memory.pct_real_mem_free)
+        self.assertEqual(25, metric.memory.vm_pg_out_rate)
 
         # Processor validation
         self.assertEqual(0, metric.processor.pool_id)
@@ -193,8 +194,22 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNotNone(metric.memory)
         # For powered off VM, the free memory is 100 percent.
         self.assertEqual(100, metric.memory.pct_real_mem_free)
+        # For powered off VM, the page in/out rate is 0.
+        self.assertEqual(0, metric.memory.vm_pg_out_rate)
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
+
+        # Take a VM which has entry in phyp data but not in PCM Lpar data.
+        # Assert that it has been correctly parsed and memory metrics
+        # are set to default values.
+        vm_in_phyp_not_in_lpar_pcm = '66A2E886-D05D-42F4-87E0-C3BA02CF7C7E'
+        metric = metrics.get(vm_in_phyp_not_in_lpar_pcm)
+        self.assertIsNotNone(metric)
+        self.assertIsNotNone(metric.processor)
+        self.assertIsNotNone(metric.memory)
+        self.assertEqual(.2, metric.processor.proc_units)
+        self.assertEqual(0, metric.memory.pct_real_mem_free)
+        self.assertEqual(-1, metric.memory.vm_pg_in_rate)
 
     def test_vm_metrics_no_phyp_data(self):
         self.assertEqual({}, pvm_t_mon.vm_metrics(None, [], None))
