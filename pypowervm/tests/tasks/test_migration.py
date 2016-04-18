@@ -42,7 +42,7 @@ class TestMigration(testtools.TestCase):
 
         # Test simple call
         mock_run_job.side_effect = u.get_parm_checker(
-            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
+            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800 * 4)
         mig.migrate_lpar(self.lpar_w, 'abc')
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',
@@ -59,7 +59,7 @@ class TestMigration(testtools.TestCase):
                         (mig.VSCSI_MAPPINGS, ['2/2/2'])]
         mock_run_job.side_effect = u.get_parm_checker(
             self, '1234', parm_list, exp_job_mappings=mapping_list,
-            exp_timeout=1800)
+            exp_timeout=1800 * 4)
 
         mig.migrate_lpar(self.lpar_w, 'abc',
                          tgt_mgmt_svr='host', tgt_mgmt_usr='usr',
@@ -73,7 +73,7 @@ class TestMigration(testtools.TestCase):
         # Test simple validation call
         self.adpt.read.reset_mock()
         mock_run_job.side_effect = u.get_parm_checker(
-            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800)
+            self, '1234', [(mig.TGT_MGD_SYS, 'abc')], exp_timeout=1800 * 4)
         mock_run_job.reset_mock()
         mig.migrate_lpar(self.lpar_w, 'abc', validate_only=True)
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
