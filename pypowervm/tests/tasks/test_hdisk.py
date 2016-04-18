@@ -220,9 +220,9 @@ class TestHDisk(unittest.TestCase):
             self.assertEqual(1, mock_fsl.call_count)
             mock_ftsk.assert_called_with('scrub_vios_vuuid', mock.ANY)
             self.assertEqual(1, mock_alsst.call_count)
-            mock_luar.assert_has_calls([
-                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.OTHER)
-                for i in range(2)])
+            mock_luar.assert_has_calls(
+                [mock.call('adp', 'vuuid', ['itls'],
+                           vendor=hdisk.LUAType.OTHER)] * 2)
             mock_fsl.reset_mock()
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()

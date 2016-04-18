@@ -96,7 +96,7 @@ class _Cache(object):
             else:
                 LOG.debug("%s cache touch for %s" % (self.host, key))
                 self._keys.append(self._keys.pop(self._keys.index(key)))
-                (t, d) = self._data.get(key, (0, None))
+                d = self._data.get(key, (0, None))[1]
                 self._data[key] = (dt.datetime.now(), d)
 
     def remove(self, key):
