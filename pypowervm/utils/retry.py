@@ -17,10 +17,10 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
-import time
-
 from oslo_log import log as logging
+import random
 from six import moves
+import time
 
 from pypowervm import const
 from pypowervm import exceptions as exc
@@ -50,6 +50,20 @@ def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
     """
     sleep_time = (0.25 * (3**(attempt-1)) - 0.25)
     time.sleep(min(sleep_time, 30))
+
+
+def gen_random_delay(min_s=0, max_s=10):
+    """Generate a delay function that waits a random amount of time.
+
+    :param min_s: Minimum number of seconds to delay (float).
+    :param max_s: Maximum number of seconds to delay (float).
+    :return: A delay method suitable for passing to retry's delay_func kwarg.
+    """
+    def RANDOM_DELAY(attempt, max_attempts, *args, **kwargs):
+        span = max_s - min_s
+        sleep_time = min_s + (random.random() * span)
+        time.sleep(sleep_time)
+    return RANDOM_DELAY
 
 
 def refresh_wrapper(trynum, maxtries, *args, **kwargs):
