@@ -15,6 +15,7 @@
 #    under the License.
 
 import mock
+import random
 import testtools
 
 from pypowervm import adapter as adpt
@@ -239,3 +240,30 @@ class TestRetry(testtools.TestCase):
             pvm_retry.STEPPED_DELAY(i, 7)
             mock_sleep.assert_called_once_with(delays[i-1])
             mock_sleep.reset_mock()
+
+    @mock.patch('time.sleep')
+    def test_random_delay(self, mock_sleep):
+        """Test random_delay."""
+        def _validate_range(start, end):
+            # Sleep was called once.
+            self.assertEqual(1, mock_sleep.call_count)
+            args, kwargs = mock_sleep.call_args
+            # Called with one arg
+            self.assertEqual(1, len(args))
+            # ...and no kwargs
+            self.assertEqual({}, kwargs)
+            # Extract the arg
+            slept_with = args[0]
+            # It should be at least 'start'
+            self.assertGreaterEqual(slept_with, start)
+            # ...and at most 'end'.
+            self.assertLessEqual(slept_with, end)
+            mock_sleep.reset_mock()
+        # Defaults
+        pvm_retry.random_delay()(1, 1)
+        _validate_range(0, 10)
+        # Use a randomizer to test a randomizer.  It's... poetry.
+        min_s = random.random() * random.randint(1, 100)
+        max_s = min_s * random.randint(1, 100)
+        pvm_retry.random_delay(min_s=min_s, max_s=max_s)(1, 1)
+        _validate_range(min_s, max_s)
