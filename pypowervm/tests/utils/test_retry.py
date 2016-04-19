@@ -177,8 +177,7 @@ class TestRetry(testtools.TestCase):
             return argl, kwargs
 
         @pvm_retry.retry(argmod_func=argmod_func,
-                         resp_checker=lambda *a, **kwa: True,
-                         delay_func=pvm_retry.NO_DELAY)
+                         resp_checker=lambda *a, **kwa: True)
         def _func(one, two, three='four', five='six', seven=None):
             global called_count
             called_count += 1
@@ -197,7 +196,7 @@ class TestRetry(testtools.TestCase):
                     self.assertEqual('foo bar bar', five)
 
         _func(10, 20, five='foo')
-        self.assertEqual(6, called_count)
+        self.assertEqual(3, called_count)
 
     def test_retry_refresh_wrapper(self):
         """Test @retry with the 'refresh_wrapper' argmod_func."""
@@ -214,8 +213,7 @@ class TestRetry(testtools.TestCase):
         mock_wrapper.refresh.side_effect = _refresh
 
         @pvm_retry.retry(argmod_func=pvm_retry.refresh_wrapper,
-                         resp_checker=lambda *a, **k: True,
-                         delay_func=pvm_retry.NO_DELAY)
+                         resp_checker=lambda *a, **k: True)
         def _func(wrapper, arg1, arg2, kw0=None, kw1=None):
             global called_count
             self.assertEqual(called_count, wrapper.refreshes)
@@ -227,9 +225,9 @@ class TestRetry(testtools.TestCase):
             called_count += 1
         _func(mock_wrapper, 'a1', 'a2', kw0='k0', kw1='k1')
         # Three calls (overall attempts)
-        self.assertEqual(6, called_count)
+        self.assertEqual(3, called_count)
         # ...equals two refreshes
-        self.assertEqual(5, mock_wrapper.refreshes)
+        self.assertEqual(2, mock_wrapper.refreshes)
 
     @mock.patch('time.sleep')
     def test_stepped_delay(self, mock_sleep):
