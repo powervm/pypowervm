@@ -28,6 +28,11 @@ MSG = ('Unexpected error occurred while fetching Cluster/SSP '
        'mand to VIOS at this moment. VIOS 1*9999-99Z*2125D4A '
        'is busy processing some other request. Please retry t'
        'he operation after sometime.')
+MSG2 = ('Error occurred while querying for Adapter from VIOS vios1 with ID 2 '
+        'in System 9119-MHE*1085B07 -  The system is currently too busy to '
+        'complete the specified request. Please retry the operation at a '
+        'later time. If the operation continues to fail, check the error log '
+        'to see if the filesystem is full.')
 REASON_CODE = 'Unknown internal error.'
 
 
@@ -61,4 +66,8 @@ class TestHttpError(unittest.TestCase):
         # Ensure it finds 'HSCL' return code.
         msg_string = 'msg HSCL3205 msg'
         with mock.patch.object(wrap, '_get_val_str', return_value=msg_string):
+            self.assertTrue(wrap.is_vios_busy())
+
+        # Ensure we find the new message
+        with mock.patch.object(wrap, '_get_val_str', return_value=MSG2):
             self.assertTrue(wrap.is_vios_busy())
