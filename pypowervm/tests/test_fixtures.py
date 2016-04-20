@@ -270,6 +270,20 @@ class SimplePatchingFx(fixtures.Fixture):
         for patcher in self.patchers.values():
             patcher.start()
 
+
+class SleepPatcher(SimplePatcher):
+    def __init__(self, fx, side_effect=None):
+        super(SleepPatcher, self).__init__(fx, 'sleep', 'time.sleep',
+                                           side_effect=side_effect)
+
+
+class SleepFx(SimplePatchingFx):
+    """Fixture for time.sleep."""
+    def __init__(self, side_effect=None):
+        """Create the fixture for time.sleep."""
+        super(SleepFx, self).__init__()
+        self.add_patchers(SleepPatcher(self, side_effect=side_effect))
+
 # Thread locking primitives are located slightly differently in py2 vs py3
 SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')
 SEM_EXIT = 'threading.%sSemaphore.__exit__' % ('_' if six.PY2 else '')
@@ -348,7 +362,8 @@ class WrapperTaskFx(SimplePatchingFx, Logger):
                 'pypowervm.wrappers.entry_wrapper.EntryWrapper.update',
                 return_value=self._wrapper),
             LoggingPatcher(self, 'lock', SEM_ENTER),
-            LoggingPatcher(self, 'unlock', SEM_EXIT)
+            LoggingPatcher(self, 'unlock', SEM_EXIT),
+            SleepPatcher(self)
         )
 
 
@@ -424,7 +439,8 @@ class FeedTaskFx(SimplePatchingFx, Logger):
                 'pypowervm.wrappers.entry_wrapper.EntryWrapper.update',
                 patch_object=True, return_value=LoggingPatcher.FIRST_ARG),
             LoggingPatcher(self, 'lock', SEM_ENTER),
-            LoggingPatcher(self, 'unlock', SEM_EXIT)
+            LoggingPatcher(self, 'unlock', SEM_EXIT),
+            SleepPatcher(self)
         )
 
 
@@ -439,4 +455,4 @@ class LoggingFx(SimplePatchingFx):
         super(LoggingFx, self).__init__()
         self.add_patchers(
             *(SimplePatcher(self, x, 'oslo_log.log.BaseLoggerAdapter.%s' % x)
-                for x in ('info', 'warning', 'debug', 'error', 'exception')))
+              for x in ('info', 'warning', 'debug', 'error', 'exception')))
