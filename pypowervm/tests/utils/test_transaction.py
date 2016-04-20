@@ -30,6 +30,7 @@ import pypowervm.const as c
 import pypowervm.exceptions as ex
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+from pypowervm.utils import retry
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
@@ -41,6 +42,7 @@ class TestWrapperTask(twrap.TestWrapper):
 
     def setUp(self):
         super(TestWrapperTask, self).setUp()
+        self.useFixture(fx.SleepFx())
         self.getter = lpar.LPAR.getter(self.adpt, 'getter_uuid')
         # Set this up for getter.get()
         self.adpt.read.return_value = self.dwrap.entry
@@ -85,7 +87,7 @@ class TestWrapperTask(twrap.TestWrapper):
     def test_synchronized_called_with_uuid(self, mock_semget):
         """Ensure the synchronizer is locking with the first arg's .uuid."""
         @tx.entry_transaction
-        def foo(wrapper_or_getter):
+        def blacklist_this(wrapper_or_getter):
             pass
 
         # At this point, the outer decorator has been invoked, but the
@@ -94,7 +96,7 @@ class TestWrapperTask(twrap.TestWrapper):
 
         # If we call the decorated method with an EntryWrapper, synchronize
         # should be invoked with the EntryWrapper's UUID
-        foo(self.dwrap)
+        blacklist_this(self.dwrap)
         self.assertEqual(1, mock_semget.call_count)
         mock_semget.assert_called_with('089FFB20-5D19-4A8C-BB80-13650627D985')
 
@@ -102,7 +104,7 @@ class TestWrapperTask(twrap.TestWrapper):
         # registered UUID.  (IRL, this will match the wrapper's UUID.  Here we
         # are making sure the right code path is being taken.)
         mock_semget.reset_mock()
-        foo(self.getter)
+        blacklist_this(self.getter)
         self.assertEqual(1, mock_semget.call_count)
         mock_semget.assert_called_with('getter_uuid')
 
@@ -119,22 +121,36 @@ class TestWrapperTask(twrap.TestWrapper):
         txfx = self.useFixture(fx.WrapperTaskFx(self.dwrap))
 
         @tx.entry_transaction
-        def foo(wrapper_or_getter):
+        def blacklist_this(wrapper_or_getter):
             # Always converted by now
             self.assertIsInstance(wrapper_or_getter, ewrap.EntryWrapper)
             return self.retry_twice(wrapper_or_getter, self.tracker, txfx)
 
         # With an EntryWrapperGetter, get() is invoked
-        self.assertEqual(self.dwrap, foo(self.getter))
+        self.assertEqual(self.dwrap, blacklist_this(self.getter))
         self.assertEqual(['lock', 'get', 'update 1', 'refresh', 'update 2',
                           'refresh', 'update 3', 'unlock'], txfx.get_log())
 
         # With an EntryWrapper, get() is not invoked
         self.tracker.counter = 0
         txfx.reset_log()
-        self.assertEqual(self.dwrap, foo(self.dwrap))
+        self.assertEqual(self.dwrap, blacklist_this(self.dwrap))
         self.assertEqual(['lock', 'update 1', 'refresh', 'update 2', 'refresh',
                           'update 3', 'unlock'], txfx.get_log())
+
+    @mock.patch('pypowervm.utils.retry.retry')
+    @mock.patch('pypowervm.utils.retry.gen_random_delay')
+    def test_retry_args(self, mock_grd, mock_retry):
+        """Ensure the correct arguments are passed to @retry."""
+        @tx.entry_transaction
+        def blacklist_this(wrapper_or_getter):
+            pass
+        blacklist_this(mock.Mock())
+        # Default random delay func was generated
+        mock_grd.assert_called_once_with()
+        mock_retry.assert_called_once_with(
+            argmod_func=retry.refresh_wrapper, tries=6,
+            delay_func=mock_grd.return_value)
 
     @staticmethod
     def tx_subtask_invoke(tst, wrapper):
