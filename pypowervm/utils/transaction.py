@@ -113,7 +113,7 @@ def entry_transaction(func):
                 wos = wos.get()
 
             @retry.retry(argmod_func=retry.refresh_wrapper, tries=6,
-                         delay_func=retry.STEPPED_DELAY)
+                         delay_func=retry.STEPPED_RANDOM_DELAY)
             def _retry_refresh(wrapper, *a3, **k3):
                 """Retry as needed, refreshing its wrapper each time."""
                 return func(wrapper, *a3, **k3)

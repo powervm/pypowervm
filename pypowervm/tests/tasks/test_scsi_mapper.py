@@ -35,6 +35,8 @@ class TestSCSIMapper(testtools.TestCase):
         super(TestSCSIMapper, self).setUp()
         # Common Adapter
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
+        # Don't really sleep
+        self.useFixture(fx.SleepFx())
 
         # Fake URI
         mock_crt_href_p = mock.patch('pypowervm.wrappers.virtual_io_server.'
