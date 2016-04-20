@@ -30,6 +30,7 @@ import pypowervm.const as c
 import pypowervm.exceptions as ex
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+from pypowervm.utils import retry
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.logical_partition as lpar
@@ -41,6 +42,7 @@ class TestWrapperTask(twrap.TestWrapper):
 
     def setUp(self):
         super(TestWrapperTask, self).setUp()
+        self.useFixture(fx.SleepFx())
         self.getter = lpar.LPAR.getter(self.adpt, 'getter_uuid')
         # Set this up for getter.get()
         self.adpt.read.return_value = self.dwrap.entry
@@ -135,6 +137,20 @@ class TestWrapperTask(twrap.TestWrapper):
         self.assertEqual(self.dwrap, foo(self.dwrap))
         self.assertEqual(['lock', 'update 1', 'refresh', 'update 2', 'refresh',
                           'update 3', 'unlock'], txfx.get_log())
+
+    @mock.patch('pypowervm.utils.retry.retry')
+    @mock.patch('pypowervm.utils.retry.gen_random_delay')
+    def test_retry_args(self, mock_grd, mock_retry):
+        """Ensure the correct arguments are passed to @retry."""
+        @tx.entry_transaction
+        def foo(wrapper_or_getter):
+            pass
+        foo(mock.Mock())
+        # Default random delay func was generated
+        mock_grd.assert_called_once_with()
+        mock_retry.assert_called_once_with(
+            argmod_func=retry.refresh_wrapper, tries=6,
+            delay_func=mock_grd.return_value)
 
     @staticmethod
     def tx_subtask_invoke(tst, wrapper):
