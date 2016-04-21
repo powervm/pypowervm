@@ -265,3 +265,31 @@ class TestRetry(testtools.TestCase):
         max_s = min_s * random.randint(1, 100)
         pvm_retry.gen_random_delay(min_s=min_s, max_s=max_s)(1, 1)
         _validate_range(min_s, max_s)
+
+    @mock.patch('time.sleep')
+    def test_stepped_random_delay(self, mock_sleep):
+        """Test STEPPED_RANDOM_DELAY."""
+        def _validate_range(attempt, start, end):
+            pvm_retry.STEPPED_RANDOM_DELAY(attempt, None)
+            # Sleep was called once.
+            self.assertEqual(1, mock_sleep.call_count)
+            args, kwargs = mock_sleep.call_args
+            # Called with one arg
+            self.assertEqual(1, len(args))
+            # ...and no kwargs
+            self.assertEqual({}, kwargs)
+            # Extract the arg
+            slept_with = args[0]
+            # It should be at least 'start'
+            self.assertGreaterEqual(slept_with, start)
+            # ...and at most 'end'.
+            self.assertLessEqual(slept_with, end)
+            mock_sleep.reset_mock()
+        # These ranges from RANDOM_DELAY_STEPS
+        _validate_range(1, 0, 0)
+        _validate_range(2, 0, 1)
+        _validate_range(3, 0.5, 4)
+        _validate_range(4, 2, 13)
+        _validate_range(5, 6.5, 30)
+        for att in (6, 7, 8, 9, 10):
+            _validate_range(att, 0, 60)
