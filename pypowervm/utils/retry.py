@@ -36,6 +36,17 @@ NO_CHECKER = lambda *args, **kwds: False
 NO_DELAY = lambda *args, **kwds: None
 NO_ARGMOD = lambda this_try, max_tries, *args, **kwds: (args, kwds)
 
+# Used by STEPPED_RANDOM_DELAY.  Each entry corresponds to the kwargs for
+# gen_random_delay.  There's no magic to these numbers; they're fairly
+# arbitrary.
+RANDOM_DELAY_STEPS = ({'max_s': 0},
+                      {'max_s': 1},
+                      {'min_s': 0.5, 'max_s': 4},
+                      {'min_s': 2, 'max_s': 13},
+                      {'min_s': 6.5, 'max_s': 30},
+                      # Subsequent steps 0-60s
+                      {'max_s': 60})
+
 
 def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
     """A delay function that increases its delay per attempt.
@@ -64,6 +75,18 @@ def gen_random_delay(min_s=0, max_s=10):
         sleep_time = min_s + (random.random() * span)
         time.sleep(sleep_time)
     return RANDOM_DELAY
+
+
+def STEPPED_RANDOM_DELAY(attempt, max_attempts, *args, **kwargs):
+    """A delay function for increasing random sleep times.
+
+    The RANDOM_DELAY_STEPS variable is used to determine the min/max for each
+    step.  For all attempts beyond len(RANDOM_DELAY_STEPS), the last entry is
+    used.
+    """
+    grd_kwargs = RANDOM_DELAY_STEPS[attempt-1] if attempt <= len(
+        RANDOM_DELAY_STEPS) else RANDOM_DELAY_STEPS[-1]
+    gen_random_delay(**grd_kwargs)(attempt, max_attempts, *args, **kwargs)
 
 
 def refresh_wrapper(trynum, maxtries, *args, **kwargs):
