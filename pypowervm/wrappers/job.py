@@ -46,6 +46,8 @@ _JOB_MESSAGE = u.xpath(_RESPONSE_EXCEPTION, 'Message')
 _JOB_STACKTRACE = u.xpath(_RESPONSE_EXCEPTION, 'StackTrace')
 _JOB_STATUS = 'Status'
 _JOB_ID = 'JobID'
+_JOB_TIME_STARTED = 'TimeStarted'
+_JOB_TARGET_UUID = 'TargetUuid'
 
 
 class JobStatus(object):
@@ -348,3 +350,103 @@ class Job(ewrap.EntryWrapper):
             self.adapter.delete(_JOBS, self.job_id)
         except pvmex.Error as exc:
             LOG.exception(exc)
+
+
+@ewrap.EntryWrapper.pvm_type(_JOBS, ns=pc.UOM_NS)
+class Jobs(ewrap.EntryWrapper):
+    @property
+    def job_id(self):
+        """Gets the job ID string.
+
+        :returns: String containing the job ID
+        """
+        return self._get_val_str(_JOB_ID)
+
+    @property
+    def status(self):
+        """Gets the job status string.
+
+        :returns: String containing the job status
+        """
+        return self._get_val_str(_JOB_STATUS)
+
+    @property
+    def time_started(self):
+        """Gets the job time started timestamp.
+
+        :returns: Timestamp containing the job start time
+        """
+        return self._get_val_str(_JOB_TIME_STARTED)
+
+    @property
+    def target_uuid(self):
+        """Gets the job's target UUID.
+
+        :returns: Target UUID string
+        """
+        return self._get_val_str(_JOB_TARGET_UUID)
+
+    @property
+    def op_name(self):
+        """Gets the job's operation name
+
+        :returns: Operation Name string
+        """
+        jr_inst = self._find('JobRequestInstance')
+
+        if not jr_inst:
+            return ""
+
+        req_op = JobRequestInstance.wrap(jr_inst).req_op
+        if not req_op:
+            return ""
+
+        return req_op.op_name
+
+    @property
+    def group_name(self):
+        """Gets the job's group name.
+
+        :returns: Group name string
+        """
+        jr_inst = self._find('JobRequestInstance')
+
+        if not jr_inst:
+            return ""
+
+        req_op = JobRequestInstance.wrap(jr_inst).req_op
+        if not req_op:
+            return ""
+
+        return req_op.group_name
+
+
+@ewrap.ElementWrapper.pvm_type('JobRequestInstance')
+class JobRequestInstance(ewrap.ElementWrapper):
+    @property
+    def req_op(self):
+        found_req_op = self._find('RequestedOperation')
+
+        if not found_req_op:
+            return None
+
+        return RequestedOperation.wrap(found_req_op)
+
+
+@ewrap.ElementWrapper.pvm_type('RequestedOperation')
+class RequestedOperation(ewrap.ElementWrapper):
+    @property
+    def op_name(self):
+        """Gets the job's operation name
+
+        :returns: Operation Name string
+        """
+        return self._get_val_str("OperationName")
+
+    @property
+    def group_name(self):
+        """Gets the job's group name.
+
+        :returns: Group name string
+        """
+        return self._get_val_str("GroupName")
