@@ -19,6 +19,7 @@
 import pypowervm.exceptions as ex
 import pypowervm.util as u
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.virtual_io_server as vios
 
 
 def get_mgmt_partition(adapter):
@@ -31,7 +32,10 @@ def get_mgmt_partition(adapter):
     :raise ManagementPartitionNotFoundException: if we don't find exactly one
                                                  management partition.
     """
-    wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+    # There is one mgmt partition on the system.  First search the LPAR type.
+    lpar_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+    vio_wraps = vios.VIOS.search(adapter, is_mgmt_partition=True)
+    wraps = lpar_wraps + vio_wraps
     if len(wraps) != 1:
         raise ex.ManagementPartitionNotFoundException(count=len(wraps))
     return wraps[0]
@@ -48,7 +52,9 @@ def get_this_partition(adapter):
                                             with the local VM's short ID.
     """
     myid = u.my_partition_id()
-    wraps = lpar.LPAR.search(adapter, id=myid)
+    lpar_wraps = lpar.LPAR.search(adapter, id=myid)
+    vio_wraps = vios.VIOS.search(adapter, id=myid)
+    wraps = lpar_wraps + vio_wraps
     if len(wraps) != 1:
         raise ex.ThisPartitionNotFoundException(lpar_id=myid, count=len(wraps))
     return wraps[0]

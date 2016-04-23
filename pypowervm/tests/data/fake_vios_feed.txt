@@ -5370,6 +5370,7 @@ BODY{
     <CurrentProcessorCompatibilityMode kb="ROO" kxe="false">POWER7</CurrentProcessorCompatibilityMode>
     <CurrentProfileSync kb="CUD" kxe="false">On</CurrentProfileSync>
     <IsConnectionMonitoringEnabled kb="UOD" kxe="false">false</IsConnectionMonitoringEnabled>
+    <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
     <IsOperationInProgress kb="ROR" kxe="false">false</IsOperationInProgress>
     <IsRedundantErrorPathReportingEnabled kb="UOD" kxe="false">false</IsRedundantErrorPathReportingEnabled>
     <IsTimeReferencePartition kb="UOD" kxe="false">false</IsTimeReferencePartition>
