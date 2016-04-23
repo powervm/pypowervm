@@ -157,6 +157,13 @@ def build_itls(i_wwpns, t_wwpns, lun):
 def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     """Attempt to discover a hard disk attached to a Virtual I/O Server.
 
+    # TODO(thorst) If the vios_uuid is a Linux I/O Host, what should we do
+    # here?  Does the REST API just return no information, should we error,
+    # or...
+    #
+    # What about when the Linux I/O Host DOES support FC?  We will need a
+    # discover_hdisk function...
+
     See lua_recovery.  This method attempts that call and analyzes the
     results.  On certain failure conditions (see below), this method will find
     stale LPARs, scrub storage artifacts associated with them, and then retry

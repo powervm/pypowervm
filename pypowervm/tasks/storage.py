@@ -220,6 +220,9 @@ def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
+    # TODO(thorst) WE need to make sure that we can upload.  This calls
+    # down to _upload_stream.  This is how we'll get the image from glance to
+    # the LVM, or even to a iSCSI PV.
     # The file type.  If local API server, then we can use the coordinated
     # file path.  Otherwise standard upload.
     file_type = (vf.FileType.DISK_IMAGE_COORDINATED
@@ -332,6 +335,10 @@ def _upload_stream(vio_file, d_stream):
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
                  tdev_udid=None):
     """Creates a file on the VIOS, which is needed before the POST.
+
+    # TODO(thorst) We know that the VIOS will support vOpt at some point.  We
+    # will need to upload files to it.  Will the whole VIO File support be
+    # in the REST API?
 
     :param adapter: The adapter to talk over the API.
     :param f_name: The name for the file.
