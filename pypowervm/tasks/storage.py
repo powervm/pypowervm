@@ -490,7 +490,8 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
-@retry.retry(argmod_func=retry.refresh_wrapper)
+@retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
+             delay_func=retry.STEPPED_RANDOM_DELAY)
 def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
     """Remove storage elements from a volume group.
 
