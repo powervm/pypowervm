@@ -17,6 +17,7 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
+import math
 from oslo_log import log as logging
 import random
 from six import moves
@@ -81,12 +82,26 @@ def STEPPED_RANDOM_DELAY(attempt, max_attempts, *args, **kwargs):
     """A delay function for increasing random sleep times.
 
     The RANDOM_DELAY_STEPS variable is used to determine the min/max for each
-    step.  For all attempts beyond len(RANDOM_DELAY_STEPS), the last entry is
-    used.
+    step.  This is a graduating scale - based on the overall max_attempts
+    specified.  If there are 60 max attempts, the first 10 will use the
+    first delay in RANDOM_DELAY_STEPS, the next ten will use the second delay
+    in RANDOM_DELAY_STEPS, etc...
+
+    If there are only 6 retries, then the first will use the first position
+    in RANDOM_DELAY_STEPS, the second will map to the second RANDOM_DELAY_STEPS
+    and so on.
     """
-    grd_kwargs = RANDOM_DELAY_STEPS[attempt-1] if attempt <= len(
-        RANDOM_DELAY_STEPS) else RANDOM_DELAY_STEPS[-1]
-    gen_random_delay(**grd_kwargs)(attempt, max_attempts, *args, **kwargs)
+    # Generate the position, based off the max attempts and the current pos
+    pos = int(((attempt - 1) * len(RANDOM_DELAY_STEPS)) / max_attempts)
+
+    # If for some reason, the user goes above the max attempts, limit it to
+    # to the last position.
+    pos = (pos if pos < len(RANDOM_DELAY_STEPS)
+           else (len(RANDOM_DELAY_STEPS) - 1))
+
+    # Run the random delay function
+    gen_random_delay(**RANDOM_DELAY_STEPS[pos])(attempt, max_attempts, *args,
+                                                **kwargs)
 
 
 def refresh_wrapper(trynum, maxtries, *args, **kwargs):

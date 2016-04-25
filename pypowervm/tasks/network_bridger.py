@@ -129,7 +129,7 @@ class NetworkBridger(object):
         self.host_uuid = host_uuid
         self._orphan_map = None
 
-    @pvm_retry.retry()
+    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
         """Will make sure that the VLANs are assigned to the Network Bridge.
 
@@ -218,7 +218,7 @@ class NetworkBridger(object):
         # The Load Groups on the Network Bridge should be correct.
         req_nb.update()
 
-    @pvm_retry.retry()
+    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
     def remove_vlan_from_nb(self, nb_uuid, vlan_id, fail_if_pvid=False,
                             existing_nbs=None):
         """Will remove the VLAN from a given Network Bridge.

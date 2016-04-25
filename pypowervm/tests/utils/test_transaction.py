@@ -147,7 +147,7 @@ class TestWrapperTask(twrap.TestWrapper):
         blacklist_this(mock.Mock())
         # Stepped random delay func was invoked
         mock_retry.assert_called_once_with(
-            argmod_func=retry.refresh_wrapper, tries=6,
+            argmod_func=retry.refresh_wrapper, tries=60,
             delay_func=retry.STEPPED_RANDOM_DELAY)
 
     @staticmethod
