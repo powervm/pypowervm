@@ -266,30 +266,78 @@ class TestRetry(testtools.TestCase):
         pvm_retry.gen_random_delay(min_s=min_s, max_s=max_s)(1, 1)
         _validate_range(min_s, max_s)
 
+    def _validate_stepped_random_range(self, mock_sleep, attempt, start, end,
+                                       max_attempts=6):
+        pvm_retry.STEPPED_RANDOM_DELAY(attempt, max_attempts)
+        # Sleep was called once.
+        self.assertEqual(1, mock_sleep.call_count)
+        args, kwargs = mock_sleep.call_args
+        # Called with one arg
+        self.assertEqual(1, len(args))
+        # ...and no kwargs
+        self.assertEqual({}, kwargs)
+        # Extract the arg
+        slept_with = args[0]
+        # It should be at least 'start'
+        self.assertGreaterEqual(slept_with, start)
+        # ...and at most 'end'.
+        self.assertLessEqual(slept_with, end)
+        mock_sleep.reset_mock()
+
     @mock.patch('time.sleep')
     def test_stepped_random_delay(self, mock_sleep):
         """Test STEPPED_RANDOM_DELAY."""
-        def _validate_range(attempt, start, end):
-            pvm_retry.STEPPED_RANDOM_DELAY(attempt, None)
-            # Sleep was called once.
-            self.assertEqual(1, mock_sleep.call_count)
-            args, kwargs = mock_sleep.call_args
-            # Called with one arg
-            self.assertEqual(1, len(args))
-            # ...and no kwargs
-            self.assertEqual({}, kwargs)
-            # Extract the arg
-            slept_with = args[0]
-            # It should be at least 'start'
-            self.assertGreaterEqual(slept_with, start)
-            # ...and at most 'end'.
-            self.assertLessEqual(slept_with, end)
-            mock_sleep.reset_mock()
+
         # These ranges from RANDOM_DELAY_STEPS
-        _validate_range(1, 0, 0)
-        _validate_range(2, 0, 1)
-        _validate_range(3, 0.5, 4)
-        _validate_range(4, 2, 13)
-        _validate_range(5, 6.5, 30)
+        self._validate_stepped_random_range(mock_sleep, 1, 0, 0)
+        self._validate_stepped_random_range(mock_sleep, 2, 0, 1)
+        self._validate_stepped_random_range(mock_sleep, 3, 0.5, 4)
+        self._validate_stepped_random_range(mock_sleep, 4, 2, 13)
+        self._validate_stepped_random_range(mock_sleep, 5, 6.5, 30)
+
+        # Use a range beyond the max attempts.  Make sure it does not fail.
         for att in (6, 7, 8, 9, 10):
-            _validate_range(att, 0, 60)
+            self._validate_stepped_random_range(mock_sleep, att, 0, 60)
+
+    @mock.patch('time.sleep')
+    def test_stepped_random_delay_large(self, mock_sleep):
+        """Test STEPPED_RANDOM_DELAY with a very large range."""
+
+        max_attempts = 60
+
+        # These ranges from RANDOM_DELAY_STEPS
+        for i in range(1, 10):
+            self._validate_stepped_random_range(mock_sleep, i, 0, 0,
+                                                max_attempts=max_attempts)
+        for i in range(11, 20):
+            self._validate_stepped_random_range(mock_sleep, i, 0, 1,
+                                                max_attempts=max_attempts)
+        for i in range(21, 30):
+            self._validate_stepped_random_range(mock_sleep, i, 0.5, 4,
+                                                max_attempts=max_attempts)
+        for i in range(31, 40):
+            self._validate_stepped_random_range(mock_sleep, i, 2, 13,
+                                                max_attempts=max_attempts)
+        for i in range(41, 50):
+            self._validate_stepped_random_range(mock_sleep, i, 6.5, 30,
+                                                max_attempts=max_attempts)
+        for i in range(51, 60):
+            self._validate_stepped_random_range(mock_sleep, i, 0, 60,
+                                                max_attempts=max_attempts)
+
+    @mock.patch('time.sleep')
+    def test_stepped_random_delay_small(self, mock_sleep):
+        """Test STEPPED_RANDOM_DELAY with a very small range.
+
+        Uses a 'max_attempts' whose range is less than the size of
+        RANDOM_DELAY_STEPS
+        """
+        # Run this a few times so as to make sure the ranges are fully
+        # adhered to.
+        for i in range(0, 50):
+            self._validate_stepped_random_range(mock_sleep, 1, 0, 0,
+                                                max_attempts=3)
+            self._validate_stepped_random_range(mock_sleep, 2, .5, 4,
+                                                max_attempts=3)
+            self._validate_stepped_random_range(mock_sleep, 3, 6.5, 60,
+                                                max_attempts=3)

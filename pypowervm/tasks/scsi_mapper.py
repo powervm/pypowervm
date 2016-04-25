@@ -44,7 +44,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 
 
 @lock.synchronized('vscsi_mapping')
-@pvm_retry.retry(tries=6, argmod_func=_argmod,
+@pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     """Will add a vSCSI mapping to a Virtual I/O Server.
@@ -286,7 +286,7 @@ def detach_storage(vwrap, client_lpar_id, match_func=None):
 
 
 @lock.synchronized('vscsi_mapping')
-@pvm_retry.retry(tries=6, argmod_func=_argmod,
+@pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     """Removes the storage element from a SCSI bus and clears out bus.

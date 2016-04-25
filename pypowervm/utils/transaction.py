@@ -112,7 +112,7 @@ def entry_transaction(func):
             if isinstance(wos, ewrap.EntryWrapperGetter):
                 wos = wos.get()
 
-            @retry.retry(argmod_func=retry.refresh_wrapper, tries=6,
+            @retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
                          delay_func=retry.STEPPED_RANDOM_DELAY)
             def _retry_refresh(wrapper, *a3, **k3):
                 """Retry as needed, refreshing its wrapper each time."""
