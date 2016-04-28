@@ -438,12 +438,25 @@ class VSCSIMapping(VStorageMapping):
     _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
-    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
+    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
+            lpar_slot_num=None):
+        """Creates a new VSCSIMapping
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        mapping.
+        :param host_uuid: The host system's UUID.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.
+        :param lpar_slot_num: The client slot number to use in the new mapping.
+        :return: The newly-created VSCSIMapping.
+        """
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(adapter))
+        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
         s_map._backing_storage(stg_ref)
         return s_map

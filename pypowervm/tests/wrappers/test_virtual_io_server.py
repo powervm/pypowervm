@@ -163,10 +163,12 @@ class TestViosMappings(twrap.TestWrapper):
         """Validation that the element is correct."""
         vopt = pvm_stor.VOptMedia.bld_ref(self.adpt, 'media_name')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
-                                     'client_lpar_uuid', vopt)
+                                     'client_lpar_uuid', vopt,
+                                     lpar_slot_num=5)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual(vmap.client_adapter.side, 'Client')
+        self.assertEqual(vmap.client_adapter.lpar_slot_num, 5)
         self.assertEqual(vmap.server_adapter.side, 'Server')
         self.assertEqual('media_name', vmap.backing_storage.media_name)
         self.assertEqual('a_link', vmap.client_lpar_href)
@@ -178,6 +180,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual(vmap2.client_adapter.side, 'Client')
+        self.assertEqual(vmap2.client_adapter.lpar_slot_num, 5)
         self.assertEqual(vmap2.server_adapter.side, 'Server')
         self.assertEqual('media_name2', vmap2.backing_storage.media_name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
@@ -189,6 +192,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap3)
         self.assertIsNotNone(vmap3.element)
         self.assertEqual('Client', vmap3.client_adapter.side)
+        self.assertEqual(5, vmap3.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap3.server_adapter.side)
         self.assertEqual('disk_name', vmap3.backing_storage.name)
         self.assertEqual('a_link', vmap3.client_lpar_href)
@@ -198,10 +202,12 @@ class TestViosMappings(twrap.TestWrapper):
         """Validation that the element is correct."""
         vdisk = pvm_stor.VDisk.bld_ref(self.adpt, 'disk_name')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
-                                     'client_lpar_uuid', vdisk)
+                                     'client_lpar_uuid', vdisk,
+                                     lpar_slot_num=5)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
@@ -213,6 +219,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
+        self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
@@ -222,10 +229,12 @@ class TestViosMappings(twrap.TestWrapper):
         """Validation that the element is correct."""
         lu = pvm_stor.LU.bld_ref(self.adpt, 'disk_name', 'udid')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
-                                     'client_lpar_uuid', lu)
+                                     'client_lpar_uuid', lu,
+                                     lpar_slot_num=5)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('udid', vmap.backing_storage.udid)
@@ -238,6 +247,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
+        self.assertEqual(5, vmap2.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('udid2', vmap2.backing_storage.udid)
@@ -248,10 +258,12 @@ class TestViosMappings(twrap.TestWrapper):
         """Validation that the element is correct."""
         pv = pvm_stor.PV.bld(self.adpt, 'disk_name', 'udid')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
-                                     'client_lpar_uuid', pv)
+                                     'client_lpar_uuid', pv,
+                                     lpar_slot_num=5)
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
@@ -263,6 +275,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
+        self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
@@ -272,13 +285,15 @@ class TestViosMappings(twrap.TestWrapper):
         """Clone a VSCSI mapping with no storage element."""
         pv = pvm_stor.PV.bld(self.adpt, 'disk_name', 'udid')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
-                                     'client_lpar_uuid', pv)
+                                     'client_lpar_uuid', pv,
+                                     lpar_slot_num=5)
         vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, None)
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('a_link', vmap2.client_lpar_href)
+        self.assertEqual(5, vmap2.client_adapter.lpar_slot_num)
         self.assertIsNone(vmap2.backing_storage)
 
     def test_get_scsi_mappings(self):
