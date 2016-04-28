@@ -487,7 +487,8 @@ def find_vios_for_port_map(vios_wraps, port_map):
     return find_vios_for_wwpn(vios_wraps, port_map[0])[0]
 
 
-def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
+def add_map(vios_w, host_uuid, lpar_uuid, port_map, client_slot=None,
+            error_if_invalid=True):
     """Adds a vFC mapping to a given VIOS wrapper.
 
     These changes are not flushed back to the REST server.  The wrapper itself
@@ -538,7 +539,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
     vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, lpar_uuid,
-                                      p_port.name, client_wwpns=v_wwpns)
+                                      p_port.name, client_wwpns=v_wwpns,
+                                      lpar_slot_num=client_slot)
     vios_w.vfc_mappings.append(vfc_map)
     return vfc_map
 

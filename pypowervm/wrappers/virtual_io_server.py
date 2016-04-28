@@ -529,7 +529,7 @@ class VFCMapping(VStorageMapping):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, backing_phy_port,
-            client_wwpns=None):
+            client_wwpns=None, lpar_slot_num=None):
         """Creates the VFCMapping object to connect to a Physical FC Port.
 
         This is used when creating a new mapping between a Client LPAR and the
@@ -559,7 +559,7 @@ class VFCMapping(VStorageMapping):
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
         s_map._client_adapter(stor.VFCClientAdapterElement.bld(
-            adapter, wwpns=client_wwpns))
+            adapter, wwpns=client_wwpns, slot_num=lpar_slot_num))
 
         # Create the backing port and change label.  API requires it be
         # Port, even though it is a Physical FC Port
