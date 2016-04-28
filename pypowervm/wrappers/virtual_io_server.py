@@ -304,8 +304,9 @@ class VIOS(bp.BasePartition):
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
-        es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_VSCSI_MAPPINGS, attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(_VIO_VSCSI_MAPPINGS,
+                               attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
             VSCSIMapping, parent_entry=self)
         return es
 
@@ -322,8 +323,9 @@ class VIOS(bp.BasePartition):
 
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def trunk_adapters(self):
-        es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_TRUNK_ADPTS, attrib=u.xag_attrs(c.XAG.VIO_NET)),
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(_VIO_TRUNK_ADPTS,
+                               attrib=u.xag_attrs(c.XAG.VIO_NET)),
             net.TrunkAdapter)
         return es
 
@@ -362,8 +364,9 @@ class VIOS(bp.BasePartition):
 
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def io_adpts_for_link_agg(self):
-        es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=u.xag_attrs(c.XAG.VIO_NET)),
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(_VIO_FREE_IO_ADPTS_FOR_LNAGG,
+                               attrib=u.xag_attrs(c.XAG.VIO_NET)),
             LinkAggrIOAdapterChoice)
         return es
 
@@ -438,24 +441,42 @@ class VSCSIMapping(VStorageMapping):
     _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
-    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
+    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
+            lpar_slot_num=None):
+        """Creates a new VSCSIMapping
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        mapping.
+        :param host_uuid: The host system's UUID.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the new mapping. If None then we let
+                              REST choose the slot number.
+        :return: The newly-created VSCSIMapping.
+        """
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(adapter))
+        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
         s_map._backing_storage(stg_ref)
         return s_map
 
     @classmethod
-    def bld_from_existing(cls, existing_map, stg_ref):
+    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None):
         """Clones the existing mapping, but swaps in the new storage elem.
 
         :param existing_map: The existing VSCSIMapping to clone.
         :param stg_ref: The backing storage element (PV, LU, VDisk, or
                         VOptMedia) to use in the new mapping.  If explicitly
                         None, the new mapping is created with no storage.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the mapping. If None then the
+                              existing slot number is used.
         :return: The newly-created VSCSIMapping.
         """
         # We do NOT want the TargetDevice element, so we explicitly copy the
@@ -469,6 +490,10 @@ class VSCSIMapping(VStorageMapping):
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
         if stg_ref is not None:
             new_map._backing_storage(copy.deepcopy(stg_ref))
+        if lpar_slot_num is not None:
+            # Set the slot number and remove the 'UseNextAvailableSlot' tag.
+            new_map.client_adapter._lpar_slot_num(lpar_slot_num)
+            new_map.client_adapter._use_next_slot(False)
         return new_map
 
     @property
