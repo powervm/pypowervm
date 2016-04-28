@@ -821,6 +821,9 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
     def _side(self, t):
         self.set_parm_value(_VADPT_TYPE, t)
 
+    def _slot_num(self, slot_num):
+        self.set_parm_value(_VADPT_SLOT_NUM, slot_num)
+
     @property
     def is_varied_on(self):
         """True if the adapter is varied on."""
@@ -843,16 +846,21 @@ class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
     has_metadata = True
 
     @classmethod
-    def _bld_new(cls, adapter, side):
+    def _bld_new(cls, adapter, side, slot_num=None):
         """Build a {Client|Server}Adapter requesting a new virtual adapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param side: Either 'Client' or 'Server'.
+        :param slot_num: (Optional, Default: None) The VirtualSlotNumber
+                         to be set. If not provided the next available
+                         slot number is used.
         :returns: A fresh ClientAdapter or ServerAdapter wrapper with
-                  UseNextAvailableSlotID=true
+                  the given slot number or UseNextAvailableSlotID=true
         """
         adp = super(_VStorageAdapterElement, cls)._bld(adapter)
         adp._side(side)
+        if slot_num:
+            adp._slot_num(slot_num)
         adp._use_next_slot(True)
         return adp
 
@@ -882,8 +890,21 @@ class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
 class _VClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
     @classmethod
-    def bld(cls, adapter):
-        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+    def bld(cls, adapter, slot_num=None):
+        """Builds a new Client Adapter.
+
+        If the slot number is None then we'll specify the
+        'UseNextAvailableSlot' tag to REST and the REST layer will assign the
+        slot. The slot number that it chose will be in the response.
+
+        :param adapter: A pypowervm.adapter.Adapter
+        :param slot_num: (Optional, Default: None) The client slot number to
+                         be used.
+        :returns: A new VSCSI Client.
+        """
+        clad = super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client',
+                                                           slot_num=slot_num)
+        return clad
 
     @property
     def lpar_id(self):
@@ -896,7 +917,7 @@ class _VClientAdapterMethods(ewrap.Wrapper):
 
     @property
     def lpar_slot_num(self):
-        """The (int) slot number that the adapter is in."""
+        """The slot number that the adapter is in."""
         return self._get_val_int(_VADPT_SLOT_NUM)
 
 
