@@ -821,6 +821,9 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
     def _side(self, t):
         self.set_parm_value(_VADPT_TYPE, t)
 
+    def _slot_num(self, slot_num):
+        self.set_parm_value(_VADPT_SLOT_NUM, slot_num)
+
     @property
     def is_varied_on(self):
         """True if the adapter is varied on."""
@@ -843,17 +846,23 @@ class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
     has_metadata = True
 
     @classmethod
-    def _bld_new(cls, adapter, side):
+    def _bld_new(cls, adapter, side, slot_num=None):
         """Build a {Client|Server}Adapter requesting a new virtual adapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param side: Either 'Client' or 'Server'.
+        :param slot_num: (Optional, Default: None) The VirtualSlotNumber
+                         to be set. If not provided the next available
+                         slot number is used.
         :returns: A fresh ClientAdapter or ServerAdapter wrapper with
-                  UseNextAvailableSlotID=true
+                  the given slot number or UseNextAvailableSlotID=true
         """
         adp = super(_VStorageAdapterElement, cls)._bld(adapter)
         adp._side(side)
-        adp._use_next_slot(True)
+        if slot_num:
+            adp._slot_num(slot_num)
+        else:
+            adp._use_next_slot(True)
         return adp
 
 
@@ -882,8 +891,9 @@ class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
 class _VClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
     @classmethod
-    def bld(cls, adapter):
-        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+    def bld(cls, adapter, slot_num=None):
+        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client',
+                                                           slot_num=slot_num)
 
     @property
     def lpar_id(self):
@@ -1031,14 +1041,17 @@ class VFCClientAdapterElement(VClientStorageAdapterElement,
     """
 
     @classmethod
-    def bld(cls, adapter, wwpns=None):
+    def bld(cls, adapter, wwpns=None, slot_num=None):
         """Create a fresh Virtual Fibre Channel Client Adapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param wwpns: An optional set of two client WWPNs to set on the
                       adapter.
+        :param slot_num: An optional integer to be set as the Virtual
+                         slot number.
         """
-        adpt = super(VFCClientAdapterElement, cls).bld(adapter)
+        adpt = super(VFCClientAdapterElement, cls).bld(adapter,
+                                                       slot_num=slot_num)
 
         if wwpns is not None:
             adpt._wwpns(wwpns)
