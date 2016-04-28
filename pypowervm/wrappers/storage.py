@@ -882,8 +882,11 @@ class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
 class _VClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
     @classmethod
-    def bld(cls, adapter):
-        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+    def bld(cls, adapter, slot_num=None):
+        clad = super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+        if slot_num is not None:
+            clad._lpar_slot_num(slot_num)
+        return clad
 
     @property
     def lpar_id(self):
@@ -898,6 +901,10 @@ class _VClientAdapterMethods(ewrap.Wrapper):
     def lpar_slot_num(self):
         """The (int) slot number that the adapter is in."""
         return self._get_val_int(_VADPT_SLOT_NUM)
+
+    def _lpar_slot_num(self, slot_num):
+        """Set the (int) slot number that the adapter is in."""
+        self.set_parm_value(_VADPT_SLOT_NUM, slot_num)
 
 
 @six.add_metaclass(abc.ABCMeta)
