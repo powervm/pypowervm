@@ -46,7 +46,8 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
-def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
+def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
+                      lpar_slot_num=None):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -69,8 +70,10 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
                       storage.
     :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
                          that is to be connected.
-    :param fuse_limit: (Optional) The max number of devices to allow on one
-                       scsi bus before creating a second SCSI bus.
+    :param fuse_limit: (Optional, Default: 32) The max number of devices to
+                       allow on one scsi bus before creating a second SCSI bus.
+    :param lpar_slot_num: (Optional, Default: None) The slot number for the
+                          client LPAR to use in the mapping.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     """
@@ -98,7 +101,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
 
     # Build the mapping.
     scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                                   fuse_limit)
+                                   fuse_limit, lpar_slot_num)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
@@ -116,7 +119,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                        fuse_limit=32):
+                        fuse_limit=32, lpar_slot_num=None):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -135,8 +138,10 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                       storage.
     :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
                          that is to be connected.
-    :param fuse_limit: (Optional) The max number of devices to allow on one
-                       scsi bus before creating a second SCSI bus.
+    :param fuse_limit: (Optional, Default: 32) The max number of devices to
+                       allow on one scsi bus before creating a second SCSI bus.
+    :param lpar_slot_num: (Optional, Default: None) The slot number for the
+                          client LPAR to use in the mapping.
     :return: The SCSI mapping that can be added to the vios_w.  This does not
              do any updates to the wrapper itself.
     """
@@ -167,10 +172,11 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     # to build from scratch.
     if clonable_map is not None:
         scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(clonable_map,
-                                                           storage_elem)
+                                                           storage_elem,
+                                                           lpar_slot_num)
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(adapter, host_uuid, lpar_uuid,
-                                             storage_elem)
+                                             storage_elem, lpar_slot_num)
     return scsi_map
 
 
