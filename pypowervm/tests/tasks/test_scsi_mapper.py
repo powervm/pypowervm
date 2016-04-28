@@ -167,7 +167,8 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         scsi_map = scsi_mapper.build_vscsi_mapping('host_uuid', self.v1wrap,
-                                                   LPAR_UUID, pv)
+                                                   LPAR_UUID, pv,
+                                                   lpar_slot_num=23)
 
         # Get the original count
         orig_mappings = len(self.v1wrap.scsi_mappings)
@@ -176,6 +177,9 @@ class TestSCSIMapper(testtools.TestCase):
         resp1 = scsi_mapper.add_map(self.v1wrap, scsi_map)
         self.assertIsNotNone(resp1)
         self.assertIsInstance(resp1, pvm_vios.VSCSIMapping)
+
+        # Assert that the desired client slot number was set
+        self.assertEqual(resp1.client_adapter.lpar_slot_num, 23)
 
         # The mapping should return as None, as it is already there.
         resp2 = scsi_mapper.add_map(self.v1wrap, scsi_map)
