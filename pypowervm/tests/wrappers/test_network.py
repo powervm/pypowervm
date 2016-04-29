@@ -542,6 +542,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
+        self.assertTrue(test.enabled)
 
     def test_trunk_crt(self):
         """Tests a standard create of the CNA."""
@@ -560,6 +561,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertTrue(test.is_trunk)
         self.assertEqual(test.trunk_pri, 2)
+        self.assertTrue(test.enabled)
 
     def test_unique_crt(self):
         """Tests the create path with a non-standard flow for the CNA."""
@@ -581,6 +583,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
+        self.assertTrue(test.enabled)
 
     def test_unasi_field(self):
         """UseNextAvailable(High)SlotID field is used, as appropriate."""
@@ -628,6 +631,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertEqual('VSITID', self.entries.vsi_type_id)
         self.assertEqual('77.99', self.entries.vsi_type_version)
         self.assertEqual('VSIMID', self.entries.vsi_type_manager_id)
+        self.assertTrue(self.entries.enabled)
 
     def test_tagged_vlan_modification(self):
         """Tests that the tagged vlans can be modified."""
@@ -703,6 +707,14 @@ class TestCNAWrapper(twrap.TestWrapper):
     def test_lpar_id(self):
         """Test that we can get the local partition id."""
         self.assertEqual(3, self.entries.lpar_id)
+
+    def test_enabled(self):
+        """Test that we diable/enable."""
+        self.assertTrue(self.entries.enabled)
+        self.entries.enabled = false
+        self.assertFalse(self.entries.enabled)
+        self.entries.enabled = true
+        self.assertTrue(self.entries.enabled)
 
 if __name__ == "__main__":
     unittest.main()

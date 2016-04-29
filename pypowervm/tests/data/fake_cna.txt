@@ -37,6 +37,7 @@ BODY{
     <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
     <VariedOn kb="CUD" kxe="true">true</VariedOn>
     <VirtualSlotNumber kb="COD" kxe="false">32</VirtualSlotNumber>
+    <Enabled ksv="V1_3_0" kxe="false" kb="UOD">true</Enabled>
     <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
     <MACAddress kb="CUR" kxe="false">FAD4433ED120</MACAddress>
     <PortVLANID kb="CUR" kxe="false">100</PortVLANID>
