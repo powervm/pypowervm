@@ -542,6 +542,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
+        self.assertFalse(test.enabled)
 
     def test_trunk_crt(self):
         """Tests a standard create of the CNA."""
@@ -628,6 +629,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertEqual('VSITID', self.entries.vsi_type_id)
         self.assertEqual('77.99', self.entries.vsi_type_version)
         self.assertEqual('VSIMID', self.entries.vsi_type_manager_id)
+        self.assertTrue(self.dwrap.enabled)
 
     def test_tagged_vlan_modification(self):
         """Tests that the tagged vlans can be modified."""
@@ -703,6 +705,14 @@ class TestCNAWrapper(twrap.TestWrapper):
     def test_lpar_id(self):
         """Test that we can get the local partition id."""
         self.assertEqual(3, self.entries.lpar_id)
+
+    def test_enabled(self):
+        """Test that we disable/enable."""
+        self.assertTrue(self.dwrap.enabled)
+        self.dwrap.enabled = False
+        self.assertFalse(self.dwrap.enabled)
+        self.dwrap.enabled = True
+        self.assertTrue(self.dwrap.enabled)
 
 if __name__ == "__main__":
     unittest.main()
