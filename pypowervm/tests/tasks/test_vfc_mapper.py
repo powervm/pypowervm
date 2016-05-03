@@ -523,3 +523,15 @@ class TestAddRemoveMap(twrap.TestWrapper):
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
                                     port_map=fabric_map)
         self.assertEqual(1, len(maps))
+
+        # Pass in slot number to be set on the VFC adapter
+        fabric_map = ('10000090FA5371F1', '2 3')
+        resp = vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid,
+                                  fabric_map, lpar_slot_num=3)
+        self.assertIsNotNone(resp)
+        self.assertEqual(vios1_orig_map_count + 2, len(vios_wrap.vfc_mappings))
+        # Verify the update is now found.
+        maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
+                                    port_map=fabric_map)
+        self.assertEqual(1, len(maps))
+        self.assertEqual(3, maps[0].client_adapter.lpar_slot_num)
