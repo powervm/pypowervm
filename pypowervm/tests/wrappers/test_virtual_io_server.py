@@ -432,6 +432,28 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(mapping.client_adapter)
         self.assertEqual(['AA', 'BB'], mapping.client_adapter.wwpns)
 
+    def test_bld_vfc_mapping_with_slot(self):
+        mapping = vios.VFCMapping.bld(self.adpt, 'host_uuid',
+                                      'client_lpar_uuid', 'fcs0',
+                                      client_wwpns=['aa', 'bb'],
+                                      lpar_slot_num=3)
+        self.assertIsNotNone(mapping)
+
+        # Validate the FC Backing port
+        self.assertIsNotNone(mapping.backing_port)
+
+        # Validate the Server Adapter
+        self.assertIsNotNone(mapping.server_adapter)
+
+        # Validate the Client Adapter
+        self.assertIsNotNone(mapping.client_adapter)
+        self.assertEqual(['AA', 'BB'], mapping.client_adapter.wwpns)
+        # verify the slot number
+        self.assertEqual(3, mapping.client_adapter.lpar_slot_num)
+        # Assert that we set this to False when specifying the slot number
+        self.assertFalse(mapping.client_adapter._get_val_bool(
+            'UseNextAvailableSlotID'))
+
     def test_bld_scsi_mapping_from_existing(self):
         def map_has_pieces(smap, lpar_href=True, client_adapter=True,
                            server_adapter=True, storage=True,
