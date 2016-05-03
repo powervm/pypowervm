@@ -1050,14 +1050,17 @@ class VFCClientAdapterElement(VClientStorageAdapterElement,
     """
 
     @classmethod
-    def bld(cls, adapter, wwpns=None):
+    def bld(cls, adapter, wwpns=None, slot_num=None):
         """Create a fresh Virtual Fibre Channel Client Adapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param wwpns: An optional set of two client WWPNs to set on the
                       adapter.
+        :param slot_num: An optional integer to be set as the Virtual
+                         slot number.
         """
-        adpt = super(VFCClientAdapterElement, cls).bld(adapter)
+        adpt = super(VFCClientAdapterElement, cls).bld(adapter,
+                                                       slot_num=slot_num)
 
         if wwpns is not None:
             adpt._wwpns(wwpns)

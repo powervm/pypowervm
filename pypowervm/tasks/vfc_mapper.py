@@ -487,7 +487,8 @@ def find_vios_for_port_map(vios_wraps, port_map):
     return find_vios_for_wwpn(vios_wraps, port_map[0])[0]
 
 
-def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
+def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
+            lpar_slot_num=None):
     """Adds a vFC mapping to a given VIOS wrapper.
 
     These changes are not flushed back to the REST server.  The wrapper itself
@@ -501,6 +502,9 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
                      method).
     :param error_if_invalid: (Optional, Default: True) If the port mapping
                              physical port can not be found, raise an error.
+    :param lpar_slot_num: (Optional, Default: None) The client adapter
+                          VirtualSlotNumber to be set. If None the next
+                          available slot would be used.
     :return: The VFCMapping that was added.  If the mapping already existed
              then None is returned.
     """
@@ -538,7 +542,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
     vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, lpar_uuid,
-                                      p_port.name, client_wwpns=v_wwpns)
+                                      p_port.name, client_wwpns=v_wwpns,
+                                      lpar_slot_num=lpar_slot_num)
     vios_w.vfc_mappings.append(vfc_map)
     return vfc_map
 
