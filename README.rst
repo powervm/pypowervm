@@ -125,3 +125,8 @@ Developer Notes
   ``rr_enabled`` and ``rr_state`` of ``pypowervm.wrappers.logical_partition.LPAR``
   should not be used.  These properties are now deprecated and will be removed
   no sooner than January 1st, 2017.  Use the ``srr_enabled`` property instead.
+
+- The method ``pypowervm.tasks.storage.crt_lu_linked_clone`` is deprecated and
+  will be removed no sooner than January 1st, 2017.  You should now use the
+  ``pypowervm.tasks.storage.crt_lu`` method to create a linked clone by passing
+  the source image LU wrapper via the ``clone`` parameter.
