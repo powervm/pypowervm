@@ -193,6 +193,16 @@ class TestVNET(twrap.TestWrapper):
         self.assertRaises(exc.Error, cna._find_free_vlan, self.adpt,
                           'host_uuid', mock_vswitch)
 
+    @mock.patch('pypowervm.tasks.cna._find_free_vlan')
+    def test_assign_free_vlan(self, mock_find_vlan):
+        mock_find_vlan.return_value = 2016
+        mocked = mock.MagicMock()
+        mock_cna = mock.MagicMock(pvid=31, enabled=False)
+        self.assertEqual(
+            2016, cna.assign_free_vlan(mocked, mocked, mocked, mock_cna))
+        self.assertEqual(2016, mock_cna.pvid)
+        self.assertEqual(True, mock_cna.enabled)
+
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
     @mock.patch('pypowervm.wrappers.network.CNA.bld')
     @mock.patch('pypowervm.tasks.cna._find_free_vlan')

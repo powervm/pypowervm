@@ -15,6 +15,7 @@
 #    under the License.
 
 """Tasks around ClientNetworkAdapter."""
+from oslo_concurrency import lockutils
 
 import pypowervm.exceptions as exc
 from pypowervm.i18n import _
@@ -145,6 +146,15 @@ def _find_free_vlan(adapter, host_uuid, vswitch_w):
                     vswitch_w.name)
 
 
+def assign_free_vlan(adapter, host_uuid, vswitch_w, cna):
+    with lockutils.lock("reserve_vlan"):
+        vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+        cna.pvid = vlan
+        cna.enabled = True
+        cna.update()
+    return vlan
+
+
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                 crt_vswitch=True, mac_addr=None):
     """Creates a 'point-to-point' Client Network Adapter.
@@ -194,14 +204,15 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
     vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
                                         crt_vswitch)
 
-    # Find the free VLAN
-    vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+    with lockutils.lock("reserve_vlan"):
+        # Find the free VLAN
+        vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
 
-    # Build and create the CNA
-    client_adpt = pvm_net.CNA.bld(
-        adapter, vlan, vswitch_w.related_href, mac_addr=mac_addr)
-    client_adpt = client_adpt.create(parent_type=lpar.LPAR,
-                                     parent_uuid=lpar_uuid)
+        # Build and create the CNA
+        client_adpt = pvm_net.CNA.bld(
+            adapter, vlan, vswitch_w.related_href, mac_addr=mac_addr)
+        client_adpt = client_adpt.create(parent_type=lpar.LPAR,
+                                         parent_uuid=lpar_uuid)
 
     # Need to get the VIOS uuids to determine if the src_io_host_uuid is a VIOS
     vios_wraps = pvm_vios.VIOS.get(adapter)
