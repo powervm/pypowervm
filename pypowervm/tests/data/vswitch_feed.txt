@@ -1,0 +1,75 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh vswitch_feed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualSwitch', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '3708', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000GB1f9nIlVDdW57ZhA81QT-M:a17cec82-c18b-4c87-8be7-df4ca789296a; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Mon, 09 May 2016 22:39:17 GMT', 'X-Transaction-ID': 'XT11312943', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Mon, 09 May 2016 22:39:17 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': 'ebee115d-e281-4bfd-a138-86d8a78a645c', 'ETag': '-228271901'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>e6b27521-ef5f-337a-b82f-2a044dfbf07f</id>
+    <updated>2016-05-09T18:39:17.856-04:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualSwitch?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>2affcc5d-b3d7-3e63-abbd-e739070ba1c2</id>
+        <title>VirtualSwitch</title>
+        <published>2016-05-09T18:39:17.859-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualSwitch/2affcc5d-b3d7-3e63-abbd-e739070ba1c2?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1845306236</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSwitch">
+            <VirtualSwitch:VirtualSwitch xmlns:VirtualSwitch="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>2affcc5d-b3d7-3e63-abbd-e739070ba1c2</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <SwitchID kxe="false" kb="ROR">0</SwitchID>
+    <SwitchMode kb="CUD" kxe="false">Veb</SwitchMode>
+    <SwitchName kb="CUD" kxe="false">ETHERNET0</SwitchName>
+    <VirtualNetworks kb="CUD" kxe="false">
+        <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualNetwork/25a38933-a9e8-3cb2-baf3-0db62f1e258b" rel="related"/>
+    </VirtualNetworks>
+</VirtualSwitch:VirtualSwitch>
+        </content>
+    </entry>
+    <entry>
+        <id>31cd66a8-ddd5-3bf2-95fe-2301d10e0fad</id>
+        <title>VirtualSwitch</title>
+        <published>2016-05-09T18:39:17.860-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualSwitch/31cd66a8-ddd5-3bf2-95fe-2301d10e0fad?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1598191330</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSwitch">
+            <VirtualSwitch:VirtualSwitch xmlns:VirtualSwitch="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>31cd66a8-ddd5-3bf2-95fe-2301d10e0fad</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <SwitchID kxe="false" kb="ROR">1</SwitchID>
+    <SwitchMode kb="CUD" kxe="false">Vepa</SwitchMode>
+    <SwitchName kb="CUD" kxe="false">MGMTSWITCH</SwitchName>
+    <VirtualNetworks kb="CUD" kxe="false">
+        <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualNetwork/cd9135e6-503a-3757-8460-b089c0addafc" rel="related"/>
+    </VirtualNetworks>
+</VirtualSwitch:VirtualSwitch>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
