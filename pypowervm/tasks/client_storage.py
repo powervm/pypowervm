@@ -42,9 +42,8 @@ def udid_to_scsi_mapping(vios_w, udid, lpar_id, ignore_orphan=True):
         if not scsi_map.client_adapter and ignore_orphan:
             continue
 
-        # Is it for the right LPAR?  (The server adapter is present even if
-        # it's an orphan.)
-        if lpar_id != scsi_map.server_adapter.lpar_id:
+        # Check the client adapter
+        if lpar_id != scsi_map.client_adapter.lpar_id:
             continue
 
         if scsi_map.backing_storage.udid == udid:
