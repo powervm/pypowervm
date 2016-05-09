@@ -146,7 +146,7 @@ def _find_free_vlan(adapter, host_uuid, vswitch_w):
 
 
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
-                crt_vswitch=True, mac_addr=None):
+                crt_vswitch=True, slot_num=None, mac_addr=None):
     """Creates a 'point-to-point' Client Network Adapter.
 
     A point to point connection is one that has a VLAN that is shared only
@@ -184,6 +184,9 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                         if the vSwitch can not be found, the system should
                         attempt to create one (with the default parameters -
                         ex: Veb mode).
+    :param slot_num: Optional slot number to use for the CNA.  If not
+                     specified, will utilize the next available slot on the
+                     LPAR.
     :param mac_addr: (Optional, Default: None) The mac address.  If not
                      specified, one will be auto generated.
     :return: The CNA Wrapper that was created.
@@ -199,7 +202,8 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
 
     # Build and create the CNA
     client_adpt = pvm_net.CNA.bld(
-        adapter, vlan, vswitch_w.related_href, mac_addr=mac_addr)
+        adapter, vlan, vswitch_w.related_href,
+        slot_num=slot_num, mac_addr=mac_addr)
     client_adpt = client_adpt.create(parent_type=lpar.LPAR,
                                      parent_uuid=lpar_uuid)
 
