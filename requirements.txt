@@ -12,4 +12,4 @@ requests>=2.5.2
 six>=1.9.0
 futures
 psutil>=1.1.1,<2.0.0
-taskflow>=1.16.0
+taskflow>=1.16.0,<1.31.0
