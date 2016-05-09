@@ -261,7 +261,7 @@ class _FunctorSubtask(Subtask):
         return self._func(wrapper, *_args, **_kwargs)
 
 
-class WrapperTask(tf_task.BaseTask):
+class WrapperTask(tf_task.Task):
     """An atomic modify-and-POST transaction Task over a single EntryWrapper.
 
     The modifications should comprise some number of Subtask instances, added
@@ -495,7 +495,7 @@ class ContextThreadPoolExecutor(th.ThreadPoolExecutor):
         return super(ContextThreadPoolExecutor, self).submit(wrapped)
 
 
-class FeedTask(tf_task.BaseTask):
+class FeedTask(tf_task.Task):
     """Invokes WrapperTasks in parallel over each EntryWrapper in a feed.
 
     Usage
