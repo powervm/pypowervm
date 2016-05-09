@@ -242,3 +242,17 @@ class NoDefaultTierFoundOnSSP(AbstractMsgFmtError):
     """Looked for a default Tier on the SSP, but didn't find it."""
     msg_fmt = _("Couldn't find the default Tier on Shared Storage Pool "
                 "%(ssp_name)s")
+
+
+class InvalidHostForRebuild(AbstractMsgFmtError):
+    pass
+
+
+class InvalidHostForRebuildNotEnoughVIOS(InvalidHostForRebuild):
+    msg_fmt = _("There are not enough Virtual I/O Servers to support the "
+                "virtual machine's volumes.")
+
+
+class InvalidHostForRebuildInvalidIOType(InvalidHostForRebuild):
+    msg_fmt = _("Can not rebuild the virtual machine.  It is using an I/O "
+                "type of %(io_type)s which is not supported for VM rebuild.")
