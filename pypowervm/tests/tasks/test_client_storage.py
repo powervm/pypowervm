@@ -28,30 +28,24 @@ class TestClientStorage(twrap.TestWrapper):
     def test_udid2scsi(self):
         """Test udid_to_scsi_mapping."""
 
-        def lpar_mock(lpar_id):
-            lpmock = mock.Mock()
-            lpmock.configure_mock(id=lpar_id)
-            return lpmock
-
         maps = self.dwrap.scsi_mappings
 
         # 2nd mapping has no client adapter
-        lpar = lpar_mock(maps[1].server_adapter.lpar_id)
+        lpar_id = maps[1].server_adapter.lpar_id
         # Default: ignore orphan
         self.assertIsNone(clstor.udid_to_scsi_mapping(
-            self.dwrap, maps[1].backing_storage.udid, lpar))
+            self.dwrap, maps[1].backing_storage.udid, lpar_id))
         # Don't ignore orphan
         self.assertEqual(maps[1], clstor.udid_to_scsi_mapping(
-            self.dwrap, maps[1].backing_storage.udid, lpar,
+            self.dwrap, maps[1].backing_storage.udid, lpar_id,
             ignore_orphan=False))
         # Doesn't work if the LPAR ID is wrong
         self.assertIsNone(clstor.udid_to_scsi_mapping(
-            self.dwrap, maps[1].backing_storage.udid, lpar_mock(123),
+            self.dwrap, maps[1].backing_storage.udid, 123,
             ignore_orphan=False))
 
         # 4th mapping has client adapter but no backing storage
-        self.assertIsNone(clstor.udid_to_scsi_mapping(self.dwrap, 'bogus',
-                                                      lpar_mock(22)))
+        self.assertIsNone(clstor.udid_to_scsi_mapping(self.dwrap, 'bogus', 22))
 
     def test_c_wwpn_to_vfc(self):
         """Test c_wwpn_to_vfc_mapping."""
