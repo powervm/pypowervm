@@ -17,7 +17,7 @@
 from pypowervm import util
 
 
-def udid_to_scsi_mapping(vios_w, udid, lpar_w, ignore_orphan=True):
+def udid_to_scsi_mapping(vios_w, udid, lpar_id, ignore_orphan=True):
     """Finds the SCSI mapping (if any) for a given backing storage udid.
 
     This is a helper method that will parse through a given VIOS wrapper
@@ -27,8 +27,7 @@ def udid_to_scsi_mapping(vios_w, udid, lpar_w, ignore_orphan=True):
     :param vios_w: The Virtual I/O Server wrapper.  Should have the Storage
                    and SCSI mapping XAG associated with it.
     :param udid: The volume's udid.
-    :param lpar_w: LPAR EntryWrapper representing the client LPAR whose mapping
-                   is to be found.
+    :param lpar_id: The LPARs 'short' id.
     :param ignore_orphan: (Optional, Default: True) If set to True, any orphan
                           SCSI mappings (those with no client adapter) will be
                           ignored.
@@ -45,7 +44,7 @@ def udid_to_scsi_mapping(vios_w, udid, lpar_w, ignore_orphan=True):
 
         # Is it for the right LPAR?  (The server adapter is present even if
         # it's an orphan.)
-        if lpar_w.id != scsi_map.server_adapter.lpar_id:
+        if lpar_id != scsi_map.server_adapter.lpar_id:
             continue
 
         if scsi_map.backing_storage.udid == udid:
