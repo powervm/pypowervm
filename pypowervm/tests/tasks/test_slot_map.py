@@ -348,15 +348,11 @@ class TestSlotMapStore(testtools.TestCase):
         self.assertEqual(smt1.topology, smt2.topology)
 
 
-class TestBuildSlotMap(testtools.TestCase):
-
-    def setUp(self):
-        super(TestBuildSlotMap, self).setUp()
-
-    # TODO(mdrabe): Test the slot getters
-
-
 class TestRebuildSlotMap(testtools.TestCase):
+    """Test for RebuildSlotMap class
+
+    Tests BuildSlotMap class's get methods as well.
+    """
 
     def setUp(self):
         super(TestRebuildSlotMap, self).setUp()
@@ -386,7 +382,7 @@ class TestRebuildSlotMap(testtools.TestCase):
         self.assertEqual(None, rsm.get_vea_slot('3AEAC528A7E3'))
         self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
 
-    def test_pv_rebuild_fails_w_lu(self):
+    def test_rebuild_fails_w_lu(self):
         """Test RebuildSlotMap fails when LUs exist in topology."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_W_LU
@@ -395,7 +391,7 @@ class TestRebuildSlotMap(testtools.TestCase):
             slot_map.RebuildSlotMap, smt,
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
-    def test_pv_vscsi_build_out_fails_w_vopt(self):
+    def test_rebuild_fails_w_vopt(self):
         """Test RebuildSlotMap fails when a Vopt exists in topology."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_W_VOPT
@@ -404,7 +400,7 @@ class TestRebuildSlotMap(testtools.TestCase):
             slot_map.RebuildSlotMap, smt,
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
-    def test_pv_vscsi_build_out_fails_w_vdisk(self):
+    def test_rebuild_fails_w_vdisk(self):
         """Test RebuildSlotMap fails when VDisks exist in topology."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_W_VDISK
@@ -414,31 +410,67 @@ class TestRebuildSlotMap(testtools.TestCase):
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
     def test_pv_vscsi_build_out_1(self):
-        """Test RebuildSlotMap deterministic"""
+        """Test RebuildSlotMap deterministic."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_PV_1
-        bsp = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
                                       VOL_TO_VIO2, {})
 
         # Deterministic. vios1 gets slot 1
-        self.assertEqual(
-            bsp._build_map['PV']['vios1'],
-            {'pv_udid3': 1, 'pv_udid2': 1, 'pv_udid1': 1})
+        for udid in rsm._build_map['PV']['vios1']:
+            self.assertEqual(
+                1, rsm.get_pv_vscsi_slot(self.vio1, udid))
 
         # Deterministic. vios2 gets slot 2
-        self.assertEqual(
-            bsp._build_map['PV']['vios2'],
-            {'pv_udid3': 2, 'pv_udid1': 2, 'pv_udid4': 2})
+        for udid in rsm._build_map['PV']['vios2']:
+            self.assertEqual(
+                2, rsm.get_pv_vscsi_slot(self.vio2, udid))
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        self.assertIsNone(
+            rsm.get_pv_vscsi_slot(self.vio1, 'pv_udid4'))
+        self.assertIsNone(
+            rsm.get_pv_vscsi_slot(self.vio2, 'pv_udid2'))
+
+    def test_pv_vscsi_build_out_arbitrary_dest_vioses(self):
+        """Test RebuildSlotMap with multiple candidate dest VIOSes."""
+        smt = SlotMapTestImpl('foo')
+        smt._slot_topo = SCSI_PV_ARB_MAP
+
+        rsm = slot_map.RebuildSlotMap(
+            smt, [self.vio1, self.vio2], VOL_TO_VIO_2_VIOS_ARB, {})
+
+        # Since this isn't deterministic we want to make sure each UDID
+        # got their slot assigned to one VIOS and not the other.
+        expected_map = {'pv_udid1': 47, 'pv_udid2': 9, 'pv_udid3': 23,
+                        'pv_udid4': 56}
+        for udid in expected_map:
+            if not rsm.get_pv_vscsi_slot(self.vio1, udid):
+                self.assertEqual(
+                    expected_map[udid], rsm.get_pv_vscsi_slot(self.vio2, udid))
+            else:
+                self.assertEqual(
+                    expected_map[udid], rsm.get_pv_vscsi_slot(self.vio1, udid))
+                self.assertIsNone(rsm.get_pv_vscsi_slot(self.vio2, udid))
 
     def test_pv_udid_not_found_on_dest(self):
         """Test RebuildSlotMap fails when UDID not found on dest."""
-        # TODO(mdrabe)
-        pass
+        smt = SlotMapTestImpl('foo')
+        smt._slot_topo = SCSI_PV_3
+        self.assertRaises(
+            pv_e.InvalidHostForRebuildNotEnoughVIOS,
+            slot_map.RebuildSlotMap, smt,
+            [self.vio1, self.vio2], BAD_VOL_TO_VIO_FOR_PV_3, {})
 
     def test_more_pv_udids_than_dest_vioses_fails(self):
         """Test RebuildSlotMap fails when there's not enough VIOSes."""
-        # TODO(mdrabe)
-        pass
+        smt = SlotMapTestImpl('foo')
+        smt._slot_topo = SCSI_PV_1
+        self.assertRaises(
+            pv_e.InvalidHostForRebuildNotEnoughVIOS,
+            slot_map.RebuildSlotMap, smt, [self.vio1, self.vio2],
+            VOL_TO_VIO_1_VIOS_PV1, {})
 
 SCSI_W_LU = {
     1: {
@@ -495,7 +527,7 @@ SCSI_PV_1 = {
     }
 }
 
-SCSI_PV_2 = {
+SCSI_PV_ARB_MAP = {
     47: {
         slot_map.IOCLASS.PV: {
             'pv_udid1': None
@@ -503,19 +535,48 @@ SCSI_PV_2 = {
     },
     9: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None
+            'pv_udid2': None
         }
     },
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None
+            'pv_udid3': None
         }
     },
     56: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None
+            'pv_udid4': None
         }
     }
+}
+
+SCSI_PV_3 = {
+    23: {
+        slot_map.IOCLASS.PV: {
+            'pv_udid1': None
+        }
+    },
+    12: {
+        slot_map.IOCLASS.PV: {
+            'pv_udid2': None
+        }
+    },
+    4: {
+        slot_map.IOCLASS.PV: {
+            'pv_udid3': None
+        }
+    }
+}
+
+BAD_VOL_TO_VIO_FOR_PV_3 = {
+    'pv_udid1': [
+        'vios1',
+        'vios2'
+    ],
+    'pv_udid2': [
+        'vios1',
+        'vios2'
+    ]
 }
 
 VOL_TO_VIO1 = {
@@ -550,6 +611,40 @@ VOL_TO_VIO2 = {
         'vios2'
     ],
     'pv_udid4': [
+        'vios2'
+    ]
+}
+
+VOL_TO_VIO_1_VIOS_PV1 = {
+    'pv_udid1': [
+        'vios1'
+    ],
+    'pv_udid2': [
+        'vios1'
+    ],
+    'pv_udid3': [
+        'vios1'
+    ],
+    'pv_udid4': [
+        'vios1'
+    ]
+}
+
+VOL_TO_VIO_2_VIOS_ARB = {
+    'pv_udid1': [
+        'vios1',
+        'vios2'
+    ],
+    'pv_udid2': [
+        'vios1',
+        'vios2'
+    ],
+    'pv_udid3': [
+        'vios1',
+        'vios2'
+    ],
+    'pv_udid4': [
+        'vios1',
         'vios2'
     ]
 }
