@@ -20,6 +20,7 @@ e.g. on the target system of a remote rebuild.
 """
 
 import collections
+import copy
 import pickle
 import six
 
@@ -453,6 +454,11 @@ class RebuildSlotMap(BuildSlotMap):
         """Builds the '_build_map' for the PV physical volumes."""
         slots_order = self._vscsi_build_slot_order()
 
+        # We're going to use the vol_to_vio dictionary for consistency and
+        # remove elements from it. We need to deepcopy so that the original
+        # remains the same.
+        vol_to_vio_cp = copy.deepcopy(vol_to_vio)
+
         for slot in slots_order:
             if not self._slot_store.topology[slot].get(IOCLASS.PV):
                 continue
@@ -465,13 +471,13 @@ class RebuildSlotMap(BuildSlotMap):
 
                 # If the UDID isn't anywhere to be found on the destination
                 # VIOSes then we have a problem.
-                if udid not in vol_to_vio:
+                if udid not in vol_to_vio_cp:
                     raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
 
                 # Inner Join. The goal is to end up with a set that only has
                 # VIOSes which can see every backing storage elem for this
                 # slot.
-                candidate_vioses &= set(vol_to_vio[udid])
+                candidate_vioses &= set(vol_to_vio_cp[udid])
 
                 # If the set of candidate VIOSes is empty then this host is
                 # not a candidate for rebuild.
@@ -499,7 +505,7 @@ class RebuildSlotMap(BuildSlotMap):
                 # identify it. We may hit an invalid host for rebuild exception
                 # if this happens or we may not. It depends on the differences
                 # between source and destination VIOSes.
-                vol_to_vio[udid].remove(vios_uuid_for_slot)
+                vol_to_vio_cp[udid].remove(vios_uuid_for_slot)
 
     def _vea_build_out(self):
         """Builds the '_build_map' for the veas."""
