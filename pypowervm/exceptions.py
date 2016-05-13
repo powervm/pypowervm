@@ -256,3 +256,10 @@ class InvalidHostForRebuildNotEnoughVIOS(InvalidHostForRebuild):
 class InvalidHostForRebuildInvalidIOType(InvalidHostForRebuild):
     msg_fmt = _("Can not rebuild the virtual machine.  It is using an I/O "
                 "type of %(io_type)s which is not supported for VM rebuild.")
+
+
+class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
+    msg_fmt = _("The number of VFC slots on the target system "
+                "(%(rebuild_slots)d) does not match the number of slots on "
+                "the client system (%(original_slots)d).  Unable to rebuild "
+                "this virtual machine on this system.")

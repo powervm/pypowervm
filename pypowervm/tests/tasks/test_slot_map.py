@@ -440,6 +440,55 @@ class TestRebuildSlotMap(testtools.TestCase):
         # TODO(mdrabe)
         pass
 
+    def test_npiv_build_out(self):
+        """Test _npiv_build_out."""
+        # Create a topology that will be converted to a rebuild map
+        smt = SlotMapTestImpl('foo')
+        vios1 = mock.Mock()
+        vios1.get_pfc_wwpns = mock.Mock(return_value=['wwpn1'])
+        vios2 = mock.Mock()
+        vios2.get_pfc_wwpns = mock.Mock(return_value=['wwpn2'])
+        smt._slot_topo = {
+            3: {'VFC': {'fab1': None}}, 4: {'VFC': {'fab7': None}},
+            5: {'VFC': {'fab10': None}}, 6: {'VFC': {'fab8': None}},
+            7: {'VFC': {'fab9': None}}, 8: {'VFC': {'fab9': None}},
+            9: {'VFC': {'fab1': None}}, 10: {'VFC': {'fab9': None}},
+            11: {'VFC': {'fab1': None}}, 12: {'VFC': {'fab7': None}},
+            113: {'VFC': {'fab7': None}}, 114: {'VFC': {'fab7': None}}}
+
+        # Run the actual test and verify an exception is raised
+        self.assertRaises(pv_e.InvalidHostForRebuildNotEnoughVIOS,
+                          slot_map.RebuildSlotMap, smt, [vios1, vios2], None,
+                          ['fab1'])
+
+        # Run the actual test
+        fabrics = ['fab1', 'fab2', 'fab7', 'fab8', 'fab9', 'fab10', 'fab27']
+        rsm = slot_map.RebuildSlotMap(smt, [vios1, vios2], None, fabrics)
+
+        # Verify rebuild map was created successfully
+        self.assertEqual({'VFC': {'fab1': [3, 9, 11], 'fab10': [5], 'fab2': [],
+                                  'fab27': [], 'fab7': [4, 12, 113, 114],
+                                  'fab8': [6], 'fab9': [7, 8, 10]}},
+                         rsm._build_map)
+
+        # Verify the getters return the slots correctly
+        self.assertEqual([3, 9, 11], rsm.get_vfc_slots('fab1', 3))
+        self.assertEqual([4, 12, 113, 114], rsm.get_vfc_slots('fab7', 4))
+        self.assertEqual([6], rsm.get_vfc_slots('fab8', 1))
+        self.assertEqual([7, 8, 10], rsm.get_vfc_slots('fab9', 3))
+        self.assertEqual([5], rsm.get_vfc_slots('fab10', 1))
+        self.assertEqual([], rsm.get_vfc_slots('fab2', 0))
+        self.assertEqual([], rsm.get_vfc_slots('fab27', 0))
+
+        # Check None paths
+        self.assertEqual([], rsm.get_vfc_slots('badfab', 0))
+        self.assertEqual([None], rsm.get_vfc_slots('badfab', 1))
+        self.assertEqual([None, None], rsm.get_vfc_slots('badfab', 2))
+
+        # Check error path.
+        self.assertRaises(pv_e.InvalidHostForRebuildSlotMismatch,
+                          rsm.get_vfc_slots, 'fab1', 2)
+
 SCSI_W_LU = {
     1: {
         slot_map.IOCLASS.LU: {
