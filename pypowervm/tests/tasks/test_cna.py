@@ -218,11 +218,11 @@ class TestVNET(twrap.TestWrapper):
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
             self.adpt, 'host_uuid', 'lpar_uuid',
             ['src_io_host_uuid', 'vios_uuid2'], mock_vswitch, crt_vswitch=True,
-            mac_addr='aabbccddeeff')
+            slot_num=1, mac_addr='aabbccddeeff')
 
         # Make sure the client and trunk were 'built'
         mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
-                                     mac_addr='aabbccddeeff')
+                                     slot_num=1, mac_addr='aabbccddeeff')
         mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
                                      trunk_pri=1)
         mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
