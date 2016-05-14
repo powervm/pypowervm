@@ -362,14 +362,28 @@ class BuildSlotMap(object):
         mgmt_vea = self._build_map.get(IOCLASS.MGMT_CNA, {})
         return mgmt_vea.get('mac', None), mgmt_vea.get('slot', None)
 
-    def get_vfc_slots(self, fabric):
+    def get_vfc_slots(self, fabric, number_of_slots):
         """Gets the client slot list for a given NPIV fabric.
 
         :param fabric: Fabric name.
+        :param number_of_slots: The number of slots for the specified fabric.
         :return: List of integer client slot numbers on which to map the given
                  fabric.
+        :raises: InvalidHostForRebuildSlotMismatch : if the target server
+                 requires more or less slots than the source server had.  If
+                 this is a first deploy (ex. a standard BuildSlotMap) will not
+                 matter, and will return an array of None's (indicating to use
+                 the next available slots).
         """
-        return self._build_map.get(IOCLASS.VFC, {}).get(fabric, None)
+        number_of_map_slots = len(self._build_map.get(IOCLASS.VFC,
+                                                      {}).get(fabric, []))
+        if not number_of_map_slots:
+            return [None] * number_of_slots
+        if number_of_map_slots == number_of_slots:
+            return self._build_map.get(IOCLASS.VFC, {}).get(fabric, None)
+        raise pvm_ex.InvalidHostForRebuildSlotMismatch(
+            rebuild_slots=number_of_slots,
+            original_slots=number_of_map_slots)
 
 
 class RebuildSlotMap(BuildSlotMap):
