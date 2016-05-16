@@ -35,7 +35,6 @@ from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
-from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as sys
 import pypowervm.wrappers.storage as stor
@@ -367,11 +366,13 @@ def default_tier_for_ssp(ssp):
 def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     """Create a new LU as a linked clone to a backing image LU.
 
+    :deprecated: Use crt_lu instead.
     :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
                 which to create the new LU.
     :param cluster: The Cluster EntryWrapper representing the Cluster against
                     which to invoke the LULinkedClone Job.
-    :param src_lu: The LU EntryWrapper representing the link source.
+    :param src_lu: The LU ElementWrapper or LUEnt EntryWrapper representing the
+                   link source.
     :param new_lu_name: The name to be given to the new LU.
     :param lu_size_gb: The size of the new LU in GB with decimal precision.  If
                        this is not specified or is smaller than the size of the
@@ -379,25 +380,14 @@ def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     :return: The updated SSP EntryWrapper containing the newly-created LU.
     :return: The newly created and linked LU.
     """
-    # New LU must be at least as big as the backing LU.
-    lu_size_gb = max(lu_size_gb, src_lu.capacity)
-
+    import warnings
+    warnings.warn(_("The crt_lu_linked_clone method is deprecated!  Please "
+                    "use the crt_lu method (clone=src_lu, size=lu_size_gb)."),
+                  DeprecationWarning)
     # Create the LU.  No locking needed on this method, as the crt_lu handles
     # the locking.
     ssp, dst_lu = crt_lu(ssp, new_lu_name, lu_size_gb, thin=True,
-                         typ=stor.LUType.DISK)
-
-    # Run the job to link the new LU to the source
-    jresp = ssp.adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
-                             suffix_parm='LULinkedClone')
-    jwrap = job.Job.wrap(jresp)
-
-    jparams = [
-        jwrap.create_job_parameter(
-            'SourceUDID', src_lu.udid),
-        jwrap.create_job_parameter(
-            'DestinationUDID', dst_lu.udid)]
-    jwrap.run_job(cluster.uuid, job_parms=jparams)
+                         typ=stor.LUType.DISK, clone=src_lu)
 
     return ssp, dst_lu
 
@@ -604,7 +594,7 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
-def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
+def crt_lu(tier_or_ssp, name, size, thin=None, typ=None, clone=None):
     """Create a Logical Unit on the specified Tier.
 
     :param tier_or_ssp: Tier or SSP EntryWrapper denoting the Tier or Shared
@@ -616,6 +606,8 @@ def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
                  unspecified, use the server default.
     :param typ: The type of LU to create, one of the LUType values.  If
                 unspecified, use the server default.
+    :param clone: If the new LU is to be a linked clone, this param is a
+                  LU(Ent) wrapper representing the backing image LU.
     :return: If the tier_or_ssp argument is an SSP, the updated SSP wrapper
              (containing the new LU and with a new etag) is returned.
              Otherwise, the first return value is the Tier.
@@ -624,7 +616,8 @@ def crt_lu(tier_or_ssp, name, size, thin=None, typ=None):
     is_ssp = isinstance(tier_or_ssp, stor.SSP)
     tier = default_tier_for_ssp(tier_or_ssp) if is_ssp else tier_or_ssp
 
-    lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ)
+    lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ,
+                        clone=clone)
     lu = lu.create(parent=tier)
 
     if is_ssp:

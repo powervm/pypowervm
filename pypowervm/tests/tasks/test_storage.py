@@ -25,7 +25,6 @@ import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.utils.transaction as tx
-import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -539,7 +538,7 @@ class TestLU(testtools.TestCase):
         ssp = mock.Mock(spec=stor.SSP)
         tier = mock.Mock(spec=stor.Tier)
 
-        def validate(ret, use_ssp, thin, typ):
+        def validate(ret, use_ssp, thin, typ, clone):
             self.assertEqual(ssp.refresh.return_value if use_ssp else tier,
                              ret[0])
             self.assertEqual(mock_lu_bld.return_value.create.return_value,
@@ -549,30 +548,38 @@ class TestLU(testtools.TestCase):
                     ssp.adapter, parent=ssp, is_default=True, one_result=True)
             mock_lu_bld.assert_called_with(
                 ssp.adapter if use_ssp else tier.adapter, 'lu5', 10, thin=thin,
-                typ=typ)
+                typ=typ, clone=clone)
             mock_lu_bld.return_value.create.assert_called_with(
                 parent=mock_tier_srch.return_value if use_ssp else tier)
             mock_lu_bld.reset_mock()
 
         # No optionals
-        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None)
-        validate(ts.crt_lu(ssp, 'lu5', 10), True, None, None)
+        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None, None)
+        validate(ts.crt_lu(ssp, 'lu5', 10), True, None, None, None)
 
         # Thin
-        validate(ts.crt_lu(tier, 'lu5', 10, thin=True), False, True, None)
-        validate(ts.crt_lu(ssp, 'lu5', 10, thin=True), True, True, None)
+        validate(ts.crt_lu(tier, 'lu5', 10, thin=True), False, True, None,
+                 None)
+        validate(ts.crt_lu(ssp, 'lu5', 10, thin=True), True, True, None, None)
 
         # Type
         validate(ts.crt_lu(tier, 'lu5', 10, typ=stor.LUType.IMAGE), False,
-                 None, stor.LUType.IMAGE)
+                 None, stor.LUType.IMAGE, None)
         validate(ts.crt_lu(ssp, 'lu5', 10, typ=stor.LUType.IMAGE), True, None,
-                 stor.LUType.IMAGE)
+                 stor.LUType.IMAGE, None)
+
+        # Clone
+        clone = mock.Mock(udid='cloned_from_udid')
+        validate(ts.crt_lu(tier, 'lu5', 10, clone=clone), False, None, None,
+                 clone)
+        validate(ts.crt_lu(ssp, 'lu5', 10, clone=clone), True, None, None,
+                 clone)
 
         # Exception path
         mock_tier_srch.return_value = None
         self.assertRaises(exc.NoDefaultTierFoundOnSSP, ts.crt_lu, ssp, '5', 10)
         # But that doesn't happen if specifying tier
-        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None)
+        validate(ts.crt_lu(tier, 'lu5', 10), False, None, None, None)
 
     def test_rm_lu_by_lu(self):
         lu = self.ssp.logical_units[2]
@@ -626,35 +633,18 @@ class TestLULinkedClone(testtools.TestCase):
             lu._cloned_from_udid('yyabc123%d' % cloned_from_idx)
         return lu
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('warnings.warn')
     @mock.patch('pypowervm.tasks.storage.crt_lu')
-    def test_crt_lu_linked_clone(self, mock_crt_lu, mock_run_job):
-        clust1 = clust.Cluster.wrap(tju.load_file(CLUSTER, self.adpt))
+    def test_crt_lu_linked_clone(self, mock_crt_lu, mock_warn):
         src_lu = self.ssp.logical_units[0]
-        self.adpt.read.return_value = tju.load_file(LU_LINKED_CLONE_JOB,
-                                                    self.adpt)
-        mock_crt_lu.return_value = self.ssp, mock.Mock(udid='udid_linked_lu')
 
-        def verify_run_job(uuid, job_parms):
-            self.assertEqual(clust1.uuid, uuid)
-            self.assertEqual(
-                '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
-                '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
-                'rameterName>SourceUDID</web:ParameterName><web:ParameterValue'
-                '>xxabc1231</web:ParameterValue></web:JobParameter>'.
-                encode('utf-8'),
-                job_parms[0].toxmlstring())
-            self.assertEqual(
-                '<web:JobParameter xmlns:web="http://www.ibm.com/xmlns/systems'
-                '/power/firmware/web/mc/2012_10/" schemaVersion="V1_0"><web:Pa'
-                'rameterName>DestinationUDID</web:ParameterName><web:Parameter'
-                'Value>udid_linked_lu</web:ParameterValue></web:JobParameter>'.
-                encode('utf-8'),
-                job_parms[1].toxmlstring())
-        mock_run_job.side_effect = verify_run_job
-        ts.crt_lu_linked_clone(self.ssp, clust1, src_lu, 'linked_lu')
-        mock_crt_lu.assert_called_with(self.ssp, 'linked_lu', src_lu.capacity,
-                                       thin=True, typ=stor.LUType.DISK)
+        mock_crt_lu.return_value = ('ssp', 'dst_lu')
+        self.assertEqual(('ssp', 'dst_lu'), ts.crt_lu_linked_clone(
+            self.ssp, 'clust1', src_lu, 'linked_lu'))
+        mock_crt_lu.assert_called_once_with(
+            self.ssp, 'linked_lu', 0, thin=True, typ=stor.LUType.DISK,
+            clone=src_lu)
+        mock_warn.assert_called_once_with(mock.ANY, DeprecationWarning)
 
     def test_image_lu_in_use(self):
         # The orphan will trigger a warning as we cycle through all the LUs

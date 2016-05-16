@@ -224,6 +224,8 @@ class TestLUEnt(twrap.TestWrapper):
         self.assertEqual(lu.lu_type, 'VirtualIO_Disk')
         self.assertAlmostEqual(lu.capacity, 1, 1)
         self.assertFalse(lu.in_use)
+        self.assertEqual('296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b49'
+                         '7780a1799236ab', lu.cloned_from_udid)
 
     def test_lu_bld(self):
         lu = stor.LUEnt.bld(None, 'lu_name', 123)
@@ -234,28 +236,33 @@ class TestLUEnt(twrap.TestWrapper):
             'om:Atom/></uom:Metadata><uom:UnitCapacity>123.000000</uom:UnitCap'
             'acity><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
             encode('utf-8'))
-        lu = stor.LUEnt.bld(None, 'lu_name', 1.2345678, thin=True)
+        lu = stor.LUEnt.bld(None, 'lu_name', 1.2345678, thin=True,
+                            typ=stor.LUType.IMAGE)
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
             'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
             'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
-            ':UnitCapacity>1.234568</uom:UnitCapacity><uom:UnitName>lu_name</u'
-            'om:UnitName></uom:LogicalUnit>'.encode('utf-8'))
-        lu = stor.LUEnt.bld(None, 'lu_name', .12300019999, thin=False)
+            ':UnitCapacity>1.234568</uom:UnitCapacity><uom:LogicalUnitType>Vir'
+            'tualIO_Image</uom:LogicalUnitType><uom:UnitName>lu_name</uom:Unit'
+            'Name></uom:LogicalUnit>'.encode('utf-8'))
+        lu = stor.LUEnt.bld(None, 'lu_name', .12300019999, thin=False,
+                            clone=mock.Mock(capacity=1.23,
+                                            udid='cloned_from_udid'))
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
             'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
             'om:Atom/></uom:Metadata><uom:ThinDevice>false</uom:ThinDevice><uo'
-            'm:UnitCapacity>0.123000</uom:UnitCapacity><uom:UnitName>lu_name</'
-            'uom:UnitName></uom:LogicalUnit>'.encode('utf-8'))
+            'm:UnitCapacity>1.230000</uom:UnitCapacity><uom:ClonedFrom>cloned_'
+            'from_udid</uom:ClonedFrom><uom:UnitName>lu_name</uom:UnitName></u'
+            'om:LogicalUnit>'.encode('utf-8'))
 
     def test_lu_ordering(self):
         lu = stor.LUEnt._bld(None)
         lu._name('lu_name')
         lu._udid('lu_udid')
-        lu.set_parm_value(stor._LU_CLONED_FROM, 'cloned_from')
+        lu._cloned_from_udid('cloned_from')
         lu._capacity(123)
         lu.set_parm_value(stor._LU_THIN, 'true')
         self.assertEqual(

@@ -570,7 +570,7 @@ class _LUBase(ewrap.Wrapper):
     its properties/methods are the same, provided here.
     """
     @classmethod
-    def bld(cls, adapter, name, capacity, thin=None, typ=None):
+    def bld(cls, adapter, name, capacity, thin=None, typ=None, clone=None):
         """Build a fresh wrapper for LU creation within an SSP.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -578,6 +578,8 @@ class _LUBase(ewrap.Wrapper):
         :param capacity: Capacity in GB for the new LogicalUnit
         :param thin: Provision the new LU as thin (True) or thick (False).
         :param typ: Logical Unit type, one of the LUType values.
+        :param clone: If the new LU is to be a linked clone, this param is a
+                      LU(Ent) wrapper representing the backing image LU.
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
@@ -588,6 +590,10 @@ class _LUBase(ewrap.Wrapper):
             lu._is_thin(thin)
         if typ is not None:
             lu._lu_type(typ)
+        if clone is not None:
+            lu._cloned_from_udid(clone.udid)
+            # New LU must be at least as big as the backing LU.
+            lu._capacity(max(capacity, clone.capacity))
         return lu
 
     @classmethod
