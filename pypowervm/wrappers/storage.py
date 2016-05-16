@@ -168,6 +168,13 @@ SERVER_ADPT = 'ServerAdapter'
 
 VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
 
+# TargetDevice Constants
+_TD_LU_TD = 'SharedStoragePoolLogicalUnitVirtualTargetDevice'
+_TD_PV_TD = 'PhysicalVolumeVirtualTargetDevice'
+_TD_VOPT_TD = 'VirtualOpticalTargetDevice'
+_TD_VDISK_TD = 'LogicalVolumeVirtualTargetDevice'
+_TD_LUA = 'LogicalUnitAddress'
+
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
 class VG(ewrap.EntryWrapper):
@@ -316,10 +323,63 @@ class VMediaRepos(ewrap.ElementWrapper):
         self.set_float_gb_value(_VREPO_SIZE, new_size)
 
 
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
+class _VTargetDevMethods(ewrap.Wrapper):
+    """Base class for {storage_type}TargetDevice of an active VSCSIMapping."""
+
+    @classmethod
+    def bld(cls, adapter, lua):
+        """Build a new Virtual Target Device.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param lua: Logical Unit Address string to assign to the new VTD.
+        :return: A new {storage_type}TargetDev, where {storage_type} is
+                 appropriate to the subclass.
+        """
+        vtd = super(_VTargetDevMethods, cls)._bld(adapter)
+        vtd._lua(lua)
+        return vtd
+
+    @property
+    def lua(self):
+        """Logical Unit Address of the target device."""
+        return self._get_val_str(_TD_LUA)
+
+    def _lua(self, val):
+        """Set the Logical Unit Address of this target device."""
+        self.set_parm_value(_TD_LUA, val)
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_LU_TD, has_metadata=True)
+class LUTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """SSP Logical Unit Virtual Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_PV_TD, has_metadata=True)
+class PVTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Physical Volume Virtual Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_VDISK_TD, has_metadata=True)
+class VDiskTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Virtual Disk (Logical Volume) Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_VOPT_TD, has_metadata=True)
+class VOptTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Virtual Optical Media Target Device for a VSCSIMapping."""
+    pass
+
+
 @ewrap.ElementWrapper.pvm_type(VOPT_ROOT, has_metadata=True,
                                child_order=_VOPT_EL_ORDER)
 class VOptMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
+    target_dev_type = VOptTargetDev
 
     @classmethod
     def bld(cls, adapter, name, size=None, mount_type='rw'):
@@ -384,6 +444,7 @@ class VOptMedia(ewrap.ElementWrapper):
                                child_order=_PV_EL_ORDER)
 class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
+    target_dev_type = PVTargetDev
 
     @classmethod
     def bld(cls, adapter, name, udid=None):
@@ -496,6 +557,7 @@ class PV(ewrap.ElementWrapper):
                                child_order=_VDISK_EL_ORDER)
 class VDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
+    target_dev_type = VDiskTargetDev
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None):
@@ -569,6 +631,8 @@ class _LUBase(ewrap.Wrapper):
     SCSI mapping); or it is a first-class REST CHILD of Tier.  In either case,
     its properties/methods are the same, provided here.
     """
+    target_dev_type = LUTargetDev
+
     @classmethod
     def bld(cls, adapter, name, capacity, thin=None, typ=None, clone=None):
         """Build a fresh wrapper for LU creation within an SSP.

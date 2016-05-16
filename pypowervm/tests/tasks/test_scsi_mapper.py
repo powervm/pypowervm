@@ -134,20 +134,24 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(3, attempt_count)
 
     def test_mapping_new_mapping(self):
+        """Fuse limit, slot number, LUA via add_vscsi_mapping."""
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was added to existing
-        def validate_update(*kargs, **kwargs):
-            vios_w = kargs[0]
+        def validate_update(*args, **kwargs):
+            vios_w = args[0]
             self.assertEqual(6, len(vios_w.scsi_mappings))
 
+            new_map = vios_w.scsi_mappings[5]
             # Make sure that the adapters do not match
             self.assertNotEqual(vios_w.scsi_mappings[0].client_adapter,
-                                vios_w.scsi_mappings[5].client_adapter)
+                                new_map.client_adapter)
             self.assertNotEqual(vios_w.scsi_mappings[0].server_adapter,
-                                vios_w.scsi_mappings[5].server_adapter)
-
+                                new_map.server_adapter)
+            # Make sure we got the right slot number and LUA
+            self.assertEqual(23, new_map.client_adapter.lpar_slot_num)
+            self.assertEqual('the_lua', new_map.target_dev.lua)
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -156,8 +160,11 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
-                                      pv, fuse_limit=5)
+        # While we're here, make sure lpar_slot_num and lua go through.  This
+        # validates those kwargs in build_vscsi_mapping too.
+        scsi_mapper.add_vscsi_mapping(
+            'host_uuid', 'vios_uuid', LPAR_UUID, pv, fuse_limit=5,
+            lpar_slot_num=23, lua='the_lua')
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
