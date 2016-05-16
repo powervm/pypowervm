@@ -84,6 +84,7 @@ _SEA_PATH = u.xpath(_VIO_SEAS, net.SHARED_ETH_ADPT)
 
 # Mapping Constants
 _MAP_STORAGE = 'Storage'
+_MAP_TARGET_DEV = 'TargetDevice'
 _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
@@ -442,7 +443,7 @@ class VSCSIMapping(VStorageMapping):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
-            lpar_slot_num=None):
+            lpar_slot_num=None, lua=None):
         """Creates a new VSCSIMapping
 
         :param adapter: The pypowervm Adapter that will be used to create the
@@ -454,6 +455,10 @@ class VSCSIMapping(VStorageMapping):
         :param lpar_slot_num: (Optional, Default: None) The client slot number
                               to use in the new mapping. If None then we let
                               REST choose the slot number.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
         :return: The newly-created VSCSIMapping.
         """
         s_map = super(VSCSIMapping, cls)._bld(adapter)
@@ -464,10 +469,14 @@ class VSCSIMapping(VStorageMapping):
             adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
         s_map._backing_storage(stg_ref)
+        if lua is not None:
+            # Build a *TargetDev of the appropriate type for this stg_ref
+            s_map._target_dev(stg_ref.target_dev_type.bld(adapter, lua))
         return s_map
 
     @classmethod
-    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None):
+    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None,
+                          lua=None):
         """Clones the existing mapping, but swaps in the new storage elem.
 
         :param existing_map: The existing VSCSIMapping to clone.
@@ -477,10 +486,14 @@ class VSCSIMapping(VStorageMapping):
         :param lpar_slot_num: (Optional, Default: None) The client slot number
                               to use in the mapping. If None then the
                               existing slot number is used.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
         :return: The newly-created VSCSIMapping.
         """
-        # We do NOT want the TargetDevice element, so we explicitly copy the
-        # pieces we want from the original mapping.
+        # We do NOT want the source's TargetDevice element, so we explicitly
+        # copy the pieces we want from the original mapping.
         new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
         if existing_map.client_lpar_href is not None:
             new_map._client_lpar_href(existing_map.client_lpar_href)
@@ -494,14 +507,21 @@ class VSCSIMapping(VStorageMapping):
             # Set the slot number and remove the 'UseNextAvailableSlot' tag.
             new_map.client_adapter._lpar_slot_num(lpar_slot_num)
             new_map.client_adapter._use_next_slot(False)
+        if lua is not None:
+            if stg_ref is None:
+                raise ValueError(_("Can't specify target device LUA without a "
+                                   "backing storage device!"))
+            # Build a *TargetDev of the appropriate type for this stg_ref
+            new_map._target_dev(stg_ref.target_dev_type.bld(
+                existing_map.adapter, lua))
         return new_map
 
     @property
     def backing_storage(self):
         """The backing storage element (if applicable).
 
-        Refer to the 'volume_group' wrapper.  This element may be a
-        VirtualDisk or VirtualOpticalMedia.  May return None.
+        This element may be a PV, LU, VirtualDisk, or VirtualOpticalMedia.
+        May return None.
         """
         elem = self.element.find(_MAP_STORAGE)
         if elem is None:
@@ -531,6 +551,36 @@ class VSCSIMapping(VStorageMapping):
                                 children=[])
         stor_elem.inject(stg.element)
         self.inject(stor_elem)
+
+    @property
+    def target_dev(self):
+        """The target device associated with the backing storage.
+
+        May be any of {storage_type}TargetDev for {storage_type} in VDisk,
+        VOpt, LU or PV.
+        """
+        elem = self.element.find(_MAP_TARGET_DEV)
+        if elem is None:
+            return None
+        # If the virtual target device exists, it comprises a single child of
+        # elem.  But the exact type is unknown.
+        vtd_elems = list(elem)
+        if len(vtd_elems) != 1:
+            return None
+        # Let ElementWrapper.wrap figure out (from the registry) the
+        # appropriate return type.
+        return ewrap.ElementWrapper.wrap(vtd_elems[0])
+
+    def _target_dev(self, vtd):
+        """Sets the target device of this mapping.
+
+        :param vtd: A {storage_type}TargetDev ElementWrapper representing the
+                    virtual target device to assign.
+        """
+        vtd_elem = ent.Element(_MAP_TARGET_DEV, self.adapter, attrib={},
+                               children=[])
+        vtd_elem.inject(vtd.element)
+        self.inject(vtd_elem)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)

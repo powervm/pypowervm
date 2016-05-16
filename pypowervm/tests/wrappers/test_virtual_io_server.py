@@ -172,6 +172,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual(vmap.server_adapter.side, 'Server')
         # If the slot number is None then REST will assign the first available.
         self.assertIsNone(vmap.client_adapter.lpar_slot_num)
+        self.assertIsNone(vmap.target_dev)
         self.assertEqual('media_name', vmap.backing_storage.media_name)
         self.assertEqual('a_link', vmap.client_lpar_href)
         self.assertIsInstance(vmap.backing_storage, pvm_stor.VOptMedia)
@@ -184,17 +185,22 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual(vmap2.client_adapter.side, 'Client')
         self.assertEqual(vmap2.server_adapter.side, 'Server')
         self.assertIsNone(vmap2.client_adapter.lpar_slot_num)
+        self.assertIsNone(vmap2.target_dev)
         self.assertEqual('media_name2', vmap2.backing_storage.media_name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.VOptMedia)
 
         # Clone to a different device type
         vdisk = pvm_stor.VDisk.bld_ref(self.adpt, 'disk_name')
-        vmap3 = vios.VSCSIMapping.bld_from_existing(vmap, vdisk,
-                                                    lpar_slot_num=6)
+        vmap3 = vios.VSCSIMapping.bld_from_existing(
+            vmap, vdisk, lpar_slot_num=6, lua='vdisk_lua')
         self.assertIsNotNone(vmap3)
         self.assertIsNotNone(vmap3.element)
         self.assertEqual('Client', vmap3.client_adapter.side)
+        # Specifying 'lua' builds the appropriate type of target dev...
+        self.assertIsInstance(vmap3.target_dev, pvm_stor.VDiskTargetDev)
+        # ...with the correct LUA
+        self.assertEqual('vdisk_lua', vmap3.target_dev.lua)
         self.assertEqual(6, vmap3.client_adapter.lpar_slot_num)
         # Assert this is set to False when specifying the slot number
         # and building from an existing mapping
@@ -210,10 +216,12 @@ class TestViosMappings(twrap.TestWrapper):
         vdisk = pvm_stor.VDisk.bld_ref(self.adpt, 'disk_name')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
                                      'client_lpar_uuid', vdisk,
-                                     lpar_slot_num=5)
+                                     lpar_slot_num=5, lua='vdisk_lua')
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertIsInstance(vmap.target_dev, pvm_stor.VDiskTargetDev)
+        self.assertEqual('vdisk_lua', vmap.target_dev.lua)
         self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         # Assert that we set this to False when specifying the slot number
         self.assertFalse(vmap.client_adapter._get_val_bool(
@@ -230,6 +238,8 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
+        # Cloning without specifying 'lua' doesn't clone the target dev
+        self.assertIsNone(vmap2.target_dev)
         self.assertEqual(6, vmap2.client_adapter.lpar_slot_num)
         self.assertFalse(vmap2.client_adapter._get_val_bool(
             'UseNextAvailableSlotID'))
@@ -247,6 +257,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
+        self.assertIsNone(vmap.target_dev)
         self.assertEqual(5, vmap.client_adapter.lpar_slot_num)
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
@@ -256,11 +267,13 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Test cloning
         lu2 = pvm_stor.LU.bld_ref(self.adpt, 'disk_name2', 'udid2')
-        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, lu2)
+        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, lu2, lua='lu_lua')
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
         self.assertEqual(5, vmap2.client_adapter.lpar_slot_num)
+        self.assertIsInstance(vmap2.target_dev, pvm_stor.LUTargetDev)
+        self.assertEqual('lu_lua', vmap2.target_dev.lua)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('udid2', vmap2.backing_storage.udid)
@@ -284,12 +297,14 @@ class TestViosMappings(twrap.TestWrapper):
 
         # Test cloning
         pv2 = pvm_stor.PV.bld(self.adpt, 'disk_name2', 'udid2')
-        vmap2 = vios.VSCSIMapping.bld_from_existing(vmap, pv2,
-                                                    lpar_slot_num=6)
+        vmap2 = vios.VSCSIMapping.bld_from_existing(
+            vmap, pv2, lpar_slot_num=6, lua='pv_lua')
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
         self.assertEqual(6, vmap2.client_adapter.lpar_slot_num)
+        self.assertIsInstance(vmap2.target_dev, pvm_stor.PVTargetDev)
+        self.assertEqual('pv_lua', vmap2.target_dev.lua)
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
@@ -308,7 +323,11 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('a_link', vmap2.client_lpar_href)
         self.assertEqual(5, vmap2.client_adapter.lpar_slot_num)
+        self.assertIsNone(vmap.target_dev)
         self.assertIsNone(vmap2.backing_storage)
+        # Illegal to specify target dev properties without backing storage.
+        self.assertRaises(ValueError, vios.VSCSIMapping.bld_from_existing,
+                          vmap, None, lua='bogus')
 
     def test_get_scsi_mappings(self):
         mappings = self.dwrap.scsi_mappings
