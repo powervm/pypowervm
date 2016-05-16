@@ -1,41 +1,41 @@
 # Translations template for pypowervm.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 IBM Corp.
 # This file is distributed under the same license as the pypowervm project.
-# Automatically generated, 2015.
+# Automatically generated, 2016.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Project-Id-Version: pypowervm 1.0.1.dev127\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-06 13:53-0500\n"
-"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"POT-Creation-Date: 2016-04-14 02:55-0400\n"
+"PO-Revision-Date: 2016-04-14 02:55-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.3.2\n"
 
-#: pypowervm/utils/lpar_builder.py:180
+#: pypowervm/utils/lpar_builder.py:182
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr "処理装置係数は 0.05 から 1.0 の範囲内でなければなりません。値: %s"
 
-#: pypowervm/utils/lpar_builder.py:206
+#: pypowervm/utils/lpar_builder.py:208
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "論理区画名の長さが無効です。名前: %s"
 
-#: pypowervm/utils/lpar_builder.py:372
+#: pypowervm/utils/lpar_builder.py:379
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "フィールド「%(field)s」に無効な値「%(value)s」があります"
 
-#: pypowervm/utils/lpar_builder.py:427
+#: pypowervm/utils/lpar_builder.py:434
 msgid "None value is not valid."
 msgstr "値なしは無効です。"
 
-#: pypowervm/utils/lpar_builder.py:434
+#: pypowervm/utils/lpar_builder.py:441
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -44,7 +44,7 @@ msgstr ""
 "値「%(value)s」は、許容される選択項目 %(choices)s のあるフィールド"
 "「%(field)s」には無効です"
 
-#: pypowervm/utils/lpar_builder.py:460
+#: pypowervm/utils/lpar_builder.py:467
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s "
@@ -53,7 +53,7 @@ msgstr ""
 "フィールド「%(field)s」の値が最小値を下回っています。値: %(value)s "
 "最小: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:469
+#: pypowervm/utils/lpar_builder.py:476
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s "
@@ -62,7 +62,7 @@ msgstr ""
 "フィールド「%(field)s」の値が最大値を上回っています。値: %(value)s "
 "最大: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:523
+#: pypowervm/utils/lpar_builder.py:530
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
@@ -71,7 +71,7 @@ msgstr ""
 "「%(desired_field)s」の値が「%(max_field)s」値を上回っています。"
 "推奨: %(desired)s 最大: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:536
+#: pypowervm/utils/lpar_builder.py:543
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
@@ -80,7 +80,7 @@ msgstr ""
 "「%(desired_field)s」の値が「%(min_field)s」値を下回っています。"
 "推奨: %(desired)s 最小: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:574
+#: pypowervm/utils/lpar_builder.py:587
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
@@ -89,3 +89,27 @@ msgstr ""
 "メモリー値がホストの論理メモリー・ブロック・サイズ (%(lmb_size)s) の"
 "倍数ではありません。値: %(value)s"
 
+#: pypowervm/utils/lpar_builder.py:598
+#, python-format
+msgid ""
+"The managed system does not support active memory expansion. The "
+"expansion factor value '%(value)s' is not valid."
+msgstr ""
+"この管理対象システムでは Active Memory Expansion はサポートされていません。"
+"拡張係数値「%(value)s」が無効です。"
+
+#: pypowervm/utils/lpar_builder.py:604
+#, python-format
+msgid ""
+"Active memory expansion value must be greater than or equal to 1.0 and "
+"less than or equal to 10.0. A value of 0 is also valid and indicates that"
+" AME is off. '%(value)s' is not valid."
+msgstr ""
+"Active Memory Expansion 値は 1.0 以上 10.0 以下でなければなりません。"
+"値 0 も有効です。値 0 は、AME がオフであることを示します。"
+"「%(value)s」は無効です。"
+
+
+# ENGL1SH_VERS10N 41954_4 DO NOT REMOVE OR CHANGE THIS LINE
+# T9N_SRC_ID 45
+# T9N_SH1P_STR1NG PV131AAP001 3

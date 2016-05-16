@@ -1,41 +1,41 @@
 # Translations template for pypowervm.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 IBM Corp.
 # This file is distributed under the same license as the pypowervm project.
-# Automatically generated, 2015.
+# Automatically generated, 2016.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Project-Id-Version: pypowervm 1.0.1.dev127\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-06 13:53-0500\n"
-"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"POT-Creation-Date: 2016-04-14 02:55-0400\n"
+"PO-Revision-Date: 2016-04-14 02:55-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.3.2\n"
 
-#: pypowervm/utils/lpar_builder.py:180
+#: pypowervm/utils/lpar_builder.py:182
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
-msgstr "Il fattore delle unità processore deve essere compreso tra 0.05 e 1.0. Valore: %s"
+msgstr "Il fattore unità  processore deve essere tra 0.05 e 1.0. Valore: %s"
 
-#: pypowervm/utils/lpar_builder.py:206
+#: pypowervm/utils/lpar_builder.py:208
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "Il nome partizione logica ha una lunghezza non valida. Nome: %s"
 
-#: pypowervm/utils/lpar_builder.py:372
+#: pypowervm/utils/lpar_builder.py:379
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "Il campo '%(field)s' ha un valore non valido: '%(value)s'"
 
-#: pypowervm/utils/lpar_builder.py:427
-msgid "None value is not valid."
-msgstr "Il valore Nessuno, non è valido."
-
 #: pypowervm/utils/lpar_builder.py:434
+msgid "None value is not valid."
+msgstr "Il valore Nessuno non è valido."
+
+#: pypowervm/utils/lpar_builder.py:441
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -44,48 +44,72 @@ msgstr ""
 "Il valore '%(value)s' non è valido per il campo '%(field)s' con "
 "scelte accettabili: %(choices)s"
 
-#: pypowervm/utils/lpar_builder.py:460
+#: pypowervm/utils/lpar_builder.py:467
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s "
 "Minimum: %(minimum)s"
 msgstr ""
-"Il campo '%(field)s' ha un valore al di sotto del minimo. Valore: %(value)s "
+"Il campo '%(field)s' ha un valore inferiore al minimo. Valore: %(value)s "
 "Minimo: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:469
+#: pypowervm/utils/lpar_builder.py:476
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s "
 "Maximum: %(maximum)s"
 msgstr ""
-"Il campo '%(field)s' ha un valore al di sopra del massimo. Valore: %(value)s "
+"Il campo '%(field)s' ha un valore superiore al massimo. Valore: %(value)s "
 "Massimo: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:523
+#: pypowervm/utils/lpar_builder.py:530
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
 "Desired: %(desired)s Maximum: %(maximum)s"
 msgstr ""
-"'%(desired_field)s' haha un valore al di sopra del valore '%(max_field)s'. "
+"'%(desired_field)s' ha un valore superiore al valore '%(max_field)s'. "
 "Desiderato: %(desired)s Massimo: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:536
+#: pypowervm/utils/lpar_builder.py:543
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
 "Desired: %(desired)s Minimum: %(minimum)s"
 msgstr ""
-"'%(desired_field)s' haha un valore al di sotto del valore '%(min_field)s'. "
+"'%(desired_field)s' ha un valore inferiore al valore '%(min_field)s'. "
 "Desiderato: %(desired)s Minimo: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:574
+#: pypowervm/utils/lpar_builder.py:587
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
 "(%(lmb_size)s) of  the host.  Value: %(value)s"
 msgstr ""
-"Il valore della memoria non è un multiplo della dimensione del blocco di memoria logica "
+"Il valore di memoria non è un multiplo della dimensione di blocco della memoria logica "
 "(%(lmb_size)s) dell'host. Valore: %(value)s"
 
+#: pypowervm/utils/lpar_builder.py:598
+#, python-format
+msgid ""
+"The managed system does not support active memory expansion. The "
+"expansion factor value '%(value)s' is not valid."
+msgstr ""
+"Il sistema gestito non supporta l'espansione di memoria attiva. "
+"Il valore del fattore di espansione '%(value)s' non è valido."
+
+#: pypowervm/utils/lpar_builder.py:604
+#, python-format
+msgid ""
+"Active memory expansion value must be greater than or equal to 1.0 and "
+"less than or equal to 10.0. A value of 0 is also valid and indicates that"
+" AME is off. '%(value)s' is not valid."
+msgstr ""
+"Il valore di espansione di memoria attiva deve essere maggiore di o uguale a 1.0 e "
+"minore di o uguale a 10.0. Anche un valore 0 è valido e indica che"
+" AME è disattivo. '%(value)s' non è valido."
+
+
+# ENGL1SH_VERS10N 41954_4 DO NOT REMOVE OR CHANGE THIS LINE
+# T9N_SRC_ID 45
+# T9N_SH1P_STR1NG PV131AAP001 3
