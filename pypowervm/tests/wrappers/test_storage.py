@@ -566,5 +566,68 @@ class TestVIOS(twrap.TestWrapper):
         with self.assertLogs(stor.__name__, 'WARNING'):
             self.assertIsNone(self.dwrap.phys_vols[2].pg83)
 
+
+class TestTargetDevs(twrap.TestWrapper):
+    """Tests for VSCSIMapping.target_dev and {storage_type}TargetDev wrappers.
+
+    SCSI mapping target devices in the test file are laid out as follows:
+
+    index  type            LUA
+    0      LUTargetDev     0x8200000000000000
+    1      None            -
+    2      None            -
+    3      LUTargetDev     0x8400000000000000
+    4      LUTargetDev     0x8500000000000000
+    5      VOptTargetDev   0x8100000000000000
+    6      LUTargetDev     0x8300000000000000
+    7      PVTargetDev     0x8600000000000000
+    8      VDiskTargetDev  0x8700000000000000
+    """
+    file = 'fake_vios_ssp_npiv.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def test_subtypes_props(self):
+        """Right subtypes and LUA gets/sets from VSCSIMapping.target_dev."""
+        smaps = self.dwrap.scsi_mappings
+        # LU
+        self.assertIsInstance(smaps[0].target_dev, stor.LUTargetDev)
+        self.assertEqual('0x8200000000000000', smaps[0].target_dev.lua)
+        smaps[0].target_dev._lua('lu_lua')
+        self.assertEqual('lu_lua', smaps[0].target_dev.lua)
+        # No TargetDevice
+        self.assertIsNone(smaps[1].target_dev)
+        # VOpt
+        self.assertIsInstance(smaps[5].target_dev, stor.VOptTargetDev)
+        self.assertEqual('0x8100000000000000', smaps[5].target_dev.lua)
+        smaps[5].target_dev._lua('vopt_lua')
+        self.assertEqual('vopt_lua', smaps[5].target_dev.lua)
+        # PV
+        self.assertIsInstance(smaps[7].target_dev, stor.PVTargetDev)
+        self.assertEqual('0x8600000000000000', smaps[7].target_dev.lua)
+        smaps[7].target_dev._lua('pv_lua')
+        self.assertEqual('pv_lua', smaps[7].target_dev.lua)
+        # LV/VDisk
+        self.assertIsInstance(smaps[8].target_dev, stor.VDiskTargetDev)
+        self.assertEqual('0x8700000000000000', smaps[8].target_dev.lua)
+        smaps[8].target_dev._lua('lv_lua')
+        self.assertEqual('lv_lua', smaps[8].target_dev.lua)
+
+    def test_bld_set(self):
+        """Test *TargetDev.bld(lua) and setting VSCSIMapping.target_dev."""
+        smaps = self.dwrap.scsi_mappings
+        for klass in (stor.LUTargetDev, stor.VOptTargetDev, stor.PVTargetDev,
+                      stor.VDiskTargetDev):
+            lua_tag = klass.__class__.__name__ + "_lua"
+            # Build LU target dev
+            vtd = klass.bld('adap', lua_tag)
+            self.assertEqual('adap', vtd.adapter)
+            self.assertEqual(lua_tag, vtd.lua)
+            # Assign to a target_dev in the SCSI mappings.  Pick one that's
+            # initially empty: the first iteration will prove we can assign to
+            # an empty one; subsequent iterations will prove we can overwrite.
+            smaps[1]._target_dev(vtd)
+            self.assertIsInstance(smaps[1].target_dev, klass)
+            self.assertEqual(lua_tag, smaps[1].target_dev.lua)
+
 if __name__ == '__main__':
     unittest.main()
