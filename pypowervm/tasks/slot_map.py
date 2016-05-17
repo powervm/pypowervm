@@ -513,7 +513,7 @@ class RebuildSlotMap(BuildSlotMap):
                 # If the UDID isn't anywhere to be found on the destination
                 # VIOSes then we have a problem.
                 if udid not in vol_to_vio_cp:
-                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+                    raise pvm_ex.InvalidHostForRebuildNoVIOSForUDID(udid=udid)
 
                 # Inner Join. The goal is to end up with a set that only has
                 # VIOSes which can see every backing storage elem for this
@@ -523,7 +523,7 @@ class RebuildSlotMap(BuildSlotMap):
                 # If the set of candidate VIOSes is empty then this host is
                 # not a candidate for rebuild.
                 if not candidate_vioses:
-                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS(udid=udid)
 
             # Just take one, doesn't matter which one.
             # TODO(IBM): Perhaps find a way to ensure better distribution.
@@ -564,9 +564,9 @@ class RebuildSlotMap(BuildSlotMap):
         """Builds the build map for the NPIV fabrics.
 
         :param fabrics: List of NPIV fabric names.
-        :raise InvalidHostForRebuildNotEnoughVIOS: If any fabrics in the
-                                                   slot_map topology are not in
-                                                   fabrics.
+        :raise InvalidHostForRebuildFabricsNotFound: If any fabrics in the
+                                                     slot_map topology are not
+                                                     in fabrics.
         """
         seen_fabrics = set()
         for fabric in fabrics:
@@ -586,7 +586,8 @@ class RebuildSlotMap(BuildSlotMap):
         topo_fabrics = {fab for iomap in self._slot_store.topology.values()
                         for fab in iomap.get(IOCLASS.VFC, {}).keys()}
         if topo_fabrics - seen_fabrics:
-            raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+            raise pvm_ex.InvalidHostForRebuildFabricsNotFound(
+                fabrics=', '.join(topo_fabrics - seen_fabrics))
 
     def _put_mgmt_vea_slot(self, mac, slot):
         """Store client slot data for the managament VEA.

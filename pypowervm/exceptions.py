@@ -241,16 +241,26 @@ class ThisPartitionNotFoundException(AbstractMsgFmtError):
 class NoDefaultTierFoundOnSSP(AbstractMsgFmtError):
     """Looked for a default Tier on the SSP, but didn't find it."""
     msg_fmt = _("Couldn't find the default Tier on Shared Storage Pool "
-                "%(ssp_name)s")
+                "%(ssp_name)s.")
 
 
 class InvalidHostForRebuild(AbstractMsgFmtError):
     pass
 
 
+class InvalidHostForRebuildNoVIOSForUDID(InvalidHostForRebuild):
+    msg_fmt = _("The device with UDID %(udid)s was not found on any of the "
+                "Virtual I/O Servers.")
+
+
 class InvalidHostForRebuildNotEnoughVIOS(InvalidHostForRebuild):
-    msg_fmt = _("There are not enough Virtual I/O Servers to support all the "
-                "virtual machine's storage connections.")
+    msg_fmt = _("There are not enough Virtual I/O Servers to support the "
+                "virtual machine's device with UDID %(udid)s.")
+
+
+class InvalidHostForRebuildFabricsNotFound(InvalidHostForRebuild):
+    msg_fmt = _("The expected fabrics (%(fabrics)s) were not found on any of "
+                "the Virtual I/O Servers.")
 
 
 class InvalidHostForRebuildInvalidIOType(InvalidHostForRebuild):
