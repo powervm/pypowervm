@@ -250,7 +250,7 @@ class InvalidHostForRebuild(AbstractMsgFmtError):
 
 class InvalidHostForRebuildNotEnoughVIOS(InvalidHostForRebuild):
     msg_fmt = _("There are not enough Virtual I/O Servers to support all the "
-                "virtual machine's storage connections.")
+                "virtual machine's storage connections. %(reason)s")
 
 
 class InvalidHostForRebuildInvalidIOType(InvalidHostForRebuild):
