@@ -189,6 +189,11 @@ class SlotMapStore(object):
             # naming, we can use the extra_spec to identify which of multiple
             # VOpts we should pick up.
             extra_spec = bstor.name
+        else:
+            # For shared storage (PV/LU), we need to make sure the LUA (Logical
+            # Unit Address) of the device is preserved on the target.  This
+            # informs things like boot order.
+            extra_spec = vscsimap.target_dev.lua
 
         return bstor, stg_key, cslot, extra_spec
 
@@ -236,10 +241,10 @@ class SlotMapStore(object):
         IOCLASS     stg_key                     extra_spec
         ==============================================================
         CNA         CNA.mac                     VSwitch.name
-        VDISK       VDisk.udid                  VDisk.capacity (float)
         VOPT        VOptMedia.udid              Media name
-        PV          PV.udid                     None
-        LU          LU.udid                     None
+        VDISK       VDisk.udid                  VDisk.capacity (float)
+        PV          PV.udid                     LUA
+        LU          LU.udid                     LUA
         VFC         fabric name                 None
         """
         return self._slot_topo
@@ -328,8 +333,30 @@ class BuildSlotMap(object):
         self._slot_store = slot_store
         self._build_map = {}
 
+    def get_vscsi_slot(self, vios_w, udid):
+        """Gets the vSCSI client slot and extra spec for the VSCSI device.
+
+        :param vios_w: VIOS wrapper.
+        :param udid: UDID of the VSCSI device.
+        :return: Integer client slot number on which to create the VSCSIMapping
+                 from the specified VIOS for the storage with the specified
+                 udid.
+        :return: Extra specification appropriate to the storage type.  See the
+                 SlotMapStore.topology @property.
+        """
+        # Pull from the build map.  Will default to None (indicating to
+        # fuse an existing vscsi mapping or use next available slot for the
+        # mapping).
+        # Since the UDID should be universally unique, search all storage types
+        for by_vuuid in six.itervalues(self._build_map):
+            if vios_w.uuid in by_vuuid and udid in by_vuuid[vios_w.uuid]:
+                return by_vuuid[vios_w.uuid][udid]
+        return None, None
+
     def get_pv_vscsi_slot(self, vios_w, udid):
-        """Gets the vSCSI client slot for the PV.
+        """DEPRECATED; Gets the vSCSI client slot for the PV.
+
+        Use get_vscsi_slot.  This method will be removed shortly.
 
         :param vios_w: VIOS wrapper.
         :param udid: UDID of the physical volume.
@@ -340,7 +367,7 @@ class BuildSlotMap(object):
         # fuse an existing vscsi mapping or use next available slot for the
         # mapping).
         pv_vscsi_map = self._build_map.get(IOCLASS.PV, {})
-        return pv_vscsi_map.get(vios_w.uuid, {}).get(udid, None)
+        return pv_vscsi_map.get(vios_w.uuid, {}).get(udid, (None,))[0]
 
     def get_vea_slot(self, mac):
         """Gets the client slot for the VEA.
@@ -502,9 +529,11 @@ class RebuildSlotMap(BuildSlotMap):
             # TODO(IBM): Perhaps find a way to ensure better distribution.
             vios_uuid_for_slot = candidate_vioses.pop()
 
-            for udid in self._slot_store.topology[slot][IOCLASS.PV]:
+            for udid, lua in six.iteritems(self._slot_store.topology[slot]
+                                           [IOCLASS.PV]):
 
-                self._put_vios_val(IOCLASS.PV, vios_uuid_for_slot, udid, slot)
+                self._put_vios_val(IOCLASS.PV, vios_uuid_for_slot, udid, (slot,
+                                                                          lua))
 
                 # There's somewhat of a problem with this. We want to remove
                 # the VIOS UUID we're picking from this list so that other
@@ -602,8 +631,8 @@ class RebuildSlotMap(BuildSlotMap):
         :param vios_uuid: UUID of the VIOS which will host the storage device
                           indicated by stg_key.
         :param udid: UDID of the storage device to be added.
-        :param val: The slot data to be added.  A single slot number for
-                    IOCLASS.PV.
+        :param val: The slot data to be added.  For IOCLASS.PV, this is a tuple
+                    of (slot, lua).
         """
         if stg_class not in self._build_map:
             self._build_map[stg_class] = {}
