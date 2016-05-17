@@ -212,15 +212,15 @@ class TestSlotMapStore(testtools.TestCase):
                 smt.register_vscsi_mapping(vscsimap)
         self.assertEqual(
             {2: {'LU': {'274d7bb790666211e3bc1a00006cae8b013842794fa0b8e9dd771'
-                        'd6a32accde003': None,
+                        'd6a32accde003': '0x8500000000000000',
                         '274d7bb790666211e3bc1a00006cae8b0148326cf1e5542c583ec'
-                        '14327771522b0': None,
+                        '14327771522b0': '0x8300000000000000',
                         '274d7bb790666211e3bc1a00006cae8b01ac18997ab9bc23fb247'
-                        '56e9713a93f90': None,
+                        '56e9713a93f90': '0x8400000000000000',
                         '274d7bb790666211e3bc1a00006cae8b01c96f590914bccbc8b7b'
-                        '88c37165c0485': None},
+                        '88c37165c0485': '0x8200000000000000'},
                  'PV': {'01M0lCTTIxNDUzMTI2MDA1MDc2ODAyODIwQTlEQTgwMDAwMDAwMDA'
-                        'wNTJBOQ==': None},
+                        'wNTJBOQ==': '0x8600000000000000'},
                  'VDisk': {'0300004c7a00007a00000001466c54110f.16': 0.125},
                  'VOptMedia': {
                      '0evopt_19bbb46ad15747d79fe08f8464466144':
@@ -421,11 +421,19 @@ class TestRebuildSlotMap(testtools.TestCase):
         for udid in rsm._build_map['PV']['vios1']:
             self.assertEqual(
                 1, rsm.get_pv_vscsi_slot(self.vio1, udid))
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_PV_1[slot][slot_map.IOCLASS.PV][udid], lua)
 
         # Deterministic. vios2 gets slot 2
         for udid in rsm._build_map['PV']['vios2']:
             self.assertEqual(
                 2, rsm.get_pv_vscsi_slot(self.vio2, udid))
+            slot, lua = rsm.get_vscsi_slot(self.vio2, udid)
+            self.assertEqual(2, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_PV_1[slot][slot_map.IOCLASS.PV][udid], lua)
 
         # The build map won't actually have these as keys but
         # the get should return None nicely.
@@ -446,14 +454,24 @@ class TestRebuildSlotMap(testtools.TestCase):
         # got their slot assigned to one VIOS and not the other.
         expected_map = {'pv_udid1': 47, 'pv_udid2': 9, 'pv_udid3': 23,
                         'pv_udid4': 56}
-        for udid, slot in six.iteritems(expected_map):
+        for udid, eslot in six.iteritems(expected_map):
             if not rsm.get_pv_vscsi_slot(self.vio1, udid):
                 self.assertEqual(
-                    slot, rsm.get_pv_vscsi_slot(self.vio2, udid))
+                    eslot, rsm.get_pv_vscsi_slot(self.vio2, udid))
             else:
                 self.assertEqual(
-                    slot, rsm.get_pv_vscsi_slot(self.vio1, udid))
+                    eslot, rsm.get_pv_vscsi_slot(self.vio1, udid))
                 self.assertIsNone(rsm.get_pv_vscsi_slot(self.vio2, udid))
+            aslot1, lua1 = rsm.get_vscsi_slot(self.vio1, udid)
+            aslot2, lua2 = rsm.get_vscsi_slot(self.vio2, udid)
+            if aslot1 is None:
+                self.assertEqual(eslot, aslot2)
+                self.assertEqual(
+                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua2)
+            else:
+                self.assertEqual(eslot, aslot1)
+                self.assertEqual(
+                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua1)
 
     def test_pv_vscsi_build_out_full_coverage(self):
         """Test rebuild with 2 slots per udid and 2 candidate VIOSes."""
@@ -468,16 +486,31 @@ class TestRebuildSlotMap(testtools.TestCase):
         # We know what slots the UDIDs should get but not what VIOSes they'll
         # belong to. So we'll assert that one VIOS gets 1 slot and the other
         # VIOS gets the other for each UDID.
-        for udid, slots in six.iteritems(expected_map):
-            if rsm.get_pv_vscsi_slot(self.vio1, udid) != slots[0]:
+        for udid, (eslot1, eslot2) in six.iteritems(expected_map):
+            if rsm.get_pv_vscsi_slot(self.vio1, udid) != eslot1:
                 self.assertEqual(
-                    slots[0], rsm.get_pv_vscsi_slot(self.vio2, udid))
+                    eslot1, rsm.get_pv_vscsi_slot(self.vio2, udid))
                 self.assertEqual(
-                    slots[1], rsm.get_pv_vscsi_slot(self.vio1, udid))
+                    eslot2, rsm.get_pv_vscsi_slot(self.vio1, udid))
             else:
                 # We already know vio1 got the first slot
                 self.assertEqual(
-                    slots[1], rsm.get_pv_vscsi_slot(self.vio2, udid))
+                    eslot2, rsm.get_pv_vscsi_slot(self.vio2, udid))
+            aslot1, lua1 = rsm.get_vscsi_slot(self.vio1, udid)
+            aslot2, lua2 = rsm.get_vscsi_slot(self.vio2, udid)
+            if eslot1 == aslot1:
+                self.assertEqual(eslot2, aslot2)
+                self.assertEqual(
+                    SCSI_PV_2S_2V_MAP[eslot1][slot_map.IOCLASS.PV][udid], lua1)
+                self.assertEqual(
+                    SCSI_PV_2S_2V_MAP[eslot2][slot_map.IOCLASS.PV][udid], lua2)
+            else:
+                self.assertEqual(eslot1, aslot2)
+                self.assertEqual(eslot2, aslot1)
+                self.assertEqual(
+                    SCSI_PV_2S_2V_MAP[eslot1][slot_map.IOCLASS.PV][udid], lua2)
+                self.assertEqual(
+                    SCSI_PV_2S_2V_MAP[eslot2][slot_map.IOCLASS.PV][udid], lua1)
 
     def test_pv_udid_not_found_on_dest(self):
         """Test RebuildSlotMap fails when UDID not found on dest."""
@@ -549,12 +582,12 @@ class TestRebuildSlotMap(testtools.TestCase):
 SCSI_W_LU = {
     1: {
         slot_map.IOCLASS.LU: {
-            'lu_udid1': None,
-            'lu_udid2': None
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid2': 'lu_lua_2'
         },
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None,
-            'pv_udid2': None
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2'
         }
     }
 }
@@ -562,11 +595,11 @@ SCSI_W_LU = {
 SCSI_W_VOPT = {
     1: {
         slot_map.IOCLASS.VOPT: {
-            slot_map.IOCLASS.VOPT: None
+            slot_map.IOCLASS.VOPT: 'vopt_name'
         },
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None,
-            'pv_udid2': None
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2'
         }
     }
 }
@@ -578,8 +611,8 @@ SCSI_W_VDISK = {
             'vd_udid2': 2048.0
         },
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None,
-            'pv_udid2': None
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2'
         }
     }
 }
@@ -587,16 +620,16 @@ SCSI_W_VDISK = {
 SCSI_PV_1 = {
     1: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None,
-            'pv_udid2': None,
-            'pv_udid3': None
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2',
+            'pv_udid3': 'pv_lua_3'
         }
     },
     2: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None,
-            'pv_udid3': None,
-            'pv_udid4': None
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid3': 'pv_lua_3',
+            'pv_udid4': 'pv_lua_4'
         }
     }
 }
@@ -604,22 +637,22 @@ SCSI_PV_1 = {
 SCSI_PV_ARB_MAP = {
     47: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None
+            'pv_udid1': 'pv_lua_1'
         }
     },
     9: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None
+            'pv_udid2': 'pv_lua_2'
         }
     },
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': None
+            'pv_udid3': 'pv_lua_3'
         }
     },
     56: {
         slot_map.IOCLASS.PV: {
-            'pv_udid4': None
+            'pv_udid4': 'pv_lua_4'
         }
     }
 }
@@ -627,41 +660,42 @@ SCSI_PV_ARB_MAP = {
 SCSI_PV_2S_2V_MAP = {
     5: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None
+            'pv_udid1': 'pv_lua_1'
         }
     },
     6: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None
+            'pv_udid2': 'pv_lua_2'
         }
     },
     7: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': None
+            'pv_udid3': 'pv_lua_3'
         }
     },
     8: {
         slot_map.IOCLASS.PV: {
-            'pv_udid4': None
+            'pv_udid4': 'pv_lua_4'
         }
     },
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None
+            'pv_udid1': 'pv_lua_1'
         }
     },
     24: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None}
+            'pv_udid2': 'pv_lua_2'
+        }
     },
     25: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': None
+            'pv_udid3': 'pv_lua_3'
         }
     },
     26: {
         slot_map.IOCLASS.PV: {
-            'pv_udid4': None
+            'pv_udid4': 'pv_lua_4'
         }
     }
 }
@@ -669,17 +703,17 @@ SCSI_PV_2S_2V_MAP = {
 SCSI_PV_3 = {
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': None
+            'pv_udid1': 'pv_lua_1'
         }
     },
     12: {
         slot_map.IOCLASS.PV: {
-            'pv_udid2': None
+            'pv_udid2': 'pv_lua_2'
         }
     },
     4: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': None
+            'pv_udid3': 'pv_lua_3'
         }
     }
 }
