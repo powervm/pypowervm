@@ -516,19 +516,35 @@ class TestRebuildSlotMap(testtools.TestCase):
         """Test RebuildSlotMap fails when UDID not found on dest."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_PV_3
-        self.assertRaises(
-            pv_e.InvalidHostForRebuildNotEnoughVIOS,
-            slot_map.RebuildSlotMap, smt,
-            [self.vio1, self.vio2], BAD_VOL_TO_VIO_FOR_PV_3, {})
+
+        # Run the test and verify the exception is raised correctly
+        try:
+            slot_map.RebuildSlotMap(
+                smt, [self.vio1, self.vio2], BAD_VOL_TO_VIO_FOR_PV_3,
+                {})
+        except pv_e.InvalidHostForRebuildNotEnoughVIOS as e:
+            # Assert the reason is correct.
+            self.assertTrue('was not found' in e.message)
+        else:
+            self.fail('InvalidHostForRebuildNotEnoughVIOS exception was not '
+                      'raised.')
 
     def test_more_pv_udids_than_dest_vioses_fails(self):
         """Test RebuildSlotMap fails when there's not enough VIOSes."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_PV_1
-        self.assertRaises(
-            pv_e.InvalidHostForRebuildNotEnoughVIOS,
-            slot_map.RebuildSlotMap, smt, [self.vio1, self.vio2],
-            VOL_TO_VIO_1_VIOS_PV1, {})
+
+        # Run the test and verify the exception is raised correctly
+        try:
+            slot_map.RebuildSlotMap(
+                smt, [self.vio1, self.vio2], VOL_TO_VIO_1_VIOS_PV1,
+                {})
+        except pv_e.InvalidHostForRebuildNotEnoughVIOS as e:
+            # Assert the reason is correct.
+            self.assertTrue('expecting' in e.message)
+        else:
+            self.fail('InvalidHostForRebuildNotEnoughVIOS exception was not '
+                      'raised.')
 
     def test_npiv_build_out(self):
         """Test _npiv_build_out."""
@@ -546,10 +562,16 @@ class TestRebuildSlotMap(testtools.TestCase):
             11: {'VFC': {'fab1': None}}, 12: {'VFC': {'fab7': None}},
             113: {'VFC': {'fab7': None}}, 114: {'VFC': {'fab7': None}}}
 
-        # Run the actual test and verify an exception is raised
-        self.assertRaises(pv_e.InvalidHostForRebuildNotEnoughVIOS,
-                          slot_map.RebuildSlotMap, smt, [vios1, vios2], None,
-                          ['fab1'])
+        # Run the actual test and verify an exception is raised correctly
+        try:
+            slot_map.RebuildSlotMap(smt, [vios1, vios2], None, ['fab1'])
+        except pv_e.InvalidHostForRebuildNotEnoughVIOS as e:
+            self.assertEqual(
+                {'fab10', 'fab9', 'fab8', 'fab7'},
+                set(e.message.split(':')[1].replace(' ', '').split(',')))
+        else:
+            self.fail('InvalidHostForRebuildNotEnoughVIOS exception was not '
+                      'raised.')
 
         # Run the actual test
         fabrics = ['fab1', 'fab2', 'fab7', 'fab8', 'fab9', 'fab10', 'fab27']

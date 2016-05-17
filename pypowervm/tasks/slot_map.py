@@ -513,7 +513,9 @@ class RebuildSlotMap(BuildSlotMap):
                 # If the UDID isn't anywhere to be found on the destination
                 # VIOSes then we have a problem.
                 if udid not in vol_to_vio_cp:
-                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS(
+                        reason=('Device with UDID %s was not found on any '
+                                'VIOSes.' % udid))
 
                 # Inner Join. The goal is to end up with a set that only has
                 # VIOSes which can see every backing storage elem for this
@@ -523,7 +525,9 @@ class RebuildSlotMap(BuildSlotMap):
                 # If the set of candidate VIOSes is empty then this host is
                 # not a candidate for rebuild.
                 if not candidate_vioses:
-                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+                    raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS(
+                        reason=('Device with UDID %s was expecting to be '
+                                'found on more VIOSes but was not.' % udid))
 
             # Just take one, doesn't matter which one.
             # TODO(IBM): Perhaps find a way to ensure better distribution.
@@ -586,7 +590,9 @@ class RebuildSlotMap(BuildSlotMap):
         topo_fabrics = {fab for iomap in self._slot_store.topology.values()
                         for fab in iomap.get(IOCLASS.VFC, {}).keys()}
         if topo_fabrics - seen_fabrics:
-            raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS()
+            raise pvm_ex.InvalidHostForRebuildNotEnoughVIOS(
+                reason=('Expected fabrics not found: %s' % ', '.join(
+                    topo_fabrics - seen_fabrics)))
 
     def _put_mgmt_vea_slot(self, mac, slot):
         """Store client slot data for the managament VEA.
