@@ -1148,7 +1148,7 @@ BODY{
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8400000000000000</LogicalUnitAddress>
                     <TargetName kb="CUR" kxe="false">vtscsi2</TargetName>
                     <UniqueDeviceID kb="ROR" kxe="false">0afa2c4b2babd4f8bU8246.L1C.0604CAA-V1-C9</UniqueDeviceID>
                 </SharedStoragePoolLogicalUnitVirtualTargetDevice>
@@ -1210,7 +1210,7 @@ BODY{
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8500000000000000</LogicalUnitAddress>
                     <TargetName kb="CUR" kxe="false">vtscsi1</TargetName>
                     <UniqueDeviceID kb="ROR" kxe="false">0a5bedf0400f3e0943U8246.L1C.0604CAA-V1-C8</UniqueDeviceID>
                 </SharedStoragePoolLogicalUnitVirtualTargetDevice>
@@ -1399,7 +1399,7 @@ BODY{
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <LogicalUnitAddress kxe="false" kb="CUR">0x8200000000000000</LogicalUnitAddress>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8600000000000000</LogicalUnitAddress>
                     <TargetName kb="CUR" kxe="false">vtscsi55</TargetName>
                     <UniqueDeviceID kb="ROR" kxe="false">085fc2b9488a5ff9f8</UniqueDeviceID>
                 </PhysicalVolumeVirtualTargetDevice>
@@ -1459,7 +1459,7 @@ BODY{
                     <Metadata>
                         <Atom/>
                     </Metadata>
-                    <LogicalUnitAddress kb="CUR" kxe="false">0x8200000000000000</LogicalUnitAddress>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8700000000000000</LogicalUnitAddress>
                     <TargetName kb="CUR" kxe="false">vtscsi0</TargetName>
                     <UniqueDeviceID kb="ROR" kxe="false">09b4fdf7bdec405d57</UniqueDeviceID>
                 </LogicalVolumeVirtualTargetDevice>
