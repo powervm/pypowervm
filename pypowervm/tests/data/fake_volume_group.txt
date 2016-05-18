@@ -101,7 +101,7 @@ BODY{
             <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
             <ReservePolicyAlgorithm kb="CUD" kxe="false">Failover</ReservePolicyAlgorithm>
             <UniqueDeviceID kb="ROR" kxe="false">01MUlCTSAgICAgSVBSLTAgICA1RDgyODMwMDAwMDAwMDQw</UniqueDeviceID>
-            <AvailableForUsage kb="CUD" kxe="false">false</AvailableForUsage>
+            <AvailableForUsage kb="CUD" kxe="false">true</AvailableForUsage>
             <VolumeCapacity kb="CUR" kxe="false">1089592</VolumeCapacity>
             <VolumeName kb="CUR" kxe="false">hdisk1</VolumeName>
             <VolumeState kb="ROR" kxe="false">active</VolumeState>

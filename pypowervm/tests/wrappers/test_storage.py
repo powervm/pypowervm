@@ -67,6 +67,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual('hdisk1', pv.name)
         self.assertEqual('active', pv.state)
         self.assertEqual(False, pv.is_fc_backed)
+        self.assertEqual(True, pv.avail_for_use)
         self.assertEqual('SAS RAID 0 Disk Array', pv.description)
         self.assertEqual('U78C9.001.WZS0095-P1-C14-R1-L405D828300-L0',
                          pv.loc_code)
