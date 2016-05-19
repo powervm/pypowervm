@@ -143,28 +143,91 @@ _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
-_VADPT_LOCAL_ID = 'LocalPartitionID'
-# SCSI adapters use this
-_VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
-# ...and FC adapters use this
-_VADPT_CONN_PARTITION_ID = 'ConnectingPartitionID'
-_VADPT_UDID = 'UniqueDeviceID'
-_VADPT_MAP_PORT = 'MapPort'
-_VADPT_WWPNS = 'WWPNs'
-_VADPT_BACK_DEV_NAME = 'BackingDeviceName'
-_VADPT_SLOT_NUM = 'VirtualSlotNumber'
-# SCSI adapters use this
-_VADPT_REM_SLOT_NUM = 'RemoteSlotNumber'
-# ...and FC adapters use this
-_VADPT_CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
-_VADPT_VARIED_ON = 'VariedOn'
-_VADPT_NAME = 'AdapterName'
-_VADPT_TYPE = 'AdapterType'
-_NEXT_SLOT = 'UseNextAvailableSlotID'
-_LOCATION_CODE = 'LocationCode'
-
 CLIENT_ADPT = 'ClientAdapter'
 SERVER_ADPT = 'ServerAdapter'
+
+# Common to all Virtual Adapters
+_VADPT_TYPE = 'AdapterType'
+_VADPT_DRC_NAME = 'DynamicReconfigurationConnectorName'
+_VADPT_LOC_CODE = 'LocationCode'
+_VADPT_LOCAL_ID = 'LocalPartitionID'
+_VADPT_REQD = 'RequiredAdapter'
+_VADPT_VARIED_ON = 'VariedOn'
+_VADPT_NEXT_SLOT = 'UseNextAvailableSlotID'
+_VADPT_NEXT_HI_SLOT = 'UseNextAvailableHighSlotID'
+_VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_ENABLED = 'Enabled'
+_VADPT_NAME = 'AdapterName'
+_VADPT_UDID = 'UniqueDeviceID'
+
+# Common to VSCSI Adapters (Client & Server)
+_VSCSI_ADPT_BACK_DEV_NAME = 'BackingDeviceName'
+_VSCSI_ADPT_REM_BACK_DEV_NAME = 'RemoteBackingDeviceName'
+_VSCSI_ADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
+_VSCSI_ADPT_REM_SLOT_NUM = 'RemoteSlotNumber'
+_VSCSI_ADPT_SVR_LOC_CODE = 'ServerLocationCode'
+
+# Common to Client Adapters
+_VCLNT_ADPT_SVR_ADPT = SERVER_ADPT
+
+# Common to VFC Adapters (Client & Server)
+_VFC_ADPT_CONN_PARTITION = 'ConnectingPartition'
+_VFC_ADPT_CONN_PARTITION_ID = 'ConnectingPartitionID'
+_VFC_ADPT_CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
+
+# VFC Server Adapter-specific
+_VFC_SVR_ADPT_MAP_PORT = 'MapPort'
+_VFC_SVR_ADPT_PHYS_PORT = 'PhysicalPort'
+
+# VFC Client Adapter-specific
+_VFC_CLNT_ADPT_WWPNS = 'WWPNs'
+_VFC_CLNT_ADPT_LOGGED_IN = 'NportLoggedInStatus'
+_VFC_CLNT_ADPT_OS_DISKS = 'OperatingSystemDisks'
+
+# Element Ordering:
+#
+# A <ServerAdapter/> might be a VSCSI server adapter or a VFC server adapter.
+# Likewise <ClientAdapter/>.  The schema inheritance hierarchy informs the
+# way we build up the element order constants:
+#
+#                            VirtualIOAdapter
+#                   VFCAdapter             VSCSIAdapter == VSCSIServerAdapter
+#      VFCClientAdapter  VFCServerAdapter        VSCSIClientAdapter
+#
+# However, this doesn't match up with the hierarchy of our wrapper classes:
+#
+#               VClientStorageAdapterElement
+# VSCSIClientAdapterElement    VFCClientAdapterElement
+#
+#               VServerStorageAdapterElement
+# VSCSIServerAdapterElement    VFCServerAdapterElement
+#
+# So we have to get creative with element ordering for the base classes, since
+# they hold the @pvm_type decorator.  We interleave the VSCSI and VFC
+# properties to create an element order that can be used commonly for both
+# types.  This only works because all overlapping properties happen to be in
+# the same order.
+#
+# Yes, this is funky.
+
+# Converged ordering base for VFC and VSCSI adapters
+_VADPT_BASE_EL_ORDER = (
+    _VADPT_TYPE, _VADPT_DRC_NAME, _VADPT_LOC_CODE, _VADPT_LOCAL_ID,
+    _VADPT_REQD, _VADPT_VARIED_ON, _VADPT_NEXT_SLOT, _VADPT_NEXT_HI_SLOT,
+    _VADPT_SLOT_NUM, _VADPT_ENABLED, _VADPT_NAME, _VSCSI_ADPT_BACK_DEV_NAME,
+    _VSCSI_ADPT_REM_BACK_DEV_NAME, _VSCSI_ADPT_REM_LPAR_ID,
+    _VFC_ADPT_CONN_PARTITION, _VFC_ADPT_CONN_PARTITION_ID,
+    _VSCSI_ADPT_REM_SLOT_NUM, _VFC_ADPT_CONN_SLOT_NUM,
+    _VSCSI_ADPT_SVR_LOC_CODE, _VADPT_UDID)
+
+# Converged (VSCSI & VFC) Server Adapter element order
+_V_SVR_ADPT_EL_ORDER = _VADPT_BASE_EL_ORDER + (
+    _VFC_SVR_ADPT_MAP_PORT, _VFC_SVR_ADPT_PHYS_PORT)
+
+# Converged (VSCSI & VFC) Client Adapter element order
+_V_CLNT_ADPT_EL_ORDER = _VADPT_BASE_EL_ORDER + (
+    _VCLNT_ADPT_SVR_ADPT, _VFC_CLNT_ADPT_WWPNS, _VFC_CLNT_ADPT_LOGGED_IN,
+    _VFC_CLNT_ADPT_OS_DISKS)
 
 VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
 
@@ -902,12 +965,12 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
 
     def _use_next_slot(self, use):
         """Use next available (not high) slot."""
-        self.set_parm_value(_NEXT_SLOT, u.sanitize_bool_for_api(use))
+        self.set_parm_value(_VADPT_NEXT_SLOT, u.sanitize_bool_for_api(use))
 
     @property
     def loc_code(self):
         """The device's location code."""
-        return self._get_val_str(_LOCATION_CODE)
+        return self._get_val_str(_VADPT_LOC_CODE)
 
 
 # base_pvm_type by _VStorageAdapterMethods
@@ -926,8 +989,8 @@ class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
                   UseNextAvailableSlotID=true
         """
         adp = super(_VStorageAdapterElement, cls)._bld(adapter)
-        adp._side(side)
         adp._use_next_slot(True)
+        adp._side(side)
         return adp
 
 
@@ -994,7 +1057,8 @@ class _VClientAdapterMethods(ewrap.Wrapper):
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True,
+                               child_order=_V_CLNT_ADPT_EL_ORDER)
 class VClientStorageAdapterElement(_VClientAdapterMethods,
                                    _VStorageAdapterElement):
     """Parent class for Client Virtual Storage Adapter Elements."""
@@ -1002,7 +1066,8 @@ class VClientStorageAdapterElement(_VClientAdapterMethods,
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True,
+                               child_order=_V_SVR_ADPT_EL_ORDER)
 class VServerStorageAdapterElement(_VStorageAdapterElement):
     """Parent class for Server Virtual Storage Adapters."""
 
@@ -1035,12 +1100,12 @@ class VSCSIClientAdapterElement(VClientStorageAdapterElement):
         Note that the VIOS ID is RemoteLogicalPartitionID on the client side,
         and LocalPartitionID on the server side.
         """
-        return self._get_val_int(_VADPT_REM_LPAR_ID)
+        return self._get_val_int(_VSCSI_ADPT_REM_LPAR_ID)
 
     @property
     def vios_slot_num(self):
         """The (int) remote slot number of the paired adapter."""
-        return self._get_val_int(_VADPT_REM_SLOT_NUM)
+        return self._get_val_int(_VSCSI_ADPT_REM_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -1053,7 +1118,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
     @property
     def backing_dev_name(self):
         """The backing device name that this virtual adapter is hooked into."""
-        return self._get_val_str(_VADPT_BACK_DEV_NAME)
+        return self._get_val_str(_VSCSI_ADPT_BACK_DEV_NAME)
 
     @property
     def lpar_id(self):
@@ -1062,7 +1127,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         Note that the LPAR ID is LocalPartitionID on the client side, and
         RemoteLogicalPartitionID on the server side.
         """
-        return self._get_val_int(_VADPT_REM_LPAR_ID)
+        return self._get_val_int(_VSCSI_ADPT_REM_LPAR_ID)
 
     @property
     def vios_id(self):
@@ -1076,7 +1141,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
     @property
     def lpar_slot_num(self):
         """The (int) slot number that the LPAR side of the adapter."""
-        return self._get_val_int(_VADPT_REM_SLOT_NUM)
+        return self._get_val_int(_VSCSI_ADPT_REM_SLOT_NUM)
 
     @property
     def vios_slot_num(self):
@@ -1093,12 +1158,12 @@ class _VFCClientAdapterMethods(ewrap.Wrapper):
         :param value: The list of WWPNs.  Should only contain two.
         """
         if value is not None:
-            self.set_parm_value(_VADPT_WWPNS, " ".join(value).lower())
+            self.set_parm_value(_VFC_CLNT_ADPT_WWPNS, " ".join(value).lower())
 
     @property
     def wwpns(self):
         """Returns a list that contains the WWPNs.  If no WWPNs, empty list."""
-        val = self._get_val_str(_VADPT_WWPNS)
+        val = self._get_val_str(_VFC_CLNT_ADPT_WWPNS)
         if val is None:
             return []
         else:
@@ -1107,12 +1172,12 @@ class _VFCClientAdapterMethods(ewrap.Wrapper):
     @property
     def vios_id(self):
         """The short ID (not UUID) of the VIOS side of this adapter."""
-        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+        return self._get_val_int(_VFC_ADPT_CONN_PARTITION_ID)
 
     @property
     def vios_slot_num(self):
         """The (int) remote slot number of the paired adapter."""
-        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
+        return self._get_val_int(_VFC_ADPT_CONN_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -1163,12 +1228,12 @@ class VFCServerAdapterElement(VServerStorageAdapterElement):
     @property
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
-        return self._get_val_str(_VADPT_MAP_PORT)
+        return self._get_val_str(_VFC_SVR_ADPT_MAP_PORT)
 
     @property
     def lpar_id(self):
         """The short ID (not UUID) of the LPAR side of this adapter."""
-        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+        return self._get_val_int(_VFC_ADPT_CONN_PARTITION_ID)
 
     @property
     def vios_id(self):
@@ -1178,7 +1243,7 @@ class VFCServerAdapterElement(VServerStorageAdapterElement):
     @property
     def lpar_slot_num(self):
         """The (int) slot number that the LPAR side of the adapter."""
-        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
+        return self._get_val_int(_VFC_ADPT_CONN_SLOT_NUM)
 
     @property
     def vios_slot_num(self):

@@ -170,6 +170,14 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertTrue(vmap.client_adapter._get_val_bool(
             'UseNextAvailableSlotID'))
         self.assertEqual(vmap.server_adapter.side, 'Server')
+        # Validate the exact XML of the server adapter: ensure proper ordering.
+        self.assertEqual(
+            '<uom:ServerAdapter xmlns:uom="http://www.ibm.com/xmlns/systems/po'
+            'wer/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata>'
+            '<uom:Atom/></uom:Metadata><uom:AdapterType>Server</uom:AdapterTyp'
+            'e><uom:UseNextAvailableSlotID>true</uom:UseNextAvailableSlotID></'
+            'uom:ServerAdapter>'.encode('utf-8'),
+            vmap.server_adapter.toxmlstring())
         # If the slot number is None then REST will assign the first available.
         self.assertIsNone(vmap.client_adapter.lpar_slot_num)
         self.assertIsNone(vmap.target_dev)
@@ -196,6 +204,14 @@ class TestViosMappings(twrap.TestWrapper):
             vmap, vdisk, lpar_slot_num=6, lua='vdisk_lua')
         self.assertIsNotNone(vmap3)
         self.assertIsNotNone(vmap3.element)
+        # Validate the exact XML of the client adapter: ensure proper ordering.
+        self.assertEqual(
+            '<uom:ClientAdapter xmlns:uom="http://www.ibm.com/xmlns/systems/po'
+            'wer/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata>'
+            '<uom:Atom/></uom:Metadata><uom:AdapterType>Client</uom:AdapterTyp'
+            'e><uom:UseNextAvailableSlotID>false</uom:UseNextAvailableSlotID><'
+            'uom:VirtualSlotNumber>6</uom:VirtualSlotNumber></uom:ClientAdapte'
+            'r>'.encode('utf-8'), vmap3.client_adapter.toxmlstring())
         self.assertEqual('Client', vmap3.client_adapter.side)
         # Specifying 'lua' builds the appropriate type of target dev...
         self.assertIsInstance(vmap3.target_dev, pvm_stor.VDiskTargetDev)
