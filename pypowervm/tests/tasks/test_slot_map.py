@@ -516,19 +516,19 @@ class TestRebuildSlotMap(testtools.TestCase):
         """Test RebuildSlotMap fails when UDID not found on dest."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_PV_3
+
         self.assertRaises(
-            pv_e.InvalidHostForRebuildNotEnoughVIOS,
-            slot_map.RebuildSlotMap, smt,
-            [self.vio1, self.vio2], BAD_VOL_TO_VIO_FOR_PV_3, {})
+            pv_e.InvalidHostForRebuildNoVIOSForUDID, slot_map.RebuildSlotMap,
+            smt, [self.vio1, self.vio2], BAD_VOL_TO_VIO_FOR_PV_3, {})
 
     def test_more_pv_udids_than_dest_vioses_fails(self):
         """Test RebuildSlotMap fails when there's not enough VIOSes."""
         smt = SlotMapTestImpl('foo')
         smt._slot_topo = SCSI_PV_1
+
         self.assertRaises(
-            pv_e.InvalidHostForRebuildNotEnoughVIOS,
-            slot_map.RebuildSlotMap, smt, [self.vio1, self.vio2],
-            VOL_TO_VIO_1_VIOS_PV1, {})
+            pv_e.InvalidHostForRebuildNotEnoughVIOS, slot_map.RebuildSlotMap,
+            smt, [self.vio1, self.vio2], VOL_TO_VIO_1_VIOS_PV1, {})
 
     def test_npiv_build_out(self):
         """Test _npiv_build_out."""
@@ -547,9 +547,9 @@ class TestRebuildSlotMap(testtools.TestCase):
             113: {'VFC': {'fab7': None}}, 114: {'VFC': {'fab7': None}}}
 
         # Run the actual test and verify an exception is raised
-        self.assertRaises(pv_e.InvalidHostForRebuildNotEnoughVIOS,
-                          slot_map.RebuildSlotMap, smt, [vios1, vios2], None,
-                          ['fab1'])
+        self.assertRaises(
+            pv_e.InvalidHostForRebuildFabricsNotFound, slot_map.RebuildSlotMap,
+            smt, [vios1, vios2], None, ['fab1'])
 
         # Run the actual test
         fabrics = ['fab1', 'fab2', 'fab7', 'fab8', 'fab9', 'fab10', 'fab27']
