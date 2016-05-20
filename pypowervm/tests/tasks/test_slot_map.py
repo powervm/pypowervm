@@ -360,6 +360,32 @@ class TestRebuildSlotMap(testtools.TestCase):
         self.vio1 = mock.Mock(uuid='vios1')
         self.vio2 = mock.Mock(uuid='vios2')
 
+    def test_get_mgmt_vea_slot(self):
+        smt = SlotMapTestImpl('foo')
+
+        # Make sure it returns the next slot available
+        smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'VFC': {'fab1': None}}}
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None,
+                                      ['fab1'])
+        self.assertEqual((None, 7), rsm.get_mgmt_vea_slot())
+        # Second call should return the same slot, as there is only one mgmt
+        # vif per VM
+        self.assertEqual((None, 7), rsm.get_mgmt_vea_slot())
+
+        # Make sure it returns the existing MGMT switch
+        smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, [])
+        self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
+
+        # Make sure it returns None if there is no real data
+        smt._slot_topo = {}
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, [])
+        self.assertEqual((None, None), rsm.get_mgmt_vea_slot())
+
     def test_vea_build_out(self):
         """Test _vea_build_out."""
         # Create a slot topology that will be converted to a rebuild map
