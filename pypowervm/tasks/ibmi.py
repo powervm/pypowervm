@@ -72,7 +72,8 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
             existing_maps = pvm_vfcmap.find_maps(
                 vios_wrap.vfc_mappings, lpar_w.id)
             client_adapters.extend([vfcmap.client_adapter
-                                    for vfcmap in existing_maps])
+                                    for vfcmap in existing_maps
+                                    if vfcmap.client_adapter is not None])
     else:
         # That boot volume, which is vscsi physical volume, ssp lu
         # and local disk, could be handled here.
@@ -83,7 +84,8 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
             existing_maps = pvm_smap.find_maps(
                 vios_wrap.scsi_mappings, lpar_w.id)
             client_adapters.extend([smap.client_adapter
-                                    for smap in existing_maps])
+                                    for smap in existing_maps
+                                    if smap.client_adapter is not None])
     slot_nums = set(s.lpar_slot_num for s in client_adapters)
     slot_nums = list(slot_nums)
     slot_nums.sort()
