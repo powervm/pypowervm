@@ -107,3 +107,16 @@ class TestIBMiWithPVM(TestIBMi):
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.wrap')
     def test_update_ibmi_settings(self, mock_viosw, mock_cnaw):
         self._validate_ibmi_settings(mock_viosw, mock_cnaw)
+
+    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.wrap')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VStorageMapping.'
+                'client_adapter', new_callable=mock.PropertyMock,
+                return_value=None)
+    def test_update_ibmi_settings_w_stale_adapters(self, mock_c_adap,
+                                                   mock_viosw, mock_cnaw):
+        mock_lparw = mock.MagicMock()
+        mock_lparw.id = 22
+        self.assertRaises(pvm_exc.IBMiLoadSourceNotFound,
+                          ibmi.update_ibmi_settings, self.apt,
+                          mock_lparw, 'vscsi')
