@@ -448,6 +448,31 @@ class RebuildSlotMap(BuildSlotMap):
         # And finally vFC (npiv)
         self._npiv_build_out(npiv_fabrics)
 
+    def get_mgmt_vea_slot(self):
+        """Gets the client slot and MAC for the mgmt VEA.
+
+        :return: MAC Address for the NIC.
+        :return: Integer client slot number for the NIC.
+        """
+        # On a rebuild specifically, the MGMT VIF may not be there.  If that
+        # is the case, we want to make sure that it is the next available slot.
+        mgmt_vea = self._build_map.get(IOCLASS.MGMT_CNA, {})
+        slot = mgmt_vea.get('slot')
+
+        # If the slot is None, that means the MGMT vif wasn't there initially
+        # but its being requested for the rebuild.
+        if slot is None:
+            # If no slots...this is a weird rebuild, but just return None so
+            # it uses the next available.
+            slots_in_use = sorted(self._slot_store.topology, reverse=True)
+            if len(slots_in_use) == 0:
+                slot = None
+            else:
+                # If there were other slots, use the 'next highest' available.
+                slot = slots_in_use[0] + 1
+
+        return mgmt_vea.get('mac', None), slot
+
     def _vscsi_build_slot_order(self):
         """Order slots by (descending) number of storage elements they host.
 
