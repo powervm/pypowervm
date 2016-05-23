@@ -37,23 +37,46 @@ cnafeed1 = loadf(net.CNA, 'cna_feed1.txt')
 vswitchfeed = loadf(net.VSwitch, 'vswitch_feed.txt')
 
 
-class SlotMapTestImpl(slot_map.SlotMapStore):
-
+class SlotMapTestImplLegacy(slot_map.SlotMapStore):
+    """Legacy subclass overriding load/save/delete directly."""
     def __init__(self, inst_key, load=True, load_ret=None):
         self._load_ret = load_ret
-        self.load_calls = 0
-        super(SlotMapTestImpl, self).__init__(inst_key, load=load)
-
-    def set_load_ret(self, val):
-        self._load_ret = val
+        super(SlotMapTestImplLegacy, self).__init__(inst_key, load=load)
 
     def load(self):
-        self.load_calls += 1
         return self._load_ret
 
+    def save(self):
+        pass
 
-class TestSlotMapStore(testtools.TestCase):
-    """Test slot_map.SlotMapStore."""
+    def delete(self):
+        pass
+
+
+class SlotMapTestImpl(slot_map.SlotMapStore):
+    """New-style subclass overriding _load/_save/_delete."""
+    def __init__(self, inst_key, load=True, load_ret=None):
+        self._load_ret = load_ret
+        super(SlotMapTestImpl, self).__init__(inst_key, load=load)
+
+    def _load(self, key):
+        return self._load_ret
+
+    def _save(self, key, blob):
+        pass
+
+    def _delete(self, key):
+        pass
+
+
+class TestSlotMapStoreLegacy(testtools.TestCase):
+    """Test slot_map.SlotMapStore with a legacy impl."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize with a particular SlotMapStore implementation."""
+        self.smt_impl = SlotMapTestImplLegacy
+        self.load_meth_nm = 'load'
+        super(TestSlotMapStoreLegacy, self).__init__(*args, **kwargs)
 
     def test_ioclass_consts(self):
         """Make sure the IOCLASS constants are disparate."""
@@ -63,20 +86,24 @@ class TestSlotMapStore(testtools.TestCase):
 
     def test_init_calls_load(self):
         """Ensure SlotMapStore.__init__ calls load or not based on the parm."""
-        loads = SlotMapTestImpl('foo')
-        self.assertEqual(1, loads.load_calls)
-        self.assertEqual('foo', loads.inst_key)
-        doesnt_load = SlotMapTestImpl('bar', load=False)
-        self.assertEqual(0, doesnt_load.load_calls)
+        with mock.patch.object(self.smt_impl, self.load_meth_nm) as mock_load:
+            mock_load.return_value = None
+            loads = self.smt_impl('foo')
+            mock_load.assert_called_once_with()
+            self.assertEqual('foo', loads.inst_key)
+            mock_load.reset_mock()
+            doesnt_load = self.smt_impl('bar', load=False)
+            self.assertEqual('bar', doesnt_load.inst_key)
+            mock_load.assert_not_called()
 
     @mock.patch('pickle.loads')
     def test_init_deserialize(self, mock_unpickle):
         """Ensure __init__ deserializes or not based on what's loaded."""
         # By default, load returns None, so nothing to unpickle
-        doesnt_unpickle = SlotMapTestImpl('foo')
+        doesnt_unpickle = self.smt_impl('foo')
         mock_unpickle.assert_not_called()
         self.assertEqual({}, doesnt_unpickle.topology)
-        unpickles = SlotMapTestImpl('foo', load_ret='abc123')
+        unpickles = self.smt_impl('foo', load_ret='abc123')
         mock_unpickle.assert_called_once_with('abc123')
         self.assertEqual(mock_unpickle.return_value, unpickles.topology)
 
@@ -86,7 +113,7 @@ class TestSlotMapStore(testtools.TestCase):
     def test_serialized(self, mock_topo, mock_pickle):
         """Validate the serialized property."""
         mock_pickle.return_value = 'abc123'
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         self.assertEqual('abc123', smt.serialized)
         mock_pickle.assert_called_once_with(mock_topo.return_value, protocol=2)
         mock_topo.assert_called_once()
@@ -97,7 +124,7 @@ class TestSlotMapStore(testtools.TestCase):
         """Ensure _vswitch_id2name caches, and gets the right content."""
         mock_vsw_get.return_value = vswitchfeed
         mock_sys_get.return_value = ['sys']
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         # We didn't cache yet
         mock_vsw_get.assert_not_called()
         mock_sys_get.assert_not_called()
@@ -123,7 +150,7 @@ class TestSlotMapStore(testtools.TestCase):
         """Test register_cna."""
         mock_vsw_get.return_value = vswitchfeed
         mock_sys_get.return_value = ['sys']
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         for cna in cnafeed1:
             smt.register_cna(cna)
         self.assertEqual({3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
@@ -133,11 +160,10 @@ class TestSlotMapStore(testtools.TestCase):
 
     def test_drop_cna(self):
         """Test drop_cna."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
-
         # Drop the first CNA and verify it was removed
         smt.drop_cna(cnafeed1[0])
         self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
@@ -151,7 +177,7 @@ class TestSlotMapStore(testtools.TestCase):
 
     def test_register_vfc_mapping(self):
         """Test register_vfc_mapping."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         i = 1
         for vio in (vio1, vio2):
             for vfcmap in vio.vfc_mappings:
@@ -181,13 +207,12 @@ class TestSlotMapStore(testtools.TestCase):
         # Init data to test with
         mock_server_adapter = mock.Mock(lpar_slot_num=3)
         vfcmap = mock.Mock(server_adapter=mock_server_adapter)
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = {3: {'VFC': {'fab1': None, 'fab10': None,
                                       'fab7': None, 'fab8': None,
                                       'fab9': None}},
                           6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}}
-
         # Drop a single slot entry and verify it is removed
         smt.drop_vfc_mapping(vfcmap, 'fab1')
         self.assertEqual({3: {'VFC': {'fab10': None,
@@ -196,7 +221,6 @@ class TestSlotMapStore(testtools.TestCase):
                           6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}},
                          smt.topology)
-
         # Drop remaining LPAR 3 slot entries and verify they are removed
         for i in range(7, 11):
             smt.drop_vfc_mapping(vfcmap, 'fab%s' % str(i))
@@ -206,7 +230,7 @@ class TestSlotMapStore(testtools.TestCase):
 
     def test_register_vscsi_mappings(self):
         """Test register_vscsi_mappings."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         for vio in (vio1, vio2):
             for vscsimap in vio.scsi_mappings:
                 smt.register_vscsi_mapping(vscsimap)
@@ -245,7 +269,7 @@ class TestSlotMapStore(testtools.TestCase):
         mock_server_adapter = mock.Mock(lpar_slot_num=2)
         vscsimap = mock.Mock(backing_storage=bstor,
                              server_adapter=mock_server_adapter)
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = {
             2: {'LU': {'274d7bb790666211e3bc1a00006cae8b013842794fa0b8e9dd771'
                        'd6a32accde003': None,
@@ -333,7 +357,7 @@ class TestSlotMapStore(testtools.TestCase):
         mock_vsw_get.return_value = vswitchfeed
         mock_sys_get.return_value = ['sys']
         # Set up a nice, big, complicated source slot map
-        smt1 = SlotMapTestImpl('foo')
+        smt1 = self.smt_impl('foo')
         for cna in cnafeed1:
             smt1.register_cna(cna)
         i = 1
@@ -344,24 +368,39 @@ class TestSlotMapStore(testtools.TestCase):
                 smt1.register_vfc_mapping(vfcmap, 'fab%d' % i)
                 i += 1
         # Serialize, and make a new slot map that loads that serialized data
-        smt2 = SlotMapTestImpl('bar', load_ret=smt1.serialized)
+        smt2 = self.smt_impl('bar', load_ret=smt1.serialized)
         # Ensure their topologies are identical
         self.assertEqual(smt1.topology, smt2.topology)
 
 
-class TestRebuildSlotMap(testtools.TestCase):
+class TestSlotMapStore(TestSlotMapStoreLegacy):
+    """Test slot_map.SlotMapStore with a legacy impl."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize with a particular SlotMapStore implementation."""
+        self.smt_impl = SlotMapTestImpl
+        self.load_meth_nm = '_load'
+        super(TestSlotMapStore, self).__init__(*args, **kwargs)
+
+
+class TestRebuildSlotMapLegacy(testtools.TestCase):
     """Test for RebuildSlotMap class
 
     Tests BuildSlotMap class's get methods as well.
     """
 
+    def __init__(self, *args, **kwargs):
+        """Initialize with a particular SlotMapStore implementation."""
+        self.smt_impl = SlotMapTestImplLegacy
+        super(TestRebuildSlotMapLegacy, self).__init__(*args, **kwargs)
+
     def setUp(self):
-        super(TestRebuildSlotMap, self).setUp()
+        super(TestRebuildSlotMapLegacy, self).setUp()
         self.vio1 = mock.Mock(uuid='vios1')
         self.vio2 = mock.Mock(uuid='vios2')
 
     def test_get_mgmt_vea_slot(self):
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
 
         # Make sure it returns the next slot available
         smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
@@ -389,7 +428,7 @@ class TestRebuildSlotMap(testtools.TestCase):
     def test_vea_build_out(self):
         """Test _vea_build_out."""
         # Create a slot topology that will be converted to a rebuild map
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
@@ -411,7 +450,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_rebuild_fails_w_lu(self):
         """Test RebuildSlotMap fails when LUs exist in topology."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_LU
         self.assertRaises(
             pv_e.InvalidHostForRebuildInvalidIOType,
@@ -420,7 +459,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_rebuild_fails_w_vopt(self):
         """Test RebuildSlotMap fails when a Vopt exists in topology."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_VOPT
         self.assertRaises(
             pv_e.InvalidHostForRebuildInvalidIOType,
@@ -429,7 +468,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_rebuild_fails_w_vdisk(self):
         """Test RebuildSlotMap fails when VDisks exist in topology."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_VDISK
         self.assertRaises(
             pv_e.InvalidHostForRebuildInvalidIOType,
@@ -438,7 +477,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_pv_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_1
         rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
                                       VOL_TO_VIO2, {})
@@ -470,7 +509,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_pv_vscsi_build_out_arbitrary_dest_vioses(self):
         """Test RebuildSlotMap with multiple candidate dest VIOSes."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_ARB_MAP
 
         rsm = slot_map.RebuildSlotMap(
@@ -501,7 +540,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_pv_vscsi_build_out_full_coverage(self):
         """Test rebuild with 2 slots per udid and 2 candidate VIOSes."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_2S_2V_MAP
 
         rsm = slot_map.RebuildSlotMap(
@@ -540,7 +579,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_pv_udid_not_found_on_dest(self):
         """Test RebuildSlotMap fails when UDID not found on dest."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_3
 
         self.assertRaises(
@@ -549,7 +588,7 @@ class TestRebuildSlotMap(testtools.TestCase):
 
     def test_more_pv_udids_than_dest_vioses_fails(self):
         """Test RebuildSlotMap fails when there's not enough VIOSes."""
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_1
 
         self.assertRaises(
@@ -559,7 +598,7 @@ class TestRebuildSlotMap(testtools.TestCase):
     def test_npiv_build_out(self):
         """Test _npiv_build_out."""
         # Create a topology that will be converted to a rebuild map
-        smt = SlotMapTestImpl('foo')
+        smt = self.smt_impl('foo')
         vios1 = mock.Mock()
         vios1.get_pfc_wwpns = mock.Mock(return_value=['wwpn1'])
         vios2 = mock.Mock()

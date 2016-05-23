@@ -70,45 +70,76 @@ class SlotMapStore(object):
         map_str = self.load() if load else None
         # Deserialize or initialize
         self._slot_topo = pickle.loads(map_str) if map_str else {}
+        # Save a copy of the topology so we can tell when it has changed
+        self._loaded_topo = copy.deepcopy(self._slot_topo)
 
     @property
     def serialized(self):
-        """An opaque representation of the data in this class.
-
-        When implementing the save method, use this method to serialize the
-        slot map data to an opaque value to write to external storage.
-        """
-        # Serialize.  Use py2/3-compatible protocol.
+        """Internal use only.  Do not override.  Do not invoke."""
+        # Used by the save method to serialize the slot map data to an opaque
+        # value to write to external storage.
+        # Use py2/3-compatible protocol.
         return pickle.dumps(self.topology, protocol=2)
 
     def load(self):
-        """Load the slot map for an LPAR from storage.
+        """Internal use only.  Do not override.  Do not invoke."""
+        # Used by __init__ to bootstrap this instance with saved data, if any.
+        self._load(self.inst_key)
+
+    def _load(self, key):
+        """Subclass implementation to load a slot map for an LPAR from storage.
 
         The subclass must implement this method to retrieve the slot map - an
-        opaque data string - from a storage back-end, where it was stored keyed
-        on self.inst_key.
+        opaque data blob - from a storage back-end, where it was stored keyed
+        on 'key'.
 
-        :return: Opaque data string loaded from storage.  If no value exists in
-                 storage for self.inst_key, this method should return None.
+        :param key: Unique key to associate with this instance in the storage
+                    back-end.
+        :return: Opaque data blob loaded from storage.  If no value exists in
+                 storage for this key, this method should return None.
         """
         return None
 
     def save(self):
-        """Save this slot map to storage.
+        """Save this slot map to storage, if needed."""
+        # Only save if needed.
+        if self._slot_topo != self._loaded_topo:
+            self._save(self.inst_key, self.serialized)
+            # Update the saved version of the loaded topology so a subsequent
+            # save (without intervening changes) can condition properly.
+            self._loaded_topo = copy.deepcopy(self._slot_topo)
 
-        The subclass must implement this method to save self.serialized - an
-        opaque data blob - to a storage back-end.  The object must be
-        retrievable subsequently via the key self.inst_key.  If the back-end
-        already contains a value for self.inst_key, this method must overwrite
-        it.
+    def _save(self, key, blob):
+        """Subclass implementation to write this slot map to storage.
+
+        The subclass must implement this method to save 'blob' - an opaque data
+        blob - to a storage back-end, keyed via 'key'.  The object must be
+        retrievable subsequently via the same key.  If the back-end already
+        contains a value for that key, this method must overwrite it.
+
+        This method need not implement save-only-if-changed logic; that is
+        handled by the 'save' method.
+
+        :param key: Unique key to associate with this instance in the storage
+                    back-end.
+        :param blob: Opaque data blob to save to the storage back-end.  This
+                     value is not to be introspected, as its format may change
+                     without notice.
         """
         pass
 
     def delete(self):
-        """Remove the back-end storage for this slot map.
+        """Remove the back-end storage for this slot map."""
+        self._delete(self.inst_key)
+
+    def _delete(self, key):
+        """Subclass implementation to delete this slot map from storage.
 
         The subclass must implement this method to remove the opaque data
-        string associated with self.inst_key from the storage back-end.
+        string associated with 'key' from the storage back-end.
+
+        :param key: Unique key to associate with this instance in the storage
+                    back-end.
         """
         pass
 
