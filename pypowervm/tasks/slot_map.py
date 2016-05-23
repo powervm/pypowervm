@@ -70,6 +70,8 @@ class SlotMapStore(object):
         map_str = self.load() if load else None
         # Deserialize or initialize
         self._slot_topo = pickle.loads(map_str) if map_str else {}
+        # Save a copy of the topology so we can tell when it has changed
+        self._loaded_topo = copy.deepcopy(self._slot_topo)
 
     @property
     def serialized(self):
@@ -93,6 +95,15 @@ class SlotMapStore(object):
         """
         return None
 
+    @property
+    def save_needed(self):
+        """Has the topology changed since it was loaded or last saved?
+
+        Smart subclasses should condition the expensive parts of their save
+        method override on this property.
+        """
+        return self._slot_topo != self._loaded_topo
+
     def save(self):
         """Save this slot map to storage.
 
@@ -101,8 +112,13 @@ class SlotMapStore(object):
         retrievable subsequently via the key self.inst_key.  If the back-end
         already contains a value for self.inst_key, this method must overwrite
         it.
+
+        The override must invoke this implementation via super(...).save() at
+        the end of the overriding method.
         """
-        pass
+        # Update the saved version of the loaded topology so a subsequent save
+        # (without intervening changes) can condition properly on save_needed.
+        self._loaded_topo = copy.deepcopy(self._slot_topo)
 
     def delete(self):
         """Remove the back-end storage for this slot map.

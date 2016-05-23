@@ -51,6 +51,9 @@ class SlotMapTestImpl(slot_map.SlotMapStore):
         self.load_calls += 1
         return self._load_ret
 
+    def save(self):
+        super(SlotMapTestImpl, self).save()
+
 
 class TestSlotMapStore(testtools.TestCase):
     """Test slot_map.SlotMapStore."""
@@ -66,8 +69,10 @@ class TestSlotMapStore(testtools.TestCase):
         loads = SlotMapTestImpl('foo')
         self.assertEqual(1, loads.load_calls)
         self.assertEqual('foo', loads.inst_key)
+        self.assertFalse(loads.save_needed)
         doesnt_load = SlotMapTestImpl('bar', load=False)
         self.assertEqual(0, doesnt_load.load_calls)
+        self.assertFalse(doesnt_load.save_needed)
 
     @mock.patch('pickle.loads')
     def test_init_deserialize(self, mock_unpickle):
@@ -124,12 +129,14 @@ class TestSlotMapStore(testtools.TestCase):
         mock_vsw_get.return_value = vswitchfeed
         mock_sys_get.return_value = ['sys']
         smt = SlotMapTestImpl('foo')
+        self.assertFalse(smt.save_needed)
         for cna in cnafeed1:
             smt.register_cna(cna)
         self.assertEqual({3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}},
                          smt.topology)
+        self.assertTrue(smt.save_needed)
 
     def test_drop_cna(self):
         """Test drop_cna."""
@@ -137,17 +144,21 @@ class TestSlotMapStore(testtools.TestCase):
         smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
-
+        smt.save()
         # Drop the first CNA and verify it was removed
         smt.drop_cna(cnafeed1[0])
         self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}},
                          smt.topology)
+        self.assertTrue(smt.save_needed)
+        smt.save()
+        self.assertFalse(smt.save_needed)
 
         # Drop all remaining CNAs, including a redundant drop on index 0
         for cna in cnafeed1:
             smt.drop_cna(cna)
         self.assertEqual({}, smt.topology)
+        self.assertTrue(smt.save_needed)
 
     def test_register_vfc_mapping(self):
         """Test register_vfc_mapping."""
@@ -175,6 +186,7 @@ class TestSlotMapStore(testtools.TestCase):
                                       'fab9': None}},
                           6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}}, smt.topology)
+        self.assertTrue(smt.save_needed)
 
     def test_drop_vfc_mapping(self):
         """Test drop_vfc_mapping."""
@@ -187,7 +199,7 @@ class TestSlotMapStore(testtools.TestCase):
                                       'fab9': None}},
                           6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}}
-
+        smt.save()
         # Drop a single slot entry and verify it is removed
         smt.drop_vfc_mapping(vfcmap, 'fab1')
         self.assertEqual({3: {'VFC': {'fab10': None,
@@ -196,13 +208,16 @@ class TestSlotMapStore(testtools.TestCase):
                           6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}},
                          smt.topology)
-
+        self.assertTrue(smt.save_needed)
+        smt.save()
+        self.assertFalse(smt.save_needed)
         # Drop remaining LPAR 3 slot entries and verify they are removed
         for i in range(7, 11):
             smt.drop_vfc_mapping(vfcmap, 'fab%s' % str(i))
         self.assertEqual({6: {'VFC': {'fab2': None}},
                           8: {'VFC': {'fab27': None}}},
                          smt.topology)
+        self.assertTrue(smt.save_needed)
 
     def test_register_vscsi_mappings(self):
         """Test register_vscsi_mappings."""
@@ -235,6 +250,7 @@ class TestSlotMapStore(testtools.TestCase):
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
              3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}},
             smt.topology)
+        self.assertTrue(smt.save_needed)
 
     def test_drop_vscsi_mappings(self):
         """Test drop_vscsi_mappings."""
@@ -271,6 +287,7 @@ class TestSlotMapStore(testtools.TestCase):
                         'vopt_de86c46e07004993b412c948bd5047c2'}},
             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}
         }
+        smt.save()
 
         # Remove a single LU entry and verify it was removed
         smt.drop_vscsi_mapping(vscsimap)
@@ -297,6 +314,7 @@ class TestSlotMapStore(testtools.TestCase):
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
              3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}},
             smt.topology)
+        self.assertTrue(smt.save_needed)
 
         # Remove all other LPAR 2 LU entries and verify they are removed
         udids = ['274d7bb790666211e3bc1a00006cae8b013842794fa0b8e9dd771'
