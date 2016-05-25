@@ -12,7 +12,7 @@ See the VERSION.rst for detailed information about current version.
 
 Overview
 --------
-pypowervm provides a Python-based API wrapper for interaction with IBM
+SOMETHING pypowervm provides a Python-based API wrapper for interaction with IBM
 PowerVM-based systems.
 
 License
