@@ -1193,7 +1193,7 @@ class WrapperElemList(list):
      - Removing from the list (ex. list.remove(other_elem))
     """
 
-    def __init__(self, root_elem, child_class=None, **kwargs):
+    def __init__(self, root_elem, child_class=None, indirect=None, **kwargs):
         """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
@@ -1202,6 +1202,25 @@ class WrapperElemList(list):
         :param child_class: The child class (subclass of ElementWrapper).
                             This is optional.  If not specified, will wrap
                             all children elements.
+        :param indirect: Name of schema layer to ignore between root_elem and
+                         the target child_class.  This is for schema structures
+                         such as:
+                            <IOAdapters>
+                                <IOAdapterChoice>
+                                    <IOAdapter>...</IOAdapter>
+                                </IOAdapterChoice>
+                                <IOAdapterChoice>
+                                    <SRIOVAdapter>...</SRIOVAdapter>
+                                </IOAdapterChoice>
+                                ...
+                          </IOAdapters>
+                         In this case, we want WrapperElemList to return
+                            [IOAdapter, SRIOVAdapter, ...]
+                         ...ignoring the intervening <IOAdapterChoice/>
+                         layer, so we would set indirect='IOAdapterChoice'.
+                         Note that we rely upon the intervening layer (in this
+                         example, IOAdapterChoice) to contain nothing but the
+                         target element type - not even <Metadata/>.
         :param kwargs: Optional additional named arguments that may be passed
                        into the wrapper on creation.
         """
@@ -1212,14 +1231,20 @@ class WrapperElemList(list):
             # Default to the ElementWrapper, which should resolve to the
             # appropriate class type.
             self.child_class = ElementWrapper
+        self.indirect = indirect
         self.injects = kwargs
 
     def __find_elems(self):
-        if (self.child_class is not None and
-                self.child_class is not ElementWrapper):
-            return self.root_elem.findall(self.child_class.schema_type)
-        else:
-            return list(self.root_elem)
+        root_elems = self.root_elem.findall(
+            self.indirect) if self.indirect else [self.root_elem]
+        found = []
+        for root_elem in root_elems:
+            if (self.child_class is not None and
+                    self.child_class is not ElementWrapper):
+                found.extend(root_elem.findall(self.child_class.schema_type))
+            else:
+                found.extend(list(root_elem))
+        return found
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -1267,9 +1292,15 @@ class WrapperElemList(list):
             self.append(elem)
 
     def append(self, elem):
+        # For now, do not support modifying a list with indirection
+        if self.indirect is not None:
+            raise NotImplementedError()
         self.root_elem.element.append(elem.element.element)
 
     def remove(self, elem):
+        # For now, do not support modifying a list with indirection
+        if self.indirect is not None:
+            raise NotImplementedError()
         # Try this way first...if there is a value error, that means
         # that the identical element isn't here...need to try 'functionally
         # equivalent' -> slower...
