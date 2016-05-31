@@ -20,6 +20,7 @@ from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.io as io
 
 # Base Partition (_BP)
 _BP_ALLOW_PERF_DATA_COLL = 'AllowPerformanceDataCollection'
@@ -222,15 +223,9 @@ _IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
 _IO_ADPT_PHYS_LOC = 'PhysicalLocation'
 _IO_ADPT_UDID = 'UniqueDeviceID'
 
-# Physical Fibre Channel Port Constants
-_PFC_PORT_LOC_CODE = 'LocationCode'
-_PFC_PORT_NAME = 'PortName'
-_PFC_PORT_UDID = 'UniqueDeviceID'
-PFC_PORT_WWPN = 'WWPN'
-_PFC_PORT_AVAILABLE_PORTS = 'AvailablePorts'
-_PFC_PORT_TOTAL_PORTS = 'TotalPorts'
-PFC_PORTS_ROOT = 'PhysicalFibreChannelPorts'
-PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
+IOAdapter = io.IOAdapter
+PhysFCAdapter = io.PhysFCAdapter
+PhysFCPort = io.PhysFCPort
 
 
 class SharingMode(object):
@@ -1308,65 +1303,6 @@ class IOSlot(ewrap.ElementWrapper):
         a Physical Fibre Channel Adapter (PhysFCAdapter).
         """
         return self.__get_prop('io_adapter')
-
-
-@ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
-class IOAdapter(ewrap.ElementWrapper):
-    """A generic IO Adapter,
-
-    This is a device plugged in to the system.  The location code indicates
-    where it is plugged into the system.
-    """
-
-    @property
-    def id(self):
-        """The adapter system id."""
-        return self._get_val_str(_IO_ADPT_ID)
-
-    @property
-    def description(self):
-        return self._get_val_str(_IO_ADPT_DESC)
-
-    @property
-    def dev_name(self):
-        return self._get_val_str(_IO_ADPT_DEV_NAME)
-
-    @property
-    def dev_type(self):
-        return self._get_val_str(_IO_ADPT_DEV_TYPE)
-
-    @property
-    def drc_name(self):
-        return self._get_val_str(_IO_ADPT_DYN_NAME)
-
-    @property
-    def phys_loc_code(self):
-        return self._get_val_str(_IO_ADPT_PHYS_LOC)
-
-    @property
-    def udid(self):
-        return self._get_val_str(_IO_ADPT_UDID)
-
-
-@ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelAdapter',
-                               has_metadata=True)
-class PhysFCAdapter(IOAdapter):
-    """A Physical Fibre Channel I/O Adapter.
-
-    Extends the generic I/O Adapter, but provides port detail as well.
-
-    The adapter has a set of Physical Fibre Channel Ports (PhysFCPort).
-    """
-
-    @property
-    def fc_ports(self):
-        """The set of PhysFCPort's that are attached to this adapter.
-
-        The data on this should be considered read only.
-        """
-        es = ewrap.WrapperElemList(self._find_or_seed(PFC_PORTS_ROOT),
-                                   PhysFCPort)
-        return es
 
 
 @ewrap.ElementWrapper.pvm_type('PhysicalFibreChannelPort', has_metadata=True)

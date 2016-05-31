@@ -30,6 +30,7 @@ from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.io as io
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
@@ -102,6 +103,8 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
     _VIO_LICENSE_ACCEPTED, _VIO_VFC_MAPPINGS, _VIO_VSCSI_MAPPINGS,
     _VIO_FREE_IO_ADPTS_FOR_LNAGG, _VIO_FREE_ETH_BACKDEVS_FOR_SEA,
     _VIO_VNIC_BACKDEVS)
+
+LinkAggrIOAdapterChoice = io.LinkAggrIOAdapterChoice
 
 
 class _VIOSXAGs(object):
@@ -663,48 +666,3 @@ class VFCMapping(VStorageMapping):
         if elem is not None:
             return bp.PhysFCPort.wrap(elem)
         return None
-
-
-@ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
-class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
-    """A free I/O Adapter link aggregation choice.
-
-    Flattens this two step heirarchy to pull the information needed directly
-    from the IOAdapter element.
-    """
-    def __get_prop(self, func):
-        """Thin wrapper to get the IOAdapter and get a property."""
-        elem = self._find('IOAdapter')
-        if elem is None:
-            return None
-
-        io_adpt = bp.IOAdapter.wrap(elem)
-        return getattr(io_adpt, func)
-
-    @property
-    def id(self):
-        return self.__get_prop('id')
-
-    @property
-    def description(self):
-        return self.__get_prop('description')
-
-    @property
-    def dev_name(self):
-        return self.__get_prop('dev_name')
-
-    @property
-    def dev_type(self):
-        return self.__get_prop('dev_type')
-
-    @property
-    def drc_name(self):
-        return self.__get_prop('drc_name')
-
-    @property
-    def phys_loc_code(self):
-        return self.__get_prop('phys_loc_code')
-
-    @property
-    def udid(self):
-        return self.__get_prop('udid')
