@@ -143,6 +143,9 @@ class SlotMapStore(object):
         """
         pass
 
+    def register_max_slot(self, max_slot):
+        self._slot_topo['_max_slot'] = max_slot
+
     def register_cna(self, cna):
         """Register the slot and switch topology of a client network adapter.
 
@@ -278,7 +281,14 @@ class SlotMapStore(object):
         LU          LU.udid                     LUA
         VFC         fabric name                 None
         """
-        return self._slot_topo
+        ret = copy.deepcopy(self._slot_topo)
+        ret.pop('_max_slot', None)
+        return ret
+
+    @property
+    def max_slot(self):
+        """Returns the highest slot number for the LPAR, or None if not set."""
+        return self._slot_topo.get('_max_slot', None)
 
     def _vswitch_id2name(self, adap):
         """(Cache and) return a map of VSwitch short ID to VSwitch name.
@@ -443,6 +453,10 @@ class BuildSlotMap(object):
         raise pvm_ex.InvalidHostForRebuildSlotMismatch(
             rebuild_slots=number_of_slots,
             original_slots=number_of_map_slots)
+
+    def get_max_slot(self):
+        return self._slot_store.max_slot or max(
+            self._slot_store.topology.keys()) + 10
 
 
 class RebuildSlotMap(BuildSlotMap):
