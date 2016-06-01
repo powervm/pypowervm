@@ -22,6 +22,7 @@ import testtools
 from pypowervm import exceptions as pv_e
 from pypowervm.tasks import slot_map
 from pypowervm.tests.test_utils import pvmhttp
+from pypowervm.utils import lpar_builder as lb
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
 from pypowervm.wrappers import virtual_io_server as vios
@@ -371,6 +372,45 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         # Ensure their topologies are identical
         self.assertEqual(smt1.topology, smt2.topology)
 
+    def test_max_vslots(self):
+        """Test setting/getting the max_vslots."""
+        smt = self.smt_impl('foo')
+        # Starts off unset
+        self.assertIsNone(smt.max_vslots)
+        # Can assign initially
+        smt.register_max_vslots(123)
+        self.assertEqual(123, smt.max_vslots)
+        # Can overwrite
+        smt.register_max_vslots(234)
+        self.assertEqual(234, smt.max_vslots)
+        # Can throw other stuff in there
+        i = 1
+        for vio in (vio1, vio2):
+            for vfcmap in vio.vfc_mappings:
+                smt.register_vfc_mapping(vfcmap, 'fab%d' % i)
+                i += 1
+        # max_vslots still set
+        self.assertEqual(234, smt.max_vslots)
+        # Topology not polluted by max_vslots
+        self.assertEqual({3: {'VFC': {'fab1': None, 'fab10': None,
+                                      'fab11': None, 'fab12': None,
+                                      'fab13': None, 'fab14': None,
+                                      'fab15': None, 'fab16': None,
+                                      'fab17': None, 'fab18': None,
+                                      'fab19': None, 'fab20': None,
+                                      'fab21': None, 'fab22': None,
+                                      'fab23': None, 'fab24': None,
+                                      'fab25': None, 'fab26': None,
+                                      'fab28': None, 'fab29': None,
+                                      'fab3': None, 'fab30': None,
+                                      'fab31': None, 'fab32': None,
+                                      'fab33': None, 'fab4': None,
+                                      'fab5': None, 'fab6': None,
+                                      'fab7': None, 'fab8': None,
+                                      'fab9': None}},
+                          6: {'VFC': {'fab2': None}},
+                          8: {'VFC': {'fab27': None}}}, smt.topology)
+
 
 class TestSlotMapStore(TestSlotMapStoreLegacy):
     """Test slot_map.SlotMapStore with a new-style impl."""
@@ -499,6 +539,36 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertEqual(4, rsm.get_vea_slot('2A2E57A4DE9C'))
         self.assertEqual(None, rsm.get_vea_slot('3AEAC528A7E3'))
         self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
+
+    def test_max_vslots(self):
+        """Ensure max_vslots returns the set value, or 10 + highest slot."""
+        # With max_vslots unset and nothing in the topology...
+        smt = self.smt_impl('foo')
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+        # ...max_vslots defaults to 64
+        self.assertEqual(lb.DEF_MAX_SLOT, rsm.get_max_vslots())
+
+        # When unset, and the highest registered slot is small...
+        smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+        # ...max_vslots still defaults to 64
+        self.assertEqual(lb.DEF_MAX_SLOT, rsm.get_max_vslots())
+
+        # When unset, and the highest registered slot is big...
+        smt._slot_topo = {62: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}}
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+        # ...max_vslots derives to 10 + highest
+        self.assertEqual(72, rsm.get_max_vslots())
+
+        # With max_vslots set, even if it's lower than 64...
+        smt.register_max_vslots(23)
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+        # ...max_vslots returns the exact value
+        self.assertEqual(23, rsm.get_max_vslots())
 
     def test_rebuild_fails_w_lu(self):
         """Test RebuildSlotMap fails when LUs exist in topology."""
