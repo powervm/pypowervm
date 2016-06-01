@@ -469,23 +469,23 @@ class TestWrapperElemList(testtools.TestCase):
 
     def test_get(self):
         self.assertIsNotNone(self.elem_set[0])
-        self.assertRaises(IndexError, lambda a, i: a[i], self.elem_set, 1)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.elem_set, 2)
 
     def test_length(self):
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.elem_set))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
             ent.Element('SharedEthernetAdapter', self.adpt))
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.elem_set))
 
         # Test Append
         self.elem_set.append(sea_add)
-        self.assertEqual(2, len(self.elem_set))
+        self.assertEqual(3, len(self.elem_set))
 
         # Make sure we can also remove what was just added.
         self.elem_set.remove(sea_add)
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.elem_set))
 
     def test_extend(self):
         seas = [
@@ -494,9 +494,9 @@ class TestWrapperElemList(testtools.TestCase):
             ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
                                                   self.adpt))
         ]
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.elem_set))
         self.elem_set.extend(seas)
-        self.assertEqual(3, len(self.elem_set))
+        self.assertEqual(4, len(self.elem_set))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
@@ -504,7 +504,7 @@ class TestWrapperElemList(testtools.TestCase):
                                                   self.adpt))
         self.elem_set.remove(e)
         self.elem_set.remove(e)
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.elem_set))
 
     def test_in(self):
         # This really does fail without __contains__
