@@ -31,7 +31,9 @@ from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -41,6 +43,7 @@ NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
 VIOS_FILE = 'fake_vios_feed.txt'
 VNETS_FILE = 'nbbr_virtual_network.txt'
+SYS_SRIOV_FILE = 'sys_with_sriov.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -460,32 +463,41 @@ class TestWrapperElemList(testtools.TestCase):
     def setUp(self):
         super(TestWrapperElemList, self).setUp()
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
-        resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
-        nb = resp.feed.entries[0]
-        self.wrapper = ewrap.EntryWrapper.wrap(nb)
-        sea_elem = self.wrapper.element.find('SharedEthernetAdapters')
-
-        self.elem_set = ewrap.WrapperElemList(sea_elem, net.SEA)
+        # No indirect
+        self.seas_wel = net.NetBridge.wrap(pvmhttp.load_pvm_resp(
+            NET_BRIDGE_FILE).get_response())[0].seas
+        # With indirect
+        self.sriovs_wel = ms.System.wrap(pvmhttp.load_pvm_resp(
+            SYS_SRIOV_FILE).get_response())[0].asio_config.sriov_adapters
 
     def test_get(self):
-        self.assertIsNotNone(self.elem_set[0])
-        self.assertRaises(IndexError, lambda a, i: a[i], self.elem_set, 2)
+        self.assertIsInstance(self.seas_wel[0], net.SEA)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 2)
+        # Works with indirect
+        self.assertIsInstance(self.sriovs_wel[0], card.SRIOVAdapter)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 3)
 
     def test_length(self):
-        self.assertEqual(2, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
+        self.assertEqual(2, len(self.sriovs_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
             ent.Element('SharedEthernetAdapter', self.adpt))
-        self.assertEqual(2, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
 
         # Test Append
-        self.elem_set.append(sea_add)
-        self.assertEqual(3, len(self.elem_set))
+        self.seas_wel.append(sea_add)
+        self.assertEqual(3, len(self.seas_wel))
+        # Appending to indirect not supported
+        sriov = copy.deepcopy(self.sriovs_wel[0])
+        self.assertRaises(NotImplementedError, self.sriovs_wel.append, sriov)
 
         # Make sure we can also remove what was just added.
-        self.elem_set.remove(sea_add)
-        self.assertEqual(2, len(self.elem_set))
+        self.seas_wel.remove(sea_add)
+        self.assertEqual(2, len(self.seas_wel))
+        # Removing from indirect not supported
+        self.assertRaises(NotImplementedError, self.sriovs_wel.remove, sriov)
 
     def test_extend(self):
         seas = [
@@ -494,26 +506,41 @@ class TestWrapperElemList(testtools.TestCase):
             ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
                                                   self.adpt))
         ]
-        self.assertEqual(2, len(self.elem_set))
-        self.elem_set.extend(seas)
-        self.assertEqual(4, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
+        self.seas_wel.extend(seas)
+        self.assertEqual(4, len(self.seas_wel))
+        # Extending indirect not supported
+        sriovs = [copy.deepcopy(self.sriovs_wel[0]),
+                  copy.deepcopy(self.sriovs_wel[1])]
+        self.assertRaises(NotImplementedError, self.sriovs_wel.extend, sriovs)
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
         e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
                                                   self.adpt))
-        self.elem_set.remove(e)
-        self.elem_set.remove(e)
-        self.assertEqual(2, len(self.elem_set))
+        self.seas_wel.remove(e)
+        self.seas_wel.remove(e)
+        self.assertEqual(2, len(self.seas_wel))
 
     def test_in(self):
         # This really does fail without __contains__
-        elem = self.elem_set[0]
-        self.assertIn(elem, self.elem_set)
+        self.assertIn(self.seas_wel[0], self.seas_wel)
+        # Works with indirect
+        self.assertIn(self.sriovs_wel[0], self.sriovs_wel)
 
     def test_index(self):
-        elem = self.elem_set[0]
-        self.assertEqual(self.elem_set.index(elem), 0)
+        self.assertEqual(self.seas_wel.index(self.seas_wel[0]), 0)
+        # Works with indirect
+        self.assertEqual(self.sriovs_wel.index(self.sriovs_wel[0]), 0)
+
+    def test_str(self):
+        strout = str(self.seas_wel)
+        for chunk in strout.split(','):
+            self.assertIn('SEA', chunk)
+        # And for indirect
+        strout = str(self.sriovs_wel)
+        for chunk in strout.split(','):
+            self.assertIn('SRIOVAdapter', chunk)
 
 
 class TestActionableList(unittest.TestCase):

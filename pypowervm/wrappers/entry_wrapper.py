@@ -1274,14 +1274,8 @@ class WrapperElemList(list):
             yield self.child_class.wrap(elem, **self.injects)
 
     def __str__(self):
-        elems = self.__find_elems()
-        string = '['
-        for elem in elems:
-            string += str(elem)
-            if elem != elems[len(elems) - 1]:
-                string += ', '
-        string += ']'
-        return string
+        return '[' + ', '.join([str(self.child_class.wrap(
+            elem, **self.injects)) for elem in self.__find_elems()]) + ']'
 
     def __contains__(self, item):
         elems = self.__find_elems()
