@@ -679,6 +679,10 @@ class SEA(ewrap.ElementWrapper):
         if self.control_channel == dev_name:
             return True
 
+        # If this SEA has no trunk adapters, primary_adpt will be None
+        if not self.primary_adpt:
+            return False
+
         if self.primary_adpt.dev_name == dev_name:
             return True
 
