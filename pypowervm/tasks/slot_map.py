@@ -26,6 +26,7 @@ import six
 
 from pypowervm import exceptions as pvm_ex
 from pypowervm import util as pvm_util
+from pypowervm.utils import lpar_builder as lb
 from pypowervm.wrappers import managed_system as sys
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
@@ -142,6 +143,13 @@ class SlotMapStore(object):
                     back-end.
         """
         pass
+
+    def register_max_vslots(self, max_vslots):
+        """Register the maximum number of virtual slots on the source LPAR.
+
+        :param max_vslots: The maximum number of virtual slots on the LPAR.
+        """
+        self._slot_topo['_max_vslots'] = max_vslots
 
     def register_cna(self, cna):
         """Register the slot and switch topology of a client network adapter.
@@ -278,7 +286,20 @@ class SlotMapStore(object):
         LU          LU.udid                     LUA
         VFC         fabric name                 None
         """
-        return self._slot_topo
+        ret = copy.deepcopy(self._slot_topo)
+        ret.pop('_max_vslots', None)
+        return ret
+
+    @property
+    def max_vslots(self):
+        """Returns the highest slot number for the LPAR, or None if not set.
+
+        This number corresponds to base_partition.max_virtual_slots, and
+        indicates the maximum number of virtual slots (I/O buses) allowed on
+        the LPAR.  If register_max_vslots has never bene called, this value
+        will be None.
+        """
+        return self._slot_topo.get('_max_vslots', None)
 
     def _vswitch_id2name(self, adap):
         """(Cache and) return a map of VSwitch short ID to VSwitch name.
@@ -443,6 +464,29 @@ class BuildSlotMap(object):
         raise pvm_ex.InvalidHostForRebuildSlotMismatch(
             rebuild_slots=number_of_slots,
             original_slots=number_of_map_slots)
+
+    def get_max_vslots(self):
+        """Retrieve or derive the maximum number of virtual slots for the LPAR.
+
+        If the source LPAR's maximum number of virtual slots was registered in
+        the source slot map, that value is returned.  Otherwise, we attempt to
+        derive a reasonable value based on the highest registered slot number.
+        If none was registered, the minimum returned value will be the default
+        from pypowervm.utils.lpar_builder.DEF_MAX_SLOT.
+
+        It is the caller's responsibility to determine whether the value
+        returned by this method is sufficiently high for the LPAR being
+        created.
+        """
+        # Return the exact value if it was registered
+        if self._slot_store.max_vslots is not None:
+            return self._slot_store.max_vslots
+        # Otherwise, return the higher of
+        # - The default from lpar_builder
+        # - The highest registered slot, plus 10
+        from_hi_slot = (max(self._slot_store.topology.keys())
+                        if self._slot_store.topology else 0) + 10
+        return max(lb.DEF_MAX_SLOT, from_hi_slot)
 
 
 class RebuildSlotMap(BuildSlotMap):

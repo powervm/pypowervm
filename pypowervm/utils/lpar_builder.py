@@ -72,6 +72,14 @@ VCPU_LOW_BOUND = 1
 PROC_UNITS_LOW_BOUND = 0.05
 MAX_LPAR_NAME_LEN = 31
 
+# Defaults
+DEF_PROC_UNIT_FACT = 0.5
+DEF_MAX_SLOT = 64
+DEF_UNCAPPED_WT = 64
+DEF_SPP = 0
+DEF_AVAIL_PRI = 127
+DEF_SRR = 'false'
+
 LOG = logging.getLogger(__name__)
 
 # TODO(IBM) translation
@@ -155,9 +163,10 @@ class DefaultStandardize(Standardize):
 
     """
     def __init__(self, mngd_sys,
-                 proc_units_factor=0.5, max_slots=64,
-                 uncapped_weight=64, spp=0, avail_priority=127,
-                 srr='false', proc_compat=bp.LPARCompat.DEFAULT):
+                 proc_units_factor=DEF_PROC_UNIT_FACT, max_slots=DEF_MAX_SLOT,
+                 uncapped_weight=DEF_UNCAPPED_WT, spp=DEF_SPP,
+                 avail_priority=DEF_AVAIL_PRI, srr=DEF_SRR,
+                 proc_compat=bp.LPARCompat.DEFAULT):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
