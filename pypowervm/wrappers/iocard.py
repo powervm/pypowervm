@@ -32,6 +32,76 @@ _IO_ADPT_CHOICE = 'IOAdapterChoice'
 _SRIOV_ADAPTER_MODE = 'AdapterMode'
 _SRIOV_ADAPTER_STATE = 'AdapterState'
 
+_SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
+_SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
+
+# SR-IOV physical port constants
+_PVM_SRIOV_PHYSICAL_PORT_TYPE_CONVERGED = 'converged'
+_PVM_SRIOV_PHYSICAL_PORT_TYPE_ETHERNET = 'ethernet'
+
+_SRIOVPP_CONFIGURED_SPEED = 'ConfiguredConnectionSpeed'
+_SRIOVPP_MTU = 'ConfiguredMTU'
+_SRIOV_PP_CONFIGURED_OPTIONS = 'ConfiguredOptions'
+_SRIOV_PP_CURRENT_SPEED = 'ConfiguredConnectionSpeed'
+_SRIOV_PP_CURRENT_OPTIONS = 'CurrentOptions'
+_SRIOV_PP_LBL = 'Label'
+_SRIOV_PP_LOCATION_CODE = 'LocationCode'
+_SRIOV_PP_MAX_DIAG_LOGICAL_PORTS = 'MaximumDiagnosticsLogicalPorts'
+_SRIOV_PP_MAX_PROM_LOGICAL_PORTS = 'MaximumPromiscuousLogicalPorts'
+_SRIOV_PP_ID = 'PhysicalPortID'
+_SRIOV_PP_CAPABILITIES = 'PortCapabilities'
+_SRIOV_PP_TYPE = 'PortType'
+_SRIOV_PP_LOGICAL_PORT_LIMIT = 'PortLogicalPortLimit'
+_SRIOV_PP_SUBLBL = 'SubLabel'
+_SRIOV_PP_SUPPORTED_SPEEDS = 'SupportedConnectionSpeeds'
+_SRIOV_PP_SUPPORTED_MTUS = 'SupportedMTUs'
+_SRIOV_PP_SUPPORTED_OPTIONS = 'SupportedOptions'
+_SRIOV_PP_SUPPORTED_PRI_ACL = 'SupportedPriorityAccessControlList'
+_SRIOV_PP_LINK_STATUS = 'LinkStatus'
+_SRIOV_PP_ALLOC_CAPACITY = 'AllocatedCapacity'
+_SRIOV_PP_CFG_MAX_ETHERNET_LOGICAL_PORTS = 'ConfiguredMaxEthernetLogicalPorts'
+_SRIOV_PP_CFG_ETHERNET_LOGICAL_PORTS = 'ConfiguredEthernetLogicalPorts'
+_SRIOV_PP_MAX_PVID = 'MaximumPortVLANID'
+_SRIOV_PP_VLAN_ID = 'MaximumVLANID'
+_SRIOV_PP_MIN_ETHERNET_CAPACITY_GRAN = 'MinimumEthernetCapacityGranularity'
+_SRIOV_PP_MIN_PVID = 'MinimumPortVLANID'
+_SRIOV_PP_MIN_VLAN_ID = 'MinimumVLANID'
+_SRIOV_PP_MAX_SUPP_ETHERNET_LOGICAL_PORTS = 'MaxSupportedEthernetLogicalPorts'
+_SRIOV_PP_CFG_MX_FCOE_LPS = 'ConfiguredMaxFiberChannelOverEthernetLogicalPorts'
+_SRIOV_PP_DEF_FCTARG_BACK_DEV = 'DefaultFiberChannelTargetsForBackingDevice'
+_SRIOV_PP_DEF_FTARG_NBACK_DEV = 'DefaultFiberChannelTargetsForNonBackingDevice'
+_SRIOV_PP_CF_FCOE_LPORTS = 'ConfiguredFiberChannelOverEthernetLogicalPorts'
+_SRIOV_PP_MIN_FCOE_CAPACITY_GRANULARITY = 'MinimumFCoECapacityGranularity'
+_SRIOV_PP_FC_TARGET_ROUNDING_VALUE = 'FiberChannelTargetsRoundingValue'
+_SRIOV_PP_MXSUP_FCOELPORTS = 'MaxSupportedFiberChannelOverEthernetLogicalPorts'
+_SRIOV_PP_MAX_FC_TARGES = 'MaximumFiberChannelTargets'
+
+
+_SRIOVPP_EL_ORDER = (
+    _SRIOVPP_CONFIGURED_SPEED, _SRIOVPP_MTU,
+    _SRIOV_PP_CONFIGURED_OPTIONS, _SRIOV_PP_CURRENT_SPEED,
+    _SRIOV_PP_CURRENT_OPTIONS, _SRIOV_PP_LBL, _SRIOV_PP_LOCATION_CODE,
+    _SRIOV_PP_MAX_DIAG_LOGICAL_PORTS, _SRIOV_PP_MAX_PROM_LOGICAL_PORTS,
+    _SRIOV_PP_ID, _SRIOV_PP_CAPABILITIES, _SRIOV_PP_TYPE,
+    _SRIOV_PP_LOGICAL_PORT_LIMIT, _SRIOV_PP_SUBLBL, _SRIOV_PP_SUPPORTED_SPEEDS,
+    _SRIOV_PP_SUPPORTED_MTUS, _SRIOV_PP_SUPPORTED_OPTIONS,
+    _SRIOV_PP_SUPPORTED_PRI_ACL, _SRIOV_PP_LINK_STATUS)
+
+_SRIOVEPP_EL_ORDER = _SRIOVPP_EL_ORDER + (
+    _SRIOV_PP_ALLOC_CAPACITY,
+    _SRIOV_PP_CFG_MAX_ETHERNET_LOGICAL_PORTS,
+    _SRIOV_PP_CFG_ETHERNET_LOGICAL_PORTS, _SRIOV_PP_MAX_PVID,
+    _SRIOV_PP_VLAN_ID, _SRIOV_PP_MIN_ETHERNET_CAPACITY_GRAN,
+    _SRIOV_PP_MIN_PVID, _SRIOV_PP_MIN_VLAN_ID,
+    _SRIOV_PP_MAX_SUPP_ETHERNET_LOGICAL_PORTS)
+
+_SRIOVCPP_EL_ORDER = _SRIOVEPP_EL_ORDER + (
+    _SRIOV_PP_CFG_MX_FCOE_LPS,
+    _SRIOV_PP_DEF_FCTARG_BACK_DEV, _SRIOV_PP_DEF_FTARG_NBACK_DEV,
+    _SRIOV_PP_CF_FCOE_LPORTS, _SRIOV_PP_MIN_FCOE_CAPACITY_GRANULARITY,
+    _SRIOV_PP_FC_TARGET_ROUNDING_VALUE, _SRIOV_PP_MXSUP_FCOELPORTS,
+    _SRIOV_PP_MAX_FC_TARGES)
+
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
 _PFC_PORT_NAME = 'PortName'
@@ -185,6 +255,96 @@ class SRIOVAdapter(IOAdapter):
     @property
     def state(self):
         return self._get_val_str(_SRIOV_ADAPTER_STATE)
+
+    def _convergedphysicalports(self):
+        """Retrieve all Converged physical ports."""
+        es = ewrap.WrapperElemList(self._find_or_seed(
+                                   _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS),
+                                   child_class=SRIOVConvPPort)
+        return es
+
+    def _ethernetphysicalports(self):
+        """Retrieve all Ethernet physical ports."""
+        es = ewrap.WrapperElemList(self._find_or_seed(
+                                   _SRIOV_ETHERNET_PHYSICAL_PORTS),
+                                   child_class=SRIOVEthPPort)
+        return es
+
+    @property
+    def phys_ports(self):
+        """Retrieve Combined list of all physical ports.
+
+        Returns a list of converged and ethernet physical ports.
+        This list is not modifiable, cannot insert or remote
+        items from it, however, individual item can be updated.
+        For example, label and sublabels can be updated.
+        """
+        allports = []
+        cports = self._convergedphysicalports()
+        eports = self._ethernetphysicalports()
+        for c in cports:
+            allports.append(c)
+        for e in eports:
+            allports.append(e)
+        return allports
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort',
+                               child_order=_SRIOVEPP_EL_ORDER)
+class SRIOVEthPPort(ewrap.ElementWrapper):
+    """The SRIOV Ethernet Physical port."""
+
+    @property
+    def label(self):
+        return self._get_val_str(_SRIOV_PP_LBL)
+
+    @label.setter
+    def label(self, value):
+        return self.set_parm_value(_SRIOV_PP_LBL, value)
+
+    @property
+    def loc_code(self):
+        return self._get_val_str(_SRIOV_PP_LOCATION_CODE)
+
+    @property
+    def port_id(self):
+        return self._get_val_int(_SRIOV_PP_ID)
+
+    @property
+    def sublabel(self):
+        return self._get_val_str(_SRIOV_PP_SUBLBL)
+
+    @sublabel.setter
+    def sublabel(self, value):
+        return self.set_parm_value(_SRIOV_PP_SUBLBL, value)
+
+    @property
+    def link_status(self):
+        return self._get_val_bool(_SRIOV_PP_LINK_STATUS)
+
+    @property
+    def cfg_max_ports(self):
+        return self._get_val_int(_SRIOV_PP_CFG_MAX_ETHERNET_LOGICAL_PORTS)
+
+    @cfg_max_ports.setter
+    def cfg_max_ports(self, value):
+        return self.set_parm_value(_SRIOV_PP_CFG_MAX_ETHERNET_LOGICAL_PORTS,
+                                   value)
+
+    @property
+    def min_granularity(self):
+        return self._get_val_int(_SRIOV_PP_MIN_ETHERNET_CAPACITY_GRAN)
+
+    @property
+    def supp_max_ports(self):
+        return self._get_val_int(_SRIOV_PP_MAX_SUPP_ETHERNET_LOGICAL_PORTS)
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
+                               child_order=_SRIOVCPP_EL_ORDER)
+class SRIOVConvPPort(SRIOVEthPPort, ewrap.ElementWrapper):
+    """The SRIOV Converged Physical port."""
+    pass
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
