@@ -30,7 +30,7 @@ from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
-import pypowervm.wrappers.io as io
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
@@ -104,7 +104,7 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
     _VIO_FREE_IO_ADPTS_FOR_LNAGG, _VIO_FREE_ETH_BACKDEVS_FOR_SEA,
     _VIO_VNIC_BACKDEVS)
 
-LinkAggrIOAdapterChoice = io.LinkAggrIOAdapterChoice
+LinkAggrIOAdapterChoice = card.LinkAggrIOAdapterChoice
 
 
 class _VIOSXAGs(object):

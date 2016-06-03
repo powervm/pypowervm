@@ -17,7 +17,7 @@
 import unittest
 
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
-import pypowervm.wrappers.io as io
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
 
 
@@ -37,7 +37,7 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual(desc, self.io_adpt.description)
         self.assertEqual('U78CB.001.WZS06RG-P1-C7',
                          self.io_adpt.phys_loc_code)
-        self.assertIsInstance(self.io_adpt, io.SRIOVAdapter)
+        self.assertIsInstance(self.io_adpt, card.SRIOVAdapter)
 
     def test_mode(self):
         self.assertEqual('Dedicated', self.io_adpt.mode)

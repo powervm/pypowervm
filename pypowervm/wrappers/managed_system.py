@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import pypowervm.const as c
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
-import pypowervm.wrappers.io as io
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.mtms as mtmwrap
 
 LOG = logging.getLogger(__name__)
@@ -361,7 +361,7 @@ class ASIOConfig(ewrap.ElementWrapper):
     @property
     def sriov_adapters(self):
         es = ewrap.WrapperElemList(self._find_or_seed(_ASIO_SRIOVS),
-                                   child_class=io.SRIOVAdapter,
+                                   child_class=card.SRIOVAdapter,
                                    indirect='IOAdapterChoice')
         return es
 

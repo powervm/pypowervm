@@ -20,7 +20,7 @@ from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
-import pypowervm.wrappers.io as io
+import pypowervm.wrappers.iocard as card
 
 # Base Partition (_BP)
 _BP_ALLOW_PERF_DATA_COLL = 'AllowPerformanceDataCollection'
@@ -223,13 +223,13 @@ _IO_ADPT_DYN_NAME = 'DynamicReconfigurationConnectorName'
 _IO_ADPT_PHYS_LOC = 'PhysicalLocation'
 _IO_ADPT_UDID = 'UniqueDeviceID'
 
-PFC_PORT_WWPN = io.PFC_PORT_WWPN
-PFC_PORTS_ROOT = io.PFC_PORTS_ROOT
-PFC_PORT_ROOT = io.PFC_PORT_ROOT
+PFC_PORT_WWPN = card.PFC_PORT_WWPN
+PFC_PORTS_ROOT = card.PFC_PORTS_ROOT
+PFC_PORT_ROOT = card.PFC_PORT_ROOT
 
-IOAdapter = io.IOAdapter
-PhysFCAdapter = io.PhysFCAdapter
-PhysFCPort = io.PhysFCPort
+IOAdapter = card.IOAdapter
+PhysFCAdapter = card.PhysFCAdapter
+PhysFCPort = card.PhysFCPort
 
 
 class SharingMode(object):
