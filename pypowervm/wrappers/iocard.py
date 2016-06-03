@@ -32,6 +32,22 @@ _IO_ADPT_CHOICE = 'IOAdapterChoice'
 _SRIOV_ADAPTER_MODE = 'AdapterMode'
 _SRIOV_ADAPTER_STATE = 'AdapterState'
 
+_SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
+_SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
+
+_SRIOV_PHYSICAL_PORT_LABEL = 'Label'
+_SRIOV_PHYSICAL_PORT_SUB_LABEL = 'SubLabel'
+_SRIOV_PHYSICAL_PORT_LOCATION_CODE = 'LocationCode'
+_SRIOV_PHYSICAL_PORT_ID = 'PhysicalPortID'
+_SRIOV_PHYSICAL_PORT_LINK_STATUS = 'LinkStatus'
+_SRIOV_PHYSICAL_PORT_CONFIG_MAX_ETHERNET_LOGICAL_PORTS = \
+    'ConfiguredMaxEthernetLogicalPorts'
+_SRIOV_PHYSICAL_PORT_MIN_ETHERNET_CAPACITY_GRANULARITY = \
+    'MinimumEthernetCapacityGranularity'
+_SRIOV_PHYSICAL_PORT_MAX_SUPPORTED_ETHERNET_LOGICAL_PORTS = \
+    'MaxSupportedEthernetLogicalPorts'
+_SRIOV_PHYSICAL_PORT_ALLOC_CAPACITY = 'AllocatedCapacity'
+
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
 _PFC_PORT_NAME = 'PortName'
@@ -185,6 +201,101 @@ class SRIOVAdapter(IOAdapter):
     @property
     def state(self):
         return self._get_val_str(_SRIOV_ADAPTER_STATE)
+
+    def _convergedphysicalports(self):
+        """Retrieve all Converged physical ports"""
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS),
+            child_class=SRIOVConvPPort,
+            indirect=None)
+        return es
+
+    def _ethernetphysicalports(self):
+        """Retrieve all Ethernet physical ports"""
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _SRIOV_ETHERNET_PHYSICAL_PORTS),
+            child_class=SRIOVEthPPort,
+            indirect=None)
+        return es
+
+    def phys_ports(self):
+        """Retrieve Combined list of all physical ports"""
+        all = []
+        cports = self._convergedphysicalports()
+        eports = self._ethernetphysicalports()
+        for c in cports:
+            all.append(c)
+        for e in eports:
+            all.append(e)
+        return all
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort', has_metadata=True)
+class SRIOVEthPPort(ewrap.ElementWrapper):
+    """The SRIOV Ethernet Physical port."""
+
+    @property
+    def label(self):
+        return self._get_val_str(_SRIOV_PHYSICAL_PORT_LABEL)
+
+    @label.setter
+    def label(self, value):
+        return self.set_parm_value(_SRIOV_PHYSICAL_PORT_LABEL, value)
+
+    @property
+    def loc_code(self):
+        return self._get_val_str(_SRIOV_PHYSICAL_PORT_LOCATION_CODE)
+
+    @property
+    def port_id(self):
+        return self._get_val_int(_SRIOV_PHYSICAL_PORT_ID)
+
+    @property
+    def sublabel(self):
+        return self._get_val_str(_SRIOV_PHYSICAL_PORT_SUB_LABEL)
+
+    @sublabel.setter
+    def sublabel(self, value):
+        return self.set_parm_value(_SRIOV_PHYSICAL_PORT_SUB_LABEL, value)
+
+    @property
+    def link_status(self):
+        return self._get_val_bool(_SRIOV_PHYSICAL_PORT_LINK_STATUS)
+
+    @property
+    def cfg_max_ports(self):
+        return self._get_val_int(
+            _SRIOV_PHYSICAL_PORT_CONFIG_MAX_ETHERNET_LOGICAL_PORTS)
+
+    @cfg_max_ports.setter
+    def cfg_max_ports(self, value):
+        return self.set_parm_value(
+            _SRIOV_PHYSICAL_PORT_CONFIG_MAX_ETHERNET_LOGICAL_PORTS, value)
+
+    @property
+    def min_granularity(self):
+        return self._get_val_int(
+            _SRIOV_PHYSICAL_PORT_MIN_ETHERNET_CAPACITY_GRANULARITY)
+
+    @property
+    def supp_max_ports(self):
+        return self._get_val_int(
+            _SRIOV_PHYSICAL_PORT_MAX_SUPPORTED_ETHERNET_LOGICAL_PORTS)
+
+    @property
+    def allocated_capacity(self):
+        return self._get_val_str(_SRIOV_PHYSICAL_PORT_ALLOC_CAPACITY)
+
+    @allocated_capacity.setter
+    def allocated_capacity(self, value):
+        return self.set_parm_value(_SRIOV_PHYSICAL_PORT_ALLOC_CAPACITY, value)
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
+                               has_metadata=True)
+class SRIOVConvPPort(SRIOVEthPPort, ewrap.ElementWrapper):
+    """The SRIOV Converged Physical port."""
+    pass
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
