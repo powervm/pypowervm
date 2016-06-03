@@ -102,6 +102,22 @@ class TestWrapper(unittest.TestCase):
         self.assertIsNone(w._get_val_str('nonexistent'))
         self.assertEqual(w._get_val_str('nonexistent', default='10'), '10')
 
+    def test_get_val_percent(self):
+        w = SubWrapper(one='2.45%', two='2.45', three=None, four='123',
+                       five='1.2345', six='123.0', seven='123%',
+                       eight='%123', nine='12%3')
+        self.assertEqual(w._get_val_percent('one'), 0.0245)
+        self.assertEqual(w._get_val_percent('two'), 0.0245)
+        self.assertEqual(w._get_val_percent('three'), None)
+        self.assertEqual(w._get_val_percent('four'), 1.23)
+        self.assertEqual(w._get_val_percent('five'), 0.012345)
+        self.assertEqual(w._get_val_percent('six'), 1.23)
+        self.assertEqual(w._get_val_percent('seven'), 1.23)
+        self.assertEqual(w._get_val_percent('eight'), 1.23)
+        # Interesting test:
+        self.assertEqual(w._get_val_percent('nine'), 0.12)
+        self.assertIsNone(w._get_val_percent('nonexistent'))
+
     def test_get_val_int(self):
         w = SubWrapper(one='1', nan='foo', empty='')
         self.assertEqual(w._get_val_int('one'), 1)

@@ -18,6 +18,7 @@
 
 import abc
 from oslo_log import log as logging
+import re
 import six
 import urllib
 
@@ -468,6 +469,24 @@ class Wrapper(object):
                  string.
         """
         return self.__get_val(property_name, default=default, converter=None)
+
+    def _get_val_percent(self, property_name, default=None):
+        """Gets the value in float-percentage format of a PowerVM property.
+
+        :param property_name: property to find
+        :param default: Value to return if property is not found. Defaults to
+                        None (which is not a float - plan accordingly).
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned. % in the property is optional.
+        """
+        def str2percent(percent_str):
+            if percent_str:
+                percent_str = re.findall(r"\d*\.?\d+", percent_str)[0]
+                return (float(percent_str))/100
+            else:
+                return None
+        return self.__get_val(property_name, default=default,
+                              converter=str2percent)
 
     def log_missing_value(self, param):
         LOG.debug('The expected parameter of %(param)s was not found in '
