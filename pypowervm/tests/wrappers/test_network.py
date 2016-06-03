@@ -395,6 +395,15 @@ class TestNetwork(twrap.TestWrapper):
         self.set_vnet(True)
         self.assertFalse(self.dwrap.supports_vlan(128))
 
+    def test_no_primary_adpt(self):
+        """Tests rare case that SEA has no primary adapter."""
+        # Test to make sure None reference error is not hit
+        self.assertIsNone(self.dwrap.seas[1].primary_adpt)
+        self.assertEqual(self.dwrap.seas[1].addl_adpts, [])
+        self.assertFalse(self.dwrap.seas[1].contains_device('abcd'))
+        ct_ch = self.dwrap.seas[1].control_channel
+        self.assertTrue(self.dwrap.seas[1].contains_device(ct_ch))
+
     def test_vswitch_id(self):
         """Tests that the pass thru of the vswitch id works."""
         self.assertEqual(2, self.dwrap.vswitch_id)
@@ -437,7 +446,7 @@ class TestNetwork(twrap.TestWrapper):
         self.assertNotIn(128, self.dwrap.list_vlans())
 
     def test_seas(self):
-        self.assertEqual(1, len(self.dwrap.seas))
+        self.assertEqual(2, len(self.dwrap.seas))
 
         sea = self.dwrap.seas[0]
 
@@ -453,12 +462,12 @@ class TestNetwork(twrap.TestWrapper):
         new_sea = copy.deepcopy(sea)
         self.dwrap.seas.append(new_sea)
 
-        self.assertEqual(2, len(self.dwrap.seas))
+        self.assertEqual(3, len(self.dwrap.seas))
 
         sea_copy = copy.copy(self.dwrap.seas)
         sea_copy.remove(new_sea)
         self.dwrap.seas = sea_copy
-        self.assertEqual(1, len(self.dwrap.seas))
+        self.assertEqual(2, len(self.dwrap.seas))
 
         # Test the 'contains_device' method within the SEA.
         self.assertTrue(new_sea.contains_device('ent5'))
@@ -506,7 +515,7 @@ class TestNetwork(twrap.TestWrapper):
         self.assertTrue(addl_adpt.has_tag_support)
 
     def test_varied_on(self):
-        self.assertEqual(1, len(self.dwrap.seas))
+        self.assertEqual(2, len(self.dwrap.seas))
 
         sea = self.dwrap.seas[0]
 
