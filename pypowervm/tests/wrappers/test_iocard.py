@@ -28,25 +28,29 @@ class TestSRIOVAdapter(twrap.TestWrapper):
 
     def setUp(self):
         super(TestSRIOVAdapter, self).setUp()
-        self.io_adpt = self.dwrap.asio_config.sriov_adapters[0]
+        self.sriovs = self.dwrap.asio_config.sriov_adapters
+
+    def test_list(self):
+        self.assertEqual(3, len(self.sriovs))
+        for sriov in self.sriovs:
+            self.assertIsInstance(sriov, card.SRIOVAdapter)
 
     def test_attrs(self):
         desc = 'PCIe2 4-port (10Gb FCoE & 1GbE) SR&RJ45 Adapter'
 
-        self.assertEqual('553713680', self.io_adpt.id)
-        self.assertEqual(desc, self.io_adpt.description)
-        self.assertEqual('U78CB.001.WZS06RG-P1-C7',
-                         self.io_adpt.phys_loc_code)
-        self.assertIsInstance(self.io_adpt, card.SRIOVAdapter)
+        self.assertEqual('553713696', self.sriovs[0].id)
+        self.assertEqual(desc, self.sriovs[0].description)
+        self.assertEqual('U78C7.001.RCH0004-P1-C8',
+                         self.sriovs[0].phys_loc_code)
 
     def test_mode(self):
-        self.assertEqual('Dedicated', self.io_adpt.mode)
+        self.assertEqual('Sriov', self.sriovs[0].mode)
         # Test setter
-        self.io_adpt.mode = 'unknown'
-        self.assertEqual('unknown', self.io_adpt.mode)
+        self.sriovs[0].mode = 'unknown'
+        self.assertEqual('unknown', self.sriovs[0].mode)
 
     def test_state(self):
-        self.assertEqual('NotConfigured', self.io_adpt.state)
+        self.assertEqual('Running', self.sriovs[0].state)
 
 if __name__ == "__main__":
     unittest.main()
