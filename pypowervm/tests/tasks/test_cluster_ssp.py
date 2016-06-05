@@ -119,6 +119,7 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         self.mock_upload_lu.side_effect = self.upload_lu
         self.mock_sleep = self.useFixture(fixtures.MockPatch(
             'time.sleep')).mock
+        self.sleep_min, self.sleep_max = cs.SLEEP_U_MIN, cs.SLEEP_U_MAX
         self.mock_sleep.side_effect = self.sleep_conflict_finishes
         self.vios_uuid = 'vios_uuid'
         self.mock_stream_func = mock.Mock()
@@ -205,7 +206,7 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
 
     def sleep_conflict_finishes(self, sec):
         """Pretend the conflicting LU finishes while we sleep."""
-        self.assertEqual(3, sec)
+        self.assertTrue(self.sleep_min <= sec <= self.sleep_max)
         # We may have used either conflict marker LU
         if self.confl_mkr_lu_lose in self.entries:
             self.entries.remove(self.confl_mkr_lu_lose)
@@ -305,6 +306,10 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
 
     def test_conflict_I_lose(self):
         """We both bid at the same time; and I lose."""
+        # Set the sleep min/max to be the 3 second value (as we're not going
+        # into a wait scenario)
+        self.sleep_min, self.sleep_max = cs.SLEEP_S, cs.SLEEP_S
+
         self.setup_crt_lu_mock(self.fail,
                                conflicting_mkr_lu=self.confl_mkr_lu_win)
 

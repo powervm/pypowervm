@@ -17,6 +17,7 @@
 """Tasks around Cluster/SharedStoragePool."""
 
 from oslo_log import log as logging
+from random import randint
 import time
 import uuid
 
@@ -33,6 +34,8 @@ LOG = logging.getLogger(__name__)
 IMGTYP = stor.LUType.IMAGE
 MKRSZ = 0.001
 SLEEP_S = 3
+SLEEP_U_MIN = 30
+SLEEP_U_MAX = 60
 
 
 def crt_cluster_ssp(clust_name, ssp_name, repos_pv, first_node, data_pv_list):
@@ -201,7 +204,7 @@ def get_or_upload_image_lu(tier, luname, vios_uuid, stream_func, b_size):
         # Is there an upload in progress?
         if _upload_in_progress(lus, luname, first):
             first = False
-            time.sleep(SLEEP_S)
+            time.sleep(randint(SLEEP_U_MIN, SLEEP_U_MAX))
             continue
 
         # No upload in progress (at least as of when we grabbed the feed).
@@ -210,7 +213,7 @@ def get_or_upload_image_lu(tier, luname, vios_uuid, stream_func, b_size):
 
         # We must remove the marker LU if
         # a) anything fails beyond this point; or
-        # b) we succeessfully upload the image LU.
+        # b) we successfully upload the image LU.
         try:
             # If another process (possibly on another host) created a marker LU
             # at the same time, there could be multiple marker LUs out there.
