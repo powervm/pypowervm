@@ -205,7 +205,7 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
 
     def sleep_conflict_finishes(self, sec):
         """Pretend the conflicting LU finishes while we sleep."""
-        self.assertEqual(3, sec)
+        self.assertTrue(cs.SLEEP_U_MIN <= sec <= cs.SLEEP_U_MAX)
         # We may have used either conflict marker LU
         if self.confl_mkr_lu_lose in self.entries:
             self.entries.remove(self.confl_mkr_lu_lose)
