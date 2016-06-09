@@ -495,7 +495,7 @@ class TestWrapperElemList(testtools.TestCase):
 
     def test_length(self):
         self.assertEqual(2, len(self.seas_wel))
-        self.assertEqual(2, len(self.sriovs_wel))
+        self.assertEqual(3, len(self.sriovs_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(

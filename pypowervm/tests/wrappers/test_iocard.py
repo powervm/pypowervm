@@ -43,6 +43,15 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual('U78C7.001.RCH0004-P1-C8',
                          self.sriovs[0].phys_loc_code)
 
+    def test_ids(self):
+        """Test .id and .sriov_adap_id."""
+        # AdapterID inherited from IOAdapter
+        self.assertEqual('553713696', self.sriovs[0].id)
+        self.assertEqual(1, self.sriovs[0].sriov_adap_id)
+
+        self.assertEqual('553713680', self.sriovs[1].id)
+        self.assertIsNone(self.sriovs[1].sriov_adap_id)
+
     def test_mode(self):
         self.assertEqual('Sriov', self.sriovs[0].mode)
         # Test setter

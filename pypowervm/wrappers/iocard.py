@@ -29,6 +29,7 @@ _IO_ADPT_UDID = 'UniqueDeviceID'
 _IO_ADPT_CHOICE = 'IOAdapterChoice'
 
 # SR-IOV Adapter constants
+_SRIOV_ADAPTER_ID = 'SRIOVAdapterID'
 _SRIOV_ADAPTER_MODE = 'AdapterMode'
 _SRIOV_ADAPTER_STATE = 'AdapterState'
 
@@ -243,12 +244,17 @@ class SRIOVAdapter(IOAdapter):
     """The SR-IOV adapters for this system."""
 
     @property
+    def sriov_adap_id(self):
+        """Not to be confused with the 'id' property (IOAdapter.AdapterID)."""
+        return self._get_val_int(_SRIOV_ADAPTER_ID)
+
+    @property
     def mode(self):
         return self._get_val_str(_SRIOV_ADAPTER_MODE)
 
     @mode.setter
     def mode(self, value):
-        return self.set_parm_value(_SRIOV_ADAPTER_MODE, value)
+        self.set_parm_value(_SRIOV_ADAPTER_MODE, value)
 
     @property
     def state(self):
