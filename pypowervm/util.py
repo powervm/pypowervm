@@ -357,6 +357,16 @@ def sanitize_float_for_api(float_val, precision=2):
     return template % float(float_val)
 
 
+def sanitize_percent_for_api(percent_val, precision=2):
+    """Sanitizes a percent value for use in the API."""
+    percent_val = str(percent_val).strip('%')
+    if float(percent_val) < 0 or float(percent_val) > 1:
+        raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+    float_val = sanitize_float_for_api(percent_val, precision)
+    float_val = float(float_val) * 100
+    return str(float_val) + '%'
+
+
 def sanitize_wwpn_for_api(wwpn):
     """Updates the format of the WWPN to match the expected PowerVM format.
 
