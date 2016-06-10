@@ -17,6 +17,7 @@
 import unittest
 
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+import pypowervm.util as u
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
 
@@ -121,6 +122,71 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual(4, eth_port.supp_max_lps)
 
         self.assertEqual(0.02, eth_port.allocated_capacity)
+
+
+class TestLogicalPort(twrap.TestWrapper):
+
+    file = 'sriov_lp_feed.txt'
+    wrapper_class_to_test = card.SRIOVEthLPort
+
+    def test_logical_ports(self):
+        # Verify logical port getters
+        lport = self.dwrap
+        self.assertEqual(654327810, lport.lport_id)
+        self.assertEqual(1, lport.sriov_adap_id)
+        self.assertFalse(lport.is_promisc)
+        self.assertEqual('PHB 4098', lport.dev_name)
+        self.assertEqual(0.02, lport.cfg_capacity)
+        self.assertEqual(2, lport.pport_id)
+        self.assertEqual(0, lport.pvid)
+        self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
+        self.assertEqual(u.VLANList.ALL, lport.allowed_vlans)
+
+        # Verify logical port setters
+        lport._sriov_adap_id(2)
+        self.assertEqual(2, lport.sriov_adap_id)
+        lport._is_promisc('true')
+        self.assertTrue(lport.is_promisc)
+        lport._pport_id(3)
+        self.assertEqual(3, lport.pport_id)
+        lport._cfg_capacity(0.0)
+        self.assertEqual(0.0, lport.cfg_capacity)
+        lport._cfg_capacity(1.0)
+        self.assertEqual(1.0, lport.cfg_capacity)
+        lport.allowed_vlans = u.VLANList.NONE
+        self.assertEqual(u.VLANList.NONE, lport.allowed_vlans)
+        lport.allowed_vlans = [1]
+        self.assertEqual([1], lport.allowed_vlans)
+        lport.allowed_vlans = [1, 2, 2230, 3340]
+        self.assertEqual([1, 2, 2230, 3340], lport.allowed_vlans)
+
+        # Verify setter validation
+        self.assertRaises(ValueError, lport._cfg_capacity, '5.0%')
+        self.assertRaises(ValueError, lport._cfg_capacity, '2')
+        self.assertRaises(ValueError, lport._cfg_capacity, float(2))
+        self.assertRaises(ValueError, lport._cfg_capacity, '1.01')
+        self.assertRaises(ValueError, lport._cfg_capacity, float(1.01))
+        self.assertRaises(ValueError, lport._cfg_capacity, '-0.01')
+        self.assertRaises(ValueError, lport._cfg_capacity, float(-0.01))
+        self.assertRaises(ValueError, lport._cfg_capacity, 'garbage')
+        self.assertRaises(ValueError, lport._cfg_capacity, '0.72%')
+
+        # Verify bld method
+        lport = card.SRIOVEthLPort.bld(
+            adapter=lport.adapter,
+            sriov_adap_id=5,
+            pport_id=6,
+            pvid=2230,
+            allowed_vlans=[1, 2, 3],
+            is_promisc=True,
+            cfg_capacity=0.05)
+        self.assertEqual(5, lport.sriov_adap_id)
+        self.assertEqual([1, 2, 3], lport.allowed_vlans)
+        self.assertTrue(lport.is_promisc)
+        self.assertEqual(0.05, lport.cfg_capacity)
+        self.assertEqual(6, lport.pport_id)
+        self.assertEqual(2230, lport.pvid)
+
 
 if __name__ == "__main__":
     unittest.main()
