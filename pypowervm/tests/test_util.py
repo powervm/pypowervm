@@ -368,3 +368,32 @@ class TestUtil(unittest.TestCase):
             None, parent, 'uuid2'))
         self.assertEqual(('schema_type2', 'uuid2'), util.parent_spec(
             None, 'schema_type2', 'uuid2'))
+
+
+class TestVLANList(unittest.TestCase):
+    def test_unmarshal(self):
+        # Test ALL and NONE cases
+        self.assertEqual('ALL', util.VLANList.unmarshal('ALL'))
+        self.assertEqual('NONE', util.VLANList.unmarshal('NONE'))
+
+        # Test VLAN lists
+        self.assertEqual([1, 2], util.VLANList.unmarshal('1 2'))
+        self.assertEqual([0], util.VLANList.unmarshal('0'))
+        self.assertEqual([5, 6, 2230, 3340],
+                         util.VLANList.unmarshal('5 6 2230 3340'))
+
+    def test_marshal(self):
+        # Test ALL and NONE cases
+        self.assertEqual('ALL', util.VLANList.marshal('ALL'))
+        self.assertEqual('NONE', util.VLANList.marshal('NONE'))
+
+        # Test VLAN lists
+        self.assertEqual('1 2', util.VLANList.marshal([1, 2]))
+        self.assertEqual('0', util.VLANList.marshal([0]))
+        self.assertEqual('5 6 2230 3340',
+                         util.VLANList.marshal([5, 6, 2230, 3340]))
+
+        # Test error cases
+        self.assertRaises(ValueError, util.VLANList.marshal, None)
+        self.assertRaises(ValueError, util.VLANList.marshal, '')
+        self.assertRaises(ValueError, util.VLANList.marshal, ' ')

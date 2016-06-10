@@ -1,0 +1,64 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh vios_with_sriov_lp.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '3178', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000ZnxUV-fSBOQFueaGXWRFjja:8cb3ca96-3fe0-43d2-ba02-95aa4c95fa2f; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Fri, 03 Jun 2016 20:30:39 GMT', 'X-Transaction-ID': 'XT10129661', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Fri, 03 Jun 2016 20:30:39 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': '85febdb4-c6ac-4969-96c7-e3900d6a0cae', 'ETag': '1743038974'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>a1209dfb-8ad6-382c-a3ac-8f3deb99411d</id>
+    <updated>2016-06-03T16:30:39.769-04:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>080c7f1f-29e9-333a-8034-a5c8a358786e</id>
+        <title>SRIOVEthernetLogicalPort</title>
+        <published>2016-06-03T16:30:39.796-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort/080c7f1f-29e9-333a-8034-a5c8a358786e?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1743038943</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SRIOVEthernetLogicalPort">
+            <SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort xmlns:SRIOVEthernetLogicalPort="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>080c7f1f-29e9-333a-8034-a5c8a358786e</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ConfigurationID kxe="false" kb="COD">0</ConfigurationID>
+    <LogicalPortID kxe="false" kb="COD">654327810</LogicalPortID>
+    <AdapterID kb="COR" kxe="false">1</AdapterID>
+    <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4098</DynamicReconfigurationConnectorName>
+    <IsFunctional kxe="false" kb="ROR">true</IsFunctional>
+    <IsPromiscous kxe="false" kb="CUR">false</IsPromiscous>
+    <IsDiagnostic kb="CUR" kxe="false">false</IsDiagnostic>
+    <IsHugeDMA kxe="false" kb="CUR">false</IsHugeDMA>
+    <DeviceName kb="ROR" kxe="false">PHB 4098</DeviceName>
+    <ConfiguredCapacity kxe="false" kb="CUR">2.0%</ConfiguredCapacity>
+    <PhysicalPortID kxe="false" kb="COR">2</PhysicalPortID>
+    <PortVLANID kxe="false" kb="CUR">0</PortVLANID>
+    <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0485-P1-C5-T3-S2</LocationCode>
+    <TuningBufferID kxe="false" kb="CUR">-1</TuningBufferID>
+    <VNICPortUsage kxe="false" kb="ROR">NOT_VNIC</VNICPortUsage>
+    <AllowedMACAddresses kxe="false" kb="CUD">NONE</AllowedMACAddresses>
+    <MACAddress kxe="false" kb="CUD">0x8ACA227C6E00</MACAddress>
+    <CurrentMACAddress kb="ROR" kxe="false">0x000000000000</CurrentMACAddress>
+    <IEEE8021QAllowablePriorities kb="CUD" kxe="false">0</IEEE8021QAllowablePriorities>
+    <IEEE8021QPriority kxe="false" kb="CUD">0</IEEE8021QPriority>
+    <AllowedVLANs kxe="false" kb="CUD">ALL</AllowedVLANs>
+</SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

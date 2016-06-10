@@ -357,6 +357,21 @@ def sanitize_float_for_api(float_val, precision=2):
     return template % float(float_val)
 
 
+def sanitize_percent_for_api(float_val, precision=2):
+    """Sanitizes a percent value for use in the API.
+
+    :param float_val: A float where valid values are 0.0 <= x <= 1.0. For
+                      example the input 0.02 will produce output '2%'.
+    :return: A string representation of the passed percentage.
+    """
+    percent_float = float(float_val)
+    if percent_float < 0 or percent_float > 1:
+        raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+    percent_float *= 100
+    percent_float = sanitize_float_for_api(percent_float, precision)
+    return str(percent_float) + '%'
+
+
 def sanitize_wwpn_for_api(wwpn):
     """Updates the format of the WWPN to match the expected PowerVM format.
 
@@ -525,3 +540,27 @@ def parent_spec(parent, parent_type, parent_uuid):
         raise ValueError(_("Developer error: parent_type must be either a "
                            "string schema type or a Wrapper subclass."))
     return parent_type, parent_uuid
+
+
+class VLANList(list):
+    ALL = 'ALL'
+    NONE = 'NONE'
+    _GOOD_STRINGS = (ALL, NONE)
+
+    @classmethod
+    def unmarshal(cls, rest_val):
+        """Convert value from REST to a list of ints or an accepted string."""
+        rest_val = rest_val.strip()
+        if rest_val in cls._GOOD_STRINGS:
+            return rest_val
+        return [int(val) for val in rest_val.split()]
+
+    @classmethod
+    def marshal(cls, val):
+        """Produce a string suitable for the REST API."""
+        if val in cls._GOOD_STRINGS:
+            return val
+        if isinstance(val, list) and all(type(ival) is int for ival in val):
+            return ' '.join([str(ival) for ival in val])
+        raise ValueError("Specify an list of VLAN integers, or 'ALL' for all "
+                         "VLANS or 'NONE' for no VLANS.")
