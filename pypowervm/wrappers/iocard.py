@@ -35,6 +35,7 @@ _SRIOV_ADAPTER_STATE = 'AdapterState'
 
 _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
 _SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
+_SRIOV_ETHERNET_LOGICAL_PORTS = 'EthernetLogicalPorts'
 
 # SR-IOV physical port constants
 
@@ -75,7 +76,6 @@ _SRIOVPP_FC_TARGET_ROUNDING_VALUE = 'FiberChannelTargetsRoundingValue'
 _SRIOVPP_MX_SUPP_FCOE_LPS = 'MaxSupportedFiberChannelOverEthernetLogicalPorts'
 _SRIOVPP_MAX_FC_TARGETS = 'MaximumFiberChannelTargets'
 
-
 _SRIOVPP_EL_ORDER = (
     _SRIOVPP_CFG_SPEED, _SRIOVPP_CFG_MTU,
     _SRIOVPP_CFG_OPTIONS, _SRIOVPP_CURR_SPEED,
@@ -100,6 +100,36 @@ _SRIOVCPP_EL_ORDER = _SRIOVEPP_EL_ORDER + (
     _SRIOVPP_CFG_FCOE_LPS, _SRIOVPP_MIN_FCOE_CAPACITY_GRAN,
     _SRIOVPP_FC_TARGET_ROUNDING_VALUE, _SRIOVPP_MX_SUPP_FCOE_LPS,
     _SRIOVPP_MAX_FC_TARGETS)
+
+# SR-IOV logical port constants
+_SRIOVLP_CFG_ID = 'ConfigurationID'
+_SRIOVLP_ID = 'LogicalPortID'
+_SRIOVLP_ADPT_ID = 'AdapterID'
+_SRIOVLP_DYN_RECFG_CON_NAME = 'DynamicReconfigurationConnectorName'
+_SRIOVLP_IS_FUNC = 'IsFunctional'
+_SRIOVLP_IS_PROMISC = 'IsPromiscous'  # [sic]
+_SRIOVLP_IS_DIAG = 'IsDiagnostic'
+_SRIOVLP_IS_DEBUG = 'IsDebug'
+_SRIOVLP_IS_HUGE_DMA = 'IsHugeDMA'
+_SRIOVLP_DEV_NAME = 'DeviceName'
+_SRIOVLP_CFG_CAPACITY = 'ConfiguredCapacity'
+_SRIOVLP_PPORT_ID = 'PhysicalPortID'
+_SRIOVLP_PVID = 'PortVLANID'
+_SRIOVLP_LOC_CODE = 'LocationCode'
+_SRIOVLP_TUNING_BUF_ID = 'TuningBufferID'
+_SRIOVLP_VNIC_PORT_USAGE = 'VNICPortUsage'
+_SRIOVLP_ASSOC_LPART = 'AssociatedLogicalPartitions'
+
+_SRIOVELP_EL_ORDER = (
+    _SRIOVLP_CFG_ID, _SRIOVLP_ID,
+    _SRIOVLP_ADPT_ID, _SRIOVLP_DYN_RECFG_CON_NAME,
+    _SRIOVLP_IS_FUNC, _SRIOVLP_IS_PROMISC,
+    _SRIOVLP_IS_DIAG, _SRIOVLP_IS_DEBUG,
+    _SRIOVLP_IS_HUGE_DMA, _SRIOVLP_DEV_NAME,
+    _SRIOVLP_CFG_CAPACITY, _SRIOVLP_PPORT_ID,
+    _SRIOVLP_PVID, _SRIOVLP_LOC_CODE,
+    _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE,
+    _SRIOVLP_ASSOC_LPART)
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
@@ -274,6 +304,13 @@ class SRIOVAdapter(IOAdapter):
             child_class=SRIOVEthPPort)
         return es
 
+    def _ethernetlogicalports(self):
+        """Retrieve all Ethernet logical ports."""
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(_SRIOV_ETHERNET_LOGICAL_PORTS),
+            child_class=SRIOVEthPPort)
+        return es
+
     @property
     def phys_ports(self):
         """Retrieve Combined list of all physical ports.
@@ -291,6 +328,17 @@ class SRIOVAdapter(IOAdapter):
         for e in eports:
             allports.append(e)
         return allports
+
+    @property
+    def logical_ports(self):
+        """Retrieve Combined list of all logical ports.
+
+        Returns a list of ethernet logical ports.
+        This list is not modifiable, cannot insert or remove
+        items from it, however, individual item can be updated.
+        For example, label and sublabels can be updated.
+        """
+        return self._ethernetlogicalports()
 
 
 @ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort',
@@ -355,6 +403,78 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 class SRIOVConvPPort(SRIOVEthPPort):
     """The SRIOV Converged Physical port."""
     pass
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVEthernetLogicalPort',
+                               has_metadata=True,
+                               child_order=_SRIOVELP_EL_ORDER)
+class SRIOVEthLPort(ewrap.ElementWrapper):
+    """The SRIOV Ethernet Logical port."""
+
+    @classmethod
+    def bld_ref(cls, adapter, sriov_adap_id, pport_id, pvid=None,
+                allowed_vlans="ALL", is_promisc=False, cfg_capacity=None):
+        """Create a wrapper that serves as a reference to a logical port.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        """
+        lport = super(SRIOVEthLPort, cls)._bld(adapter)
+        lport._sriov_adap_id(sriov_adap_id)
+        lport._pport_id(pport_id)
+        if pvid:
+            lport.pvid(pvid)
+        lport._is_promisc(is_promisc)
+        if cfg_capacity:
+            lport.pvid(cfg_capacity)
+        return lport
+
+    @property
+    def lport_id(self):
+        return self._get_val_str(_SRIOVLP_ID)
+
+    @property
+    def sriov_adap_id(self):
+        return self._get_val_str(_SRIOVLP_ADPT_ID)
+
+    def _sriov_adap_id(self, value):
+        return self.set_parm_value(_SRIOVLP_ADPT_ID, value)
+
+    @property
+    def is_promisc(self):
+        return self._get_val_str(_SRIOVLP_IS_PROMISC)
+
+    def _is_promisc(self, value):
+        return self.set_parm_value(_SRIOVLP_IS_PROMISC, value)
+
+    @property
+    def dev_name(self):
+        return self._get_val_str(_SRIOVLP_DEV_NAME)
+
+    @property
+    def cfg_capacity(self):
+        return self._get_val_str(_SRIOVLP_CFG_CAPACITY)
+
+    def _cfg_capacity(self, value):
+        return self.set_parm_value(_SRIOVLP_CFG_CAPACITY, value)
+
+    @property
+    def pport_id(self):
+        return self._get_val_str(_SRIOVLP_PPORT_ID)
+
+    def _pport_id(self, value):
+        return self.set_parm_value(_SRIOVLP_PPORT_ID, value)
+
+    @property
+    def pvid(self):
+        return self._get_val_str(_SRIOVLP_PVID)
+
+    @pvid.setter
+    def pvid(self, value):
+        return self.set_parm_value(_SRIOVLP_PVID, value)
+
+    @property
+    def loc_code(self):
+        return self._get_val_str(_PFC_PORT_LOC_CODE)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)

@@ -120,5 +120,21 @@ class TestSRIOVAdapter(twrap.TestWrapper):
 
         self.assertEqual(0.02, eth_port.allocated_capacity)
 
+
+class TestLogicalPort(twrap.TestWrapper):
+
+    file = 'sriov_lp_feed.txt'
+    wrapper_class_to_test = card.SRIOVEthLPort
+
+    def setUp(self):
+        super(TestLogicalPort, self).setUp()
+        self.sriovs = self.dwrap.element
+
+    def test_logical_ports(self):
+        # Get logical ports
+        lports = self.sriovs[0].logical_ports
+        self.assertEqual(1, len(lports))
+
+
 if __name__ == "__main__":
     unittest.main()
