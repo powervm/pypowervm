@@ -120,5 +120,49 @@ class TestSRIOVAdapter(twrap.TestWrapper):
 
         self.assertEqual(0.02, eth_port.allocated_capacity)
 
+
+class TestLogicalPort(twrap.TestWrapper):
+
+    file = 'sriov_lp_feed.txt'
+    wrapper_class_to_test = card.SRIOVEthLPort
+
+    def test_logical_ports(self):
+        # Verify logical port getters
+        lport = self.dwrap
+        self.assertEqual(654327810, lport.lport_id)
+        self.assertEqual(1, lport.sriov_adap_id)
+        self.assertFalse(lport.is_promisc)
+        self.assertEqual('PHB 4098', lport.dev_name)
+        self.assertEqual('2.0%', lport.cfg_capacity)
+        self.assertEqual(2, lport.pport_id)
+        self.assertEqual(0, lport.pvid)
+        self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
+        self.assertEqual('ALL', lport.allowed_vlans)
+
+        # Verify logical port setters
+        lport._sriov_adap_id(2)
+        self.assertEqual(2, lport.sriov_adap_id)
+        lport._is_promisc('true')
+        self.assertTrue(lport.is_promisc)
+        lport._pport_id(3)
+        self.assertEqual(3, lport.pport_id)
+        lport.allowed_vlans = '1,2,2230,3340'
+        self.assertEqual('1,2,2230,3340', lport.allowed_vlans)
+
+        # Verify bld method
+        lport = card.SRIOVEthLPort.bld(
+            adapter=lport.adapter,
+            sriov_adap_id=5,
+            pport_id=6,
+            pvid=2230,
+            is_promisc=True,
+            cfg_capacity='5.0%')
+        self.assertEqual(5, lport.sriov_adap_id)
+        self.assertTrue(lport.is_promisc)
+        self.assertEqual('5.0%', lport.cfg_capacity)
+        self.assertEqual(6, lport.pport_id)
+        self.assertEqual(2230, lport.pvid)
+
+
 if __name__ == "__main__":
     unittest.main()
