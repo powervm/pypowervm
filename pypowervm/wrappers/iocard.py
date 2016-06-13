@@ -337,6 +337,10 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
                                    value)
 
     @property
+    def cfg_lps(self):
+        return self._get_val_int(_SRIOVPP_CFG_ETHERNET_LPS)
+
+    @property
     def min_granularity(self):
         return self._get_val_int(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
 

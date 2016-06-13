@@ -89,6 +89,8 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         conv_port.cfg_max_lps = 40
         self.assertEqual(40, conv_port.cfg_max_lps)
 
+        self.assertEqual(2, conv_port.cfg_lps)
+
         self.assertEqual(200, conv_port.min_granularity)
 
         self.assertEqual(20, conv_port.supp_max_lps)
