@@ -38,13 +38,15 @@ VSCSI_MAPPINGS = 'VirtualSCSIMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
+OVS_OVERRIDE = 'OVSOverride'
 
 
 def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                  tgt_mgmt_svr=None, tgt_mgmt_usr=None,
                  virtual_fc_mappings=None, virtual_scsi_mappings=None,
                  dest_msp_name=None, source_msp_name=None, spp_id=None,
-                 timeout=CONF.pypowervm_job_request_timeout * 4):
+                 timeout=CONF.pypowervm_job_request_timeout * 4,
+                 sdn_override=False):
 
     """Method to migrate a logical partition.
 
@@ -66,6 +68,9 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
         partition.
     :param spp_id: The shared processor pool id to use on the target system.
     :param timeout: maximum number of seconds for job to complete
+    :param sdn_override: (Optional, Default: False) If set to true, will allow
+                         a migration where the networking is hosted on the
+                         NovaLink partition via Open vSwitch.
 
     virtual_fc_mappings:
 
@@ -127,6 +132,11 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))
+
+    # The SDN override is...odd.  Instead of passing in a 'True', we must
+    # pass in the character of '2' to indicate that it is an override.
+    if sdn_override:
+        job_parms.append(job_wrapper.create_job_parameter(OVS_OVERRIDE, '2'))
 
     # The mappings are special.  They require a join so that they are comma
     # separated down to the API.
