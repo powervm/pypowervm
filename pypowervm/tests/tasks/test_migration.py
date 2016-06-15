@@ -54,7 +54,9 @@ class TestMigration(testtools.TestCase):
                      (mig.TGT_RMT_HMC_USR, 'usr'),
                      (mig.DEST_MSP, 'vios1'),
                      (mig.SRC_MSP, 'vios2'),
-                     (mig.SPP_ID, '5')]
+                     (mig.SPP_ID, '5'),
+                     (mig.OVS_OVERRIDE, '2'),
+                     (mig.VLAN_BRIDGE_OVERRIDE, '2')]
         mapping_list = [(mig.VFC_MAPPINGS, ['1/1/1', '3/3/3//3']),
                         (mig.VSCSI_MAPPINGS, ['2/2/2'])]
         mock_run_job.side_effect = u.get_parm_checker(
@@ -66,7 +68,8 @@ class TestMigration(testtools.TestCase):
                          virtual_fc_mappings=['1/1/1', '3/3/3//3'],
                          virtual_scsi_mappings=['2/2/2'],
                          dest_msp_name='vios1', source_msp_name='vios2',
-                         spp_id='5')
+                         spp_id='5', sdn_override=True,
+                         vlan_check_override=True)
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',
                                                suffix_type='do')
