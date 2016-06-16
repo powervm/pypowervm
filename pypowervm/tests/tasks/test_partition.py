@@ -25,7 +25,7 @@ import pypowervm.tasks.partition as tpar
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
-import pypowervm.wrappers.base_partition as pvm_bp
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
 
@@ -140,8 +140,23 @@ class TestVios(twrap.TestWrapper):
         self.assertEqual(1, len(vioses))
         self.mock_vios_get.assert_called_once_with(self.adpt, xag=())
         vio = vioses[0]
-        self.assertEqual(pvm_bp.LPARState.RUNNING, vio.state)
-        self.assertEqual(pvm_bp.RMCState.ACTIVE, vio.rmc_state)
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
+        self.mock_vios_get.assert_called_once_with(self.adpt, xag=())
+
+        self.mock_vios_get.reset_mock()
+
+        # Test with actual xag.  find_min equal to the number found - works.
+        vioses = tpar.get_active_vioses(self.adpt, xag='xaglist', find_min=1)
+        self.assertEqual(1, len(vioses))
+        vio = vioses[0]
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
+        self.mock_vios_get.assert_called_once_with(self.adpt, xag='xaglist')
+
+        # Violates find_min
+        self.assertRaises(ex.NotEnoughActiveVioses, tpar.get_active_vioses,
+                          self.adpt, find_min=2)
 
     def test_get_active_vioses_w_vios_wraps(self):
         mock_vios1 = mock_vios('vios1', 'running', 'active')
@@ -152,8 +167,8 @@ class TestVios(twrap.TestWrapper):
         self.assertEqual(1, len(vioses))
         self.mock_vios_get.assert_not_called()
         vio = vioses[0]
-        self.assertEqual(pvm_bp.LPARState.RUNNING, vio.state)
-        self.assertEqual(pvm_bp.RMCState.ACTIVE, vio.rmc_state)
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
         self.mock_vios_get.assert_not_called()
 
     def test_get_physical_wwpns(self):
@@ -170,35 +185,37 @@ class TestVios(twrap.TestWrapper):
         mock_feed_task.return_value = 'mock_feed'
         self.assertEqual('mock_feed', tpar.build_active_vio_feed_task('adpt'))
         mock_get_active_vioses.assert_called_once_with(
-            'adpt', xag=(c.XAG.VIO_STOR, c.XAG.VIO_SMAP, c.XAG.VIO_FMAP))
+            'adpt', xag=(c.XAG.VIO_STOR, c.XAG.VIO_SMAP, c.XAG.VIO_FMAP),
+            find_min=1)
 
     @mock.patch('pypowervm.tasks.partition.get_active_vioses')
     def test_build_tx_feed_task_w_empty_feed(self, mock_get_active_vioses):
         mock_get_active_vioses.return_value = []
         self.assertRaises(
-            ex.NoActiveVios, tpar.build_active_vio_feed_task, mock.MagicMock())
+            ex.FeedTaskEmptyFeed, tpar.build_active_vio_feed_task,
+            mock.MagicMock())
 
     @mock.patch('pypowervm.tasks.partition.LOG.warning')
     def test_rmc_down_vioses(self, mock_warn):
         """Time out waiting for up/inactive partitions, but succeed."""
         # No
-        mock_vios1 = mock_vios('vios1', pvm_bp.LPARState.NOT_ACTIVATED,
-                               pvm_bp.RMCState.INACTIVE)
+        mock_vios1 = mock_vios('vios1', bp.LPARState.NOT_ACTIVATED,
+                               bp.RMCState.INACTIVE)
         # No
-        mock_vios2 = mock_vios('vios2', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.BUSY)
+        mock_vios2 = mock_vios('vios2', bp.LPARState.RUNNING,
+                               bp.RMCState.BUSY)
         # Yes
-        mock_vios3 = mock_vios('vios3', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.UNKNOWN)
+        mock_vios3 = mock_vios('vios3', bp.LPARState.RUNNING,
+                               bp.RMCState.UNKNOWN)
         # No
-        mock_vios4 = mock_vios('vios4', pvm_bp.LPARState.UNKNOWN,
-                               pvm_bp.RMCState.ACTIVE)
+        mock_vios4 = mock_vios('vios4', bp.LPARState.UNKNOWN,
+                               bp.RMCState.ACTIVE)
         # No
-        mock_vios5 = mock_vios('vios5', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.ACTIVE)
+        mock_vios5 = mock_vios('vios5', bp.LPARState.RUNNING,
+                               bp.RMCState.ACTIVE)
         # Yes
-        mock_vios6 = mock_vios('vios6', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.INACTIVE)
+        mock_vios6 = mock_vios('vios6', bp.LPARState.RUNNING,
+                               bp.RMCState.INACTIVE)
 
         self.mock_vios_get.return_value = [mock_vios1, mock_vios2, mock_vios3,
                                            mock_vios4, mock_vios5, mock_vios6]
@@ -221,12 +238,12 @@ class TestVios(twrap.TestWrapper):
     @mock.patch('pypowervm.tasks.partition.LOG.warning')
     def test_exception_and_good_path(self, mock_warn):
         """VIOS.get raises, then succeeds with some halfsies, then succeeds."""
-        vios1_good = mock_vios('vios1', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.BUSY)
-        vios2_bad = mock_vios('vios2', pvm_bp.LPARState.RUNNING,
-                              pvm_bp.RMCState.UNKNOWN)
-        vios2_good = mock_vios('vios2', pvm_bp.LPARState.RUNNING,
-                               pvm_bp.RMCState.ACTIVE)
+        vios1_good = mock_vios('vios1', bp.LPARState.RUNNING,
+                               bp.RMCState.BUSY)
+        vios2_bad = mock_vios('vios2', bp.LPARState.RUNNING,
+                              bp.RMCState.UNKNOWN)
+        vios2_good = mock_vios('vios2', bp.LPARState.RUNNING,
+                               bp.RMCState.ACTIVE)
         self.mock_vios_get.side_effect = (ValueError('foo'),
                                           [vios1_good, vios2_bad],
                                           [vios1_good, vios2_good])
