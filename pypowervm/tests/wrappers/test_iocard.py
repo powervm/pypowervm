@@ -215,8 +215,9 @@ class TestVNIC(twrap.TestWrapper):
 
         # Values in kwargs
 
-        def build_href(sch, uuid, xag=None):
+        def build_href(sch, uuid, **kwargs):
             self.assertEqual('VirtualIOServer', sch)
+            self.assertEqual([], kwargs['xag'])
             return 'http://' + uuid
         self.adpt.build_href.side_effect = build_href
 
