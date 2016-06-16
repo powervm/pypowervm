@@ -347,7 +347,7 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 
     @label.setter
     def label(self, value):
-        return self.set_parm_value(_SRIOVPP_LBL, value)
+        self.set_parm_value(_SRIOVPP_LBL, value)
 
     @property
     def loc_code(self):
@@ -363,7 +363,7 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 
     @sublabel.setter
     def sublabel(self, value):
-        return self.set_parm_value(_SRIOVPP_SUBLBL, value)
+        self.set_parm_value(_SRIOVPP_SUBLBL, value)
 
     @property
     def link_status(self):
@@ -375,8 +375,7 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 
     @cfg_max_lps.setter
     def cfg_max_lps(self, value):
-        return self.set_parm_value(_SRIOVPP_CFG_MAX_ETHERNET_LPS,
-                                   value)
+        self.set_parm_value(_SRIOVPP_CFG_MAX_ETHERNET_LPS, value)
 
     @property
     def cfg_lps(self):
