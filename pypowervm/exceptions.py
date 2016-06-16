@@ -275,8 +275,9 @@ class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
                 "this virtual machine on this system.")
 
 
-class NoActiveVios(AbstractMsgFmtError):
-    msg_fmt = _("There are no active Virtual I/O Servers available.")
+class NotEnoughActiveVioses(AbstractMsgFmtError):
+    msg_fmt = _("There are not enough active Virtual I/O Servers available. "
+                "Expected %(exp)d; found %(act)d.")
 
 
 class ViosNotAvailable(AbstractMsgFmtError):
@@ -284,3 +285,13 @@ class ViosNotAvailable(AbstractMsgFmtError):
                 "a VIOS to become active for %(wait_time)d seconds.  Please "
                 "check the RMC connectivity between the PowerVM NovaLink and "
                 "the Virtual I/O Servers.")
+
+
+class NoRunningSharedSriovAdapters(AbstractMsgFmtError):
+    msg_fmt = _("Could not find any SR-IOV adapters in Sriov mode and Running "
+                "state.")
+
+
+class InsufficientSRIOVCapacity(AbstractMsgFmtError):
+    msg_fmt = _("Unable to fulfill minimum redundancy requirement of "
+                "%(min_vfs)d.  Found %(found_vfs)d viable backing device(s).")
