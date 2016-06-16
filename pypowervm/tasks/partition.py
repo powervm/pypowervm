@@ -83,7 +83,7 @@ def get_this_partition(adapter):
     return wraps[0]
 
 
-def get_active_vioses(adapter, xag=(), vios_wraps=None):
+def get_active_vioses(adapter, xag=(), vios_wraps=None, find_min=None):
     """Returns a list of active Virtual I/O Server Wrappers for a host.
 
     Active is defined by powered on and RMC state being 'active'.
@@ -93,13 +93,26 @@ def get_active_vioses(adapter, xag=(), vios_wraps=None):
     :param vios_wraps: (Optional, Default: None) A list of VIOS wrappers. If
                        specified, the method will check for active VIOSes
                        in this list instead of issuing a GET.
+    :param find_min: (Optional, Default: None) If specified, the minimum
+                     acceptable number of active VIOSes.  If fewer are found,
+                     this method raises NotEnoughActiveVioses.
     :return: List of VIOS wrappers.
+    :raise NotEnoughActiveVioses: If find_min is specified and the number of
+                                  active VIOSes is less than the specified
+                                  number.
     """
     if vios_wraps is None:
         vios_wraps = vios.VIOS.get(adapter, xag=xag)
 
-    return [vio for vio in vios_wraps if vio.rmc_state in _VALID_RMC_STATES and
-            vio.state in _VALID_VM_STATES]
+    ret = [vio for vio in vios_wraps if vio.rmc_state in _VALID_RMC_STATES and
+           vio.state in _VALID_VM_STATES]
+
+    if find_min is not None and len(ret) < find_min:
+        raise ex.NotEnoughActiveVioses(exp=find_min, act=len(ret))
+
+    LOG.debug('Found active VIOS(es): %s', str([vio.name for vio in ret]))
+
+    return ret
 
 
 def get_physical_wwpns(adapter):
@@ -132,12 +145,9 @@ def build_active_vio_feed_task(adapter, name='vio_feed_task', xag=(
     :param xag: (Optional) Iterable of extended attributes to use.  If not
                 specified, defaults to all mapping/storage options (as this is
                 most common case for using a transaction manager).
+    :raise NotEnoughActiveVioses: if there is not at least one active VIOS.
     """
-    active_vio_feed = get_active_vioses(adapter, xag=xag)
-    if not active_vio_feed:
-        raise ex.NoActiveVios()
-
-    return tx.FeedTask(name, active_vio_feed)
+    return tx.FeedTask(name, get_active_vioses(adapter, xag=xag, find_min=1))
 
 
 def _wait_for_vioses(adapter, max_wait_time):
