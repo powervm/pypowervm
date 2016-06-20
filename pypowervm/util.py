@@ -334,16 +334,18 @@ def round_gb_size_up(gb_size, dp=2):
     return float(math.ceil(gb_size * shift))/shift
 
 
-def sanitize_mac_for_api(mac):
+def sanitize_mac_for_api(mac, case=str.upper):
     """Converts a generalized mac address to one for the API.
 
     Takes any standard mac (case-insensitive, with or without colons) and
-    formats it to uppercase and removes colons.  This is the format for
-    the API.
+    formats it to the specified case (uppercase by default) and removes colons.
+    This is the format for the API.
     :param mac: The input mac.
+    :param case: Method to convert the case of the result. str.upper (convert
+                 to uppercase) by default.
     :returns: The sanitized mac.
     """
-    return mac.replace(':', '').upper()
+    return case(mac.replace(':', ''))
 
 
 def sanitize_bool_for_api(bool_val):
