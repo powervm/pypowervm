@@ -273,3 +273,14 @@ class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
                 "(%(rebuild_slots)d) does not match the number of slots on "
                 "the client system (%(original_slots)d).  Unable to rebuild "
                 "this virtual machine on this system.")
+
+
+class NoActiveVios(AbstractMsgFmtError):
+    msg_fmt = _("There are no active Virtual I/O Servers available.")
+
+
+class ViosNotAvailable(AbstractMsgFmtError):
+    msg_fmt = _("No Virtual I/O Servers are available.  Attempted to wait for "
+                "a VIOS to become active for %(wait_time)d seconds.  Please "
+                "check the RMC connectivity between the PowerVM NovaLink and "
+                "the Virtual I/O Servers.")
