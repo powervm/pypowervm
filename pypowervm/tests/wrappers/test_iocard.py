@@ -164,19 +164,137 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertRaises(ValueError, lport._cfg_capacity, '0.72%')
 
         # Verify bld method
+        # With default kwargs
         lport = card.SRIOVEthLPort.bld(
-            adapter=lport.adapter,
-            sriov_adap_id=5,
-            pport_id=6,
-            pvid=2230,
-            is_promisc=True,
-            cfg_capacity=0.05)
+            self.adpt, 5, 6)
+        self.assertEqual(5, lport.sriov_adap_id)
+        self.assertFalse(lport.is_promisc)
+        self.assertIsNone(lport.cfg_capacity)
+        self.assertEqual(6, lport.pport_id)
+        self.assertIsNone(lport.pvid)
+        # With explicit kwargs
+        lport = card.SRIOVEthLPort.bld(
+            self.adpt, 5, 6, pvid=2230, is_promisc=True, cfg_capacity=0.05)
         self.assertEqual(5, lport.sriov_adap_id)
         self.assertTrue(lport.is_promisc)
         self.assertEqual(0.05, lport.cfg_capacity)
         self.assertEqual(6, lport.pport_id)
         self.assertEqual(2230, lport.pvid)
 
+
+class TestVNIC(twrap.TestWrapper):
+    file = 'vnic_feed.txt'
+    wrapper_class_to_test = card.VNIC
+
+    def test_vnic_props(self):
+        self.assertEqual('U8286.42A.21C1B6V-V10-C3', self.dwrap.drc_name)
+        self.assertEqual(10, self.dwrap.lpar_id)
+        self.assertEqual(3, self.dwrap.slot)
+
+    def test_vnic_and_backdev_bld(self):
+        # Defaults in kwargs
+        vnic = card.VNIC.bld(self.adpt, 2)
+        dets = vnic.details
+        backdevs = vnic.back_devs
+        self.assertEqual(self.adpt, vnic.adapter)
+        self.assertEqual(2, dets.pvid)
+        self.assertIsNotNone(backdevs)
+        self.assertEqual(0, len(backdevs))
+        # Fields without setters
+        self.assertIsNone(vnic.drc_name)
+        self.assertIsNone(vnic.lpar_id)
+        self.assertIsNone(dets.capacity)
+        # Fields with setters not invoked (because not specified)
+        self.assertIsNone(vnic.slot)
+        self.assertTrue(vnic._use_next_avail_slot_id)
+        self.assertFalse(vnic._get_val_bool(card._VNIC_USE_NEXT_AVAIL_SLOT))
+        self.assertEqual(u.VLANList.ALL, dets.allowed_vlans)
+        self.assertIsNone(dets.mac)
+        self.assertEqual(u.MACList.ALL, dets.allowed_macs)
+
+        # Values in kwargs
+
+        def build_href(sch, uuid, xag=None):
+            self.assertEqual('VirtualIOServer', sch)
+            return 'http://' + uuid
+        self.adpt.build_href.side_effect = build_href
+
+        backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4),
+                    card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
+                                         capacity=0.3456789)]
+        vnic = card.VNIC.bld(
+            self.adpt, 7, slot_num=8, allowed_vlans=[1, 2], mac_addr='M:A:C',
+            allowed_macs=['AB:12:CD:34:EF:56', '12ab34cd56ef'],
+            back_devs=backdevs)
+        dets = vnic.details
+        backdevs = vnic.back_devs
+        self.assertEqual(self.adpt, vnic.adapter)
+        self.assertIsNone(vnic.drc_name)
+        self.assertIsNone(vnic.lpar_id)
+        self.assertEqual(7, dets.pvid)
+        self.assertEqual(8, vnic.slot)
+        self.assertFalse(vnic._use_next_avail_slot_id)
+        self.assertFalse(vnic._get_val_bool(card._VNIC_USE_NEXT_AVAIL_SLOT))
+        self.assertEqual([1, 2], dets.allowed_vlans)
+        self.assertEqual(['ab12cd34ef56', '12ab34cd56ef'], dets.allowed_macs)
+        self.assertEqual('mac', dets.mac)
+        self.assertIsNotNone(backdevs)
+        self.assertEqual(2, len(backdevs))
+        bd1, bd2 = backdevs
+        self.assertEqual(self.adpt, bd1.adapter)
+        self.adpt.build_href.assert_any_call('VirtualIOServer', 'vios_uuid',
+                                             xag=[])
+        self.assertEqual('http://vios_uuid', bd1.vios_href)
+        self.assertEqual(3, bd1.sriov_adap_id)
+        self.assertEqual(4, bd1.pport_id)
+        self.assertIsNone(bd1.capacity)
+        self.assertEqual(self.adpt, bd2.adapter)
+        self.adpt.build_href.assert_any_call('VirtualIOServer', 'vios_uuid2',
+                                             xag=[])
+        self.assertEqual('http://vios_uuid2', bd2.vios_href)
+        self.assertEqual(5, bd2.sriov_adap_id)
+        self.assertEqual(6, bd2.pport_id)
+        self.assertEqual(0.3457, bd2.capacity)
+
+    def test_details_props(self):
+        dets = self.dwrap.details
+        self.assertEqual(0, dets.pvid)
+        dets.pvid = 123
+        self.assertEqual(123, dets.pvid)
+        self.assertEqual(u.VLANList.ALL, dets.allowed_vlans)
+        dets.allowed_vlans = [1, 2, 3]
+        self.assertEqual([1, 2, 3], dets.allowed_vlans)
+        self.assertEqual(0.02, dets.capacity)
+
+        def bad_vlans_setter(val):
+            dets.allowed_vlans = val
+        self.assertRaises(ValueError, bad_vlans_setter, 'foo')
+        self.assertRaises(ValueError, bad_vlans_setter, ['a', 'b', 'c'])
+        self.assertEqual('ae7a25e59a03', dets.mac)
+        dets.mac = '12:AB:34:CD:56:EF'
+        self.assertEqual('12ab34cd56ef', dets.mac)
+        self.assertEqual(u.MACList.ALL, dets.allowed_macs)
+        dets.allowed_macs = ['AB:12:CD:34:EF:56', '12ab34cd56ef']
+        self.assertEqual(['ab12cd34ef56', '12ab34cd56ef'], dets.allowed_macs)
+
+        def bad_macs_setter(val):
+            dets.allowed_macs = val
+        self.assertRaises(ValueError, bad_macs_setter, 'foo')
+
+    def test_backdev_props(self):
+        self.assertEqual(1, len(self.dwrap.back_devs))
+        backdev = self.dwrap.back_devs[0]
+        self.assertEqual(
+            'https://9.3.206.231:12443/rest/api/uom/ManagedSystem/1cab7366-6b7'
+            '3-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-'
+            '1D369213ED83', backdev.vios_href)
+        self.assertEqual(1, backdev.sriov_adap_id)
+        self.assertEqual(0, backdev.pport_id)
+        self.assertEqual(
+            'https://9.3.206.231:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C'
+            '4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1'
+            '-3496-9af6-8cd562f0e839', backdev.lport_href)
+        self.assertEqual(0.02, backdev.capacity)
 
 if __name__ == "__main__":
     unittest.main()
