@@ -51,8 +51,8 @@ BODY{
     <TuningBufferID kxe="false" kb="CUR">-1</TuningBufferID>
     <VNICPortUsage kxe="false" kb="ROR">NOT_VNIC</VNICPortUsage>
     <AllowedMACAddresses kxe="false" kb="CUD">NONE</AllowedMACAddresses>
-    <MACAddress kxe="false" kb="CUD">0x8ACA227C6E00</MACAddress>
-    <CurrentMACAddress kb="ROR" kxe="false">0x000000000000</CurrentMACAddress>
+    <MACAddress kxe="false" kb="CUD">8ACA227C6E00</MACAddress>
+    <CurrentMACAddress kb="ROR" kxe="false">000000000000</CurrentMACAddress>
     <IEEE8021QAllowablePriorities kb="CUD" kxe="false">0</IEEE8021QAllowablePriorities>
     <IEEE8021QPriority kxe="false" kb="CUD">0</IEEE8021QPriority>
     <AllowedVLANs kxe="false" kb="CUD">ALL</AllowedVLANs>

@@ -16,10 +16,12 @@
 
 """Pervasive/commonly-used utilities."""
 
+import abc
 import datetime as dt
 import hashlib
 import math
 import re
+import six
 import socket
 import ssl
 try:
@@ -542,25 +544,76 @@ def parent_spec(parent, parent_type, parent_uuid):
     return parent_type, parent_uuid
 
 
-class VLANList(list):
+@six.add_metaclass(abc.ABCMeta)
+class _AllowedList(object):
+    """For REST fields taking 'ALL', 'NONE', or [list of values].
+
+    Subclasses should override parse_val and sanitize_for_api.
+    """
     ALL = 'ALL'
     NONE = 'NONE'
     _GOOD_STRINGS = (ALL, NONE)
 
+    @staticmethod
+    def parse_val(val):
+        """Parse a single list value from string to appropriate native type.
+
+        :param val: A single value to parse.
+        :return: The converted value.
+        """
+        # Default native type: str
+        return val
+
+    @staticmethod
+    def sanitize_for_api(val):
+        """Convert a native value to the expected string format for REST.
+
+        :param val: The native value to convert.
+        :return: Sanitized string value suitable for the REST API.
+        :raise ValueError: If the string can't be converted.
+        """
+        # Default: Just string-convert
+        return str(val)
+
     @classmethod
     def unmarshal(cls, rest_val):
-        """Convert value from REST to a list of ints or an accepted string."""
+        """Convert value from REST to a list of vals or an accepted string."""
         rest_val = rest_val.strip()
         if rest_val in cls._GOOD_STRINGS:
             return rest_val
-        return [int(val) for val in rest_val.split()]
+        return [cls.parse_val(val) for val in rest_val.split()]
 
     @classmethod
     def marshal(cls, val):
         """Produce a string suitable for the REST API."""
         if val in cls._GOOD_STRINGS:
             return val
-        if isinstance(val, list) and all(type(ival) is int for ival in val):
-            return ' '.join([str(ival) for ival in val])
-        raise ValueError("Specify an list of VLAN integers, or 'ALL' for all "
-                         "VLANS or 'NONE' for no VLANS.")
+        if isinstance(val, list):
+            return ' '.join([cls.sanitize_for_api(ival) for ival in val])
+        # Not a list, not a good value
+        raise ValueError(_("Invalid value '%(bad_val)s'.  Expected one of "
+                           "%(good_vals)s, or a list.") %
+                         {'bad_val': val, 'good_vals': str(cls._GOOD_STRINGS)})
+
+
+class VLANList(_AllowedList):
+    """For REST fields of type AllowedVLANIDs.Union."""
+    @staticmethod
+    def parse_val(val):
+        return int(val)
+
+    @staticmethod
+    def sanitize_for_api(val):
+        if type(val) is not int:
+            raise ValueError("Specify a list of VLAN integers, or 'ALL' for "
+                             "all VLANS or 'NONE' for no VLANS.")
+        return str(val)
+
+
+class MACList(_AllowedList):
+    """For REST fields of type AllowedMACAddresses.Union."""
+    # Default parse_val is fine
+
+    @staticmethod
+    def sanitize_for_api(val):
+        return sanitize_mac_for_api(val)

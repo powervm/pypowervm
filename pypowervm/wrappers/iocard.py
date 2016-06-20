@@ -129,19 +129,69 @@ _SRIOVLP_NUM_ALLOWED_VLANS = 'NumberOfAllowedVLANs'
 _SRIOVLP_ALLOWED_VLANS = 'AllowedVLANs'
 
 _SRIOVLP_EL_ORDER = (
-    _SRIOVLP_CFG_ID, _SRIOVLP_ID,
-    _SRIOVLP_ADPT_ID, _SRIOVLP_DRC_NAME,
-    _SRIOVLP_IS_FUNC, _SRIOVLP_IS_PROMISC,
-    _SRIOVLP_IS_DIAG, _SRIOVLP_IS_DEBUG,
-    _SRIOVLP_IS_HUGE_DMA, _SRIOVLP_DEV_NAME,
-    _SRIOVLP_CFG_CAPACITY, _SRIOVLP_PPORT_ID,
-    _SRIOVLP_PVID, _SRIOVLP_LOC_CODE,
-    _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE,
-    _SRIOVLP_ASSOC_LPARS, _SRIOVLP_ALLOWED_MACS,
-    _SRIOVLP_MAC, _SRIOVLP_CUR_MAC,
-    _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI,
-    _SRIOVLP_MAC_FLAGS, _SRIOVLP_NUM_ALLOWED_VLANS,
-    _SRIOVLP_ALLOWED_VLANS)
+    _SRIOVLP_CFG_ID, _SRIOVLP_ID, _SRIOVLP_ADPT_ID, _SRIOVLP_DRC_NAME,
+    _SRIOVLP_IS_FUNC, _SRIOVLP_IS_PROMISC, _SRIOVLP_IS_DIAG, _SRIOVLP_IS_DEBUG,
+    _SRIOVLP_IS_HUGE_DMA, _SRIOVLP_DEV_NAME, _SRIOVLP_CFG_CAPACITY,
+    _SRIOVLP_PPORT_ID, _SRIOVLP_PVID, _SRIOVLP_LOC_CODE,
+    _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE, _SRIOVLP_ASSOC_LPARS,
+    _SRIOVLP_ALLOWED_MACS, _SRIOVLP_MAC, _SRIOVLP_CUR_MAC,
+    _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI, _SRIOVLP_MAC_FLAGS,
+    _SRIOVLP_NUM_ALLOWED_VLANS, _SRIOVLP_ALLOWED_VLANS)
+
+# Top-level VNIC properties
+_VNIC_DED = 'VirtualNICDedicated'
+_VNIC_ADP_TYPE = 'AdapterType'
+_VNIC_DRC_NAME = 'DynamicReconfigurationConnectorName'
+_VNIC_LOC_CODE = 'LocationCode'
+_VNIC_LPAR_ID = 'LocalPartitionID'
+_VNIC_REQ_ADP = 'RequiredAdapter'
+_VNIC_VARIED_ON = 'VariedOn'
+_VNIC_USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
+_VNIC_USE_NEXT_AVAIL_HIGH_SLOT = 'UseNextAvailableHighSlotID'
+_VNIC_SLOT_NUM = 'VirtualSlotNumber'
+_VNIC_ENABLED = 'Enabled'
+_VNIC_DETAILS = 'Details'
+_VNIC_BACK_DEVS = 'AssociatedBackingDevices'
+
+_VNIC_EL_ORDER = (
+    _VNIC_DED, _VNIC_ADP_TYPE, _VNIC_DRC_NAME, _VNIC_LOC_CODE, _VNIC_LPAR_ID,
+    _VNIC_REQ_ADP, _VNIC_VARIED_ON, _VNIC_USE_NEXT_AVAIL_SLOT,
+    _VNIC_USE_NEXT_AVAIL_HIGH_SLOT, _VNIC_SLOT_NUM, _VNIC_ENABLED,
+    _VNIC_DETAILS, _VNIC_BACK_DEVS)
+
+# Properties for VNICDetails (schema: VirtualNICDetails.Type)
+_VNICD_PVID = 'PortVLANID'
+_VNICD_PVID_PRI = 'PortVLANIDPriority'
+_VNICD_ALLOWED_VLANS = 'AllowedVLANIDs'
+_VNICD_MAC = 'MACAddress'
+_VNICD_ALLOWED_OS_MACS = 'AllowedOperatingSystemMACAddresses'
+_VNICD_OS_DEV_NAME = 'OSDeviceName'
+_VNICD_DES_MODE = 'DesiredMode'
+_VNICD_DES_CAP_PCT = 'DesiredCapacityPercentage'
+
+_VNICD_EL_ORDER = (
+    _VNICD_PVID, _VNICD_PVID_PRI, _VNICD_ALLOWED_VLANS, _VNICD_MAC,
+    _VNICD_ALLOWED_OS_MACS, _VNICD_OS_DEV_NAME, _VNICD_DES_MODE,
+    _VNICD_DES_CAP_PCT)
+
+# Properties for VNICBackDev (schema: VirtualNICSRIOVBackingDevice)
+_VNICBD_CHOICE = 'VirtualNICBackingDeviceChoice'
+_VNICBD = 'VirtualNICSRIOVBackingDevice'
+_VNICBD_DEV_TYP = 'DeviceType'
+_VNICBD_VIOS = 'AssociatedVirtualIOServer'
+_VNICBD_SWITCH = 'AssociatedVirtualNICSwitch'
+_VNICBD_VNIC = 'AssociatedVirtualNICDedicated'
+_VNICBD_SRIOV_ADP_ID = 'RelatedSRIOVAdapterID'
+_VNICBD_CUR_CAP_PCT = 'CurrentCapacityPercentage'
+_VNICBD_PPORT_ID = 'RelatedSRIOVPhysicalPortID'
+_VNICBD_LPORT = 'RelatedSRIOVLogicalPort'
+# For building the VIOS HREF.  (Would have liked to use pypowervm.wrappers.
+# virtual_io_server.VIOS.schema_type, but circular import.)
+_VIOS = 'VirtualIOServer'
+
+_VNICBD_EL_ORDER = (
+    _VNICBD_DEV_TYP, _VNICBD_VIOS, _VNICBD_SWITCH, _VNICBD_VNIC,
+    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_PPORT_ID, _VNICBD_LPORT)
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
@@ -408,7 +458,6 @@ class SRIOVConvPPort(SRIOVEthPPort):
 
 
 @ewrap.EntryWrapper.pvm_type('SRIOVEthernetLogicalPort',
-                             has_metadata=True,
                              child_order=_SRIOVLP_EL_ORDER)
 class SRIOVEthLPort(ewrap.EntryWrapper):
     """The SRIOV Ethernet Logical port."""
@@ -509,6 +558,258 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     @property
     def loc_code(self):
         return self._get_val_str(_SRIOVLP_LOC_CODE)
+
+
+@ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
+class VNIC(ewrap.EntryWrapper):
+    """A dedicated, possibly-redundant Virtual NIC."""
+
+    @classmethod
+    def bld(cls, adapter, pvid, slot_num=None, allowed_vlans=u.VLANList.ALL,
+            mac_addr=None, allowed_macs=u.MACList.ALL, back_devs=None):
+        """Build a new VNIC wrapper suitable for .create()
+
+        A VNIC is a CHILD object on a LogicalPartition.  Usage models:
+            vnic = VNIC.bld(...)
+            vnic.back_devs.append(back_dev1)
+            ...
+        or
+            vnic = VNIC.bld(..., back_devs=[back_dev1, back_dev2, ...])
+        then
+            vnic.create(parent=lpar_wrap)
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param pvid: Port VLAN ID for this vNIC.
+        :param slot_num: Desired virtual slot number on the owning LPAR.
+        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
+                              Specify pypowervm.util.VLANList.ALL to allow all
+                              VLANs or .NONE to allow no VLANs on this vNIC.
+                              Default: ALL.
+        :param mac_addr: MAC address for the vNIC.
+        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
+                             Specify pypowervm.util.MACList.ALL to allow all
+                             MAC addresses, or .NONE to allow no MAC addresses
+                             on this vNIC.  Default: ALL.
+        :param back_devs: List of VNICBackDev wrappers each indicating a
+                          combination of VIOS, SRIOV adapter, and physical port
+                          on which to create the VF for the backing device.
+                          See VNICBackDev.bld.  If not specified to bld, at
+                          least one must be added before the VNIC can be
+                          created.
+        :return: A new VNIC wrapper.
+        """
+        vnic = super(VNIC, cls)._bld(adapter)
+        if slot_num is not None:
+            vnic._slot(slot_num)
+        else:
+            vnic._use_next_avail_slot_id = True
+
+        vnic._details(VNICDetails._bld_new(
+            adapter, pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
+            allowed_macs=allowed_macs))
+
+        if back_devs:
+            vnic.back_devs = back_devs
+        return vnic
+
+    @property
+    def drc_name(self):
+        return self._get_val_str(_VNIC_DRC_NAME)
+
+    @property
+    def lpar_id(self):
+        """The integer ID, not UUID, of the LPAR owning this VNIC."""
+        return self._get_val_int(_VNIC_LPAR_ID)
+
+    @property
+    def slot(self):
+        return self._get_val_int(_VNIC_SLOT_NUM)
+
+    def _slot(self, val):
+        self.set_parm_value(_VNIC_SLOT_NUM, val)
+
+    @property
+    def _use_next_avail_slot_id(self):
+        """Use next available (high) slot ID, true or false."""
+        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _VNIC_USE_NEXT_AVAIL_SLOT)
+        return self._get_val_bool(unasi_field)
+
+    @_use_next_avail_slot_id.setter
+    def _use_next_avail_slot_id(self, unasi):
+        """Use next available (high) slot ID.
+
+        :param unasi: Boolean value to set (True or False)
+        """
+        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _VNIC_USE_NEXT_AVAIL_SLOT)
+        self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
+
+    @property
+    def details(self):
+        return VNICDetails.wrap(self._find_or_seed(_VNIC_DETAILS))
+
+    def _details(self, val):
+        self.element.replace(self._find_or_seed(_VNIC_DETAILS), val.element)
+
+    @property
+    def back_devs(self):
+        return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
+                                     child_class=VNICBackDev,
+                                     indirect=_VNICBD_CHOICE)
+
+    @back_devs.setter
+    def back_devs(self, new_devs):
+        self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
+
+
+@ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
+                               child_order=_VNICD_EL_ORDER)
+class VNICDetails(ewrap.ElementWrapper):
+    """The 'Details' sub-element of a VirtualNICDedicated."""
+
+    @classmethod
+    def _bld_new(cls, adapter, pvid, allowed_vlans=u.VLANList.ALL,
+                 mac_addr=None, allowed_macs=u.MACList.ALL):
+        """Create a new VNICDetails wrapper suitable for insertion into a VNIC.
+
+        Not to be called outside of VNIC.bld().
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param pvid: Port VLAN ID for this vNIC.
+        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
+                              Specify pypowervm.util.VLANList.ALL to allow all
+                              VLANs or .NONE to allow no VLANs on this vNIC.
+                              Default: ALL.
+        :param mac_addr: MAC address for the vNIC.
+        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
+                             Specify pypowervm.util.MACList.ALL to allow all
+                             MAC addresses, or .NONE to allow no MAC addresses
+                             on this vNIC.  Default: ALL.
+        :return: A new VNICDetails wrapper.
+        """
+        vnicd = super(VNICDetails, cls)._bld(adapter)
+        vnicd.pvid = pvid
+        vnicd.allowed_vlans = allowed_vlans
+        if mac_addr is not None:
+            vnicd.mac = mac_addr
+        vnicd.allowed_macs = allowed_macs
+        return vnicd
+
+    @property
+    def pvid(self):
+        return self._get_val_int(_VNICD_PVID)
+
+    @pvid.setter
+    def pvid(self, val):
+        self.set_parm_value(_VNICD_PVID, val)
+
+    @property
+    def allowed_vlans(self):
+        vlan_str = self._get_val_str(_VNICD_ALLOWED_VLANS)
+        return u.VLANList.unmarshal(vlan_str) if vlan_str is not None else None
+
+    @allowed_vlans.setter
+    def allowed_vlans(self, vlans):
+        self.set_parm_value(_VNICD_ALLOWED_VLANS, u.VLANList.marshal(vlans))
+
+    @property
+    def mac(self):
+        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
+        return self._get_val_str(_VNICD_MAC)
+
+    @mac.setter
+    def mac(self, val):
+        self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val))
+
+    @property
+    def allowed_macs(self):
+        amstr = self._get_val_str(_VNICD_ALLOWED_OS_MACS)
+        return u.MACList.unmarshal(amstr) if amstr is not None else None
+
+    @allowed_macs.setter
+    def allowed_macs(self, maclist):
+        self.set_parm_value(_VNICD_ALLOWED_OS_MACS, u.MACList.marshal(maclist))
+
+    @property
+    def capacity(self):
+        """The capacity (float, 0.0-1.0) of the active backing logical port."""
+        return self._get_val_percent(_VNICD_DES_CAP_PCT)
+
+
+@ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
+                               child_order=_VNICBD_EL_ORDER)
+class VNICBackDev(ewrap.ElementWrapper):
+    """SRIOV backing device for a vNIC."""
+
+    @classmethod
+    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None):
+        """Create a new VNICBackDev, suitable for inclusion in a VNIC wrapper.
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param vios_uuid: String UUID of the Virtual I/O Server to host the
+                          vNIC server for this backing device.
+        :param sriov_adap_id: Integer SRIOV Adapter ID of the SRIOV adapter
+                              owning the physical port on which the backing VF
+                              is to be created: SRIOVAdapter.sriov_adap_id.
+        :param pport_id: Integer physical port ID of the SRIOV physical port on
+                         which the VF is to be created: SRIOVEthPPort.port_id
+        :param capacity: Float value between 0.0 and 1.0 indicating the minimum
+                         fraction of the physical port's bandwidth allocated to
+                         traffic over this backing device.  Must be a multiple
+                         of SRIOVEthPPort.min_granularity for the physical port
+                         indicated by pport_id.  If not specified,
+                         SRIOVEthPPort.min_granularity is used by the platform.
+        :return: A new VNICBackDev, suitable for inclusion in a VNIC wrapper.
+        """
+        bdev = super(VNICBackDev, cls)._bld(adapter)
+        # TODO(IBM): Verify that this can be ManagedSystem-less
+        bdev._vios_href(adapter.build_href(_VIOS, vios_uuid, xag=[]))
+        bdev._sriov_adap_id(sriov_adap_id)
+        bdev._pport_id(pport_id)
+        if capacity is not None:
+            bdev._capacity(capacity)
+        return bdev
+
+    @property
+    def vios_href(self):
+        return self.get_href(_VNICBD_VIOS, one_result=True)
+
+    def _vios_href(self, href):
+        self.set_href(_VNICBD_VIOS, href)
+
+    @property
+    def sriov_adap_id(self):
+        return self._get_val_int(_VNICBD_SRIOV_ADP_ID)
+
+    def _sriov_adap_id(self, val):
+        self.set_parm_value(_VNICBD_SRIOV_ADP_ID, val)
+
+    @property
+    def pport_id(self):
+        return self._get_val_int(_VNICBD_PPORT_ID)
+
+    def _pport_id(self, val):
+        self.set_parm_value(_VNICBD_PPORT_ID, val)
+
+    @property
+    def lport_href(self):
+        return self.get_href(_VNICBD_LPORT, one_result=True)
+
+    @property
+    def capacity(self):
+        """Gets the allocated capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_VNICBD_CUR_CAP_PCT)
+
+    def _capacity(self, float_val):
+        self.set_parm_value(_VNICBD_CUR_CAP_PCT,
+                            u.sanitize_percent_for_api(float_val))
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)

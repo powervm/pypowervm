@@ -1,0 +1,132 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh vios_with_sriov_lp.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'LogicalPartition/020C9406-2B1A-461D-A8D3-0C9A7EB6746A/VirtualNICDedicated', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '7644', 'X-Powered-By': 'Servlet/3.1', 'Set-Cookie': 'JSESSIONID=0000ZnxUV-fSBOQFueaGXWRFjja:54518243-2afe-3834-a1f2-f7ada1d16030; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Fri, 03 Jun 2016 20:30:39 GMT', 'X-Transaction-ID': 'XT10129661', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Fri, 03 Jun 2016 20:30:39 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': '54518243-2afe-3834-a1f2-f7ada1d16030', 'ETag': '7743738979'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>54518243-2afe-3834-a1f2-f7ada1d16030</id>
+    <updated>2016-06-17T03:48:04.197-05:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/LogicalPartition/020C9406-2B1A-461D-A8D3-0C9A7EB6746A/VirtualNICDedicated"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/1a6b8062-4fc0-32c9-93e6-1243a04450b8"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>c4cd2502-caf5-399d-97f8-b9644ac8c9f9</id>
+        <title>VirtualNICDedicated</title>
+        <published>2016-06-17T03:48:06.283-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/LogicalPartition/020C9406-2B1A-461D-A8D3-0C9A7EB6746A/VirtualNICDedicated/c4cd2502-caf5-399d-97f8-b9644ac8c9f9"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1370264134</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNICDedicated">
+            <VirtualNICDedicated:VirtualNICDedicated xmlns:VirtualNICDedicated="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c4cd2502-caf5-399d-97f8-b9644ac8c9f9</AtomID>
+            <AtomCreated>1466075583618</AtomCreated>
+        </Atom>
+    </Metadata>
+    <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V10-C3</DynamicReconfigurationConnectorName>
+    <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">3</VirtualSlotNumber>
+    <Details kxe="false" kb="CUR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PortVLANID kxe="false" kb="CUD">0</PortVLANID>
+        <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
+        <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
+        <MACAddress kb="COD" kxe="false">AE7A25E59A03</MACAddress>
+        <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
+        <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
+        <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
+        <DesiredCapacityPercentage kb="ROO" kxe="false">2.0%</DesiredCapacityPercentage>
+    </Details>
+    <AssociatedBackingDevices kb="COR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualNICBackingDeviceChoice>
+            <VirtualNICSRIOVBackingDevice schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <DeviceType kxe="false" kb="COR">SRIOV</DeviceType>
+                <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83" rel="related"/>
+                <RelatedSRIOVAdapterID kxe="false" kb="COR">1</RelatedSRIOVAdapterID>
+                <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
+                <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
+                <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1-3496-9af6-8cd562f0e839" rel="related"/>
+            </VirtualNICSRIOVBackingDevice>
+        </VirtualNICBackingDeviceChoice>
+    </AssociatedBackingDevices>
+</VirtualNICDedicated:VirtualNICDedicated>
+        </content>
+    </entry>
+    <entry>
+        <id>9655fc81-3df4-3f58-883c-6b732b377bdd</id>
+        <title>VirtualNICDedicated</title>
+        <published>2016-06-17T03:48:06.285-05:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/LogicalPartition/020C9406-2B1A-461D-A8D3-0C9A7EB6746A/VirtualNICDedicated/9655fc81-3df4-3f58-883c-6b732b377bdd"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">545222413</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualNICDedicated">
+            <VirtualNICDedicated:VirtualNICDedicated xmlns:VirtualNICDedicated="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_4_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9655fc81-3df4-3f58-883c-6b732b377bdd</AtomID>
+            <AtomCreated>1466075584690</AtomCreated>
+        </Atom>
+    </Metadata>
+    <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V10-C4</DynamicReconfigurationConnectorName>
+    <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
+    <VirtualSlotNumber kxe="false" kb="COD">4</VirtualSlotNumber>
+    <Details kxe="false" kb="CUR" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PortVLANID kxe="false" kb="CUD">0</PortVLANID>
+        <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
+        <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
+        <MACAddress kb="COD" kxe="false">ae7a25e59a04</MACAddress>
+        <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
+        <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
+        <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
+        <DesiredCapacityPercentage kb="ROO" kxe="false">2.0%</DesiredCapacityPercentage>
+    </Details>
+    <AssociatedBackingDevices kb="COR" kxe="false" schemaVersion="V1_4_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualNICBackingDeviceChoice>
+            <VirtualNICSRIOVBackingDevice schemaVersion="V1_4_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <DeviceType kxe="false" kb="COR">SRIOV</DeviceType>
+                <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83" rel="related"/>
+                <RelatedSRIOVAdapterID kxe="false" kb="COR">2</RelatedSRIOVAdapterID>
+                <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
+                <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
+                <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/b77d3d91-29e5-3f20-b2b2-c9c59a97f83c" rel="related"/>
+            </VirtualNICSRIOVBackingDevice>
+        </VirtualNICBackingDeviceChoice>
+    </AssociatedBackingDevices>
+</VirtualNICDedicated:VirtualNICDedicated>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
