@@ -27,11 +27,14 @@ from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import monitor as pvm_mon
+from pypowervm.wrappers.pcm import lpar as pvm_mon_lpar
 from pypowervm.wrappers.pcm import phyp as pvm_mon_phyp
 from pypowervm.wrappers.pcm import vios as pvm_mon_vios
 
+
 PHYP_DATA = 'phyp_pcm_data.txt'
 VIOS_DATA = 'vios_pcm_data.txt'
+LPAR_DATA = 'lpar_pcm_data.txt'
 LTM_FEED = 'ltm_feed2.txt'
 
 
@@ -127,7 +130,10 @@ class TestMonitors(testtools.TestCase):
         vios_resp = self._load(VIOS_DATA)
         vios_data = pvm_mon_vios.ViosInfo(vios_resp)
 
-        metrics = pvm_t_mon.vm_metrics(phyp_data, [vios_data])
+        lpar_resp = self._load(LPAR_DATA)
+        lpar_data = pvm_mon_lpar.LparInfo(lpar_resp)
+
+        metrics = pvm_t_mon.vm_metrics(phyp_data, [vios_data], lpar_data)
         self.assertIsNotNone(metrics)
 
         # In the test data, there are 5 LPARs total.
@@ -146,6 +152,8 @@ class TestMonitors(testtools.TestCase):
         # Memory validation
         self.assertEqual(20480, metric.memory.logical_mem)
         self.assertEqual(20480, metric.memory.backed_physical_mem)
+        self.assertEqual(61, metric.memory.pct_real_mem_free)
+        self.assertEqual(25, metric.memory.vm_pg_out_rate)
 
         # Processor validation
         self.assertEqual(0, metric.processor.pool_id)
@@ -184,11 +192,27 @@ class TestMonitors(testtools.TestCase):
 
         self.assertIsNotNone(metric.processor)
         self.assertIsNotNone(metric.memory)
+        # For powered off VM, the free memory is 100 percent.
+        self.assertEqual(100, metric.memory.pct_real_mem_free)
+        # For powered off VM, the page in/out rate is 0.
+        self.assertEqual(0, metric.memory.vm_pg_out_rate)
         self.assertIsNone(metric.storage)
         self.assertIsNone(metric.network)
 
+        # Take a VM which has entry in phyp data but not in PCM Lpar data.
+        # Assert that it has been correctly parsed and memory metrics
+        # are set to default values.
+        vm_in_phyp_not_in_lpar_pcm = '66A2E886-D05D-42F4-87E0-C3BA02CF7C7E'
+        metric = metrics.get(vm_in_phyp_not_in_lpar_pcm)
+        self.assertIsNotNone(metric)
+        self.assertIsNotNone(metric.processor)
+        self.assertIsNotNone(metric.memory)
+        self.assertEqual(.2, metric.processor.proc_units)
+        self.assertEqual(0, metric.memory.pct_real_mem_free)
+        self.assertEqual(-1, metric.memory.vm_pg_in_rate)
+
     def test_vm_metrics_no_phyp_data(self):
-        self.assertEqual({}, pvm_t_mon.vm_metrics(None, []))
+        self.assertEqual({}, pvm_t_mon.vm_metrics(None, [], None))
 
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
     def test_latest_stats(self, mock_ltm_feed):
@@ -218,11 +242,16 @@ class TestMonitors(testtools.TestCase):
         mock_vio3_metric.updated_datetime = 2
         mock_vio3_metric.link = 'vio'
 
+        mock_lpar1_metric = mock.MagicMock()
+        mock_lpar1_metric.category = 'lpar'
+        mock_lpar1_metric.updated_datetime = 2
+        mock_lpar1_metric.link = 'lpar'
+
         # Reset as this was invoked once up front.
         mock_ltm_feed.reset_mock()
         mock_ltm_feed.return_value = [mock_phyp_metric, mock_phyp2_metric,
                                       mock_vio1_metric, mock_vio2_metric,
-                                      mock_vio3_metric]
+                                      mock_vio3_metric, mock_lpar1_metric]
 
         # Data for the responses.
         phyp_resp = self._load(PHYP_DATA)
@@ -236,22 +265,27 @@ class TestMonitors(testtools.TestCase):
             elif link == 'vio':
                 resp.body = vios_resp
                 return resp
+            elif link == 'lpar':
+                resp.body = self._load(LPAR_DATA)
+                return resp
             else:
                 self.fail()
 
         self.adpt.read_by_href.side_effect = validate_read
 
-        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(self.adpt,
-                                                                   mock.Mock())
+        resp_date, resp_phyp, resp_vioses, resp_lpars = (
+            pvm_t_mon.latest_stats(self.adpt, mock.Mock()))
         self.assertIsNotNone(resp_phyp)
         self.assertIsInstance(resp_phyp, pvm_mon_phyp.PhypInfo)
         self.assertEqual(2, len(resp_vioses))
         self.assertIsInstance(resp_vioses[0], pvm_mon_vios.ViosInfo)
         self.assertIsInstance(resp_vioses[1], pvm_mon_vios.ViosInfo)
+        self.assertEqual(6, len(resp_lpars.lpars_util))
+        self.assertIsInstance(resp_lpars, pvm_mon_lpar.LparInfo)
 
         # Invoke again, but set to ignore vioses
-        resp_date, resp_phyp, resp_vioses = pvm_t_mon.latest_stats(
-            self.adpt, mock.Mock(), include_vio=False)
+        resp_date, resp_phyp, resp_vioses, resp_lpars = (
+            pvm_t_mon.latest_stats(self.adpt, mock.Mock(), include_vio=False))
         self.assertIsNotNone(resp_phyp)
         self.assertIsInstance(resp_phyp, pvm_mon_phyp.PhypInfo)
         self.assertEqual(0, len(resp_vioses))
@@ -269,11 +303,12 @@ class TestMonitors(testtools.TestCase):
         mock_ltm_feed.return_value = [mock_vio3_metric]
 
         # Call the system.
-        resp_date, resp_phyp, resp_vios = pvm_t_mon.latest_stats(mock.Mock(),
-                                                                 mock.Mock())
+        resp_date, resp_phyp, resp_vios, resp_lpars = (
+            pvm_t_mon.latest_stats(mock.Mock(), mock.Mock()))
         self.assertIsNotNone(resp_date)
         self.assertIsNone(resp_phyp)
         self.assertIsNone(resp_vios)
+        self.assertIsNone(resp_lpars)
 
 
 class TestMetricsCache(testtools.TestCase):
@@ -298,9 +333,10 @@ class TestMetricsCache(testtools.TestCase):
         date_ret2 = date_ret1 + datetime.timedelta(milliseconds=250)
         date_ret3 = date_ret2 + datetime.timedelta(milliseconds=250)
 
-        mock_stats.side_effect = [(date_ret1, mock.Mock(), mock.Mock()),
-                                  (date_ret2, mock.Mock(), mock.Mock()),
-                                  (date_ret3, mock.Mock(), mock.Mock())]
+        mock_stats.side_effect = [
+            (date_ret1, mock.Mock(), mock.Mock(), mock.Mock()),
+            (date_ret2, mock.Mock(), mock.Mock(), mock.Mock()),
+            (date_ret3, mock.Mock(), mock.Mock(), mock.Mock())]
         mock_vm_metrics.side_effect = [ret1, ret2, ret3]
 
         # Creation invokes the refresh once automatically.

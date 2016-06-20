@@ -17,10 +17,10 @@
 """Utility decorator to retry the decorated method."""
 
 import functools
-import time
-
 from oslo_log import log as logging
+import random
 from six import moves
+import time
 
 from pypowervm import const
 from pypowervm import exceptions as exc
@@ -36,6 +36,17 @@ NO_CHECKER = lambda *args, **kwds: False
 NO_DELAY = lambda *args, **kwds: None
 NO_ARGMOD = lambda this_try, max_tries, *args, **kwds: (args, kwds)
 
+# Used by STEPPED_RANDOM_DELAY.  Each entry corresponds to the kwargs for
+# gen_random_delay.  There's no magic to these numbers; they're fairly
+# arbitrary.
+RANDOM_DELAY_STEPS = ({'max_s': 0},
+                      {'max_s': 1},
+                      {'min_s': 0.5, 'max_s': 4},
+                      {'min_s': 2, 'max_s': 13},
+                      {'min_s': 6.5, 'max_s': 30},
+                      # Subsequent steps 0-60s
+                      {'max_s': 60})
+
 
 def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
     """A delay function that increases its delay per attempt.
@@ -50,6 +61,46 @@ def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
     """
     sleep_time = (0.25 * (3**(attempt-1)) - 0.25)
     time.sleep(min(sleep_time, 30))
+
+
+def gen_random_delay(min_s=0, max_s=10):
+    """Generate a delay function that waits a random amount of time.
+
+    :param min_s: Minimum number of seconds to delay (float).
+    :param max_s: Maximum number of seconds to delay (float).
+    :return: A delay method suitable for passing to retry's delay_func kwarg.
+    """
+    def RANDOM_DELAY(attempt, max_attempts, *args, **kwargs):
+        span = max_s - min_s
+        sleep_time = min_s + (random.random() * span)
+        time.sleep(sleep_time)
+    return RANDOM_DELAY
+
+
+def STEPPED_RANDOM_DELAY(attempt, max_attempts, *args, **kwargs):
+    """A delay function for increasing random sleep times.
+
+    The RANDOM_DELAY_STEPS variable is used to determine the min/max for each
+    step.  This is a graduating scale - based on the overall max_attempts
+    specified.  If there are 60 max attempts, the first 10 will use the
+    first delay in RANDOM_DELAY_STEPS, the next ten will use the second delay
+    in RANDOM_DELAY_STEPS, etc...
+
+    If there are only 6 retries, then the first will use the first position
+    in RANDOM_DELAY_STEPS, the second will map to the second RANDOM_DELAY_STEPS
+    and so on.
+    """
+    # Generate the position, based off the max attempts and the current pos
+    pos = int(((attempt - 1) * len(RANDOM_DELAY_STEPS)) / max_attempts)
+
+    # If for some reason, the user goes above the max attempts, limit it to
+    # to the last position.
+    pos = (pos if pos < len(RANDOM_DELAY_STEPS)
+           else (len(RANDOM_DELAY_STEPS) - 1))
+
+    # Run the random delay function
+    gen_random_delay(**RANDOM_DELAY_STEPS[pos])(attempt, max_attempts, *args,
+                                                **kwargs)
 
 
 def refresh_wrapper(trynum, maxtries, *args, **kwargs):
@@ -87,8 +138,8 @@ def retry(tries=3, delay_func=NO_DELAY,
             - the arguments to the decorated method
             - the keyword arguments to the decorated method
         No return value is expected.
-    :param retry_except: A list of exceptions to retry if received.
-        Defaults to no exceptions besides the HttpError which is
+    :param retry_except: An exception class (or tuple thereof) to retry if
+        received.  Defaults to no exceptions besides the HttpError which is
         handled separately by the http_codes parameter.
     :param http_codes: A list of http response codes to retry if received.
         Default is to not handle any specific http codes.
@@ -185,8 +236,8 @@ def retry(tries=3, delay_func=NO_DELAY,
                 try:
                     resp = func(*args, **kwds)
                     # No exception raised, call the response checker
-                    # If we're on the last iteration, we return the response
-                    # the response checker should raise an exception if
+                    # If we're on the last iteration, we return the response.
+                    # The response checker should raise an exception if
                     # it doesn't want this behavior.
                     if (not _resp_checker(resp, try_, _tries, *args, **kwds)
                             or try_ == _tries):

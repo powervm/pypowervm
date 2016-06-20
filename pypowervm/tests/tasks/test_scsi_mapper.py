@@ -35,6 +35,8 @@ class TestSCSIMapper(testtools.TestCase):
         super(TestSCSIMapper, self).setUp()
         # Common Adapter
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
+        # Don't really sleep
+        self.useFixture(fx.SleepFx())
 
         # Fake URI
         mock_crt_href_p = mock.patch('pypowervm.wrappers.virtual_io_server.'
@@ -132,20 +134,24 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(3, attempt_count)
 
     def test_mapping_new_mapping(self):
+        """Fuse limit, slot number, LUA via add_vscsi_mapping."""
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was added to existing
-        def validate_update(*kargs, **kwargs):
-            vios_w = kargs[0]
+        def validate_update(*args, **kwargs):
+            vios_w = args[0]
             self.assertEqual(6, len(vios_w.scsi_mappings))
 
+            new_map = vios_w.scsi_mappings[5]
             # Make sure that the adapters do not match
             self.assertNotEqual(vios_w.scsi_mappings[0].client_adapter,
-                                vios_w.scsi_mappings[5].client_adapter)
+                                new_map.client_adapter)
             self.assertNotEqual(vios_w.scsi_mappings[0].server_adapter,
-                                vios_w.scsi_mappings[5].server_adapter)
-
+                                new_map.server_adapter)
+            # Make sure we got the right slot number and LUA
+            self.assertEqual(23, new_map.client_adapter.lpar_slot_num)
+            self.assertEqual('the_lua', new_map.target_dev.lua)
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -154,8 +160,11 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         # Run the code
-        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
-                                      pv, fuse_limit=5)
+        # While we're here, make sure lpar_slot_num and lua go through.  This
+        # validates those kwargs in build_vscsi_mapping too.
+        scsi_mapper.add_vscsi_mapping(
+            'host_uuid', 'vios_uuid', LPAR_UUID, pv, fuse_limit=5,
+            lpar_slot_num=23, lua='the_lua')
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -165,7 +174,8 @@ class TestSCSIMapper(testtools.TestCase):
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
 
         scsi_map = scsi_mapper.build_vscsi_mapping('host_uuid', self.v1wrap,
-                                                   LPAR_UUID, pv)
+                                                   LPAR_UUID, pv,
+                                                   lpar_slot_num=23)
 
         # Get the original count
         orig_mappings = len(self.v1wrap.scsi_mappings)
@@ -174,6 +184,9 @@ class TestSCSIMapper(testtools.TestCase):
         resp1 = scsi_mapper.add_map(self.v1wrap, scsi_map)
         self.assertIsNotNone(resp1)
         self.assertIsInstance(resp1, pvm_vios.VSCSIMapping)
+
+        # Assert that the desired client slot number was set
+        self.assertEqual(resp1.client_adapter.lpar_slot_num, 23)
 
         # The mapping should return as None, as it is already there.
         resp2 = scsi_mapper.add_map(self.v1wrap, scsi_map)
@@ -211,6 +224,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
         # And the VIOS was "looked up"
         self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
         # Now do it again, but passing the vios wrapper and the client UUID
         vios_wrap = pvm_vios.VIOS.wrap(
@@ -224,6 +238,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
         # But the VIOS was not "looked up"
         self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(vios_wrap.entry, vios.entry)
 
     def test_remove_storage_vopt_no_name_specified(self):
         # Mock Data
@@ -245,6 +260,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_storage_vopt_retry(self):
         """Tests removing the storage vOpt with multiple retries."""
@@ -276,8 +292,8 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Run the code
         media_name = 'bldr1_dfe05349_kyleh_config.iso'
-        vios, remel = scsi_mapper.remove_vopt_mapping(
-            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)
+        remel = scsi_mapper.remove_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=media_name)[1]
 
         # Make sure that our validation code above was invoked
         self.assertEqual(3, self.adpt.update_by_path.call_count)
@@ -305,6 +321,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VDisk)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_storage_lu(self):
         # Mock Data
@@ -326,6 +343,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.LU)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_remove_pv_mapping(self):
         # Mock Data
@@ -347,6 +365,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.PV)
+        self.assertEqual(self.v1resp.atom, vios.entry)
 
     def test_detach_storage(self):
         """Detach storage from some mappings."""

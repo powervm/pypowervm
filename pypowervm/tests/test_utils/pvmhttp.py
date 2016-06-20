@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import ast
 import os
 
 import pypowervm.adapter as adp
@@ -30,9 +31,6 @@ END_OF_SECTION = "END OF SECTION}"
 class PVMFile(object):
     def __init__(self, file_name=None):
         self.comment = None
-        self.host = None
-        self.user = None
-        self.pw = None
         self.path = None
         self.reason = None
         self.status = None
@@ -80,16 +78,13 @@ class PVMFile(object):
             buf = _read_section(section, file_name, resp_file)
 
             if line.startswith(INFO):
-                info = eval(buf)
+                info = ast.literal_eval(buf)
                 self.comment = info['comment']
-                self.host = info['host']
-                self.user = info['user']
-                self.pw = info['pw']
                 self.path = info['path']
                 self.reason = info['reason']
                 self.status = info['status']
             elif line.startswith(HEADERS):
-                self.headers = eval(buf)
+                self.headers = ast.literal_eval(buf)
             elif line.startswith(BODY):
                 self.body = buf
 
@@ -122,9 +117,6 @@ class PVMResp(PVMFile):
                 pvmfile.load_file(file_name)
             # Copy in attrs from pvmfile
             self.comment = pvmfile.comment
-            self.host = pvmfile.host
-            self.user = pvmfile.user
-            self.pw = pvmfile.pw
             self.path = pvmfile.path
             self.reason = pvmfile.reason
             self.status = pvmfile.status
@@ -143,29 +135,18 @@ class PVMResp(PVMFile):
     def refresh(self):
         """Do the query and get the response."""
 
-        print("Connecting to " + self.host)
-        conn = adp.Session(self.host, self.user, self.pw, certpath=None)
-        if conn is None:
-            print("Could not get connection to " + self.host)
-            return False
-
-        oper = adp.Adapter(conn)
-        if oper is None:
-            print("Could not create a Adapter")
-            return False
+        print("Connecting.")
+        adap = adp.Adapter()
 
         print("Reading path:  " + self.path)
-        self.response = oper.read(self.path)
+        self.response = adap.read(self.path)
 
-        print("Received " + self.response)
+        print("Received " + str(self.response))
 
     def save(self, file_name):
 
         everything = {
             'comment': self.comment,
-            'host': self.host,
-            'user': self.user,
-            'pw': self.pw,
             'path': self.path,
             'reason': self.response.reason,
             'status': self.response.status,

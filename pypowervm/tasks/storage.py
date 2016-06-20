@@ -35,7 +35,6 @@ from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
-from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as sys
 import pypowervm.wrappers.storage as stor
@@ -53,8 +52,8 @@ _LOCK_VOL_GRP = 'vol_grp_lock'
 _UPLOAD_SEM = threading.Semaphore(3)
 
 
-def upload_new_vdisk(adapter, v_uuid,  vol_grp_uuid, d_stream,
-                     d_name, f_size, d_size=None, sha_chksum=None):
+def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
+                     d_size=None, sha_chksum=None):
     """Creates a new Virtual Disk and uploads a data stream to it.
 
     :param adapter: The adapter to talk over the API.
@@ -146,9 +145,17 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return reference, f_uuid
 
 
-def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
-                  sha_chksum=None):
+def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
+                  sha_chksum=None, return_ssp=False):
     """Creates a new SSP Logical Unit and uploads a data stream to it.
+
+    Note: return spec varies based on the return_ssp parameter:
+
+        # Default/legacy behavior
+        new_lu, maybe_file = upload_new_lu(..., return_ssp=False)
+
+        # With return_ssp=True
+        ssp, new_lu, maybe_file = upload_new_lu(..., return_ssp=True)
 
     :param v_uuid: The UUID of the Virtual I/O Server through which to perform
                    the upload.  (Note that the new LU will be visible from any
@@ -165,13 +172,21 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
                    file.
     :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :return: The first return value is an LU EntryWrapper corresponding to the
-             Logical Unit into which the file was uploaded.
-    :return: Normally the second return value will be None, indicating that the
-             LU was created and the image was uploaded without issue.  If for
-             some reason the File metadata for the VIOS was not cleaned up, the
-             return value is the LU EntryWrapper.  This is simply a marker to
-             be later used to retry the cleanup.
+    :param return_ssp: (OPTIONAL) If True, the return value of the method is a
+                       three-member tuple whose third value is the updated SSP
+                       EntryWrapper.  If False (the default), the method
+                       returns a two-member tuple.
+    :return: If the return_ssp parameter is True, the first return value is the
+             updated SSP EntryWrapper, containing the newly-created and
+             -uploaded LU.  If return_ssp is False, this return value is absent
+             - only the below two values are returned.
+    :return: An LU EntryWrapper corresponding to the Logical Unit into which
+             the file was uploaded.
+    :return: Normally None, indicating that the LU was created and the image
+             was uploaded without issue.  If for some reason the File metadata
+             for the VIOS was not cleaned up, the return value is the File
+             EntryWrapper.  This is simply a marker to be later used to retry
+             the cleanup.
     """
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
@@ -182,7 +197,7 @@ def upload_new_lu(v_uuid,  ssp, d_stream, lu_name, f_size, d_size=None,
 
     maybe_file = upload_lu(v_uuid, new_lu, d_stream, f_size,
                            sha_chksum=sha_chksum)
-    return new_lu, maybe_file
+    return (ssp, new_lu, maybe_file) if return_ssp else (new_lu, maybe_file)
 
 
 def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
@@ -333,14 +348,31 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
                        f_size=f_size, tdev_udid=tdev_udid).create()
 
 
+def default_tier_for_ssp(ssp):
+    """Find the default Tier for the given Shared Storage Pool.
+
+    :param ssp: The SSP EntryWrapper whose default Tier is to be retrieved.
+    :return: Tier EntryWrapper representing ssp's default Tier.
+    :raise NoDefaultTierFoundOnSSP: If no default Tier is found on the
+                                    specified Shared Storage Pool.
+    """
+    tier = stor.Tier.search(ssp.adapter, parent=ssp, is_default=True,
+                            one_result=True)
+    if tier is None:
+        raise exc.NoDefaultTierFoundOnSSP(ssp_name=ssp.name)
+    return tier
+
+
 def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     """Create a new LU as a linked clone to a backing image LU.
 
+    :deprecated: Use crt_lu instead.
     :param ssp: The SSP EntryWrapper representing the SharedStoragePool on
                 which to create the new LU.
     :param cluster: The Cluster EntryWrapper representing the Cluster against
                     which to invoke the LULinkedClone Job.
-    :param src_lu: The LU EntryWrapper representing the link source.
+    :param src_lu: The LU ElementWrapper or LUEnt EntryWrapper representing the
+                   link source.
     :param new_lu_name: The name to be given to the new LU.
     :param lu_size_gb: The size of the new LU in GB with decimal precision.  If
                        this is not specified or is smaller than the size of the
@@ -348,33 +380,22 @@ def crt_lu_linked_clone(ssp, cluster, src_lu, new_lu_name, lu_size_gb=0):
     :return: The updated SSP EntryWrapper containing the newly-created LU.
     :return: The newly created and linked LU.
     """
-    # New LU must be at least as big as the backing LU.
-    lu_size_gb = max(lu_size_gb, src_lu.capacity)
-
+    import warnings
+    warnings.warn(_("The crt_lu_linked_clone method is deprecated!  Please "
+                    "use the crt_lu method (clone=src_lu, size=lu_size_gb)."),
+                  DeprecationWarning)
     # Create the LU.  No locking needed on this method, as the crt_lu handles
     # the locking.
     ssp, dst_lu = crt_lu(ssp, new_lu_name, lu_size_gb, thin=True,
-                         typ=stor.LUType.DISK)
-
-    # Run the job to link the new LU to the source
-    jresp = ssp.adapter.read(cluster.schema_type, suffix_type=c.SUFFIX_TYPE_DO,
-                             suffix_parm='LULinkedClone')
-    jwrap = job.Job.wrap(jresp)
-
-    jparams = [
-        jwrap.create_job_parameter(
-            'SourceUDID', src_lu.udid),
-        jwrap.create_job_parameter(
-            'DestinationUDID', dst_lu.udid)]
-    jwrap.run_job(cluster.uuid, job_parms=jparams)
+                         typ=stor.LUType.DISK, clone=src_lu)
 
     return ssp, dst_lu
 
 
-def _image_lu_for_clone(ssp, clone_lu):
+def _image_lu_for_clone(lus, clone_lu):
     """Given a Disk LU linked clone, find the Image LU to which it is linked.
 
-    :param ssp: The SSP EntryWrapper to search.
+    :param lus: List of LUs (LU or LUEnt) to search.
     :param clone_lu: The LU EntryWrapper representing the Disk LU linked clone
                      whose backing Image LU is to be found.
     :return: The LU EntryWrapper representing the Image LU backing the
@@ -385,7 +406,7 @@ def _image_lu_for_clone(ssp, clone_lu):
         return None
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = clone_lu.cloned_from_udid[2:]
-    for lu in ssp.logical_units:
+    for lu in lus:
         if lu.lu_type != stor.LUType.IMAGE:
             continue
         if lu.udid[2:] == image_udid:
@@ -393,25 +414,26 @@ def _image_lu_for_clone(ssp, clone_lu):
     return None
 
 
-def _image_lu_in_use(ssp, image_lu):
+def _image_lu_in_use(lus, image_lu):
     """Determine whether an Image LU still has any Disk LU linked clones.
 
-    :param ssp: The SSP EntryWrapper to search.
+    :param lus: List of all the LUs in the SSP/Tier.  They must have UDIDs
+                (i.e. must have been retrieved from the server, not created
+                locally).
     :param image_lu: LU EntryWrapper representing the Image LU.
     :return: True if the SSP contains any Disk LU linked clones backed by the
              image_lu; False otherwise.
     """
     # When comparing udid/cloned_from_udid, disregard the 2-digit 'type' prefix
     image_udid = image_lu.udid[2:]
-    for lu in ssp.logical_units:
+    for lu in lus:
         if lu.lu_type != stor.LUType.DISK:
             continue
         cloned_from = lu.cloned_from_udid
         if cloned_from is None:
             LOG.warning(
-                _("Linked clone Logical Unit %(luname)s (UDID %(udid)s) has "
-                  "no backing image LU.  It should probably be deleted."),
-                {'luname': lu.name, 'udid': lu.udid})
+                _("Disk Logical Unit %(luname)s has no backing image LU.  "
+                  "(UDID: %(udid)s) "), {'luname': lu.name, 'udid': lu.udid})
             continue
         if cloned_from[2:] == image_udid:
             return True
@@ -458,7 +480,8 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
-@retry.retry(argmod_func=retry.refresh_wrapper)
+@retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
+             delay_func=retry.STEPPED_RANDOM_DELAY)
 def rm_vg_storage(vg_wrap, vdisks=None, vopts=None):
     """Remove storage elements from a volume group.
 
@@ -571,82 +594,124 @@ def _rm_vopts(vg_wrap, vopts):
     return changes
 
 
-@tx.entry_transaction
-def crt_lu(ssp, name, size, thin=None, typ=None):
-    """Create a Logical Unit on the specified Shared Storage Pool.
+def crt_lu(tier_or_ssp, name, size, thin=None, typ=None, clone=None):
+    """Create a Logical Unit on the specified Tier.
 
-    :param ssp: SSP EntryWrapper denoting the Shared Storage Pool on which to
-                create the LU.
+    :param tier_or_ssp: Tier or SSP EntryWrapper denoting the Tier or Shared
+                        Storage Pool on which to create the LU.  If an SSP is
+                        supplied, the LU is created on the default Tier.
     :param name: Name for the new Logical Unit.
     :param size: LU size in GB with decimal precision.
     :param thin: Provision the new LU as Thin (True) or Thick (False).  If
                  unspecified, use the server default.
     :param typ: The type of LU to create, one of the LUType values.  If
                 unspecified, use the server default.
-    :return: The updated SSP wrapper.  (It will contain the new LU and have a
-             new etag.)
+    :param clone: If the new LU is to be a linked clone, this param is a
+                  LU(Ent) wrapper representing the backing image LU.
+    :return: If the tier_or_ssp argument is an SSP, the updated SSP wrapper
+             (containing the new LU and with a new etag) is returned.
+             Otherwise, the first return value is the Tier.
     :return: LU ElementWrapper representing the Logical Unit just created.
     """
-    # Refuse to add with duplicate name
-    if name in [lu.name for lu in ssp.logical_units]:
-        raise exc.DuplicateLUNameError(lu_name=name, ssp_name=ssp.name)
+    is_ssp = isinstance(tier_or_ssp, stor.SSP)
+    tier = default_tier_for_ssp(tier_or_ssp) if is_ssp else tier_or_ssp
 
-    lu = stor.LU.bld(ssp.adapter, name, size, thin=thin, typ=typ)
-    ssp.logical_units.append(lu)
-    ssp = ssp.update()
-    newlu = None
-    for lu in ssp.logical_units:
-        if lu.name == name:
-            newlu = lu
-            break
-    return ssp, newlu
+    lu = stor.LUEnt.bld(tier_or_ssp.adapter, name, size, thin=thin, typ=typ,
+                        clone=clone)
+    lu = lu.create(parent=tier)
+
+    if is_ssp:
+        # Refresh the SSP to pick up the new LU and etag
+        tier_or_ssp = tier_or_ssp.refresh()
+
+    return tier_or_ssp, lu
 
 
-def _rm_lus(ssp_wrap, lus, del_unused_images=True):
-    ssp_lus = ssp_wrap.logical_units
+def _rm_lus(all_lus, lus_to_rm, del_unused_images=True):
     changes = []
     backing_images = set()
 
-    for lu in lus:
+    for lu in lus_to_rm:
         # Is it a linked clone?  (We only care if del_unused_images.)
         if del_unused_images and lu.lu_type == stor.LUType.DISK:
             # Note: This can add None to the set
-            backing_images.add(_image_lu_for_clone(ssp_wrap, lu))
-        msg_args = dict(lu_name=lu.name, ssp_name=ssp_wrap.name)
-        removed = _rm_dev_by_udid(lu, ssp_lus)
+            backing_images.add(_image_lu_for_clone(all_lus, lu))
+        msgargs = {'lu_name': lu.name, 'lu_udid': lu.udid}
+        removed = _rm_dev_by_udid(lu, all_lus)
         if removed:
-            LOG.info(_("Removing LU %(lu_name)s from SSP %(ssp_name)s"),
-                     msg_args)
-            changes.append(lu)
+            LOG.debug(_("Removing LU %(lu_name)s (UDID %(lu_udid)s)"), msgargs)
+            changes.append(removed)
         else:
             # It's okay if the LU was already absent.
-            LOG.info(_("LU %(lu_name)s was not found in SSP %(ssp_name)s"),
-                     msg_args)
+            LOG.info(_("LU %(lu_name)s was not found - it may have been "
+                       "deleted out of band.  (UDID: %(lu_udid)s)"), msgargs)
 
     # Now remove any unused backing images.  This set will be empty if
     # del_unused_images=False
-    for backing_image in backing_images:
-        # Ignore None, which could have appeared in the unusual event that a
-        # clone existed with no backing image.
-        if backing_image is not None:
-            msg_args = dict(lu_name=backing_image.name, ssp_name=ssp_wrap.name)
-            # Only remove backing images that are not in use.
-            if _image_lu_in_use(ssp_wrap, backing_image):
-                LOG.debug("Not removing Image LU %(lu_name)s from SSP "
-                          "%(ssp_name)s because it is still in use." %
-                          msg_args)
+    for back_img in backing_images:
+        # Ignore None, which could have appeared if a clone existed with no
+        # backing image.
+        if back_img is None:
+            continue
+        msgargs = {'lu_name': back_img.name, 'lu_udid': back_img.udid}
+        # Only remove backing images that are not in use.
+        if _image_lu_in_use(all_lus, back_img):
+            LOG.debug("Not removing Image LU %(lu_name)s because it is still "
+                      "in use.  (UDID: %(lu_udid)s)", msgargs)
+        else:
+            removed = _rm_dev_by_udid(back_img, all_lus)
+            if removed:
+                LOG.info(_("Removing Image LU %(lu_name)s because it is no "
+                           "longer in use.  (UDID: %(lu_udid)s)"), msgargs)
+                changes.append(removed)
             else:
-                removed = _rm_dev_by_udid(backing_image, ssp_lus)
-                if removed:
-                    LOG.info(_("Removing Image LU %(lu_name)s from SSP "
-                               "%(ssp_name)s because it is no longer in use."),
-                             msg_args)
-                    changes.append(backing_image)
-                else:
-                    # This would be wildly unexpected
-                    LOG.warning(_("Backing LU %(lu_name)s was not found in "
-                                  "SSP %(ssp_name)s"), msg_args)
+                # This would be wildly unexpected
+                LOG.warning(_("Backing LU %(lu_name)s was not found.  "
+                              "(UDID: %(lu_udid)s)"), msgargs)
     return changes
+
+
+def rm_tier_storage(lus_to_rm, tier=None, lufeed=None, del_unused_images=True):
+    """Remove Logical Units from a Shared Storage Pool Tier.
+
+    :param lus_to_rm: Iterable of LU ElementWrappers or LUEnt EntryWrappers
+                      representing the LogicalUnits to delete.
+    :param tier: Tier EntryWrapper representing the SSP Tier on which the
+                 lus_to_rm (and their backing images) reside. Either tier or
+                 lufeed is required.  If both are specified, tier is ignored.
+    :param lufeed: Pre-fetched list of LUEnt (i.e. result of a GET of
+                   Tier/{uuid}/LogicalUnit) where we expect to find the
+                   lus_to_rm (and their backing images).  Either tier or lufeed
+                   is required.  If both are specified, tier is ignored.
+    :param del_unused_images: If True, and a removed Disk LU was the last one
+                              linked to its backing Image LU, the backing Image
+                              LU is also removed.
+    :raise ValueError: - If neither tier nor lufeed was supplied.
+                       - If lufeed was supplied but doesn't contain LUEnt
+                         EntryWrappers (e.g. the caller provided
+                         SSP.logical_units).
+    """
+    if all(param is None for param in (tier, lufeed)):
+        raise ValueError(_("Developer error: Either tier or lufeed is "
+                           "required."))
+    if lufeed is None:
+        lufeed = stor.LUEnt.get(tier.adapter, parent=tier)
+    elif any(not isinstance(lu, stor.LUEnt) for lu in lufeed):
+        raise ValueError(_("Developer error: The lufeed parameter must "
+                           "comprise LUEnt EntryWrappers."))
+
+    # Figure out which LUs to delete and delete them; _rm_lus returns a list of
+    # LUEnt, so they can be removed directly.
+    for dlu in _rm_lus(lufeed, lus_to_rm, del_unused_images=del_unused_images):
+        msg_args = dict(lu_name=dlu.name, lu_udid=dlu.udid)
+        LOG.info(_("Deleting LU %(lu_name)s (UDID: %(lu_udid)s)"), msg_args)
+        try:
+            dlu.delete()
+        except exc.HttpError as he:
+            LOG.warning(he)
+            LOG.warning(_("Ignoring HttpError for LU %(lu_name)s may have "
+                          "been deleted out of band.  (UDID: %(lu_udid)s)"),
+                        msg_args)
 
 
 @tx.entry_transaction
@@ -657,14 +722,15 @@ def rm_ssp_storage(ssp_wrap, lus, del_unused_images=True):
 
     :param ssp_wrap: SSP EntryWrapper representing the SharedStoragePool to
     modify.
-    :param lus: Iterable of LU EntryWrappers representing the LogicalUnits to
-                delete.
+    :param lus: Iterable of LU ElementWrappers or LUEnt EntryWrappers
+                representing the LogicalUnits to delete.
     :param del_unused_images: If True, and a removed Disk LU was the last one
                               linked to its backing Image LU, the backing Image
                               LU is also removed.
     :return: The (possibly) modified SSP wrapper.
     """
-    if _rm_lus(ssp_wrap, lus, del_unused_images=del_unused_images):
+    if _rm_lus(ssp_wrap.logical_units, lus,
+               del_unused_images=del_unused_images):
         # Flush changes
         ssp_wrap = ssp_wrap.update()
     return ssp_wrap
@@ -677,9 +743,8 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
 
     :param vwrap: VIOS wrapper containing the mappings to inspect.  If type_str
                   is 'VFC', the VIOS wrapper must have been retrieved with the
-                  FC_MAPPING extended attribute group; if type_str is 'VSCSI',
-                  the SCSI_MAPPING extended attribute group must have been
-                  used.
+                  VIO_FMAP extended attribute group; if type_str is 'VSCSI',
+                  the VIO_SMAP extended attribute group must have been used.
     :param type_str: The type of mapping being removed.  Must be either 'VFC'
                      or 'VSCSI'.
     :param lpar_id: (Optional) Only orphan mappings associated with the
@@ -710,7 +775,7 @@ def _remove_portless_vfc_maps(vwrap, lpar_id=None):
     """Remove non-logged-in VFC mappings (no Port) from a list.
 
     :param vwrap: VIOS wrapper containing the mappings to inspect.  Must have
-                  been retrieved with the FC_MAPPING extended attribute group.
+                  been retrieved with the VIO_FMAP extended attribute group.
     :param lpar_id: (Optional) Only port-less mappings associated with the
                     specified LPAR ID will be removed.  If None (the default),
                     all LPARs' mappings will be considered.
@@ -843,8 +908,7 @@ class _RemoveStorage(tf_tsk.Task):
             # all of them.  POST will only be done on VGs which actually need
             # updating.
             vgftsk = tx.FeedTask('scrub_vg_vios_%s' % vuuid, stor.VG.getter(
-                vwrap.adapter, parent_class=vwrap.__class__,
-                parent_uuid=vwrap.uuid))
+                vwrap.adapter, parent=vwrap))
             if vdisks_to_rm:
                 vgftsk.add_functor_subtask(
                     _rm_vdisks, vdisks_to_rm, logspec=(LOG.warning, _(
@@ -893,7 +957,7 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
-                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+                 The feed/getter must use the VIO_SMAP and VIO_FMAP xags.
     :param lpars_exist: (Optional) If set to False (the default), storage
                         artifacts associated with an extant LPAR will be
                         ignored (NOT scrubbed).  Otherwise, we will scrub
@@ -938,7 +1002,7 @@ def add_orphan_storage_scrub_tasks(ftsk, lpar_id=None):
     :param ftsk: FeedTask to which the scrubbing actions should be added, for
                  execution by the caller.  The FeedTask must be built for all
                  the VIOSes from which mappings and storage should be scrubbed.
-                 The feed/getter must use the SCSI_MAPPING and FC_MAPPING xags.
+                 The feed/getter must use the VIO_SMAP and VIO_FMAP xags.
     :param lpar_id: (Optional) Only orphan mappings associated with the
                     specified LPAR ID will be removed.  If None (the default),
                     all LPARs' mappings will be considered.
@@ -958,7 +1022,7 @@ def find_stale_lpars(vios_w):
     latter.
 
     :param vios_w: VIOS EntryWrapper.  To be effective, this must have been
-                   retrieved with the SCSI_MAPPING and FC_MAPPING extended
+                   retrieved with the VIO_SMAP and VIO_FMAP extended
                    attribute groups.
     :return: List of LPAR IDs (integer short IDs, not UUIDs) which don't exist
              on the system.  The list is guaranteed to contain no duplicates.
@@ -989,8 +1053,7 @@ class ComprehensiveScrub(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING,
-                                 vios.VIOS.xags.SCSI_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP, c.XAG.VIO_SMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)
@@ -1027,8 +1090,7 @@ class ScrubOrphanStorageForLpar(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING,
-                                 vios.VIOS.xags.SCSI_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP, c.XAG.VIO_SMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)
@@ -1056,7 +1118,7 @@ class ScrubPortlessVFCMaps(tx.FeedTask):
                           host.  Otherwise, scrub across all VIOSes known to
                           the adapter.
         """
-        getter_kwargs = {'xag': [vios.VIOS.xags.FC_MAPPING]}
+        getter_kwargs = {'xag': [c.XAG.VIO_FMAP]}
         if host_uuid is not None:
             getter_kwargs = dict(getter_kwargs, parent_class=sys.System,
                                  parent_uuid=host_uuid)

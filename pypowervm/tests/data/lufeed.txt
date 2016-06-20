@@ -1,0 +1,613 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh lufeed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'X-Powered-By': 'Servlet/3.1', 'Transfer-Encoding': 'chunked', 'Set-Cookie': 'JSESSIONID=0000f0UTE-8egUwjXJBFXhtlLqp:c83b267d-dc99-4d51-b4fd-a9b2013da3f6; Path=/; Secure; HttpOnly', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Fri, 01 Apr 2016 20:27:06 GMT', 'X-Transaction-ID': 'XT10081487', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Date': 'Fri, 01 Apr 2016 20:27:08 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'X-TransactionRecord-Uuid': '410d8190-8602-44c2-862b-fa98e9862170', 'ETag': '-168932186'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>5856c96c-ea00-3e9e-b93c-438d157d7e90</id>
+    <updated>2016-04-01T16:27:06.554-04:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>a2b11d20-322d-3dcc-84ee-74fce7e90310</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.245-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/a2b11d20-322d-3dcc-84ee-74fce7e90310?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1056750293</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a2b11d20-322d-3dcc-84ee-74fce7e90310</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95dc4a789dfd63464654319f89c04aa5382</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest_ser_a73d7083</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>1bf136f4-5e8e-30e4-8f4c-3926ddee169e</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.245-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/1bf136f4-5e8e-30e4-8f4c-3926ddee169e?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1878760355</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>1bf136f4-5e8e-30e4-8f4c-3926ddee169e</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95df9ca942cb7818d357aa8fcf3df691919</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest.com_2d9a59b7</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>116c2146-db2c-324a-9702-b422c4c90153</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.246-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/116c2146-db2c-324a-9702-b422c4c90153?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2113241389</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>116c2146-db2c-324a-9702-b422c4c90153</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d2d9e58cbe630d0b1128bc20c9f03ac91</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">rescue_pvm3_tempest.com_e8220bdc</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>1af3de01-1a54-32a7-aee1-e6c879c01e5c</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.246-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/1af3de01-1a54-32a7-aee1-e6c879c01e5c?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1197303150</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>1af3de01-1a54-32a7-aee1-e6c879c01e5c</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">296c097502d44311e58004000040f2e95d0ec5f748940367e2947b871234b786ba</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Image</LogicalUnitType>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">image_tempest.common.compute_insta_157330555537896c89120ac206347be2</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>5196af4a-24c8-3bcc-aa77-270f0a294564</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.247-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/5196af4a-24c8-3bcc-aa77-270f0a294564?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1750783433</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>5196af4a-24c8-3bcc-aa77-270f0a294564</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">296c097502d44311e58004000040f2e95d38242afc010e4ed813c655a4f64baf6c</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Image</LogicalUnitType>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">image_template_PowerVM_Ubuntu_Base_15d1cc7daa4a07853b511bf5c2a15773</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>8df99b8d-676c-32a4-92c9-496ac4665097</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.248-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/8df99b8d-676c-32a4-92c9-496ac4665097?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1855452777</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8df99b8d-676c-32a4-92c9-496ac4665097</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95da60dffe1d10cdb5e2dc1ea85b377bd63</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_7acf8fd5_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>11a5cf67-2175-3f64-831c-973418ca6f4e</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.248-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/11a5cf67-2175-3f64-831c-973418ca6f4e?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1442734507</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>11a5cf67-2175-3f64-831c-973418ca6f4e</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d96fcd91c17448f7337d76cdf4a55df54</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_1faabc71_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>7f309915-e19a-3d2e-884c-16a405b9a211</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.249-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/7f309915-e19a-3d2e-884c-16a405b9a211?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-942402102</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7f309915-e19a-3d2e-884c-16a405b9a211</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d7e751b2f0bb4bbfeb5122aa991aebaef</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_ssp_primer_8786c8bd</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>a94ae849-d55c-3cb0-b850-cb23060de650</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.249-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/a94ae849-d55c-3cb0-b850-cb23060de650?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-979315907</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a94ae849-d55c-3cb0-b850-cb23060de650</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95dc8abd602a5cb3f32cff25dd6628f2cf4</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_9b2a2cef_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>15e16d9b-bd08-31e8-afc2-6aae91a995ca</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.250-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/15e16d9b-bd08-31e8-afc2-6aae91a995ca?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-879618324</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>15e16d9b-bd08-31e8-afc2-6aae91a995ca</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d50df766402f40d2942104b846d9dd947</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d38242afc010e4ed813c655a4f64baf6c</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_ed7d0f14_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>7c438dd8-6d97-34cb-af74-2cf4bea97794</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.251-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/7c438dd8-6d97-34cb-af74-2cf4bea97794?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1455910120</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7c438dd8-6d97-34cb-af74-2cf4bea97794</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95df687a18124cfb5d0a23628cd700c4a53</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest.com_c0a14a57</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>5391ee78-60a9-3a14-82ea-9063360c7a37</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.251-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/5391ee78-60a9-3a14-82ea-9063360c7a37?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">37164908</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>5391ee78-60a9-3a14-82ea-9063360c7a37</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d463909128b565b9b2dba38b300911de5</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d38242afc010e4ed813c655a4f64baf6c</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_efried_60166e2e_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>ced6279b-db23-3741-a0a8-77281d71234d</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.252-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/ced6279b-db23-3741-a0a8-77281d71234d?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1696135952</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>ced6279b-db23-3741-a0a8-77281d71234d</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d634671e06877829710625a5e2faa2081</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_87d2fdd2_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>a671df5f-c5ee-3396-be27-9bd35cf90789</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.252-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/a671df5f-c5ee-3396-be27-9bd35cf90789?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-598644111</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a671df5f-c5ee-3396-be27-9bd35cf90789</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95db0c981cbc0499dfe6f4adcdadd1548d1</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_b7f4117b_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>d4b7d0ef-c1ef-30a9-9453-ea2cbb020849</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.253-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/d4b7d0ef-c1ef-30a9-9453-ea2cbb020849?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1647099011</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d4b7d0ef-c1ef-30a9-9453-ea2cbb020849</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95da1b9879e39d3b740100c7c2e7aeaa7f2</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest.com_846d9d11</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>084779fc-5358-363c-bc81-335de8df3c8c</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.253-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/084779fc-5358-363c-bc81-335de8df3c8c?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-428708139</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>084779fc-5358-363c-bc81-335de8df3c8c</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d0163c9b46a2d014558f28b47cf448c48</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest_mul_853cf019</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>6b396fc6-4c80-32d5-b15b-11b68e28f3bb</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.254-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/6b396fc6-4c80-32d5-b15b-11b68e28f3bb?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1707249548</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6b396fc6-4c80-32d5-b15b-11b68e28f3bb</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Image</LogicalUnitType>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">image_base_os_157330555537896c89120ac206347be2</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>aa88a05c-5e0e-3245-b3fc-cf9575cc70bf</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.255-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/aa88a05c-5e0e-3245-b3fc-cf9575cc70bf?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1602810180</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>aa88a05c-5e0e-3245-b3fc-cf9575cc70bf</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d909f7fec0dbd0c0c91fcc2fa3c0f0d0d</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_7a6b11ba_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>026f1411-5c1f-3b46-9542-386040ad43a5</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.255-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/026f1411-5c1f-3b46-9542-386040ad43a5?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2071179378</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>026f1411-5c1f-3b46-9542-386040ad43a5</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95de37f293d6c706a3ddab827eea56fa7d2</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest_Lis_34aa187a</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>6d1fae20-487e-3fd0-ba39-fa0f7db933bc</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.256-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/6d1fae20-487e-3fd0-ba39-fa0f7db933bc?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1450299766</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6d1fae20-487e-3fd0-ba39-fa0f7db933bc</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">296c097502d44311e58004000040f2e95d9437fb054f7c56b6821fd4857f1bffa8</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Image</LogicalUnitType>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">image_template_PowerVM_Ubuntu_Base_97f6adc3b9144076a210393b9eea4da6</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>d381ed63-9dbb-31f3-beab-aef8d546cc03</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.256-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/d381ed63-9dbb-31f3-beab-aef8d546cc03?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-117485050</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d381ed63-9dbb-31f3-beab-aef8d546cc03</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95d3a9ae7ce486d290ccc07fb71b3560446</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">1</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95dcf6063cd6bf7ed7b497780a1799236ab</ClonedFrom>
+    <InUse kxe="false" kb="ROR">false</InUse>
+    <UnitName kxe="false" kb="CUR">boot_pvm3_tempest_ser_2edc910f</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+    <entry>
+        <id>17f79393-cc9e-3c95-8cb0-61b7e0c14d8f</id>
+        <title>LogicalUnit</title>
+        <published>2016-04-01T16:27:08.257-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/Tier/c390432c-f139-3e7f-a168-e76f8c1cbc98/LogicalUnit/17f79393-cc9e-3c95-8cb0-61b7e0c14d8f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1536917179</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=LogicalUnit">
+            <LogicalUnit:LogicalUnit xmlns:LogicalUnit="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>17f79393-cc9e-3c95-8cb0-61b7e0c14d8f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <ThinDevice kb="CUR" kxe="false">true</ThinDevice>
+    <UniqueDeviceID kxe="false" kb="ROR">276c097502d44311e58004000040f2e95db15ba9d075e58aa7bb316d0f8c84d80b</UniqueDeviceID>
+    <UnitCapacity kxe="false" kb="COR">20</UnitCapacity>
+    <LogicalUnitType kxe="false" kb="COD">VirtualIO_Disk</LogicalUnitType>
+    <ClonedFrom kxe="false" kb="COD">296c097502d44311e58004000040f2e95d38242afc010e4ed813c655a4f64baf6c</ClonedFrom>
+    <InUse kxe="false" kb="ROR">true</InUse>
+    <UnitName kxe="false" kb="CUR">boot_PowerVM_CI_Po_5efd5f67_pvm</UnitName>
+</LogicalUnit:LogicalUnit>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

@@ -35,15 +35,12 @@ def refresh_response(file_to_refresh):
 
 
 def usage():
-    print("create_httpresp -host host -user user -pw pw -path path "
-          "-output response_file [-comment comment]")
-    print("    Note: output_file can be a full path or a file in the same "
+    print("create_httpresp -path path -output out_file [-comment comment]")
+    print("    Note: out_file can be a full path or a file in the same "
           "location as create_httpresp.py")
 
-    print('Ex: create_httpresp -host 9.1.2.3 -user hscroot '
-          '-pw abc123 -path ManagedSystem/<uuid>/LogicalPartition '
-          ' -output fakelpar.txt '
-          '-comment "Created by jsmith"')
+    print('Ex: create_httpresp -path ManagedSystem/<uuid>/LogicalPartition '
+          ' -output fakelpar.txt -comment "Created by jsmith"')
     print()
     print('create_httpresp -refresh response_file')
     print('Update a previously created response file by '
@@ -60,16 +57,7 @@ def main(argv):
 
     aindex = 0
     while aindex < len(argv):
-        if argv[aindex] == '-host':
-            aindex += 1
-            new_response.host = argv[aindex]
-        elif argv[aindex] == '-user':
-            aindex += 1
-            new_response.user = argv[aindex]
-        elif argv[aindex] == '-pw':
-            aindex += 1
-            new_response.pw = argv[aindex]
-        elif argv[aindex] == '-path':
+        if argv[aindex] == '-path':
             aindex += 1
             new_response.path = argv[aindex]
         elif argv[aindex] == '-comment':
@@ -91,19 +79,13 @@ def main(argv):
         rc = refresh_response(file_to_refresh)
         exit(rc)
 
-    if (new_response.host is None or
-            new_response.user is None or
-            new_response.pw is None or
-            new_response.path is None or
-            output_file is None):
+    if new_response.path is None or output_file is None:
         usage()
 
-    print("Connecting to ", new_response.host)
-    conn = adp.Session(new_response.host, new_response.user, new_response.pw,
-                       certpath=None)
-    oper = adp.Adapter(conn)
+    print("Connecting.")
+    adap = adp.Adapter()
     print("Reading path:  ", new_response.path)
-    new_response.response = oper.read(new_response.path)
+    new_response.response = adap.read(new_response.path)
 
     print("Received ", new_response.response)
 

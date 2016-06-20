@@ -128,7 +128,7 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     globally unique WWPNs rather than pre-seeding them.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
-                       extended attribute group (xag) of FC_MAPPING.
+                       extended attribute group (xag) of VIO_FMAP.
     :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
                          map the ports to.  These WWPNs should reside on
                          Physical FC Ports on the VIOS wrappers that were
@@ -140,7 +140,7 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
              the WWPN.
     """
     # Double the count of the markers.  Should result in -1 -1 as the WWPN.
-    v_port_markers = [_ANY_WWPN for x in range(0, v_port_count * 2)]
+    v_port_markers = [_ANY_WWPN] * v_port_count * 2
     return derive_npiv_map(vios_wraps, p_port_wwpns, v_port_markers)
 
 
@@ -167,7 +167,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     v_port_wwpn pairs exceed the total number of p_port_wwpns.
 
     :param vios_wraps: A list of VIOS wrappers.  Can be built using the
-                       extended attribute group (xag) of FC_MAPPING.
+                       extended attribute group (xag) of VIO_FMAP.
     :param p_port_wwpns: A list of the WWPNs (strings) that can be used to
                          map the ports to.  These WWPNs should reside on
                          Physical FC Ports on the VIOS wrappers that were
@@ -195,7 +195,7 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     # Detect if any mappings already exist on the system.  If so, preserve them
     for fused_v_wwpn in fused_v_port_wwpns:
         # If the mapping already exists, then add it to the existing maps.
-        vios_w, vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))
+        vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))[1]
         if vfc_map is not None:
             mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
             existing_maps.append(mapping)
@@ -397,9 +397,8 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
         if is_uuid and (not href or client_id != u.get_req_path_uuid(
                 href, preserve_case=True)):
             continue
-        elif (not is_uuid and
-                # Use the server adapter in case this is an orphan.
-                vfc_map.server_adapter.lpar_id != client_id):
+        elif not is_uuid and vfc_map.server_adapter.lpar_id != client_id:
+            # Use the server adapter ^^ in case this is an orphan.
             continue
 
         # If there is a client adapter, and it is not a 'ANY WWPN', then
@@ -488,7 +487,8 @@ def find_vios_for_port_map(vios_wraps, port_map):
     return find_vios_for_wwpn(vios_wraps, port_map[0])[0]
 
 
-def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
+def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
+            lpar_slot_num=None):
     """Adds a vFC mapping to a given VIOS wrapper.
 
     These changes are not flushed back to the REST server.  The wrapper itself
@@ -502,6 +502,9 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
                      method).
     :param error_if_invalid: (Optional, Default: True) If the port mapping
                              physical port can not be found, raise an error.
+    :param lpar_slot_num: (Optional, Default: None) The client adapter
+                          VirtualSlotNumber to be set. If None the next
+                          available slot would be used.
     :return: The VFCMapping that was added.  If the mapping already existed
              then None is returned.
     """
@@ -539,7 +542,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True):
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping
     vfc_map = pvm_vios.VFCMapping.bld(vios_w.adapter, host_uuid, lpar_uuid,
-                                      p_port.name, client_wwpns=v_wwpns)
+                                      p_port.name, client_wwpns=v_wwpns,
+                                      lpar_slot_num=lpar_slot_num)
     vios_w.vfc_mappings.append(vfc_map)
     return vfc_map
 
@@ -548,7 +552,7 @@ def has_client_wwpns(vios_wraps, client_wwpn_pair):
     """Returns the vios wrapper and vfc map if the client WWPNs already exist.
 
     :param vios_wraps: The VIOS wrappers.  Should be queried with the
-                       FC_MAPPING extended attribute.
+                       VIO_FMAP extended attribute.
     :param client_wwpn_pair: The pair (list or set) of the client WWPNs.
     :return vios_w: The VIOS wrapper containing the wwpn pair.  None if none
                     of the wrappers contain the pair.
@@ -584,7 +588,7 @@ def build_migration_mappings_for_fabric(vios_wraps, p_port_wwpns,
     It is typically input back to the source server for the migration call.
 
     :param vios_wraps: The VIOS wrappers for the target system.  Must
-                       have the VFC_MAPPING xag specified.
+                       have the VIO_FMAP xag specified.
     :param p_port_wwpns: The physical port WWPNs that can be used for
                          this specific fabric.  May span multiple VIOSes,
                          but each must be part of the vios_wraps.

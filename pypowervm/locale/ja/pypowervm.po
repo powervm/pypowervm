@@ -1,22 +1,304 @@
 # Translations template for pypowervm.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 IBM Corp.
 # This file is distributed under the same license as the pypowervm project.
-# Automatically generated, 2015.
+# Automatically generated, 2016.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 0.0.3.dev270\n"
+"Project-Id-Version: pypowervm 1.0.1.dev127\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-06 13:53-0500\n"
-"PO-Revision-Date: 2015-10-06 13:53-0500\n"
+"POT-Creation-Date: 2016-04-14 02:54-0400\n"
+"PO-Revision-Date: 2016-04-14 02:54-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.3.2\n"
 
-#: pypowervm/exceptions.py:116
+#: pypowervm/adapter.py:126
+#, python-format
+msgid "Invalid protocol \"%s\""
+msgstr "プロトコル「%s」は無効です"
+
+#: pypowervm/adapter.py:132
+msgid "Unencrypted communication with PowerVM! Revert configuration to https."
+msgstr "PowerVM との通信が暗号化されていません。構成を https に戻してください。"
+
+#: pypowervm/adapter.py:146
+msgid "Calculating default audit memento failed, using 'default'."
+msgstr "デフォルト監査記録を計算できませんでした。「default」を使用します。"
+
+#: pypowervm/adapter.py:181
+msgid "Local authentication not supported on HMC."
+msgstr "ローカル認証は HMC でサポートされていません。"
+
+#: pypowervm/adapter.py:200
+#, python-format
+msgid "Setting up event listener for %s"
+msgstr "%s のイベント・リスナーをセットアップしています"
+
+#: pypowervm/adapter.py:239
+#, python-format
+msgid "Unexpected filehandle on %s request"
+msgstr "%s 要求に対して予期しないファイル・ハンドルです"
+
+#: pypowervm/adapter.py:292
+#, python-format
+msgid "Unexpected error for %(meth)s %(url)s"
+msgstr "%(meth)s %(url)s に関して予期しないエラーが発生しました"
+
+#: pypowervm/adapter.py:294
+#, python-format
+msgid "Unexpected error: %(class)s for %(method)s %(url)s: %(excp)s"
+msgstr "%(method)s %(url)s に関して予期しないエラー %(class)s が発生しました: %(excp)s"
+
+#: pypowervm/adapter.py:332
+msgid ""
+"Re-login has been deemed unsafe. This Session instance should no longer "
+"be used."
+msgstr ""
+"再ログインは安全ではないとみなされています。このセッション・インスタンスは"
+"今後使用すべきではありません。"
+
+#: pypowervm/adapter.py:342
+#, python-format
+msgid "Attempting re-login %s"
+msgstr "%s への再ログインを試みています"
+
+#: pypowervm/adapter.py:353
+#, python-format
+msgid ""
+"Re-login 401, response body:\n"
+"%s"
+msgstr ""
+"再ログイン 401、応答本体:\n"
+"%s"
+
+#: pypowervm/adapter.py:358
+#, python-format
+msgid ""
+"Re-login failed, resp body:\n"
+"%s"
+msgstr ""
+"再ログインが失敗しました。応答本体:\n"
+"%s"
+
+#: pypowervm/adapter.py:362
+#, python-format
+msgid ""
+"Re-login failed:\n"
+"%s"
+msgstr ""
+"再ログインが失敗しました:\n"
+"%s"
+
+#: pypowervm/adapter.py:381
+#, python-format
+msgid ""
+"Re-attempt failed with another 401, response body:\n"
+"%s"
+msgstr ""
+"別の 401 で再試行が失敗しました。応答本体:\n"
+"%s"
+
+#: pypowervm/adapter.py:384
+#, python-format
+msgid "suspicious HTTP 401 response for %(method)s %(path)s: token is brand new"
+msgstr "%(method)s %(path)s について疑わしい HTTP 401 応答です: トークンは新規のものです"
+
+#: pypowervm/adapter.py:416
+#, python-format
+msgid "Session logging on %s"
+msgstr "セッション・ログオン %s"
+
+#: pypowervm/adapter.py:478
+msgid "Failed to parse a session token from the PowerVM response."
+msgstr "PowerVM 応答からのセッション・トークンを解析できませんでした。"
+
+#: pypowervm/adapter.py:480 pypowervm/adapter.py:496
+#, python-format
+msgid " Body= %s"
+msgstr " 本体= %s"
+
+#: pypowervm/adapter.py:494
+msgid "Failed to parse a session file path from the PowerVM response."
+msgstr "PowerVM 応答からのセッション・ファイル・パスを解析できませんでした。"
+
+#: pypowervm/adapter.py:508
+#, python-format
+msgid "Token file %s didn't contain a readable session token."
+msgstr "トークン・ファイル %s には読み取り可能なセッション・トークンが含まれていませんでした。"
+
+#: pypowervm/adapter.py:518
+#, python-format
+msgid "Session logging off %s"
+msgstr "セッション・ログオフ %s"
+
+#: pypowervm/adapter.py:523
+msgid "Problem logging off.  Ignoring."
+msgstr "ログオフするときに問題が発生しました。無視します。"
+
+#: pypowervm/adapter.py:561
+msgid "Failed to register for events.  Events will not be used."
+msgstr "イベントの登録に失敗しました。イベントは使用されません。"
+
+#: pypowervm/adapter.py:642
+msgid "job must be a JobRequest element"
+msgstr "ジョブは JobRequest エレメントでなければなりません"
+
+#: pypowervm/adapter.py:646
+msgid "JobRequest is missing OperationName"
+msgstr "JobRequest に OperationName がありません"
+
+#: pypowervm/adapter.py:660 pypowervm/adapter.py:866 pypowervm/adapter.py:926
+#: pypowervm/adapter.py:1022
+#, python-format
+msgid "path=%s is not a PowerVM API reference"
+msgstr "path=%s は PowerVM API 参照ではありません"
+
+#: pypowervm/adapter.py:1037 pypowervm/adapter.py:1054
+msgid "Invalid file descriptor"
+msgstr "ファイル記述子が無効です"
+
+#: pypowervm/adapter.py:1179 pypowervm/adapter.py:1207
+#: pypowervm/adapter.py:1222
+msgid "Expected root_id"
+msgstr "root_id が予期されました"
+
+#: pypowervm/adapter.py:1181
+msgid "Expected child_type"
+msgstr "child_type が予期されました"
+
+#: pypowervm/adapter.py:1185 pypowervm/adapter.py:1211
+#: pypowervm/adapter.py:1216
+#, python-format
+msgid "Unexpected suffix_type=%s"
+msgstr "予期しない suffix_type=%s です"
+
+#: pypowervm/adapter.py:1188 pypowervm/adapter.py:1219
+msgid "Expected suffix_parm"
+msgstr "suffix_parm が予期されました"
+
+#: pypowervm/adapter.py:1190 pypowervm/adapter.py:1209
+#: pypowervm/adapter.py:1224
+msgid "Expected child_id"
+msgstr "child_id が予期されました"
+
+#: pypowervm/adapter.py:1193 pypowervm/adapter.py:1202
+msgid "Unexpected child_id"
+msgstr "予期しない child_id です"
+
+#: pypowervm/adapter.py:1195 pypowervm/adapter.py:1204
+msgid "Unexpected root_id"
+msgstr "予期しない root_id です"
+
+#: pypowervm/adapter.py:1226
+#, python-format
+msgid "Unexpected req_method=%s"
+msgstr "予期しない req_method=%s です"
+
+#: pypowervm/adapter.py:1345
+#, python-format
+msgid "Error parsing XML response from PowerVM: %s"
+msgstr "PowerVM からの XML 応答を解析しているときにエラーが発生しました: %s"
+
+#: pypowervm/adapter.py:1358
+msgid "Response is not an Atom feed/entry"
+msgstr "応答は Atom フィード/エントリーではありません"
+
+#: pypowervm/adapter.py:1369
+msgid "Unexpected HTTP 204 for request"
+msgstr "要求に対する予期しない HTTP 204"
+
+#: pypowervm/adapter.py:1377
+msgid "Unexpectedly empty response body"
+msgstr "応答本体が予期せず空です"
+
+#: pypowervm/adapter.py:1380
+#, python-format
+msgid ""
+"%(err_reason)s:\n"
+"request headers: %(reqheaders)s\n"
+"\n"
+"request body: %(reqbody)s\n"
+"\n"
+"response headers: %(respheaders)s\n"
+"\n"
+"response body: %(respbody)s"
+msgstr ""
+"%(err_reason)s: \n"
+"要求ヘッダー: %(reqheaders)s\n"
+"\n"
+"要求本体: %(reqbody)s\n"
+"\n"
+"応答ヘッダー: %(respheaders)s\n"
+"\n"
+"応答本体: %(respbody)s"
+
+#: pypowervm/adapter.py:1388
+#, python-format
+msgid "Atom error for %(method)s %(path)s: %(reason)s"
+msgstr "%(method)s %(path)s に関して Atom エラーが発生しました: %(reason)s"
+
+#: pypowervm/adapter.py:1430
+msgid "Session must not be None"
+msgstr "「セッション」は「なし」であってはなりません"
+
+#: pypowervm/adapter.py:1432
+msgid "An event listener is already active on the session."
+msgstr "このセッションではイベント・リスナーが既にアクティブになっています。"
+
+#: pypowervm/adapter.py:1448
+#, python-format
+msgid "Failed to initialize event feed listener: %s"
+msgstr "イベント・フィード・リスナーを初期化できませんでした: %s"
+
+#: pypowervm/adapter.py:1452
+#, python-format
+msgid "Application id \"%s\" is not unique"
+msgstr "アプリケーション ID「%s」は固有ではありません"
+
+#: pypowervm/adapter.py:1461
+msgid "Shutting down"
+msgstr "シャットダウン中"
+
+#: pypowervm/adapter.py:1464
+msgid "This handler is already subscribed"
+msgstr "このハンドラーは既にサブスクライブされています"
+
+#: pypowervm/adapter.py:1472
+msgid "Handler must be an EventHandler"
+msgstr "ハンドラーはイベント・ハンドラーでなければなりません"
+
+#: pypowervm/adapter.py:1475
+msgid "This handler not found in subscriber list"
+msgstr "このハンドラーはサブスクライバー・リストに見つかりません"
+
+#: pypowervm/adapter.py:1483
+#, python-format
+msgid "Shutting down EventListener for %s"
+msgstr "%s のイベント・リスナーをシャットダウンしています"
+
+#: pypowervm/adapter.py:1487
+#, python-format
+msgid "EventListener shutdown complete for %s"
+msgstr "%s のイベント・リスナーのシャットダウンが完了しました"
+
+#: pypowervm/adapter.py:1507
+msgid "Error while getting PowerVM events"
+msgstr "PowerVM イベントを取得するときにエラーが発生しました"
+
+#: pypowervm/adapter.py:1544
+#, python-format
+msgid "Unexpected EventType=%s"
+msgstr "予期しないイベント・タイプ (%s) です"
+
+#: pypowervm/adapter.py:1561
+msgid "Error while processing PowerVM events"
+msgstr "PowerVM イベントを処理しているときにエラーが発生しました"
+
+#: pypowervm/exceptions.py:117
 #, python-format
 msgid ""
 "Unable to derive the appropriate physical FC port for WWPN %(wwpn)s.  The"
@@ -26,22 +308,22 @@ msgstr ""
 "WWPN %(wwpn)s の適切な物理 FC ポートを取得できません。VIOS 拡張属性グループが"
 "不十分である可能性があります。照会の VIOS URI は %(vio_uri)s でした。"
 
-#: pypowervm/exceptions.py:122
+#: pypowervm/exceptions.py:123
 #, python-format
 msgid "Element not found: %(element_type)s %(element)s"
 msgstr "エレメントが見つかりません: %(element_type)s %(element)s"
 
-#: pypowervm/exceptions.py:126
+#: pypowervm/exceptions.py:127
 #, python-format
 msgid "LPAR not found: %(lpar_name)s"
 msgstr "LPAR が見つかりません: %(lpar_name)s"
 
-#: pypowervm/exceptions.py:130
+#: pypowervm/exceptions.py:131
 #, python-format
 msgid "The '%(operation_name)s' operation failed. %(error)s"
 msgstr "「%(operation_name)s」操作が失敗しました。%(error)s"
 
-#: pypowervm/exceptions.py:134
+#: pypowervm/exceptions.py:135
 #, python-format
 msgid ""
 "The '%(operation_name)s' operation failed. Failed to complete the task in"
@@ -50,17 +332,17 @@ msgstr ""
 "「%(operation_name)s」操作が失敗しました。%(seconds)d 秒以内にタスクを"
 "完了できませんでした。"
 
-#: pypowervm/exceptions.py:139
+#: pypowervm/exceptions.py:140
 #, python-format
 msgid "Failed to power off Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "仮想マシン %(lpar_nm)s の電源をオフにできませんでした: %(reason)s"
 
-#: pypowervm/exceptions.py:143
+#: pypowervm/exceptions.py:144
 #, python-format
 msgid "Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "仮想マシン %(lpar_nm)s の電源をオンにできませんでした: %(reason)s"
 
-#: pypowervm/exceptions.py:147
+#: pypowervm/exceptions.py:148
 #, python-format
 msgid ""
 "Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN Identifier on"
@@ -69,7 +351,7 @@ msgstr ""
 "VLAN %(vlan_id)d は別のネットワーク・ブリッジ上の 1 次 "
 "VLAN ID であるため削除できません。"
 
-#: pypowervm/exceptions.py:152
+#: pypowervm/exceptions.py:153
 #, python-format
 msgid ""
 "Unable to provision VLAN %(vlan_id)d.  It appears to be contained on "
@@ -78,13 +360,13 @@ msgid ""
 "manually remove the device or add it to the Network Bridge before "
 "continuing."
 msgstr ""
-"VLAN %(vlan_id)d をプロビジョンできません。Virtual I/O Server %(vios)s 上の"
-"デバイス「%(dev_name)s」に含まれている可能性があります。このデバイスは"
-"ネットワーク・ブリッジ (共用イーサネット・アダプター) に接続されていません。"
-"先に進む前に、デバイスを手動で削除するか、ネットワーク・ブリッジに追加して"
-"ください。"
+"VLAN %(vlan_id)d をプロビジョンできません。これは Virtual I/O Server "
+"%(vios)s 上のデバイス「%(dev_name)s」に含まれている可能性があります。その"
+"デバイスはいずれのネットワーク・ブリッジ (共用イーサネット・アダプター) にも"
+"接続されていません。続行する前に、そのデバイスを手動で削除するか、またはその"
+"デバイスをネットワーク・ブリッジに追加してください。"
 
-#: pypowervm/exceptions.py:161
+#: pypowervm/exceptions.py:162
 #, python-format
 msgid ""
 "A Logical Unit with name %(lu_name)s already exists on Shared Storage "
@@ -93,7 +375,7 @@ msgstr ""
 "%(lu_name)s という名前の論理装置は、共用ストレージ・プール "
 "%(ssp_name)s 上に既に存在しています。"
 
-#: pypowervm/exceptions.py:166
+#: pypowervm/exceptions.py:167
 msgid ""
 "Unable to find a physical port to map a virtual Fibre Channel port to.  "
 "This is due to either a Virtual I/O Server being unavailable, or improper"
@@ -103,7 +385,7 @@ msgstr ""
 "その原因は、Virtual I/O Server が使用不可になっていること、または物理"
 "ファイバー・チャネル・ポートに対して指定されたポートが正しくないことです。"
 
-#: pypowervm/exceptions.py:173
+#: pypowervm/exceptions.py:174
 msgid ""
 "Unable to start the console to the Virtual Machine.  The pypowervm API is"
 " running in a non-local mode.  The console can only be deployed when "
@@ -113,34 +395,82 @@ msgstr ""
 "モードで実行されています。コンソールは、pypowervm が PowerVM API と"
 "同一場所に設置されている場合にのみデプロイ可能です。"
 
-#: pypowervm/exceptions.py:180
+#: pypowervm/exceptions.py:181
 #, python-format
 msgid "WrapperTask %(name)s has no subtasks!"
 msgstr "WrapperTask %(name)s にサブタスクがありません!"
 
-#: pypowervm/exceptions.py:184
+#: pypowervm/exceptions.py:185
 msgid "FeedTask can't have an empty feed."
 msgstr "FeedTask で空のフィードは使用できません。"
 
-#: pypowervm/exceptions.py:188
+#: pypowervm/exceptions.py:189
 #, python-format
-msgid "OS unable to read file %(access_file)s."
-msgstr "OS でファイル %(access_file)s を読み取ることができません。"
+msgid "OS denied access to file %(access_file)s."
+msgstr "ファイル %(access_file)s へのアクセスが OS で拒否されました。"
 
-#: pypowervm/exceptions.py:192
+#: pypowervm/exceptions.py:193
 #, python-format
-msgid "OS able to read file %(access_file)s, but encountered an access error."
-msgstr "OS でファイル %(access_file)s を読み取ることはできましたが、アクセス・エラーが発生しました。"
+msgid ""
+"OS encountered an I/O error attempting to read file %(access_file)s: "
+"%(error)s"
+msgstr ""
+"ファイル %(access_file)s を読み取るときに入出力エラーが OS で検出されました: "
+"%(error)s"
 
-#: pypowervm/exceptions.py:197
+#: pypowervm/exceptions.py:198
 #, python-format
 msgid "The migration task failed. %(error)s"
 msgstr "マイグレーション・タスクが失敗しました。%(error)s"
 
-#: pypowervm/exceptions.py:201
+#: pypowervm/exceptions.py:202
 #, python-format
 msgid "No load source found for VM %(vm_name)s"
 msgstr "VM %(vm_name)s のロード・ソースが見つかりません"
+
+#: pypowervm/exceptions.py:206
+#, python-format
+msgid ""
+"Unable to derive the pg83 encoding for hdisk %(dev_name)s.  The "
+"parent_entry attribute is not set.  This may be due to using a PV "
+"obtained through an unsupported property chain.  The PV must be accessed "
+"via VIOS.phys_vols, VG.phys_vols, or "
+"VIOS.scsi_mappings[n].backing_storage."
+msgstr ""
+"hdisk %(dev_name)s について pg83 エンコードを取得できません。parent_entry "
+"属性が設定されていません。この原因として、サポートされていないプロパティー・"
+"チェーンを通じて取得された PV が使用されていることが考えられます。PV には、"
+"VIOS.phys_vols、VG.phys_vols、または VIOS.scsi_mappings[n].backing_storage を"
+"使用してアクセスする必要があります。"
+
+#: pypowervm/exceptions.py:214
+#, python-format
+msgid ""
+"Found device %(devname)s %(count)d times; expected to find it at most "
+"once."
+msgstr ""
+"デバイス %(devname)s が %(count)d 回検出されました。このデバイスは多くても "
+"1 回検出されることが予期されていました。"
+
+#: pypowervm/exceptions.py:231
+#, python-format
+msgid "Expected to find exactly one management partition; found %(count)d."
+msgstr "1 つの管理区画のみが見つかると予期されていましたが、%(count)d 個が"
+"見つかりました。"
+
+#: pypowervm/exceptions.py:237
+#, python-format
+msgid ""
+"Expected to find exactly one partition with ID %(lpar_id)d; found "
+"%(count)d."
+msgstr ""
+"ID %(lpar_id)d のパーティションは 1 つのみ検出されることが"
+"予期されていましたが、%(count)d 個が検出されました。"
+
+#: pypowervm/exceptions.py:243
+#, python-format
+msgid "Couldn't find the default Tier on Shared Storage Pool %(ssp_name)s"
+msgstr "共用ストレージ・プール %(ssp_name)s に、デフォルトの層が見つかりませんでした"
 
 #: pypowervm/util.py:122
 #, python-format
@@ -151,10 +481,14 @@ msgstr ""
 "提案された拡張属性グループ「%(arg_xag)s」は、既存の拡張属性グループ"
 "「%(path_xag)s」と一致しません"
 
+#: pypowervm/util.py:258
+msgid "Certificate has expired."
+msgstr "証明書の有効期限が切れました。"
+
 #: pypowervm/util.py:391
 #, python-format
 msgid "Prefix and suffix together may not be more than %d characters."
-msgstr "プレフィックスおよびサフィックスは %d 文字を超えてはなりません。"
+msgstr "プレフィックスおよびサフィックスは合わせて %d 文字を超えてはなりません。"
 
 #: pypowervm/util.py:396
 msgid "Total length must be at least 1 character."
@@ -169,22 +503,72 @@ msgstr "名前パラメーターの長さは 1 文字以上でなければなり
 msgid "The name parameter must not exceed %d characters when trunk_ok is False."
 msgstr "trunk_ok が False の場合、名前パラメーターは %d 文字を超えてはなりません。"
 
-#: pypowervm/helpers/log_helper.py:82
+#: pypowervm/util.py:520
+msgid "Developer error: partial parent specification."
+msgstr "開発者エラー: 部分的な親の指定。"
+
+#: pypowervm/util.py:525
+msgid ""
+"Developer error: parent_type must be either a string schema type or a "
+"Wrapper subclass."
+msgstr ""
+"開発者エラー: parent_type は、ストリング・スキーマ・タイプかラッパー・サブクラスのどちらかでなければなりません。"
+
+#: pypowervm/helpers/log_helper.py:83
 #, python-format
 msgid "REQUEST: %s"
 msgstr "要求: %s"
 
-#: pypowervm/helpers/log_helper.py:102
+#: pypowervm/helpers/log_helper.py:103
 #, python-format
 msgid "RESPONSE: %s"
 msgstr "応答: %s"
 
-#: pypowervm/tasks/cna.py:77
+#: pypowervm/tasks/cluster_ssp.py:106
+#, python-format
+msgid "Waiting for in-progress upload(s) to complete.  Marker LU(s): %s"
+msgstr "進行中のアップロードが完了するまで待機しています。マーカー LU: %s"
+
+#: pypowervm/tasks/cluster_ssp.py:135
+msgid "Abdicating in favor of in-progress upload."
+msgstr "対象が放棄されて、進行中のアップロードが選択されます。"
+
+#: pypowervm/tasks/cluster_ssp.py:145
+#, python-format
+msgid "Abdicating upload in favor of marker %s."
+msgstr "アップロードが放棄されて、マーカー %s が選択されます。"
+
+#: pypowervm/tasks/cluster_ssp.py:198
+#, python-format
+msgid "Using already-uploaded image LU %s."
+msgstr "アップロード済みイメージ LU %s を使用しています。"
+
+#: pypowervm/tasks/cluster_ssp.py:208
+#, python-format
+msgid "Creating marker LU %s"
+msgstr "マーカー LU %s を作成しています"
+
+#: pypowervm/tasks/cluster_ssp.py:224
+#, python-format
+msgid "Uploading to image LU %(lu)s (marker %(mkr)s)."
+msgstr "イメージ LU %(lu)s (マーカー %(mkr)s) にアップロードしています。"
+
+#: pypowervm/tasks/cluster_ssp.py:235
+#, python-format
+msgid "Removing failed LU %s."
+msgstr "障害が発生した LU %s を削除しています。"
+
+#: pypowervm/tasks/cna.py:117
 #, python-format
 msgid "Unable to find the Virtual Switch %s on the system."
 msgstr "システム上に仮想スイッチ %s が見つかりません。"
 
-#: pypowervm/tasks/hdisk.py:182
+#: pypowervm/tasks/cna.py:144
+#, python-format
+msgid "Unable to find a valid VLAN for Virtual Switch %s."
+msgstr "仮想スイッチ %s に有効な VLAN が見つかりません。"
+
+#: pypowervm/tasks/hdisk.py:197
 #, python-format
 msgid ""
 "hdisk discovery failed; will scrub stale storage for LPAR IDs %s and "
@@ -193,37 +577,59 @@ msgstr ""
 "hdisk ディスカバリーが失敗しました。LPAR ID %s について、不整合な"
 "ストレージを修正して、再試行してください。"
 
-#: pypowervm/tasks/hdisk.py:324
+#: pypowervm/tasks/hdisk.py:339
 #, python-format
 msgid "LUA Recovery Successful. Device Found: %s"
 msgstr "LUA リカバリーが正常に行われました。見つかったデバイス: %s"
 
-#: pypowervm/tasks/hdisk.py:328
+#: pypowervm/tasks/hdisk.py:343
 #, python-format
 msgid "ITL Error encountered: %s"
 msgstr "ITL エラーが発生しました: %s"
 
-#: pypowervm/tasks/hdisk.py:330
+#: pypowervm/tasks/hdisk.py:345
 #, python-format
 msgid "%s Device is currently in use."
 msgstr "%s デバイスは現在使用中です。"
 
-#: pypowervm/tasks/hdisk.py:332
+#: pypowervm/tasks/hdisk.py:347
 #, python-format
 msgid "%s Device discovered with unknown UDID."
 msgstr "不明な UDID を持つ %s デバイスがディスカバーされました。"
 
-#: pypowervm/tasks/hdisk.py:334
+#: pypowervm/tasks/hdisk.py:349
 #, python-format
 msgid "Failed to Discover the Device : %s"
 msgstr "デバイスをディスカバーできませんでした: %s"
 
-#: pypowervm/tasks/hdisk.py:404
+#: pypowervm/tasks/hdisk.py:419
 #, python-format
 msgid "CLIRunner Error: %s"
 msgstr "CLIRunner エラー: %s"
 
-#: pypowervm/tasks/memory.py:101
+#: pypowervm/tasks/hdisk.py:451
+msgid ""
+"QUERY_INVENTORY LUARecovery Job succeeded, but result contained neither "
+"OutputXML nor StdOut."
+msgstr ""
+"QUERY_INVENTORY LUARecovery ジョブは正常に終了しましたが、結果には "
+"OutputXML も StdOut も含まれていませんでした。"
+
+#: pypowervm/tasks/hdisk.py:465
+#, python-format
+msgid "QUERY_INVENTORY produced invalid chunk of XML (%(chunk)s).  Error: %(err)s"
+msgstr "QUERY_INVENTORY から無効な XML チャンク (%(chunk)s) が生成されました。エラー: %(err)s"
+
+#: pypowervm/tasks/hdisk.py:473
+#, python-format
+msgid ""
+"Failed to find pg83 descriptor in XML output:\n"
+"%s"
+msgstr ""
+"XML 出力に pg83 ディスクリプターが見つかりませんでした:\n"
+"%s"
+
+#: pypowervm/tasks/memory.py:102
 #, python-format
 msgid ""
 "Error obtaining host memory overhead for host with UUID '%(host)s': "
@@ -233,19 +639,19 @@ msgstr ""
 "取得エラーです: "
 "%(error)s。"
 
-#: pypowervm/tasks/power.py:159 pypowervm/tasks/power.py:168
+#: pypowervm/tasks/power.py:216
 #, python-format
 msgid "Error: %s"
 msgstr "エラー: %s"
 
-#: pypowervm/tasks/power.py:200
+#: pypowervm/tasks/power.py:263
 #, python-format
 msgid ""
 "Error invalidating adapter cache for LPAR  %(lpar_name) with UUID "
 "%(lpar_uuid)s: %(exc)s"
 msgstr ""
-"UUID %(lpar_uuid)s を持つ LPAR %(lpar_name) のアダプター・キャッシュの"
-"無効化エラーです: %(exc)s"
+"UUID %(lpar_uuid)s の LPAR %(lpar_name) に対してアダプター・キャッシュを"
+"無効化するときにエラーが発生しました: %(exc)s"
 
 #: pypowervm/tasks/scsi_mapper.py:38
 msgid "Retrying modification of SCSI Mapping."
@@ -269,63 +675,113 @@ msgstr ""
 "Virtual I/O Server %(vios_name)s からクライアント LPAR %(lpar_uuid)s への "
 "%(stg_type)s ストレージ・エレメント %(stg_name)s のマッピングを作成しています。"
 
-#: pypowervm/tasks/scsi_mapper.py:371
+#: pypowervm/tasks/scsi_mapper.py:402
 msgid "Must not specify both match_func and stg_elem."
 msgstr "match_func と stg_elem を両方一緒に指定してはなりません。"
 
-#: pypowervm/tasks/storage.py:287
+#: pypowervm/tasks/storage.py:326
 #, python-format
 msgid "Unable to cleanup after file upload. File uuid: %s"
 msgstr "ファイル・アップロード後のクリーンアップができません。"
 "ファイル uuid: %s"
 
-#: pypowervm/tasks/storage.py:385
+#: pypowervm/tasks/storage.py:445
 #, python-format
-msgid ""
-"Linked clone Logical Unit %(luname)s (UDID %(udid)s) has no backing image"
-" LU.  It should probably be deleted."
-msgstr ""
-"リンクされた複製論理装置 %(luname)s (UDID %(udid)s) にバッキング・イメージ "
-"LU がありません。削除された可能性があります。"
+msgid "Disk Logical Unit %(luname)s has no backing image LU.  (UDID: %(udid)s) "
+msgstr "ディスク論理装置 %(luname)s には、バッキング・イメージ LU がありません。(UDID: %(udid)s)"
 
-#: pypowervm/tasks/storage.py:430
+#: pypowervm/tasks/storage.py:489
 msgid "Unable to locate new vDisk on file upload."
 msgstr "ファイル・アップロード時に新規仮想ディスクが見つかりません。"
 
-#: pypowervm/tasks/storage.py:480
+#: pypowervm/tasks/storage.py:537
+#, python-format
+msgid ""
+"Ignoring device because it lacks a UDID:\n"
+"%s"
+msgstr ""
+"UDID がないため、デバイスを無視します:\n"
+"%s"
+
+#: pypowervm/tasks/storage.py:543
+#, python-format
+msgid "Device %s not found in list."
+msgstr "デバイス %s がリストに見つかりません。"
+
+#: pypowervm/tasks/storage.py:572
 #, python-format
 msgid "Deleting virtual disk %(vdisk)s from volume group %(vg)s"
 msgstr "ボリューム・グループ %(vg)s から仮想ディスク %(vdisk)s を削除しています"
 
-#: pypowervm/tasks/storage.py:504
+#: pypowervm/tasks/storage.py:595
 #, python-format
 msgid "Deleting virtual optical device %(vopt)s from volume group %(vg)s"
 msgstr "ボリューム・グループ %(vg)s から仮想光ディスク・デバイス %(vopt)s を削除しています"
 
-#: pypowervm/tasks/storage.py:559
+#: pypowervm/tasks/storage.py:648
 #, python-format
-msgid "Removing LU %(lu_name)s from SSP %(ssp_name)s"
-msgstr "SSP %(ssp_name)s から LU %(lu_name)s を削除しています"
+msgid "Removing LU %(lu_name)s (UDID %(lu_udid)s)"
+msgstr "LU %(lu_name)s (UDID %(lu_udid)s) を削除しています"
 
-#: pypowervm/tasks/storage.py:580
+#: pypowervm/tasks/storage.py:652
 #, python-format
 msgid ""
-"Removing Image LU %(lu_name)s from SSP %(ssp_name)s because it is no "
-"longer in use."
+"LU %(lu_name)s was not found - it may have been deleted out of band.  "
+"(UDID: %(lu_udid)s)"
 msgstr ""
-"イメージ LU %(lu_name)s を SSP %(ssp_name)s から"
-"削除しています (使用されなくなったため)。"
+"LU %(lu_name)s が見つかりませんでした - 帯域外で削除された可能性があります。"
+"(UDID: %(lu_udid)s)"
 
-#: pypowervm/tasks/storage.py:625
+#: pypowervm/tasks/storage.py:670
+#, python-format
+msgid ""
+"Removing Image LU %(lu_name)s because it is no longer in use.  (UDID: "
+"%(lu_udid)s)"
+msgstr ""
+"イメージ LU %(lu_name)s は使用されていないため、削除します。(UDID: %(lu_udid)s)"
+
+#: pypowervm/tasks/storage.py:675
+#, python-format
+msgid "Backing LU %(lu_name)s was not found.  (UDID: %(lu_udid)s)"
+msgstr "バッキング LU %(lu_name)s が見つかりません。(UDID: %(lu_udid)s)"
+
+#: pypowervm/tasks/storage.py:701
+msgid "Developer error: Either tier or lufeed is required."
+msgstr "開発者エラー: tier または lufeed が必要です。"
+
+#: pypowervm/tasks/storage.py:706
+msgid "Developer error: The lufeed parameter must comprise LUEnt EntryWrappers."
+msgstr "開発者エラー: lufeed パラメーターは、複数の LUEnt EntryWrapper から構成されていなければなりません。"
+
+#: pypowervm/tasks/storage.py:713
+#, python-format
+msgid "Deleting LU %(lu_name)s (UDID: %(lu_udid)s)"
+msgstr "LU %(lu_name)s (UDID: %(lu_udid)s) を削除しています"
+
+#: pypowervm/tasks/storage.py:718
+#, python-format
+msgid ""
+"Ignoring HttpError for LU %(lu_name)s may have been deleted out of band."
+"  (UDID: %(lu_udid)s)"
+msgstr ""
+"LU %(lu_name)s の HttpError を無視します - 帯域外で削除された可能性があります。"
+"  (UDID: %(lu_udid)s)"
+
+#: pypowervm/tasks/storage.py:771
 #, python-format
 msgid ""
 "Removing %(num_maps)d orphan %(stg_type)s mappings from VIOS "
 "%(vios_name)s."
 msgstr ""
 "%(num_maps)d 個の孤立 %(stg_type)s マッピングを VIOS %(vios_name)s から"
-"削除中です。"
+"削除しています。"
 
-#: pypowervm/tasks/storage.py:652
+#: pypowervm/tasks/storage.py:797
+#, python-format
+msgid "Removing %(num_maps)d port-less VFC mappings from VIOS %(vios_name)s."
+msgstr "%(num_maps)d 個のポートなし VFC マッピングを VIOS %(vios_name)s から削除しています。"
+
+#: pypowervm/tasks/storage.py:824
 #, python-format
 msgid ""
 "Removing %(num_maps)d %(stg_type)s mappings associated with LPAR ID "
@@ -334,12 +790,27 @@ msgstr ""
 "LPAR ID %(lpar_id)d に関連付けられた %(num_maps)d 個の %(stg_type)s "
 "マッピングを VIOS %(vios_name)s から削除中です。"
 
-#: pypowervm/tasks/storage.py:725
+#: pypowervm/tasks/storage.py:891
 #, python-format
-msgid "Unexpected storage element type %s."
-msgstr "%s は、予期しないストレージ・エレメント・タイプです。"
+msgid ""
+"Not removing storage %(stg_name)s of type %(stg_type)s because it cannot "
+"be determined whether it is still in use.  Manual verification and "
+"cleanup may be necessary."
+msgstr ""
+"タイプ %(stg_type)s のストレージ %(stg_name)s は、まだ使用されているかどうかを"
+"判別できないため削除されません。手動での確認とクリーンアップが必要となる"
+"可能性があります。"
 
-#: pypowervm/tasks/storage.py:742
+#: pypowervm/tasks/storage.py:902
+#, python-format
+msgid ""
+"Storage scrub ignoring storage element %(stg_name)s because it is of "
+"unexpected type %(stg_type)s."
+msgstr ""
+"ストレージ・エレメント %(stg_name)s は予期しないタイプ %(stg_type)s である"
+"ため、ストレージ修正で無視されます。"
+
+#: pypowervm/tasks/storage.py:920
 #, python-format
 msgid ""
 "Scrubbing the following %(vdcount)d Virtual Disks from VIOS %(vios)s: "
@@ -348,7 +819,7 @@ msgstr ""
 "VIOS %(vios)s にある次の %(vdcount)d 個の仮想ディスクを修正しています: "
 "%(vdlist)s"
 
-#: pypowervm/tasks/storage.py:750
+#: pypowervm/tasks/storage.py:928
 #, python-format
 msgid ""
 "Scrubbing the following %(vocount)d Virtual Opticals from VIOS %(vios)s: "
@@ -357,7 +828,7 @@ msgstr ""
 "VIOS %(vios)s にある次の %(vocount)d 個の仮想光ディスクを修正しています: "
 "%(volist)s"
 
-#: pypowervm/tasks/storage.py:814
+#: pypowervm/tasks/storage.py:991
 #, python-format
 msgid ""
 "Skipping scrub of %(stg_type)s mappings from VIOS %(vios_name)s for the "
@@ -366,12 +837,7 @@ msgstr ""
 "次の LPAR ID は存在するため、この ID の VIOS %(vios_name)s からの "
 "%(stg_type)s マッピングの修正をスキップ中です: %(lpar_ids)s"
 
-#: pypowervm/tasks/vfc_mapper.py:379
-#, python-format
-msgid "Detected a stale mapping for LPAR with UUID %s."
-msgstr "UUID に %s を持つ LPAR について、不整合なマッピングが検出されました。"
-
-#: pypowervm/tasks/vfc_mapper.py:583
+#: pypowervm/tasks/vfc_mapper.py:514
 #, python-format
 msgid ""
 "Unable to find appropriate VIOS.  The payload provided was likely "
@@ -382,9 +848,22 @@ msgstr ""
 "あります。ペイロード・データ:\n"
 " %s)"
 
-#: pypowervm/tasks/vterm.py:61
+#: pypowervm/tasks/vterm.py:74
 msgid "Unable to close vterm."
 msgstr "vterm を閉じることができません。"
+
+#: pypowervm/tasks/vterm.py:266
+#, python-format
+msgid "VNCRepeater Server Listening on ip=%(ip)s port=%(port)s"
+msgstr "VNCRepeater サーバーが ip=%(ip)s port=%(port)s で listen しています"
+
+#: pypowervm/tasks/monitor/util.py:421
+msgid ""
+"Metric data is not available.  This may be due to the metrics being "
+"recently initialized."
+msgstr ""
+"メトリック・データがありません。この原因として、メトリックが最近初期化された"
+"ことが考えられます。"
 
 #: pypowervm/tests/test_i18n.py:33
 msgid "This is a test"
@@ -412,47 +891,47 @@ msgstr ""
 "%(total)d 中 %(retry)d 回の試行が失敗しました。再試行します。例外:\n"
 " %(except)s。"
 
-#: pypowervm/utils/transaction.py:311
+#: pypowervm/utils/transaction.py:348
 msgid "Must supply either EntryWrapper or EntryWrapperGetter."
 msgstr "EntryWrapper または EntryWrapperGetter を指定する必要があります。"
 
-#: pypowervm/utils/transaction.py:337
+#: pypowervm/utils/transaction.py:374
 msgid "Must supply a valid Subtask."
 msgstr "有効なサブタスクを指定する必要があります。"
 
-#: pypowervm/utils/transaction.py:341
+#: pypowervm/utils/transaction.py:378
 #, python-format
 msgid "Duplicate 'provides' name %s."
-msgstr "「provides」の名前 %s が重複しています。"
+msgstr "重複により名前 %s が「提供」されます。"
 
-#: pypowervm/utils/transaction.py:416
+#: pypowervm/utils/transaction.py:453
 #, python-format
 msgid "WrapperTask %s has no Subtasks; no-op execution."
 msgstr "WrapperTask %s にはサブタスクがありません。操作は実行されません。"
 
-#: pypowervm/utils/transaction.py:541
+#: pypowervm/utils/transaction.py:585
 msgid "Must supply either a list of EntryWrappers or a FeedGetter."
 msgstr "EntryWrapper のリストを指定するか、または FeedGetter を指定する必要があります。"
 
-#: pypowervm/utils/transaction.py:720
+#: pypowervm/utils/transaction.py:764
 #, python-format
 msgid "FeedTask %s has no Subtasks; no-op execution."
 msgstr "FeedTask %s にはサブタスクがありません。操作は実行されません。"
 
-#: pypowervm/utils/validation.py:160
+#: pypowervm/utils/validation.py:161
 #, python-format
 msgid ""
 "Insufficient available %(res_name)s on host for virtual machine "
 "'%(instance_name)s' (%(requested)s requested, %(avail)s available)"
 msgstr ""
 "仮想マシン「%(instance_name)s」についてホストで使用できる %(res_name)s が"
-"不足しています (必要: %(requested)s、使用可能: %(avail)s)"
+"不足しています (要求: %(requested)s、使用可能: %(avail)s)"
 
-#: pypowervm/utils/validation.py:187
+#: pypowervm/utils/validation.py:189
 msgid "memory"
 msgstr "メモリー"
 
-#: pypowervm/utils/validation.py:207
+#: pypowervm/utils/validation.py:210
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the minimum or "
@@ -461,15 +940,24 @@ msgstr ""
 "最小メモリーまたは最大メモリーを変更する前に仮想マシンを電源オフする必要が"
 "あります。仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/utils/validation.py:292
+#: pypowervm/utils/validation.py:215
+#, python-format
+msgid ""
+"The virtual machine must be powered off before changing the expansion "
+"factor. Power off virtual machine %s and try again."
+msgstr ""
+"拡張係数を変更する前に仮想マシンの電源をオフにする必要があります。"
+"仮想マシン %s の電源をオフにして、再試行してください。"
+
+#: pypowervm/utils/validation.py:302
 msgid "CPUs"
 msgstr "CPU"
 
-#: pypowervm/utils/validation.py:308
+#: pypowervm/utils/validation.py:318
 msgid "processing units"
 msgstr "処理装置"
 
-#: pypowervm/utils/validation.py:349
+#: pypowervm/utils/validation.py:359
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the minimum or "
@@ -478,7 +966,7 @@ msgstr ""
 "最小プロセッサーまたは最大プロセッサーを変更する前に仮想マシンを電源オフする"
 "必要があります。仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/utils/validation.py:359
+#: pypowervm/utils/validation.py:369
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the minimum or "
@@ -487,7 +975,7 @@ msgstr ""
 "最小処理装置または最大処理装置を変更する前に仮想マシンを電源オフする必要が"
 "あります。仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/utils/validation.py:375
+#: pypowervm/utils/validation.py:385
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the processor "
@@ -496,7 +984,7 @@ msgstr ""
 "プロセッサー互換モードを変更する前に仮想マシンを電源オフする必要があります。"
 "仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/utils/validation.py:383
+#: pypowervm/utils/validation.py:393
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the processing "
@@ -505,7 +993,7 @@ msgstr ""
 "処理モードを変更する前に仮想マシンを電源オフする必要があります。"
 "仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/utils/validation.py:412
+#: pypowervm/utils/validation.py:422
 #, python-format
 msgid ""
 "The desired processors (%(vcpus)d) cannot be above the maximum allowed "
@@ -515,7 +1003,7 @@ msgstr ""
 "推奨プロセッサー数 (%(vcpus)d) は仮想マシン「%(instance_name)s」の区画あたりに"
 "許可される最大数 (%(max_allowed)d) を超えてはなりません。"
 
-#: pypowervm/utils/validation.py:424
+#: pypowervm/utils/validation.py:434
 #, python-format
 msgid ""
 "The maximum processors (%(vcpus)d) cannot be above the maximum system "
@@ -526,17 +1014,7 @@ msgstr ""
 "システム・キャパシティー・プロセッサー限度 (%(max_allowed)d) を超えては"
 "なりません。"
 
-#: pypowervm/utils/validation.py:442
-#, python-format
-msgid "The shared processor pool for %s must be DefaultPool."
-msgstr "%s の共用プロセッサー・プールは DefaultPool でなければなりません。"
-
-#: pypowervm/utils/validation.py:450
-#, python-format
-msgid "The shared processor pool for %s cannot be changed."
-msgstr "%s の共用プロセッサー・プールは変更できません。"
-
-#: pypowervm/utils/validation.py:513
+#: pypowervm/utils/validation.py:506
 #, python-format
 msgid ""
 "The virtual machine must be powered off before changing the simplified "
@@ -545,22 +1023,37 @@ msgstr ""
 "簡易リモート再始動機能を変更する前に仮想マシンを電源オフする必要があります。"
 "仮想マシン %s を電源オフし、再試行してください。"
 
-#: pypowervm/wrappers/base_partition.py:470
+#: pypowervm/wrappers/base_partition.py:526
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "KeylockPos「%s」が無効です。"
 
-#: pypowervm/wrappers/entry_wrapper.py:258
+#: pypowervm/wrappers/base_partition.py:537
+#, python-format
+msgid "Invalid BootMode '%s'."
+msgstr "BootMode「%s」が無効です。"
+
+#: pypowervm/wrappers/base_partition.py:1299
+msgid "IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."
+msgstr "IOSlot.adapter は推奨されません。代わりに IOSlot.io_adapter を使用してください。"
+
+#: pypowervm/wrappers/enterprise_pool.py:143
+#, python-format
+msgid ""
+"Unable to determine master management console MTMS (machine type, model, "
+"serial number) from %(identifier)s because no %(param)s was marked as the"
+" master console for the pool."
+msgstr ""
+"%(param)s がプールのマスター・コンソールとしてマークされていなかったため、"
+"%(identifier)s からのマスター管理コンソール MTMS (マシン・タイプ、モデル、"
+"シリアル番号) を判別できませんでした。"
+
+#: pypowervm/wrappers/entry_wrapper.py:371
 #, python-format
 msgid "Cannot convert %(property_name)s='%(value)s' in object %(pvmobject)s"
 msgstr "オブジェクト %(pvmobject)s で %(property_name)s='%(value)s' を変換できません"
 
-#: pypowervm/wrappers/entry_wrapper.py:337
-#, python-format
-msgid "The expected parameter of %(param)s was not found in %(identifier)s"
-msgstr "%(param)s の予期されたパラメーターが %(identifier)s に見つかりませんでした"
-
-#: pypowervm/wrappers/entry_wrapper.py:386
+#: pypowervm/wrappers/entry_wrapper.py:496
 msgid ""
 "Refusing set href over multiple links.\n"
 "Path: %{path}s\n"
@@ -570,120 +1063,171 @@ msgstr ""
 "パス: %{path}s\n"
 "見つかったリンク数: %{nlinks}d"
 
-#: pypowervm/wrappers/entry_wrapper.py:430
+#: pypowervm/wrappers/entry_wrapper.py:540
 msgid "Refusing to construct and wrap an Element without a tag."
 msgstr "タグなしでエレメントを構成およびラップすることを拒否しています。"
 
-#: pypowervm/wrappers/entry_wrapper.py:554
+#: pypowervm/wrappers/entry_wrapper.py:665
 msgid "Response is missing 'entry' property."
 msgstr "応答に「entry」プロパティーがありません。"
 
-#: pypowervm/wrappers/entry_wrapper.py:568
+#: pypowervm/wrappers/entry_wrapper.py:679
 #, python-format
 msgid "Must supply a Response or Entry to wrap.  Got %s"
 msgstr "ラップする応答または項目を指定する必要があります。%s が発生しました"
 
-#: pypowervm/wrappers/entry_wrapper.py:667
+#: pypowervm/wrappers/entry_wrapper.py:766
+msgid ""
+"Developer error: specify 'parent' or ('parent_type' and 'parent_uuid') to"
+" retrieve a CHILD object."
+msgstr ""
+"開発者エラー: CHILD オブジェクトを取得するには、「parent」または (「parent_type」と「parent_uuid」) を指定してください。"
+
+#: pypowervm/wrappers/entry_wrapper.py:771
+msgid "Specify either 'uuid' or 'root_id' when requesting a ROOT object."
+msgstr "ルート・オブジェクトを要求するときは、「uuid」または「root_id」を指定してください。"
+
+#: pypowervm/wrappers/entry_wrapper.py:784
+msgid ""
+"Both parent_type and parent_uuid are required when retrieving a CHILD "
+"feed or entry."
+msgstr ""
+"子フィードまたは子項目を取得するときは、parent_type と parent_uuid の両方が"
+"必要です。"
+
+#: pypowervm/wrappers/entry_wrapper.py:787
+msgid "Specify the parent's UUID via the parent_uuid parameter."
+msgstr "parent_uuid パラメーターを使用して親の UUID を指定してください。"
+
+#: pypowervm/wrappers/entry_wrapper.py:791
+msgid "Specify either 'uuid' or 'child_id' when requesting a CHILD object."
+msgstr "子オブジェクトを要求するときは、「uuid」または「child_id」を指定してください。"
+
+#: pypowervm/wrappers/entry_wrapper.py:885
 msgid "Parent UUID specified without parent type."
 msgstr "親 UUID が親タイプなしで指定されました。"
 
-#: pypowervm/wrappers/entry_wrapper.py:670
+#: pypowervm/wrappers/entry_wrapper.py:888
 msgid "The search() method requires exactly one key=value argument."
 msgstr "search() メソッドには、key=value 引数が 1 つのみ必要です。"
 
-#: pypowervm/wrappers/entry_wrapper.py:698
+#: pypowervm/wrappers/entry_wrapper.py:919
 #, python-format
 msgid "Wrapper class %(class)s does not support search key '%(key)s'."
 msgstr "ラッパー・クラス %(class)s は、検索キー「%(key)s」をサポートしていません。"
 
-#: pypowervm/wrappers/entry_wrapper.py:774
-msgid "Must specify both parent type and UUID, or neither."
-msgstr "親タイプと UUID の両方を指定するか、または両方とも指定しないでください。"
+#: pypowervm/wrappers/entry_wrapper.py:1019
+msgid ""
+"The 'xag' parameter to EntryWrapper.update is deprecated!  At best, using"
+" it will result in a no-op.  At worst, it will give you incurable etag "
+"mismatch errors."
+msgstr ""
+"EntryWrapper.update に対する「xag」パラメーターは推奨されません。これを"
+"使用した場合は、よくても何も操作が行われません。最悪の場合、修正不可の etag "
+"不一致エラーが発生します。"
 
-#: pypowervm/wrappers/entry_wrapper.py:851
+#: pypowervm/wrappers/entry_wrapper.py:1081
 msgid "Cannot set uuid."
 msgstr "UUID を設定できません。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1041
+#: pypowervm/wrappers/entry_wrapper.py:1282
 msgid "No such child element."
 msgstr "そのような子エレメントはありません。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1102
+#: pypowervm/wrappers/entry_wrapper.py:1343
 msgid "Cannot set UUID on Wrapper with no Metadata."
 msgstr "メタデータなしにラッパーで UUID を設定することはできません。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1107
+#: pypowervm/wrappers/entry_wrapper.py:1348
 #, python-format
 msgid "uuid value not valid: %s"
 msgstr "UUID 値が無効です: %s"
 
-#: pypowervm/wrappers/entry_wrapper.py:1155
+#: pypowervm/wrappers/entry_wrapper.py:1403
 msgid "Must specify a Wrapper subclass."
 msgstr "ラッパー・サブクラスを指定する必要があります。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1162
+#: pypowervm/wrappers/entry_wrapper.py:1412
 msgid "Must specify both parent class and parent UUID, or neither."
 msgstr "親クラスと親 UUID の両方を指定するか、どちらも指定しないようにする"
 "必要があります。"
 
-#: pypowervm/wrappers/job.py:281
+#: pypowervm/wrappers/job.py:276
 #, python-format
-msgid "Job %(job_id)s failed to cancel after %(timeout)s seconds."
-msgstr "%(timeout)s 秒経過した後で、ジョブ %(job_id)s を取り消すことができませんでした。"
+msgid "Job %(job_id)s monitoring for %(time)i seconds."
+msgstr "ジョブ %(job_id)s は %(time)i 秒間モニターされています。"
 
-#: pypowervm/wrappers/job.py:302
+#: pypowervm/wrappers/job.py:327
+#, python-format
+msgid ""
+"Issuing cancel request for job %(job_id)s. Will poll the job indefinitely"
+" for termination."
+msgstr ""
+"ジョブ %(job_id)s に対して取り消し要求が発行されます。このジョブは"
+"終了についてポーリングされます。"
+
+#: pypowervm/wrappers/job.py:343
 #, python-format
 msgid "Job %s not deleted. Job is in running state."
 msgstr "ジョブ %s は削除されません。ジョブは実行中状態です。"
 
-#: pypowervm/wrappers/logical_partition.py:139
-#: pypowervm/wrappers/logical_partition.py:208
+#: pypowervm/wrappers/logical_partition.py:150
+#: pypowervm/wrappers/logical_partition.py:230
 msgid "LPAR does not have an active RMC connection."
 msgstr "アクティブな RMC 接続が LPAR にありません。"
 
-#: pypowervm/wrappers/logical_partition.py:141
+#: pypowervm/wrappers/logical_partition.py:152
 #, python-format
 msgid "LPAR does not have an active DLPAR capability for %s."
 msgstr "%s 用のアクティブな DLPAR 機能が LPAR にありません。"
 
-#: pypowervm/wrappers/logical_partition.py:153
+#: pypowervm/wrappers/logical_partition.py:164
 msgid "I/O"
 msgstr "入出力"
 
-#: pypowervm/wrappers/logical_partition.py:163
+#: pypowervm/wrappers/logical_partition.py:174
 msgid "Memory"
 msgstr "メモリー"
 
-#: pypowervm/wrappers/logical_partition.py:173
+#: pypowervm/wrappers/logical_partition.py:184
 msgid "Processors"
 msgstr "プロセッサー"
 
-#: pypowervm/wrappers/logical_partition.py:190
+#: pypowervm/wrappers/logical_partition.py:208
 msgid "LPAR is not in an active state."
 msgstr "LPAR はアクティブ状態ではありません。"
 
-#: pypowervm/wrappers/logical_partition.py:196
+#: pypowervm/wrappers/logical_partition.py:218
+msgid "Target system does not have the IBM i LPAR Mobility Capability."
+msgstr "ターゲット・システムに IBM i LPAR モビリティー機能がありません。"
+
+#: pypowervm/wrappers/logical_partition.py:222
 msgid "IBM i LPAR does not have restricted I/O."
 msgstr "IBM i LPAR に制限付き入出力がありません。"
 
-#: pypowervm/wrappers/logical_partition.py:200
+#: pypowervm/wrappers/logical_partition.py:226
 msgid "Source system does not have the IBM i LPAR Mobility Capability."
 msgstr "ソース・システムに IBM i LPAR モビリティー機能がありません。"
 
-#: pypowervm/wrappers/logical_partition.py:205
-msgid "IBM i LPAR Live Migration is only supported on POWER7 and higher systems."
-msgstr "IBM i LPAR ライブ・マイグレーションは、POWER7 以上のシステムでのみサポートされます。"
-
-#: pypowervm/wrappers/logical_partition.py:212
+#: pypowervm/wrappers/logical_partition.py:234
 msgid "LPAR is not available for LPM due to missing DLPAR capabilities."
 msgstr "DLPAR 機能がないため、LPAR は LPM には使用できません。"
 
-#: pypowervm/wrappers/logical_partition.py:273
+#: pypowervm/wrappers/logical_partition.py:251
+#: pypowervm/wrappers/logical_partition.py:260
+#: pypowervm/wrappers/logical_partition.py:268
+msgid ""
+"This is not the property you are looking for.  Use srr_enabled in a "
+"NovaLink environment."
+msgstr ""
+"これは、見つけようとしているプロパティーではありません。NovaLink 環境では srr_enabled を使用してください。"
+
+#: pypowervm/wrappers/logical_partition.py:304
 #, python-format
 msgid "Invalid IPLSrc '%s'."
 msgstr "IPLSrc「%s」が無効です。"
 
-#: pypowervm/wrappers/storage.py:437
+#: pypowervm/wrappers/storage.py:489
 #, python-format
 msgid ""
 "PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
@@ -692,3 +1236,15 @@ msgstr ""
 "PV で pg83 ディスクリプター「%(pg83_raw)s」がエンコードされましたが、"
 "(%(type_error)s) をデコードできませんでした。"
 
+#: pypowervm/wrappers/virtual_io_server.py:143
+msgid ""
+"The 'xags' property of the VIOS EntryWrapper class is deprecated!  Please"
+" use values from pypowervm.const.XAG instead."
+msgstr ""
+"VIOS EntryWrapper クラスの「xags」プロパティーは推奨されません。代わりに "
+"pypowervm.const.XAG の値を使用してください。"
+
+
+# ENGL1SH_VERS10N 47423_39 DO NOT REMOVE OR CHANGE THIS LINE
+# T9N_SRC_ID 23
+# T9N_SH1P_STR1NG PV131AAP001 3

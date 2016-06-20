@@ -26,7 +26,6 @@ if six.PY2:
     import __builtin__ as builtins
 elif six.PY3:
     import builtins
-import unittest
 
 try:
     import urlparse
@@ -46,12 +45,9 @@ import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import storage as pvm_stor
-from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 logon_text = testlib.file2b("logon.xml")
-
 response_text = testlib.file2b("event.xml")
-
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
 
@@ -67,18 +63,17 @@ class TestAdapter(testtools.TestCase):
         clen = '0'
         if status == 200 and content:
             clen = str(len(content))
-        dict_headers = {'content-length': clen,
-                        'x-powered-by': 'Servlet/3.0',
-                        'set-cookie': 'JSESSIONID=0000a41BnJsGTNQvBGERA' +
-                        '3wR1nj:759878cb-4f9a-4b05-a09a-3357abfea3b4; ' +
-                        'Path=/; Secure; HttpOnly, CCFWSESSION=E4C0FFBE9' +
-                        '130431DBF1864171ECC6A6E; Path=/; Secure; HttpOnly',
-                        'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-                        'x-transaction-id': 'XT10000073',
-                        'cache-control': 'no-cache="set-cookie, ' +
-                                         'set-cookie2"',
-                        'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
-                        'content-type': 'application/vnd.ibm.powervm'}
+        dict_headers = {
+            'content-length': clen, 'x-powered-by': 'Servlet/3.0',
+            'set-cookie': ('JSESSIONID=0000a41BnJsGTNQvBGERA3wR1nj:759878cb-4f'
+                           '9a-4b05-a09a-3357abfea3b4; Path=/; Secure; HttpOnl'
+                           'y, CCFWSESSION=E4C0FFBE9130431DBF1864171ECC6A6E; P'
+                           'ath=/; Secure; HttpOnly'),
+            'expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
+            'x-transaction-id': 'XT10000073',
+            'cache-control': 'no-cache="set-cookie, set-cookie2"',
+            'date': 'Wed, 23 Jul 2014 21:51:10 GMT',
+            'content-type': 'application/vnd.ibm.powervm'}
         my_response.headers = req_struct.CaseInsensitiveDict(dict_headers)
         my_response._content = content
         return my_response
@@ -415,7 +410,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.VIOS.xags.FC_MAPPING])
+                                   xag=[c.XAG.VIO_FMAP])
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping')
@@ -425,8 +420,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag={pvm_vios.VIOS.xags.FC_MAPPING,
-                                        pvm_vios.VIOS.xags.NETWORK})
+                                   xag={c.XAG.VIO_FMAP, c.XAG.VIO_NET})
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
@@ -436,8 +430,7 @@ class TestAdapter(testtools.TestCase):
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
                                    detail='detail',
-                                   xag=[pvm_vios.VIOS.xags.NETWORK,
-                                        pvm_vios.VIOS.xags.FC_MAPPING])
+                                   xag=[c.XAG.VIO_NET, c.XAG.VIO_FMAP])
 
         expected_path = ('basepath/suffix/suffix_parm?detail=detail&'
                          'group=ViosFCMapping,ViosNetwork')
@@ -653,6 +646,49 @@ class TestAdapter(testtools.TestCase):
 
         # Get only the top
         self.assertEqual(_count_elem(top_element, 'Top'), 1)
+
+    @mock.patch('pypowervm.entities.Feed.unmarshal_atom_feed')
+    @mock.patch('pypowervm.entities.Entry.unmarshal_atom_entry')
+    @mock.patch('lxml.etree.fromstring')
+    def test_extract_atom(self, mock_fromstring, mock_unm_ent, mock_unm_feed):
+        resp = adp.Response('meth', '/rest/api/uom/Debug/SetLoggingLevel',
+                            'status', 'reason', 'headers', body='body')
+        feed_ret = mock.Mock(tag=etree.QName(c.ATOM_NS, 'feed'))
+        entry_ret = mock.Mock(tag=etree.QName(c.ATOM_NS, 'entry'))
+
+        # Empty content; "Response is not an Atom feed/entry"
+        mock_fromstring.return_value = None
+        self.assertIsNotNone(resp._extract_atom())
+        mock_fromstring.assert_called_with('body')
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
+
+        # Unmarshal feed (returns None)
+        mock_fromstring.return_value = feed_ret
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_feed.assert_called_once_with(feed_ret, resp)
+        mock_unm_ent.assert_not_called()
+        mock_unm_feed.reset_mock()
+
+        # Unmarshal entry (returns None)
+        mock_fromstring.return_value = entry_ret
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_ent.assert_called_once_with(entry_ret, resp)
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.reset_mock()
+
+        # Unmarshal a 'Debug' response (returns None)
+        mock_fromstring.return_value = mock.Mock(tag='debug output')
+        self.assertIsNone(resp._extract_atom())
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
+
+        # 'fromstring' raises.  Make sure the return message came from the
+        # right place (will include the exception text)
+        mock_fromstring.side_effect = Exception("test_extract_atom")
+        self.assertIn("test_extract_atom", resp._extract_atom())
+        mock_unm_feed.assert_not_called()
+        mock_unm_ent.assert_not_called()
 
 
 class TestElement(testtools.TestCase):
@@ -961,6 +997,3 @@ class TestElementWrapper(testtools.TestCase):
         """Wrapper for the SEAs."""
         return entry.element.findall('SharedEthernetAdapters/'
                                      'SharedEthernetAdapter')
-
-if __name__ == '__main__':
-    unittest.main()

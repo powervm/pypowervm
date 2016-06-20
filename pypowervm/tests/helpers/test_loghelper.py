@@ -61,7 +61,7 @@ class TestLogHelper(testtools.TestCase):
         # Test that we limit the number of entries
         mock_log.reset_mock()
         for x in range(0, 30):
-            adpt._request('method1', 'path', body='the body')
+            adpt._request('method1', 'path', body='the body %d' % x)
         log_hlp._write_thread_log()
         # Each req/resp pair is 2 log entries but headers and body
         # are logged separately, so with maxlogs=5, it's 5 * 2 * 2.
@@ -90,8 +90,8 @@ class TestLogHelper(testtools.TestCase):
         hlp_size = functools.partial(log_hlp.log_helper, max_logs=20)
         adpt1 = adp.Adapter(self.sess, use_cache=False, helpers=hlp_size)
         self.sess.request.side_effect = None
-        with mock.patch('pypowervm.helpers.log_helper._init_thread_stg'
-                        ) as mock_init:
+        with mock.patch('pypowervm.helpers.log_helper.'
+                        '_init_thread_stg') as mock_init:
             adpt1._request('method1', 'path', body='the body')
             # Should be called with 40 since 20 * 2 entries.
             self.assertEqual(mock_init.call_args_list,

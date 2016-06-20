@@ -121,10 +121,19 @@ class LUType(object):
     IMAGE = "VirtualIO_Image"
     AMS = "VirtualIO_Active_Memory_Sharing"
 
+_CAPACITY = 'Capacity'
+
+# Tier Constants
+_TIER_NAME = 'Name'
+_TIER_UDID = UDID
+_TIER_IS_DEFAULT = 'IsDefault'
+_TIER_CAPACITY = _CAPACITY
+_TIER_ASSOC_SSP = 'AssociatedSharedStoragePool'
+
 # Shared Storage Pool Constants
 _SSP_NAME = 'StoragePoolName'
 _SSP_UDID = UDID
-_SSP_CAPACITY = 'Capacity'
+_SSP_CAPACITY = _CAPACITY
 _SSP_FREE_SPACE = 'FreeSpace'
 _SSP_TOTAL_LU_SIZE = 'TotalLogicalUnitSize'
 _SSP_LUS = 'LogicalUnits'
@@ -134,30 +143,100 @@ _SSP_PVS = PVS
 _SSP_PV = PHYS_VOL
 
 # Virtual Adapter Constants
-_VADPT_LOCAL_ID = 'LocalPartitionID'
-# SCSI adapters use this
-_VADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
-# ...and FC adapters use this
-_VADPT_CONN_PARTITION_ID = 'ConnectingPartitionID'
-_VADPT_UDID = 'UniqueDeviceID'
-_VADPT_MAP_PORT = 'MapPort'
-_VADPT_WWPNS = 'WWPNs'
-_VADPT_BACK_DEV_NAME = 'BackingDeviceName'
-_VADPT_SLOT_NUM = 'VirtualSlotNumber'
-# SCSI adapters use this
-_VADPT_REM_SLOT_NUM = 'RemoteSlotNumber'
-# ...and FC adapters use this
-_VADPT_CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
-_VADPT_VARIED_ON = 'VariedOn'
-_VADPT_NAME = 'AdapterName'
-_VADPT_TYPE = 'AdapterType'
-_NEXT_SLOT = 'UseNextAvailableSlotID'
-_LOCATION_CODE = 'LocationCode'
-
 CLIENT_ADPT = 'ClientAdapter'
 SERVER_ADPT = 'ServerAdapter'
 
+# Common to all Virtual Adapters
+_VADPT_TYPE = 'AdapterType'
+_VADPT_DRC_NAME = 'DynamicReconfigurationConnectorName'
+_VADPT_LOC_CODE = 'LocationCode'
+_VADPT_LOCAL_ID = 'LocalPartitionID'
+_VADPT_REQD = 'RequiredAdapter'
+_VADPT_VARIED_ON = 'VariedOn'
+_VADPT_NEXT_SLOT = 'UseNextAvailableSlotID'
+_VADPT_NEXT_HI_SLOT = 'UseNextAvailableHighSlotID'
+_VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_ENABLED = 'Enabled'
+_VADPT_NAME = 'AdapterName'
+_VADPT_UDID = 'UniqueDeviceID'
+
+# Common to VSCSI Adapters (Client & Server)
+_VSCSI_ADPT_BACK_DEV_NAME = 'BackingDeviceName'
+_VSCSI_ADPT_REM_BACK_DEV_NAME = 'RemoteBackingDeviceName'
+_VSCSI_ADPT_REM_LPAR_ID = 'RemoteLogicalPartitionID'
+_VSCSI_ADPT_REM_SLOT_NUM = 'RemoteSlotNumber'
+_VSCSI_ADPT_SVR_LOC_CODE = 'ServerLocationCode'
+
+# Common to Client Adapters
+_VCLNT_ADPT_SVR_ADPT = SERVER_ADPT
+
+# Common to VFC Adapters (Client & Server)
+_VFC_ADPT_CONN_PARTITION = 'ConnectingPartition'
+_VFC_ADPT_CONN_PARTITION_ID = 'ConnectingPartitionID'
+_VFC_ADPT_CONN_SLOT_NUM = 'ConnectingVirtualSlotNumber'
+
+# VFC Server Adapter-specific
+_VFC_SVR_ADPT_MAP_PORT = 'MapPort'
+_VFC_SVR_ADPT_PHYS_PORT = 'PhysicalPort'
+
+# VFC Client Adapter-specific
+_VFC_CLNT_ADPT_WWPNS = 'WWPNs'
+_VFC_CLNT_ADPT_LOGGED_IN = 'NportLoggedInStatus'
+_VFC_CLNT_ADPT_OS_DISKS = 'OperatingSystemDisks'
+
+# Element Ordering:
+#
+# A <ServerAdapter/> might be a VSCSI server adapter or a VFC server adapter.
+# Likewise <ClientAdapter/>.  The schema inheritance hierarchy informs the
+# way we build up the element order constants:
+#
+#                            VirtualIOAdapter
+#                   VFCAdapter             VSCSIAdapter == VSCSIServerAdapter
+#      VFCClientAdapter  VFCServerAdapter        VSCSIClientAdapter
+#
+# However, this doesn't match up with the hierarchy of our wrapper classes:
+#
+#               VClientStorageAdapterElement
+# VSCSIClientAdapterElement    VFCClientAdapterElement
+#
+#               VServerStorageAdapterElement
+# VSCSIServerAdapterElement    VFCServerAdapterElement
+#
+# So we have to get creative with element ordering for the base classes, since
+# they hold the @pvm_type decorator.  We interleave the VSCSI and VFC
+# properties to create an element order that can be used commonly for both
+# types.  This only works because all overlapping properties happen to be in
+# the same order.
+#
+# Yes, this is funky.
+
+# Converged ordering base for VFC and VSCSI adapters
+_VADPT_BASE_EL_ORDER = (
+    _VADPT_TYPE, _VADPT_DRC_NAME, _VADPT_LOC_CODE, _VADPT_LOCAL_ID,
+    _VADPT_REQD, _VADPT_VARIED_ON, _VADPT_NEXT_SLOT, _VADPT_NEXT_HI_SLOT,
+    _VADPT_SLOT_NUM, _VADPT_ENABLED, _VADPT_NAME, _VSCSI_ADPT_BACK_DEV_NAME,
+    _VSCSI_ADPT_REM_BACK_DEV_NAME, _VSCSI_ADPT_REM_LPAR_ID,
+    _VFC_ADPT_CONN_PARTITION, _VFC_ADPT_CONN_PARTITION_ID,
+    _VSCSI_ADPT_REM_SLOT_NUM, _VFC_ADPT_CONN_SLOT_NUM,
+    _VSCSI_ADPT_SVR_LOC_CODE, _VADPT_UDID)
+
+# Converged (VSCSI & VFC) Server Adapter element order
+_V_SVR_ADPT_EL_ORDER = _VADPT_BASE_EL_ORDER + (
+    _VFC_SVR_ADPT_MAP_PORT, _VFC_SVR_ADPT_PHYS_PORT)
+
+# Converged (VSCSI & VFC) Client Adapter element order
+_V_CLNT_ADPT_EL_ORDER = _VADPT_BASE_EL_ORDER + (
+    _VCLNT_ADPT_SVR_ADPT, _VFC_CLNT_ADPT_WWPNS, _VFC_CLNT_ADPT_LOGGED_IN,
+    _VFC_CLNT_ADPT_OS_DISKS)
+
 VFC_CLIENT_ADPT = 'VirtualFibreChannelClientAdapter'
+
+# TargetDevice Constants
+_TD_LU_TD = 'SharedStoragePoolLogicalUnitVirtualTargetDevice'
+_TD_PV_TD = 'PhysicalVolumeVirtualTargetDevice'
+_TD_VOPT_TD = 'VirtualOpticalTargetDevice'
+_TD_VDISK_TD = 'LogicalVolumeVirtualTargetDevice'
+_TD_LUA = 'LogicalUnitAddress'
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -307,10 +386,63 @@ class VMediaRepos(ewrap.ElementWrapper):
         self.set_float_gb_value(_VREPO_SIZE, new_size)
 
 
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
+class _VTargetDevMethods(ewrap.Wrapper):
+    """Base class for {storage_type}TargetDevice of an active VSCSIMapping."""
+
+    @classmethod
+    def bld(cls, adapter, lua):
+        """Build a new Virtual Target Device.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param lua: Logical Unit Address string to assign to the new VTD.
+        :return: A new {storage_type}TargetDev, where {storage_type} is
+                 appropriate to the subclass.
+        """
+        vtd = super(_VTargetDevMethods, cls)._bld(adapter)
+        vtd._lua(lua)
+        return vtd
+
+    @property
+    def lua(self):
+        """Logical Unit Address of the target device."""
+        return self._get_val_str(_TD_LUA)
+
+    def _lua(self, val):
+        """Set the Logical Unit Address of this target device."""
+        self.set_parm_value(_TD_LUA, val)
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_LU_TD, has_metadata=True)
+class LUTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """SSP Logical Unit Virtual Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_PV_TD, has_metadata=True)
+class PVTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Physical Volume Virtual Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_VDISK_TD, has_metadata=True)
+class VDiskTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Virtual Disk (Logical Volume) Target Device for a VSCSIMapping."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type(_TD_VOPT_TD, has_metadata=True)
+class VOptTargetDev(_VTargetDevMethods, ewrap.ElementWrapper):
+    """Virtual Optical Media Target Device for a VSCSIMapping."""
+    pass
+
+
 @ewrap.ElementWrapper.pvm_type(VOPT_ROOT, has_metadata=True,
                                child_order=_VOPT_EL_ORDER)
 class VOptMedia(ewrap.ElementWrapper):
     """A virtual optical piece of media."""
+    target_dev_type = VOptTargetDev
 
     @classmethod
     def bld(cls, adapter, name, size=None, mount_type='rw'):
@@ -375,6 +507,7 @@ class VOptMedia(ewrap.ElementWrapper):
                                child_order=_PV_EL_ORDER)
 class PV(ewrap.ElementWrapper):
     """A physical volume that backs a Volume Group."""
+    target_dev_type = PVTargetDev
 
     @classmethod
     def bld(cls, adapter, name, udid=None):
@@ -487,6 +620,7 @@ class PV(ewrap.ElementWrapper):
                                child_order=_VDISK_EL_ORDER)
 class VDisk(ewrap.ElementWrapper):
     """A virtual disk that can be attached to a VM."""
+    target_dev_type = VDiskTargetDev
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None):
@@ -551,13 +685,19 @@ class VDisk(ewrap.ElementWrapper):
         return self.get_href(_DISK_VG, one_result=True)
 
 
-@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
-                               child_order=_LU_EL_ORDER)
-class LU(ewrap.ElementWrapper):
-    """A Logical Unit (usually part of a SharedStoragePool)."""
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
+class _LUBase(ewrap.Wrapper):
+    """Mixin for a Logical Unit EntryWrapper or ElementWrapper.
+
+    A Logical Unit is either a DETAIL object (within a SharedStoragePool or
+    SCSI mapping); or it is a first-class REST CHILD of Tier.  In either case,
+    its properties/methods are the same, provided here.
+    """
+    target_dev_type = LUTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, capacity, thin=None, typ=None):
+    def bld(cls, adapter, name, capacity, thin=None, typ=None, clone=None):
         """Build a fresh wrapper for LU creation within an SSP.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -565,16 +705,22 @@ class LU(ewrap.ElementWrapper):
         :param capacity: Capacity in GB for the new LogicalUnit
         :param thin: Provision the new LU as thin (True) or thick (False).
         :param typ: Logical Unit type, one of the LUType values.
+        :param clone: If the new LU is to be a linked clone, this param is a
+                      LU(Ent) wrapper representing the backing image LU.
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
-        lu = super(LU, cls)._bld(adapter)
+        lu = super(_LUBase, cls)._bld(adapter)
         lu._name(name)
         lu._capacity(capacity)
         if thin is not None:
             lu._is_thin(thin)
         if typ is not None:
             lu._lu_type(typ)
+        if clone is not None:
+            lu._cloned_from_udid(clone.udid)
+            # New LU must be at least as big as the backing LU.
+            lu._capacity(max(capacity, clone.capacity))
         return lu
 
     @classmethod
@@ -588,7 +734,7 @@ class LU(ewrap.ElementWrapper):
         :param udid: Universal Disk Identifier.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
-        lu = super(LU, cls)._bld(adapter)
+        lu = super(_LUBase, cls)._bld(adapter)
         lu._name(name)
         lu._udid(udid)
         return lu
@@ -666,6 +812,57 @@ class LU(ewrap.ElementWrapper):
         return self._get_val_bool(_LU_IN_USE, default=None)
 
 
+@ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
+                               child_order=_LU_EL_ORDER)
+class LU(_LUBase, ewrap.ElementWrapper):
+    """ElementWrapper representing a LogicalUnit DETAIL object.
+
+    LogicalUnit exists as a DETAIL object e.g. within a SharedStoragePool
+    (accessed via SSP.logical_units[n]) or a SCSI mapping (accessed via
+    VIOS.scsi_mappings[n].backing_storage).
+    """
+    pass
+
+
+@ewrap.EntryWrapper.pvm_type('LogicalUnit', child_order=_LU_EL_ORDER)
+class LUEnt(_LUBase, ewrap.EntryWrapper):
+    """EntryWrapper representing a LogicalUnit as a first-class REST object.
+
+    LogicalUnit exists as a CHILD REST object under Tier.  This class provides
+    the ability to perform e.g.
+
+        LUEnt.get(adapter, parent=tier)
+    """
+    pass
+
+
+@ewrap.EntryWrapper.pvm_type('Tier')
+class Tier(ewrap.EntryWrapper):
+    """A storage grouping within a SharedStoragePool."""
+
+    @property
+    def name(self):
+        return self._get_val_str(_TIER_NAME)
+
+    @property
+    def udid(self):
+        return self._get_val_str(_TIER_UDID)
+
+    @property
+    def is_default(self):
+        return self._get_val_bool(_TIER_IS_DEFAULT)
+
+    @property
+    def capacity(self):
+        return self._get_val_float(_TIER_CAPACITY)
+
+    @property
+    def ssp_uuid(self):
+        """The UUID of this Tier's parent SharedStoragePool."""
+        return u.get_req_path_uuid(self.get_href(_TIER_ASSOC_SSP,
+                                                 one_result=True))
+
+
 @ewrap.EntryWrapper.pvm_type('SharedStoragePool')
 class SSP(ewrap.EntryWrapper):
     """A Shared Storage Pool containing PVs and LUs."""
@@ -739,6 +936,7 @@ class SSP(ewrap.EntryWrapper):
         self.replace_list(_SSP_PVS, pvs)
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VStorageAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VStorageAdapter{Element|Entry}."""
 
@@ -763,14 +961,15 @@ class _VStorageAdapterMethods(ewrap.Wrapper):
 
     def _use_next_slot(self, use):
         """Use next available (not high) slot."""
-        self.set_parm_value(_NEXT_SLOT, u.sanitize_bool_for_api(use))
+        self.set_parm_value(_VADPT_NEXT_SLOT, u.sanitize_bool_for_api(use))
 
     @property
     def loc_code(self):
         """The device's location code."""
-        return self._get_val_str(_LOCATION_CODE)
+        return self._get_val_str(_VADPT_LOC_CODE)
 
 
+# base_pvm_type by _VStorageAdapterMethods
 @six.add_metaclass(abc.ABCMeta)
 class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
@@ -786,11 +985,12 @@ class _VStorageAdapterElement(ewrap.ElementWrapper, _VStorageAdapterMethods):
                   UseNextAvailableSlotID=true
         """
         adp = super(_VStorageAdapterElement, cls)._bld(adapter)
-        adp._side(side)
         adp._use_next_slot(True)
+        adp._side(side)
         return adp
 
 
+# base_pvm_type by _VStorageAdapterMethods
 @six.add_metaclass(abc.ABCMeta)
 class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
     """Parent class for the virtual storage adapters (FC or SCSI)."""
@@ -811,11 +1011,27 @@ class _VStorageAdapterEntry(ewrap.EntryWrapper, _VStorageAdapterMethods):
         return adp
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with _VClientStorageAdapter{Element|Entry}."""
     @classmethod
-    def bld(cls, adapter):
-        return super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+    def bld(cls, adapter, slot_num=None):
+        """Builds a new Client Adapter.
+
+        If the slot number is None then we'll specify the
+        'UseNextAvailableSlot' tag to REST and the REST layer will assign the
+        slot. The slot number that it chose will be in the response.
+
+        :param adapter: A pypowervm.adapter.Adapter
+        :param slot_num: (Optional, Default: None) The client slot number to
+                         be used.
+        :returns: A new Client Adapter.
+        """
+        clad = super(_VClientAdapterMethods, cls)._bld_new(adapter, 'Client')
+        if slot_num is not None:
+            clad._lpar_slot_num(slot_num)
+            clad._use_next_slot(False)
+        return clad
 
     @property
     def lpar_id(self):
@@ -831,9 +1047,14 @@ class _VClientAdapterMethods(ewrap.Wrapper):
         """The (int) slot number that the adapter is in."""
         return self._get_val_int(_VADPT_SLOT_NUM)
 
+    def _lpar_slot_num(self, slot_num):
+        """Set the slot number that the adapter is in."""
+        self.set_parm_value(_VADPT_SLOT_NUM, slot_num)
+
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(CLIENT_ADPT, has_metadata=True,
+                               child_order=_V_CLNT_ADPT_EL_ORDER)
 class VClientStorageAdapterElement(_VClientAdapterMethods,
                                    _VStorageAdapterElement):
     """Parent class for Client Virtual Storage Adapter Elements."""
@@ -841,7 +1062,8 @@ class VClientStorageAdapterElement(_VClientAdapterMethods,
 
 
 @six.add_metaclass(abc.ABCMeta)
-@ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True)
+@ewrap.ElementWrapper.pvm_type(SERVER_ADPT, has_metadata=True,
+                               child_order=_V_SVR_ADPT_EL_ORDER)
 class VServerStorageAdapterElement(_VStorageAdapterElement):
     """Parent class for Server Virtual Storage Adapters."""
 
@@ -874,12 +1096,12 @@ class VSCSIClientAdapterElement(VClientStorageAdapterElement):
         Note that the VIOS ID is RemoteLogicalPartitionID on the client side,
         and LocalPartitionID on the server side.
         """
-        return self._get_val_int(_VADPT_REM_LPAR_ID)
+        return self._get_val_int(_VSCSI_ADPT_REM_LPAR_ID)
 
     @property
     def vios_slot_num(self):
         """The (int) remote slot number of the paired adapter."""
-        return self._get_val_int(_VADPT_REM_SLOT_NUM)
+        return self._get_val_int(_VSCSI_ADPT_REM_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -892,7 +1114,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
     @property
     def backing_dev_name(self):
         """The backing device name that this virtual adapter is hooked into."""
-        return self._get_val_str(_VADPT_BACK_DEV_NAME)
+        return self._get_val_str(_VSCSI_ADPT_BACK_DEV_NAME)
 
     @property
     def lpar_id(self):
@@ -901,7 +1123,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         Note that the LPAR ID is LocalPartitionID on the client side, and
         RemoteLogicalPartitionID on the server side.
         """
-        return self._get_val_int(_VADPT_REM_LPAR_ID)
+        return self._get_val_int(_VSCSI_ADPT_REM_LPAR_ID)
 
     @property
     def vios_id(self):
@@ -915,7 +1137,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
     @property
     def lpar_slot_num(self):
         """The (int) slot number that the LPAR side of the adapter."""
-        return self._get_val_int(_VADPT_REM_SLOT_NUM)
+        return self._get_val_int(_VSCSI_ADPT_REM_SLOT_NUM)
 
     @property
     def vios_slot_num(self):
@@ -923,6 +1145,7 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         return self._get_val_int(_VADPT_SLOT_NUM)
 
 
+@ewrap.Wrapper.base_pvm_type
 class _VFCClientAdapterMethods(ewrap.Wrapper):
     """Mixin to be used with VFCClientAdapter(Element)."""
     def _wwpns(self, value):
@@ -931,12 +1154,12 @@ class _VFCClientAdapterMethods(ewrap.Wrapper):
         :param value: The list of WWPNs.  Should only contain two.
         """
         if value is not None:
-            self.set_parm_value(_VADPT_WWPNS, " ".join(value).lower())
+            self.set_parm_value(_VFC_CLNT_ADPT_WWPNS, " ".join(value).lower())
 
     @property
     def wwpns(self):
         """Returns a list that contains the WWPNs.  If no WWPNs, empty list."""
-        val = self._get_val_str(_VADPT_WWPNS)
+        val = self._get_val_str(_VFC_CLNT_ADPT_WWPNS)
         if val is None:
             return []
         else:
@@ -945,12 +1168,12 @@ class _VFCClientAdapterMethods(ewrap.Wrapper):
     @property
     def vios_id(self):
         """The short ID (not UUID) of the VIOS side of this adapter."""
-        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+        return self._get_val_int(_VFC_ADPT_CONN_PARTITION_ID)
 
     @property
     def vios_slot_num(self):
         """The (int) remote slot number of the paired adapter."""
-        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
+        return self._get_val_int(_VFC_ADPT_CONN_SLOT_NUM)
 
 
 # pvm_type decorator by superclass (it is not unique)
@@ -962,14 +1185,17 @@ class VFCClientAdapterElement(VClientStorageAdapterElement,
     """
 
     @classmethod
-    def bld(cls, adapter, wwpns=None):
+    def bld(cls, adapter, wwpns=None, slot_num=None):
         """Create a fresh Virtual Fibre Channel Client Adapter.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param wwpns: An optional set of two client WWPNs to set on the
                       adapter.
+        :param slot_num: An optional integer to be set as the Virtual
+                         slot number.
         """
-        adpt = super(VFCClientAdapterElement, cls).bld(adapter)
+        adpt = super(VFCClientAdapterElement, cls).bld(adapter,
+                                                       slot_num=slot_num)
 
         if wwpns is not None:
             adpt._wwpns(wwpns)
@@ -998,12 +1224,12 @@ class VFCServerAdapterElement(VServerStorageAdapterElement):
     @property
     def map_port(self):
         """The physical FC port name that this virtual port is connect to."""
-        return self._get_val_str(_VADPT_MAP_PORT)
+        return self._get_val_str(_VFC_SVR_ADPT_MAP_PORT)
 
     @property
     def lpar_id(self):
         """The short ID (not UUID) of the LPAR side of this adapter."""
-        return self._get_val_int(_VADPT_CONN_PARTITION_ID)
+        return self._get_val_int(_VFC_ADPT_CONN_PARTITION_ID)
 
     @property
     def vios_id(self):
@@ -1013,7 +1239,7 @@ class VFCServerAdapterElement(VServerStorageAdapterElement):
     @property
     def lpar_slot_num(self):
         """The (int) slot number that the LPAR side of the adapter."""
-        return self._get_val_int(_VADPT_CONN_SLOT_NUM)
+        return self._get_val_int(_VFC_ADPT_CONN_SLOT_NUM)
 
     @property
     def vios_slot_num(self):

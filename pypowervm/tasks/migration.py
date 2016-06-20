@@ -37,13 +37,14 @@ VFC_MAPPINGS = 'VirtualFCMappings'
 VSCSI_MAPPINGS = 'VirtualSCSIMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
+SPP_ID = 'SharedProcPoolID'
 
 
 def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                  tgt_mgmt_svr=None, tgt_mgmt_usr=None,
                  virtual_fc_mappings=None, virtual_scsi_mappings=None,
-                 dest_msp_name=None, source_msp_name=None,
-                 timeout=CONF.pypowervm_job_request_timeout):
+                 dest_msp_name=None, source_msp_name=None, spp_id=None,
+                 timeout=CONF.pypowervm_job_request_timeout * 4):
 
     """Method to migrate a logical partition.
 
@@ -63,6 +64,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
         partition.
     :param source_msp_name: The name of the source VIOS to use for the mover
         partition.
+    :param spp_id: The shared processor pool id to use on the target system.
     :param timeout: maximum number of seconds for job to complete
 
     virtual_fc_mappings:
@@ -121,7 +123,7 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
     # Generic 'raw' format job parameters.
     for kw, val in [(TGT_RMT_HMC, tgt_mgmt_svr),
                     (TGT_RMT_HMC_USR, tgt_mgmt_usr), (DEST_MSP, dest_msp_name),
-                    (SRC_MSP, source_msp_name)]:
+                    (SRC_MSP, source_msp_name), (SPP_ID, spp_id)]:
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))

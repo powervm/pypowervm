@@ -140,6 +140,7 @@ _VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
 _VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
 _VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
 _VADPT_PVID = _PVID
+_VADPT_ENABLED = 'Enabled'
 _VADPT_LOC_PART_ID = 'LocalPartitionID'
 _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
@@ -1133,6 +1134,22 @@ class CNA(ewrap.EntryWrapper):
     @pvid.setter
     def pvid(self, new_val):
         self.set_parm_value(_VADPT_PVID, new_val)
+
+    @property
+    def enabled(self):
+        """Returns the enabled state (boolean value).
+
+        A CNA is always created enabled=true.  However, certain migration
+        operations of an LPAR (ex. migration via OpenStack when using Open
+        vSwitch) will cause the client's CNA to be disabled. This method can be
+        used to check the state of the adapter.
+        """
+        return self._get_val_bool(_VADPT_ENABLED)
+
+    @enabled.setter
+    def enabled(self, new_val):
+        self.set_parm_value(_VADPT_ENABLED,
+                            u.sanitize_bool_for_api(new_val))
 
     @property
     def loc_code(self):

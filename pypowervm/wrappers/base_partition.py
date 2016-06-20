@@ -16,6 +16,7 @@
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
 
+from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -71,6 +72,7 @@ _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
+_BP_NVRAM = 'PartitionNVRAM'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -84,8 +86,8 @@ BP_EL_ORDER = (
     _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOC_SYSTEM,
     _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
     _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION, _BP_AUTO_START,
-    _BP_BOOT_MODE, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS,
-    _BP_DESC
+    _BP_BOOT_MODE, _BP_NVRAM, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_ASSOC_TASKS, _BP_DESC
 )
 
 # Partition Capabilities (_CAP)
@@ -188,6 +190,7 @@ _ASSOC_IO_SLOT_PHYS_LOC = 'IOUnitPhysicalLocation'
 _ASSOC_IO_SLOT_ADPT_ID = 'PCAdapterID'
 _ASSOC_IO_SLOT_PCI_CLASS = 'PCIClass'
 _ASSOC_IO_SLOT_PCI_DEV_ID = 'PCIDeviceID'
+_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID = 'PCISubsystemDeviceID'
 _ASSOC_IO_SLOT_PCI_MFG_ID = 'PCIManufacturerID'
 _ASSOC_IO_SLOT_PCI_REV_ID = 'PCIRevisionID'
 _ASSOC_IO_SLOT_PCI_VENDOR_ID = 'PCIVendorID'
@@ -204,10 +207,11 @@ _IO_SLOT_ORDER = (ASSOC_IO_SLOT_ROOT, _IO_SLOT_REQ)
 _AIO_ORDER = (_ASSOC_IO_SLOT_BUS_GRP, _ASSOC_IO_SLOT_DESC,
               _ASSOC_IO_SLOT_FEAT_CODES, _ASSOC_IO_SLOT_PHYS_LOC,
               _ASSOC_IO_SLOT_ADPT_ID, _ASSOC_IO_SLOT_PCI_CLASS,
-              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_MFG_ID,
-              _ASSOC_IO_SLOT_PCI_REV_ID, _ASSOC_IO_SLOT_PCI_VENDOR_ID,
-              _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID, RELATED_IO_ADPT_ROOT,
-              _ASSOC_IO_SLOT_DRC_INDEX, _ASSOC_IO_SLOT_DRC_NAME)
+              _ASSOC_IO_SLOT_PCI_DEV_ID, _ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID,
+              _ASSOC_IO_SLOT_PCI_MFG_ID, _ASSOC_IO_SLOT_PCI_REV_ID,
+              _ASSOC_IO_SLOT_PCI_VENDOR_ID, _ASSOC_IO_SLOT_SUBSYS_VENDOR_ID,
+              RELATED_IO_ADPT_ROOT, _ASSOC_IO_SLOT_DRC_INDEX,
+              _ASSOC_IO_SLOT_DRC_NAME)
 
 IO_PFC_ADPT_ROOT = 'PhysicalFibreChannelAdapter'
 _IO_ADPT_ID = 'AdapterID'
@@ -346,6 +350,7 @@ class KeylockPos(object):
     ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
 
 
+@ewrap.Wrapper.base_pvm_type
 class BasePartition(ewrap.EntryWrapper):
     """Base class for Logical Partition (LPAR) & Virtual I/O Server (VIOS).
 
@@ -574,6 +579,16 @@ class BasePartition(ewrap.EntryWrapper):
         """The Partition Processor Configuration for the LPAR."""
         elem = self._find_or_seed(_BP_PROC_CFG)
         self.element.replace(elem, proc_config.element)
+
+    @ewrap.Wrapper.xag_property(const.XAG.NVRAM)
+    def nvram(self):
+        return self._get_val_str(_BP_NVRAM)
+
+    @nvram.setter
+    def nvram(self, nvram):
+        self.set_parm_value(_BP_NVRAM, nvram,
+                            attrib=u.xag_attrs(const.XAG.NVRAM,
+                                               base=const.ATTR_KSV130))
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
@@ -1151,7 +1166,7 @@ class IOSlot(ewrap.ElementWrapper):
 
         @property
         def pci_subsys_dev_id(self):
-            return self._get_val_int(_ASSOC_IO_SLOT_PCI_DEV_ID)
+            return self._get_val_int(_ASSOC_IO_SLOT_PCI_SUBSYS_DEV_ID)
 
         @property
         def pci_mfg_id(self):

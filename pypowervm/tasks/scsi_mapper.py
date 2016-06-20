@@ -19,6 +19,7 @@
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
 
+from pypowervm import const as c
 from pypowervm.i18n import _
 from pypowervm import util
 from pypowervm.utils import retry as pvm_retry
@@ -43,8 +44,10 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 
 
 @lock.synchronized('vscsi_mapping')
-@pvm_retry.retry(argmod_func=_argmod)
-def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
+@pvm_retry.retry(tries=60, argmod_func=_argmod,
+                 delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
+                      lpar_slot_num=None, lua=None):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -62,13 +65,20 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     :param vios: The virtual I/O server to which the mapping should be
                  added.  This may be the VIOS's UUID string OR an existing VIOS
                  EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param lpar_uuid: The UUID of the LPAR that will have the connected
                       storage.
     :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
                          that is to be connected.
-    :param fuse_limit: (Optional) The max number of devices to allow on one
-                       scsi bus before creating a second SCSI bus.
+    :param fuse_limit: (Optional, Default: 32) The max number of devices to
+                       allow on one scsi bus before creating a second SCSI bus.
+    :param lpar_slot_num: (Optional, Default: None) The slot number for the
+                          client LPAR to use in the mapping. If None, the next
+                          available slot number is assigned by the server.
+    :param lua: (Optional.  Default: None) Logical Unit Address to set on the
+                TargetDevice.  If None, the LUA will be assigned by the server.
+                Should be specified for all of the VSCSIMappings for a
+                particular bus, or none of them.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     """
@@ -78,7 +88,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
     if not isinstance(vios, pvm_vios.VIOS):
         vios_w = pvm_vios.VIOS.wrap(
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
-                         xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
+                         xag=[c.XAG.VIO_SMAP]))
     else:
         vios_w = vios
 
@@ -96,7 +106,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
 
     # Build the mapping.
     scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                                   fuse_limit)
+                                   fuse_limit=fuse_limit,
+                                   lpar_slot_num=lpar_slot_num, lua=lua)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
@@ -114,7 +125,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32):
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                        fuse_limit=32):
+                        fuse_limit=32, lpar_slot_num=None, lua=None):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -133,8 +144,15 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                       storage.
     :param storage_elem: The storage element (either a vDisk, vOpt, LU or PV)
                          that is to be connected.
-    :param fuse_limit: (Optional) The max number of devices to allow on one
-                       scsi bus before creating a second SCSI bus.
+    :param fuse_limit: (Optional, Default: 32) The max number of devices to
+                       allow on one scsi bus before creating a second SCSI bus.
+    :param lpar_slot_num: (Optional, Default: None) The slot number for the
+                          client LPAR to use in the mapping. If None, the next
+                          available slot number is assigned by the server.
+    :param lua: (Optional.  Default: None) Logical Unit Address to set on the
+                TargetDevice.  If None, the LUA will be assigned by the server.
+                Should be specified for all of the VSCSIMappings for a
+                particular bus, or none of them.
     :return: The SCSI mapping that can be added to the vios_w.  This does not
              do any updates to the wrapper itself.
     """
@@ -164,11 +182,12 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     # If we have a clonable map, we can replicate that.  Otherwise we need
     # to build from scratch.
     if clonable_map is not None:
-        scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(clonable_map,
-                                                           storage_elem)
+        scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(
+            clonable_map, storage_elem, lpar_slot_num=lpar_slot_num, lua=lua)
     else:
-        scsi_map = pvm_vios.VSCSIMapping.bld(adapter, host_uuid, lpar_uuid,
-                                             storage_elem)
+        scsi_map = pvm_vios.VSCSIMapping.bld(
+            adapter, host_uuid, lpar_uuid, storage_elem,
+            lpar_slot_num=lpar_slot_num, lua=lua)
     return scsi_map
 
 
@@ -284,7 +303,8 @@ def detach_storage(vwrap, client_lpar_id, match_func=None):
 
 
 @lock.synchronized('vscsi_mapping')
-@pvm_retry.retry(argmod_func=_argmod)
+@pvm_retry.retry(tries=60, argmod_func=_argmod,
+                 delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     """Removes the storage element from a SCSI bus and clears out bus.
 
@@ -296,7 +316,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     :param vios: The virtual I/O server from which the mapping should be
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param match_func: Matching function suitable for passing to find_maps.
                        See that method's match_func parameter.
@@ -308,7 +328,7 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     if not isinstance(vios, pvm_vios.VIOS):
         vios = pvm_vios.VIOS.wrap(
             adapter.read(pvm_vios.VIOS.schema_type, root_id=vios,
-                         xag=[pvm_vios.VIOS.xags.SCSI_MAPPING]))
+                         xag=[c.XAG.VIO_SMAP]))
 
     resp_list = remove_maps(vios, client_lpar_id, match_func=match_func)
 
@@ -425,8 +445,8 @@ def find_maps(mapping_list, client_lpar_id=None, match_func=None,
                 href, preserve_case=True)):
             continue
         elif (client_lpar_id and not is_uuid and
-                # Use the server adapter in case this is an orphan.
-                existing_scsi_map.server_adapter.lpar_id != client_id):
+              # Use the server adapter in case this is an orphan.
+              existing_scsi_map.server_adapter.lpar_id != client_id):
             continue
 
         if match_func(existing_scsi_map.backing_storage):
@@ -501,7 +521,7 @@ def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
     :param vios: The virtual I/O server from which the mapping should be
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param media_name: (Optional) The name of the virtual optical media to
                        remove from the SCSI bus.  If None, will remove all
@@ -528,7 +548,7 @@ def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
     :param vios: The virtual I/O server from which the mapping should be
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the virtual disk to remove
                        from the SCSI bus.  If None, all virtual disks will be
@@ -558,7 +578,7 @@ def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
     :param vios: The virtual I/O server from which the mapping should be
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the LUs to remove from
                        the SCSI bus.  If None, all LUs asssociated with the
@@ -587,7 +607,7 @@ def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev):
     :param vios: The virtual I/O server from which the mapping should be
                  removed.  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
-                 using the SCSI_MAPPING extended attribute group.
+                 using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param backing_dev: The physical volume name to be removed.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.

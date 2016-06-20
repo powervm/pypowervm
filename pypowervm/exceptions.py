@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -213,3 +213,63 @@ class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
 class FoundDevMultipleTimes(AbstractMsgFmtError):
     msg_fmt = _("Found device %(devname)s %(count)d times; expected to find "
                 "it at most once.")
+
+
+class MultipleExceptionsInFeedTask(Exception):
+    """Exception containing tracebacks in WrappedFailure exceptions.
+
+    Exception raised when a pypowervm.utils.transaction.FeedTask run raises a
+    tasflow.exceptions.WrappedFailure containing more than one exception.  The
+    message string is a concatenation of the tracebacks of the wrapped
+    exceptions.
+    """
+    pass
+
+
+class ManagementPartitionNotFoundException(AbstractMsgFmtError):
+    """Couldn't find exactly one management partition on the system."""
+    msg_fmt = _("Expected to find exactly one management partition; found "
+                "%(count)d.")
+
+
+class ThisPartitionNotFoundException(AbstractMsgFmtError):
+    """Couldn't find exactly one partition with the local VM's short ID."""
+    msg_fmt = _("Expected to find exactly one partition with ID %(lpar_id)d; "
+                "found %(count)d.")
+
+
+class NoDefaultTierFoundOnSSP(AbstractMsgFmtError):
+    """Looked for a default Tier on the SSP, but didn't find it."""
+    msg_fmt = _("Couldn't find the default Tier on Shared Storage Pool "
+                "%(ssp_name)s.")
+
+
+class InvalidHostForRebuild(AbstractMsgFmtError):
+    pass
+
+
+class InvalidHostForRebuildNoVIOSForUDID(InvalidHostForRebuild):
+    msg_fmt = _("The device with UDID %(udid)s was not found on any of the "
+                "Virtual I/O Servers.")
+
+
+class InvalidHostForRebuildNotEnoughVIOS(InvalidHostForRebuild):
+    msg_fmt = _("There are not enough Virtual I/O Servers to support the "
+                "virtual machine's device with UDID %(udid)s.")
+
+
+class InvalidHostForRebuildFabricsNotFound(InvalidHostForRebuild):
+    msg_fmt = _("The expected fabrics (%(fabrics)s) were not found on any of "
+                "the Virtual I/O Servers.")
+
+
+class InvalidHostForRebuildInvalidIOType(InvalidHostForRebuild):
+    msg_fmt = _("Can not rebuild the virtual machine.  It is using an I/O "
+                "type of %(io_type)s which is not supported for VM rebuild.")
+
+
+class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
+    msg_fmt = _("The number of VFC slots on the target system "
+                "(%(rebuild_slots)d) does not match the number of slots on "
+                "the client system (%(original_slots)d).  Unable to rebuild "
+                "this virtual machine on this system.")

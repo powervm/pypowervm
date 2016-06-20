@@ -22,6 +22,7 @@ from oslo_log import log as logging
 from oslo_utils import reflection
 import six
 from taskflow import engines as tf_eng
+from taskflow import exceptions as tf_ex
 from taskflow.patterns import linear_flow as tf_lf
 from taskflow.patterns import unordered_flow as tf_uf
 from taskflow import task as tf_task
@@ -111,8 +112,8 @@ def entry_transaction(func):
             if isinstance(wos, ewrap.EntryWrapperGetter):
                 wos = wos.get()
 
-            @retry.retry(argmod_func=retry.refresh_wrapper, tries=6,
-                         delay_func=retry.STEPPED_DELAY)
+            @retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
+                         delay_func=retry.STEPPED_RANDOM_DELAY)
             def _retry_refresh(wrapper, *a3, **k3):
                 """Retry as needed, refreshing its wrapper each time."""
                 return func(wrapper, *a3, **k3)
@@ -260,7 +261,7 @@ class _FunctorSubtask(Subtask):
         return self._func(wrapper, *_args, **_kwargs)
 
 
-class WrapperTask(tf_task.BaseTask):
+class WrapperTask(tf_task.Task):
     """An atomic modify-and-POST transaction Task over a single EntryWrapper.
 
     The modifications should comprise some number of Subtask instances, added
@@ -494,7 +495,7 @@ class ContextThreadPoolExecutor(th.ThreadPoolExecutor):
         return super(ContextThreadPoolExecutor, self).submit(wrapped)
 
 
-class FeedTask(tf_task.BaseTask):
+class FeedTask(tf_task.Task):
     """Invokes WrapperTasks in parallel over each EntryWrapper in a feed.
 
     Usage
@@ -764,22 +765,32 @@ class FeedTask(tf_task.BaseTask):
                      self.name)
             return
         rets = {'wrapper_task_rets': {}}
-        # Calling .wrapper_tasks will cause the feed to be fetched and
-        # WrapperTasks to be replicated, if not already done.  Only do this if
-        # there exists at least one WrapperTask with Subtasks.
-        # (NB: It is legal to have a FeedTask that *only* has post-execs.)
-        if self._tx_by_uuid or self._common_tx.subtasks:
-            pflow = tf_uf.Flow("%s_parallel_flow" % self.name)
-            pflow.add(*self.wrapper_tasks.values())
-            # Execute the parallel flow now so the results can be provided to
-            # any post-execs.
-            rets['wrapper_task_rets'] = self._process_subtask_rets(tf_eng.run(
-                pflow, engine='parallel',
-                executor=ContextThreadPoolExecutor(self.max_workers)))
-        if self._post_exec:
-            flow = tf_lf.Flow('%s_post_execs' % self.name)
-            flow.add(*self._post_exec)
-            eng = tf_eng.load(flow, store=rets)
-            eng.run()
-            rets = eng.storage.fetch_all()
+        try:
+            # Calling .wrapper_tasks will cause the feed to be fetched and
+            # WrapperTasks to be replicated, if not already done.  Only do this
+            # if there exists at least one WrapperTask with Subtasks.
+            # (NB: It is legal to have a FeedTask that *only* has post-execs.)
+            if self._tx_by_uuid or self._common_tx.subtasks:
+                pflow = tf_uf.Flow("%s_parallel_flow" % self.name)
+                pflow.add(*self.wrapper_tasks.values())
+                # Execute the parallel flow now so the results can be provided
+                # to any post-execs.
+                rets['wrapper_task_rets'] = self._process_subtask_rets(
+                    tf_eng.run(
+                        pflow, engine='parallel',
+                        executor=ContextThreadPoolExecutor(self.max_workers)))
+            if self._post_exec:
+                flow = tf_lf.Flow('%s_post_execs' % self.name)
+                flow.add(*self._post_exec)
+                eng = tf_eng.load(flow, store=rets)
+                eng.run()
+                rets = eng.storage.fetch_all()
+        except tf_ex.WrappedFailure as wfail:
+            raise ex.MultipleExceptionsInFeedTask(
+                '\n' + '\n'.join(
+                    'WrappedFailure:\n%s' % fail.traceback_str
+                    for fail in wfail))
+        # Let a non-wrapped exception (which happens if there's only one
+        # element in the feed) bubble up as-is.
+
         return rets

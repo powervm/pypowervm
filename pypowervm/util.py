@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -471,3 +471,57 @@ def part_id_by_loc_code(loc_code):
     """
     id_match = re.search('.*-V(.+?)-.*', loc_code)
     return int(id_match.group(1)) if id_match else None
+
+
+def xag_attrs(xagstr, base=const.DEFAULT_SCHEMA_ATTR):
+    """Produce XML attributes for a property using extended attribute groups.
+
+    :param xagstr: Extended attribute group name (from pypowervm.const.XAG).
+    :param base: The dict of attributes to which to add the extended attribute
+                 group.  Usually one of the pypowervm.const values near
+                 DEFAULT_SCHEMA_ATTR (the default).
+    :return: Dict of XML attributes suitable for the 'attrib' kwarg of a
+             (pypowervm.entities or etree) Element constructor.
+    """
+    return dict(base, group=xagstr) if xagstr else base
+
+
+def my_partition_id():
+    """Return the short ID (not UUID) of the current partition, as an int."""
+    with open('/proc/ppc64/lparcfg') as lparcfg:
+        for line in lparcfg:
+            if line.startswith('partition_id='):
+                return int(line.split('=')[1].rstrip())
+
+
+def parent_spec(parent, parent_type, parent_uuid):
+    """Produce a canonical parent type and UUID suitable for read().
+
+    :param parent: EntryWrapper representing the parent.  If specified,
+                   parent_type and parent_uuid are ignored.
+    :param parent_type: EntryWrapper class or schema_type string representing
+                        the schema type of the parent.
+    :param parent_uuid: String UUID of the parent.
+    :return parent_type: String schema type of the parent.  The parent_type and
+                         parent_uuid returns are both None or both valid
+                         strings.
+    :return parent_uuid: String UUID of the parent.  The parent_type and
+                         parent_uuid returns are both None or both valid
+                         strings.
+    :raise ValueError: If parent is None and parent_type xor parent_uuid is
+                       specified.
+    """
+    if all(param is None for param in (parent, parent_type, parent_uuid)):
+        return None, None
+    if parent is not None:
+        return parent.schema_type, parent.uuid
+    if any(param is None for param in (parent_type, parent_uuid)):
+        # parent_type xor parent_uuid specified
+        raise ValueError(_("Developer error: partial parent specification."))
+    # Allow either string or class for parent_type
+    if hasattr(parent_type, 'schema_type'):
+        parent_type = parent_type.schema_type
+    elif type(parent_type) is not str:
+        raise ValueError(_("Developer error: parent_type must be either a "
+                           "string schema type or a Wrapper subclass."))
+    return parent_type, parent_uuid

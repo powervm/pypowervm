@@ -3187,6 +3187,7 @@ BODY{
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
+    <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">TheNVRAMis20KofBASE64encodedDATA</PartitionNVRAM>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>

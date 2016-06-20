@@ -190,7 +190,7 @@ class TestHDisk(unittest.TestCase):
     @mock.patch('pypowervm.utils.transaction.FeedTask')
     @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
     @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
-    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapperGetter.get')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.get')
     def test_discover_hdisk(self, mock_ewget, mock_fsl, mock_alsst, mock_ftsk,
                             mock_luar):
         def set_luar_side_effect(_stat, _dev):
@@ -220,9 +220,9 @@ class TestHDisk(unittest.TestCase):
             self.assertEqual(1, mock_fsl.call_count)
             mock_ftsk.assert_called_with('scrub_vios_vuuid', mock.ANY)
             self.assertEqual(1, mock_alsst.call_count)
-            mock_luar.assert_has_calls([
-                mock.call('adp', 'vuuid', ['itls'], vendor=hdisk.LUAType.OTHER)
-                for i in range(2)])
+            mock_luar.assert_has_calls(
+                [mock.call('adp', 'vuuid', ['itls'],
+                           vendor=hdisk.LUAType.OTHER)] * 2)
             mock_fsl.reset_mock()
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()

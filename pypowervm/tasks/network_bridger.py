@@ -21,6 +21,7 @@ import copy
 
 import six
 
+from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
 from pypowervm.utils import retry as pvm_retry
@@ -128,7 +129,7 @@ class NetworkBridger(object):
         self.host_uuid = host_uuid
         self._orphan_map = None
 
-    @pvm_retry.retry()
+    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
         """Will make sure that the VLANs are assigned to the Network Bridge.
 
@@ -217,7 +218,7 @@ class NetworkBridger(object):
         # The Load Groups on the Network Bridge should be correct.
         req_nb.update()
 
-    @pvm_retry.retry()
+    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
     def remove_vlan_from_nb(self, nb_uuid, vlan_id, fail_if_pvid=False,
                             existing_nbs=None):
         """Will remove the VLAN from a given Network Bridge.
@@ -315,21 +316,6 @@ class NetworkBridger(object):
         for i in range(4094, 1, -1):
             if i not in all_vlans:
                 return i
-        return None
-
-    # TODO(IBM): Remove this method; callers should use VSwitch.search()
-    def _find_vswitch(self, vswitch_id):
-        """Gathers the VSwitch wrapper from the system.
-
-        :param vswitch_id: The identifier (not uuid) for the vswitch.
-        :return: Wrapper for the corresponding VirtualSwitch.
-        """
-        vswitches = pvm_net.VSwitch.get(
-            self.adapter, parent_type=pvm_ms.System,
-            parent_uuid=self.host_uuid)
-        for vswitch in vswitches:
-            if vswitch.switch_id == int(vswitch_id):
-                return vswitch
         return None
 
     @staticmethod
@@ -437,7 +423,7 @@ class NetworkBridger(object):
         # Loop through all the VIOSes.
         vios_wraps = pvm_vios.VIOS.get(self.adapter, parent_type=pvm_ms.System,
                                        parent_uuid=self.host_uuid,
-                                       xag=[pvm_vios.VIOS.xags.NETWORK])
+                                       xag=[c.XAG.VIO_NET])
 
         for vios_w in vios_wraps:
             # List all of the trunk adapters that are not part of the SEAs
@@ -476,7 +462,7 @@ class NetworkBridger(object):
             vio_part[dev_name] = []
         vio_part[dev_name].extend(vlan_ids)
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         Should perform the actual update to the API.
@@ -526,7 +512,10 @@ class NetworkBridgerVNET(NetworkBridger):
         """
         # At this point, all of the new VLANs that need to be added are in the
         # new_vlans list.  Now we need to put them on load groups.
-        vswitch_w = self._find_vswitch(req_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=req_nb.vswitch_id)
         vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
                                  parent_uuid=self.host_uuid)
 
@@ -605,7 +594,10 @@ class NetworkBridgerVNET(NetworkBridger):
 
         # For the _find_or_create_vnet, we need to query all the virtual
         # networks
-        vswitch_w = self._find_vswitch(impacted_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=impacted_nb.vswitch_id)
         vnets = pvm_net.VNet.get(self.adapter, parent_type=pvm_ms.System,
                                  parent_uuid=self.host_uuid)
 
@@ -746,7 +738,7 @@ class NetworkBridgerVNET(NetworkBridger):
 class NetworkBridgerTA(NetworkBridger):
     """The Trunk Adapter aware NetworkBridger."""
 
-    def _reassign_arbitrary_vid(self,  old_vid, new_vid, impacted_nb):
+    def _reassign_arbitrary_vid(self, old_vid, new_vid, impacted_nb):
         """Moves the arbitrary VLAN ID from one Load Group to another.
 
         Should perform the actual update to the API.
@@ -782,7 +774,10 @@ class NetworkBridgerTA(NetworkBridger):
         """
         # At this point, all of the new VLANs that need to be added are in the
         # new_vlans list.  Now we need to put them on trunk adapters.
-        vswitch_w = self._find_vswitch(req_nb.vswitch_id)
+        vswitch_w = pvm_net.VSwitch.search(
+            self.adapter, parent_type=pvm_ms.System,
+            parent_uuid=self.host_uuid, one_result=True,
+            switch_id=req_nb.vswitch_id)
         for vlan_id in new_vlans:
             trunks = self._find_available_trunks(req_nb)
 

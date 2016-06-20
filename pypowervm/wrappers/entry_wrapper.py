@@ -17,10 +17,10 @@
 """Base classes for all wrapper classes in the pypowervm.wrappers package."""
 
 import abc
+from oslo_log import log as logging
 import six
 import urllib
 
-from oslo_log import log as logging
 
 from pypowervm import adapter as adpt
 import pypowervm.const as pc
@@ -47,14 +47,77 @@ class Wrapper(object):
     has_metadata = False
 
     # Registers PowerVM object wrappers by their schema type.
-    # { schema_type_string: wrapper_class, ... }
-    # E.g. { 'SharedEthernetAdapter': pypowervm.wrappers.network.SEA, ... }
+    # {schema_type_string:
+    #     {'entry': entry_wrapper_class,
+    #      'element': element_wrapper_class},
+    #  ...}
+    # E.g. {'SharedEthernetAdapter':
+    #          {'entry': pypowervm.wrappers.network.SEA},
+    #       'LogicalUnit':
+    #          {'entry': pypowervm.wrappers.storage.LUEnt,
+    #           'element': pypowervm.wrappers.storage.LU},
+    #       ...}
+    # Some schema types double as a ROOT/CHILD object and a DETAIL within a
+    # ROOT/CHILD).  Such schema types will have both 'entry' and 'element' keys
+    # in the sub-dict.  Otherwise, only one key will exist accordingly.
     _pvm_object_registry = {}
 
     # Maps a property name to its extended attribute group.  Should be sparse -
     # if a property is not associated with a xag, it can (should) be absent
     # from this dict.
     _xag_registry = {}
+
+    # Allows us to ensure that all Wrapper classes are properly registered via
+    # @[base_]pvm_type.
+    _registered = False
+
+    @classmethod
+    def base_pvm_type(cls, cls_):
+        """Decorator/method to register a PowerVM base class.
+
+        Use this instead of @pvm_type on Wrapper subclasses which are not to be
+        instantiated, but are themselves bases for real Wrappers.  For example,
+        use @base_pvm_type for BasePartition; and @pvm_type for
+        LogicalPartition and VirtualIOServer.
+
+        Use as a decorator with no arguments:
+
+        @Wrapper.base_pvm_type
+        class SomeBaseClass(Wrapper):
+            ...
+
+        Or use as a method to register a base class explicitly after it has
+        been defined:
+
+        Wrapper.base_pvm_type(SomeBaseClass)
+
+        :param cls_: The Wrapper subclass to be decorated/registered.
+        :return: cls_
+        """
+        # @xag_property registers with Wrapper._xag_registry because
+        # cls_ hasn't been created yet.  Transfer the created registry to the
+        # cls_, merging with any already registered by its bases, and clear
+        # Wrapper's registry so it doesn't pollute the next cls_.
+        cls_._xag_registry = dict(cls_._xag_registry, **Wrapper._xag_registry)
+        cls_._registered = True
+        Wrapper._xag_registry = {}
+        return cls_
+
+    @classmethod
+    def _register_schema_type(cls, schema_type, class_):
+        """Register this class according to its schema_type.
+
+        The registry is used to identify the appropriate wrapper class to apply
+        to an XML object we receive from the REST server.
+
+        :param schema_type: String schema type of the REST element to register.
+        :param class_: Concrete {Entry|Element}Wrapper subclass to associate
+                       with the schema_type.
+        """
+        ent_or_el = 'entry' if issubclass(class_, EntryWrapper) else 'element'
+        if schema_type not in Wrapper._pvm_object_registry:
+            Wrapper._pvm_object_registry[schema_type] = {}
+        Wrapper._pvm_object_registry[schema_type][ent_or_el] = class_
 
     @classmethod
     def pvm_type(cls, schema_type, has_metadata=None, ns=pc.UOM_NS,
@@ -80,6 +143,8 @@ class Wrapper(object):
                             order-agnostic construction/setting of values.
         """
         def inner(class_):
+            # Base stuff first (e.g. register extended attribute groups).
+            cls.base_pvm_type(class_)
             class_.schema_type = schema_type
             if has_metadata is not None:
                 class_.has_metadata = has_metadata
@@ -92,13 +157,7 @@ class Wrapper(object):
                 if class_.has_metadata and co[0] != 'Metadata':
                     co.insert(0, 'Metadata')
                 class_._child_order = tuple(co)
-            Wrapper._pvm_object_registry[schema_type] = class_
-            # @xag_property registers with Wrapper._xag_registry because
-            # class_ hasn't been created yet.  Transfer the created registry
-            # to the class_, and clear Wrapper's so it doesn't pollute the next
-            # class_.
-            class_._xag_registry = Wrapper._xag_registry
-            Wrapper._xag_registry = {}
+            cls._register_schema_type(schema_type, class_)
             return class_
         return inner
 
@@ -158,6 +217,30 @@ class Wrapper(object):
     @property
     def traits(self):
         return self.adapter.traits
+
+    @property
+    def uuid(self):
+        """Returns the uuid of the entry or element."""
+        # The following should only apply to EntryWrappers
+        if getattr(self, 'entry', None) is not None:
+            return self.entry.uuid
+
+        # Anything with Metadata may have a UUID.  Could do has_metadata check,
+        # but that doesn't really add anything.  This will return None if not
+        # found.
+        return self._get_val_str(pc.UUID_XPATH)
+
+    @uuid.setter
+    def uuid(self, value):
+        """Sets the UUID (if supported).
+
+        :param value: A valid PowerVM UUID value in either uuid format
+                      or string format
+        """
+        if isinstance(self, WrapperSetUUIDMixin):
+            self.set_uuid(value)
+        else:
+            raise AttributeError(_('Cannot set uuid.'))
 
     def inject(self, subelement, replace=True):
         """Injects subelement as a child element, possibly replacing it.
@@ -228,8 +311,7 @@ class Wrapper(object):
 
         self.inject(new_elem)
 
-    @property
-    @abc.abstractmethod
+    @abc.abstractproperty
     def _type_and_uuid(self):
         """Return the type and uuid of this entry together in one string.
 
@@ -508,7 +590,8 @@ class Wrapper(object):
         schema_type = element.tag
         # Is it a registered wrapper class?
         try:
-            return Wrapper._pvm_object_registry[schema_type]
+            return Wrapper._pvm_object_registry[schema_type][
+                'entry' if issubclass(cls, EntryWrapper) else 'element']
         except KeyError:
             return cls
 
@@ -536,7 +619,7 @@ class EntryWrapper(Wrapper):
 
     @classmethod
     def getter(cls, adapter, entry_uuid=None, parent_class=None,
-               parent_uuid=None, xag=None):
+               parent_uuid=None, xag=None, parent=None):
         """Return EntryWrapperGetter or FeedGetter for this EntryWrapper type.
 
         Parameters are the same as described by EntryWrapperGetter.__init__
@@ -545,12 +628,12 @@ class EntryWrapper(Wrapper):
         """
         if entry_uuid is None:
             return FeedGetter(
-                adapter, cls, parent_class=parent_class,
+                adapter, cls, parent=parent, parent_class=parent_class,
                 parent_uuid=parent_uuid, xag=xag)
         else:
             return EntryWrapperGetter(
-                adapter, cls, entry_uuid, parent_class=parent_class,
-                parent_uuid=parent_uuid, xag=xag)
+                adapter, cls, entry_uuid, parent=parent,
+                parent_class=parent_class, parent_uuid=parent_uuid, xag=xag)
 
     @classmethod
     def _bld(cls, adapter, tag=None, has_metadata=None, ns=None, attrib=None):
@@ -646,7 +729,7 @@ class EntryWrapper(Wrapper):
 
     @classmethod
     def get(cls, adapter, uuid=None, parent_type=None, parent_uuid=None,
-            **read_kwargs):
+            parent=None, **read_kwargs):
         """GET and wrap an entry or feed of this type.
 
         Shortcut to EntryWrapper.wrap(adapter.read(...)).
@@ -661,6 +744,8 @@ class EntryWrapper(Wrapper):
                                 child_type=VSwitch.schema_type)
             vswfeed = VSwitch.wrap(resp)
         Becomes:
+            vswfeed = VSwitch.get(adapter, parent=sys)
+        Or:
             vswfeed = VSwitch.get(adapter, parent_type=System,
                                   parent_uuid=sys_uuid)
 
@@ -672,29 +757,39 @@ class EntryWrapper(Wrapper):
                      For ROOT objects, you may specify either uuid or root_id;
                      for CHILD objects, you may specify either uuid or
                      child_id.
-        :param parent_type: Required if the invoking class represents a CHILD
-                            object. Specify the schema type of the parent ROOT
-                            object. May be either the string or the
-                            EntryWrapper subclass itself.
-        :param parent_uuid: Required if the invoking class represents a CHILD
-                            object. Specify the UUID of the parent ROOT object.
-                            Do not use the root_id parameter.
+        :param parent_type: If the invoking class represents a CHILD, specify
+                            either the parent parameter or BOTH parent_type and
+                            parent_uuid. This parameter may be either the
+                            schema_type or the EntryWrapper subclass of the
+                            parent ROOT object.
+        :param parent_uuid: If the invoking class represents a CHILD, specify
+                            either the parent parameter or BOTH parent_type and
+                            parent_uuid. This parameter indicates the UUID of
+                            the parent ROOT object. Do not use the root_id
+                            parameter.
+        :param parent: If the invoking class represents a CHILD, specify either
+                       the parent parameter or BOTH parent_type and
+                       parent_uuid.  This parameter is an EntryWrapper
+                       representing the parent ROOT object of the CHILD to be
+                       retrieved.
         :param read_kwargs: Any arguments to be passed directly through to
                             Adapter.read().
         :return: An EntryWrapper (or list thereof) around the requested REST
                  object.  (Note that this may not be of the type from which the
                  method was invoked, e.g. if the child_type parameter is used.)
         """
+        parent_type, parent_uuid = util.parent_spec(parent, parent_type,
+                                                    parent_uuid)
         if parent_type is not None:
             # CHILD mode
             resp = cls._read_child(adapter, parent_type, parent_uuid, uuid,
                                    read_kwargs)
         else:
             # ROOT mode
-            if parent_uuid is not None or any(k in read_kwargs for k in
-                                              ('child_type', 'child_id')):
-                raise ValueError(_("Specify 'parent_type' and 'parent_uuid' "
-                                   "to retrieve a CHILD object."))
+            if any(k in read_kwargs for k in ('child_type', 'child_id')):
+                raise ValueError(_("Developer error: specify 'parent' or "
+                                   "('parent_type' and 'parent_uuid') to "
+                                   "retrieve a CHILD object."))
             if uuid is not None:
                 if 'root_id' in read_kwargs:
                     raise ValueError(_("Specify either 'uuid' or 'root_id' "
@@ -728,7 +823,7 @@ class EntryWrapper(Wrapper):
 
     @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
-               parent_uuid=None, **kwargs):
+               parent_uuid=None, one_result=False, parent=None, **kwargs):
         """Performs a REST API search.
 
         Searches for object(s) of the type indicated by cls having (or not
@@ -754,26 +849,61 @@ class EntryWrapper(Wrapper):
                        the indicated type where the search key does *not* equal
                        the search value.
         :param xag: List of extended attribute group names.
-        :param parent_type: If searching for CHILD objects, this parameter must
-                            indicate the parent ROOT object.  It may be either
-                            the string schema type or the corresponding
-                            EntryWrapper subclass.
-        :param parent_uuid: If searching for CHILD objects, this parameter may
-                            specify the UUID of the parent ROOT object.  If
-                            parent_type is specified, but parent_uuid is None,
-                            all parents of the ROOT type will be searched.
-                            This may result in a slow response time.
+        :param parent_type: If searching for CHILD objects, specify either
+                            the parent parameter or BOTH parent_type and
+                            parent_uuid.  This parameter indicates the parent
+                            ROOT object.  It may be either the string schema
+                            type or the corresponding EntryWrapper subclass.
+        :param parent_uuid: If searching for CHILD objects, specify either
+                            the parent parameter or BOTH parent_type and
+                            parent_uuid.  This parameter specifies the UUID of
+                            the parent ROOT object.  If parent_type is
+                            specified, but parent_uuid is None, all parents of
+                            the ROOT type will be searched. This may result in
+                            a slow response time.
+        :param one_result: Use when expecting (at most) one search result.  If
+                           True, this method will return the first element of
+                           the search result list, or None if the search
+                           produced no results.
+        :param parent: If searching for CHILD objects, specify either the
+                       parent parameter or BOTH parent_type and parent_uuid.
+                       This parameter is an EntryWrapper instance indicating
+                       the parent ROOT object.
         :param kwargs: Exactly one key=value.  The key must correspond to a key
                        in cls.search_keys and/or the name of a getter @property
                        on the EntryWrapper subclass.  Due to limitations of
                        the REST API, if specifying xags or searching for a
                        CHILD, the key must be the name of a getter @property.
                        The value is the value to match.
-        :return: A list of instances of the cls.  The list may be empty
-                 (no results were found).  It may contain more than one
-                 instance (e.g. for a negated search, or for one where the key
-                 does not represent a unique property of the object).
+        :return: If one_result=False (the default), a list of instances of the
+                 cls.  The list may be empty (no results were found).  It may
+                 contain more than one instance (e.g. for a negated search, or
+                 for one where the key does not represent a unique property of
+                 the object).  If one_result=True, returns a single instance of
+                 cls, or None if the search produced no results.
         """
+        def list_or_single(results, single):
+            """Returns either the results list or its first entry.
+
+            :param results: The list of results from the search.  May be empty.
+                            Must not be None.
+            :param single: If False, return results unchanged.  If True, return
+                           only the first entry in the results list, or None if
+                           results is empty.
+            """
+            if not single:
+                return results
+            return results[0] if results else None
+
+        try:
+            parent_type, parent_uuid = util.parent_spec(parent, parent_type,
+                                                        parent_uuid)
+        except ValueError:
+            # Special case where we allow parent_type without parent_uuid.  The
+            # reverse is caught by the check below.
+            if parent_type is not None and type(parent_type) is not str:
+                parent_type = parent_type.schema_type
+
         # parent_uuid makes no sense without parent_type
         if parent_type is None and parent_uuid is not None:
             raise ValueError(_('Parent UUID specified without parent type.'))
@@ -781,10 +911,6 @@ class EntryWrapper(Wrapper):
         if len(kwargs) != 1:
             raise ValueError(_('The search() method requires exactly one '
                                'key=value argument.'))
-
-        # Convert parent_type to string if necessary
-        if parent_type and not isinstance(parent_type, str):
-            parent_type = parent_type.schema_type
 
         key, val = kwargs.popitem()
         try:
@@ -795,18 +921,20 @@ class EntryWrapper(Wrapper):
             search_key = cls.search_keys[key]
         except (AttributeError, KeyError):
             # Fallback search by [GET feed] + loop
-            return cls._search_by_feed(adapter, cls.schema_type, negate, key,
-                                       val, xag, parent_type, parent_uuid)
+            return list_or_single(
+                cls._search_by_feed(adapter, cls.schema_type, negate, key, val,
+                                    xag, parent_type, parent_uuid), one_result)
 
         op = '!=' if negate else '=='
         quote = urllib.parse.quote if six.PY3 else urllib.quote
         search_parm = "(%s%s'%s')" % (search_key, op, quote(str(val), safe=''))
         # Let this throw HttpError if the caller got it wrong.
         # Note that this path will only be hit for ROOTs.
-        resp = cls._read_parent_or_child(adapter, cls.schema_type, parent_type,
-                                         parent_uuid, suffix_type='search',
-                                         suffix_parm=search_parm)
-        return cls.wrap(resp)
+        return list_or_single(
+            cls.wrap(cls._read_parent_or_child(
+                adapter, cls.schema_type, parent_type, parent_uuid,
+                suffix_type='search', suffix_parm=search_parm)),
+            one_result)
 
     @classmethod
     def _search_by_feed(cls, adapter, target_type, negate, key, val, xag,
@@ -857,39 +985,41 @@ class EntryWrapper(Wrapper):
                 ret.feed.entries.extend(resp.feed.entries)
             return ret
 
-    def create(self, parent_type=None, parent_uuid=None, timeout=-1):
+    def create(self, parent_type=None, parent_uuid=None, timeout=-1,
+               parent=None):
         """Performs an adapter.create (REST API PUT) with this wrapper.
 
-        :param parent_type: If creating a CHILD, both parent_type and
-                            parent_uuid must be specified.  This parameter
-                            may be either the schema_type or the EntryWrapper
-                            subclass of the parent ROOT object.
-        :param parent_uuid: If creating a CHILD, both parent_type and
-                            parent_uuid must be specified.  This parameter
-                            indicates the UUID of the parent ROOT object.
+        :param parent_type: If creating a CHILD, specify either the parent
+                            parameter or BOTH parent_type and parent_uuid.
+                            This parameter may be either the schema_type or the
+                            EntryWrapper subclass of the parent ROOT object.
+        :param parent_uuid: If creating a CHILD, specify either the parent
+                            parameter or BOTH parent_type and parent_uuid.
+                            This parameter indicates the UUID of the parent
+                            ROOT object.
         :param timeout: (Optional) Integer number of seconds after which to
                         time out the PUT request.  -1, the default, causes the
                         request to use the timeout value configured on the
                         Session belonging to the Adapter.
+        :param parent: If creating a CHILD, specify either the parent parameter
+                       or BOTH parent_type and parent_uuid.  This parameter is
+                       an EntryWrapper representing the parent ROOT object of
+                       the CHILD to be created.
         :return: New EntryWrapper of the invoking class representing the PUT
                  response.
         """
         service = pc.SERVICE_BY_NS[self.schema_ns]
+        parent_type, parent_uuid = util.parent_spec(parent, parent_type,
+                                                    parent_uuid)
         if parent_type is None and parent_uuid is None:
+            # ROOT
             resp = self.adapter.create(self, self.schema_type, service=service,
                                        timeout=timeout)
-        elif parent_type is not None and parent_uuid is not None:
-            # parent_type and parent_uuid specified.
-            # Allow either string or class.
-            if type(parent_type) is not str:
-                parent_type = parent_type.schema_type
+        else:
+            # CHILD
             resp = self.adapter.create(
                 self, parent_type, root_id=parent_uuid,
                 child_type=self.schema_type, service=service, timeout=timeout)
-        else:
-            # parent_type xor parent_uuid specified
-            raise ValueError(
-                _("Must specify both parent type and UUID, or neither."))
         return self.wrap(resp)
 
     def delete(self):
@@ -953,26 +1083,6 @@ class EntryWrapper(Wrapper):
         temp_href = self.href
         return util.dice_href(temp_href, include_scheme_netloc=True,
                               include_query=False, include_fragment=False)
-
-    @property
-    def uuid(self):
-        """Returns the uuid of the entry."""
-        if self.entry is None:
-            return None
-
-        return self.entry.uuid
-
-    @uuid.setter
-    def uuid(self, value):
-        """Sets the UUID (if supported).
-
-        :param value: A valid PowerVM UUID value in either uuid format
-                      or string format
-        """
-        if isinstance(self, WrapperSetUUIDMixin):
-            self.set_uuid(value)
-        else:
-            raise AttributeError(_('Cannot set uuid.'))
 
     @property
     def _type_and_uuid(self):
@@ -1271,7 +1381,7 @@ class EntryWrapperGetter(object):
     requiring a retry.
     """
     def __init__(self, adapter, entry_class, entry_uuid, parent_class=None,
-                 parent_uuid=None, xag=None):
+                 parent_uuid=None, xag=None, parent=None):
         """Create a GET specification for an EntryWrapper.
 
         :param adapter: A pypowervm.adapter.Adapter instance through which the
@@ -1279,11 +1389,18 @@ class EntryWrapperGetter(object):
         :param entry_class: An EntryWrapper subclass indicating the type of the
                             entry to GET.
         :param entry_uuid: The string UUID of the entry to GET.
-        :param parent_class: If the target entry is a CHILD, this param is the
-                             EntryWrapper subclass of its parent object type.
-        :param parent_uuid: If the target entry is a CHILD, this param is the
-                            UUID of its parent object.
+        :param parent_class: If the target object type is CHILD, specify either
+                             the parent parameter or BOTH parent_class and
+                             parent_uuid.  This param is the EntryWrapper
+                             subclass of the ROOT parent object type.
+        :param parent_uuid: If the target object type is CHILD, specify either
+                            the parent parameter or BOTH parent_class and
+                            parent_uuid.this param is the UUID of the ROOT
+                            parent object.
         :param xag: List of extended attribute groups to request on the object.
+        :param parent: If the target object type is CHILD, specify either the
+                       parent parameter or BOTH parent_class and parent_uuid.
+                       This parameter represents the ROOT parent object.
         """
         def validate_wrapper_type(var):
             if not issubclass(type(var), type) or not issubclass(var, Wrapper):
@@ -1292,12 +1409,12 @@ class EntryWrapperGetter(object):
         validate_wrapper_type(entry_class)
         self.entry_class = entry_class
         self.entry_uuid = entry_uuid
+        parent_class, parent_uuid = util.parent_spec(parent, parent_class,
+                                                     parent_uuid)
         if (parent_class and not parent_uuid) or (
                 parent_uuid and not parent_class):
             raise ValueError(_("Must specify both parent class and parent "
                                "UUID, or neither."))
-        if parent_class:
-            validate_wrapper_type(parent_class)
         self.parent_class = parent_class
         self.parent_uuid = parent_uuid
         self.xag = xag
@@ -1321,7 +1438,7 @@ class EntryWrapperGetter(object):
         """
         if self.cache is None:
             if self.parent_class:
-                root_type = self.parent_class.schema_type
+                root_type = self.parent_class
                 root_id = self.parent_uuid
                 child_type = self.entry_class.schema_type
                 child_id = self.entry_uuid
@@ -1357,24 +1474,30 @@ class FeedGetter(EntryWrapperGetter):
     a retry.
     """
     def __init__(self, adapter, entry_class, parent_class=None,
-                 parent_uuid=None, xag=None):
+                 parent_uuid=None, xag=None, parent=None):
         """Create a GET specification for an EntryWrapper feed.
 
         :param adapter: A pypowervm.adapter.Adapter instance through which the
                         GET can be performed.
         :param entry_class: An EntryWrapper subclass indicating the type of the
                             feed to GET.
-        :param parent_class: If the target object type is CHILD, this param is
-                             the EntryWrapper subclass of its parent object
-                             type.
-        :param parent_uuid: If the target object type is CHILD, this param is
-                            the UUID of its parent object.
+        :param parent_class: If the target object type is CHILD, specify either
+                             the parent parameter or BOTH parent_class and
+                             parent_uuid.  This param is the EntryWrapper
+                             subclass of the ROOT parent object type.
+        :param parent_uuid: If the target object type is CHILD, specify either
+                            the parent parameter or BOTH parent_class and
+                            parent_uuid.this param is the UUID of the ROOT
+                            parent object.
         :param xag: List of extended attribute groups to request on the feed.
+        :param parent: If the target object type is CHILD, specify either the
+                       parent parameter or BOTH parent_class and parent_uuid.
+                       This parameter represents the ROOT parent object.
         """
         # Using entry_uuid=None will cause the GET to fetch the feed.
         super(FeedGetter, self).__init__(
-            adapter, entry_class, None, parent_class=parent_class,
-            parent_uuid=parent_uuid, xag=xag)
+            adapter, entry_class, None, parent=parent,
+            parent_class=parent_class, parent_uuid=parent_uuid, xag=xag)
 
     def get(self, refresh=False, refetch=False):
         """Return the feed (list of EntryWrappers) indicated by this instance.
@@ -1432,7 +1555,7 @@ class UUIDFeedGetter(FeedGetter):
       is not sufficient.
     """
     def __init__(self, adapter, entry_class, uuid_list, parent_class=None,
-                 parent_uuid=None, xag=None):
+                 parent_uuid=None, xag=None, parent=None):
         """Create a UUIDFeedGetter.
 
         :param adapter: See FeedGetter.
@@ -1442,9 +1565,10 @@ class UUIDFeedGetter(FeedGetter):
         :param parent_class: See FeedGetter.
         :param parent_uuid: See FeedGetter.
         :param xag: See FeedGetter.
+        :param parent: See FeedGetter.
         """
         super(UUIDFeedGetter, self).__init__(
-            adapter, entry_class, parent_class=parent_class,
+            adapter, entry_class, parent=parent, parent_class=parent_class,
             parent_uuid=parent_uuid, xag=xag)
         self.uuid_list = uuid_list
         self._create_wrapper_getters()

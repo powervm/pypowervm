@@ -1,0 +1,99 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'rest/api/pcm/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/RawMetrics/LongTermMonitor/LTM_8247-22L*2125D4A_lpar_20160328T031000-0400.json'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '1878', 'x-powered-by': 'Servlet/3.0', 'last-modified': 'Thu, 30 Apr 2015 03:53:05 GMT', 'etag': '1430365985674', 'date': 'Thu, 30 Apr 2015 03:53:04 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+{
+    "lparUtil":
+    [
+        {
+            "uuid": "42AD4FD4-DC64-4935-9E29-9B7C6F35AFCC",
+            "id": "2",
+            "name": "Ubuntu1410",
+            "memory":
+            {
+                "pctRealMemFree": 61,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 25,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "5536C020-C995-4508-A010-5292CD21F307",
+            "id": "13",
+            "name": "test_vm2",
+            "memory":
+            {
+                "pctRealMemFree": 62,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 94,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "3B8B95E8-4D85-4599-803E-E2B3CD193033",
+            "id": "8",
+            "name": "test_vm3",
+            "memory":
+            {
+                "pctRealMemFree": 60,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 0,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "7C478B9C-64C6-4CD4-B6F8-3C9BBAA1CFD5",
+            "id": "15",
+            "name": "test_vm4",
+            "memory":
+            {
+                "pctRealMemFree": 62,
+                "vmPgInRate": 0,
+                "vmPgOutRate": 80,
+                "vmPgSpInRate": 0,
+                "vmPgSpOutRate": 0
+            },
+            "timeStamp": "20160328T031000-0400"
+        },
+        {
+            "uuid": "3B0237F9-26F1-41C7-BE57-A08C9452AD9D",
+            "id": "24",
+            "name": "3B0237F9-26F1-41C7-BE57-A08C9452AD9D",
+            "errorInfo":
+            {
+                "errorId": "6001",
+                "message": "Lpar is not in running state on Managed System"
+            },
+            "timeStamp": null
+        },
+        {
+            "uuid": "vm_inactive_rmc",
+            "id": "3",
+            "name": "vm_inactive_rmc",
+            "errorInfo":
+            {
+                "errorId": "6003",
+                "message": "RMC is INACTIVE on lpar"
+            },
+            "timeStamp": null
+        }
+    ]
+}
+
+END OF SECTION}

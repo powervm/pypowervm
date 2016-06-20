@@ -18,12 +18,15 @@
 
 import abc
 import copy
+import functools
 import re
 import six
 
 from oslo_log import log as logging
 
+import pypowervm.const as c
 import pypowervm.entities as ent
+from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
@@ -81,6 +84,7 @@ _SEA_PATH = u.xpath(_VIO_SEAS, net.SHARED_ETH_ADPT)
 
 # Mapping Constants
 _MAP_STORAGE = 'Storage'
+_MAP_TARGET_DEV = 'TargetDevice'
 _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
@@ -100,11 +104,55 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
     _VIO_VNIC_BACKDEVS)
 
 
+class _VIOSXAGs(object):
+    """Extended attribute groups relevant to Virtual I/O Server.
+
+    DEPRECATED.  Use pypowervm.const.XAG and pypowervm.util.xag_attrs().
+    """
+
+    @functools.total_ordering
+    class _Handler(object):
+        def __init__(self, name):
+            self.name = name
+            self.attrs = u.xag_attrs(name)
+
+        def __str__(self):
+            return self.name
+
+        def __eq__(self, other):
+            if type(other) is str:
+                return self.name == other
+            return self.name == other.name
+
+        def __lt__(self, other):
+            if type(other) is str:
+                return self.name < other
+            return self.name < other.name
+
+        def __hash__(self):
+            return hash(self.name)
+
+    _vals = dict(
+        NETWORK=_Handler(c.XAG.VIO_NET),
+        STORAGE=_Handler(c.XAG.VIO_STOR),
+        SCSI_MAPPING=_Handler(c.XAG.VIO_SMAP),
+        FC_MAPPING=_Handler(c.XAG.VIO_FMAP))
+
+    def __getattr__(self, item):
+        if item in self._vals:
+            import warnings
+            warnings.warn(_("The 'xags' property of the VIOS EntryWrapper "
+                            "class is deprecated!  Please use values from "
+                            "pypowervm.const.XAG instead."),
+                          DeprecationWarning)
+            return self._vals[item]
+
+
 @ewrap.EntryWrapper.pvm_type('VirtualIOServer', child_order=_VIOS_EL_ORDER)
 class VIOS(bp.BasePartition):
 
-    # Extended Attribute Groups
-    xags = ent.VIOSXAGs()
+    # DEPRECATED.  Use pypowervm.const.XAG and pypowervm.util.xag_attrs().
+    xags = _VIOSXAGs()
 
     @classmethod
     def bld(cls, adapter, name, mem_cfg, proc_cfg, io_cfg=None):
@@ -112,7 +160,7 @@ class VIOS(bp.BasePartition):
         return super(VIOS, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env=bp.LPARType.VIOS, io_cfg=io_cfg)
 
-    @ewrap.Wrapper.xag_property(xags.STORAGE)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_STOR)
     def media_repository(self):
         return self.element.find(_VIRT_MEDIA_REPOSITORY_PATH)
 
@@ -208,7 +256,17 @@ class VIOS(bp.BasePartition):
     def is_mover_service_partition(self):
         return self._get_val_bool(_VIO_MVR_SVC_PARTITION, False)
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @is_mover_service_partition.setter
+    def is_mover_service_partition(self, value):
+        """Set the Mover Service Partition designation.
+
+        :param value: Boolean indicating whether the VIOS should be designated
+                      as a Mover Service Partition.
+        """
+        self.set_parm_value(_VIO_MVR_SVC_PARTITION,
+                            u.sanitize_bool_for_api(value))
+
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def ip_addresses(self):
         """Returns a list of IP addresses assigned to the VIOS.
 
@@ -231,47 +289,44 @@ class VIOS(bp.BasePartition):
 
         return tuple(ip_list)
 
-    @ewrap.Wrapper.xag_property(xags.FC_MAPPING)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_FMAP)
     def vfc_mappings(self):
         """Returns a WrapperElemList of the VFCMapping objects."""
-        def_attrib = self.xags.FC_MAPPING.attrs
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_VFC_MAPPINGS, attrib=def_attrib),
-            VFCMapping)
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_VFC_MAPPINGS, attrib=u.xag_attrs(c.XAG.VIO_FMAP)), VFCMapping)
         return es
 
     @vfc_mappings.setter
     def vfc_mappings(self, new_mappings):
         self.replace_list(_VIO_VFC_MAPPINGS, new_mappings,
-                          attrib=self.xags.FC_MAPPING.attrs)
+                          attrib=u.xag_attrs(c.XAG.VIO_FMAP))
 
-    @ewrap.Wrapper.xag_property(xags.SCSI_MAPPING)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_SMAP)
     def scsi_mappings(self):
         """Returns a WrapperElemList of the VSCSIMapping objects."""
-        def_attrib = self.xags.SCSI_MAPPING.attrs
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
         es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_VSCSI_MAPPINGS, attrib=def_attrib),
+            self._find_or_seed(_VIO_VSCSI_MAPPINGS,
+                               attrib=u.xag_attrs(c.XAG.VIO_SMAP)),
             VSCSIMapping, parent_entry=self)
         return es
 
     @scsi_mappings.setter
     def scsi_mappings(self, new_mappings):
         self.replace_list(_VIO_VSCSI_MAPPINGS, new_mappings,
-                          attrib=self.xags.SCSI_MAPPING.attrs)
+                          attrib=u.xag_attrs(c.XAG.VIO_SMAP))
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def seas(self):
-        def_attrib = self.xags.NETWORK.attrs
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_SEAS, attrib=def_attrib), net.SEA)
+        es = ewrap.WrapperElemList(self._find_or_seed(
+            _VIO_SEAS, attrib=u.xag_attrs(c.XAG.VIO_NET)), net.SEA)
         return es
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def trunk_adapters(self):
-        def_attrib = self.xags.NETWORK.attrs
         es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_TRUNK_ADPTS, attrib=def_attrib),
+            self._find_or_seed(_VIO_TRUNK_ADPTS,
+                               attrib=u.xag_attrs(c.XAG.VIO_NET)),
             net.TrunkAdapter)
         return es
 
@@ -295,7 +350,7 @@ class VIOS(bp.BasePartition):
                     break
         return orphan_trunks
 
-    @ewrap.Wrapper.xag_property(xags.STORAGE)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_STOR)
     def phys_vols(self):
         """Will return a list of physical volumes attached to this VIOS.
 
@@ -303,20 +358,22 @@ class VIOS(bp.BasePartition):
         """
         # TODO(efried): remove parent_entry once VIOS has pg83 in Events
         es = ewrap.WrapperElemList(
-            self._find_or_seed(stor.PVS, attrib=self.xags.STORAGE.attrs),
+            self._find_or_seed(stor.PVS, attrib=u.xag_attrs(c.XAG.VIO_STOR)),
             stor.PV, parent_entry=self)
         es_list = [es_val for es_val in es]
         return tuple(es_list)
 
-    @ewrap.Wrapper.xag_property(xags.NETWORK)
+    @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def io_adpts_for_link_agg(self):
-        es = ewrap.WrapperElemList(self._find_or_seed(
-            _VIO_FREE_IO_ADPTS_FOR_LNAGG, attrib=self.xags.NETWORK.attrs),
+        es = ewrap.WrapperElemList(
+            self._find_or_seed(_VIO_FREE_IO_ADPTS_FOR_LNAGG,
+                               attrib=u.xag_attrs(c.XAG.VIO_NET)),
             LinkAggrIOAdapterChoice)
         return es
 
 
 @six.add_metaclass(abc.ABCMeta)
+@ewrap.Wrapper.base_pvm_type
 class VStorageMapping(ewrap.ElementWrapper):
     """Base class for VSCSIMapping and VFCMapping."""
 
@@ -385,28 +442,58 @@ class VSCSIMapping(VStorageMapping):
     _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
-    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref):
+    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
+            lpar_slot_num=None, lua=None):
+        """Creates a new VSCSIMapping
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        mapping.
+        :param host_uuid: The host system's UUID.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the new mapping. If None then we let
+                              REST choose the slot number.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
+        :return: The newly-created VSCSIMapping.
+        """
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(adapter))
+        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
         s_map._backing_storage(stg_ref)
+        if lua is not None:
+            # Build a *TargetDev of the appropriate type for this stg_ref
+            s_map._target_dev(stg_ref.target_dev_type.bld(adapter, lua))
         return s_map
 
     @classmethod
-    def bld_from_existing(cls, existing_map, stg_ref):
+    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None,
+                          lua=None):
         """Clones the existing mapping, but swaps in the new storage elem.
 
         :param existing_map: The existing VSCSIMapping to clone.
         :param stg_ref: The backing storage element (PV, LU, VDisk, or
                         VOptMedia) to use in the new mapping.  If explicitly
                         None, the new mapping is created with no storage.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the mapping. If None then the
+                              existing slot number is used.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
         :return: The newly-created VSCSIMapping.
         """
-        # We do NOT want the TargetDevice element, so we explicitly copy the
-        # pieces we want from the original mapping.
+        # We do NOT want the source's TargetDevice element, so we explicitly
+        # copy the pieces we want from the original mapping.
         new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
         if existing_map.client_lpar_href is not None:
             new_map._client_lpar_href(existing_map.client_lpar_href)
@@ -416,14 +503,25 @@ class VSCSIMapping(VStorageMapping):
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
         if stg_ref is not None:
             new_map._backing_storage(copy.deepcopy(stg_ref))
+        if lpar_slot_num is not None:
+            # Set the slot number and remove the 'UseNextAvailableSlot' tag.
+            new_map.client_adapter._lpar_slot_num(lpar_slot_num)
+            new_map.client_adapter._use_next_slot(False)
+        if lua is not None:
+            if stg_ref is None:
+                raise ValueError(_("Can't specify target device LUA without a "
+                                   "backing storage device!"))
+            # Build a *TargetDev of the appropriate type for this stg_ref
+            new_map._target_dev(stg_ref.target_dev_type.bld(
+                existing_map.adapter, lua))
         return new_map
 
     @property
     def backing_storage(self):
         """The backing storage element (if applicable).
 
-        Refer to the 'volume_group' wrapper.  This element may be a
-        VirtualDisk or VirtualOpticalMedia.  May return None.
+        This element may be a PV, LU, VirtualDisk, or VirtualOpticalMedia.
+        May return None.
         """
         elem = self.element.find(_MAP_STORAGE)
         if elem is None:
@@ -454,6 +552,36 @@ class VSCSIMapping(VStorageMapping):
         stor_elem.inject(stg.element)
         self.inject(stor_elem)
 
+    @property
+    def target_dev(self):
+        """The target device associated with the backing storage.
+
+        May be any of {storage_type}TargetDev for {storage_type} in VDisk,
+        VOpt, LU or PV.
+        """
+        elem = self.element.find(_MAP_TARGET_DEV)
+        if elem is None:
+            return None
+        # If the virtual target device exists, it comprises a single child of
+        # elem.  But the exact type is unknown.
+        vtd_elems = list(elem)
+        if len(vtd_elems) != 1:
+            return None
+        # Let ElementWrapper.wrap figure out (from the registry) the
+        # appropriate return type.
+        return ewrap.ElementWrapper.wrap(vtd_elems[0])
+
+    def _target_dev(self, vtd):
+        """Sets the target device of this mapping.
+
+        :param vtd: A {storage_type}TargetDev ElementWrapper representing the
+                    virtual target device to assign.
+        """
+        vtd_elem = ent.Element(_MAP_TARGET_DEV, self.adapter, attrib={},
+                               children=[])
+        vtd_elem.inject(vtd.element)
+        self.inject(vtd_elem)
+
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
 class VFCMapping(VStorageMapping):
@@ -476,7 +604,7 @@ class VFCMapping(VStorageMapping):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, backing_phy_port,
-            client_wwpns=None):
+            client_wwpns=None, lpar_slot_num=None):
         """Creates the VFCMapping object to connect to a Physical FC Port.
 
         This is used when creating a new mapping between a Client LPAR and the
@@ -499,6 +627,8 @@ class VFCMapping(VStorageMapping):
                              the mapping.  These represent the client VM's
                              WWPNs on the client FC adapter.  If not set, the
                              system will dynamically generate them.
+        :param lpar_slot_num: An optional integer to be used as the Virtual
+                              slot number on the client adapter
         :returns: The new VFCMapping Wrapper.
         """
         s_map = super(VFCMapping, cls)._bld(adapter)
@@ -506,7 +636,7 @@ class VFCMapping(VStorageMapping):
         s_map._client_lpar_href(
             cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
         s_map._client_adapter(stor.VFCClientAdapterElement.bld(
-            adapter, wwpns=client_wwpns))
+            adapter, wwpns=client_wwpns, slot_num=lpar_slot_num))
 
         # Create the backing port and change label.  API requires it be
         # Port, even though it is a Physical FC Port

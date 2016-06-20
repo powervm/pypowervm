@@ -64,18 +64,61 @@ class PropertyWrapper(object):
         return getattr(self.elem, attr)
 
 
-class LparMemory(PropertyWrapper):
+class LparMemory(object):
     """Represents the memory for a given LPAR.
 
-    Requires the PhypLparMemory raw metric as input.
+    Requires the following as inputs:
+      - PhypLparMemory raw metric
+      - LparInfo.LparUtil raw metric. These metrics are got from IBM.Host
+                           Resource Manager through RMC.
 
     The supported metrics are as follows:
       - logical_mem: The amount of memory on the LPAR.
       - backed_physical_mem: The amount of backing physical memory used by
                              the LPAR.
+      - pct_real_mem_free: Percentage of real page frames that are currently
+                           available on the VMM (Virtual Memory Manager)
+                           free list. VMM manages the allocation of real
+                           memory page frames, resolves references to virtual
+                           memory pages that are not currently in real memory
+                           and manages the reading and writing of pages to
+                           disk storage.
+      - vm_pg_in_rate: Represents the rate (in pages per second) that the VMM
+                           is reading both persistent and working pages from
+                           disk storage. A -1 value indicates that system
+                           could not determine this metric.
+      - vm_pg_out_rate: Represents the rate (in pages per second) that the VMM
+                           is writing both persistent and working pages to
+                           disk storage. A -1 value indicates that system
+                           could not determine this metric.
+      - vm_pg_swap_in_rate: Represents the rate (in pages per second) that the
+                           VMM is reading working pages from paging-space
+                           disk storage. A -1 value indicates that system
+                           could not determine this metric.
+      - vm_pg_swap_out_rate: Represents the rate (in pages per second) that the
+                           VMM is writing working pages to paging-space
+                           disk storage. A -1 value indicates that system
+                           could not determine this metric.
     """
 
-    _supported_metrics = ('logical_mem', 'backed_physical_mem')
+    def __init__(self, lpar_mem_phyp, lpar_mem_pcm):
+        self.logical_mem = lpar_mem_phyp.logical_mem
+        self.backed_physical_mem = lpar_mem_phyp.backed_physical_mem
+        # Its possible that for the lpar_sample, the memory metric was not
+        # collected. If the metric is not available,
+        # then assume 0 i.e. all memory is being utilized.
+        if lpar_mem_pcm:
+            self.pct_real_mem_free = lpar_mem_pcm.memory.pct_real_mem_free
+            self.vm_pg_in_rate = lpar_mem_pcm.memory.vm_pg_in_rate
+            self.vm_pg_out_rate = lpar_mem_pcm.memory.vm_pg_out_rate
+            self.vm_pg_swap_in_rate = lpar_mem_pcm.memory.vm_pg_swap_in_rate
+            self.vm_pg_swap_out_rate = lpar_mem_pcm.memory.vm_pg_swap_out_rate
+        else:
+            self.pct_real_mem_free = 0
+            self.vm_pg_in_rate = -1
+            self.vm_pg_out_rate = -1
+            self.vm_pg_swap_in_rate = -1
+            self.vm_pg_swap_out_rate = -1
 
 
 class LparProc(PropertyWrapper):

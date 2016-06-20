@@ -23,14 +23,16 @@ UNCACHEABLE = ('/rest/api/web/', '/rest/api/pcm/',
                '/quick', '/search/', '?detail', '/jobs')
 # TODO(IBM): invalidate SSP cache based on ClusterLULinkedClone jobs
 
-DEFAULT_SCHEMA_VERSION = 'V1_0'
-SCHEMA_VER120 = 'V1_2_0'
-SCHEMA_VER130 = 'V1_3_0'
-SCHEMA_VER = 'schemaVersion'
-ATTR_SCHEMA = 'ksv'
-DEFAULT_SCHEMA_ATTR = {SCHEMA_VER: DEFAULT_SCHEMA_VERSION}
-ATTR_SCHEMA120 = {ATTR_SCHEMA: SCHEMA_VER120}
-ATTR_SCHEMA130 = {ATTR_SCHEMA: SCHEMA_VER130, SCHEMA_VER: SCHEMA_VER130}
+_DEFAULT_SCHEMA_VERSION = 'V1_0'
+_SCHEMA_VER120 = 'V1_2_0'
+_SCHEMA_VER130 = 'V1_3_0'
+_ATTR_SCHEMA_VER = 'schemaVersion'
+_ATTR_KSV = 'ksv'
+DEFAULT_SCHEMA_ATTR = {_ATTR_SCHEMA_VER: _DEFAULT_SCHEMA_VERSION}
+ATTR_KSV120 = {_ATTR_KSV: _SCHEMA_VER120}
+ATTR_KSV130 = {_ATTR_KSV: _SCHEMA_VER130}
+ATTR_SCHEMA_KSV130 = {_ATTR_KSV: _SCHEMA_VER130,
+                      _ATTR_SCHEMA_VER: _SCHEMA_VER130}
 
 API_BASE_PATH = '/rest/api/'
 LOGON_PATH = API_BASE_PATH + 'web/Logon'
@@ -67,6 +69,8 @@ UUID_REGEX = '%(x)s{8}-%(x)s{4}-%(x)s{4}-%(x)s{4}-%(x)s{12}' % {
     'x': '[A-Fa-f0-9]'}
 # Entire search string must be a UUID and nothing more
 UUID_REGEX_WORD = '^%s$' % UUID_REGEX
+# XPath to the UUID of a metadata-having XML object
+UUID_XPATH = 'Metadata/Atom/AtomID'
 
 SUFFIX_TYPE_DO = 'do'
 LINK = 'link'
@@ -108,7 +112,7 @@ class XAG(object):
     ADV = 'Advanced'
     ENERGY = 'EnergyManagement'
     HYP = 'Hypervisor'
-    POOL_COMPLIANCE_HRS_LEFT = 'ComplianceRemainingHours'
+    NVRAM = 'NVRAM'
     SYS_NET = 'SystemNetwork'
     TIER_THRESH = 'TierThreshold'
     VIO_FMAP = 'ViosFCMapping'
