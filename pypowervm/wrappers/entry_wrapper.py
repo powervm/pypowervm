@@ -33,6 +33,13 @@ import pypowervm.utils.uuid as pvm_uuid
 LOG = logging.getLogger(__name__)
 
 
+def _indirect_child_elem(wrap, indirect):
+    if indirect is None:
+        return wrap.element
+    else:
+        return ent.Element(indirect, wrap.adapter, children=[wrap.element])
+
+
 @six.add_metaclass(abc.ABCMeta)
 class Wrapper(object):
     """Base wrapper object that subclasses should extend.
@@ -291,7 +298,7 @@ class Wrapper(object):
             return new_elem
 
     def replace_list(self, prop_name, prop_children,
-                     attrib=pc.DEFAULT_SCHEMA_ATTR):
+                     attrib=pc.DEFAULT_SCHEMA_ATTR, indirect=None):
         """Replaces a property on this Entry that contains a children list.
 
         The prop_children represent the new elements for the property.
@@ -304,11 +311,32 @@ class Wrapper(object):
                               the new children for the property list.
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
+        :param indirect: Name of a schema element which should wrap each of the
+                         prop_children.  For example, VNIC backing devices look
+                         like:
+                            <AssociatedBackingDevices>
+                                <Metadata>...</Metadata>
+                                <VirtualNICBackingDeviceChoice>
+                                    <VirtualNICSRIOVBackingDevice>
+                                        ...
+                                    </VirtualNICSRIOVBackingDevice>
+                                </VirtualNICBackingDeviceChoice>
+                                <VirtualNICBackingDeviceChoice>
+                                    <VirtualNICSRIOVBackingDevice>
+                                        ...
+                                    </VirtualNICSRIOVBackingDevice>
+                                </VirtualNICBackingDeviceChoice>
+                                ...
+                            </AssociatedBackingDevices>
+                         In this case, invoke this method as:
+                         replace_list(
+                             'AssociatedBackingDevices',
+                             [<list of VirtualNICSRIOVBackingDevice wrappers>],
+                             indirect='VirtualNICBackingDeviceChoice')
         """
-        new_elem = ent.Element(prop_name, self.adapter,
-                               attrib=attrib,
-                               children=[x.element for
-                                         x in prop_children])
+        new_elem = ent.Element(prop_name, self.adapter, attrib=attrib,
+                               children=[_indirect_child_elem(child, indirect)
+                                         for child in prop_children])
 
         self.inject(new_elem)
 
@@ -1305,27 +1333,23 @@ class WrapperElemList(list):
             self.append(elem)
 
     def append(self, elem):
-        # For now, do not support modifying a list with indirection
-        if self.indirect is not None:
-            raise NotImplementedError()
-        self.root_elem.element.append(elem.element.element)
+        self.root_elem.element.append(
+            _indirect_child_elem(elem, self.indirect).element)
 
     def remove(self, elem):
-        # For now, do not support modifying a list with indirection
-        if self.indirect is not None:
-            raise NotImplementedError()
+        find_elem = _indirect_child_elem(elem, self.indirect)
         # Try this way first...if there is a value error, that means
         # that the identical element isn't here...need to try 'functionally
         # equivalent' -> slower...
         try:
-            self.root_elem.remove(elem.element)
+            self.root_elem.remove(find_elem)
             return
         except ValueError:
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
         children = list(self.root_elem)
-        equiv = util.find_equivalent(elem.element, children)
+        equiv = util.find_equivalent(find_elem, children)
         if equiv is None:
             raise ValueError(_('No such child element.'))
         self.root_elem.remove(equiv)

@@ -33,7 +33,6 @@ import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
-import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -43,7 +42,7 @@ NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
 VIOS_FILE = 'fake_vios_feed.txt'
 VNETS_FILE = 'nbbr_virtual_network.txt'
-SYS_SRIOV_FILE = 'sys_with_sriov.txt'
+SYS_VNIC_FILE = 'vnic_feed.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -483,19 +482,19 @@ class TestWrapperElemList(testtools.TestCase):
         self.seas_wel = net.NetBridge.wrap(pvmhttp.load_pvm_resp(
             NET_BRIDGE_FILE).get_response())[0].seas
         # With indirect
-        self.sriovs_wel = ms.System.wrap(pvmhttp.load_pvm_resp(
-            SYS_SRIOV_FILE).get_response())[0].asio_config.sriov_adapters
+        self.backdev_wel = card.VNIC.wrap(pvmhttp.load_pvm_resp(
+            SYS_VNIC_FILE).get_response())[0].back_devs
 
     def test_get(self):
         self.assertIsInstance(self.seas_wel[0], net.SEA)
         self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 2)
         # Works with indirect
-        self.assertIsInstance(self.sriovs_wel[0], card.SRIOVAdapter)
-        self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 3)
+        self.assertIsInstance(self.backdev_wel[0], card.VNICBackDev)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 1)
 
     def test_length(self):
         self.assertEqual(2, len(self.seas_wel))
-        self.assertEqual(3, len(self.sriovs_wel))
+        self.assertEqual(1, len(self.backdev_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
@@ -505,15 +504,17 @@ class TestWrapperElemList(testtools.TestCase):
         # Test Append
         self.seas_wel.append(sea_add)
         self.assertEqual(3, len(self.seas_wel))
-        # Appending to indirect not supported
-        sriov = copy.deepcopy(self.sriovs_wel[0])
-        self.assertRaises(NotImplementedError, self.sriovs_wel.append, sriov)
+        # Appending to indirect
+        backdev = copy.deepcopy(self.backdev_wel[0])
+        self.backdev_wel.append(backdev)
+        self.assertEqual(2, len(self.backdev_wel))
 
         # Make sure we can also remove what was just added.
         self.seas_wel.remove(sea_add)
         self.assertEqual(2, len(self.seas_wel))
-        # Removing from indirect not supported
-        self.assertRaises(NotImplementedError, self.sriovs_wel.remove, sriov)
+        # Removing from indirect
+        self.backdev_wel.remove(backdev)
+        self.assertEqual(1, len(self.backdev_wel))
 
     def test_extend(self):
         seas = [
@@ -525,10 +526,12 @@ class TestWrapperElemList(testtools.TestCase):
         self.assertEqual(2, len(self.seas_wel))
         self.seas_wel.extend(seas)
         self.assertEqual(4, len(self.seas_wel))
-        # Extending indirect not supported
-        sriovs = [copy.deepcopy(self.sriovs_wel[0]),
-                  copy.deepcopy(self.sriovs_wel[1])]
-        self.assertRaises(NotImplementedError, self.sriovs_wel.extend, sriovs)
+        self.adpt.build_href.return_value = 'href'
+        # Extending indirect
+        backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 2),
+                    card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4)]
+        self.backdev_wel.extend(backdevs)
+        self.assertEqual(3, len(self.backdev_wel))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
@@ -537,26 +540,33 @@ class TestWrapperElemList(testtools.TestCase):
         self.seas_wel.remove(e)
         self.seas_wel.remove(e)
         self.assertEqual(2, len(self.seas_wel))
+        # With indirect
+        self.backdev_wel.remove(card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1,
+                                                     2))
+        self.assertEqual(2, len(self.backdev_wel))
+        # Non-equivalent one doesn't work
+        self.assertRaises(ValueError, self.backdev_wel.remove,
+                          card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 3))
 
     def test_in(self):
         # This really does fail without __contains__
         self.assertIn(self.seas_wel[0], self.seas_wel)
         # Works with indirect
-        self.assertIn(self.sriovs_wel[0], self.sriovs_wel)
+        self.assertIn(self.backdev_wel[0], self.backdev_wel)
 
     def test_index(self):
         self.assertEqual(self.seas_wel.index(self.seas_wel[0]), 0)
         # Works with indirect
-        self.assertEqual(self.sriovs_wel.index(self.sriovs_wel[0]), 0)
+        self.assertEqual(self.backdev_wel.index(self.backdev_wel[0]), 0)
 
     def test_str(self):
         strout = str(self.seas_wel)
         for chunk in strout.split(','):
             self.assertIn('SEA', chunk)
         # And for indirect
-        strout = str(self.sriovs_wel)
+        strout = str(self.backdev_wel)
         for chunk in strout.split(','):
-            self.assertIn('SRIOVAdapter', chunk)
+            self.assertIn('VNIC', chunk)
 
 
 class TestActionableList(unittest.TestCase):
