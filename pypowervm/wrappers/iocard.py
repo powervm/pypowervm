@@ -414,8 +414,8 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     """The SRIOV Ethernet Logical port."""
 
     @classmethod
-    def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None,
-            allowed_vlans=u.VLANList.ALL, is_promisc=False, cfg_capacity=None):
+    def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, is_promisc=False,
+            cfg_capacity=None):
         """Create a wrapper used to create a logical port on the server.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -425,11 +425,10 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         :param pvid: The port VLAN identifier for this logical port. Any
                      untagged traffic passing through this port will have
                      this VLAN tag added.
-        :param allowed_vlans: An integer list of VLANS allowed on this logical
-                              port. Specify 'ALL' to allow all VLANs or 'NONE'
-                              to allow no VLANs on this port.
-        :param is_promisc: If this value is True, all traffic will pass through
-                           the logical port, regardless of MAC address.
+        :param is_promisc: Set to True if using the logical port for bridging
+                           (e.g. SEA, OVS, etc.); False if assigning directly
+                           to an LPAR.  Only one logical port per physical port
+                           may be promiscuous.
         :param cfg_capacity: The configured capacity of the logical port as a
                              percentage.  This represents the minimum bandwidth
                              this logical port will receive, as a percentage
@@ -443,7 +442,6 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         lport._pport_id(pport_id)
         if pvid is not None:
             lport.pvid = pvid
-        lport.allowed_vlans = allowed_vlans
         lport._is_promisc(is_promisc)
         if cfg_capacity:
             lport._cfg_capacity(cfg_capacity)
@@ -511,16 +509,6 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     @property
     def loc_code(self):
         return self._get_val_str(_SRIOVLP_LOC_CODE)
-
-    @property
-    def allowed_vlans(self):
-        vlan_str = self._get_val_str(_SRIOVLP_ALLOWED_VLANS)
-        return u.VLANList.unmarshal(vlan_str)
-
-    @allowed_vlans.setter
-    def allowed_vlans(self, vlan_list):
-        vlan_str = u.VLANList.marshal(vlan_list)
-        self.set_parm_value(_SRIOVLP_ALLOWED_VLANS, vlan_str)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
