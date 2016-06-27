@@ -298,3 +298,9 @@ class NoRunningSharedSriovAdapters(AbstractMsgFmtError):
 class InsufficientSRIOVCapacity(AbstractMsgFmtError):
     msg_fmt = _("Unable to fulfill minimum redundancy requirement of "
                 "%(min_vfs)d.  Found %(found_vfs)d viable backing device(s).")
+
+
+class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
+    msg_fmt = _("Unable to locate the volume group %(vol_grp)s to store the "
+                "virtual optical media within.  Unable to create the "
+                "media repository.")
