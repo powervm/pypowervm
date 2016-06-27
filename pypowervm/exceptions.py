@@ -284,3 +284,9 @@ class ViosNotAvailable(AbstractMsgFmtError):
                 "a VIOS to become active for %(wait_time)d seconds.  Please "
                 "check the RMC connectivity between the PowerVM NovaLink and "
                 "the Virtual I/O Servers.")
+
+
+class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
+    msg_fmt = _("Unable to locate the volume group %(vol_grp)s to store the "
+                "virtual optical media within.  Unable to create the "
+                "media repository.")
