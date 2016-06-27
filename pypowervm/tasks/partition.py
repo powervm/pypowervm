@@ -86,7 +86,9 @@ def get_this_partition(adapter):
 def get_active_vioses(adapter, xag=(), vios_wraps=None):
     """Returns a list of active Virtual I/O Server Wrappers for a host.
 
-    Active is defined by powered on and RMC state being 'active'.
+    Active is defined by powered on and RMC state being 'active'.  The
+    VIOSes will be sorted such that if the Mgmt partition is a VIOS, it is
+    the first in the list.
 
     :param adapter: The pypowervm adapter for the query.
     :param xag: (Optional, Default: ()) Iterable of extended attributes to use.
@@ -98,8 +100,12 @@ def get_active_vioses(adapter, xag=(), vios_wraps=None):
     if vios_wraps is None:
         vios_wraps = vios.VIOS.get(adapter, xag=xag)
 
-    return [vio for vio in vios_wraps if vio.rmc_state in _VALID_RMC_STATES and
-            vio.state in _VALID_VM_STATES]
+    vios_wraps = [vio for vio in vios_wraps
+                  if vio.rmc_state in _VALID_RMC_STATES and
+                  vio.state in _VALID_VM_STATES]
+    vios_wraps = sorted(vios_wraps, key=lambda x: x.is_mgmt_partition,
+                        reverse=True)
+    return vios_wraps
 
 
 def get_physical_wwpns(adapter):
