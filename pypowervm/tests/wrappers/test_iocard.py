@@ -123,6 +123,8 @@ class TestSRIOVAdapter(twrap.TestWrapper):
 
         self.assertEqual(0.02, eth_port.allocated_capacity)
 
+        self.assertEqual(card.SRIOVSpeed.E1G, eth_port.curr_speed)
+
 
 class TestLogicalPort(twrap.TestWrapper):
 

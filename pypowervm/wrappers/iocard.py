@@ -225,6 +225,18 @@ class SRIOVAdapterState(object):
     MISMATCH = 'PCIEIDMismatch'
 
 
+class SRIOVSpeed(object):
+    """Enumeration for SRIOV speed (from SRIOVConnectionSpeed.Enum)."""
+    E10M = 'E10Mbps'
+    E100M = 'E100Mbps'
+    E1G = 'E1Gbps'
+    E10G = 'E10Gbps'
+    E40G = 'E40Gpbs'
+    E100G = 'E100Gpbs'
+    AUTO = 'Auto'
+    UNKNOWN = 'Unknown'
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -447,6 +459,10 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
                  returned.
         """
         return self._get_val_percent(_SRIOVPP_ALLOC_CAPACITY)
+
+    @property
+    def curr_speed(self):
+        return self._get_val_str(_SRIOVPP_CURR_SPEED)
 
 
 @ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
