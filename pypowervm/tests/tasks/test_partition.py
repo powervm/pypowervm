@@ -35,9 +35,10 @@ LPAR_FEED_NO_MGMT = 'lpar_ibmi.txt'
 VIO_FEED_NO_MGMT = 'fake_vios_feed2.txt'
 
 
-def mock_vios(name, state, rmc_state):
+def mock_vios(name, state, rmc_state, is_mgmt=False):
     ret = mock.Mock()
-    ret.configure_mock(name=name, state=state, rmc_state=rmc_state)
+    ret.configure_mock(name=name, state=state, rmc_state=rmc_state,
+                       is_mgmt_partition=is_mgmt)
     return ret
 
 
@@ -161,12 +162,20 @@ class TestVios(twrap.TestWrapper):
     def test_get_active_vioses_w_vios_wraps(self):
         mock_vios1 = mock_vios('vios1', 'running', 'active')
         mock_vios2 = mock_vios('vios2', 'running', 'inactive')
-        vios_wraps = [mock_vios1, mock_vios2]
+        mock_vios3 = mock_vios('mgmt', 'running', 'inactive', is_mgmt=True)
+        vios_wraps = [mock_vios1, mock_vios2, mock_vios3]
 
         vioses = tpar.get_active_vioses(self.adpt, vios_wraps=vios_wraps)
-        self.assertEqual(1, len(vioses))
+        self.assertEqual(2, len(vioses))
         self.mock_vios_get.assert_not_called()
+
+        # The first should be the mgmt partition
         vio = vioses[0]
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.INACTIVE, vio.rmc_state)
+
+        # The second should be the active one
+        vio = vioses[1]
         self.assertEqual(bp.LPARState.RUNNING, vio.state)
         self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
         self.mock_vios_get.assert_not_called()
