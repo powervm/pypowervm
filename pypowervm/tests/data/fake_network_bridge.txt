@@ -207,6 +207,51 @@ BODY{
             <LargeSend kb="CUD" kxe="false">true</LargeSend>
             <ConfigurationState kb="CUD" kxe="false">Configured</ConfigurationState>
         </SharedEthernetAdapter>
+        <SharedEthernetAdapter schemaVersion="V1_2_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <AssignedVirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualIOServer/691019AF-506A-4896-AADE-607E21FA93EE" rel="related"/>
+            <BackingDeviceChoice kb="CUD" kxe="false">
+                <EthernetBackingDevice schemaVersion="V1_2_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kb="ROR" kxe="false">1</AdapterID>
+                    <Description kb="CUD" kxe="false">4-Port 10/100/1000 Base-TX PCI-Express Adapter (14106803)</Description>
+                    <DeviceName kb="ROR" kxe="false">ent0</DeviceName>
+                    <DeviceType kb="ROR" kxe="false">physicalEthernetAdpter</DeviceType>
+                    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U78AB.001.WZSH5ZY-P1-C4-T1</DynamicReconfigurationConnectorName>
+                    <PhysicalLocation kb="ROR" kxe="false">U78AB.001.WZSH5ZY-P1-C4-T1</PhysicalLocation>
+                    <UniqueDeviceID kb="ROR" kxe="false">13U78AB.001.WZSH5ZY-P1-C4-T1</UniqueDeviceID>
+                </EthernetBackingDevice>
+            </BackingDeviceChoice>
+            <HighAvailabilityMode kb="CUD" kxe="false">disabled</HighAvailabilityMode>
+            <DeviceName kb="CUD" kxe="false">ent8</DeviceName>
+            <JumboFramesEnabled kb="UOD" kxe="false">false</JumboFramesEnabled>
+            <PortVLANID kb="ROR" kxe="false">1</PortVLANID>
+            <QualityOfServiceMode kb="CUD" kxe="false">disabled</QualityOfServiceMode>
+            <QueueSize kb="UOD" kxe="false">8192</QueueSize>
+            <ThreadModeEnabled kb="CUD" kxe="false">true</ThreadModeEnabled>
+            <TrunkAdapters kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+            </TrunkAdapters>
+            <IsPrimary kb="CUD" kxe="false">true</IsPrimary>
+            <IPInterface kb="CUD" kxe="false" schemaVersion="V1_2_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <InterfaceName kb="CUD" kxe="false">en8</InterfaceName>
+                <IPAddress kb="CUD" kxe="false">9.1.2.4</IPAddress>
+                <SubnetMask kb="CUD" kxe="false">255.255.255.0</SubnetMask>
+                <State kb="CUD" kxe="false">Active</State>
+            </IPInterface>
+            <UniqueDeviceID kb="ROR" kxe="false">10298abf2b234f52cb</UniqueDeviceID>
+            <LargeSend kb="CUD" kxe="false">true</LargeSend>
+            <ConfigurationState kb="CUD" kxe="false">Configured</ConfigurationState>
+        </SharedEthernetAdapter>
     </SharedEthernetAdapters>
     <UniqueDeviceID kxe="false" kb="ROR">2</UniqueDeviceID>
     <VirtualNetworks kb="ROR" kxe="false">

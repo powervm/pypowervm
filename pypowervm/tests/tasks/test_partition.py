@@ -1,4 +1,4 @@
-# Copyright 2016 IBM Corp.
+# Copyright 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -17,47 +17,237 @@
 """Tests for pypowervm.tasks.partition."""
 
 import mock
+import testtools
 
+import pypowervm.const as c
 import pypowervm.exceptions as ex
 import pypowervm.tasks.partition as tpar
+import pypowervm.tests.tasks.util as tju
+import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.virtual_io_server as vios
+
+LPAR_FEED_WITH_MGMT = 'lpar.txt'
+VIO_FEED_WITH_MGMT = 'fake_vios_feed.txt'
+LPAR_FEED_NO_MGMT = 'lpar_ibmi.txt'
+VIO_FEED_NO_MGMT = 'fake_vios_feed2.txt'
 
 
-class TestPartition(twrap.TestWrapper):
-    file = 'lpar.txt'
-    wrapper_class_to_test = lpar.LPAR
+def mock_vios(name, state, rmc_state):
+    ret = mock.Mock()
+    ret.configure_mock(name=name, state=state, rmc_state=rmc_state)
+    return ret
 
-    def test_get_mgmt(self):
-        """Test get_mgmt_partition()."""
-        self.adpt.read.return_value = self.resp
+
+class TestPartition(testtools.TestCase):
+
+    def setUp(self):
+        super(TestPartition, self).setUp()
+        self.adpt = self.useFixture(
+            fx.AdapterFx(traits=fx.RemotePVMTraits)).adpt
+        self.mgmt_vio = tju.load_file(VIO_FEED_WITH_MGMT, self.adpt)
+        self.mgmt_lpar = tju.load_file(LPAR_FEED_WITH_MGMT, self.adpt)
+        self.nomgmt_vio = tju.load_file(VIO_FEED_NO_MGMT, self.adpt)
+        self.nomgmt_lpar = tju.load_file(LPAR_FEED_NO_MGMT, self.adpt)
+
+    def test_get_mgmt_lpar(self):
+        "Happy path where the LPAR is the mgmt VM is a LPAR."
+        self.adpt.read.side_effect = [self.mgmt_lpar, self.nomgmt_vio]
+
         mgmt_w = tpar.get_mgmt_partition(self.adpt)
         self.assertTrue(mgmt_w.is_mgmt_partition)
         self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', mgmt_w.uuid)
-        with mock.patch(
-                'pypowervm.wrappers.logical_partition.LPAR.is_mgmt_partition',
-                return_value=False):
-            self.assertRaises(ex.ManagementPartitionNotFoundException,
-                              tpar.get_mgmt_partition, self.adpt)
+        self.assertIsInstance(mgmt_w, lpar.LPAR)
 
+    def test_get_mgmt_vio(self):
+        "Happy path where the LPAR is the mgmt VM is a VIOS."
+        self.adpt.read.side_effect = [self.nomgmt_lpar, self.mgmt_vio]
+
+        mgmt_w = tpar.get_mgmt_partition(self.adpt)
+        self.assertTrue(mgmt_w.is_mgmt_partition)
+        self.assertEqual('7DBBE705-E4C4-4458-8223-3EBE07015CA9', mgmt_w.uuid)
+        self.assertIsInstance(mgmt_w, vios.VIOS)
+
+    def test_get_mgmt_multiple(self):
+        """Failure path with multiple mgmt VMs."""
+        self.adpt.read.side_effect = [self.mgmt_lpar, self.mgmt_vio]
+
+        self.assertRaises(ex.ManagementPartitionNotFoundException,
+                          tpar.get_mgmt_partition, self.adpt)
+
+    def test_get_mgmt_none(self):
+        """Failure path with no mgmt VMs."""
+        self.adpt.read.side_effect = [self.nomgmt_lpar, self.nomgmt_vio]
+
+        self.assertRaises(ex.ManagementPartitionNotFoundException,
+                          tpar.get_mgmt_partition, self.adpt)
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.search')
     @mock.patch('pypowervm.wrappers.logical_partition.LPAR.search')
     @mock.patch('pypowervm.util.my_partition_id')
-    def test_get_me(self, mock_my_id, mock_search):
+    def test_get_me(self, mock_my_id, mock_lp_search, mock_vio_search):
         """Test get_this_partition()."""
-        # Good path - one hit
-        mock_search.return_value = [self.dwrap]
+        # Good path - one hit on LPAR
+        mock_lp_search.return_value = [lpar.LPAR.wrap(self.mgmt_lpar)[0]]
+        mock_vio_search.return_value = []
         mock_my_id.return_value = 9
         my_w = tpar.get_this_partition(self.adpt)
         self.assertEqual(9, my_w.id)
         self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', my_w.uuid)
-        mock_search.assert_called_with(self.adpt, id=9)
+        mock_lp_search.assert_called_with(self.adpt, id=9)
+        mock_vio_search.assert_called_with(self.adpt, id=9)
+
+        # Good path - one hit on VIOS
+        mock_lp_search.return_value = []
+        mock_vio_search.return_value = [vios.VIOS.wrap(self.mgmt_vio)[0]]
+        mock_my_id.return_value = 2
+        my_w = tpar.get_this_partition(self.adpt)
+        self.assertEqual(2, my_w.id)
+        self.assertEqual('1300C76F-9814-4A4D-B1F0-5B69352A7DEA', my_w.uuid)
+        mock_lp_search.assert_called_with(self.adpt, id=2)
+        mock_vio_search.assert_called_with(self.adpt, id=2)
 
         # Bad path - multiple hits
-        mock_search.return_value = self.entries
+        mock_lp_search.return_value = lpar.LPAR.wrap(self.mgmt_lpar)
         self.assertRaises(ex.ThisPartitionNotFoundException,
                           tpar.get_this_partition, self.adpt)
 
         # Bad path - no hits
-        mock_search.return_value = []
+        mock_lp_search.return_value = []
+        mock_vio_search.return_value = []
         self.assertRaises(ex.ThisPartitionNotFoundException,
                           tpar.get_this_partition, self.adpt)
+
+
+class TestVios(twrap.TestWrapper):
+    file = 'fake_vios_feed2.txt'
+    wrapper_class_to_test = vios.VIOS
+
+    def setUp(self):
+        super(TestVios, self).setUp()
+        sleep_p = mock.patch('time.sleep')
+        self.mock_sleep = sleep_p.start()
+        self.addCleanup(sleep_p.stop)
+        vioget_p = mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+        self.mock_vios_get = vioget_p.start()
+        self.addCleanup(vioget_p.stop)
+
+    def test_get_active_vioses(self):
+        self.mock_vios_get.return_value = self.entries
+        vioses = tpar.get_active_vioses(self.adpt)
+        self.assertEqual(1, len(vioses))
+        self.mock_vios_get.assert_called_once_with(self.adpt, xag=())
+        vio = vioses[0]
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
+        self.mock_vios_get.assert_called_once_with(self.adpt, xag=())
+
+        self.mock_vios_get.reset_mock()
+
+        # Test with actual xag.  find_min equal to the number found - works.
+        vioses = tpar.get_active_vioses(self.adpt, xag='xaglist', find_min=1)
+        self.assertEqual(1, len(vioses))
+        vio = vioses[0]
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
+        self.mock_vios_get.assert_called_once_with(self.adpt, xag='xaglist')
+
+        # Violates find_min
+        self.assertRaises(ex.NotEnoughActiveVioses, tpar.get_active_vioses,
+                          self.adpt, find_min=2)
+
+    def test_get_active_vioses_w_vios_wraps(self):
+        mock_vios1 = mock_vios('vios1', 'running', 'active')
+        mock_vios2 = mock_vios('vios2', 'running', 'inactive')
+        vios_wraps = [mock_vios1, mock_vios2]
+
+        vioses = tpar.get_active_vioses(self.adpt, vios_wraps=vios_wraps)
+        self.assertEqual(1, len(vioses))
+        self.mock_vios_get.assert_not_called()
+        vio = vioses[0]
+        self.assertEqual(bp.LPARState.RUNNING, vio.state)
+        self.assertEqual(bp.RMCState.ACTIVE, vio.rmc_state)
+        self.mock_vios_get.assert_not_called()
+
+    def test_get_physical_wwpns(self):
+        self.mock_vios_get.return_value = self.entries
+        expected = {'21000024FF649104'}
+        result = set(tpar.get_physical_wwpns(self.adpt))
+        self.assertSetEqual(expected, result)
+
+    @mock.patch('pypowervm.tasks.partition.get_active_vioses')
+    @mock.patch('pypowervm.utils.transaction.FeedTask')
+    def test_build_active_vio_feed_task(self, mock_feed_task,
+                                        mock_get_active_vioses):
+        mock_get_active_vioses.return_value = ['vios1', 'vios2']
+        mock_feed_task.return_value = 'mock_feed'
+        self.assertEqual('mock_feed', tpar.build_active_vio_feed_task('adpt'))
+        mock_get_active_vioses.assert_called_once_with(
+            'adpt', xag=(c.XAG.VIO_STOR, c.XAG.VIO_SMAP, c.XAG.VIO_FMAP),
+            find_min=1)
+
+    @mock.patch('pypowervm.tasks.partition.get_active_vioses')
+    def test_build_tx_feed_task_w_empty_feed(self, mock_get_active_vioses):
+        mock_get_active_vioses.return_value = []
+        self.assertRaises(
+            ex.FeedTaskEmptyFeed, tpar.build_active_vio_feed_task,
+            mock.MagicMock())
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_rmc_down_vioses(self, mock_warn):
+        """Time out waiting for up/inactive partitions, but succeed."""
+        # No
+        mock_vios1 = mock_vios('vios1', bp.LPARState.NOT_ACTIVATED,
+                               bp.RMCState.INACTIVE)
+        # No
+        mock_vios2 = mock_vios('vios2', bp.LPARState.RUNNING,
+                               bp.RMCState.BUSY)
+        # Yes
+        mock_vios3 = mock_vios('vios3', bp.LPARState.RUNNING,
+                               bp.RMCState.UNKNOWN)
+        # No
+        mock_vios4 = mock_vios('vios4', bp.LPARState.UNKNOWN,
+                               bp.RMCState.ACTIVE)
+        # No
+        mock_vios5 = mock_vios('vios5', bp.LPARState.RUNNING,
+                               bp.RMCState.ACTIVE)
+        # Yes
+        mock_vios6 = mock_vios('vios6', bp.LPARState.RUNNING,
+                               bp.RMCState.INACTIVE)
+
+        self.mock_vios_get.return_value = [mock_vios1, mock_vios2, mock_vios3,
+                                           mock_vios4, mock_vios5, mock_vios6]
+        tpar.validate_vios_ready('adap')
+        # We slept.
+        self.assertEqual(120, self.mock_sleep.call_count)
+        self.mock_sleep.assert_called_with(5)
+        # We wound up with rmc_down_vioses
+        mock_warn.assert_called_once_with(mock.ANY, {'time': 600,
+                                                     'vioses': 'vios3, vios6'})
+        # We didn't raise - because some VIOSes were okay.
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_no_vioses(self, mock_warn):
+        """In the (highly unusual) case of no VIOSes, no warning, but raise."""
+        self.mock_vios_get.return_value = []
+        self.assertRaises(ex.ViosNotAvailable, tpar.validate_vios_ready, 'adp')
+        mock_warn.assert_not_called()
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_exception_and_good_path(self, mock_warn):
+        """VIOS.get raises, then succeeds with some halfsies, then succeeds."""
+        vios1_good = mock_vios('vios1', bp.LPARState.RUNNING,
+                               bp.RMCState.BUSY)
+        vios2_bad = mock_vios('vios2', bp.LPARState.RUNNING,
+                              bp.RMCState.UNKNOWN)
+        vios2_good = mock_vios('vios2', bp.LPARState.RUNNING,
+                               bp.RMCState.ACTIVE)
+        self.mock_vios_get.side_effect = (ValueError('foo'),
+                                          [vios1_good, vios2_bad],
+                                          [vios1_good, vios2_good])
+        tpar.validate_vios_ready('adap')
+        self.assertEqual(3, self.mock_vios_get.call_count)
+        self.assertEqual(2, self.mock_sleep.call_count)
+        mock_warn.assert_called_once_with(mock.ANY)

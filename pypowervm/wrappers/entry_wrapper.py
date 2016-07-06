@@ -18,6 +18,7 @@
 
 import abc
 from oslo_log import log as logging
+import re
 import six
 import urllib
 
@@ -30,6 +31,13 @@ from pypowervm import util
 import pypowervm.utils.uuid as pvm_uuid
 
 LOG = logging.getLogger(__name__)
+
+
+def _indirect_child_elem(wrap, indirect):
+    if indirect is None:
+        return wrap.element
+    else:
+        return ent.Element(indirect, wrap.adapter, children=[wrap.element])
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -290,7 +298,7 @@ class Wrapper(object):
             return new_elem
 
     def replace_list(self, prop_name, prop_children,
-                     attrib=pc.DEFAULT_SCHEMA_ATTR):
+                     attrib=pc.DEFAULT_SCHEMA_ATTR, indirect=None):
         """Replaces a property on this Entry that contains a children list.
 
         The prop_children represent the new elements for the property.
@@ -303,11 +311,32 @@ class Wrapper(object):
                               the new children for the property list.
         :param attrib: The attributes to use if the property.  Defaults to
                        the DEFAULT_SCHEM_ATTR.
+        :param indirect: Name of a schema element which should wrap each of the
+                         prop_children.  For example, VNIC backing devices look
+                         like:
+                            <AssociatedBackingDevices>
+                                <Metadata>...</Metadata>
+                                <VirtualNICBackingDeviceChoice>
+                                    <VirtualNICSRIOVBackingDevice>
+                                        ...
+                                    </VirtualNICSRIOVBackingDevice>
+                                </VirtualNICBackingDeviceChoice>
+                                <VirtualNICBackingDeviceChoice>
+                                    <VirtualNICSRIOVBackingDevice>
+                                        ...
+                                    </VirtualNICSRIOVBackingDevice>
+                                </VirtualNICBackingDeviceChoice>
+                                ...
+                            </AssociatedBackingDevices>
+                         In this case, invoke this method as:
+                         replace_list(
+                             'AssociatedBackingDevices',
+                             [<list of VirtualNICSRIOVBackingDevice wrappers>],
+                             indirect='VirtualNICBackingDeviceChoice')
         """
-        new_elem = ent.Element(prop_name, self.adapter,
-                               attrib=attrib,
-                               children=[x.element for
-                                         x in prop_children])
+        new_elem = ent.Element(prop_name, self.adapter, attrib=attrib,
+                               children=[_indirect_child_elem(child, indirect)
+                                         for child in prop_children])
 
         self.inject(new_elem)
 
@@ -468,6 +497,24 @@ class Wrapper(object):
                  string.
         """
         return self.__get_val(property_name, default=default, converter=None)
+
+    def _get_val_percent(self, property_name, default=None):
+        """Gets the value in float-percentage format of a PowerVM property.
+
+        :param property_name: property to find
+        :param default: Value to return if property is not found. Defaults to
+                        None (which is not a float - plan accordingly).
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned. % in the property is optional.
+        """
+        def str2percent(percent_str):
+            if percent_str:
+                percent_str = re.findall(r"\d*\.?\d+", percent_str)[0]
+                return (float(percent_str))/100
+            else:
+                return None
+        return self.__get_val(property_name, default=default,
+                              converter=str2percent)
 
     def log_missing_value(self, param):
         LOG.debug('The expected parameter of %(param)s was not found in '
@@ -1193,7 +1240,7 @@ class WrapperElemList(list):
      - Removing from the list (ex. list.remove(other_elem))
     """
 
-    def __init__(self, root_elem, child_class=None, **kwargs):
+    def __init__(self, root_elem, child_class=None, indirect=None, **kwargs):
         """Creates a new list backed by an Element anchor and child type.
 
         :param root_elem: The container element.  Should be the backing
@@ -1202,6 +1249,25 @@ class WrapperElemList(list):
         :param child_class: The child class (subclass of ElementWrapper).
                             This is optional.  If not specified, will wrap
                             all children elements.
+        :param indirect: Name of schema layer to ignore between root_elem and
+                         the target child_class.  This is for schema structures
+                         such as:
+                            <IOAdapters>
+                                <IOAdapterChoice>
+                                    <IOAdapter>...</IOAdapter>
+                                </IOAdapterChoice>
+                                <IOAdapterChoice>
+                                    <SRIOVAdapter>...</SRIOVAdapter>
+                                </IOAdapterChoice>
+                                ...
+                          </IOAdapters>
+                         In this case, we want WrapperElemList to return
+                            [IOAdapter, SRIOVAdapter, ...]
+                         ...ignoring the intervening <IOAdapterChoice/>
+                         layer, so we would set indirect='IOAdapterChoice'.
+                         Note that we rely upon the intervening layer (in this
+                         example, IOAdapterChoice) to contain nothing but the
+                         target element type - not even <Metadata/>.
         :param kwargs: Optional additional named arguments that may be passed
                        into the wrapper on creation.
         """
@@ -1212,14 +1278,20 @@ class WrapperElemList(list):
             # Default to the ElementWrapper, which should resolve to the
             # appropriate class type.
             self.child_class = ElementWrapper
+        self.indirect = indirect
         self.injects = kwargs
 
     def __find_elems(self):
-        if (self.child_class is not None and
-                self.child_class is not ElementWrapper):
-            return self.root_elem.findall(self.child_class.schema_type)
-        else:
-            return list(self.root_elem)
+        root_elems = self.root_elem.findall(
+            self.indirect) if self.indirect else [self.root_elem]
+        found = []
+        for root_elem in root_elems:
+            if (self.child_class is not None and
+                    self.child_class is not ElementWrapper):
+                found.extend(root_elem.findall(self.child_class.schema_type))
+            else:
+                found.extend(list(root_elem))
+        return found
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -1249,14 +1321,8 @@ class WrapperElemList(list):
             yield self.child_class.wrap(elem, **self.injects)
 
     def __str__(self):
-        elems = self.__find_elems()
-        string = '['
-        for elem in elems:
-            string += str(elem)
-            if elem != elems[len(elems) - 1]:
-                string += ', '
-        string += ']'
-        return string
+        return '[' + ', '.join([str(self.child_class.wrap(
+            elem, **self.injects)) for elem in self.__find_elems()]) + ']'
 
     def __contains__(self, item):
         elems = self.__find_elems()
@@ -1267,21 +1333,23 @@ class WrapperElemList(list):
             self.append(elem)
 
     def append(self, elem):
-        self.root_elem.element.append(elem.element.element)
+        self.root_elem.element.append(
+            _indirect_child_elem(elem, self.indirect).element)
 
     def remove(self, elem):
+        find_elem = _indirect_child_elem(elem, self.indirect)
         # Try this way first...if there is a value error, that means
         # that the identical element isn't here...need to try 'functionally
         # equivalent' -> slower...
         try:
-            self.root_elem.remove(elem.element)
+            self.root_elem.remove(find_elem)
             return
         except ValueError:
             pass
 
         # Onto the slower path.  Get children and see if any are equivalent
         children = list(self.root_elem)
-        equiv = util.find_equivalent(elem.element, children)
+        equiv = util.find_equivalent(find_elem, children)
         if equiv is None:
             raise ValueError(_('No such child element.'))
         self.root_elem.remove(equiv)

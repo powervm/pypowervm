@@ -154,7 +154,7 @@ def log_helper(func, max_logs=5):
             # Special case for 412 (etag mismatch) - don't dump.
             if not is_etag_mismatch(e):
                 _write_thread_log()
-            raise e
+            raise
         else:
             _stash_response(sensitive, response)
             return response
