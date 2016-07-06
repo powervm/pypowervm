@@ -230,3 +230,83 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.assertTrue(mock_server.close.called)
         self.assertTrue(mock_client_peer.close.called)
         self.assertTrue(mock_server_peer.close.called)
+
+    @mock.patch('select.select')
+    @mock.patch('ssl.wrap_socket')
+    def test_enable_x509_authentication(self, mock_wrap, mock_select):
+        mock_select.return_value = None, None, None
+        csock, ssock = _FakeSocket(), _FakeSocket()
+        ssock.recv_buffer = 'RFB 003.008\n\x01\x01'
+        csock.recv_buffer = 'RFB 003.007\n\x13\x00\x02\x00\x00\x01\x04'
+        # Test the method to do the handshake to enable VeNCrypt Authentication
+        nsock = self.srv._enable_x509_authentication(csock, ssock)
+        # Make sure that we didn't get an error and the TLS Socket was created
+        self.assertIsNotNone(nsock, 'The TLS Socket was not created')
+        # Verify that the data sent to the Client Socket matches expected
+        csock_snd = 'RFB 003.008\n\x01\x13\x00\x02\x00\x01\x00\x00\x01\x04\x01'
+        self.assertEqual(csock.send_buffer, csock_snd,
+                         'Did not send to the client socket what was expected')
+        # Verify that the data sent to the Server Socket matches expected
+        self.assertEqual(ssock.send_buffer, 'RFB 003.007\n\x01',
+                         'Did not send to the server socket what was expected')
+
+    @mock.patch('select.select')
+    def test_enable_x509_authentication_bad_auth_type(self, mock_select):
+        mock_select.return_value = None, None, None
+        csock, ssock = _FakeSocket(), _FakeSocket()
+        ssock.recv_buffer = 'RFB 003.008\n\x01\x01'
+        csock.recv_buffer = 'RFB 003.007\n\x14\x00\x02\x00\x00\x01\x04'
+        # Test the method to do the handshake to enable VeNCrypt Authentication
+        nsock = self.srv._enable_x509_authentication(csock, ssock)
+        # Make sure that we got an error and it didn't create the TLS Socket
+        self.assertIsNone(nsock, 'Expected an error validating auth type')
+        # Verify that the data sent to the Client Socket matches expected
+        csock_snd = 'RFB 003.008\n\x01\x13\x00\x02\x01'
+        self.assertEqual(csock.send_buffer, csock_snd,
+                         'Did not send to the client socket what was expected')
+
+    @mock.patch('select.select')
+    def test_enable_x509_authentication_bad_auth_version(self, mock_select):
+        mock_select.return_value = None, None, None
+        csock, ssock = _FakeSocket(), _FakeSocket()
+        ssock.recv_buffer = 'RFB 003.008\n\x01\x01'
+        csock.recv_buffer = 'RFB 003.007\n\x13\x00\x01\x00\x00\x01\x04'
+        # Test the method to do the handshake to enable VeNCrypt Authentication
+        nsock = self.srv._enable_x509_authentication(csock, ssock)
+        # Make sure that we got an error and it didn't create the TLS Socket
+        self.assertIsNone(nsock, 'Expected an error validating auth version')
+        # Verify that the data sent to the Client Socket matches expected
+        csock_snd = 'RFB 003.008\n\x01\x13\x00\x02\x01'
+        self.assertEqual(csock.send_buffer, csock_snd,
+                         'Did not send to the client socket what was expected')
+
+    @mock.patch('select.select')
+    def test_enable_x509_authentication_bad_auth_subtype(self, mock_select):
+        mock_select.return_value = None, None, None
+        csock, ssock = _FakeSocket(), _FakeSocket()
+        ssock.recv_buffer = 'RFB 003.008\n\x01\x01'
+        csock.recv_buffer = 'RFB 003.007\n\x13\x00\x02\x00\x00\x01\x03'
+        # Test the method to do the handshake to enable VeNCrypt Authentication
+        nsock = self.srv._enable_x509_authentication(csock, ssock)
+        # Make sure that we got an error and it didn't create the TLS Socket
+        self.assertIsNone(nsock, 'Expected an error validating auth sub-type')
+        # Verify that the data sent to the Client Socket matches expected
+        csock_snd = 'RFB 003.008\n\x01\x13\x00\x02\x00\x01\x00\x00\x01\x04\x00'
+        self.assertEqual(csock.send_buffer, csock_snd,
+                         'Did not send to the client socket what was expected')
+
+
+class _FakeSocket(object):
+
+    def __init__(self):
+        self.recv_buffer, self.send_buffer = '', ''
+        self.recv_bytes, self.send_bytes = 0, 0
+
+    def recv(self, bufsize):
+        chunk = self.recv_buffer[self.recv_bytes:self.recv_bytes+bufsize]
+        self.recv_bytes += bufsize
+        return chunk
+
+    def sendall(self, string):
+        self.send_buffer += string
+        self.send_bytes += len(string)
