@@ -125,6 +125,9 @@ class TestUtil(unittest.TestCase):
         # Round up
         self.assertEqual(1.15, util.convert_bytes_to_gb(1224067890, dp=2))
 
+        # Low value still honors dp
+        self.assertEqual(0.01, util.convert_bytes_to_gb(1, dp=2))
+
     def test_round_gb_size_up(self):
         self.assertEqual(12.35, util.round_gb_size_up(12.34000000001))
         self.assertEqual(12.34000000001, util.round_gb_size_up(12.34000000001,

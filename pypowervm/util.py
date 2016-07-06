@@ -305,7 +305,9 @@ def convert_bytes_to_gb(bytes_, low_value=.0001, dp=None):
     may be required.
 
     :param bytes_: The integer number of bytes.
-    :param low_value: The minimum value that should be returned.
+    :param low_value: The minimum value that should be returned.  (Note: if dp
+                      is also specified, the value returned may be rounded up
+                      and thus be higher than low_value.)
     :param dp: If specified, the value is rounded up to the specified number of
                decimal places by round_gb_size_up.  (Note: None and zero are
                very different.)
@@ -313,7 +315,7 @@ def convert_bytes_to_gb(bytes_, low_value=.0001, dp=None):
     """
     gb_size = bytes_ / float(units.Gi)
     if gb_size < low_value:
-        return low_value
+        gb_size = low_value
     if dp is not None:
         gb_size = round_gb_size_up(gb_size, dp=dp)
     return gb_size
