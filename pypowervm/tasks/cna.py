@@ -17,8 +17,9 @@
 """Tasks around ClientNetworkAdapter."""
 from oslo_concurrency import lockutils
 
-import pypowervm.exceptions as exc
+from pypowervm import exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.tasks import partition
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
@@ -363,18 +364,19 @@ def get_all_lpars(adapter, mgmt_partitions=False):
     """Gets all lpars and VIOSes.
 
     :param adapter: The pypowervm adapter to perform the search with.
-    :param mgmt_partitions: This is optional. If True, will search for
-                            mgmt_partitions only, otherwise it will return all
-                            lpars and VIOSes.
+    :param mgmt_partitions: (Optional, Default: False) If set to True, will
+                             return the VIOSes and the mgmt partitions.  If
+                             set to False (the default) will return all the
+                             VIOSes and the LPARs (including the mgmt
+                             partitions.
     :return: A list of all the lpars.
     """
     vios_wraps = pvm_vios.VIOS.get(adapter)
     if mgmt_partitions:
-        mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
-        if mgmt_wraps[0].uuid in [x.uuid for x in vios_wraps]:
-            host_wraps = vios_wraps
-        else:
-            host_wraps = vios_wraps + mgmt_wraps
+        mgmt_wrap = partition.get_mgmt_partition(adapter)
+        if mgmt_wrap.uuid not in [x.uuid for x in vios_wraps]:
+            vios_wraps.append(mgmt_wrap)
+        host_wraps = vios_wraps
     else:
         lpar_wraps = lpar.LPAR.get(adapter)
         host_wraps = vios_wraps + lpar_wraps
