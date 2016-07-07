@@ -203,6 +203,19 @@ def build_active_vio_feed_task(adapter, name='vio_feed_task', xag=(
     return tx.FeedTask(name, get_active_vioses(adapter, xag=xag, find_min=1))
 
 
+def _rmc_down(vwrap):
+    """Check is VIOS is in RMC Down states
+
+    :param vwrap: VIOS wrapper on which to check if RMC is down
+    """
+    if vwrap.is_mgmt_partition:
+        return False
+    if (vwrap.rmc_state not in _VALID_RMC_STATES and
+            vwrap.state not in _DOWN_VM_STATES):
+        return True
+    return False
+
+
 def _wait_for_vioses(adapter, max_wait_time):
     """Wait for VIOSes to stabilize, and report on their states.
 
@@ -219,8 +232,7 @@ def _wait_for_vioses(adapter, max_wait_time):
         try:
             vios_wraps = vios.VIOS.get(adapter)
             rmc_down_vioses = [
-                vwrap for vwrap in vios_wraps if vwrap.rmc_state not in
-                _VALID_RMC_STATES and vwrap.state not in _DOWN_VM_STATES]
+                vwrap for vwrap in vios_wraps if _rmc_down(vwrap)]
             if not vios_wraps or (not rmc_down_vioses and get_active_vioses(
                     adapter, vios_wraps=vios_wraps)):
                 # If there are truly no VIOSes (which should generally be
