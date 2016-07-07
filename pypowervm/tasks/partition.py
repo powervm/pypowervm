@@ -219,8 +219,8 @@ def _wait_for_vioses(adapter, max_wait_time):
         try:
             vios_wraps = vios.VIOS.get(adapter)
             rmc_down_vioses = [
-                vwrap for vwrap in vios_wraps if vwrap.rmc_state not in
-                _VALID_RMC_STATES and vwrap.state not in _DOWN_VM_STATES]
+                vwrap for vwrap in vios_wraps if not vwrap.can_modify_io and
+                vwrap.state not in _DOWN_VM_STATES]
             if not vios_wraps or (not rmc_down_vioses and get_active_vioses(
                     adapter, vios_wraps=vios_wraps)):
                 # If there are truly no VIOSes (which should generally be

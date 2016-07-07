@@ -217,8 +217,13 @@ class TestVios(twrap.TestWrapper):
         mock_vios6 = mock_vios('vios6', bp.LPARState.RUNNING,
                                bp.RMCState.INACTIVE)
 
+        # No
+        mock_vios7 = mock_vios('vios7', bp.LPARState.RUNNING,
+                               bp.RMCState.INACTIVE, is_mgmt=True)
+
         self.mock_vios_get.return_value = [mock_vios1, mock_vios2, mock_vios3,
-                                           mock_vios4, mock_vios5, mock_vios6]
+                                           mock_vios4, mock_vios5, mock_vios6,
+                                           mock_vios7]
         tpar.validate_vios_ready('adap')
         # We slept.
         self.assertEqual(120, self.mock_sleep.call_count)
