@@ -17,8 +17,9 @@
 """Tasks around ClientNetworkAdapter."""
 from oslo_concurrency import lockutils
 
-import pypowervm.exceptions as exc
+from pypowervm import exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.tasks import partition
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
@@ -265,7 +266,8 @@ def find_trunks(adapter, cna_w):
              the Client Network Adapter.
     """
     # VIOS and Management Partitions can host Trunk Adapters.
-    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
+    host_wraps = _get_partitions(
+        adapter, get_lpars=False, get_vioses=True, get_mgmt=True)
 
     # Find the corresponding trunk adapters.
     trunk_list = []
@@ -317,7 +319,7 @@ def _find_cna_wraps(adapter, vswitch_id=None):
              vswitch_id.
     """
     # All lpars should be searched, including VIOSes
-    lpar_wraps = get_all_lpars(adapter)
+    lpar_wraps = _get_partitions(adapter)
 
     cna_wraps = []
     filtered_cna_wraps = []
@@ -359,26 +361,33 @@ def find_cnas_on_trunk(trunk_w, cna_wraps=None):
     return cna_list
 
 
-def get_all_lpars(adapter, mgmt_partitions=False):
-    """Gets all lpars and VIOSes.
+def _get_partitions(adapter, get_lpars=True, get_vioses=True, get_mgmt=False):
+    """Get a list of partitions.
 
-    :param adapter: The pypowervm adapter to perform the search with.
-    :param mgmt_partitions: This is optional. If True, will search for
-                            mgmt_partitions only, otherwise it will return all
-                            lpars and VIOSes.
-    :return: A list of all the lpars.
+    Can include LPARs, VIOSes, and the management partition.
+
+    :param adapter: The pypowervm adapter.
+    :param get_lpars: If True, the result will include all LPARs.
+    :param get_vioses: If True, the result will include all VIOSes.
+    :param get_mgmt: If True, the result is guaranteed to include the
+                     management partition, even if it would not otherwise have
+                     been included based on get_lpars/get_vioses.
     """
-    vios_wraps = pvm_vios.VIOS.get(adapter)
-    if mgmt_partitions:
-        mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
-        if mgmt_wraps[0].uuid in [x.uuid for x in vios_wraps]:
-            host_wraps = vios_wraps
-        else:
-            host_wraps = vios_wraps + mgmt_wraps
-    else:
-        lpar_wraps = lpar.LPAR.get(adapter)
-        host_wraps = vios_wraps + lpar_wraps
-    return host_wraps
+    rets = []
+    if get_vioses:
+        rets.extend(pvm_vios.VIOS.get(adapter))
+    if get_lpars:
+        rets.extend(lpar.LPAR.get(adapter))
+
+    # If they need the mgmt lpar, get it.  But ONLY if we didn't get both
+    # VIOSes and LPARs.  If we got both of those already, then we are
+    # guaranteed to already have the mgmt lpar in there.
+    if get_mgmt and not (get_lpars and get_vioses):
+        mgmt_w = partition.get_mgmt_partition(adapter)
+        if mgmt_w.uuid not in [x.uuid for x in rets]:
+            rets.append(partition.get_mgmt_partition(adapter))
+
+    return rets
 
 
 def find_orphaned_trunks(adapter, vswitch_name):
@@ -394,7 +403,8 @@ def find_orphaned_trunks(adapter, vswitch_name):
     """
 
     # VIOS and Management Partitions can host Trunk Adapters.
-    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
+    host_wraps = _get_partitions(
+        adapter, get_lpars=False, get_vioses=True, get_mgmt=True)
 
     vswitch_id = pvm_net.VSwitch.search(
         adapter, parent_type=pvm_ms.System, one_result=True,
