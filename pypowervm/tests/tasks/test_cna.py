@@ -312,31 +312,30 @@ class TestVNET(twrap.TestWrapper):
         self.assertTrue(mock_cna_get.called)
 
     @mock.patch('pypowervm.tasks.cna._find_trunk_on_lpar')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.search')
+    @mock.patch('pypowervm.tasks.partition.get_mgmt_partition')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
-    def test_find_trunks(self, mock_vios_get, mock_lpar_search,
+    def test_find_trunks(self, mock_vios_get, mock_get_mgmt,
                          mock_find_trunk):
         # Mocked responses can be simple, since they are just fed into the
         # _find_trunk_on_lpar
         mock_vios_get.return_value = [mock.MagicMock(), mock.MagicMock()]
-        mock_lpar_search.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_get_mgmt.return_value = mock.MagicMock()
 
-        # The responses back from the find trunk.  Have a None to make sure
-        # we don't have LPARs without trunks added to the response list.
-        # Also, make it an odd trunk priority ordering.
-        v1, v2 = None, mock.Mock(trunk_pri=3)
+        # The responses back from the find trunk.  Make it an odd trunk
+        # priority ordering to make sure we sort properly
+        v1 = mock.Mock(trunk_pri=3)
         c1, c2 = mock.Mock(trunk_pri=1), mock.Mock(trunk_pri=2)
-        mock_find_trunk.side_effect = [v1, v2, c1, c2]
+        mock_find_trunk.side_effect = [v1, c1, c2]
 
         # Invoke the method.
         resp = cna.find_trunks(self.adpt, mock.Mock(pvid=2))
 
         # Make sure four calls to the find trunk
-        self.assertEqual(4, mock_find_trunk.call_count)
+        self.assertEqual(3, mock_find_trunk.call_count)
 
         # Order of the response is important.  Should be based off of trunk
         # priority
-        self.assertEqual([c1, c2, v2], resp)
+        self.assertEqual([c1, c2, v1], resp)
 
     @mock.patch('pypowervm.wrappers.network.CNA.get')
     def test_find_all_trunks_on_lpar(self, mock_cna_get):
@@ -399,14 +398,14 @@ class TestVNET(twrap.TestWrapper):
 
     @mock.patch('pypowervm.tasks.cna._find_cna_wraps')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.search')
+    @mock.patch('pypowervm.tasks.partition.get_mgmt_partition')
     @mock.patch('pypowervm.tasks.cna._find_all_trunks_on_lpar')
     @mock.patch('pypowervm.wrappers.network.VSwitch.search')
     def test_find_orphaned_trunks(self, mock_vswitch, mock_trunks,
-                                  mock_lpar_search, mock_vios_get, mock_wraps):
+                                  mock_get_mgmt, mock_vios_get, mock_wraps):
 
         mock_vswitch.return_value = mock.MagicMock(switch_id=1)
-        mock_lpar_search.return_value = [mock.MagicMock()]
+        mock_get_mgmt.return_value = mock.MagicMock()
         mock_vios_get.return_value = [mock.MagicMock()]
         # Mocked cna_wraps
         m1 = mock.Mock(is_trunk=True, uuid=2, pvid=2, vswitch_id=1)
