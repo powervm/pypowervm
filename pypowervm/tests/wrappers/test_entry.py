@@ -561,10 +561,27 @@ class TestWrapperElemList(testtools.TestCase):
 
     def test_str(self):
         strout = str(self.seas_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
         for chunk in strout.split(','):
             self.assertIn('SEA', chunk)
         # And for indirect
         strout = str(self.backdev_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
+        for chunk in strout.split(','):
+            self.assertIn('VNIC', chunk)
+
+    def test_repr(self):
+        strout = repr(self.seas_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
+        for chunk in strout.split(','):
+            self.assertIn('SEA', chunk)
+        # And for indirect
+        strout = repr(self.backdev_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
         for chunk in strout.split(','):
             self.assertIn('VNIC', chunk)
 
