@@ -1324,6 +1324,10 @@ class WrapperElemList(list):
         return '[' + ', '.join([str(self.child_class.wrap(
             elem, **self.injects)) for elem in self.__find_elems()]) + ']'
 
+    def __repr__(self):
+        return '[' + ', '.join([repr(self.child_class.wrap(
+            elem, **self.injects)) for elem in self.__find_elems()]) + ']'
+
     def __contains__(self, item):
         elems = self.__find_elems()
         return item.element in elems
