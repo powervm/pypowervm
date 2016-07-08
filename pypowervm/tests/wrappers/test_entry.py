@@ -15,6 +15,7 @@
 #    under the License.
 
 import copy
+import re
 import unittest
 import uuid
 
@@ -33,6 +34,7 @@ import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -43,6 +45,7 @@ LPAR_FILE = 'lpar.txt'
 VIOS_FILE = 'fake_vios_feed.txt'
 VNETS_FILE = 'nbbr_virtual_network.txt'
 SYS_VNIC_FILE = 'vnic_feed.txt'
+SYS_SRIOV_FILE = 'sys_with_sriov.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -93,6 +96,87 @@ class TestElement(twrap.TestWrapper):
         newel.append(self.dwrap.load_grps[1].element)
         # TODO(IBM): ...but it doesn't.  See comment in that method.
         # self.assertEqual(num_lg, len(self.dwrap.load_grps))
+
+
+class TestElementList(twrap.TestWrapper):
+    file = SYS_SRIOV_FILE
+    wrapper_class_to_test = ms.System
+
+    def setUp(self):
+        super(TestElementList, self).setUp()
+        self.pport = self.dwrap.asio_config.sriov_adapters[0].phys_ports[0]
+        self.tag = 'ConfiguredOptions'
+
+    def _validate_xml(self, val_list):
+        outer_tag = self.pport.schema_type
+        tag_before = 'ConfiguredMTU'
+        tag_after = 'CurrentConnectionSpeed'
+        # Opening
+        tag_pat_fmt = r'<%s(\s[^>]*)?>'
+        elem_pat_fmt = tag_pat_fmt + r'%s</%s>\s*'
+        pattern = '.*'
+        pattern += tag_pat_fmt % outer_tag
+        pattern += '.*'
+        pattern += elem_pat_fmt % (tag_before, '[^<]*', tag_before)
+        for val in val_list:
+            pattern += elem_pat_fmt % (self.tag, val, self.tag)
+        pattern += elem_pat_fmt % (tag_after, '[^<]*', tag_after)
+        pattern += '.*'
+        pattern += tag_pat_fmt % ('/' + outer_tag)
+        pattern += '.*'
+        self.assertTrue(re.match(pattern.encode('utf-8'),
+                                 self.pport.toxmlstring(), flags=re.DOTALL))
+
+    def test_everything(self):
+        """Ensure ElementList behaves like a list where implemented."""
+        # Wrapper._get_elem_list, ElementList.__init__
+        coel = self.pport._get_elem_list(self.tag)
+        # index
+        self.assertEqual(0, coel.index('autoDuplex'))
+        self.assertEqual(1, coel.index('Veb'))
+        self.assertRaises(ValueError, coel.index, 'foo')
+        # __len__
+        self.assertEqual(2, len(coel))
+        # __repr__
+        self.assertEqual("['autoDuplex', 'Veb']", repr(coel))
+        # __contains__
+        self.assertIn('autoDuplex', coel)
+        self.assertIn('Veb', coel)
+        self.assertNotIn('foo', coel)
+        # __str__
+        self.assertEqual("['autoDuplex', 'Veb']", str(coel))
+        # __getitem__
+        self.assertEqual('autoDuplex', coel[0])
+        self.assertEqual('Veb', coel[1])
+        self.assertRaises(IndexError, coel.__getitem__, 2)
+        # __setitem__
+        coel[0] = 'fullDuplex'
+        self.assertEqual('fullDuplex', coel[0])
+        self.assertRaises(IndexError, coel.__setitem__, 2, 'foo')
+        # append
+        coel.append('foo')
+        self._validate_xml(['fullDuplex', 'Veb', 'foo'])
+        # extend
+        coel.extend(['bar', 'baz'])
+        self._validate_xml(['fullDuplex', 'Veb', 'foo', 'bar', 'baz'])
+        # __delitem__
+        del coel[3]
+        self._validate_xml(['fullDuplex', 'Veb', 'foo', 'baz'])
+        # remove
+        coel.remove('foo')
+        self._validate_xml(['fullDuplex', 'Veb', 'baz'])
+        # __iter__
+        self.assertEqual(['fullDuplex', 'Veb', 'baz'], [val for val in coel])
+        # clear
+        coel.clear()
+        self.assertEqual(0, len(coel))
+        self._validate_xml([])
+        # Inserting stuff back in puts it in the right place
+        coel.extend(['one', 'two', 'three'])
+        self._validate_xml(['one', 'two', 'three'])
+        # Wrapper._set_elem_list
+        self.pport._set_elem_list(self.tag, ['four', 'five', 'six'])
+        self._validate_xml(['four', 'five', 'six'])
 
 
 class TestWrapper(unittest.TestCase):

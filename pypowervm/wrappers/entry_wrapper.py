@@ -297,6 +297,25 @@ class Wrapper(object):
             self.inject(new_elem)
             return new_elem
 
+    def _get_elem_list(self, tag):
+        """An entities.ElementList for a given tag from within this wrapper.
+
+        :param tag: The string XML tag of the values to find.
+        :return: An entities.ElementList for the specified tag.
+        """
+        return ent.ElementList(
+            self.element, tag, ordering_list=self.child_order)
+
+    def _set_elem_list(self, tag, val_iter):
+        """Set (or replace) the contents of an entities.ElementList.
+
+        :param tag: The string XML tag of the ElementList to assign.
+        :param val_iter: Iterable of raw (string) values to set.
+        """
+        ellist = self._get_elem_list(tag)
+        ellist.clear()
+        ellist.extend(val_iter)
+
     def replace_list(self, prop_name, prop_children,
                      attrib=pc.DEFAULT_SCHEMA_ATTR, indirect=None):
         """Replaces a property on this Entry that contains a children list.

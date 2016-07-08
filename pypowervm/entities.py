@@ -489,3 +489,124 @@ class Element(object):
             if parts[i] and not re.match(r'[\.\*\[\{]', parts[i]):
                 parts[i] = str(etree.QName(ns, parts[i]))
         return '/'.join(parts)
+
+
+class ElementList(object):
+    """Useful list ops on a list of Element.
+
+    In a schema where a simpleType element has a multiplicity allowing more
+    than one instance within the containing element, this class provides a way
+    to treat those instances as a list, to a limited extent.
+
+    For example, given XML like:
+        <parent>
+            ...(stuff that isn't <foo/>)...
+            <foo>one</foo>
+            <foo>two</foo>
+            <foo>three</foo>
+            ...(stuff that isn't <foo/>)...
+        </parent>
+
+        fooList = ElementList(parent_element, 'foo')
+        len(fooList)
+            3
+        repr(fooList)
+            "['one', 'two', 'three']"
+        'two' in fooList
+            True
+        'four' in fooList
+            False
+        fooList.append('four')
+        repr(fooList)
+            "['one', 'two', 'three', 'four']"
+        print root.toxmlstring()
+            <parent>
+                ...(stuff that isn't <foo/>)...
+                <foo>one</foo>
+                <foo>two</foo>
+                <foo>three</foo>
+                <foo>four</foo>
+                ...(stuff that isn't <foo/>)...
+            </parent>
+    """
+
+    def __init__(self, root_elem, tag, ordering_list=()):
+        """Initialize a new ElementList.
+
+        Note: The current implementation is limited to simple string elements.
+              When inserting new values, they will have the default namespace
+              and attrs.
+
+        :param root_elem: The entities.Element representing the parent node
+                          containing the elements of interest.
+        :param tag: The XML tag of the elements of interest.
+        :param ordering_list: Iterable of tag strings indicating the desired
+                              overall ordering of the elements within the
+                              root_elem.  Used to create the first value in
+                              the appropriate spot if the ElementList is
+                              initially empty.
+        """
+        self.root_elem = root_elem
+        self.tag = tag
+        self.order = ordering_list
+
+    def __find_elems(self):
+        """List of entities.Element under self.root_elem with tag self.tag."""
+        return self.root_elem.findall(self.tag)
+
+    def __get_values(self):
+        """List of the string values within the entities.Element instances."""
+        return [elem.text for elem in self.__find_elems()]
+
+    def __create_elem(self, val):
+        """Create a new entities.Element suitable for this list.
+
+        :param val: The raw string value for the text content of the new
+                    element. E.g. self.__create_elem('foo') will yield an
+                    entities.Element representing <tag ...>foo</tag> (where tag
+                    is whatever this ElementList was initialized with).
+        :return: A new entities.Element containing the specified string val.
+        """
+        return Element(self.tag, self.root_elem.adapter, text=val)
+
+    def index(self, val):
+        return self.__get_values().index(val)
+
+    def __len__(self):
+        return len(self.__find_elems())
+
+    def extend(self, val_list):
+        for val in val_list:
+            self.append(val)
+
+    def __repr__(self):
+        return repr(self.__get_values())
+
+    def __contains__(self, val):
+        return val in self.__get_values()
+
+    def __str__(self):
+        return str(self.__get_values())
+
+    def append(self, val):
+        self.root_elem.inject(
+            self.__create_elem(val), ordering_list=self.order, replace=False)
+
+    def __getitem__(self, idx):
+        return self.__get_values()[idx]
+
+    def __setitem__(self, idx, value):
+        self.__find_elems()[idx].text = value
+
+    def __delitem__(self, idx):
+        self.root_elem.remove(self.__find_elems()[idx])
+
+    def remove(self, val):
+        self.__delitem__(self.__get_values().index(val))
+
+    def __iter__(self):
+        return iter(self.__get_values())
+
+    def clear(self):
+        for val in self.__get_values():
+            self.remove(val)
