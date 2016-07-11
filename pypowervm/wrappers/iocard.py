@@ -301,7 +301,7 @@ class PhysFCPort(ewrap.ElementWrapper):
     """A Physical Fibre Channel Port."""
 
     @classmethod
-    def bld_ref(cls, adapter, name):
+    def bld_ref(cls, adapter, name, ref_tag=None):
         """Create a wrapper that serves as a reference to a port.
 
         This is typically used when another element (ex. Virtual FC Mapping)
@@ -310,9 +310,14 @@ class PhysFCPort(ewrap.ElementWrapper):
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param name: The name of the physical FC port.  End users need to
                      verify the port name.  Typically starts with 'fcs'.
+        :param ref_tag: (Optional, Default=None) If set, override the
+                        default 'PhysicalFibreChannelPort' tag/label in the
+                        element with the string specified.
         """
         port = super(PhysFCPort, cls)._bld(adapter)
         port._name(name)
+        if ref_tag:
+            port.element.tag = ref_tag
         return port
 
     @property
