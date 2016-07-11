@@ -15,12 +15,13 @@
 #    under the License.
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
-
+import abc
 from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
+import six
 
 # Base Partition (_BP)
 _BP_ALLOW_PERF_DATA_COLL = 'AllowPerformanceDataCollection'
@@ -349,8 +350,72 @@ class KeylockPos(object):
     ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
 
 
+class _DlparCapable(object):
+    def _can_modify(self, dlpar_cap, cap_desc):
+        """Checks to determine if the partition can be modified.
+
+        :param dlpar_cap: The appropriate DLPAR attribute to validate.  Only
+                          used if system is active.
+        :param cap_desc: A translated string indicating the DLPAR capability.
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # First check is the not activated state
+        if self.state == LPARState.NOT_ACTIVATED:
+            return True, None
+        if self.rmc_state != RMCState.ACTIVE and not self.is_mgmt_partition:
+            return False, _('Partition does not have an active RMC '
+                            'connection.')
+        if not dlpar_cap:
+            return False, _('Partition does not have an active DLPAR '
+                            'capability for %s.') % cap_desc
+        return True, None
+
+    def can_modify_io(self):
+        """Determines if a partition is capable of adding/removing I/O HW.
+
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.io_dlpar, _('I/O'))
+
+    def can_modify_mem(self):
+        """Determines if a partition is capable of adding/removing Memory.
+
+        :return capable: True if memory can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'))
+
+    def can_modify_proc(self):
+        """Determines if a partition is capable of adding/removing processors.
+
+        :return capable: True if procs can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
+
+    @abc.abstractmethod
+    def can_lpm(self, host_w, migr_data=None):
+        """Determines if a partition is ready for Live Partition Migration.
+
+        :return capable: False, VIOS types are not LPM capable
+        :return reason: A message that will indicate why it was not
+                        capable of LPM.
+        """
+
+
+@six.add_metaclass(abc.ABCMeta)
 @ewrap.Wrapper.base_pvm_type
-class BasePartition(ewrap.EntryWrapper):
+class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     """Base class for Logical Partition (LPAR) & Virtual I/O Server (VIOS).
 
     This corresponds to the abstract BasePartition object in the PowerVM
