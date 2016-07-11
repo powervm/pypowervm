@@ -141,47 +141,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         # If it is an OS400 type, then we can add/remove HW no matter what.
         if self.env == bp.LPARType.OS400:
             return True, None
-
-        # First check is the not activated state
-        if self.state == bp.LPARState.NOT_ACTIVATED:
-            return True, None
-
-        if self.rmc_state != bp.RMCState.ACTIVE:
-            return False, _('LPAR does not have an active RMC connection.')
-        if not dlpar_cap:
-            return False, _('LPAR does not have an active DLPAR capability '
-                            'for %s.') % cap_desc
-        return True, None
-
-    def can_modify_io(self):
-        """Determines if a LPAR is capable of adding/removing I/O HW.
-
-        :return capable: True if HW can be added/removed.  False otherwise.
-        :return reason: A translated message that will indicate why it was not
-                        capable of modification.  If capable is True, the
-                        reason will be None.
-        """
-        return self._can_modify(self.capabilities.io_dlpar, _('I/O'))
-
-    def can_modify_mem(self):
-        """Determines if a LPAR is capable of adding/removing Memory.
-
-        :return capable: True if memory can be added/removed.  False otherwise.
-        :return reason: A translated message that will indicate why it was not
-                        capable of modification.  If capable is True, the
-                        reason will be None.
-        """
-        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'))
-
-    def can_modify_proc(self):
-        """Determines if a LPAR is capable of adding/removing processors.
-
-        :return capable: True if procs can be added/removed.  False otherwise.
-        :return reason: A translated message that will indicate why it was not
-                        capable of modification.  If capable is True, the
-                        reason will be None.
-        """
-        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
+        return super(LPAR, self)._can_modify(dlpar_cap, cap_desc)
 
     def can_lpm(self, host_w, migr_data=None):
         """Determines if a LPAR is ready for Live Partition Migration.
@@ -228,6 +188,9 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
         elif self.rmc_state != bp.RMCState.ACTIVE:
             return False, _('LPAR does not have an active RMC connection.')
+
+        if self.is_mgmt_partition:
+            return False, _('LPAR is the management partition')
 
         c = self.capabilities
         if not (c.mem_dlpar and c.proc_dlpar):
