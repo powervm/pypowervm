@@ -125,6 +125,55 @@ class TestSRIOVAdapter(twrap.TestWrapper):
 
         self.assertEqual(card.SRIOVSpeed.E1G, eth_port.curr_speed)
 
+        self.assertEqual(card.SRIOVPPMTU.E1500, eth_port.mtu)
+        eth_port.mtu = card.SRIOVPPMTU.E9000
+        self.assertEqual(card.SRIOVPPMTU.E9000, eth_port.mtu)
+
+        self.assertEqual(card.SRIOVPPOpts.SWMODE_VEB, eth_port.cfg_switch_mode)
+        # Assert the modes don't coexist
+        self.assertNotIn(card.SRIOVPPOpts.SWMODE_VEPA, eth_port._cfg_opts)
+        eth_port.cfg_switch_mode = card.SRIOVPPOpts.SWMODE_VEPA
+        self.assertEqual(card.SRIOVPPOpts.SWMODE_VEPA,
+                         eth_port.cfg_switch_mode)
+        # Assert the modes don't coexist
+        self.assertNotIn(card.SRIOVPPOpts.SWMODE_VEB, eth_port._cfg_opts)
+        # Setting again to same value has no effect
+        eth_port.cfg_switch_mode = card.SRIOVPPOpts.SWMODE_VEPA
+        self.assertEqual(card.SRIOVPPOpts.SWMODE_VEPA,
+                         eth_port.cfg_switch_mode)
+        # Make sure we didn't add more than one
+        self.assertEqual(1, len([opt for opt in eth_port._cfg_opts if opt ==
+                                 card.SRIOVPPOpts.SWMODE_VEPA]))
+
+        self.assertEqual(card.SRIOVPPOpts.SWMODE_VEB,
+                         eth_port.curr_switch_mode)
+
+        self.assertFalse(eth_port.cfg_flow_ctl)
+        # Make sure *neither* flow control option exists
+        self.assertNotIn(card.SRIOVPPOpts.FLOWCTL_RX, eth_port._cfg_opts)
+        self.assertNotIn(card.SRIOVPPOpts.FLOWCTL_TX, eth_port._cfg_opts)
+        eth_port.cfg_flow_ctl = True
+        self.assertTrue(eth_port.cfg_flow_ctl)
+        # Make sure *both* flow control options exist
+        self.assertIn(card.SRIOVPPOpts.FLOWCTL_RX, eth_port._cfg_opts)
+        self.assertIn(card.SRIOVPPOpts.FLOWCTL_TX, eth_port._cfg_opts)
+        # Reassignment is a no-op
+        eth_port.cfg_flow_ctl = True
+        self.assertTrue(eth_port.cfg_flow_ctl)
+        # Make sure *both* flow control options exist
+        self.assertIn(card.SRIOVPPOpts.FLOWCTL_RX, eth_port._cfg_opts)
+        self.assertIn(card.SRIOVPPOpts.FLOWCTL_TX, eth_port._cfg_opts)
+        # Make sure we didn't add more than one of each
+        self.assertEqual(2, len([opt for opt in eth_port._cfg_opts if opt in
+                                 (card.SRIOVPPOpts.FLOWCTL_RX,
+                                  card.SRIOVPPOpts.FLOWCTL_TX)]))
+
+        self.assertFalse(eth_port.curr_flow_ctl)
+        # Cheat
+        eth_port._curr_opts.extend((card.SRIOVPPOpts.FLOWCTL_RX,
+                                    card.SRIOVPPOpts.FLOWCTL_TX))
+        self.assertTrue(eth_port.curr_flow_ctl)
+
 
 class TestLogicalPort(twrap.TestWrapper):
 
