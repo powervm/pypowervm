@@ -112,6 +112,61 @@ class TestVFCMapper(unittest.TestCase):
         unique_keys = set([i[0] for i in resp])
         self.assertEqual({'10000090FA45473B', '10000090FA451758'}, unique_keys)
 
+    def test_derive_npiv_map_existing_preserve(self):
+        # Use sample vios data with mappings.
+        vios_file = 'fake_vios_mappings.txt'
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(vios_file).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA1B6898', '10000090FA1B6899']
+        v_port_wwpns = ['c05076065a7c02e4', 'c05076065a7c02e5']
+        candidates = vfc_mapper._find_ports_on_vio(vios_w, p_wwpns)
+        for p_port in candidates:
+            if p_port.wwpn == p_wwpns[1]:
+                # Artificially inflate the free ports so that it would get
+                # chosen for a newly created mapping, but first in list
+                # would show up for a preserved mapping.
+                p_port.set_parm_value('AvailablePorts', '64')
+
+        # Run the derivation now
+        resp = vfc_mapper.derive_npiv_map(vios_wraps, p_wwpns, v_port_wwpns,
+                                          preserve=True)
+        self.assertIsNotNone(resp)
+        self.assertEqual(1, len(resp))
+
+        # Make sure we only got the one phys port key back that has the
+        # existing mapping.
+        unique_keys = set([i[0] for i in resp])
+        self.assertEqual({'10000090FA1B6898'}, unique_keys)
+
+    def test_derive_npiv_map_existing_no_preserve(self):
+        # Use sample vios data with mappings.
+        vios_file = 'fake_vios_mappings.txt'
+        vios_w = pvm_vios.VIOS.wrap(tju.load_file(vios_file).entry)
+        vios_wraps = [vios_w]
+
+        # Subset the WWPNs on that VIOS
+        p_wwpns = ['10000090FA1B6898', '10000090FA1B6899']
+        v_port_wwpns = ['c05076065a7c02e4', 'c05076065a7c02e5']
+        candidates = vfc_mapper._find_ports_on_vio(vios_w, p_wwpns)
+        for p_port in candidates:
+            if p_port.wwpn == p_wwpns[1]:
+                # Artificially inflate the free ports so that it would get
+                # chosen for a newly created mapping.
+                p_port.set_parm_value('AvailablePorts', '64')
+
+        # Run the derivation now
+        resp = vfc_mapper.derive_npiv_map(vios_wraps, p_wwpns, v_port_wwpns,
+                                          preserve=False)
+        self.assertIsNotNone(resp)
+        self.assertEqual(1, len(resp))
+
+        # Make sure we only got one phys port key back and it should *not*
+        # match the existing mapping of 'preserve' testcase.
+        unique_keys = set([i[0] for i in resp])
+        self.assertEqual({'10000090FA1B6899'}, unique_keys)
+
     def test_derive_base_npiv_map(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
         vios_wraps = [vios_w]
@@ -523,6 +578,18 @@ class TestAddRemoveMap(twrap.TestWrapper):
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
                                     port_map=fabric_map)
         self.assertEqual(1, len(maps))
+
+        # This time, remove the backing port of the existing mapping and try
+        # the add again. It should return an updated mapping that contains the
+        # backing port. This simulates a VM migrating with a vfc mapping, but
+        # no volume had been previously detached.
+        maps[0].element.remove(maps[0].backing_port.element)
+        resp = vfc_mapper.add_map(vios_wrap, 'host_uuid', self.lpar_uuid,
+                                  fabric_map)
+        self.assertIsNotNone(resp)
+        self.assertIsInstance(resp, pvm_vios.VFCMapping)
+        self.assertIsNotNone(resp.backing_port)
+        self.assertIn('Port', resp.child_order)
 
         # Pass in slot number to be set on the VFC adapter
         fabric_map = ('10000090FA5371F1', '2 3')

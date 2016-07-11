@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -90,6 +90,8 @@ _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
               _MAP_STORAGE)
+_VFC_MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, _MAP_PORT,
+                  stor.SERVER_ADPT, _MAP_STORAGE)
 
 _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
@@ -586,7 +588,8 @@ class VSCSIMapping(VStorageMapping):
         self.inject(vtd_elem)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True,
+                               child_order=_VFC_MAP_ORDER)
 class VFCMapping(VStorageMapping):
     """The mapping of a VIOS FC adapter to the Client LPAR FC adapter.
 
@@ -641,12 +644,10 @@ class VFCMapping(VStorageMapping):
         s_map._client_adapter(stor.VFCClientAdapterElement.bld(
             adapter, wwpns=client_wwpns, slot_num=lpar_slot_num))
 
-        # Create the backing port and change label.  API requires it be
-        # Port, even though it is a Physical FC Port
-        backing_port = bp.PhysFCPort.bld_ref(adapter, backing_phy_port)
-        backing_port.element.tag = 'Port'
-        s_map._backing_port(backing_port)
+        # Create the backing port reference.
+        s_map.bld_and_set_backing_port(adapter, backing_phy_port)
 
+        # Add the server adapter element
         s_map._server_adapter(stor.VFCServerAdapterElement.bld(adapter))
         return s_map
 
@@ -654,6 +655,18 @@ class VFCMapping(VStorageMapping):
         """Sets the backing port."""
         elem = self._find_or_seed(_MAP_PORT)
         self.element.replace(elem, value.element)
+
+    def bld_and_set_backing_port(self, adapter, phys_port_name):
+        """Builds the backing port from a physical port name and sets"""
+        # This helper method is defined because '_backing_port' is
+        # considered protected and cannot be modified by external callers
+        # like vfc_mapper when the mapping exists, but is no longer backed
+        # by a physical port.
+        backing_port = bp.PhysFCPort.bld_ref(adapter, phys_port_name)
+        # Change the label. API requires it be Port, even though it is a
+        # Physical FC Port.
+        backing_port.element.tag = 'Port'
+        self._backing_port(backing_port)
 
     @property
     def backing_port(self):
