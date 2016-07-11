@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -90,6 +90,8 @@ _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
               _MAP_STORAGE)
+_VFC_MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, _MAP_PORT,
+                  stor.SERVER_ADPT, _MAP_STORAGE)
 
 _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
@@ -586,7 +588,8 @@ class VSCSIMapping(VStorageMapping):
         self.inject(vtd_elem)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True,
+                               child_order=_VFC_MAP_ORDER)
 class VFCMapping(VStorageMapping):
     """The mapping of a VIOS FC adapter to the Client LPAR FC adapter.
 
