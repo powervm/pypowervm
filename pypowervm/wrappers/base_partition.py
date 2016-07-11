@@ -19,8 +19,14 @@
 from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
+import pypowervm.wrappers.dlpar_capable as dlpar
+from pypowervm.wrappers.dlpar_capable import LPARState
+from pypowervm.wrappers.dlpar_capable import RMCState
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
+
+assert LPARState
+assert RMCState
 
 # Base Partition (_BP)
 _BP_ALLOW_PERF_DATA_COLL = 'AllowPerformanceDataCollection'
@@ -255,27 +261,6 @@ class DedicatedSharingMode(object):
                   SHARE_IDLE_PROCS_ALWAYS, KEEP_IDLE_PROCS)
 
 
-class LPARState(object):
-    """State of a given LPAR.
-
-    From LogicalPartitionStateEnum.
-    """
-    ERROR = 'error'
-    NOT_ACTIVATED = 'not activated'
-    NOT_AVAILBLE = 'not available'
-    OPEN_FIRMWARE = 'open firmware'
-    RUNNING = 'running'
-    SHUTTING_DOWN = 'shutting down'
-    STARTING = 'starting'
-    MIGRATING_NOT_ACTIVE = 'migrating not active'
-    MIGRATING_RUNNING = 'migrating running'
-    HARDWARE_DISCOVERY = 'hardware discovery'
-    SUSPENDED = 'suspended'
-    SUSPENDING = 'suspending'
-    RESUMING = 'resuming'
-    UNKNOWN = 'Unknown'
-
-
 class LPARType(object):
     """Subset of LogicalPartitionEnvironmentEnum."""
     OS400 = 'OS400'
@@ -296,18 +281,6 @@ class LPARCompat(object):
     POWER8 = 'POWER8'
     ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER6_PLUS_ENHANCED, POWER7,
                   POWER8)
-
-
-class RMCState(object):
-    """Various RMC States.
-
-    From ResourceMonitoringControlStateEnum.
-    """
-    ACTIVE = 'active'
-    INACTIVE = 'inactive'
-    NONE = 'none'
-    UNKNOWN = 'unknown'
-    BUSY = 'busy'
 
 
 class BootMode(object):
@@ -350,7 +323,7 @@ class KeylockPos(object):
 
 
 @ewrap.Wrapper.base_pvm_type
-class BasePartition(ewrap.EntryWrapper):
+class BasePartition(ewrap.EntryWrapper, dlpar.DlparCapable):
     """Base class for Logical Partition (LPAR) & Virtual I/O Server (VIOS).
 
     This corresponds to the abstract BasePartition object in the PowerVM
