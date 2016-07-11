@@ -237,6 +237,29 @@ class SRIOVSpeed(object):
     UNKNOWN = 'Unknown'
 
 
+class SRIOVPPMTU(object):
+    """Enumeration for SRIOV PP MTU (from SRIOVPhysicalPortMTU.Enum)."""
+    E1500 = "E_1500"
+    E9000 = "E_9000"
+    UNKNOWN = 'Unknown'
+
+
+class SRIOVPPOpts(object):
+    """Enumeration of SRIOV PP options (from SRIOVPhysicalPortOptions.Enum)."""
+    DUPLEX_AUTO = "autoDuplex"
+    DUPLEX_FULL = "fullDuplex"
+    DUPLEX_HALF = "halfDuplex"
+    LOOPBACK_EXT = "externalLoopBack"
+    LOOPBACK_INT = "internalLoopBack"
+    LINK_UP = "linkUp"
+    PROMISC = "promiscousMode"
+    FLOWCTL_RX = "receiveFlowControl"
+    FLOWCTL_TX = "transmitFlowControl"
+    PRI_FLOWCTL = "PriorityFlowControl"
+    SWMODE_VEB = "Veb"
+    SWMODE_VEPA = "Vepa"
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -408,7 +431,38 @@ class SRIOVAdapter(IOAdapter):
 @ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort', has_metadata=True,
                                child_order=_SRIOVEPP_EL_ORDER)
 class SRIOVEthPPort(ewrap.ElementWrapper):
-    """The SRIOV Ethernet Physical port."""
+    """The SRIOV Ethernet Physical port.
+
+    Note: This object contains pairs of properties like cfg_* and curr_*.
+
+    The cfg_* represents the configured value, which is modifiable (you can
+    change it and POST the wrapper to effect the change on the server).
+
+    The curr_* represents the setting that is active on the server.  This may
+    match the configured setting, but it may instead represent a negotiated
+    value or a default.
+
+    For example, the cfg value for duplex might be "auto", but the curr value
+    might be "half".
+    """
+
+    @property
+    def _cfg_opts(self):
+        """ConfiguredOptions ElementList, for use by public properties.
+
+        ConfiguredOptions are those we're requesting of the server.  Compare to
+        CurrentOptions, which are what's actually set on the server.
+        """
+        return self._get_elem_list(_SRIOVPP_CFG_OPTIONS)
+
+    @property
+    def _curr_opts(self):
+        """CurrentOptions ElementList, for use by public properties.
+
+        CurrentOptions, are what's actually set on the server.  Compare to
+        ConfiguredOptions, which are those we're requesting of the server.
+        """
+        return self._get_elem_list(_SRIOVPP_CURR_OPTIONS)
 
     def __init__(self):
         super(SRIOVEthPPort, self).__init__()
@@ -493,6 +547,112 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
     @property
     def curr_speed(self):
         return self._get_val_str(_SRIOVPP_CURR_SPEED)
+
+    @property
+    def mtu(self):
+        """Result should be a SRIOVPPMTU value."""
+        return self._get_val_str(_SRIOVPP_CFG_MTU)
+
+    @mtu.setter
+    def mtu(self, val):
+        """Input val should be a SRIOVPPMTU value."""
+        self.set_parm_value(_SRIOVPP_CFG_MTU, val)
+
+    def _get_switch_mode(self, opts):
+        """Get the port switch mode, either configured or current.
+
+        :param opts: Either self._cfg_opts or self._curr_opts
+        :return: Either SRIOVPPOpts.SWMODE_VEB or .SWMODE_VEPA.
+        """
+        for opt in (SRIOVPPOpts.SWMODE_VEB, SRIOVPPOpts.SWMODE_VEPA):
+            if opt in opts:
+                return opt
+        return None
+
+    @property
+    def cfg_switch_mode(self):
+        """Configured port switch mode.
+
+        This is the value we're requesting of the server.  Compare to
+        cur_switch_mode, which is the value that's actually set on the server.
+
+        :return: Either SRIOVPPOpts.SWMODE_VEB or .SWMODE_VEPA.
+        """
+        return self._get_switch_mode(self._cfg_opts)
+
+    @cfg_switch_mode.setter
+    def cfg_switch_mode(self, val):
+        """Configured port switch mode.
+
+        This is the value we're requesting of the server.  Compare to
+        cur_switch_mode, which is the value that's actually set on the server.
+
+        :param val: Either SRIOVPPOpts.SWMODE_VEB or .SWMODE_VEPA.
+        """
+        opts = self._cfg_opts
+        curval = self.cfg_switch_mode
+        if curval is None:
+            # If neither option shows up, add it
+            opts.append(val)
+        else:
+            # Find the currently-configured value and change it
+            opts[opts.index(curval)] = val
+
+    @property
+    def curr_switch_mode(self):
+        """Current port switch mode.
+
+        This is the value that's actually set on the server.  Compare to
+        cur_switch_mode, which is the value we're requesting of the server.
+
+        :return: Either SRIOVPPOpts.SWMODE_VEB or .SWMODE_VEPA.
+        """
+        return self._get_switch_mode(self._curr_opts)
+
+    @property
+    def cfg_flow_ctl(self):
+        """Configured transmit/receive flow control.
+
+        This is the value we're requesting of the server.  Compare to
+        curr_flow_ctl, which is the value that's actually set on the server.
+
+        :return: True (flow control is enabled) or False (flow control is
+                 disabled).
+        """
+        # On the server, CurrentOptions contains receiveFlowControl and
+        # transmitFlowControl - both or neither - so we'll look for just one.
+        return SRIOVPPOpts.FLOWCTL_RX in self._cfg_opts
+
+    @cfg_flow_ctl.setter
+    def cfg_flow_ctl(self, set_on):
+        """Configured transmit/receive flow control.
+
+        This is the value we're requesting of the server.  Compare to
+        curr_flow_ctl, which is the value that's actually set on the server.
+
+        :param set_on: True (enable flow control) or False (disable flow
+        control).
+        """
+        if set_on and not self.cfg_flow_ctl:
+            self._cfg_opts.extend((SRIOVPPOpts.FLOWCTL_RX,
+                                   SRIOVPPOpts.FLOWCTL_TX))
+        elif not set_on and self.cfg_flow_ctl:
+            self._cfg_opts.remove(SRIOVPPOpts.FLOWCTL_RX)
+            self._cfg_opts.remove(SRIOVPPOpts.FLOWCTL_TX)
+
+    @property
+    def curr_flow_ctl(self):
+        """Current transmit/receive flow control.
+
+        This is the value that's actually set on the server.  Compare to
+        cfg_flow_ctl, which is the value we're requesting of the server.
+
+        :return: True (flow control is enabled) or False (flow control is
+                 disabled).
+        """
+        # On the server, CurrentOptions contains receiveFlowControl and
+        # transmitFlowControl - both or neither - so we'll look for just one.
+        return SRIOVPPOpts.FLOWCTL_RX in self._curr_opts
 
 
 @ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
