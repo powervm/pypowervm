@@ -553,6 +553,91 @@ class TestCrtRelatedHref(unittest.TestCase):
                          'LogicalPartition/lpar', href)
 
 
+class TestVSCSIBus(twrap.TestWrapper):
+    file = 'vscsibus_feed.txt'
+    wrapper_class_to_test = vios.VSCSIBus
+
+    def test_props(self):
+        self.assertEqual(4, len(self.entries))
+        bus = self.dwrap
+        self.assertEqual('1f25efc1-a42b-3384-85e7-f37158f46615', bus.uuid)
+        self.assertEqual(
+            'http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-3'
+            '42c-9f43-ddfeb9f8edd3/LogicalPartition/3DFF2EF5-6F99-4C29-B655-EE'
+            '57DF1B64C6', bus.client_lpar_href)
+        self.assertEqual(5, bus.client_adapter.lpar_id)
+        self.assertEqual(2, bus.client_adapter.lpar_slot_num)
+        self.assertEqual(5, bus.server_adapter.lpar_id)
+        self.assertEqual(2, bus.server_adapter.lpar_slot_num)
+        map1, map2 = bus.mappings
+        self.assertIsInstance(map1.backing_storage, pvm_stor.PV)
+        self.assertEqual('hdisk10', map1.backing_storage.name)
+        self.assertIsInstance(map1.target_dev, pvm_stor.PVTargetDev)
+        self.assertEqual('0x8100000000000000', map1.target_dev.lua)
+        self.assertIsInstance(map2.backing_storage, pvm_stor.VOptMedia)
+        self.assertEqual('cfg_My_OS_Image_V_3dff2ef5_000000.iso',
+                         map2.backing_storage.name)
+        self.assertIsInstance(map2.target_dev, pvm_stor.VOptTargetDev)
+        self.assertEqual('0x8200000000000000', map2.target_dev.lua)
+
+    def test_bld(self):
+        self.adpt.build_href.return_value = 'href'
+        # Default slot number (use next available)
+        bus = vios.VSCSIBus.bld(self.adpt, 'client_lpar_uuid')
+        self.adpt.build_href.assert_called_once_with(
+            'LogicalPartition', 'client_lpar_uuid', xag=[])
+        self.assertEqual('href', bus.client_lpar_href)
+        self.assertTrue(bus.client_adapter._get_val_bool(
+            pvm_stor._VADPT_NEXT_SLOT))
+        self.assertIsNotNone(bus.server_adapter)
+        self.assertEqual([], bus.mappings)
+        # Specify slot number
+        bus = vios.VSCSIBus.bld(self.adpt, 'client_lpar_uuid',
+                                lpar_slot_num=42)
+        self.assertFalse(bus.client_adapter._get_val_bool(
+            pvm_stor._VADPT_NEXT_SLOT))
+        self.assertEqual(42, bus.client_adapter.lpar_slot_num)
+
+    def test_bld_from_existing(self):
+        bus = vios.VSCSIBus.bld_from_existing(self.dwrap)
+        self.assertEqual(
+            'http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-3'
+            '42c-9f43-ddfeb9f8edd3/LogicalPartition/3DFF2EF5-6F99-4C29-B655-EE'
+            '57DF1B64C6', bus.client_lpar_href)
+        self.assertEqual(5, bus.client_adapter.lpar_id)
+        self.assertEqual(2, bus.client_adapter.lpar_slot_num)
+        self.assertEqual(5, bus.server_adapter.lpar_id)
+        self.assertEqual(2, bus.server_adapter.lpar_slot_num)
+        self.assertEqual([], bus.mappings)
+
+    def test_mappings(self):
+        # No LUA
+        lu1 = pvm_stor.LU.bld_ref(self.adpt, 'lu1', 'lu_udid1')
+        std1 = vios.STDev.bld(self.adpt, lu1)
+        self.assertIsInstance(std1.backing_storage, pvm_stor.LU)
+        self.assertEqual('lu1', std1.backing_storage.name)
+        self.assertIsNone(std1.target_dev)
+        # With LUA
+        vdisk1 = pvm_stor.VDisk.bld_ref(self.adpt, 'vdisk1')
+        std2 = vios.STDev.bld(self.adpt, vdisk1, lua='vdisk1_lua')
+        self.assertIsInstance(std2.backing_storage, pvm_stor.VDisk)
+        self.assertEqual('vdisk1', std2.backing_storage.name)
+        self.assertIsInstance(std2.target_dev, pvm_stor.VDiskTargetDev)
+        self.assertEqual('vdisk1_lua', std2.target_dev.lua)
+        # Add 'em to a bus
+        bus = self.dwrap
+        self.assertEqual(2, len(bus.mappings))
+        bus.mappings.extend((std1, std2))
+        self.assertEqual(4, len(bus.mappings))
+        self.assertEqual('lu1', bus.mappings[2].backing_storage.name)
+        self.assertEqual('vdisk1', bus.mappings[3].backing_storage.name)
+        # Replace bus mappings
+        bus.mappings = [std2, std1]
+        self.assertEqual(2, len(bus.mappings))
+        self.assertEqual('vdisk1', bus.mappings[0].backing_storage.name)
+        self.assertEqual('lu1', bus.mappings[1].backing_storage.name)
+
+
 class TestPartitionIOConfiguration(twrap.TestWrapper):
 
     file = 'fake_vios_ssp_npiv.txt'
