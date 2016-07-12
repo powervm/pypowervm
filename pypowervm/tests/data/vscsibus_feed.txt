@@ -1,0 +1,473 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh vscsibus_feed1.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'Content-Length': '27934', 'X-Powered-By': 'Servlet/3.1', 'X-TransactionRecord-Uuid': '8b7ca9fd-71b6-4168-bdce-37ebb3600f0c', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Wed, 13 Jul 2016 14:51:28 GMT', 'X-Transaction-ID': 'XT10000338', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Set-Cookie': 'JSESSIONID=00003kvClDKUhedByC9kuLLr6Tj:cb9a9e54-8c19-495b-b950-fb8f07c26228; Path=/; Secure; HttpOnly', 'Date': 'Wed, 13 Jul 2016 14:51:29 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'ETag': '-1862965557'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>fd5ac123-81b9-30db-8aaa-01cf6c5ecf61</id>
+    <updated>2016-07-13T10:51:28.681-04:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>1f25efc1-a42b-3384-85e7-f37158f46615</id>
+        <title>VirtualSCSIBus</title>
+        <published>2016-07-13T10:51:29.635-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus/1f25efc1-a42b-3384-85e7-f37158f46615?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">96346471</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSCSIBus">
+            <VirtualSCSIBus:VirtualSCSIBus xmlns:VirtualSCSIBus="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>1f25efc1-a42b-3384-85e7-f37158f46615</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedLogicalPartition ksv="V1_4_0" kxe="false" kb="CUR" href="http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/3DFF2EF5-6F99-4C29-B655-EE57DF1B64C6" rel="related"/>
+    <ClientAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V5-C2</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V5-C2</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">5</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">5</RemoteSlotNumber>
+    </ClientAdapter>
+    <ServerAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V2-C5</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V2-C5</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">2</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">5</VirtualSlotNumber>
+        <AdapterName kxe="false" kb="CUR">vhost0</AdapterName>
+        <BackingDeviceName kxe="false" kb="CUR">cfg_My_OS_Image_V_3dff2ef5_000000.iso</BackingDeviceName>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">5</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">2</RemoteSlotNumber>
+        <UniqueDeviceID kxe="false" kb="ROR">1eU8286.42A.21C1B6V-V2-C5</UniqueDeviceID>
+    </ServerAdapter>
+    <AssociatedMappings ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kb="CUD" kxe="false">MPIO IBM 2076 FC Disk</Description>
+                    <LocationCode kb="ROR" kxe="false">U78C9.001.WZS094N-P1-C12-T1-W500507680B22447B-LA000000000000</LocationCode>
+                    <PersistentReserveKeyValue kxe="false" kb="ROR">none</PersistentReserveKeyValue>
+                    <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
+                    <ReservePolicyAlgorithm kxe="false" kb="CUD">Round_Robin</ReservePolicyAlgorithm>
+                    <UniqueDeviceID kb="ROR" kxe="false">01M0lCTTIxNDU1MjQ2MDA1MDc2NDAwODEwMDk0QjAwMDAwMDAwMDAwNjQ1Mg==</UniqueDeviceID>
+                    <AvailableForUsage kxe="false" kb="CUD">false</AvailableForUsage>
+                    <VolumeCapacity kxe="false" kb="CUR">10240</VolumeCapacity>
+                    <VolumeName kb="CUR" kxe="false">hdisk10</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <VolumeUniqueID kb="ROR" kxe="false">332136005076400810094B00000000000645204214503IBMfcp</VolumeUniqueID>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">false</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">dm9sdW1lLU15X09TX0ltYWdlX1YtM2RmZjJlZjUtMDAwMDAwMjctYm9vdC0tMTM1MTJmODEtMmU2ZA==</StorageLabel>
+                    <DescriptorPage83 kxe="false" kb="ROR">NjAwNTA3NjQwMDgxMDA5NEIwMDAwMDAwMDAwMDY0NTI=</DescriptorPage83>
+                </PhysicalVolume>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <PhysicalVolumeVirtualTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8100000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtscsi0</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">0864aae4f28be41501</UniqueDeviceID>
+                </PhysicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <VirtualOpticalMedia schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">cfg_My_OS_Image_V_3dff2ef5_000000.iso</MediaName>
+                    <MediaUDID kxe="false" kb="ROR">0ecfg_My_OS_Image_V_3dff2ef5_000000.iso</MediaUDID>
+                    <MountType kxe="false" kb="CUD">rw</MountType>
+                    <Size kxe="false" kb="CUR">0</Size>
+                </VirtualOpticalMedia>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <VirtualOpticalTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtopt0</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">19545ebb7b46f0f5f3</UniqueDeviceID>
+                </VirtualOpticalTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+    </AssociatedMappings>
+</VirtualSCSIBus:VirtualSCSIBus>
+        </content>
+    </entry>
+    <entry>
+        <id>b9480e09-fc17-37f3-b1fd-2e9f61409c14</id>
+        <title>VirtualSCSIBus</title>
+        <published>2016-07-13T10:51:29.636-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus/b9480e09-fc17-37f3-b1fd-2e9f61409c14?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-352516241</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSCSIBus">
+            <VirtualSCSIBus:VirtualSCSIBus xmlns:VirtualSCSIBus="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b9480e09-fc17-37f3-b1fd-2e9f61409c14</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedLogicalPartition ksv="V1_4_0" kxe="false" kb="CUR" href="http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/01CB5414-6781-48FF-BAC0-A344C915E3E2" rel="related"/>
+    <ClientAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V7-C3</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V7-C3</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">7</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">7</RemoteSlotNumber>
+    </ClientAdapter>
+    <ServerAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V2-C7</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V2-C7</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">2</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">7</VirtualSlotNumber>
+        <AdapterName kxe="false" kb="CUR">vhost1</AdapterName>
+        <BackingDeviceName kxe="false" kb="CUR">cfg_RHEL65Image_81cb5414_00000005.iso</BackingDeviceName>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">7</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">3</RemoteSlotNumber>
+        <UniqueDeviceID kxe="false" kb="ROR">1eU8286.42A.21C1B6V-V2-C7</UniqueDeviceID>
+    </ServerAdapter>
+    <AssociatedMappings ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kb="CUD" kxe="false">MPIO IBM 2076 FC Disk</Description>
+                    <LocationCode kb="ROR" kxe="false">U78C9.001.WZS094N-P1-C12-T1-W500507680B22447B-LB000000000000</LocationCode>
+                    <PersistentReserveKeyValue kxe="false" kb="ROR">none</PersistentReserveKeyValue>
+                    <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
+                    <ReservePolicyAlgorithm kxe="false" kb="CUD">Round_Robin</ReservePolicyAlgorithm>
+                    <UniqueDeviceID kb="ROR" kxe="false">01M0lCTTIxNDU1MjQ2MDA1MDc2NDAwODEwMDk0QjAwMDAwMDAwMDAwNjRGOQ==</UniqueDeviceID>
+                    <AvailableForUsage kxe="false" kb="CUD">false</AvailableForUsage>
+                    <VolumeCapacity kxe="false" kb="CUR">10240</VolumeCapacity>
+                    <VolumeName kb="CUR" kxe="false">hdisk11</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <VolumeUniqueID kb="ROR" kxe="false">332136005076400810094B0000000000064F904214503IBMfcp</VolumeUniqueID>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">false</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">dm9sdW1lLVJIRUw2NUltYWdlLTgxY2I1NDE0LTAwMDAwMDA1LWJvb3QtMC1jZWI0YmU2ZC0zNzM3</StorageLabel>
+                    <DescriptorPage83 kxe="false" kb="ROR">NjAwNTA3NjQwMDgxMDA5NEIwMDAwMDAwMDAwMDY0Rjk=</DescriptorPage83>
+                </PhysicalVolume>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <PhysicalVolumeVirtualTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8100000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtscsi2</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">08904425b7f1223a2e</UniqueDeviceID>
+                </PhysicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <VirtualOpticalMedia schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">cfg_RHEL65Image_81cb5414_00000005.iso</MediaName>
+                    <MediaUDID kxe="false" kb="ROR">0ecfg_RHEL65Image_81cb5414_00000005.iso</MediaUDID>
+                    <MountType kxe="false" kb="CUD">rw</MountType>
+                    <Size kxe="false" kb="CUR">0</Size>
+                </VirtualOpticalMedia>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <VirtualOpticalTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtopt2</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">1922ec16abad552a57</UniqueDeviceID>
+                </VirtualOpticalTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+    </AssociatedMappings>
+</VirtualSCSIBus:VirtualSCSIBus>
+        </content>
+    </entry>
+    <entry>
+        <id>983a2155-1d85-37b2-8ed9-72bfed018bda</id>
+        <title>VirtualSCSIBus</title>
+        <published>2016-07-13T10:51:29.637-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus/983a2155-1d85-37b2-8ed9-72bfed018bda?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1378494912</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSCSIBus">
+            <VirtualSCSIBus:VirtualSCSIBus xmlns:VirtualSCSIBus="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>983a2155-1d85-37b2-8ed9-72bfed018bda</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedLogicalPartition ksv="V1_4_0" kxe="false" kb="CUR" href="http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/5EB54307-7D9E-4AB3-B4FC-F2A9B8F5EDD8" rel="related"/>
+    <ClientAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V4-C2</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V4-C2</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">4</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">2</VirtualSlotNumber>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">8</RemoteSlotNumber>
+    </ClientAdapter>
+    <ServerAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V2-C8</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V2-C8</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">2</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">8</VirtualSlotNumber>
+        <AdapterName kxe="false" kb="CUR">vhost2</AdapterName>
+        <BackingDeviceName kxe="false" kb="CUR">cfg_RHEL65CI_5eb54307_00000023.iso</BackingDeviceName>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">4</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">2</RemoteSlotNumber>
+        <UniqueDeviceID kxe="false" kb="ROR">1eU8286.42A.21C1B6V-V2-C8</UniqueDeviceID>
+    </ServerAdapter>
+    <AssociatedMappings ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kb="CUD" kxe="false">MPIO IBM 2076 FC Disk</Description>
+                    <LocationCode kb="ROR" kxe="false">U78C9.001.WZS094N-P1-C12-T1-W500507680B22447B-L9000000000000</LocationCode>
+                    <PersistentReserveKeyValue kxe="false" kb="ROR">none</PersistentReserveKeyValue>
+                    <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
+                    <ReservePolicyAlgorithm kxe="false" kb="CUD">Round_Robin</ReservePolicyAlgorithm>
+                    <UniqueDeviceID kb="ROR" kxe="false">01M0lCTTIxNDU1MjQ2MDA1MDc2NDAwODEwMDk0QjAwMDAwMDAwMDAwNTc5Rg==</UniqueDeviceID>
+                    <AvailableForUsage kxe="false" kb="CUD">false</AvailableForUsage>
+                    <VolumeCapacity kxe="false" kb="CUR">10240</VolumeCapacity>
+                    <VolumeName kb="CUR" kxe="false">hdisk8</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <VolumeUniqueID kb="ROR" kxe="false">332136005076400810094B00000000000579F04214503IBMfcp</VolumeUniqueID>
+                    <IsFibreChannelBacked kxe="false" kb="ROR">false</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">dm9sdW1lLVJIRUw2NUNJLTVlYjU0MzA3LTAwMDAwMDIzLWJvb3QtMC1kM2ZiOWQ0Mi0yYjA0</StorageLabel>
+                    <DescriptorPage83 kxe="false" kb="ROR">NjAwNTA3NjQwMDgxMDA5NEIwMDAwMDAwMDAwMDU3OUY=</DescriptorPage83>
+                </PhysicalVolume>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <PhysicalVolumeVirtualTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8100000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtscsi1</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">08295db3a41c2c9ceb</UniqueDeviceID>
+                </PhysicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <VirtualOpticalMedia schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">cfg_RHEL65CI_5eb54307_00000023.iso</MediaName>
+                    <MediaUDID kxe="false" kb="ROR">0ecfg_RHEL65CI_5eb54307_00000023.iso</MediaUDID>
+                    <MountType kxe="false" kb="CUD">rw</MountType>
+                    <Size kxe="false" kb="CUR">0</Size>
+                </VirtualOpticalMedia>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <VirtualOpticalTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtopt1</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">19f5590818621572a8</UniqueDeviceID>
+                </VirtualOpticalTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+    </AssociatedMappings>
+</VirtualSCSIBus:VirtualSCSIBus>
+        </content>
+    </entry>
+    <entry>
+        <id>a0d5bae9-fd1a-3a07-9f75-93ff928abbee</id>
+        <title>VirtualSCSIBus</title>
+        <published>2016-07-13T10:51:29.639-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/VirtualSCSIBus/a0d5bae9-fd1a-3a07-9f75-93ff928abbee?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">460874914</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSCSIBus">
+            <VirtualSCSIBus:VirtualSCSIBus xmlns:VirtualSCSIBus="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a0d5bae9-fd1a-3a07-9f75-93ff928abbee</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedLogicalPartition ksv="V1_4_0" kxe="false" kb="CUR" href="http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/7D7FDFE0-0693-4E46-8C02-298CFF65CD31" rel="related"/>
+    <ClientAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Client</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V8-C4</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V8-C4</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">8</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">4</VirtualSlotNumber>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">2</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">9</RemoteSlotNumber>
+    </ClientAdapter>
+    <ServerAdapter ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+        <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V2-C9</DynamicReconfigurationConnectorName>
+        <LocationCode kxe="false" kb="ROR">U8286.42A.21C1B6V-V2-C9</LocationCode>
+        <LocalPartitionID kxe="false" kb="CUR">2</LocalPartitionID>
+        <VirtualSlotNumber kb="COD" kxe="false">9</VirtualSlotNumber>
+        <AdapterName kxe="false" kb="CUR">vhost3</AdapterName>
+        <BackingDeviceName kxe="false" kb="CUR">cfg_myvm826_fd7fdfe0_pvm.iso</BackingDeviceName>
+        <RemoteLogicalPartitionID kb="CUR" kxe="false">8</RemoteLogicalPartitionID>
+        <RemoteSlotNumber kxe="false" kb="CUA">4</RemoteSlotNumber>
+        <UniqueDeviceID kxe="false" kb="ROR">1eU8286.42A.21C1B6V-V2-C9</UniqueDeviceID>
+    </ServerAdapter>
+    <AssociatedMappings ksv="V1_4_0" kb="CUR" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <VirtualDisk schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <DiskCapacity kb="CUR" kxe="false">1</DiskCapacity>
+                    <DiskLabel kb="CUR" kxe="false">None</DiskLabel>
+                    <DiskName kxe="false" kb="CUR">b_myvm826__fd7f</DiskName>
+                    <UniqueDeviceID kxe="false" kb="ROR">0300f9c1b600004c0000000155cc7642a6.1</UniqueDeviceID>
+                </VirtualDisk>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <LogicalVolumeVirtualTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8100000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtscsi3</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">09c57279efec761e0c</UniqueDeviceID>
+                </LogicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+        <VirtualSCSIStorageAndTargetDevice schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <Storage ksv="V1_4_0" kxe="false" kb="CUR">
+                <VirtualOpticalMedia schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <MediaName kxe="false" kb="CUR">cfg_myvm826_fd7fdfe0_pvm.iso</MediaName>
+                    <MediaUDID kxe="false" kb="ROR">0ecfg_myvm826_fd7fdfe0_pvm.iso</MediaUDID>
+                    <MountType kxe="false" kb="CUD">rw</MountType>
+                    <Size kxe="false" kb="CUR">0</Size>
+                </VirtualOpticalMedia>
+            </Storage>
+            <TargetDevice ksv="V1_4_0" kb="CUR" kxe="false">
+                <VirtualOpticalTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kxe="false" kb="CUR">0x8200000000000000</LogicalUnitAddress>
+                    <TargetName kxe="false" kb="CUR">vtopt3</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">19aa6872e4f55163d8</UniqueDeviceID>
+                </VirtualOpticalTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIStorageAndTargetDevice>
+    </AssociatedMappings>
+</VirtualSCSIBus:VirtualSCSIBus>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
