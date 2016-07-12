@@ -91,6 +91,15 @@ _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
               _MAP_STORAGE)
 
+# VSCSI Bus Constants
+_BUS_ASSOC_MAPS = 'AssociatedMappings'
+
+_BUS_EL_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
+                 _BUS_ASSOC_MAPS)
+
+# VSCSI Storage/Target Device Constants
+_STDEV_EL_ORDER = (_MAP_STORAGE, _MAP_TARGET_DEV)
+
 _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
 _PVS_PATH = u.xpath(stor.PVS, stor.PHYS_VOL)
@@ -400,7 +409,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def client_adapter(self):
-        """Returns the Client side VSCSIClientAdapterElement.
+        """Returns the Client side V*ClientAdapterElement.
 
         If None - then no client is connected.
         """
@@ -415,7 +424,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def server_adapter(self):
-        """Returns the Virtual I/O Server side VSCSIServerAdapterElement."""
+        """Returns the Virtual I/O Server side V*ServerAdapterElement."""
         return self._server_adapter_cls.wrap(
             self.element.find(stor.SERVER_ADPT))
 
@@ -424,9 +433,87 @@ class VStorageMapping(ewrap.ElementWrapper):
         self.element.replace(elem, sa.element)
 
 
+@ewrap.ElementWrapper.pvm_type('VirtualSCSIStorageAndTargetDevice',
+                               has_metadata=True, child_order=_STDEV_EL_ORDER)
+class STDev(ewrap.ElementWrapper):
+    """Mapping backing storage and target device.
+
+    Used as a mixin for VSCSIMapping, and first-class internal Element for
+    VSCSIBus.
+    """
+    _client_adapter_cls = stor.VSCSIClientAdapterElement
+    _server_adapter_cls = stor.VSCSIServerAdapterElement
+
+    @property
+    def backing_storage(self):
+        """The backing storage element (if applicable).
+
+        This element may be a PV, LU, VirtualDisk, or VirtualOpticalMedia.
+        May return None.
+        """
+        elem = self.element.find(_MAP_STORAGE)
+        if elem is None:
+            return None
+        # If backing storage exists, it comprises a single child of elem.  But
+        # type is unknown immediately, so call all children and then wrap.
+        stor_elems = list(elem)
+        if len(stor_elems) != 1:
+            return None
+        # TODO(efried): parent_entry not needed once VIOS has pg83 in Events
+        parent_entry = getattr(self, 'parent_entry', None)
+        # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
+        # Allow ElementWrapper to detect (from the registry) and wrap correctly
+        return ewrap.ElementWrapper.wrap(stor_elems[0],
+                                         parent_entry=parent_entry)
+
+    def _backing_storage(self, stg):
+        """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
+
+        :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
+                    backing storage to assign.
+        """
+        # Always replace.  Because while the storage has one element, it can't
+        # inject properly if the backing type changes (ex. cloning from vOpt to
+        # vDisk).
+        stor_elem = ent.Element(_MAP_STORAGE, self.adapter, attrib={},
+                                children=[])
+        stor_elem.inject(stg.element)
+        self.inject(stor_elem)
+
+    @property
+    def target_dev(self):
+        """The target device associated with the backing storage.
+
+        May be any of {storage_type}TargetDev for {storage_type} in VDisk,
+        VOpt, LU or PV.
+        """
+        elem = self.element.find(_MAP_TARGET_DEV)
+        if elem is None:
+            return None
+        # If the virtual target device exists, it comprises a single child of
+        # elem.  But the exact type is unknown.
+        vtd_elems = list(elem)
+        if len(vtd_elems) != 1:
+            return None
+        # Let ElementWrapper.wrap figure out (from the registry) the
+        # appropriate return type.
+        return ewrap.ElementWrapper.wrap(vtd_elems[0])
+
+    def _target_dev(self, vtd):
+        """Sets the target device of this mapping.
+
+        :param vtd: A {storage_type}TargetDev ElementWrapper representing the
+                    virtual target device to assign.
+        """
+        vtd_elem = ent.Element(_MAP_TARGET_DEV, self.adapter, attrib={},
+                               children=[])
+        vtd_elem.inject(vtd.element)
+        self.inject(vtd_elem)
+
+
 @ewrap.ElementWrapper.pvm_type('VirtualSCSIMapping', has_metadata=True,
                                child_order=_MAP_ORDER)
-class VSCSIMapping(VStorageMapping):
+class VSCSIMapping(VStorageMapping, STDev):
     """The mapping of a VIOS SCSI adapter to the Client LPAR SCSI adapter.
 
     PowerVM provides a mechanism for Server/Client adapters to provide storage
@@ -440,9 +527,6 @@ class VSCSIMapping(VStorageMapping):
     properly.  There is no need to pre-create the adapters before creating a
     new mapping.
     """
-
-    _client_adapter_cls = stor.VSCSIClientAdapterElement
-    _server_adapter_cls = stor.VSCSIServerAdapterElement
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
@@ -519,71 +603,75 @@ class VSCSIMapping(VStorageMapping):
                 existing_map.adapter, lua))
         return new_map
 
+
+@ewrap.EntryWrapper.pvm_type('VirtualSCSIBus', child_order=_BUS_EL_ORDER)
+class VSCSIBus(ewrap.EntryWrapper, VStorageMapping):
+    """Virtual SCSI Bus, first-class CHILD of VirtualIOServer.
+
+    PowerVM provides a mechanism for Server/Client adapters to provide storage
+    connectivity (for LPARs that do not have dedicated hardware).  This mapping
+    describes the Virtual I/O Server's Server SCSI Adapter and the Client
+    LPAR's Client SCSI Adapter.
+
+    To create a new Client SCSI Adapter, create a new mapping and update the
+    Virtual I/O Server.  This will be an atomic operation that creates the
+    adapters on the Virtual I/O Server and Client LPAR, and then maps them
+    properly.  There is no need to pre-create the adapters before creating a
+    new mapping.
+    """
+
+    _client_adapter_cls = stor.VSCSIClientAdapterElement
+    _server_adapter_cls = stor.VSCSIServerAdapterElement
+
+    @classmethod
+    def bld(cls, adapter, client_lpar_uuid, lpar_slot_num=None):
+        """Creates a new VSCSIBus with no storage.
+
+        Storage should be added afterwards by modifying stg_targets.
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        bus.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the new mapping. If None then we let
+                              REST choose the slot number.
+        :return: The newly-created VSCSIBus.
+        """
+        s_bus = super(VSCSIBus, cls)._bld(adapter)
+        # Create the 'Associated Logical Partition' element of the mapping.
+        s_bus._client_lpar_href(adapter.build_href(lpar.LPAR.schema_type,
+                                                   client_lpar_uuid, xag=[]))
+        s_bus._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
+        s_bus._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
+        return s_bus
+
+    @classmethod
+    def bld_from_existing(cls, existing_bus):
+        """Clones a bus's LPAR and client/server adapters, but not storage.
+
+        :param existing_bus: The existing VSCSIBus to clone.
+        :return: The newly-created VSCSIBus.
+        """
+        # We do NOT want the source's storage, so we explicitly copy the pieces
+        # we want from the original bus.
+        new_bus = super(VSCSIBus, cls)._bld(existing_bus.adapter)
+        if existing_bus.client_lpar_href is not None:
+            new_bus._client_lpar_href(existing_bus.client_lpar_href)
+        if existing_bus.client_adapter is not None:
+            new_bus._client_adapter(copy.deepcopy(existing_bus.client_adapter))
+        if existing_bus.server_adapter is not None:
+            new_bus._server_adapter(copy.deepcopy(existing_bus.server_adapter))
+        return new_bus
+
     @property
-    def backing_storage(self):
-        """The backing storage element (if applicable).
+    def mappings(self):
+        return ewrap.WrapperElemList(self._find_or_seed(
+            _BUS_ASSOC_MAPS), STDev)
 
-        This element may be a PV, LU, VirtualDisk, or VirtualOpticalMedia.
-        May return None.
-        """
-        elem = self.element.find(_MAP_STORAGE)
-        if elem is None:
-            return None
-        # If backing storage exists, it comprises a single child of elem.  But
-        # type is unknown immediately, so call all children and then wrap.
-        stor_elems = list(elem)
-        if len(stor_elems) != 1:
-            return None
-        # TODO(efried): parent_entry not needed once VIOS has pg83 in Events
-        parent_entry = getattr(self, 'parent_entry', None)
-        # The storage element may be any one of VDisk, VOptMedia, PV, or LU.
-        # Allow ElementWrapper to detect (from the registry) and wrap correctly
-        return ewrap.ElementWrapper.wrap(stor_elems[0],
-                                         parent_entry=parent_entry)
-
-    def _backing_storage(self, stg):
-        """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
-
-        :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
-                    backing storage to assign.
-        """
-        # Always replace.  Because while the storage has one element, it can't
-        # inject properly if the backing type changes (ex. cloning from vOpt to
-        # vDisk).
-        stor_elem = ent.Element(_MAP_STORAGE, self.adapter, attrib={},
-                                children=[])
-        stor_elem.inject(stg.element)
-        self.inject(stor_elem)
-
-    @property
-    def target_dev(self):
-        """The target device associated with the backing storage.
-
-        May be any of {storage_type}TargetDev for {storage_type} in VDisk,
-        VOpt, LU or PV.
-        """
-        elem = self.element.find(_MAP_TARGET_DEV)
-        if elem is None:
-            return None
-        # If the virtual target device exists, it comprises a single child of
-        # elem.  But the exact type is unknown.
-        vtd_elems = list(elem)
-        if len(vtd_elems) != 1:
-            return None
-        # Let ElementWrapper.wrap figure out (from the registry) the
-        # appropriate return type.
-        return ewrap.ElementWrapper.wrap(vtd_elems[0])
-
-    def _target_dev(self, vtd):
-        """Sets the target device of this mapping.
-
-        :param vtd: A {storage_type}TargetDev ElementWrapper representing the
-                    virtual target device to assign.
-        """
-        vtd_elem = ent.Element(_MAP_TARGET_DEV, self.adapter, attrib={},
-                               children=[])
-        vtd_elem.inject(vtd.element)
-        self.inject(vtd_elem)
+    @mappings.setter
+    def mappings(self, stdevs):
+        self.replace_list(_BUS_ASSOC_MAPS, stdevs)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
