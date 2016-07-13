@@ -2,7 +2,7 @@
 Summary: Python API wrapper for PowerVM
 Name: pypowervm
 BuildArch: noarch
-Version: 1.0
+Version: %{_pvm_version}
 Release: %{_pvm_release}
 Group: Applications/System
 License: IBM Corp.
