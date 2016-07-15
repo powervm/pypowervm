@@ -55,13 +55,22 @@ def get_mgmt_partition(adapter):
     :raise ManagementPartitionNotFoundException: if we don't find exactly one
                                                  management partition.
     """
-    # There is one mgmt partition on the system.  First search the LPAR type.
-    lpar_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+
+    # There will almost always be fewer VIOSes than LPARs.  Since we're
+    # querying without xags, it should be very quick.
     vio_wraps = vios.VIOS.search(adapter, is_mgmt_partition=True)
-    wraps = lpar_wraps + vio_wraps
-    if len(wraps) != 1:
-        raise ex.ManagementPartitionNotFoundException(count=len(wraps))
-    return wraps[0]
+    if len(vio_wraps) == 1:
+        return vio_wraps[0]
+
+    # We delay the query to the LPARs because there could be hundreds of them.
+    # So we don't want to query it unless we need to.
+    lpar_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
+    if len(lpar_wraps) == 1:
+        return lpar_wraps[0]
+
+    # If we made it here, something is wrong.
+    raise ex.ManagementPartitionNotFoundException(
+        count=len(vio_wraps + lpar_wraps))
 
 
 def get_this_partition(adapter):
@@ -75,12 +84,22 @@ def get_this_partition(adapter):
                                             VIOS with the local VM's short ID.
     """
     myid = u.my_partition_id()
-    lpar_wraps = lpar.LPAR.search(adapter, id=myid)
+
+    # There will almost always be fewer VIOSes than LPARs.  Since we're
+    # querying without xags, it should be very quick.
     vio_wraps = vios.VIOS.search(adapter, id=myid)
-    wraps = lpar_wraps + vio_wraps
-    if len(wraps) != 1:
-        raise ex.ThisPartitionNotFoundException(lpar_id=myid, count=len(wraps))
-    return wraps[0]
+    if len(vio_wraps) == 1:
+        return vio_wraps[0]
+
+    # We delay the query to the LPARs because there could be hundreds of them.
+    # So we don't want to query it unless we need to.
+    lpar_wraps = lpar.LPAR.search(adapter, id=myid)
+    if len(lpar_wraps) == 1:
+        return lpar_wraps[0]
+
+    # If we made it here, something is wrong.
+    raise ex.ThisPartitionNotFoundException(
+        count=len(vio_wraps + lpar_wraps), lpar_id=myid)
 
 
 def get_active_vioses(adapter, xag=(), vios_wraps=None, find_min=None):

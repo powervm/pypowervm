@@ -55,28 +55,23 @@ class TestPartition(testtools.TestCase):
 
     def test_get_mgmt_lpar(self):
         "Happy path where the LPAR is the mgmt VM is a LPAR."
-        self.adpt.read.side_effect = [self.mgmt_lpar, self.nomgmt_vio]
+        self.adpt.read.side_effect = [self.nomgmt_vio, self.mgmt_lpar]
 
         mgmt_w = tpar.get_mgmt_partition(self.adpt)
         self.assertTrue(mgmt_w.is_mgmt_partition)
         self.assertEqual('089FFB20-5D19-4A8C-BB80-13650627D985', mgmt_w.uuid)
         self.assertIsInstance(mgmt_w, lpar.LPAR)
+        self.assertEqual(2, self.adpt.read.call_count)
 
     def test_get_mgmt_vio(self):
         "Happy path where the LPAR is the mgmt VM is a VIOS."
-        self.adpt.read.side_effect = [self.nomgmt_lpar, self.mgmt_vio]
+        self.adpt.read.side_effect = [self.mgmt_vio, self.nomgmt_lpar]
 
         mgmt_w = tpar.get_mgmt_partition(self.adpt)
         self.assertTrue(mgmt_w.is_mgmt_partition)
         self.assertEqual('7DBBE705-E4C4-4458-8223-3EBE07015CA9', mgmt_w.uuid)
         self.assertIsInstance(mgmt_w, vios.VIOS)
-
-    def test_get_mgmt_multiple(self):
-        """Failure path with multiple mgmt VMs."""
-        self.adpt.read.side_effect = [self.mgmt_lpar, self.mgmt_vio]
-
-        self.assertRaises(ex.ManagementPartitionNotFoundException,
-                          tpar.get_mgmt_partition, self.adpt)
+        self.assertEqual(1, self.adpt.read.call_count)
 
     def test_get_mgmt_none(self):
         """Failure path with no mgmt VMs."""
@@ -101,19 +96,15 @@ class TestPartition(testtools.TestCase):
         mock_vio_search.assert_called_with(self.adpt, id=9)
 
         # Good path - one hit on VIOS
+        mock_lp_search.reset_mock()
         mock_lp_search.return_value = []
         mock_vio_search.return_value = [vios.VIOS.wrap(self.mgmt_vio)[0]]
         mock_my_id.return_value = 2
         my_w = tpar.get_this_partition(self.adpt)
         self.assertEqual(2, my_w.id)
         self.assertEqual('1300C76F-9814-4A4D-B1F0-5B69352A7DEA', my_w.uuid)
-        mock_lp_search.assert_called_with(self.adpt, id=2)
+        mock_lp_search.assert_not_called()
         mock_vio_search.assert_called_with(self.adpt, id=2)
-
-        # Bad path - multiple hits
-        mock_lp_search.return_value = lpar.LPAR.wrap(self.mgmt_lpar)
-        self.assertRaises(ex.ThisPartitionNotFoundException,
-                          tpar.get_this_partition, self.adpt)
 
         # Bad path - no hits
         mock_lp_search.return_value = []
