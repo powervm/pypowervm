@@ -304,3 +304,9 @@ class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
     msg_fmt = _("Unable to locate the volume group %(vol_grp)s to store the "
                 "virtual optical media within.  Unable to create the "
                 "media repository.")
+
+
+class CantUpdatePPortsInUse(AbstractMsgFmtError):
+    msg_fmt = _("The ManagedSystem update was not attempted because changes "
+                "were requested to one or more SR-IOV physical ports which "
+                "are in use by vNICs.\n%(warnings)s")
