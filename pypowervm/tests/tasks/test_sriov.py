@@ -200,3 +200,142 @@ class TestSriov(testtools.TestCase):
                            bd.capacity) for bd in vnic.back_devs])
 
         self.assertEqual(5, mock_shuffle.call_count)
+
+
+class TestSafeUpdatePPort(testtools.TestCase):
+
+    @mock.patch('pypowervm.tasks.partition.get_partitions')
+    @mock.patch('pypowervm.wrappers.iocard.VNIC.get')
+    def test_get_lpar_vnics(self, mock_vnics, mock_get_pars):
+        lpars = ['lpar1', 'lpar2', 'lpar3']
+        mock_get_pars.return_value = lpars
+        mock_vnics.side_effect = ['list1', 'list2', 'list3']
+        self.assertEqual({'lpar%d' % i: 'list%d' % i for i in (1, 2, 3)},
+                         tsriov.get_lpar_vnics('adap'))
+        mock_get_pars.assert_called_once_with('adap', lpars=True, vioses=False)
+        for lpar in lpars:
+            mock_vnics.assert_any_call('adap', parent=lpar)
+
+    def test_vnics_using_pport(self):
+        lpar1 = mock.Mock()
+        lpar1.configure_mock(name='lpar1', uuid='lpar_uuid1')
+        lpar2 = mock.Mock()
+        lpar2.configure_mock(name='lpar2', uuid='lpar_uuid2')
+        vnic1 = mock.Mock(uuid='vnic_uuid1', back_devs=[
+            mock.Mock(sriov_adap_id=1, pport_id=1),
+            mock.Mock(sriov_adap_id=2, pport_id=2)])
+        vnic2 = mock.Mock(uuid='vnic_uuid2', back_devs=[
+            mock.Mock(sriov_adap_id=1, pport_id=2),
+            mock.Mock(sriov_adap_id=2, pport_id=1)])
+        vnic3 = mock.Mock(uuid='vnic_uuid3', back_devs=[
+            mock.Mock(sriov_adap_id=3, pport_id=1),
+            mock.Mock(sriov_adap_id=4, pport_id=2)])
+        vnic4 = mock.Mock(uuid='vnic_uuid4', back_devs=[
+            mock.Mock(sriov_adap_id=1, pport_id=2),
+            mock.Mock(sriov_adap_id=4, pport_id=2)])
+        lpar2vnics = {lpar1: [vnic1, vnic2], lpar2: [vnic3, vnic4]}
+        # Not in use
+        self.assertEqual([], tsriov._vnics_using_pport(mock.Mock(
+            sriov_adap_id=1, port_id=3, loc_code='not_used'), lpar2vnics))
+        # Used once
+        ret = tsriov._vnics_using_pport(mock.Mock(
+            sriov_adap_id=1, port_id=1, loc_code='loc1'), lpar2vnics)
+        self.assertEqual(1, len(ret))
+        # loc1 backs vNIC for LPAR lpar1 (lpar_uuid1 / vnic_uuid1)
+        self.assertIn('loc1', ret[0])
+        self.assertIn('lpar1', ret[0])
+        self.assertIn('lpar_uuid1', ret[0])
+        self.assertIn('vnic_uuid1', ret[0])
+        # Used twice
+        ret = tsriov._vnics_using_pport(mock.Mock(
+            sriov_adap_id=1, port_id=2, loc_code='loc2'), lpar2vnics)
+        self.assertEqual(2, len(ret))
+        # Order of the return is not deterministic.  Reverse if necessary
+        if 'lpar1' not in ret[0]:
+            ret = ret[::-1]
+        # loc2 backs vNIC for LPAR lpar1 (lpar_uuid1 / vnic_uuid2)
+        self.assertIn('loc2', ret[0])
+        self.assertIn('lpar1', ret[0])
+        self.assertIn('lpar_uuid1', ret[0])
+        self.assertIn('vnic_uuid2', ret[0])
+        # loc2 backs vNIC for LPAR lpar2 (lpar_uuid2 / vnic_uuid4)
+        self.assertIn('loc2', ret[1])
+        self.assertIn('lpar2', ret[1])
+        self.assertIn('lpar_uuid2', ret[1])
+        self.assertIn('vnic_uuid4', ret[1])
+
+    @mock.patch('pypowervm.tasks.sriov.get_lpar_vnics')
+    @mock.patch('pypowervm.tasks.sriov._vnics_using_pport')
+    def test_vet_port_usage(self, mock_vup, mock_glv):
+        label_index = {'loc1': 'pre_label1', 'loc2': '', 'loc3': 'pre_label3',
+                       'loc4': 'pre_label4'}
+        # No LPs
+        pport1 = mock.Mock(cfg_lps=0, loc_code='loc1', label='post_label1')
+        # Pre-label empty, but label changed
+        pport2 = mock.Mock(loc_code='loc2', label='post_label2')
+        # Pre-label matches post-label
+        pport3 = mock.Mock(loc_code='loc3', label='pre_label3')
+        # Label changed
+        pport4 = mock.Mock(loc_code='loc4', label='post_label4')
+        pport5 = mock.Mock(loc_code='loc3', label='post_label3')
+        # PPorts that hit the first three criteria (no LPs, label originally
+        # unset, label unchanged) don't trigger expensive get_lpar_vnics or
+        # _vnics_using_pport.
+        sriov1 = mock.Mock(phys_ports=[pport1, pport2])
+        sriov2 = mock.Mock(phys_ports=[pport3])
+        ret = tsriov._vet_port_usage(
+            mock.Mock(asio_config=mock.Mock(sriov_adapters=[sriov1, sriov2])),
+            label_index)
+        self.assertEqual([], ret)
+        mock_vup.assert_not_called()
+        mock_glv.assert_not_called()
+        # Multiple pports that pass the easy criteria; get_lpar_vnics only
+        # called once.
+        mock_vup.side_effect = [1], [2]
+        sriov3 = mock.Mock(phys_ports=[pport4, pport5])
+        ret = tsriov._vet_port_usage(mock.Mock(
+            adapter='adap', asio_config=mock.Mock(
+                sriov_adapters=[sriov1, sriov3])), label_index)
+        mock_glv.assert_called_once_with('adap')
+        self.assertEqual([1, 2], ret)
+        mock_vup.assert_has_calls([mock.call(pport4, mock_glv.return_value),
+                                   mock.call(pport5, mock_glv.return_value)])
+
+    @mock.patch('pypowervm.tasks.sriov._vet_port_usage')
+    @mock.patch('pypowervm.tasks.sriov.LOG.warning')
+    @mock.patch('fasteners.lock.ReaderWriterLock.write_lock')
+    def test_safe_update_pports(self, mock_lock, mock_warn, mock_vpu):
+        mock_sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=[
+            mock.Mock(phys_ports=[mock.Mock(loc_code='loc1', label='label1'),
+                                  mock.Mock(loc_code='loc2', label='label2')]),
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='loc3', label='label3')])]))
+
+        def sup_caller(sys_w, force=None):
+            """Because assertRaises() on a context manager is difficult."""
+            if force is None:
+                with tsriov.safe_update_pports(sys_w):
+                    mock_lock.assert_called()
+            else:
+                with tsriov.safe_update_pports(sys_w, force=force):
+                    mock_lock.assert_called()
+            mock_vpu.assert_called_once_with(sys_w, {
+                'loc1': 'label1', 'loc2': 'label2', 'loc3': 'label3'})
+            sys_w.update.assert_called_once_with()
+            sys_w.update.reset_mock()
+
+        # No force, no warnings - finishes
+        mock_vpu.return_value = []
+        sup_caller(mock_sys)
+        mock_warn.assert_not_called()
+        # Warnings, no force - raises
+        mock_vpu.reset_mock()
+        mock_vpu.return_value = [1]
+        self.assertRaises(ex.CantUpdatePPortsInUse, sup_caller, mock_sys)
+        mock_warn.assert_not_called()
+        # Warnings, force - logs
+        mock_vpu.reset_mock()
+        mock_vpu.return_value = ['one', 'two']
+        sup_caller(mock_sys, force=True)
+        mock_warn.assert_has_calls([mock.call(mock.ANY), mock.call('one'),
+                                    mock.call('two')])
