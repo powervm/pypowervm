@@ -260,3 +260,43 @@ class TestVios(twrap.TestWrapper):
         self.assertEqual(3, self.mock_vios_get.call_count)
         self.assertEqual(2, self.mock_sleep.call_count)
         mock_warn.assert_called_once_with(mock.ANY)
+
+    @mock.patch('pypowervm.tasks.partition.get_mgmt_partition')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    def test_get_partitions(self, mock_vio_get, mock_lpar_get, mock_mgmt_get):
+        adpt = mock.Mock()
+
+        # Test with the MGMT as a VIOS
+        mgmt = mock.Mock(uuid='1')
+        vioses = [mock.Mock(uuid='2'), mgmt]
+        lpars = [mock.Mock(uuid='3'), mock.Mock(uuid='4')]
+
+        mock_mgmt_get.return_value = mgmt
+        mock_vio_get.return_value = vioses
+        mock_lpar_get.return_value = lpars
+
+        # Basic case
+        self.assertEqual(vioses + lpars, tpar.get_partitions(adpt))
+
+        # Different permutations
+        self.assertEqual(lpars + [mgmt], tpar.get_partitions(
+            adpt, vioses=False, mgmt=True))
+        self.assertEqual(vioses, tpar.get_partitions(
+            adpt, lpars=False, mgmt=True))
+
+        # Now test with the MGMT as a LPAR
+        vioses = [mock.Mock(uuid='2')]
+        lpars = [mock.Mock(uuid='3'), mock.Mock(uuid='4'), mgmt]
+
+        mock_vio_get.return_value = vioses
+        mock_lpar_get.return_value = lpars
+
+        # Basic case
+        self.assertEqual(vioses + lpars, tpar.get_partitions(adpt))
+
+        # Different permutations
+        self.assertEqual(lpars, tpar.get_partitions(
+            adpt, vioses=False, mgmt=True))
+        self.assertEqual(vioses + [mgmt], tpar.get_partitions(
+            adpt, lpars=False, mgmt=True))

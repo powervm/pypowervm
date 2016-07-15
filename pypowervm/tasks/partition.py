@@ -120,6 +120,35 @@ def get_active_vioses(adapter, xag=(), vios_wraps=None, find_min=None):
     return ret
 
 
+def get_partitions(adapter, lpars=True, vioses=True, mgmt=False):
+    """Get a list of partitions.
+
+    Can include LPARs, VIOSes, and the management partition.
+
+    :param adapter: The pypowervm adapter.
+    :param lpars: If True, the result will include all LPARs.
+    :param vioses: If True, the result will include all VIOSes.
+    :param mgmt: If True, the result is guaranteed to include the
+                 management partition, even if it would not otherwise have
+                 been included based on get_lpars/get_vioses.
+    """
+    rets = []
+    if vioses:
+        rets.extend(vios.VIOS.get(adapter))
+    if lpars:
+        rets.extend(lpar.LPAR.get(adapter))
+
+    # If they need the mgmt lpar, get it.  But ONLY if we didn't get both
+    # VIOSes and LPARs.  If we got both of those already, then we are
+    # guaranteed to already have the mgmt lpar in there.
+    if mgmt and not (lpars and vioses):
+        mgmt_w = get_mgmt_partition(adapter)
+        if mgmt_w.uuid not in [x.uuid for x in rets]:
+            rets.append(get_mgmt_partition(adapter))
+
+    return rets
+
+
 def get_physical_wwpns(adapter):
     """Returns the active WWPNs of the FC ports across all VIOSes on system.
 
