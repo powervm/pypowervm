@@ -24,6 +24,7 @@ import ssl
 import struct
 import subprocess
 import threading
+import time
 
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
@@ -174,7 +175,7 @@ def open_remotable_vnc_vterm(
         global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
         if vnc_port not in _LOCAL_VNC_SERVERS:
             repeater = _VNCRepeaterServer(
-                lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
+                adapter, lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
                 vnc_path=vnc_path)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
@@ -229,10 +230,11 @@ class _VNCRepeaterServer(threading.Thread):
     This is a very light weight thread, only one is needed per PowerVM LPAR.
     """
 
-    def __init__(self, lpar_uuid, local_ip, port, remote_ips=None,
+    def __init__(self, adapter, lpar_uuid, local_ip, port, remote_ips=None,
                  vnc_path=None):
         """Creates the repeater.
 
+        :param adapter: The pypowervm adapter
         :param lpar_uuid: Partition UUID.
         :param local_ip: The IP Address to bind the VNC server to.  This would
                          be the IP of the management network on the system.
@@ -257,6 +259,7 @@ class _VNCRepeaterServer(threading.Thread):
         """
         super(_VNCRepeaterServer, self).__init__()
 
+        self.adapter = adapter
         self.lpar_uuid = lpar_uuid
         self.local_ip = local_ip
         self.port = port
@@ -265,6 +268,7 @@ class _VNCRepeaterServer(threading.Thread):
         self.x509_certs = None
 
         self.alive = True
+        self.vnc_killer = None
 
     def set_x509_certificates(self, ca_certs=None,
                               server_cert=None, server_key=None):
@@ -400,6 +404,11 @@ class _VNCRepeaterServer(threading.Thread):
 
         # Setup the forwarding socket to the local LinuxVNC session
         self._setup_forwarding_socket(peers, client_socket)
+
+        # If for some reason, the VNC was being killed, abort it
+        if self.vnc_killer is not None:
+            self.vnc_killer.abort()
+            self.vnc_killer = None
 
     def _setup_forwarding_socket(self, peers, client_socket):
         """Setup the forwarding socket to the local LinuxVNC session.
@@ -560,3 +569,32 @@ class _VNCRepeaterServer(threading.Thread):
         # them
         del peers[peer]
         del peers[s_input]
+
+        # If this was the last port, close the local connection
+        if len(peers) == 0:
+            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid)
+            self.vnc_killer.start()
+
+
+class _VNCKiller(threading.Thread):
+
+    def __init__(self, adapter, lpar_uuid):
+        self.adapter = adapter
+        self.lpar_uuid = lpar_uuid
+        self._abort = False
+
+    def abort(self):
+        self._abort = True
+
+    def run(self):
+        count = 0
+    
+        # Wait up to 500 seconds to see if any new negotiations came in
+        while count < 500 and not self._abort:
+            time.sleep(1)
+            if self._abort:
+                break
+            count += 1
+
+        if not self._abort:
+            _close_vterm_local(self.adapter, self.lpar_uuid)
