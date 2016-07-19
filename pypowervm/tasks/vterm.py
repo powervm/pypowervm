@@ -174,7 +174,7 @@ def open_remotable_vnc_vterm(
         global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
         if vnc_port not in _LOCAL_VNC_SERVERS:
             repeater = _VNCRepeaterServer(
-                lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
+                adapter, lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
                 vnc_path=vnc_path)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
@@ -229,10 +229,11 @@ class _VNCRepeaterServer(threading.Thread):
     This is a very light weight thread, only one is needed per PowerVM LPAR.
     """
 
-    def __init__(self, lpar_uuid, local_ip, port, remote_ips=None,
+    def __init__(self, adapter, lpar_uuid, local_ip, port, remote_ips=None,
                  vnc_path=None):
         """Creates the repeater.
 
+        :param adapter: The pypowervm adapter
         :param lpar_uuid: Partition UUID.
         :param local_ip: The IP Address to bind the VNC server to.  This would
                          be the IP of the management network on the system.
@@ -257,6 +258,7 @@ class _VNCRepeaterServer(threading.Thread):
         """
         super(_VNCRepeaterServer, self).__init__()
 
+        self.adapter = adapter
         self.lpar_uuid = lpar_uuid
         self.local_ip = local_ip
         self.port = port
@@ -560,3 +562,6 @@ class _VNCRepeaterServer(threading.Thread):
         # them
         del peers[peer]
         del peers[s_input]
+
+        # If this was the last port, close the local connection
+        _close_vterm_local(self.adapter, self.lpar_uuid)
