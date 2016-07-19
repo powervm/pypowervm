@@ -96,7 +96,8 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.adpt = self.useFixture(
             fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
         self.srv = vterm._VNCRepeaterServer(
-            'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'], vnc_path='path')
+            self.adpt, 'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'],
+            vnc_path='path')
 
     def test_stop(self):
         self.assertTrue(self.srv.alive)
@@ -181,7 +182,9 @@ class TestVNCRepeaterServer(testtools.TestCase):
             "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
 
-    def test_close_client(self):
+    @mock.patch('pypowervm.tasks.vterm._close_vterm_local')
+    @mock.patch('time.sleep')
+    def test_close_client(self, mock_sleep, mock_close):
         client, server = mock.Mock(), mock.Mock()
         peers = {client: server, server: client}
 
@@ -190,6 +193,10 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.assertTrue(client.close.called)
         self.assertTrue(server.close.called)
         self.assertEqual({}, peers)
+
+        # Get the killer off the thread and wait for it to complete.
+        self.srv.vnc_killer.join()
+        mock_close.assert_called_once_with(self.adpt, 'uuid')
 
     @mock.patch('pypowervm.tasks.vterm._VNCRepeaterServer._new_client')
     @mock.patch('select.select')
