@@ -24,6 +24,7 @@ import ssl
 import struct
 import subprocess
 import threading
+import time
 
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
@@ -174,7 +175,7 @@ def open_remotable_vnc_vterm(
         global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
         if vnc_port not in _LOCAL_VNC_SERVERS:
             repeater = _VNCRepeaterServer(
-                lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
+                adapter, lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
                 vnc_path=vnc_path)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
@@ -229,10 +230,11 @@ class _VNCRepeaterServer(threading.Thread):
     This is a very light weight thread, only one is needed per PowerVM LPAR.
     """
 
-    def __init__(self, lpar_uuid, local_ip, port, remote_ips=None,
+    def __init__(self, adapter, lpar_uuid, local_ip, port, remote_ips=None,
                  vnc_path=None):
         """Creates the repeater.
 
+        :param adapter: The pypowervm adapter
         :param lpar_uuid: Partition UUID.
         :param local_ip: The IP Address to bind the VNC server to.  This would
                          be the IP of the management network on the system.
@@ -257,6 +259,7 @@ class _VNCRepeaterServer(threading.Thread):
         """
         super(_VNCRepeaterServer, self).__init__()
 
+        self.adapter = adapter
         self.lpar_uuid = lpar_uuid
         self.local_ip = local_ip
         self.port = port
@@ -265,6 +268,7 @@ class _VNCRepeaterServer(threading.Thread):
         self.x509_certs = None
 
         self.alive = True
+        self.vnc_killer = None
 
     def set_x509_certificates(self, ca_certs=None,
                               server_cert=None, server_key=None):
@@ -317,7 +321,7 @@ class _VNCRepeaterServer(threading.Thread):
             # --- They are a pair of inputs, such that whenever they receive
             #     input, they send to their peer's output.
             input_list = list(peers) + [server]
-            s_inputs = select.select(input_list, [], [])[0]
+            s_inputs = select.select(input_list, [], [], 1)[0]
 
             for s_input in s_inputs:
                 # If the input is the server, then we have a new client
@@ -400,6 +404,11 @@ class _VNCRepeaterServer(threading.Thread):
 
         # Setup the forwarding socket to the local LinuxVNC session
         self._setup_forwarding_socket(peers, client_socket)
+
+        # If for some reason, the VNC was being killed, abort it
+        if self.vnc_killer is not None:
+            self.vnc_killer.abort()
+            self.vnc_killer = None
 
     def _setup_forwarding_socket(self, peers, client_socket):
         """Setup the forwarding socket to the local LinuxVNC session.
@@ -560,3 +569,45 @@ class _VNCRepeaterServer(threading.Thread):
         # them
         del peers[peer]
         del peers[s_input]
+
+        # If this was the last port, close the local connection
+        if len(peers) == 0:
+            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid)
+            self.vnc_killer.start()
+
+
+class _VNCKiller(threading.Thread):
+    """The VNC Killer is a thread that will eventually close the VNC.
+
+    The VNC Repeater could run indefinitely, whether clients are connected to
+    it or not.  This class will wait a period of time (5 minutes) and if
+    the abort has not been called, will fully close the vterm.
+
+    This is used in orchestration with the VNCRepeaterServer.  The intention
+    is, if the user quickly navigates off the VNC, they can come back without
+    losing their whole session.  But if they wait up to 5 minutes, then the
+    session will be closed out and the memory will be reclaimed.
+    """
+
+    def __init__(self, adapter, lpar_uuid):
+        super(_VNCKiller, self).__init__()
+        self.adapter = adapter
+        self.lpar_uuid = lpar_uuid
+        self._abort = False
+
+    def abort(self):
+        """Call to stop the killer from completing its job."""
+        self._abort = True
+
+    def run(self):
+        count = 0
+
+        # Wait up to 5 minutes to see if any new negotiations came in
+        while count < 300 and not self._abort:
+            time.sleep(1)
+            if self._abort:
+                break
+            count += 1
+
+        if not self._abort:
+            _close_vterm_local(self.adapter, self.lpar_uuid)
