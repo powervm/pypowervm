@@ -96,7 +96,8 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.adpt = self.useFixture(
             fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
         self.srv = vterm._VNCRepeaterServer(
-            'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'], vnc_path='path')
+            self.adpt, 'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'],
+            vnc_path='path')
 
     def test_stop(self):
         self.assertTrue(self.srv.alive)
@@ -181,15 +182,21 @@ class TestVNCRepeaterServer(testtools.TestCase):
             "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
 
-    def test_close_client(self):
+    @mock.patch('pypowervm.tasks.vterm._close_vterm_local')
+    def test_close_client(self, mock_close):
         client, server = mock.Mock(), mock.Mock()
         peers = {client: server, server: client}
 
-        self.srv._close_client(client, peers)
+        with mock.patch('time.sleep'):
+            self.srv._close_client(client, peers)
 
-        self.assertTrue(client.close.called)
-        self.assertTrue(server.close.called)
-        self.assertEqual({}, peers)
+            self.assertTrue(client.close.called)
+            self.assertTrue(server.close.called)
+            self.assertEqual({}, peers)
+
+            # Get the killer off the thread and wait for it to complete.
+            self.srv.vnc_killer.join()
+            mock_close.assert_called_once_with(self.adpt, 'uuid')
 
     @mock.patch('pypowervm.tasks.vterm._VNCRepeaterServer._new_client')
     @mock.patch('select.select')
@@ -233,7 +240,7 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.assertTrue(mock_server_peer.close.called)
 
         # Make sure the select was called with a timeout.
-        mock_select.assert_called_with(mock.ANY, mock.ANY, mock.ANY, 10)
+        mock_select.assert_called_with(mock.ANY, mock.ANY, mock.ANY, 1)
 
     @mock.patch('select.select')
     @mock.patch('ssl.wrap_socket', mock.Mock())
