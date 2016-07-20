@@ -385,6 +385,15 @@ class VIOS(bp.BasePartition):
             LinkAggrIOAdapterChoice)
         return es
 
+    def can_lpm(self, host_w, migr_data=None):
+        """Determines if a partition is ready for Live Partition Migration.
+
+        :return capable: False, VIOS types are not LPM capable
+        :return reason: A message that will indicate why it was not
+                        capable of LPM.
+        """
+        return False, _('Partition of VIOS type is not LPM capable')
+
 
 @six.add_metaclass(abc.ABCMeta)
 @ewrap.Wrapper.base_pvm_type
