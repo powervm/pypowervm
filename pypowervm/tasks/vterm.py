@@ -317,7 +317,7 @@ class _VNCRepeaterServer(threading.Thread):
             # --- They are a pair of inputs, such that whenever they receive
             #     input, they send to their peer's output.
             input_list = list(peers) + [server]
-            s_inputs = select.select(input_list, [], [])[0]
+            s_inputs = select.select(input_list, [], [], 10)[0]
 
             for s_input in s_inputs:
                 # If the input is the server, then we have a new client

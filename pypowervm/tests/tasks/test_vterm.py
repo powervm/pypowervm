@@ -232,6 +232,9 @@ class TestVNCRepeaterServer(testtools.TestCase):
         self.assertTrue(mock_client_peer.close.called)
         self.assertTrue(mock_server_peer.close.called)
 
+        # Make sure the select was called with a timeout.
+        mock_select.assert_called_with(mock.ANY, mock.ANY, mock.ANY, 10)
+
     @mock.patch('select.select')
     @mock.patch('ssl.wrap_socket', mock.Mock())
     def test_enable_x509_authentication(self, mock_select):
