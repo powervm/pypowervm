@@ -366,7 +366,7 @@ BODY{
                             <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">2</ConfiguredEthernetLogicalPorts>
                             <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
                             <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
-                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">2.0%</MinimumEthernetCapacityGranularity>
                             <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
                             <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
                             <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">20</MaxSupportedEthernetLogicalPorts>
@@ -374,7 +374,7 @@ BODY{
                             <DefaultFiberChannelTargetsForBackingDevice kxe="false" kb="ROR">256</DefaultFiberChannelTargetsForBackingDevice>
                             <DefaultFiberChannelTargetsForNonBackingDevice kb="ROR" kxe="false">128</DefaultFiberChannelTargetsForNonBackingDevice>
                             <ConfiguredFiberChannelOverEthernetLogicalPorts kxe="false" kb="UOD">0</ConfiguredFiberChannelOverEthernetLogicalPorts>
-                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">1000</MinimumFCoECapacityGranularity>
+                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">10.0%</MinimumFCoECapacityGranularity>
                             <FiberChannelTargetsRoundingValue kb="ROR" kxe="false">64</FiberChannelTargetsRoundingValue>
                             <MaxSupportedFiberChannelOverEthernetLogicalPorts kb="ROR" kxe="false">0</MaxSupportedFiberChannelOverEthernetLogicalPorts>
                             <MaximumFiberChannelTargets kxe="false" kb="ROR">0</MaximumFiberChannelTargets>
@@ -422,7 +422,7 @@ BODY{
                             <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">0</ConfiguredEthernetLogicalPorts>
                             <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
                             <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
-                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">2.0%</MinimumEthernetCapacityGranularity>
                             <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
                             <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
                             <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">20</MaxSupportedEthernetLogicalPorts>
@@ -430,7 +430,7 @@ BODY{
                             <DefaultFiberChannelTargetsForBackingDevice kxe="false" kb="ROR">256</DefaultFiberChannelTargetsForBackingDevice>
                             <DefaultFiberChannelTargetsForNonBackingDevice kb="ROR" kxe="false">128</DefaultFiberChannelTargetsForNonBackingDevice>
                             <ConfiguredFiberChannelOverEthernetLogicalPorts kxe="false" kb="UOD">0</ConfiguredFiberChannelOverEthernetLogicalPorts>
-                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">1000</MinimumFCoECapacityGranularity>
+                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">10.0%</MinimumFCoECapacityGranularity>
                             <FiberChannelTargetsRoundingValue kb="ROR" kxe="false">64</FiberChannelTargetsRoundingValue>
                             <MaxSupportedFiberChannelOverEthernetLogicalPorts kb="ROR" kxe="false">0</MaxSupportedFiberChannelOverEthernetLogicalPorts>
                             <MaximumFiberChannelTargets kxe="false" kb="ROR">0</MaximumFiberChannelTargets>
@@ -484,7 +484,7 @@ BODY{
                             <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">1</ConfiguredEthernetLogicalPorts>
                             <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
                             <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
-                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">2.0%</MinimumEthernetCapacityGranularity>
                             <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
                             <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
                             <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">4</MaxSupportedEthernetLogicalPorts>
@@ -531,7 +531,7 @@ BODY{
                             <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">0</ConfiguredEthernetLogicalPorts>
                             <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
                             <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
-                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">2.0%</MinimumEthernetCapacityGranularity>
                             <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
                             <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
                             <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">4</MaxSupportedEthernetLogicalPorts>
