@@ -450,7 +450,16 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 
     @property
     def min_granularity(self):
-        return self._get_val_int(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
+        """Minimum capacity granularity for the port.
+
+        Logical port capacities must be a multiple of this value.
+        The schema value is a long int, but needs to represent a percentage to
+        two decimal places; hence it is provided as 100 * the percentage, or
+        10000 * the fractional value.  We want to return it as a fractional
+        value to match e.g. allocated_capacity.
+        """
+        pct100 = self._get_val_int(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
+        return float(pct100) / 10000.0
 
     @property
     def supp_max_lps(self):
