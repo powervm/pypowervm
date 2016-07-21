@@ -16,16 +16,26 @@
 
 """Complex tasks around SR-IOV cards/ports, VFs, and vNICs."""
 
+import contextlib
 import copy
+from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
 import random
+import six
 
 import pypowervm.exceptions as ex
+from pypowervm.i18n import _
 import pypowervm.tasks.partition as tpar
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
 
 LOG = logging.getLogger(__name__)
+
+# Take read_lock on operations that create/delete VFs (including VNIC).  This
+# is a read_lock so we don't serialize all VF creation globally.
+# Take write_lock on operations that modify properties of physical ports and
+# rely on knowing the usage counts thereon (e.g. changing port labels).
+PPORT_MOD_LOCK = lock.ReaderWriterLock()
 
 
 def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
@@ -249,3 +259,135 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
     LOG.debug('Filtered list of physical ports: %s' %
               str([pport.loc_code for pport in pport_wraps]))
     return pport_wraps
+
+
+def get_lpar_vnics(adapter):
+    """Return a dict mapping LPAR wrappers to their VNIC feeds.
+
+    :param adapter: The pypowervm.adapter.Adapter for REST API communication.
+    :return: A dict of the form { LPAR: [VNIC, ...] }, where the keys are
+             pypowervm.wrappers.logical_partition.LPAR and the values are lists
+             of the pypowervm.wrappers.iocard.VNIC they own.
+    """
+    return {lpar: card.VNIC.get(adapter, parent=lpar) for lpar in
+            tpar.get_partitions(adapter, lpars=True, vioses=False)}
+
+
+def _vnics_using_pport(pport, lpar2vnics):
+    """Determine (and warn about) usage of SRIOV physical port by VNICs.
+
+    Ascertain whether an SRIOV physical port is being used as a backing device
+    for any VNICs.  The method returns a list of warning messages for each such
+    usage found.
+
+    :param pport: pypowervm.wrappers.iocard.SRIOV*PPort wrapper containing the
+                  extra attribute sriov_adap_id of the adapter owning the
+                  physical port.
+    :param lpar2vnics: Dict of {LPAR: [VNIC, ...]} gleaned from get_lpar_vnics
+    :return: A list of warning messages for found usages of the physical port.
+             If no usages were found, the empty list is returned.
+    """
+    warnings = []
+    for lpar, vnics in six.iteritems(lpar2vnics):
+        for vnic in vnics:
+            if any([backdev for backdev in vnic.back_devs if
+                    backdev.sriov_adap_id == pport.sriov_adap_id and
+                    backdev.pport_id == pport.port_id]):
+                warnings.append(
+                    _("SR-IOV Physical Port at location %(loc_code)s is "
+                      "backing a vNIC belonging to LPAR %(lpar_name)s (LPAR "
+                      "UUID: %(lpar_uuid)s; vNIC UUID: %(vnic_uuid)s).") %
+                    {'loc_code': pport.loc_code, 'lpar_name': lpar.name,
+                     'lpar_uuid': lpar.uuid, 'vnic_uuid': vnic.uuid})
+    return warnings
+
+
+def _vet_port_usage(sys_w, label_index):
+    """Look for relabeled ports which are in use by vNICs.
+
+    :param sys_w: pypowervm.wrappers.managed_system.System wrapper for the
+                  host.
+    :param label_index: Dict of { port_loc_code: port_label_before } mapping
+                        the physical location code of each physical port to the
+                        value of its label before changes were made.
+    :return: A list of translated messages warning of relabeled ports which are
+             in use by vNICs.
+    """
+    warnings = []
+    lpar2vnics = None
+    for sriovadap in sys_w.asio_config.sriov_adapters:
+        for pport in sriovadap.phys_ports:
+            # If the port is unused, it's fine
+            if pport.cfg_lps == 0:
+                continue
+            # If the original port label was unset, no harm setting it.
+            if not label_index[pport.loc_code]:
+                continue
+            # If the port label is unchanged, it's fine
+            if pport.label == label_index[pport.loc_code]:
+                continue
+            # Now we have to check all the VNICs on all the LPARs.  Lazy-load
+            # this, because it's expensive.
+            if lpar2vnics is None:
+                lpar2vnics = get_lpar_vnics(sys_w.adapter)
+            # Cheat a backpointer to the SRIOV adapter ID.  This is not a
+            # @property.
+            pport.sriov_adap_id = sriovadap.sriov_adap_id
+            warnings += _vnics_using_pport(pport, lpar2vnics)
+    return warnings
+
+
+@contextlib.contextmanager
+def safe_update_pports(sys_w, force=False):
+    """Context manager allowing safe changes to SR-IOV physical port labels.
+
+    Within this context manager, the consumer makes changes to the labels of
+    the physical ports of the ManagedSystem's SR-IOV adapters.  This method
+    checks whether any of the changed ports are in use by vNICs (see "Why
+    vNICs?" below).  If the force option is not True, and any uses were found,
+    this method raises an exception whose text includes details about the found
+    usages.  Otherwise, the found usages are logged as warnings.
+
+    Usage:
+        sys_w, = System.get(adap)
+        with safe_update_pports(sys_w, force=user_is_sure):
+            for sriov in sys_w.asio_config.sriov_adapters:
+                ...
+                sriov.phys_ports[n].pport.label = some_new_label
+                ...
+
+    Why vNICs?
+    We're being careful about changing port labels on the fly because those
+    labels are used by LPM to ensure that the LPAR on the target system gets
+    equivalent connectivity.  Direct-attached VFs - either those belonging to
+    VIOSes (e.g. for SEA) or to LPARs - mean the partition is not migratable,
+    so the labels can be changed with impunity.  And the only way a VF is
+    migratable is if it belongs to a vNIC on a migratable LPAR.
+
+    :param sys_w: pypowervm.wrappers.managed_system.System wrapper for the
+                  host.
+    :param force: If False (the default) and any of the updated physical ports
+                  are found to be in use by vNICs, the method will raise.  If
+                  True, warnings are logged for each such usage, but the method
+                  will succeed.
+    :raise CantUpdatePPortsInUse: If any of the relabeled physical ports are in
+                                  use by vNICs *and* the force option is False.
+    """
+    with PPORT_MOD_LOCK.write_lock():
+        # Build an index of port:label for comparison after setting
+        label_index = {pport.loc_code: pport.label for sriovadap in
+                       sys_w.asio_config.sriov_adapters for pport in
+                       sriovadap.phys_ports}
+        # Let caller make the pport changes
+        yield
+        # Now for each port that changed, check its usage
+        warnings = _vet_port_usage(sys_w, label_index)
+        if warnings and not force:
+            raise ex.CantUpdatePPortsInUse(warnings=warnings)
+        # We're going to do thet update.  Log any found usages.
+        if warnings:
+            LOG.warning(_("Making changes to the following SR-IOV physical "
+                          "port labels even though they are in use by vNICs:"))
+            for warning in warnings:
+                LOG.warning(warning)
+        sys_w.update()
