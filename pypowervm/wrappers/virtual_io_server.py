@@ -666,7 +666,7 @@ class VSCSIBus(ewrap.EntryWrapper, VStorageMapping):
     def bld(cls, adapter, client_lpar_uuid, lpar_slot_num=None):
         """Creates a new VSCSIBus with no storage.
 
-        Storage should be added afterwards by modifying stg_targets.
+        Storage should be added afterwards by modifying mappings.
 
         :param adapter: The pypowervm Adapter that will be used to create the
                         bus.
@@ -705,6 +705,7 @@ class VSCSIBus(ewrap.EntryWrapper, VStorageMapping):
 
     @property
     def mappings(self):
+        """WrapperElemList of STDev (storage/target device)."""
         return ewrap.WrapperElemList(self._find_or_seed(
             _BUS_ASSOC_MAPS), STDev)
 
