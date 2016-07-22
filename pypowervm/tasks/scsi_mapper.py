@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
+import six
 
 from pypowervm import const as c
 from pypowervm.i18n import _
@@ -618,3 +619,76 @@ def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev):
     return _remove_storage_elem(
         adapter, vios, client_lpar_id, gen_match_func(
             pvm_stor.PV, names=[backing_dev]))
+
+
+class VSCSIBusBuilder(object):
+    """Accumulate mappings into VSCSIBuses and batch-build them on the server.
+
+    Usage:
+    bus_bldr = VSCSIBusBuilder(adapter, lpar_uuid, [vuuid1, vuuid2])
+    bus_bldr.add_mapping(vuuid1, lu_ref)
+    bus_bldr.add_mapping(vuuid1, pv_ref, lpar_slot_num=3)
+    bus_bldr.add_mapping(vuuid2, vopt_ref, lua='0x8200000000000000')
+    ...
+    bus_bldr.build()
+    """
+    def __init__(self, adapter, lpar_uuid, vios_uuids, fuse_limit=32):
+        """Build one or more VSCSIBuses mapping storage to a particular LPAR.
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param lpar_uuid: The string UUID of the LPAR to which the storage is
+                          being mapped.
+        :param vios_uuids: List of string UUIDs for the VIOSes to host the
+                           buses.
+        :param fuse_limit: (Optional, Default: 32) The max number of devices to
+                           allow on one VSCSIBus before creating a subsequent
+                           VSCSIBus.
+        """
+        self._adapter = adapter
+        self._lpar_uuid = lpar_uuid
+        # self._bus_map will be of the form:
+        # { vios_uuid: { lpar_slot_num: [VSCSIBus, ...] } }
+        self._bus_map = {vios_uuid: {} for vios_uuid in vios_uuids}
+        self._fuse_limit = fuse_limit
+
+    def add_mapping(self, vios_uuid, storage_elem, lpar_slot_num=None,
+                    lua=None):
+        """Add a vSCSI mapping to a new or existing bus in this builder.
+
+        :param vios_uuid: The string UUID of the virtual I/O server to which
+                          the mapping should be added.
+        :param storage_elem: The storage element (either a vDisk, vOpt, LU or
+                             PV) that is to be connected.
+        :param lpar_slot_num: (Optional, Default: None) The slot number for the
+                              client LPAR to use in the mapping. If None, the
+                              next available slot number is assigned by the
+                              server.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server. Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
+        """
+        if lpar_slot_num not in self._bus_map[vios_uuid]:
+            self._bus_map[vios_uuid][lpar_slot_num] = []
+
+        # Find an existing bus with available mapping space, if possible.
+        for bus in self._bus_map[vios_uuid][lpar_slot_num]:
+            if len(bus.mappings) < self._fuse_limit:
+                break
+        else:
+            # None found - create one
+            bus = pvm_vios.VSCSIBus.bld(self._adapter, self._lpar_uuid,
+                                        lpar_slot_num=lpar_slot_num)
+            self._bus_map[vios_uuid][lpar_slot_num].append(bus)
+
+        # Add the storage mapping to the bus
+        bus.mappings.append(pvm_vios.STDev.bld(self._adapter, storage_elem,
+                                           lua=lua))
+
+    def build(self):
+        """Create the accumulated VSCSIBus(es) on the server."""
+        # TODO(efried): Can we run these in parallel?  At least per VIOS?
+        for vuuid, byslot in six.iteritems(self._bus_map):
+            for buses in six.itervalues(byslot):
+                for bus in buses:
+                    bus.create(parent_type=pvm_vios.VIOS, parent_uuid=vuuid)
