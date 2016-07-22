@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -592,3 +592,62 @@ class TestSCSIMapper(testtools.TestCase):
         mfunc = scsi_mapper.gen_match_func(mock.Mock, name_prop='alt_name',
                                            names=['bar', 'foo', 'baz'])
         self.assertTrue(mfunc(elem))
+
+
+class TestVSCSIBusBuilder(testtools.TestCase):
+    def setUp(self):
+        super(TestVSCSIBusBuilder, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+        self.adpt.build_href.return_value = 'href'
+
+    def test_init(self):
+        vbb = scsi_mapper.VSCSIBusBuilder('adap', 'lpar', ['vio1', 'vio2'])
+        self.assertEqual('adap', vbb._adapter)
+        self.assertEqual('lpar', vbb._lpar_uuid)
+        self.assertEqual({'vio1': {}, 'vio2': {}}, vbb._bus_map)
+        self.assertEqual(32, vbb._fuse_limit)
+        vbb = scsi_mapper.VSCSIBusBuilder('', '', [], fuse_limit=42)
+        self.assertEqual(42, vbb._fuse_limit)
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VSCSIBus.create')
+    def test_add_mapping_and_build(self, mock_crt):
+        # Low fuse limit so we don't have to add a lot to cover all code paths.
+        vbb = scsi_mapper.VSCSIBusBuilder(self.adpt, 'lpar', ['vio1', 'vio2'],
+                                          fuse_limit=3)
+        # Bad VIO UUID (this is on the caller)
+        self.assertRaises(KeyError, vbb.add_mapping, 'vio3', 'storage')
+        # Add some mappings
+        for i in range(20):
+            vio = 'vio%d' % ((i % 2) + 1)
+            # Use explicit slot numbers for some
+            slot = i % 3 or None
+            stg = pvm_stor.LU.bld_ref(self.adpt, 'lu%d' % i, 'udid%d' % i)
+            # Use explicit LUAs for some
+            lua = 'lua%d' % (i % 5) if (i % 5) else None
+            vbb.add_mapping(vio, stg, lpar_slot_num=slot, lua=lua)
+        # This should have created "full" buses for each vio/slot combination
+        for vio in ('vio1', 'vio2'):
+            for slot in (None, 1, 2):
+                bus = vbb._bus_map[vio][slot][0]
+                self.assertEqual(3, len(bus.mappings))
+                # The slot number should always match the dict key
+                self.assertEqual(slot, bus.client_adapter.lpar_slot_num)
+        # And "overflowed" into new buses for vio1/None and vio2/1
+        self.assertEqual(1, len(vbb._bus_map['vio1'][None][1].mappings))
+        self.assertEqual(1, len(vbb._bus_map['vio2'][1][1].mappings))
+        # All told, we should have 8 buses
+        self.assertEqual(8, sum([len(buses) for byslot in vbb._bus_map.values()
+                                 for buses in byslot.values()]))
+        # ...and 20 mappings
+        self.assertEqual(20, sum(len(bus.mappings) for byslot in
+                                 vbb._bus_map.values() for buses in
+                                 byslot.values() for bus in buses))
+        # Let's check one of these mappings all the way down
+        bus = vbb._bus_map['vio1'][None][0]
+        self.assertEqual(self.adpt, bus.adapter)
+        self.assertEqual('href', bus.client_lpar_href)
+        self.assertIsNotNone(bus.server_adapter)
+        self.assertEqual('lua1', bus.mappings[1].target_dev.lua)
+        # Now build 'em.  Should build 8 of 'em.
+        vbb.build()
+        self.assertEqual(8, mock_crt.call_count)
