@@ -23,6 +23,7 @@ from pypowervm import exceptions as e
 from pypowervm.i18n import _
 from pypowervm import util as u
 from pypowervm.utils import uuid
+from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
@@ -144,7 +145,7 @@ def derive_base_npiv_map(vios_wraps, p_port_wwpns, v_port_count):
     return derive_npiv_map(vios_wraps, p_port_wwpns, v_port_markers)
 
 
-def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
+def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns, preserve=True):
     """This method will derive a NPIV map.
 
     A NPIV map is the linkage between an NPIV virtual FC Port and the backing
@@ -174,7 +175,11 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
                          passed in.
     :param v_port_wwpns: A list of the virtual fibre channel port WWPNs.  Must
                          be an even number of ports.
-    :return: A list of tuples.  The format will be:
+    :param preserve: (Optional, Default=True) If True, existing mappings with
+                     matching virtual fibre channel ports are preserved. Else
+                     new mappings are generated.
+    :return: A list of tuples representing both new and preserved mappings.
+             The format will be:
       [ (p_port_wwpn1, fused_vfc_port_wwpn1),
         (p_port_wwpn2, fused_vfc_port_wwpn2),
         etc... ]
@@ -192,15 +197,20 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns):
     existing_maps = []
     new_fused_wwpns = []
 
-    # Detect if any mappings already exist on the system.  If so, preserve them
+    # Detect if any mappings already exist on the system.
     for fused_v_wwpn in fused_v_port_wwpns:
         # If the mapping already exists, then add it to the existing maps.
         vfc_map = has_client_wwpns(vios_wraps, fused_v_wwpn.split(" "))[1]
-        if vfc_map is not None:
+        # Preserve an existing mapping if preserve=True. Otherwise, the
+        # backing_port may not be set and this is not an error condition if
+        # the vfc mapping is getting rebuilt.
+        if vfc_map is not None and preserve:
             mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
             existing_maps.append(mapping)
         else:
             new_fused_wwpns.append(fused_v_wwpn)
+            LOG.debug("Add new map for client wwpns %s. Existing map=%s, "
+                      "preserve=%s", fused_v_wwpn, vfc_map, preserve)
 
     # Determine how many mappings are needed.
     needed_maps = len(new_fused_wwpns)
@@ -505,8 +515,8 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
     :param lpar_slot_num: (Optional, Default: None) The client adapter
                           VirtualSlotNumber to be set. If None the next
                           available slot would be used.
-    :return: The VFCMapping that was added.  If the mapping already existed
-             then None is returned.
+    :return: The VFCMapping that was added or updated with a missing backing
+             port.  If the mapping already existed then None is returned.
     """
     # This is meant to find the physical port.  Can run against a single
     # element.  We assume invoker has passed correct VIOS.
@@ -534,10 +544,23 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
             if set(vfc_map.client_adapter.wwpns) != set(v_wwpns):
                 continue
 
-            # If we reach this point, we know that we have a matching map.  So
-            # the attach of this volume, for this vFC mapping is complete.
-            # Nothing else needs to be done, exit the method.
-            return None
+            # If we reach this point, we know that we have a matching map.
+            # Check that the physical port is set in the mapping.
+            if vfc_map.backing_port:
+                LOG.debug("Matching existing vfc map found with backing port:"
+                          " %s", vfc_map.backing_port.wwpn)
+                # The attach of this volume, for this vFC mapping is complete.
+                # Nothing else needs to be done, exit the method.
+                return None
+            else:
+                LOG.info(_("The matched VFC port map has no backing port set."
+                           " Adding %(port)s to mapping for client wwpns: "
+                           "%(wwpns)s"),
+                         {'port': p_port.name, 'wwpns': v_wwpns})
+                # Build the backing_port and add it to the vfc_map.
+                vfc_map.backing_port = bp.PhysFCPort.bld_ref(
+                    vios_w.adapter, p_port.name, ref_tag='Port')
+                return vfc_map
 
     # However, if we hit here, then we need to create a new mapping and
     # attach it to the VIOS mapping

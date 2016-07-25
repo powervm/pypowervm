@@ -1,0 +1,1021 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh sys_with_sriov.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'ManagedSystem', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'X-Powered-By': 'Servlet/3.1', 'Transfer-Encoding': 'chunked', 'X-TransactionRecord-Uuid': '3e5cc147-d7f5-46eb-8c0a-578029ad9065', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Fri, 03 Jun 2016 15:25:07 GMT', 'X-Transaction-ID': 'XT10000043', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Set-Cookie': 'JSESSIONID=0000JuyF9JDEx0jb5uGVjKVD7Sk:33812f47-0916-4faf-9225-40f81341e124; Path=/; Secure; HttpOnly', 'Date': 'Fri, 03 Jun 2016 15:25:08 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'ETag': '2102051559'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>70459846-6c0f-32d2-ac61-fb26a8ed810b</id>
+    <updated>2016-06-03T10:25:07.960-05:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/ManagedSystem?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>95329c84-9a01-330f-809e-2e5577110d1e</id>
+        <title>ManagedSystem</title>
+        <published>2016-06-03T10:25:08.090-05:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/ManagedSystem/95329c84-9a01-330f-809e-2e5577110d1e?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">2102051528</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=ManagedSystem">
+            <ManagedSystem:ManagedSystem xmlns:ManagedSystem="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>95329c84-9a01-330f-809e-2e5577110d1e</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <AssociatedIPLConfiguration group="Hypervisor" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <PowerOffWhenLastLogicalPartitionIsShutdown kxe="false" kb="CUD">false</PowerOffWhenLastLogicalPartitionIsShutdown>
+    </AssociatedIPLConfiguration>
+    <AssociatedLogicalPartitions kxe="false" kb="CUD"/>
+    <AssociatedReservedStorageDevicePool kxe="false" kb="CUD"/>
+    <AssociatedSystemCapabilities kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <ActiveLogicalPartitionMobilityCapable kb="ROO" kxe="false">true</ActiveLogicalPartitionMobilityCapable>
+        <ActiveMemoryExpansionCapable kxe="false" kb="ROO">true</ActiveMemoryExpansionCapable>
+        <BarrierSynchronizationRegisterCapable kxe="false" kb="ROO">false</BarrierSynchronizationRegisterCapable>
+        <CapacityOnDemandMemoryCapable kxe="false" kb="ROO">true</CapacityOnDemandMemoryCapable>
+        <CapacityOnDemandProcessorCapable kxe="false" kb="ROO">true</CapacityOnDemandProcessorCapable>
+        <HostChannelAdapterCapable kb="ROO" kxe="false">false</HostChannelAdapterCapable>
+        <HugePageMemoryCapable kxe="false" kb="ROO">true</HugePageMemoryCapable>
+        <IBMiCapable kxe="false" kb="ROO">true</IBMiCapable>
+        <IBMiLogicalPartitionMobilityCapable kxe="false" kb="ROO">true</IBMiLogicalPartitionMobilityCapable>
+        <IBMiRestrictedIOModeCapable kxe="false" kb="ROO">true</IBMiRestrictedIOModeCapable>
+        <InactiveLogicalPartitionMobilityCapable kb="ROO" kxe="false">true</InactiveLogicalPartitionMobilityCapable>
+        <LogicalPartitionProcessorCompatibilityModeCapable kb="ROO" kxe="false">true</LogicalPartitionProcessorCompatibilityModeCapable>
+        <PowerVMLogicalPartitionSimplifiedRemoteRestartCapable ksv="V1_2_0" kb="ROO" kxe="false">true</PowerVMLogicalPartitionSimplifiedRemoteRestartCapable>
+        <RedundantErrorPathReportingCapable kxe="false" kb="ROO">true</RedundantErrorPathReportingCapable>
+        <SharedProcessorPoolCapable kxe="false" kb="ROO">true</SharedProcessorPoolCapable>
+        <Telnet5250ApplicationCapable kxe="false" kb="ROO">true</Telnet5250ApplicationCapable>
+        <VirtualFiberChannelCapable kxe="false" kb="ROO">true</VirtualFiberChannelCapable>
+        <VirtualSwitchCapable kb="ROO" kxe="false">true</VirtualSwitchCapable>
+    </AssociatedSystemCapabilities>
+    <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <AvailableWWPNs kb="CUD" kxe="false">0</AvailableWWPNs>
+        <HostChannelAdapters kb="CUD" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </HostChannelAdapters>
+        <HostEthernetAdapters kxe="false" kb="CUD"/>
+        <IOAdapters kb="CUD" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </IOAdapters>
+        <IOBuses kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </IOBuses>
+        <IOSlots kxe="false" kb="CUD" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">SAS RAID Controller, PCIe2, Dual-port 6Gb</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">260</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1224</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">842</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713697</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P3-R1</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
+                <FeatureCodes kb="ROO" kxe="false">&quot;EN0H,EN0J&quot;</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1039</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">16</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">57888</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713696</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C8</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Empty slot</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713728</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C1</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
+                <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1056</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">1</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713704</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C9</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Empty slot</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713736</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C2</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Universal Serial Bus UHC Spec</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">3075</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1202</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">33345</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713707</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-T1</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Empty slot</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553779244</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C6</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">2-Port 10GbE RoCE SFP+ Adapter</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1046</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">176</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">26448</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553844781</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C7</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">SAS RAID Controller, PCIe2, Dual-port 6Gb</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">260</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1224</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">842</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713681</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P3-R2</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Empty slot</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713680</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C10</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">2-Port 10GbE RoCE SFP+ Adapter</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1046</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">176</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">26448</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713712</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C3</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">Empty slot</Description>
+                <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">65535</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713689</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C12</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
+                <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1056</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">1</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713688</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C11</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+            <IOSlot schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <BusGroupingRequired kxe="false" kb="CUD">false</BusGroupingRequired>
+                <Description kb="CUD" kxe="false">PCIe2 2-Port 10GbE Base-T Adapter</Description>
+                <FeatureCodes kb="ROO" kxe="false"/>
+                <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCISubsystemDeviceID kb="ROO" kxe="false">1170</PCISubsystemDeviceID>
+                <PCIRevisionID kxe="false" kb="ROO">16</PCIRevisionID>
+                <PCIVendorID kb="ROO" kxe="false">5774</PCIVendorID>
+                <PCISubsystemVendorID kxe="false" kb="ROO">4116</PCISubsystemVendorID>
+                <SlotDynamicReconfigurationConnectorIndex kxe="false" kb="ROR">553713720</SlotDynamicReconfigurationConnectorIndex>
+                <SlotDynamicReconfigurationConnectorName kb="CUD" kxe="false">U78C7.001.RCH0004-P1-C4</SlotDynamicReconfigurationConnectorName>
+            </IOSlot>
+        </IOSlots>
+        <SRIOVAdapters kb="CUD" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <IOAdapterChoice>
+                <SRIOVAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kxe="false" kb="ROR">553713696</AdapterID>
+                    <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
+                    <PhysicalLocation kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8</PhysicalLocation>
+                    <SRIOVAdapterID kb="COD" kxe="false">1</SRIOVAdapterID>
+                    <AdapterState kb="ROR" kxe="false">Running</AdapterState>
+                    <AdapterMode kxe="false" kb="CUD">Sriov</AdapterMode>
+                    <ConvergedEthernetPhysicalPorts kb="ROR" kxe="false" schemaVersion="V1_3_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <SRIOVConvergedNetworkAdapterPhysicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
+                            <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
+                            <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <CurrentConnectionSpeed kb="ROR" kxe="false">E10Mbps</CurrentConnectionSpeed>
+                            <CurrentOptions kb="ROR" kxe="false">fullDuplex</CurrentOptions>
+                            <CurrentOptions kb="ROR" kxe="false">linkUp</CurrentOptions>
+                            <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
+                            <Label kxe="false" kb="CUR"/>
+                            <LocationCode kb="ROR" kxe="false">U78C7.001.RCH0004-P1-C8-T1</LocationCode>
+                            <MaximumDiagnosticsLogicalPorts kxe="false" kb="ROR">1</MaximumDiagnosticsLogicalPorts>
+                            <MaximumPromiscuousLogicalPorts kb="ROR" kxe="false">1</MaximumPromiscuousLogicalPorts>
+                            <PhysicalPortID kxe="false" kb="ROR">0</PhysicalPortID>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Logical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Physical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">IEEE8021Q_Priority</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Mac Vlan ACL Restriction</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Pvid</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">unknown</PortCapabilities>
+                            <PortType kb="ROR" kxe="false">Cna</PortType>
+                            <PortLogicalPortLimit kb="ROR" kxe="false">20</PortLogicalPortLimit>
+                            <SubLabel kxe="false" kb="CUR"/>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">Auto</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E10Mbps</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E10Gbps</SupportedConnectionSpeeds>
+                            <SupportedMTUs kb="ROR" kxe="false">E_1500</SupportedMTUs>
+                            <SupportedMTUs kb="ROR" kxe="false">E_9000</SupportedMTUs>
+                            <SupportedOptions kb="ROR" kxe="false">autoDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">fullDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">promiscousMode</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">receiveFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">transmitFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Veb</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Vepa</SupportedOptions>
+                            <SupportedPriorityAccessControlList kb="ROR" kxe="false">0</SupportedPriorityAccessControlList>
+                            <LinkStatus kxe="false" kb="ROR">true</LinkStatus>
+                            <AllocatedCapacity kb="ROR" kxe="false">2.0%</AllocatedCapacity>
+                            <ConfiguredMaxEthernetLogicalPorts kb="UOD" kxe="false">20</ConfiguredMaxEthernetLogicalPorts>
+                            <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">2</ConfiguredEthernetLogicalPorts>
+                            <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
+                            <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
+                            <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
+                            <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">20</MaxSupportedEthernetLogicalPorts>
+                            <ConfiguredMaxFiberChannelOverEthernetLogicalPorts kb="UOD" kxe="false">0</ConfiguredMaxFiberChannelOverEthernetLogicalPorts>
+                            <DefaultFiberChannelTargetsForBackingDevice kxe="false" kb="ROR">256</DefaultFiberChannelTargetsForBackingDevice>
+                            <DefaultFiberChannelTargetsForNonBackingDevice kb="ROR" kxe="false">128</DefaultFiberChannelTargetsForNonBackingDevice>
+                            <ConfiguredFiberChannelOverEthernetLogicalPorts kxe="false" kb="UOD">0</ConfiguredFiberChannelOverEthernetLogicalPorts>
+                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">1000</MinimumFCoECapacityGranularity>
+                            <FiberChannelTargetsRoundingValue kb="ROR" kxe="false">64</FiberChannelTargetsRoundingValue>
+                            <MaxSupportedFiberChannelOverEthernetLogicalPorts kb="ROR" kxe="false">0</MaxSupportedFiberChannelOverEthernetLogicalPorts>
+                            <MaximumFiberChannelTargets kxe="false" kb="ROR">0</MaximumFiberChannelTargets>
+                        </SRIOVConvergedNetworkAdapterPhysicalPort>
+                        <SRIOVConvergedNetworkAdapterPhysicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
+                            <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
+                            <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <CurrentConnectionSpeed kb="ROR" kxe="false">Unknown</CurrentConnectionSpeed>
+                            <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
+                            <Label kxe="false" kb="CUR"/>
+                            <LocationCode kb="ROR" kxe="false">U78C7.001.RCH0004-P1-C8-T2</LocationCode>
+                            <MaximumDiagnosticsLogicalPorts kxe="false" kb="ROR">1</MaximumDiagnosticsLogicalPorts>
+                            <MaximumPromiscuousLogicalPorts kb="ROR" kxe="false">1</MaximumPromiscuousLogicalPorts>
+                            <PhysicalPortID kxe="false" kb="ROR">1</PhysicalPortID>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Logical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Physical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">IEEE8021Q_Priority</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Mac Vlan ACL Restriction</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Pvid</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">unknown</PortCapabilities>
+                            <PortType kb="ROR" kxe="false">Cna</PortType>
+                            <PortLogicalPortLimit kb="ROR" kxe="false">20</PortLogicalPortLimit>
+                            <SubLabel kxe="false" kb="CUR"/>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">Auto</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E10Mbps</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E10Gbps</SupportedConnectionSpeeds>
+                            <SupportedMTUs kb="ROR" kxe="false">E_1500</SupportedMTUs>
+                            <SupportedMTUs kb="ROR" kxe="false">E_9000</SupportedMTUs>
+                            <SupportedOptions kb="ROR" kxe="false">autoDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">fullDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">promiscousMode</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">receiveFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">transmitFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Veb</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Vepa</SupportedOptions>
+                            <SupportedPriorityAccessControlList kb="ROR" kxe="false">0</SupportedPriorityAccessControlList>
+                            <LinkStatus kxe="false" kb="ROR">false</LinkStatus>
+                            <AllocatedCapacity kb="ROR" kxe="false">2.0%</AllocatedCapacity>
+                            <ConfiguredMaxEthernetLogicalPorts kb="UOD" kxe="false">20</ConfiguredMaxEthernetLogicalPorts>
+                            <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">0</ConfiguredEthernetLogicalPorts>
+                            <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
+                            <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
+                            <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
+                            <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">20</MaxSupportedEthernetLogicalPorts>
+                            <ConfiguredMaxFiberChannelOverEthernetLogicalPorts kb="UOD" kxe="false">0</ConfiguredMaxFiberChannelOverEthernetLogicalPorts>
+                            <DefaultFiberChannelTargetsForBackingDevice kxe="false" kb="ROR">256</DefaultFiberChannelTargetsForBackingDevice>
+                            <DefaultFiberChannelTargetsForNonBackingDevice kb="ROR" kxe="false">128</DefaultFiberChannelTargetsForNonBackingDevice>
+                            <ConfiguredFiberChannelOverEthernetLogicalPorts kxe="false" kb="UOD">0</ConfiguredFiberChannelOverEthernetLogicalPorts>
+                            <MinimumFCoECapacityGranularity kb="ROR" kxe="false">1000</MinimumFCoECapacityGranularity>
+                            <FiberChannelTargetsRoundingValue kb="ROR" kxe="false">64</FiberChannelTargetsRoundingValue>
+                            <MaxSupportedFiberChannelOverEthernetLogicalPorts kb="ROR" kxe="false">0</MaxSupportedFiberChannelOverEthernetLogicalPorts>
+                            <MaximumFiberChannelTargets kxe="false" kb="ROR">0</MaximumFiberChannelTargets>
+                        </SRIOVConvergedNetworkAdapterPhysicalPort>
+                    </ConvergedEthernetPhysicalPorts>
+                    <EthernetPhysicalPorts kxe="false" kb="ROR" schemaVersion="V1_3_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <SRIOVEthernetPhysicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
+                            <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
+                            <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <CurrentConnectionSpeed kb="ROR" kxe="false">E1Gbps</CurrentConnectionSpeed>
+                            <CurrentOptions kb="ROR" kxe="false">fullDuplex</CurrentOptions>
+                            <CurrentOptions kb="ROR" kxe="false">linkUp</CurrentOptions>
+                            <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
+                            <Label kxe="false" kb="CUR"/>
+                            <LocationCode kb="ROR" kxe="false">U78C7.001.RCH0004-P1-C8-T3</LocationCode>
+                            <MaximumDiagnosticsLogicalPorts kxe="false" kb="ROR">1</MaximumDiagnosticsLogicalPorts>
+                            <MaximumPromiscuousLogicalPorts kb="ROR" kxe="false">1</MaximumPromiscuousLogicalPorts>
+                            <PhysicalPortID kxe="false" kb="ROR">2</PhysicalPortID>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Logical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Physical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">IEEE8021Q_Priority</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Mac Vlan ACL Restriction</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Pvid</PortCapabilities>
+                            <PortType kb="ROR" kxe="false">Ethernet</PortType>
+                            <PortLogicalPortLimit kb="ROR" kxe="false">4</PortLogicalPortLimit>
+                            <SubLabel kxe="false" kb="CUR"/>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">Auto</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E100Mbps</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E1Gbps</SupportedConnectionSpeeds>
+                            <SupportedMTUs kb="ROR" kxe="false">E_1500</SupportedMTUs>
+                            <SupportedMTUs kb="ROR" kxe="false">E_9000</SupportedMTUs>
+                            <SupportedOptions kb="ROR" kxe="false">autoDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">fullDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">promiscousMode</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">receiveFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">transmitFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Veb</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Vepa</SupportedOptions>
+                            <SupportedPriorityAccessControlList kb="ROR" kxe="false">0</SupportedPriorityAccessControlList>
+                            <LinkStatus kxe="false" kb="ROR">true</LinkStatus>
+                            <AllocatedCapacity kb="ROR" kxe="false">2.0%</AllocatedCapacity>
+                            <ConfiguredMaxEthernetLogicalPorts kb="UOD" kxe="false">4</ConfiguredMaxEthernetLogicalPorts>
+                            <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">1</ConfiguredEthernetLogicalPorts>
+                            <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
+                            <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
+                            <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
+                            <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">4</MaxSupportedEthernetLogicalPorts>
+                        </SRIOVEthernetPhysicalPort>
+                        <SRIOVEthernetPhysicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
+                            <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
+                            <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <CurrentConnectionSpeed kb="ROR" kxe="false">Unknown</CurrentConnectionSpeed>
+                            <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
+                            <Label kxe="false" kb="CUR"/>
+                            <LocationCode kb="ROR" kxe="false">U78C7.001.RCH0004-P1-C8-T4</LocationCode>
+                            <MaximumDiagnosticsLogicalPorts kxe="false" kb="ROR">1</MaximumDiagnosticsLogicalPorts>
+                            <MaximumPromiscuousLogicalPorts kb="ROR" kxe="false">1</MaximumPromiscuousLogicalPorts>
+                            <PhysicalPortID kxe="false" kb="ROR">3</PhysicalPortID>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Logical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Clear Physical Port Stat</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">IEEE8021Q_Priority</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Mac Vlan ACL Restriction</PortCapabilities>
+                            <PortCapabilities kxe="false" kb="ROR">Pvid</PortCapabilities>
+                            <PortType kb="ROR" kxe="false">Ethernet</PortType>
+                            <PortLogicalPortLimit kb="ROR" kxe="false">4</PortLogicalPortLimit>
+                            <SubLabel kxe="false" kb="CUR"/>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">Auto</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E100Mbps</SupportedConnectionSpeeds>
+                            <SupportedConnectionSpeeds kb="ROR" kxe="false">E1Gbps</SupportedConnectionSpeeds>
+                            <SupportedMTUs kb="ROR" kxe="false">E_1500</SupportedMTUs>
+                            <SupportedMTUs kb="ROR" kxe="false">E_9000</SupportedMTUs>
+                            <SupportedOptions kb="ROR" kxe="false">autoDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">fullDuplex</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">promiscousMode</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">receiveFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">transmitFlowControl</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Veb</SupportedOptions>
+                            <SupportedOptions kb="ROR" kxe="false">Vepa</SupportedOptions>
+                            <SupportedPriorityAccessControlList kb="ROR" kxe="false">0</SupportedPriorityAccessControlList>
+                            <LinkStatus kxe="false" kb="ROR">false</LinkStatus>
+                            <AllocatedCapacity kb="ROR" kxe="false">2.0%</AllocatedCapacity>
+                            <ConfiguredMaxEthernetLogicalPorts kb="UOD" kxe="false">4</ConfiguredMaxEthernetLogicalPorts>
+                            <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">0</ConfiguredEthernetLogicalPorts>
+                            <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
+                            <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
+                            <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
+                            <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
+                            <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">4</MaxSupportedEthernetLogicalPorts>
+                        </SRIOVEthernetPhysicalPort>
+                    </EthernetPhysicalPorts>
+                    <MaximumHugeDMALogicalPorts kxe="false" kb="ROR">0</MaximumHugeDMALogicalPorts>
+                    <MaximumLogicalPortsSupported kxe="false" kb="ROR">48</MaximumLogicalPortsSupported>
+                    <UnconfiguredLogicalPorts kxe="false" kb="ROR" schemaVersion="V1_3_0">
+                        <Metadata>
+                            <Atom/>
+                        </Metadata>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327812</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4100</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S4</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327813</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4101</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S5</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327814</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4102</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S6</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327815</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4103</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S7</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327816</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4104</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S8</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327817</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4105</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S9</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327818</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4106</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S10</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327819</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4107</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S11</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327820</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4108</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S12</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327821</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4109</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S13</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327822</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4110</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S14</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327823</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4111</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S15</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327824</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4112</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S16</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327825</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4113</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S17</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327826</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4114</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S18</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327827</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4115</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S19</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327828</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4116</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S20</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327829</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4117</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S21</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327830</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4118</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S22</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327831</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4119</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S23</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327832</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4120</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S24</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327833</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4121</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S25</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327834</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4122</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S26</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327835</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4123</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S27</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327836</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4124</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S28</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327837</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4125</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S29</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327838</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4126</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S30</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327839</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4127</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S31</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327840</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4128</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S32</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327841</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4129</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S33</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327842</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4130</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S34</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327843</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4131</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S35</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327844</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4132</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S36</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327845</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4133</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S37</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327846</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4134</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S38</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327847</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4135</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S39</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327848</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4136</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S40</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327849</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4137</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S41</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327850</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4138</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S42</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327851</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4139</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S43</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327852</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4140</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S44</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327853</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4141</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S45</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327854</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4142</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S46</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327855</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4143</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S47</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                        <SRIOVUnconfiguredLogicalPort schemaVersion="V1_3_0">
+                            <Metadata>
+<Atom/>
+                            </Metadata>
+                            <DynamicReconfigurationConnectorIndex kb="ROR" kxe="false">654327856</DynamicReconfigurationConnectorIndex>
+                            <DynamicReconfigurationConnectorName kxe="false" kb="ROR">PHB 4144</DynamicReconfigurationConnectorName>
+                            <LocationCode kxe="false" kb="ROR">U78C7.001.RCH0004-P1-C8-T1-S48</LocationCode>
+                        </SRIOVUnconfiguredLogicalPort>
+                    </UnconfiguredLogicalPorts>
+                </SRIOVAdapter>
+            </IOAdapterChoice>
+            <IOAdapterChoice>
+                <SRIOVAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kxe="false" kb="ROR">553713680</AdapterID>
+                    <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
+                    <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS06RG-P1-C7</PhysicalLocation>
+                    <AdapterState kb="ROR" kxe="false">NotConfigured</AdapterState>
+                    <AdapterMode kxe="false" kb="CUD">Dedicated</AdapterMode>
+                </SRIOVAdapter>
+            </IOAdapterChoice>
+            <IOAdapterChoice>
+                <SRIOVAdapter schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <AdapterID kxe="false" kb="ROR">553713697</AdapterID>
+                    <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
+                    <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS06RG-P1-C5</PhysicalLocation>
+                    <AdapterState kb="ROR" kxe="false">NotConfigured</AdapterState>
+                    <AdapterMode kxe="false" kb="CUD">Dedicated</AdapterMode>
+                </SRIOVAdapter>
+            </IOAdapterChoice>
+        </SRIOVAdapters>
+        <AssociatedSystemVirtualNetwork group="SystemNetwork" kb="CUD" kxe="false" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+        </AssociatedSystemVirtualNetwork>
+        <WWPNPrefix kb="CUD" kxe="false">13857705831041335296</WWPNPrefix>
+    </AssociatedSystemIOConfiguration>
+    <AssociatedSystemMemoryConfiguration kb="CUD" kxe="false" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <ConfigurableSystemMemory kxe="false" kb="ROR">524288</ConfigurableSystemMemory>
+        <CurrentAvailableSystemMemory kxe="false" kb="ROR">491008</CurrentAvailableSystemMemory>
+        <CurrentLogicalMemoryBlockSize kb="ROR" kxe="false">256</CurrentLogicalMemoryBlockSize>
+        <DefaultHardwarePageTableRatio kb="COR" kxe="false">6</DefaultHardwarePageTableRatio>
+        <InstalledSystemMemory kxe="false" kb="ROR">524288</InstalledSystemMemory>
+        <MaximumMemoryPoolCount kb="ROR" kxe="false">1</MaximumMemoryPoolCount>
+        <MemoryRegionSize kb="CUD" kxe="false">256</MemoryRegionSize>
+        <MemoryUsedByHypervisor kxe="false" kb="ROR">8192</MemoryUsedByHypervisor>
+        <PendingAvailableSystemMemory kb="CUD" kxe="false">491008</PendingAvailableSystemMemory>
+        <PendingLogicalMemoryBlockSize kb="CUD" kxe="false">256</PendingLogicalMemoryBlockSize>
+        <PendingMemoryRegionSize kxe="false" kb="CUD">256</PendingMemoryRegionSize>
+        <SharedMemoryPool kb="CUD" kxe="false"/>
+    </AssociatedSystemMemoryConfiguration>
+    <AssociatedSystemProcessorConfiguration kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <ConfigurableSystemProcessorUnits kxe="false" kb="ROR">40</ConfigurableSystemProcessorUnits>
+        <CurrentAvailableSystemProcessorUnits kxe="false" kb="ROR">36</CurrentAvailableSystemProcessorUnits>
+        <CurrentMaximumProcessorsPerAIXOrLinuxPartition kxe="false" kb="ROR">64</CurrentMaximumProcessorsPerAIXOrLinuxPartition>
+        <CurrentMaximumProcessorsPerIBMiPartition kxe="false" kb="ROR">64</CurrentMaximumProcessorsPerIBMiPartition>
+        <CurrentMaximumAllowedProcessorsPerPartition kb="ROR" kxe="false">256</CurrentMaximumAllowedProcessorsPerPartition>
+        <CurrentMaximumProcessorsPerVirtualIOServerPartition kxe="false" kb="ROR">64</CurrentMaximumProcessorsPerVirtualIOServerPartition>
+        <CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition kb="ROR" kxe="false">64</CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition>
+        <CurrentMaximumVirtualProcessorsPerIBMiPartition kxe="false" kb="ROR">64</CurrentMaximumVirtualProcessorsPerIBMiPartition>
+        <CurrentMaximumVirtualProcessorsPerVirtualIOServerPartition kxe="false" kb="ROR">64</CurrentMaximumVirtualProcessorsPerVirtualIOServerPartition>
+        <InstalledSystemProcessorUnits kb="ROR" kxe="false">40</InstalledSystemProcessorUnits>
+        <MaximumAllowedVirtualProcessorsPerPartition kxe="false" kb="ROR">256</MaximumAllowedVirtualProcessorsPerPartition>
+        <MinimumProcessorUnitsPerVirtualProcessor kb="ROR" kxe="false">0.05</MinimumProcessorUnitsPerVirtualProcessor>
+        <PendingAvailableSystemProcessorUnits kb="CUD" kxe="false">36</PendingAvailableSystemProcessorUnits>
+        <SupportedPartitionProcessorCompatibilityModes kxe="false" kb="ROR">default</SupportedPartitionProcessorCompatibilityModes>
+        <SupportedPartitionProcessorCompatibilityModes kxe="false" kb="ROR">POWER6</SupportedPartitionProcessorCompatibilityModes>
+        <SupportedPartitionProcessorCompatibilityModes kxe="false" kb="ROR">POWER6_Plus</SupportedPartitionProcessorCompatibilityModes>
+        <SupportedPartitionProcessorCompatibilityModes kxe="false" kb="ROR">POWER7</SupportedPartitionProcessorCompatibilityModes>
+        <SupportedPartitionProcessorCompatibilityModes kxe="false" kb="ROR">POWER8</SupportedPartitionProcessorCompatibilityModes>
+        <SharedProcessorPool kxe="false" kb="CUD"/>
+    </AssociatedSystemProcessorConfiguration>
+    <AssociatedSystemVirtualStorage kxe="false" kb="CUD" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+    </AssociatedSystemVirtualStorage>
+    <MachineTypeModelAndSerialNumber kxe="false" kb="ROR" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MachineType kb="CUR" kxe="false">8408</MachineType>
+        <Model kxe="false" kb="CUR">E8E</Model>
+        <SerialNumber kb="CUR" kxe="false">10678CV</SerialNumber>
+    </MachineTypeModelAndSerialNumber>
+    <ManufacturingDefaultConfigurationEnabled kxe="false" kb="ROR">false</ManufacturingDefaultConfigurationEnabled>
+    <MaximumPartitions kb="CUD" kxe="false">800</MaximumPartitions>
+    <PrimaryIPAddress kxe="false" kb="CUR">9.5.249.35</PrimaryIPAddress>
+    <SecondaryIPAddress kxe="false" kb="CUD">169.254.3.147</SecondaryIPAddress>
+    <State kxe="false" kb="ROR">operating</State>
+    <SystemName kb="CUR" kxe="false">z1403ce-8408-E8E-SN10678CV</SystemName>
+    <SystemMigrationInformation kxe="false" kb="ROR" schemaVersion="V1_3_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumInactiveMigrations kxe="false" kb="ROR">16</MaximumInactiveMigrations>
+        <MaximumActiveMigrations kb="ROR" kxe="false">16</MaximumActiveMigrations>
+        <NumberOfInactiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfInactiveMigrationsInProgress>
+        <NumberOfActiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfActiveMigrationsInProgress>
+    </SystemMigrationInformation>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
+    <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsManagementPartitionPowerVMManagementMaster>
+    <IsHMCPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsHMCPowerVMManagementMaster>
+    <AssociatedGroups ksv="V1_2_0" kb="ROO" kxe="false"/>
+    <AssociatedTasks ksv="V1_2_0" kxe="false" kb="ROO"/>
+</ManagedSystem:ManagedSystem>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

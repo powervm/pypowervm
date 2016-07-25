@@ -38,13 +38,18 @@ VSCSI_MAPPINGS = 'VirtualSCSIMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
+OVS_OVERRIDE = 'OVSOverride'
+VLAN_BRIDGE_OVERRIDE = 'VLANBridgeOverride'
+
+_OVERRIDE_OK = '2'
 
 
 def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                  tgt_mgmt_svr=None, tgt_mgmt_usr=None,
                  virtual_fc_mappings=None, virtual_scsi_mappings=None,
                  dest_msp_name=None, source_msp_name=None, spp_id=None,
-                 timeout=CONF.pypowervm_job_request_timeout * 4):
+                 timeout=CONF.pypowervm_job_request_timeout * 4,
+                 sdn_override=False, vlan_check_override=False):
 
     """Method to migrate a logical partition.
 
@@ -66,6 +71,13 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
         partition.
     :param spp_id: The shared processor pool id to use on the target system.
     :param timeout: maximum number of seconds for job to complete
+    :param sdn_override: (Optional, Default: False) If set to True, will allow
+                         a migration where the networking is hosted on a non-
+                         traditional VIOS partition (ex. the NovaLink)
+    :param vlan_check_override: (Optional, Default: False) If set to True, will
+                                tell the Virtual I/O Server not to validate
+                                that the other VIOS has the VLAN
+                                pre-provisioned.
 
     virtual_fc_mappings:
 
@@ -127,6 +139,14 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))
+
+    # The SDN / VLAN overrides are...odd.  Instead of passing in a 'True', we
+    # must pass in the character of '2' to indicate that it is an override.
+    for kw, val in [(OVS_OVERRIDE, sdn_override),
+                    (VLAN_BRIDGE_OVERRIDE, vlan_check_override)]:
+        if val:
+            job_parms.append(job_wrapper.create_job_parameter(kw,
+                                                              _OVERRIDE_OK))
 
     # The mappings are special.  They require a join so that they are comma
     # separated down to the API.

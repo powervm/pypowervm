@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -30,6 +30,7 @@ from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
@@ -89,6 +90,8 @@ _MAP_CLIENT_LPAR = 'AssociatedLogicalPartition'
 _MAP_PORT = 'Port'
 _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
               _MAP_STORAGE)
+_VFC_MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, _MAP_PORT,
+                  stor.SERVER_ADPT, _MAP_STORAGE)
 
 _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
@@ -102,6 +105,8 @@ _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
     _VIO_LICENSE_ACCEPTED, _VIO_VFC_MAPPINGS, _VIO_VSCSI_MAPPINGS,
     _VIO_FREE_IO_ADPTS_FOR_LNAGG, _VIO_FREE_ETH_BACKDEVS_FOR_SEA,
     _VIO_VNIC_BACKDEVS)
+
+LinkAggrIOAdapterChoice = card.LinkAggrIOAdapterChoice
 
 
 class _VIOSXAGs(object):
@@ -583,7 +588,8 @@ class VSCSIMapping(VStorageMapping):
         self.inject(vtd_elem)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True)
+@ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True,
+                               child_order=_VFC_MAP_ORDER)
 class VFCMapping(VStorageMapping):
     """The mapping of a VIOS FC adapter to the Client LPAR FC adapter.
 
@@ -638,19 +644,12 @@ class VFCMapping(VStorageMapping):
         s_map._client_adapter(stor.VFCClientAdapterElement.bld(
             adapter, wwpns=client_wwpns, slot_num=lpar_slot_num))
 
-        # Create the backing port and change label.  API requires it be
-        # Port, even though it is a Physical FC Port
-        backing_port = bp.PhysFCPort.bld_ref(adapter, backing_phy_port)
-        backing_port.element.tag = 'Port'
-        s_map._backing_port(backing_port)
+        # Create the backing port with required 'Port' tag.
+        s_map.backing_port = bp.PhysFCPort.bld_ref(adapter, backing_phy_port,
+                                                   ref_tag='Port')
 
         s_map._server_adapter(stor.VFCServerAdapterElement.bld(adapter))
         return s_map
-
-    def _backing_port(self, value):
-        """Sets the backing port."""
-        elem = self._find_or_seed(_MAP_PORT)
-        self.element.replace(elem, value.element)
 
     @property
     def backing_port(self):
@@ -664,47 +663,8 @@ class VFCMapping(VStorageMapping):
             return bp.PhysFCPort.wrap(elem)
         return None
 
-
-@ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
-class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
-    """A free I/O Adapter link aggregation choice.
-
-    Flattens this two step heirarchy to pull the information needed directly
-    from the IOAdapter element.
-    """
-    def __get_prop(self, func):
-        """Thin wrapper to get the IOAdapter and get a property."""
-        elem = self._find('IOAdapter')
-        if elem is None:
-            return None
-
-        io_adpt = bp.IOAdapter.wrap(elem)
-        return getattr(io_adpt, func)
-
-    @property
-    def id(self):
-        return self.__get_prop('id')
-
-    @property
-    def description(self):
-        return self.__get_prop('description')
-
-    @property
-    def dev_name(self):
-        return self.__get_prop('dev_name')
-
-    @property
-    def dev_type(self):
-        return self.__get_prop('dev_type')
-
-    @property
-    def drc_name(self):
-        return self.__get_prop('drc_name')
-
-    @property
-    def phys_loc_code(self):
-        return self.__get_prop('phys_loc_code')
-
-    @property
-    def udid(self):
-        return self.__get_prop('udid')
+    @backing_port.setter
+    def backing_port(self, value):
+        """Sets the backing port."""
+        elem = self._find_or_seed(_MAP_PORT)
+        self.element.replace(elem, value.element)

@@ -31,6 +31,7 @@ from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 import pypowervm.utils.uuid as pvm_uuid
 import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
@@ -41,6 +42,7 @@ NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 LPAR_FILE = 'lpar.txt'
 VIOS_FILE = 'fake_vios_feed.txt'
 VNETS_FILE = 'nbbr_virtual_network.txt'
+SYS_VNIC_FILE = 'vnic_feed.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -101,6 +103,22 @@ class TestWrapper(unittest.TestCase):
         self.assertEqual(w._get_val_str('empty'), '')
         self.assertIsNone(w._get_val_str('nonexistent'))
         self.assertEqual(w._get_val_str('nonexistent', default='10'), '10')
+
+    def test_get_val_percent(self):
+        w = SubWrapper(one='2.45%', two='2.45', three=None, four='123',
+                       five='1.2345', six='123.0', seven='123%',
+                       eight='%123', nine='12%3')
+        self.assertEqual(w._get_val_percent('one'), 0.0245)
+        self.assertEqual(w._get_val_percent('two'), 0.0245)
+        self.assertEqual(w._get_val_percent('three'), None)
+        self.assertEqual(w._get_val_percent('four'), 1.23)
+        self.assertEqual(w._get_val_percent('five'), 0.012345)
+        self.assertEqual(w._get_val_percent('six'), 1.23)
+        self.assertEqual(w._get_val_percent('seven'), 1.23)
+        self.assertEqual(w._get_val_percent('eight'), 1.23)
+        # Interesting test:
+        self.assertEqual(w._get_val_percent('nine'), 0.12)
+        self.assertIsNone(w._get_val_percent('nonexistent'))
 
     def test_get_val_int(self):
         w = SubWrapper(one='1', nan='foo', empty='')
@@ -460,32 +478,43 @@ class TestWrapperElemList(testtools.TestCase):
     def setUp(self):
         super(TestWrapperElemList, self).setUp()
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
-        resp = pvmhttp.load_pvm_resp(NET_BRIDGE_FILE).get_response()
-        nb = resp.feed.entries[0]
-        self.wrapper = ewrap.EntryWrapper.wrap(nb)
-        sea_elem = self.wrapper.element.find('SharedEthernetAdapters')
-
-        self.elem_set = ewrap.WrapperElemList(sea_elem, net.SEA)
+        # No indirect
+        self.seas_wel = net.NetBridge.wrap(pvmhttp.load_pvm_resp(
+            NET_BRIDGE_FILE).get_response())[0].seas
+        # With indirect
+        self.backdev_wel = card.VNIC.wrap(pvmhttp.load_pvm_resp(
+            SYS_VNIC_FILE).get_response())[0].back_devs
 
     def test_get(self):
-        self.assertIsNotNone(self.elem_set[0])
-        self.assertRaises(IndexError, lambda a, i: a[i], self.elem_set, 1)
+        self.assertIsInstance(self.seas_wel[0], net.SEA)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 2)
+        # Works with indirect
+        self.assertIsInstance(self.backdev_wel[0], card.VNICBackDev)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 1)
 
     def test_length(self):
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
+        self.assertEqual(1, len(self.backdev_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
             ent.Element('SharedEthernetAdapter', self.adpt))
-        self.assertEqual(1, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
 
         # Test Append
-        self.elem_set.append(sea_add)
-        self.assertEqual(2, len(self.elem_set))
+        self.seas_wel.append(sea_add)
+        self.assertEqual(3, len(self.seas_wel))
+        # Appending to indirect
+        backdev = copy.deepcopy(self.backdev_wel[0])
+        self.backdev_wel.append(backdev)
+        self.assertEqual(2, len(self.backdev_wel))
 
         # Make sure we can also remove what was just added.
-        self.elem_set.remove(sea_add)
-        self.assertEqual(1, len(self.elem_set))
+        self.seas_wel.remove(sea_add)
+        self.assertEqual(2, len(self.seas_wel))
+        # Removing from indirect
+        self.backdev_wel.remove(backdev)
+        self.assertEqual(1, len(self.backdev_wel))
 
     def test_extend(self):
         seas = [
@@ -494,26 +523,50 @@ class TestWrapperElemList(testtools.TestCase):
             ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
                                                   self.adpt))
         ]
-        self.assertEqual(1, len(self.elem_set))
-        self.elem_set.extend(seas)
-        self.assertEqual(3, len(self.elem_set))
+        self.assertEqual(2, len(self.seas_wel))
+        self.seas_wel.extend(seas)
+        self.assertEqual(4, len(self.seas_wel))
+        self.adpt.build_href.return_value = 'href'
+        # Extending indirect
+        backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 2),
+                    card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4)]
+        self.backdev_wel.extend(backdevs)
+        self.assertEqual(3, len(self.backdev_wel))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
         e = ewrap.ElementWrapper.wrap(ent.Element('SharedEthernetAdapter',
                                                   self.adpt))
-        self.elem_set.remove(e)
-        self.elem_set.remove(e)
-        self.assertEqual(1, len(self.elem_set))
+        self.seas_wel.remove(e)
+        self.seas_wel.remove(e)
+        self.assertEqual(2, len(self.seas_wel))
+        # With indirect
+        self.backdev_wel.remove(card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1,
+                                                     2))
+        self.assertEqual(2, len(self.backdev_wel))
+        # Non-equivalent one doesn't work
+        self.assertRaises(ValueError, self.backdev_wel.remove,
+                          card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 3))
 
     def test_in(self):
         # This really does fail without __contains__
-        elem = self.elem_set[0]
-        self.assertIn(elem, self.elem_set)
+        self.assertIn(self.seas_wel[0], self.seas_wel)
+        # Works with indirect
+        self.assertIn(self.backdev_wel[0], self.backdev_wel)
 
     def test_index(self):
-        elem = self.elem_set[0]
-        self.assertEqual(self.elem_set.index(elem), 0)
+        self.assertEqual(self.seas_wel.index(self.seas_wel[0]), 0)
+        # Works with indirect
+        self.assertEqual(self.backdev_wel.index(self.backdev_wel[0]), 0)
+
+    def test_str(self):
+        strout = str(self.seas_wel)
+        for chunk in strout.split(','):
+            self.assertIn('SEA', chunk)
+        # And for indirect
+        strout = str(self.backdev_wel)
+        for chunk in strout.split(','):
+            self.assertIn('VNIC', chunk)
 
 
 class TestActionableList(unittest.TestCase):

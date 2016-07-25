@@ -22,6 +22,7 @@ from oslo_log import log as logging
 import pypowervm.const as c
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.mtms as mtmwrap
 
 LOG = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ _ASIO_HCA = 'HostChannelAdapters'
 _ASIO_HEA = 'HostEthernetAdapters'
 _ASIO_IOBUSES = 'IOBuses'
 _ASIO_IOSLOTS = 'IOSlots'
-_ASIO_SRIOV = 'SRIOVAdapters'
+_ASIO_SRIOVS = 'SRIOVAdapters'
 _ASIO_ASVNET = 'AssociatedSystemVirtualNetwork'
 _ASIO_WWPN_PREFIX = 'WWPNPrefix'
 
@@ -356,6 +357,13 @@ class ASIOConfig(ewrap.ElementWrapper):
     @property
     def wwpn_prefix(self):
         return self._get_val_str(_ASIO_WWPN_PREFIX)
+
+    @property
+    def sriov_adapters(self):
+        es = ewrap.WrapperElemList(self._find_or_seed(_ASIO_SRIOVS),
+                                   child_class=card.SRIOVAdapter,
+                                   indirect='IOAdapterChoice')
+        return es
 
 
 @ewrap.ElementWrapper.pvm_type(_IOSLOT_ROOT, has_metadata=True)

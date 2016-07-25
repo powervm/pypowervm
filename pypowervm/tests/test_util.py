@@ -368,3 +368,45 @@ class TestUtil(unittest.TestCase):
             None, parent, 'uuid2'))
         self.assertEqual(('schema_type2', 'uuid2'), util.parent_spec(
             None, 'schema_type2', 'uuid2'))
+
+
+class TestAllowedList(unittest.TestCase):
+    def test_all_none(self):
+        for val in ('ALL', 'NONE'):
+            for cls in (util.VLANList, util.MACList):
+                self.assertEqual(val, cls.unmarshal(val))
+                self.assertEqual(val, cls.marshal(val))
+
+    def test_unmarshal(self):
+        # Test VLAN lists
+        self.assertEqual([1, 2], util.VLANList.unmarshal('1 2'))
+        self.assertEqual([0], util.VLANList.unmarshal('0'))
+        self.assertEqual([5, 6, 2230, 3340],
+                         util.VLANList.unmarshal('5 6 2230 3340'))
+
+        # Test MAC lists
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
+                         util.MACList.unmarshal('AB12CD34EF56 12AB34CD56EF'))
+        self.assertEqual(['AB12CD34EF56'],
+                         util.MACList.unmarshal('AB12CD34EF56'))
+
+    def test_marshal(self):
+        # Test VLAN lists
+        self.assertEqual('1 2', util.VLANList.marshal([1, 2]))
+        self.assertEqual('0', util.VLANList.marshal([0]))
+        self.assertEqual('5 6 2230 3340',
+                         util.VLANList.marshal([5, 6, 2230, 3340]))
+
+        # Test MAC lists
+        self.assertEqual('AB12CD34EF56 12AB34CD56EF', util.MACList.marshal(
+            ['aB:12:Cd:34:eF:56', '12Ab34cD56Ef']))
+        self.assertEqual('AB12CD34EF56', util.MACList.marshal(
+            ['Ab:12:cD:34:Ef:56']))
+
+        # Test error cases
+        for cls in (util.VLANList, util.MACList):
+            self.assertRaises(ValueError, cls.marshal, None)
+            self.assertRaises(ValueError, cls.marshal, '')
+            self.assertRaises(ValueError, cls.marshal, ' ')
+            self.assertRaises(ValueError, cls.marshal, 'bogus')
+        self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])

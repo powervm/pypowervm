@@ -571,6 +571,10 @@ class PV(ewrap.ElementWrapper):
         return self._get_val_str(_PV_LOC_CODE)
 
     @property
+    def avail_for_use(self):
+        return self._get_val_bool(_PV_AVAIL_FOR_USE)
+
+    @property
     def pg83(self):
         encoded = self._get_val_str(_PV_PG83)
         # TODO(efried): Temporary workaround until VIOS supports pg83 in Events
