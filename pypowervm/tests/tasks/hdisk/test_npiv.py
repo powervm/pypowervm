@@ -18,25 +18,25 @@ import mock
 
 import unittest
 
-from pypowervm.tasks import hdisk
+from pypowervm.tasks.hdisk import _npiv as npiv
 import pypowervm.tests.tasks.util as tju
 
 VIOS_FEED = 'fake_vios_feed.txt'
 
 
-class TestHDisk(unittest.TestCase):
+class TestNPIV(unittest.TestCase):
 
     def setUp(self):
-        super(TestHDisk, self).setUp()
+        super(TestNPIV, self).setUp()
 
     def test_itl(self):
         """Tests the ITL class."""
-        itl = hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)
+        itl = npiv.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)
         self.assertEqual('aabbccddeeff0011', itl.initiator)
         self.assertEqual('00112233445566ee', itl.target)
         self.assertEqual('ee000000000000', itl.lun)
         # Test Lun-ID length for max 8 bytes
-        itl = hdisk.ITL('AABBC11', '00:11:22:33:44:55:66:EE', 1074872357)
+        itl = npiv.ITL('AABBC11', '00:11:22:33:44:55:66:EE', 1074872357)
         self.assertEqual('4011402500000000', itl.lun)
         self.assertEqual(16, len(itl.lun))
 
@@ -44,23 +44,23 @@ class TestHDisk(unittest.TestCase):
         """Tests that the ITL combinations can be built out."""
         i_wwpns = ['0011223344556677', '0011223344556678']
         t_wwpns = ['1111223344556677', '1111223344556678', '1111223344556679']
-        all_itls = hdisk.build_itls(i_wwpns, t_wwpns, 238)
+        all_itls = npiv.build_itls(i_wwpns, t_wwpns, 238)
 
         self.assertEqual(6, len(all_itls))
 
-        combos = [hdisk.ITL(i_wwpns[0], t_wwpns[0], 238),
-                  hdisk.ITL(i_wwpns[0], t_wwpns[1], 238),
-                  hdisk.ITL(i_wwpns[0], t_wwpns[2], 238),
-                  hdisk.ITL(i_wwpns[1], t_wwpns[0], 238),
-                  hdisk.ITL(i_wwpns[1], t_wwpns[1], 238),
-                  hdisk.ITL(i_wwpns[1], t_wwpns[2], 238)]
+        combos = [npiv.ITL(i_wwpns[0], t_wwpns[0], 238),
+                  npiv.ITL(i_wwpns[0], t_wwpns[1], 238),
+                  npiv.ITL(i_wwpns[0], t_wwpns[2], 238),
+                  npiv.ITL(i_wwpns[1], t_wwpns[0], 238),
+                  npiv.ITL(i_wwpns[1], t_wwpns[1], 238),
+                  npiv.ITL(i_wwpns[1], t_wwpns[2], 238)]
         self.assertListEqual(combos, all_itls)
 
     def test_lua_recovery_xml(self):
         """Validates that the LUA recovery XML is build properly."""
         i_wwpns = ['0011223344556677', '0011223344556678']
         t_wwpns = ['1111223344556677', '1111223344556678', '1111223344556679']
-        all_itls = hdisk.build_itls(i_wwpns, t_wwpns, 238)
+        all_itls = npiv.build_itls(i_wwpns, t_wwpns, 238)
 
         lua_xml = ('<XML_LIST><general><cmd_version>3</cmd_version><version>'
                    '2.0</version></general><reliableITL>false</reliableITL>'
@@ -80,11 +80,11 @@ class TestHDisk(unittest.TestCase):
                    '<lua>ee000000000000</lua></itl></itlList></device>'
                    '</deviceList></XML_LIST>')
 
-        self.assertEqual(lua_xml, hdisk._lua_recovery_xml(all_itls, None))
+        self.assertEqual(lua_xml, npiv._lua_recovery_xml(all_itls, None))
 
     def test_process_lua_result_no_resp(self):
         result = {}
-        status, dev_name, udid = hdisk._process_lua_result(result)
+        status, dev_name, udid = npiv._process_lua_result(result)
         self.assertIsNone(status)
         self.assertIsNone(dev_name)
         self.assertIsNone(udid)
@@ -94,7 +94,7 @@ class TestHDisk(unittest.TestCase):
         xml = ('<luaResult><version>2.0</version><deviceList></deviceList>'
                '</luaResult>')
         result = {'StdOut': xml}
-        status, dev_name, udid = hdisk._process_lua_result(result)
+        status, dev_name, udid = npiv._process_lua_result(result)
         self.assertIsNone(status)
         self.assertIsNone(dev_name)
         self.assertIsNone(udid)
@@ -106,51 +106,51 @@ class TestHDisk(unittest.TestCase):
                '</pvName><uniqueID>fake_uid</uniqueID><udid>fake_udid'
                '</udid></device></deviceList></luaResult>')
         result = {'StdOut': xml}
-        status, dev_name, udid = hdisk._process_lua_result(result)
+        status, dev_name, udid = npiv._process_lua_result(result)
         self.assertEqual('8', status)
         self.assertEqual('hdisk10', dev_name)
         self.assertEqual('fake_udid', udid)
 
         # Repeat with the input as the resultXML
         result = {'OutputXML': xml}
-        status, dev_name, udid = hdisk._process_lua_result(result)
+        status, dev_name, udid = npiv._process_lua_result(result)
         self.assertEqual('8', status)
         self.assertEqual('hdisk10', dev_name)
         self.assertEqual('fake_udid', udid)
 
-    @mock.patch('pypowervm.tasks.hdisk.LOG')
+    @mock.patch('pypowervm.tasks.hdisk._npiv.LOG')
     def test_validate_lua_status(self, mock_log):
         """This tests the branches of validate_lua_status."""
-        hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_AVAILABLE,
-                              'dev_name', 'message')
+        npiv._log_lua_status(npiv.LUAStatus.DEVICE_AVAILABLE,
+                             'dev_name', 'message')
         self.assertEqual(1, mock_log.info.call_count)
 
-        hdisk._log_lua_status(hdisk.LUAStatus.FOUND_ITL_ERR,
-                              'dev_name', 'message')
+        npiv._log_lua_status(npiv.LUAStatus.FOUND_ITL_ERR,
+                             'dev_name', 'message')
         self.assertEqual(1, mock_log.warning.call_count)
 
-        hdisk._log_lua_status(hdisk.LUAStatus.DEVICE_IN_USE,
-                              'dev_name', 'message')
+        npiv._log_lua_status(npiv.LUAStatus.DEVICE_IN_USE,
+                             'dev_name', 'message')
         self.assertEqual(2, mock_log.warning.call_count)
 
-        hdisk._log_lua_status(hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
-                              'dev_name', 'message')
+        npiv._log_lua_status(npiv.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID,
+                             'dev_name', 'message')
         self.assertEqual(3, mock_log.warning.call_count)
 
-        hdisk._log_lua_status(hdisk.LUAStatus.INCORRECT_ITL,
-                              'dev_name', 'message')
+        npiv._log_lua_status(npiv.LUAStatus.INCORRECT_ITL,
+                             'dev_name', 'message')
         self.assertEqual(4, mock_log.warning.call_count)
 
-    @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
+    @mock.patch('pypowervm.tasks.hdisk._npiv._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_lua_recovery(self, mock_adapter, mock_job, mock_lua_result):
-        itls = [hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
+        itls = [npiv.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
 
         mock_lua_result.return_value = ('OK', 'hdisk1', 'udid')
 
-        status, devname, udid = hdisk.lua_recovery(mock_adapter,
-                                                   'vios_uuid', itls)
+        status, devname, udid = npiv.lua_recovery(mock_adapter, 'vios_uuid',
+                                                  itls)
 
         # Validate value unpack
         self.assertEqual('OK', status)
@@ -161,19 +161,19 @@ class TestHDisk(unittest.TestCase):
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
 
-    @mock.patch('pypowervm.tasks.hdisk._lua_recovery_xml')
-    @mock.patch('pypowervm.tasks.hdisk._process_lua_result')
+    @mock.patch('pypowervm.tasks.hdisk._npiv._lua_recovery_xml')
+    @mock.patch('pypowervm.tasks.hdisk._npiv._process_lua_result')
     @mock.patch('pypowervm.wrappers.job.Job')
     @mock.patch('pypowervm.adapter.Adapter')
     def test_lua_recovery_dupe_itls(self, mock_adapter, mock_job,
                                     mock_lua_result, mock_lua_xml):
-        itls = [hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238),
-                hdisk.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
+        itls = [npiv.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238),
+                npiv.ITL('AABBCCDDEEFF0011', '00:11:22:33:44:55:66:EE', 238)]
 
         mock_lua_result.return_value = ('OK', 'hdisk1', 'udid')
 
-        status, devname, udid = hdisk.lua_recovery(mock_adapter,
-                                                   'vios_uuid', itls)
+        status, devname, udid = npiv.lua_recovery(mock_adapter, 'vios_uuid',
+                                                  itls)
 
         # Validate value unpack
         self.assertEqual('OK', status)
@@ -186,7 +186,7 @@ class TestHDisk(unittest.TestCase):
         mock_lua_xml.assert_called_with({itls[0]}, mock_adapter,
                                         vendor='OTHER')
 
-    @mock.patch('pypowervm.tasks.hdisk.lua_recovery')
+    @mock.patch('pypowervm.tasks.hdisk._npiv.lua_recovery')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
     @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
     @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
@@ -205,24 +205,24 @@ class TestHDisk(unittest.TestCase):
                                      ('ok_s', 'ok_h', 'ok_u')]
         stale_lpar_ids = [12, 34]
         # All of these should cause a scrub-and-retry
-        retry_rets = [(None, None), (hdisk.LUAStatus.DEVICE_AVAILABLE, None),
-                      (hdisk.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID, 'hdisk456')]
+        retry_rets = [(None, None), (npiv.LUAStatus.DEVICE_AVAILABLE, None),
+                      (npiv.LUAStatus.FOUND_DEVICE_UNKNOWN_UDID, 'hdisk456')]
         # These should *not* cause a scrub-and-retry
-        no_retry_rets = [(hdisk.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
-                         (hdisk.LUAStatus.FOUND_ITL_ERR, 'hdisk456'),
-                         (hdisk.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
+        no_retry_rets = [(npiv.LUAStatus.DEVICE_AVAILABLE, 'hdisk456'),
+                         (npiv.LUAStatus.FOUND_ITL_ERR, 'hdisk456'),
+                         (npiv.LUAStatus.DEVICE_IN_USE, 'hdisk456')]
         mock_fsl.return_value = stale_lpar_ids
         for st, dev in retry_rets:
             set_luar_side_effect(st, dev)
             self.assertEqual(
-                ('ok_s', 'ok_h', 'ok_u'), hdisk.discover_hdisk(
+                ('ok_s', 'ok_h', 'ok_u'), npiv.discover_hdisk(
                     'adp', 'vuuid', ['itls']))
             self.assertEqual(1, mock_fsl.call_count)
             mock_ftsk.assert_called_with('scrub_vios_vuuid', mock.ANY)
             self.assertEqual(1, mock_alsst.call_count)
             mock_luar.assert_has_calls(
                 [mock.call('adp', 'vuuid', ['itls'],
-                           vendor=hdisk.LUAType.OTHER)] * 2)
+                           vendor=npiv.LUAType.OTHER)] * 2)
             mock_fsl.reset_mock()
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()
@@ -230,14 +230,14 @@ class TestHDisk(unittest.TestCase):
         for st, dev in no_retry_rets:
             set_luar_side_effect(st, dev)
             self.assertEqual(
-                (st, dev, 'udid'), hdisk.discover_hdisk(
+                (st, dev, 'udid'), npiv.discover_hdisk(
                     'adp', 'vuuid', ['itls']))
             self.assertEqual(0, mock_fsl.call_count)
             self.assertEqual(0, mock_ftsk.call_count)
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
-                                         vendor=hdisk.LUAType.OTHER)
+                                         vendor=npiv.LUAType.OTHER)
 
         # If no stale LPARs found, scrub-and-retry should not be triggered with
         # either set.
@@ -245,7 +245,7 @@ class TestHDisk(unittest.TestCase):
         for st, dev in retry_rets + no_retry_rets:
             set_luar_side_effect(st, dev)
             self.assertEqual(
-                (st, dev, 'udid'), hdisk.discover_hdisk(
+                (st, dev, 'udid'), npiv.discover_hdisk(
                     'adp', 'vuuid', ['itls']))
             # find_stale_lpars will be called for retry_rets, but not for
             # no_retry_rets
@@ -254,7 +254,7 @@ class TestHDisk(unittest.TestCase):
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
-                                         vendor=hdisk.LUAType.OTHER)
+                                         vendor=npiv.LUAType.OTHER)
             mock_fsl.reset_mock()
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status')
@@ -265,8 +265,8 @@ class TestHDisk(unittest.TestCase):
         mock_adapter.read.return_value = (tju.load_file(VIOS_FEED)
                                           .feed.entries[0])
 
-        hdisk._remove_hdisk_classic(mock_adapter, 'host_name', 'dev_name',
-                                    'vios_uuid')
+        npiv._remove_hdisk_classic(mock_adapter, 'host_name', 'dev_name',
+                                   'vios_uuid')
         # Validate method invocations
         self.assertEqual(2, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
@@ -288,14 +288,14 @@ class TestHDisk(unittest.TestCase):
 
         mock_run_job.side_effect = verify_run_job
 
-        hdisk._remove_hdisk_job(mock_adapter, 'dev_name', 'vios_uuid')
+        npiv._remove_hdisk_job(mock_adapter, 'dev_name', 'vios_uuid')
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
 
     def test_normalize_lun(self):
-        lun = hdisk.normalize_lun(12)
+        lun = npiv.normalize_lun(12)
         self.assertEqual('c000000000000', lun)
         # Test when lun exceeds len 8
-        lun = hdisk.normalize_lun(1074872357)
+        lun = npiv.normalize_lun(1074872357)
         self.assertEqual('4011402500000000', lun)

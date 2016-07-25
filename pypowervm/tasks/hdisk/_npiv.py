@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Tasks around VIOS-backed 'physical' disks."""
+"""Tasks around VIOS-backed 'physical' NPIV disks."""
 
 import itertools
 
