@@ -22,7 +22,9 @@ import testtools
 import pypowervm.exceptions as ex
 import pypowervm.tasks.sriov as tsriov
 import pypowervm.tests.test_fixtures as fx
+import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.wrappers.iocard as card
+import pypowervm.wrappers.managed_system as ms
 
 
 def fake_sriov(mode, state, sriov_adap_id, phys_ports):
@@ -340,3 +342,21 @@ class TestSafeUpdatePPort(testtools.TestCase):
         sup_caller(mock_sys, force=True)
         mock_warn.assert_has_calls([mock.call(mock.ANY), mock.call('one'),
                                     mock.call('two')])
+
+
+class TestMisc(twrap.TestWrapper):
+    file = 'sys_with_sriov.txt'
+    wrapper_class_to_test = ms.System
+
+    def test_find_pport(self):
+        self.assertIsNone(tsriov.find_pport('bogus', self.dwrap))
+        pport = tsriov.find_pport('U78C7.001.RCH0004-P1-C8-T2', self.dwrap)
+        self.assertEqual('U78C7.001.RCH0004-P1-C8',
+                         pport.sriov_adap.phys_loc_code)
+        self.assertEqual(1, pport.sriov_adap_id)
+        # It's a converged port...
+        self.assertIsInstance(pport, card.SRIOVConvPPort)
+        # ...which is also an ethernet port
+        self.assertIsInstance(pport, card.SRIOVEthPPort)
+        self.assertEqual('U78C7.001.RCH0004-P1-C8-T2', pport.loc_code)
+        self.assertEqual(1, pport.port_id)
