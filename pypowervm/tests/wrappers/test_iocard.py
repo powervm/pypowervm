@@ -72,6 +72,9 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         conv_port, eth_port = self.sriovs[0].phys_ports[:3:2]
 
         # Converged physical ports test
+        self.assertEqual(self.sriovs[0], conv_port.sriov_adap)
+        self.assertEqual(self.sriovs[0].sriov_adap_id, conv_port.sriov_adap_id)
+
         self.assertEqual(None, conv_port.label)
         conv_port.label = 'updatedlabel'
         self.assertEqual('updatedlabel', conv_port.label)
@@ -99,6 +102,9 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual(0.02, conv_port.allocated_capacity)
 
         # Ethernet physical ports test
+        self.assertEqual(self.sriovs[0], eth_port.sriov_adap)
+        self.assertEqual(self.sriovs[0].sriov_adap_id, eth_port.sriov_adap_id)
+
         self.assertEqual(None, eth_port.label)
         eth_port.label = 'updatedlabel'
         self.assertEqual('updatedlabel', eth_port.label)

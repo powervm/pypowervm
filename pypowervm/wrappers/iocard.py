@@ -399,14 +399,34 @@ class SRIOVAdapter(IOAdapter):
             allports.append(c)
         for e in eports:
             allports.append(e)
+        # Set the ports' backpointers to this SRIOVAdapter
+        for pport in allports:
+            pport._sriov_adap = self
         return allports
 
 
-@ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort',
-                               has_metadata=True,
+@ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort', has_metadata=True,
                                child_order=_SRIOVEPP_EL_ORDER)
 class SRIOVEthPPort(ewrap.ElementWrapper):
     """The SRIOV Ethernet Physical port."""
+
+    def __init__(self):
+        super(SRIOVEthPPort, self).__init__()
+        # This must be set by the instantiating SRIOVAdapter.
+        self._sriov_adap = None
+
+    @property
+    def sriov_adap(self):
+        """Backpointer to the SRIOVAdapter owning this physical port."""
+        if self._sriov_adap is None:
+            raise NotImplementedError("Developer error: SRIOVAdapter pointer "
+                                      "not set!")
+        return self._sriov_adap
+
+    @property
+    def sriov_adap_id(self):
+        """The integer sriov_adap_id of the SRIOVAdapter owning this port."""
+        return self.sriov_adap.sriov_adap_id
 
     @property
     def label(self):

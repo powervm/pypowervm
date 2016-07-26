@@ -212,8 +212,6 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
 
     Builds a list of pypowervm.wrappers.iocard.SRIOV*PPort from sriov_adaps
     such that:
-    - The wrapper has an invisible (to REST) sriov_adap_id attribute indicating
-      its parent SRIOV adapter ID.
     - Only ports whose location codes are listed in the pports param are
       considered.
     - Only ports with sufficient remaining capacity (per the capacity param, if
@@ -249,8 +247,6 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
             if pport.allocated_capacity + des_cap > 1.0:
                 continue
             pp2add = copy.deepcopy(pport)
-            # Back-pointer to the adapter ID
-            pp2add.sriov_adap_id = sriov.sriov_adap_id
             pport_wraps.append(pp2add)
 
     if len(pport_wraps) < min_returns:
@@ -280,9 +276,7 @@ def _vnics_using_pport(pport, lpar2vnics):
     for any VNICs.  The method returns a list of warning messages for each such
     usage found.
 
-    :param pport: pypowervm.wrappers.iocard.SRIOV*PPort wrapper containing the
-                  extra attribute sriov_adap_id of the adapter owning the
-                  physical port.
+    :param pport: pypowervm.wrappers.iocard.SRIOV*PPort wrapper to check.
     :param lpar2vnics: Dict of {LPAR: [VNIC, ...]} gleaned from get_lpar_vnics
     :return: A list of warning messages for found usages of the physical port.
              If no usages were found, the empty list is returned.
@@ -330,9 +324,6 @@ def _vet_port_usage(sys_w, label_index):
             # this, because it's expensive.
             if lpar2vnics is None:
                 lpar2vnics = get_lpar_vnics(sys_w.adapter)
-            # Cheat a backpointer to the SRIOV adapter ID.  This is not a
-            # @property.
-            pport.sriov_adap_id = sriovadap.sriov_adap_id
             warnings += _vnics_using_pport(pport, lpar2vnics)
     return warnings
 
@@ -384,7 +375,7 @@ def safe_update_pports(sys_w, force=False):
         warnings = _vet_port_usage(sys_w, label_index)
         if warnings and not force:
             raise ex.CantUpdatePPortsInUse(warnings=warnings)
-        # We're going to do thet update.  Log any found usages.
+        # We're going to do the update.  Log any found usages.
         if warnings:
             LOG.warning(_("Making changes to the following SR-IOV physical "
                           "port labels even though they are in use by vNICs:"))

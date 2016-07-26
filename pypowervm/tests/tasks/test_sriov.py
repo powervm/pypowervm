@@ -31,8 +31,9 @@ def fake_sriov(mode, state, sriov_adap_id, phys_ports):
                      phys_ports=phys_ports)
 
 
-def fake_pport(port_id, alloc_cap):
-    return mock.Mock(port_id=port_id, loc_code='pport_loc%d' % port_id,
+def fake_pport(sriov_adap_id, port_id, alloc_cap):
+    return mock.Mock(sriov_adap_id=sriov_adap_id, port_id=port_id,
+                     loc_code='pport_loc%d' % port_id,
                      min_granularity=float(port_id) / 1000,
                      allocated_capacity=alloc_cap)
 
@@ -52,13 +53,13 @@ class TestSriov(testtools.TestCase):
         super(TestSriov, self).setUp()
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
         self.fake_sriovs = [
-            good_sriov(1, [fake_pport(pid, cap) for pid, cap in (
+            good_sriov(1, [fake_pport(1, pid, cap) for pid, cap in (
                 (11, 0.95), (12, 0.0), (13, 0.03), (14, 0.987))]),
-            ded_sriov, good_sriov(2, [fake_pport(21, 0.3)]), down_sriov,
+            ded_sriov, good_sriov(2, [fake_pport(2, 21, 0.3)]), down_sriov,
             good_sriov(3, []),
-            good_sriov(4, [fake_pport(pid, cap) for pid, cap in (
+            good_sriov(4, [fake_pport(4, pid, cap) for pid, cap in (
                 (41, 0.02), (42, 0.01))]),
-            good_sriov(5, [fake_pport(pid, cap) for pid, cap in (
+            good_sriov(5, [fake_pport(5, pid, cap) for pid, cap in (
                 (51, 0.49), (52, 0.0), (53, 0.95), (54, 0.0),
                 (55, 0.4), (56, 0.1), (57, 0.15), (58, 1.0))])]
 
