@@ -17,6 +17,7 @@
 """Tasks related to objects that will appear as hard disks to VMs."""
 
 from pypowervm.tasks.hdisk import _fc
+from pypowervm.tasks.hdisk import _iscsi
 
 LUAType = _fc.LUAType
 LUAStatus = _fc.LUAStatus
@@ -28,3 +29,4 @@ discover_hdisk = _fc.discover_hdisk
 lua_recovery = _fc.lua_recovery
 remove_hdisk = _fc.remove_hdisk
 get_pg83_via_job = _fc.get_pg83_via_job
+discover_iscsi = _iscsi.discover_iscsi
