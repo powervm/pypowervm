@@ -470,7 +470,12 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
 
     @property
     def min_granularity(self):
-        return self._get_val_int(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
+        """Gets the minimum granularity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
 
     @property
     def supp_max_lps(self):
