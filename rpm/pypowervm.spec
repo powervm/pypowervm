@@ -1,7 +1,6 @@
 # Spec file for pypowervm package
 Summary: Python API wrapper for PowerVM
 Name: pypowervm
-BuildArch: noarch
 Version: %{_pvm_version}
 Release: %{_pvm_release}
 Group: Applications/System
