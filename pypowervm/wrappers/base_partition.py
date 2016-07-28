@@ -29,6 +29,7 @@ _BP_CURR_BSR_ARRAYS = 'CurrentAllocatedBarrierSynchronizationRegisterArrays'
 _BP_CURRENT_PROC_MODE = 'CurrentProcessorCompatibilityMode'
 _BP_PROFILE_SYNC = 'CurrentProfileSync'
 _BP_HOSTNAME = 'Hostname'
+_BP_BOOTABLE = 'IsBootable'
 _BP_CALL_HOME = 'IsCallHomeEnabled'
 _BP_CONN_MONITORING = 'IsConnectionMonitoringEnabled'
 _BP_OP_IN_PROGRESS = 'IsOperationInProgress'
@@ -59,35 +60,37 @@ _BP_RMC_IP = 'ResourceMonitoringIPAddress'
 _BP_VAL_INT_PERF = 'ValidInteractivePerformance'
 _BP_ASSOC_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
+_BP_SRIOV_ROCE = 'SRIOVRoCELogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
 _BP_MAC_PREF = 'MACAddressPrefix'
 _BP_SVC_PARTITION = 'IsServicePartition'
+_BP_MGMT_CAP = 'PowerVMManagementCapable'
 _BP_REF_CODE = 'ReferenceCode'
 _BP_MGT_PARTITION = 'IsManagementPartition'
 _BP_AUTO_START = 'AutoStart'
 _BP_BOOT_MODE = 'BootMode'
+_BP_NVRAM = 'PartitionNVRAM'
 _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
-_BP_NVRAM = 'PartitionNVRAM'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
     _BP_CURR_BSR_ARRAYS, _BP_CURRENT_PROC_MODE, _BP_PROFILE_SYNC, _BP_HOSTNAME,
-    _BP_CALL_HOME, _BP_CONN_MONITORING, _BP_OP_IN_PROGRESS,
+    _BP_BOOTABLE, _BP_CALL_HOME, _BP_CONN_MONITORING, _BP_OP_IN_PROGRESS,
     _BP_REDUNDANT_ERR_PATH_REP, _BP_TIME_REF, _BP_ATTN_LED,
     _BP_TRUSTED_PLATFORM, _BP_KEYLOCK_POS, _BP_LOGICAL_SERIAL_NUM, _BP_OS_VER,
     _BP_CAPABILITIES, _BP_ID, _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG,
     _BP_PROFS, _BP_STATE, _BP_TYPE, _BP_UUID, _BP_PENDING_PROC_MODE,
     _BP_PROC_POOL, _BP_PROG_DATA_REMAIN, _BP_PROG_DATA_TOTAL, _BP_PROG_STATE,
     _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOC_SYSTEM,
-    _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
-    _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION, _BP_AUTO_START,
-    _BP_BOOT_MODE, _BP_NVRAM, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
-    _BP_ASSOC_TASKS, _BP_DESC
+    _BP_SRIOV_ETH, _BP_SRIOV_ROCE, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH,
+    _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
+    _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE, _BP_NVRAM,
+    _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS, _BP_DESC
 )
 
 # Partition Capabilities (_CAP)

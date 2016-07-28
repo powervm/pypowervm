@@ -58,6 +58,9 @@ _SRIOVPP_SUPP_MTUS = 'SupportedMTUs'
 _SRIOVPP_SUPP_OPTIONS = 'SupportedOptions'
 _SRIOVPP_SUPP_PRI_ACL = 'SupportedPriorityAccessControlList'
 _SRIOVPP_LINK_STATUS = 'LinkStatus'
+_SRIOVPP_DEF_PORTVF_CFG = 'DefaultPortVFConfigurationOption'
+_SRIOVPP_SEL_PORTVF_CFG = 'SelectedPortVFConfigurationOption'
+_SRIOVPP_SUPP_PORTVF_CFG = 'SupportedPortVFConfigurationOptions'
 _SRIOVPP_ALLOC_CAPACITY = 'AllocatedCapacity'
 _SRIOVPP_CFG_MAX_ETHERNET_LPS = 'ConfiguredMaxEthernetLogicalPorts'
 _SRIOVPP_CFG_ETHERNET_LPS = 'ConfiguredEthernetLogicalPorts'
@@ -67,6 +70,10 @@ _SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN = 'MinimumEthernetCapacityGranularity'
 _SRIOVPP_MIN_PVID = 'MinimumPortVLANID'
 _SRIOVPP_MIN_VLAN_ID = 'MinimumVLANID'
 _SRIOVPP_MAX_SUPP_ETHERNET_LPS = 'MaxSupportedEthernetLogicalPorts'
+_SRIOVPP_MAX_ALLOW_ETH_VLANS = 'MaximumAllowedEthVLANs'
+_SRIOVPP_MAX_ALLOW_ETH_MACS = 'MaximumAllowedEthMACs'
+_SRIOVPP_SUPP_VLAN_RESTR = 'SupportedVLANRestrictions'
+_SRIOVPP_SUPP_MAC_RESTR = 'SupportedMACRestrictions'
 _SRIOVPP_CFG_MX_FCOE_LPS = 'ConfiguredMaxFiberChannelOverEthernetLogicalPorts'
 _SRIOVPP_DEF_FCTARG_BACK_DEV = 'DefaultFiberChannelTargetsForBackingDevice'
 _SRIOVPP_DEF_FTARG_NBACK_DEV = 'DefaultFiberChannelTargetsForNonBackingDevice'
@@ -84,7 +91,8 @@ _SRIOVPP_EL_ORDER = (
     _SRIOVPP_ID, _SRIOVPP_CAPABILITIES, _SRIOVPP_TYPE,
     _SRIOVPP_LP_LIMIT, _SRIOVPP_SUBLBL, _SRIOVPP_SUPP_SPEEDS,
     _SRIOVPP_SUPP_MTUS, _SRIOVPP_SUPP_OPTIONS,
-    _SRIOVPP_SUPP_PRI_ACL, _SRIOVPP_LINK_STATUS)
+    _SRIOVPP_SUPP_PRI_ACL, _SRIOVPP_LINK_STATUS, _SRIOVPP_DEF_PORTVF_CFG,
+    _SRIOVPP_SEL_PORTVF_CFG, _SRIOVPP_SUPP_PORTVF_CFG)
 
 _SRIOVEPP_EL_ORDER = _SRIOVPP_EL_ORDER + (
     _SRIOVPP_ALLOC_CAPACITY,
@@ -92,7 +100,9 @@ _SRIOVEPP_EL_ORDER = _SRIOVPP_EL_ORDER + (
     _SRIOVPP_CFG_ETHERNET_LPS, _SRIOVPP_MAX_PVID,
     _SRIOVPP_MAX_VLAN_ID, _SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN,
     _SRIOVPP_MIN_PVID, _SRIOVPP_MIN_VLAN_ID,
-    _SRIOVPP_MAX_SUPP_ETHERNET_LPS)
+    _SRIOVPP_MAX_SUPP_ETHERNET_LPS, _SRIOVPP_MAX_ALLOW_ETH_VLANS,
+    _SRIOVPP_MAX_ALLOW_ETH_MACS, _SRIOVPP_SUPP_VLAN_RESTR,
+    _SRIOVPP_SUPP_MAC_RESTR)
 
 _SRIOVCPP_EL_ORDER = _SRIOVEPP_EL_ORDER + (
     _SRIOVPP_CFG_MX_FCOE_LPS,
@@ -168,11 +178,12 @@ _VNICD_ALLOWED_OS_MACS = 'AllowedOperatingSystemMACAddresses'
 _VNICD_OS_DEV_NAME = 'OSDeviceName'
 _VNICD_DES_MODE = 'DesiredMode'
 _VNICD_DES_CAP_PCT = 'DesiredCapacityPercentage'
+_VNICD_AUTO_FB = 'AutoFailBack'
 
 _VNICD_EL_ORDER = (
     _VNICD_PVID, _VNICD_PVID_PRI, _VNICD_ALLOWED_VLANS, _VNICD_MAC,
     _VNICD_ALLOWED_OS_MACS, _VNICD_OS_DEV_NAME, _VNICD_DES_MODE,
-    _VNICD_DES_CAP_PCT)
+    _VNICD_DES_CAP_PCT, _VNICD_DES_CAP_PCT)
 
 # Properties for VNICBackDev (schema: VirtualNICSRIOVBackingDevice)
 _VNICBD_CHOICE = 'VirtualNICBackingDeviceChoice'
@@ -181,17 +192,24 @@ _VNICBD_DEV_TYP = 'DeviceType'
 _VNICBD_VIOS = 'AssociatedVirtualIOServer'
 _VNICBD_SWITCH = 'AssociatedVirtualNICSwitch'
 _VNICBD_VNIC = 'AssociatedVirtualNICDedicated'
+_VNICBD_ACTIVE = 'IsActive'
+_VNICBD_STATUS = 'Status'
+_VNICBD_FAILOVER_PRI = 'FailOverPriority'
+_VNICBD_ACTION = 'BackingDeviceAction'
 _VNICBD_SRIOV_ADP_ID = 'RelatedSRIOVAdapterID'
 _VNICBD_CUR_CAP_PCT = 'CurrentCapacityPercentage'
 _VNICBD_PPORT_ID = 'RelatedSRIOVPhysicalPortID'
 _VNICBD_LPORT = 'RelatedSRIOVLogicalPort'
+_VNICBD_DES_CAP_PCT = 'DesiredCapacityPercentage'
 # For building the VIOS HREF.  (Would have liked to use pypowervm.wrappers.
 # virtual_io_server.VIOS.schema_type, but circular import.)
 _VIOS = 'VirtualIOServer'
 
 _VNICBD_EL_ORDER = (
     _VNICBD_DEV_TYP, _VNICBD_VIOS, _VNICBD_SWITCH, _VNICBD_VNIC,
-    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_PPORT_ID, _VNICBD_LPORT)
+    _VNICBD_ACTIVE, _VNICBD_STATUS, _VNICBD_FAILOVER_PRI, _VNICBD_ACTION,
+    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_PPORT_ID, _VNICBD_LPORT,
+    _VNICBD_DES_CAP_PCT)
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
