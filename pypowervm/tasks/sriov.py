@@ -16,7 +16,6 @@
 
 """Complex tasks around SR-IOV cards/ports, VFs, and vNICs."""
 
-import contextlib
 import copy
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
@@ -26,6 +25,7 @@ import six
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 import pypowervm.tasks.partition as tpar
+import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
 
@@ -328,24 +328,40 @@ def _vet_port_usage(sys_w, label_index):
     return warnings
 
 
-@contextlib.contextmanager
-def safe_update_pports(sys_w, force=False):
-    """Context manager allowing safe changes to SR-IOV physical port labels.
-
-    Within this context manager, the consumer makes changes to the labels of
-    the physical ports of the ManagedSystem's SR-IOV adapters.  This method
-    checks whether any of the changed ports are in use by vNICs (see "Why
-    vNICs?" below).  If the force option is not True, and any uses were found,
-    this method raises an exception whose text includes details about the found
-    usages.  Otherwise, the found usages are logged as warnings.
+@tx.entry_transaction
+def safe_update_pports(sys_w, callback_func, force=False):
+    """Retrying entry transaction for safe updates to SR-IOV physical ports.
 
     Usage:
-        sys_w, = System.get(adap)
-        with safe_update_pports(sys_w, force=user_is_sure):
+        def changes(sys_w):
             for sriov in sys_w.asio_config.sriov_adapters:
                 ...
                 sriov.phys_ports[n].pport.label = some_new_label
                 ...
+                update_needed = True
+                ...
+            return update_needed
+
+        sys_w = safe_update_pports(System.getter(adap), changes, force=maybe)
+
+    The consumer passes a callback method which makes changes to the labels of
+    the physical ports of the ManagedSystem's SR-IOV adapters.
+
+    If the callback returns a False value (indicating that no update is
+    necessary), safe_update_pports immediately returns the sys_w.
+
+    If the callback returns a True value, safe_update_pports first checks
+    whether any of the changed ports are in use by vNICs (see "Why vNICs?"
+    below).
+
+    If the force option is not True, and any uses were found, this method
+    raises an exception whose text includes details about the found usages.
+    Otherwise, the found usages are logged as warnings.
+
+    Assuming no exception is raised, safe_update_pports attempts to update the
+    sys_w wrapper with the REST server.  (The caller does *not* do the update.)
+    If an etag mismatch is encountered, safe_update_pports refreshes the sys_w
+    wrapper and retries, according to the semantics of entry_transaction.
 
     Why vNICs?
     We're being careful about changing port labels on the fly because those
@@ -355,12 +371,18 @@ def safe_update_pports(sys_w, force=False):
     so the labels can be changed with impunity.  And the only way a VF is
     migratable is if it belongs to a vNIC on a migratable LPAR.
 
-    :param sys_w: pypowervm.wrappers.managed_system.System wrapper for the
-                  host.
+    :param sys_w: pypowervm.wrappers.managed_system.System wrapper or getter
+                  thereof.
+    :param callback_func: Method executing the actual changes on the sys_w.
+                          The method must accept sys_w (a System wrapper) as
+                          its only argument.  Its return value will be
+                          interpreted as a boolean to determine whether to
+                          perform the update() (True) or not (False).
     :param force: If False (the default) and any of the updated physical ports
                   are found to be in use by vNICs, the method will raise.  If
                   True, warnings are logged for each such usage, but the method
                   will succeed.
+    :return: The (possibly-updated) sys_w.
     :raise CantUpdatePPortsInUse: If any of the relabeled physical ports are in
                                   use by vNICs *and* the force option is False.
     """
@@ -369,9 +391,15 @@ def safe_update_pports(sys_w, force=False):
         label_index = {pport.loc_code: pport.label for sriovadap in
                        sys_w.asio_config.sriov_adapters for pport in
                        sriovadap.phys_ports}
-        # Let caller make the pport changes
-        yield
-        # Now for each port that changed, check its usage
+
+        # Let caller make the pport changes.
+        if not callback_func(sys_w):
+            # No update needed.
+            # sys_w may be what was passed in, or the result of the getter.
+            return sys_w
+
+        # If return is True, caller wants us to update().  For each port that
+        # changed, check its usage
         warnings = _vet_port_usage(sys_w, label_index)
         if warnings and not force:
             raise ex.CantUpdatePPortsInUse(warnings=warnings)
@@ -381,4 +409,4 @@ def safe_update_pports(sys_w, force=False):
                           "port labels even though they are in use by vNICs:"))
             for warning in warnings:
                 LOG.warning(warning)
-        sys_w.update()
+        return sys_w.update()
