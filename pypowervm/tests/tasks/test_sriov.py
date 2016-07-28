@@ -23,6 +23,7 @@ import pypowervm.exceptions as ex
 import pypowervm.tasks.sriov as tsriov
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.wrappers.iocard as card
+import pypowervm.wrappers.managed_system as ms
 
 
 def fake_sriov(mode, state, sriov_adap_id, phys_ports):
@@ -305,38 +306,46 @@ class TestSafeUpdatePPort(testtools.TestCase):
     @mock.patch('pypowervm.tasks.sriov._vet_port_usage')
     @mock.patch('pypowervm.tasks.sriov.LOG.warning')
     @mock.patch('fasteners.lock.ReaderWriterLock.write_lock')
-    def test_safe_update_pports(self, mock_lock, mock_warn, mock_vpu):
+    @mock.patch('pypowervm.wrappers.managed_system.System.getter')
+    def test_safe_update_pports(self, mock_getter, mock_lock, mock_warn,
+                                mock_vpu):
         mock_sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=[
             mock.Mock(phys_ports=[mock.Mock(loc_code='loc1', label='label1'),
                                   mock.Mock(loc_code='loc2', label='label2')]),
             mock.Mock(phys_ports=[
                 mock.Mock(loc_code='loc3', label='label3')])]))
 
-        def sup_caller(sys_w, force=None):
-            """Because assertRaises() on a context manager is difficult."""
-            if force is None:
-                with tsriov.safe_update_pports(sys_w):
-                    mock_lock.assert_called()
-            else:
-                with tsriov.safe_update_pports(sys_w, force=force):
-                    mock_lock.assert_called()
-            mock_vpu.assert_called_once_with(sys_w, {
-                'loc1': 'label1', 'loc2': 'label2', 'loc3': 'label3'})
-            sys_w.update.assert_called_once_with()
-            sys_w.update.reset_mock()
+        def changes_func(ret_bool):
+            def changes(sys_w):
+                mock_lock.assert_called()
+                mock_lock.reset_mock()
+                return ret_bool
+            return changes
 
-        # No force, no warnings - finishes
+        # No force, no warnings, update requested
         mock_vpu.return_value = []
-        sup_caller(mock_sys)
+        self.assertEqual(mock_sys.update.return_value,
+                         tsriov.safe_update_pports(
+                             mock_sys, changes_func(True)))
         mock_warn.assert_not_called()
-        # Warnings, no force - raises
+        # No force, no in-use, no update, use a getter: runs but doesn't update
+        mock_sys.update.reset_mock()
+        self.assertEqual(mock_getter.return_value, tsriov.safe_update_pports(
+            ms.System.getter('adap'), changes_func(False)))
+        mock_warn.assert_not_called()
+        mock_getter.return_value.update.assert_not_called()
+        # Update requested, some in-use, no force - raises
         mock_vpu.reset_mock()
         mock_vpu.return_value = [1]
-        self.assertRaises(ex.CantUpdatePPortsInUse, sup_caller, mock_sys)
+        self.assertRaises(ex.CantUpdatePPortsInUse, tsriov.safe_update_pports,
+                          mock_sys, changes_func(True), force=False)
         mock_warn.assert_not_called()
-        # Warnings, force - logs
+        mock_sys.update.assert_not_called()
+        # Update requested, some in-use, force - runs & warns
         mock_vpu.reset_mock()
         mock_vpu.return_value = ['one', 'two']
-        sup_caller(mock_sys, force=True)
+        self.assertEqual(mock_sys.update.return_value,
+                         tsriov.safe_update_pports(
+                             mock_sys, changes_func(True), force=True))
         mock_warn.assert_has_calls([mock.call(mock.ANY), mock.call('one'),
                                     mock.call('two')])
