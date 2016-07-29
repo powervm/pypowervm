@@ -21,6 +21,8 @@ import copy
 
 import six
 
+from oslo_concurrency import lockutils as lock
+
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
@@ -30,6 +32,7 @@ from pypowervm.wrappers import network as pvm_net
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 _MAX_VLANS_PER_VEA = 20
+_ENSURE_VLAN_LOCK = 'ensure_vlans_nb'
 
 
 def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
@@ -129,8 +132,12 @@ class NetworkBridger(object):
         self.host_uuid = host_uuid
         self._orphan_map = None
 
-    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+    @lock.synchronized(_ENSURE_VLAN_LOCK)
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
+        self.ensure_vlans_on_nb_synch(nb_uuid, vlan_ids)
+
+    @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+    def ensure_vlans_on_nb_synch(self, nb_uuid, vlan_ids):
         """Will make sure that the VLANs are assigned to the Network Bridge.
 
         This method will reorder the arbitrary VLAN IDs as needed (those which
@@ -197,7 +204,7 @@ class NetworkBridger(object):
                 new_a_vid = self._find_new_arbitrary_vid(
                     all_nbs_on_vs, others=other_vlans)
                 self._reassign_arbitrary_vid(vlan_id, new_a_vid, req_nb)
-                return self.ensure_vlans_on_nb(nb_uuid, vlan_ids)
+                return self.ensure_vlans_on_nb_synch(nb_uuid, vlan_ids)
 
             # At this point, we've done all the easy checks.  Next up is to
             # detect if it is an orphan.
@@ -219,6 +226,7 @@ class NetworkBridger(object):
         req_nb.update()
 
     @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+    @lock.synchronized(_ENSURE_VLAN_LOCK)
     def remove_vlan_from_nb(self, nb_uuid, vlan_id, fail_if_pvid=False,
                             existing_nbs=None):
         """Will remove the VLAN from a given Network Bridge.
