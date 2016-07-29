@@ -23,6 +23,7 @@ from pypowervm import exceptions as pv_e
 from pypowervm.tasks import slot_map
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.utils import lpar_builder as lb
+from pypowervm.wrappers import iocard as ioc
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
 from pypowervm.wrappers import virtual_io_server as vios
@@ -36,6 +37,7 @@ vio1 = loadf(vios.VIOS, 'fake_vios_ssp_npiv.txt')
 vio2 = loadf(vios.VIOS, 'fake_vios_mappings.txt')
 cnafeed1 = loadf(net.CNA, 'cna_feed1.txt')
 vswitchfeed = loadf(net.VSwitch, 'vswitch_feed.txt')
+vnicfeed = loadf(ioc.VNIC, 'vnic_feed.txt')
 
 
 class SlotMapTestImplLegacy(slot_map.SlotMapStore):
@@ -173,6 +175,30 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         # Drop all remaining CNAs, including a redundant drop on index 0
         for cna in cnafeed1:
             smt.drop_cna(cna)
+        self.assertEqual({}, smt.topology)
+
+    def test_register_vnic(self):
+        """Test register_vnic."""
+        smt = self.smt_impl('foo')
+        for vnic in vnicfeed:
+            smt.register_vnic(vnic)
+        self.assertEqual({3: {'VNIC': {'AE7A25E59A03': None}},
+                          4: {'VNIC': {'AE7A25E59A04': None}}},
+                         smt.topology)
+
+    def test_drop_vnic(self):
+        """Test drop_vnic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {3: {'VNIC': {'AE7A25E59A03': None}},
+                          4: {'VNIC': {'AE7A25E59A04': None}}}
+        # Drop the first VNIC and verify it was removed
+        smt.drop_vnic(vnicfeed[0])
+        self.assertEqual({4: {'VNIC': {'AE7A25E59A04': None}}},
+                         smt.topology)
+
+        # Drop all remaining VNICs
+        for vnic in vnicfeed:
+            smt.drop_vnic(vnic)
         self.assertEqual({}, smt.topology)
 
     def test_register_vfc_mapping(self):
@@ -360,6 +386,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         smt1 = self.smt_impl('foo')
         for cna in cnafeed1:
             smt1.register_cna(cna)
+        for vnic in vnicfeed:
+            smt1.register_vnic(vnic)
         i = 1
         for vio in (vio1, vio2):
             for vscsimap in vio.scsi_mappings:
@@ -539,6 +567,24 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertEqual(4, rsm.get_vea_slot('2A2E57A4DE9C'))
         self.assertEqual(None, rsm.get_vea_slot('3AEAC528A7E3'))
         self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
+
+    def test_vnic_build_out(self):
+        """Test _vnic_build_out."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {5: {'VNIC': {'72AB8C392CD6': None}},
+                          6: {'VNIC': {'111111111111': None}},
+                          7: {'VNIC': {'45F16A97BC7E': None}}}
+
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+
+        self.assertEqual(
+            {'VNIC':
+                {'72AB8C392CD6': 5, '111111111111': 6, '45F16A97BC7E': 7}},
+            rsm._build_map)
+
+        self.assertEqual(5, rsm.get_vnic_slot('72AB8C392CD6'))
+        self.assertEqual(6, rsm.get_vnic_slot('111111111111'))
+        self.assertEqual(7, rsm.get_vnic_slot('45F16A97BC7E'))
 
     def test_max_vslots(self):
         """Ensure max_vslots returns the set value, or 10 + highest slot."""

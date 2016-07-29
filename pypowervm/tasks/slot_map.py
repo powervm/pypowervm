@@ -27,6 +27,7 @@ import six
 from pypowervm import exceptions as pvm_ex
 from pypowervm import util as pvm_util
 from pypowervm.utils import lpar_builder as lb
+from pypowervm.wrappers import iocard as ioc
 from pypowervm.wrappers import managed_system as sys
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
@@ -41,6 +42,7 @@ class IOCLASS(object):
     PV = stor.PV.__name__
     CNA = net.CNA.__name__
     MGMT_CNA = 'MGMT' + net.CNA.__name__
+    VNIC = ioc.VNIC.__name__
 
 
 class SlotMapStore(object):
@@ -167,6 +169,20 @@ class SlotMapStore(object):
         """
         self._drop_slot(IOCLASS.CNA, cna.mac, cna.slot)
 
+    def register_vnic(self, vnic):
+        """Register the slot of a virtual network interface card.
+
+        :param vnic: VNIC EntryWrapper to register.
+        """
+        self._reg_slot(IOCLASS.VNIC, vnic.details.mac, vnic.slot)
+
+    def drop_vnic(self, vnic):
+        """Drops the virtual network interface card from the slot topology.
+
+        :param vnic: VNIC EntryWrapper to drop.
+        """
+        self._drop_slot(IOCLASS.VNIC, vnic.details.mac, vnic.slot)
+
     def register_vfc_mapping(self, vfcmap, fab):
         """Incorporate the slot topology associated with a VFC mapping.
 
@@ -285,6 +301,7 @@ class SlotMapStore(object):
         PV          PV.udid                     LUA
         LU          LU.udid                     LUA
         VFC         fabric name                 None
+        VNIC        VNICDetails.mac             None
         """
         ret = copy.deepcopy(self._slot_topo)
         ret.pop('_max_vslots', None)
@@ -442,6 +459,18 @@ class BuildSlotMap(object):
         mgmt_vea = self._build_map.get(IOCLASS.MGMT_CNA, {})
         return mgmt_vea.get('mac', None), mgmt_vea.get('slot', None)
 
+    def get_vnic_slot(self, mac):
+        """Gets the client slot for the VNIC.
+
+        :param mac: MAC address string to look up.
+        :return: Integer client slot number on which to create a VNIC with the
+                 specified MAC address.
+        """
+        # Pull from the build map. Will default to None (indicating to use
+        # the next available high slot).
+        return self._build_map.get(IOCLASS.VNIC, {}).get(
+            pvm_util.sanitize_mac_for_api(mac), None)
+
     def get_vfc_slots(self, fabric, number_of_slots):
         """Gets the client slot list for a given NPIV fabric.
 
@@ -514,8 +543,9 @@ class RebuildSlotMap(BuildSlotMap):
 
         self.vios_wraps = vios_wraps
 
-        # Lets first get the VEAs built
+        # Lets first get the VEAs and VNICs built
         self._vea_build_out()
+        self._vnic_build_out()
 
         # Next up is vSCSI
         self._pv_vscsi_build_out(pv_vscsi_vol_to_vio)
@@ -659,6 +689,13 @@ class RebuildSlotMap(BuildSlotMap):
                 else:
                     self._put_novios_val(IOCLASS.CNA, mac, slot)
 
+    def _vnic_build_out(self):
+        """Builds the '_build_map' for the vnics."""
+        for slot, io_dict in six.iteritems(self._slot_store.topology):
+            for mac in io_dict.get(IOCLASS.VNIC, {}):
+                self._put_novios_val(
+                    IOCLASS.VNIC, pvm_util.sanitize_mac_for_api(mac), slot)
+
     def _npiv_build_out(self, fabrics):
         """Builds the build map for the NPIV fabrics.
 
@@ -706,16 +743,17 @@ class RebuildSlotMap(BuildSlotMap):
     def _put_novios_val(self, io_class, io_key, val):
         """Store a keyed value not associated with a VIOS.
 
-        This applies to non-management CNAs and NPIV fabrics.  Enhances the
-        rebuild map with:
+        This applies to non-management CNAs, VNICs, and NPIV fabrics.
+        Enhances the rebuild map with:
         { io_class: { io_key: val } }
 
         :param io_class: IOCLASS const value representing the type of I/O.
-                         Either IOCLASS.CNA or IOCLASS.NPIV
+                         Either IOCLASS.CNA, IOCLASS.VNIC, or IOCLASS.NPIV
         :param io_key: Key of the I/O device to be added.  MAC address for
-                       IOCLASS.CNA; fabric name for IOCLASS.VFC.
+                       IOCLASS.CNA, IOCLASS.VNIC; fabric name for IOCLASS.VFC.
         :param val: The slot value(s) to be added.  A list of slot numbers for
-                    IOCLASS.VFC; a single slot number for IOCLASS.CNA.
+                    IOCLASS.VFC; a single slot number for IOCLASS.CNA and
+                    IOCLASS.VNIC.
         """
         if io_class not in self._build_map:
             self._build_map[io_class] = {}
