@@ -36,7 +36,7 @@ python setup.py clean -a
 mkdir -p $RPM_BUILD_ROOT/usr/lib/$PYVERSION/site-packages/
 python setup.py install --no-compile --root=$RPM_BUILD_ROOT --install-lib=/usr/lib/$PYVERSION/site-packages/ --install-scripts=/usr/lib/$PYVERSION/site-packages/
 find $RPM_BUILD_ROOT/usr/lib/$PYVERSION/site-packages -type f -name "*.pyc" -delete
-for lc in $(ls -d $RPM_SOURCE_DIR/pypowervm/locale/*/ | cut -f5 -d'/'); do
+for lc in $(ls -d pypowervm/locale/*/ | cut -f3 -d'/'); do
     mkdir -p $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES
     python setup.py compile_catalog -f --input-file $RPM_SOURCE_DIR/pypowervm/locale/$lc/pypowervm.po --output-file $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES/pypowervm.mo
     for lvl in log-critical log-error log-info log-warning; do
