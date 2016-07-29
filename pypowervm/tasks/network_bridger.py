@@ -21,6 +21,8 @@ import copy
 
 import six
 
+from oslo_concurrency import lockutils as lock
+
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm import util as pvm_util
@@ -30,6 +32,7 @@ from pypowervm.wrappers import network as pvm_net
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 _MAX_VLANS_PER_VEA = 20
+_ENSURE_VLAN_LOCK = 'ensure_vlans_nb'
 
 
 def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
@@ -130,6 +133,7 @@ class NetworkBridger(object):
         self._orphan_map = None
 
     @pvm_retry.retry(tries=60, delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+    @lock.synchronized(_ENSURE_VLAN_LOCK)
     def ensure_vlans_on_nb(self, nb_uuid, vlan_ids):
         """Will make sure that the VLANs are assigned to the Network Bridge.
 
