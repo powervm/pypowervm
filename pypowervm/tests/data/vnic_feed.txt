@@ -38,7 +38,7 @@ BODY{
     </Metadata>
     <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V10-C3</DynamicReconfigurationConnectorName>
     <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
-    <VirtualSlotNumber kxe="false" kb="COD">3</VirtualSlotNumber>
+    <VirtualSlotNumber kxe="false" kb="COD">7</VirtualSlotNumber>
     <Details kxe="false" kb="CUR" schemaVersion="V1_4_0">
         <Metadata>
             <Atom/>
@@ -46,7 +46,7 @@ BODY{
         <PortVLANID kxe="false" kb="CUD">0</PortVLANID>
         <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
         <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
-        <MACAddress kb="COD" kxe="false">AE7A25E59A03</MACAddress>
+        <MACAddress kb="COD" kxe="false">AE7A25E59A07</MACAddress>
         <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
         <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
         <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
@@ -92,7 +92,7 @@ BODY{
     </Metadata>
     <DynamicReconfigurationConnectorName kxe="false" kb="CUD">U8286.42A.21C1B6V-V10-C4</DynamicReconfigurationConnectorName>
     <LocalPartitionID kb="CUR" kxe="false">10</LocalPartitionID>
-    <VirtualSlotNumber kxe="false" kb="COD">4</VirtualSlotNumber>
+    <VirtualSlotNumber kxe="false" kb="COD">8</VirtualSlotNumber>
     <Details kxe="false" kb="CUR" schemaVersion="V1_4_0">
         <Metadata>
             <Atom/>
@@ -100,7 +100,7 @@ BODY{
         <PortVLANID kxe="false" kb="CUD">0</PortVLANID>
         <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
         <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
-        <MACAddress kb="COD" kxe="false">AE7A25E59A04</MACAddress>
+        <MACAddress kb="COD" kxe="false">AE7A25E59A08</MACAddress>
         <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
         <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
         <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
