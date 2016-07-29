@@ -23,6 +23,7 @@ from pypowervm import exceptions as pv_e
 from pypowervm.tasks import slot_map
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.utils import lpar_builder as lb
+from pypowervm.wrappers import iocard as ioc
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
 from pypowervm.wrappers import virtual_io_server as vios
@@ -36,6 +37,7 @@ vio1 = loadf(vios.VIOS, 'fake_vios_ssp_npiv.txt')
 vio2 = loadf(vios.VIOS, 'fake_vios_mappings.txt')
 cnafeed1 = loadf(net.CNA, 'cna_feed1.txt')
 vswitchfeed = loadf(net.VSwitch, 'vswitch_feed.txt')
+vnicfeed = loadf(ioc.VNIC, 'vnic_feed.txt')
 
 
 class SlotMapTestImplLegacy(slot_map.SlotMapStore):
@@ -174,6 +176,64 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         for cna in cnafeed1:
             smt.drop_cna(cna)
         self.assertEqual({}, smt.topology)
+
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    @mock.patch('pypowervm.wrappers.network.VSwitch.get')
+    def test_register_vnet(self, mock_vsw_get, mock_sys_get):
+        """Test register_vnet."""
+        mock_vsw_get.return_value = vswitchfeed
+        mock_sys_get.return_value = ['sys']
+        smt = self.smt_impl('foo')
+        for vnic in vnicfeed:
+            smt.register_vnet(vnic)
+        for cna in cnafeed1:
+            smt.register_vnet(cna)
+        self.assertEqual({3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          7: {'VNIC': {'AE7A25E59A07': None}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}},
+                         smt.topology)
+
+    def test_register_vnet_exception(self):
+        """Test register_vnet raises exception without CNA or VNIC."""
+        smt = self.smt_impl('foo')
+        self.assertRaises(pv_e.InvalidVirtualNetworkDeviceType,
+                          smt.register_vnet, None)
+
+    def test_drop_vnet(self):
+        """Test drop_vnic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          7: {'VNIC': {'AE7A25E59A07': None}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}}
+
+        # Drop the first CNA and VNIC and verify it was removed
+        smt.drop_vnet(cnafeed1[0])
+        smt.drop_vnet(vnicfeed[0])
+        self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}},
+                         smt.topology)
+
+        # Drop all remaining VNICs
+        for vnic in vnicfeed:
+            smt.drop_vnet(vnic)
+        self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}},
+                         smt.topology)
+        # Drop all remaining CNAs
+        for cna in cnafeed1:
+            smt.drop_vnet(cna)
+        self.assertEqual({}, smt.topology)
+
+    def test_drop_vnet_exception(self):
+        """Test drop_vnet raises exception without CNA or VNIC."""
+        smt = self.smt_impl('foo')
+        self.assertRaises(pv_e.InvalidVirtualNetworkDeviceType,
+                          smt.drop_vnet, None)
 
     def test_register_vfc_mapping(self):
         """Test register_vfc_mapping."""
@@ -360,6 +420,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         smt1 = self.smt_impl('foo')
         for cna in cnafeed1:
             smt1.register_cna(cna)
+        for vnic in vnicfeed:
+            smt1.register_vnet(vnic)
         i = 1
         for vio in (vio1, vio2):
             for vscsimap in vio.scsi_mappings:
@@ -539,6 +601,25 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertEqual(4, rsm.get_vea_slot('2A2E57A4DE9C'))
         self.assertEqual(None, rsm.get_vea_slot('3AEAC528A7E3'))
         self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
+
+    def test_vnic_build_out(self):
+        """Test _vnic_build_out."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {5: {'VNIC': {'72AB8C392CD6': None}},
+                          6: {'VNIC': {'111111111111': None}},
+                          7: {'VNIC': {'45F16A97BC7E': None}}}
+
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+
+        self.assertEqual(
+            {'VNIC': {'72AB8C392CD6': 5,
+                      '111111111111': 6,
+                      '45F16A97BC7E': 7}},
+            rsm._build_map)
+
+        self.assertEqual(5, rsm.get_vnet_slot('72AB8C392CD6'))
+        self.assertEqual(6, rsm.get_vnet_slot('111111111111'))
+        self.assertEqual(7, rsm.get_vnet_slot('45F16A97BC7E'))
 
     def test_max_vslots(self):
         """Ensure max_vslots returns the set value, or 10 + highest slot."""

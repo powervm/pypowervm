@@ -27,6 +27,7 @@ import six
 from pypowervm import exceptions as pvm_ex
 from pypowervm import util as pvm_util
 from pypowervm.utils import lpar_builder as lb
+from pypowervm.wrappers import iocard as ioc
 from pypowervm.wrappers import managed_system as sys
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
@@ -41,6 +42,7 @@ class IOCLASS(object):
     PV = stor.PV.__name__
     CNA = net.CNA.__name__
     MGMT_CNA = 'MGMT' + net.CNA.__name__
+    VNIC = ioc.VNIC.__name__
 
 
 class SlotMapStore(object):
@@ -150,6 +152,34 @@ class SlotMapStore(object):
         :param max_vslots: The maximum number of virtual slots on the LPAR.
         """
         self._slot_topo['_max_vslots'] = max_vslots
+
+    def register_vnet(self, vnet_w):
+        """Register the slot number for a CNA or VNIC.
+
+        :param vnet_w: Either a CNA wrapper or a VNIC wrapper.
+        :raises: InvalidVirtualNetworkDeviceType: If the wrapper passed in
+                 is not a CNA or VNIC this will be raised.
+        """
+        if isinstance(vnet_w, net.CNA):
+            self.register_cna(vnet_w)
+        elif isinstance(vnet_w, ioc.VNIC):
+            self._reg_slot(IOCLASS.VNIC, vnet_w.details.mac, vnet_w.slot)
+        else:
+            raise pvm_ex.InvalidVirtualNetworkDeviceType(wrapper=vnet_w)
+
+    def drop_vnet(self, vnet_w):
+        """Drops the slot number for a CNA or VNIC.
+
+        :param vnet_w: Either a CNA wrapper or a VNIC wrapper.
+        :raises: InvalidVirtualNetworkDeviceType: If the wrapper passed in
+                 is not a CNA or VNIC this will be raised.
+        """
+        if isinstance(vnet_w, net.CNA):
+            self.drop_cna(vnet_w)
+        elif isinstance(vnet_w, ioc.VNIC):
+            self._drop_slot(IOCLASS.VNIC, vnet_w.details.mac, vnet_w.slot)
+        else:
+            raise pvm_ex.InvalidVirtualNetworkDeviceType(wrapper=vnet_w)
 
     def register_cna(self, cna):
         """Register the slot and switch topology of a client network adapter.
@@ -285,6 +315,7 @@ class SlotMapStore(object):
         PV          PV.udid                     LUA
         LU          LU.udid                     LUA
         VFC         fabric name                 None
+        VNIC        VNICDetails.mac             None
         """
         ret = copy.deepcopy(self._slot_topo)
         ret.pop('_max_vslots', None)
@@ -442,6 +473,19 @@ class BuildSlotMap(object):
         mgmt_vea = self._build_map.get(IOCLASS.MGMT_CNA, {})
         return mgmt_vea.get('mac', None), mgmt_vea.get('slot', None)
 
+    def get_vnet_slot(self, mac):
+        """Gets the client slot for the VEA or VNIC, mgmt VEA not included.
+
+        :param mac: MAC address string to look up.
+        :return: Integer client slot number on which to create a CNA or VNIC
+                 with the specified MAC address.
+        """
+        # Pull from the build map. Will default to None (indicating to use
+        # the next available high slot).
+        mac = pvm_util.sanitize_mac_for_api(mac)
+        return (self._build_map.get(IOCLASS.CNA, {}).get(mac, None) or
+                self._build_map.get(IOCLASS.VNIC, {}).get(mac, None))
+
     def get_vfc_slots(self, fabric, number_of_slots):
         """Gets the client slot list for a given NPIV fabric.
 
@@ -514,8 +558,9 @@ class RebuildSlotMap(BuildSlotMap):
 
         self.vios_wraps = vios_wraps
 
-        # Lets first get the VEAs built
+        # Lets first get the VEAs and VNICs built
         self._vea_build_out()
+        self._vnic_build_out()
 
         # Next up is vSCSI
         self._pv_vscsi_build_out(pv_vscsi_vol_to_vio)
@@ -659,6 +704,13 @@ class RebuildSlotMap(BuildSlotMap):
                 else:
                     self._put_novios_val(IOCLASS.CNA, mac, slot)
 
+    def _vnic_build_out(self):
+        """Builds the '_build_map' for the vnics."""
+        for slot, io_dict in six.iteritems(self._slot_store.topology):
+            for mac in io_dict.get(IOCLASS.VNIC, {}):
+                self._put_novios_val(
+                    IOCLASS.VNIC, pvm_util.sanitize_mac_for_api(mac), slot)
+
     def _npiv_build_out(self, fabrics):
         """Builds the build map for the NPIV fabrics.
 
@@ -706,16 +758,17 @@ class RebuildSlotMap(BuildSlotMap):
     def _put_novios_val(self, io_class, io_key, val):
         """Store a keyed value not associated with a VIOS.
 
-        This applies to non-management CNAs and NPIV fabrics.  Enhances the
-        rebuild map with:
+        This applies to non-management CNAs, VNICs, and NPIV fabrics.
+        Enhances the rebuild map with:
         { io_class: { io_key: val } }
 
         :param io_class: IOCLASS const value representing the type of I/O.
-                         Either IOCLASS.CNA or IOCLASS.NPIV
+                         Either IOCLASS.CNA, IOCLASS.VNIC, or IOCLASS.NPIV
         :param io_key: Key of the I/O device to be added.  MAC address for
-                       IOCLASS.CNA; fabric name for IOCLASS.VFC.
+                       IOCLASS.CNA, IOCLASS.VNIC; fabric name for IOCLASS.VFC.
         :param val: The slot value(s) to be added.  A list of slot numbers for
-                    IOCLASS.VFC; a single slot number for IOCLASS.CNA.
+                    IOCLASS.VFC; a single slot number for IOCLASS.CNA and
+                    IOCLASS.VNIC.
         """
         if io_class not in self._build_map:
             self._build_map[io_class] = {}

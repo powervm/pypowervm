@@ -192,7 +192,7 @@ class TestVNIC(twrap.TestWrapper):
     def test_vnic_props(self):
         self.assertEqual('U8286.42A.21C1B6V-V10-C3', self.dwrap.drc_name)
         self.assertEqual(10, self.dwrap.lpar_id)
-        self.assertEqual(3, self.dwrap.slot)
+        self.assertEqual(7, self.dwrap.slot)
 
     def test_vnic_and_backdev_bld(self):
         # Defaults in kwargs
@@ -274,7 +274,7 @@ class TestVNIC(twrap.TestWrapper):
             dets.allowed_vlans = val
         self.assertRaises(ValueError, bad_vlans_setter, 'foo')
         self.assertRaises(ValueError, bad_vlans_setter, ['a', 'b', 'c'])
-        self.assertEqual('AE7A25E59A03', dets.mac)
+        self.assertEqual('AE7A25E59A07', dets.mac)
         dets.mac = '12:ab:34:CD:56:ef'
         self.assertEqual('12AB34CD56EF', dets.mac)
         self.assertEqual(u.MACList.ALL, dets.allowed_macs)

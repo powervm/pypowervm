@@ -275,6 +275,12 @@ class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
                 "this virtual machine on this system.")
 
 
+class InvalidVirtualNetworkDeviceType(AbstractMsgFmtError):
+    msg_fmt = _("To register the slot information of the network device a "
+                "CNA or VNIC adapter is needed. Instead the following "
+                "was given: %(wrapper)s.")
+
+
 class NotEnoughActiveVioses(AbstractMsgFmtError):
     msg_fmt = _("There are not enough active Virtual I/O Servers available. "
                 "Expected %(exp)d; found %(act)d.")
