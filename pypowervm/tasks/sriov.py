@@ -382,3 +382,19 @@ def safe_update_pports(sys_w, force=False):
             for warning in warnings:
                 LOG.warning(warning)
         sys_w.update()
+
+
+def find_pport(sys_w, physloc):
+    """Find an SR-IOV physical port based on its location code.
+
+    :param sys_w: pypowervm.wrappers.managed_system.System wrapper of the host.
+    :param physloc: Physical location code string (per SRIOV*PPort.loc_code) of
+                    the SR-IOV physical port to find.
+    :return: SRIOVEthPPort or SRIOVConvPPort wrapper with the specified
+             location code, or None if no such port exists in sys_w.
+    """
+    for sriov in sys_w.asio_config.sriov_adapters:
+        for pport in sriov.phys_ports:
+            if pport.loc_code == physloc:
+                return pport
+    return None
