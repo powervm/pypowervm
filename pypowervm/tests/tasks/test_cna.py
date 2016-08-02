@@ -224,8 +224,9 @@ class TestVNET(twrap.TestWrapper):
                                       mock.Mock(uuid='vios_uuid2')]
 
         mock_cna = mock.MagicMock()
-        mock_trunk1, mock_trunk2 = mock.MagicMock(), mock.MagicMock()
-        mock_cna_bld.side_effect = [mock_cna, mock_trunk1, mock_trunk2]
+        mock_trunk1, mock_trunk2 = mock.MagicMock(pvid=2050), mock.MagicMock()
+        mock_trunk1.create.return_value = mock_trunk1
+        mock_cna_bld.side_effect = [mock_trunk1, mock_trunk2, mock_cna]
 
         # Invoke the create
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
@@ -269,8 +270,9 @@ class TestVNET(twrap.TestWrapper):
                                       mock.Mock(uuid='vios_uuid2')]
 
         mock_cna = mock.MagicMock()
-        mock_trunk1, mock_trunk2 = mock.MagicMock(), mock.MagicMock()
-        mock_cna_bld.side_effect = [mock_cna, mock_trunk1, mock_trunk2]
+        mock_trunk1 = mock.MagicMock(pvid=2050)
+        mock_trunk1.create.return_value = mock_trunk1
+        mock_cna_bld.side_effect = [mock_trunk1, mock_cna]
 
         # Invoke the create
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
@@ -291,6 +293,41 @@ class TestVNET(twrap.TestWrapper):
             parent_type=pvm_lpar.LPAR, parent_uuid='lpar_uuid')
         mock_trunk1.create.assert_called_once_with(
             parent_type=pvm_lpar.LPAR, parent_uuid='mgmt_lpar_uuid')
+
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    @mock.patch('pypowervm.wrappers.network.CNA.bld')
+    @mock.patch('pypowervm.tasks.cna._find_free_vlan')
+    @mock.patch('pypowervm.tasks.cna._find_or_create_vswitch')
+    def test_crt_trunk_with_free_vlan(
+            self, mock_find_or_create_vswitch, mock_find_free_vlan,
+            mock_cna_bld, mock_vios_get):
+        """Tests the crt_trunk_with_free_vlan on mgmt based VIOS."""
+        # Mock out the data
+        mock_vswitch = mock.Mock(related_href='vswitch_href')
+        mock_find_or_create_vswitch.return_value = mock_vswitch
+        mock_find_free_vlan.return_value = 2050
+
+        # Mock the get of the VIOSes.
+        mock_vios_get.return_value = [mock.Mock(uuid='vios_uuid1')]
+
+        mock_trunk1 = mock.MagicMock(pvid=2050)
+        mock_trunk1.create.return_value = mock_trunk1
+        mock_cna_bld.return_value = mock_trunk1
+
+        # Invoke the create
+        trunk_adpts = cna.crt_trunk_with_free_vlan(
+            self.adpt, 'host_uuid', ['vios_uuid1'],
+            mock_vswitch, crt_vswitch=True, mac_addr='aabbccddeeff',
+            dev_name='tap-12345')
+
+        # Make sure the client and trunk were 'built'
+        mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
+                                     trunk_pri=1, dev_name='tap-12345')
+
+        # Make sure that the trunk was created
+        self.assertEqual(1, len(trunk_adpts))
+        mock_trunk1.create.assert_called_once_with(
+            parent_type=pvm_vios.VIOS, parent_uuid='vios_uuid1')
 
     @mock.patch('pypowervm.wrappers.network.CNA.get')
     def test_find_trunk_on_lpar(self, mock_cna_get):
