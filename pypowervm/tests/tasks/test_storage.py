@@ -837,8 +837,21 @@ class TestScrub2(testtools.TestCase):
         # in the same FeedTask (no duplicate 'provides' names).
         ts.add_lpar_storage_scrub_tasks([45], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
+        self.assertEqual(2, mock_rm_vopt.call_count)
+        self.assertEqual(2, mock_rm_vd.call_count)
         self.logfx.patchers['warning'].mock.assert_has_calls(
             warns, any_order=True)
+
+    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage._rm_lus')
+    def test_no_remove_storage(self, mock_rm_lu, mock_rm_vopt, mock_rm_vd):
+        ts.add_lpar_storage_scrub_tasks([3], self.ftsk, lpars_exist=True,
+                                        remove_storage=False)
+        self.ftsk.execute()
+        mock_rm_lu.assert_not_called()
+        mock_rm_vopt.assert_not_called()
+        mock_rm_vd.assert_not_called()
 
     def test_find_stale_lpars(self):
         self.adpt.read.return_value = tju.load_file(LPAR_FEED,

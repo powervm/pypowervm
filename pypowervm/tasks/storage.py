@@ -935,7 +935,8 @@ class _RemoveStorage(tf_tsk.Task):
                 executor=tx.ContextThreadPoolExecutor(max(8, len(rmtasks))))
 
 
-def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
+def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False,
+                                 remove_storage=True):
     """Delete storage mappings and elements associated with an LPAR ID.
 
     This should typically be used to clean leftovers from an LPAR that has been
@@ -946,7 +947,7 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     associate a mapping-less storage element with an LPAR ID.
 
     Storage elements are deleted if their only mappings are to the LPAR ID
-    being scrubbed.
+    being scrubbed (and remove_storage=True).
 
     This method only adds subtasks/post-execs to the passed-in FeedTask.  The
     caller is responsible for executing that FeedTask in an appropriate Flow or
@@ -964,6 +965,10 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
                         whether the LPAR exists or not. Thus, set to True only
                         if intentionally removing mappings associated with
                         extant LPARs.
+    :param remove_storage: If True (the default), storage elements associated
+                           with stale mappings are removed, assuming it can be
+                           verified that they were only in use by this LPAR.
+                           If False, no storage removal is attempted.
     """
     tag = '_'.join((str(lpar_id) for lpar_id in lpar_ids))
 
@@ -993,7 +998,8 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     ftsk.add_functor_subtask(remove_chain, 'VSCSI',
                              provides='vscsi_removals_' + tag)
     ftsk.add_functor_subtask(remove_chain, 'VFC')
-    ftsk.add_post_execute(_RemoveStorage(tag))
+    if remove_storage:
+        ftsk.add_post_execute(_RemoveStorage(tag))
 
 
 def add_orphan_storage_scrub_tasks(ftsk, lpar_id=None):
