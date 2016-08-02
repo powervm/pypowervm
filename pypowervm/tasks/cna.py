@@ -170,6 +170,13 @@ def assign_free_vlan(adapter, host_uuid, vswitch_w, cna, ensure_enabled=False):
     return cna
 
 
+@lockutils.synchronized(VLAN_LOCK)
+def crt_cna_with_free_vlan(adapter, host_uuid, lpar_w, vswitch_w, cna):
+    vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+    cna.pvid = vlan
+    return cna.create(parent=lpar_w)
+
+
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                 crt_vswitch=True, mac_addr=None, slot_num=None, dev_name=None):
     """Creates a 'point-to-point' Client Network Adapter.
@@ -372,14 +379,17 @@ def find_orphaned_trunks(adapter, vswitch_name):
                          on.
     :return: A list of trunk adapters that do not have any associated CNAs
     """
+    vswitch_id = pvm_net.VSwitch.search(
+        adapter, parent_type=pvm_ms.System, one_result=True,
+        name=vswitch_name).switch_id
+
+    # May occur if the vswitch does not have the vswitch.
+    if vswitch_id is None:
+        return []
 
     # VIOS and Management Partitions can host Trunk Adapters.
     host_wraps = partition.get_partitions(
         adapter, lpars=False, vioses=True, mgmt=True)
-
-    vswitch_id = pvm_net.VSwitch.search(
-        adapter, parent_type=pvm_ms.System, one_result=True,
-        name=vswitch_name).switch_id
 
     # Get all the CNA wraps on the vswitch
     cna_wraps = _find_cna_wraps(adapter, vswitch_id=vswitch_id)
