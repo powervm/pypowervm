@@ -147,6 +147,8 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(0.02, lport.cfg_capacity)
         self.assertEqual(2, lport.pport_id)
         self.assertEqual(0, lport.pvid)
+        self.assertEqual('8ACA227C6E00', lport.mac)
+        self.assertEqual('000000000000', lport.cur_mac)
         self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
 
         # Verify logical port setters
@@ -181,14 +183,17 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertIsNone(lport.cfg_capacity)
         self.assertEqual(6, lport.pport_id)
         self.assertIsNone(lport.pvid)
+        self.assertIsNone(lport.mac)
         # With explicit kwargs
         lport = card.SRIOVEthLPort.bld(
-            self.adpt, 5, 6, pvid=2230, is_promisc=True, cfg_capacity=0.05)
+            self.adpt, 5, 6, pvid=2230, mac='12:ab:34:CD:56:ef',
+            is_promisc=True, cfg_capacity=0.05)
         self.assertEqual(5, lport.sriov_adap_id)
         self.assertTrue(lport.is_promisc)
         self.assertEqual(0.05, lport.cfg_capacity)
         self.assertEqual(6, lport.pport_id)
         self.assertEqual(2230, lport.pvid)
+        self.assertEqual('12AB34CD56EF', lport.mac)
 
 
 class TestVNIC(twrap.TestWrapper):

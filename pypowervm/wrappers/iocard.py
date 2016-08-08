@@ -527,8 +527,8 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     """The SRIOV Ethernet Logical port."""
 
     @classmethod
-    def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, is_promisc=False,
-            cfg_capacity=None):
+    def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, mac=None,
+            is_promisc=False, cfg_capacity=None):
         """Create a wrapper used to create a logical port on the server.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -538,6 +538,7 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         :param pvid: The port VLAN identifier for this logical port. Any
                      untagged traffic passing through this port will have
                      this VLAN tag added.
+        :param mac: The MAC address to assign to the logical port.
         :param is_promisc: Set to True if using the logical port for bridging
                            (e.g. SEA, OVS, etc.); False if assigning directly
                            to an LPAR.  Only one logical port per physical port
@@ -555,6 +556,8 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         lport._pport_id(pport_id)
         if pvid is not None:
             lport.pvid = pvid
+        if mac is not None:
+            lport._mac(mac)
         lport._is_promisc(is_promisc)
         if cfg_capacity:
             lport._cfg_capacity(cfg_capacity)
@@ -618,6 +621,30 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     @pvid.setter
     def pvid(self, value):
         self.set_parm_value(_SRIOVLP_PVID, value)
+
+    @property
+    def mac(self):
+        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits).
+
+        This is the MAC address "burned into" the logical port.  The actual MAC
+        address on the interface (cur_mac) may be this value or the value set
+        from within the OS on the VM.
+        """
+        return self._get_val_str(_SRIOVLP_MAC)
+
+    def _mac(self, value):
+        self.set_parm_value(_SRIOVLP_MAC, u.sanitize_mac_for_api(value))
+
+    @property
+    def cur_mac(self):
+        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits).
+
+        This is the real value set on the interface, possibly by the VM's OS.
+
+        Note that some SR-IOV cards are broken and don't report the OS-assigned
+        value correctly.  In such cases, cur_mac will report the same as mac.
+        """
+        return self._get_val_str(_SRIOVLP_CUR_MAC)
 
     @property
     def loc_code(self):
