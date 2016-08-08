@@ -656,8 +656,9 @@ class VNIC(ewrap.EntryWrapper):
     """A dedicated, possibly-redundant Virtual NIC."""
 
     @classmethod
-    def bld(cls, adapter, pvid, slot_num=None, allowed_vlans=u.VLANList.ALL,
-            mac_addr=None, allowed_macs=u.MACList.ALL, back_devs=None):
+    def bld(cls, adapter, pvid=None, slot_num=None,
+            allowed_vlans=u.VLANList.ALL, mac_addr=None,
+            allowed_macs=u.MACList.ALL, back_devs=None):
         """Build a new VNIC wrapper suitable for .create()
 
         A VNIC is a CHILD object on a LogicalPartition.  Usage models:
@@ -670,7 +671,8 @@ class VNIC(ewrap.EntryWrapper):
             vnic.create(parent=lpar_wrap)
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
-        :param pvid: Port VLAN ID for this vNIC.
+        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
+                     traffic is untagged.
         :param slot_num: Desired virtual slot number on the owning LPAR.
         :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
                               Specify pypowervm.util.VLANList.ALL to allow all
@@ -696,7 +698,7 @@ class VNIC(ewrap.EntryWrapper):
             vnic._use_next_avail_slot_id = True
 
         vnic._details(VNICDetails._bld_new(
-            adapter, pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
+            adapter, pvid=pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
             allowed_macs=allowed_macs))
 
         if back_devs:
@@ -762,14 +764,15 @@ class VNICDetails(ewrap.ElementWrapper):
     """The 'Details' sub-element of a VirtualNICDedicated."""
 
     @classmethod
-    def _bld_new(cls, adapter, pvid, allowed_vlans=u.VLANList.ALL,
+    def _bld_new(cls, adapter, pvid=None, allowed_vlans=u.VLANList.ALL,
                  mac_addr=None, allowed_macs=u.MACList.ALL):
         """Create a new VNICDetails wrapper suitable for insertion into a VNIC.
 
         Not to be called outside of VNIC.bld().
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
-        :param pvid: Port VLAN ID for this vNIC.
+        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
+                     traffic is untagged.
         :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
                               Specify pypowervm.util.VLANList.ALL to allow all
                               VLANs or .NONE to allow no VLANs on this vNIC.
@@ -782,7 +785,8 @@ class VNICDetails(ewrap.ElementWrapper):
         :return: A new VNICDetails wrapper.
         """
         vnicd = super(VNICDetails, cls)._bld(adapter)
-        vnicd.pvid = pvid
+        if pvid is not None:
+            vnicd.pvid = pvid
         vnicd.allowed_vlans = allowed_vlans
         if mac_addr is not None:
             vnicd.mac = mac_addr
@@ -791,7 +795,8 @@ class VNICDetails(ewrap.ElementWrapper):
 
     @property
     def pvid(self):
-        return self._get_val_int(_VNICD_PVID)
+        """The integer port VLAN ID, or None if the vNIC has no PVID."""
+        return self._get_val_int(_VNICD_PVID) or None
 
     @pvid.setter
     def pvid(self, val):
