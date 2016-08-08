@@ -138,7 +138,7 @@ class TestSriov(testtools.TestCase):
                                     mock.Mock(uuid='vios_uuid2'),
                                     mock.Mock(uuid='vios_uuid3')]
         self.adpt.build_href.side_effect = lambda *a, **k: '%s' % a[1]
-        vnic = card.VNIC.bld(self.adpt, 5)
+        vnic = card.VNIC.bld(self.adpt, pvid=5)
         self.assertEqual(0, len(vnic.back_devs))
         # Silly case: min/max of zero
         tsriov.set_vnic_back_devs(vnic, [], sriov_adaps=self.fake_sriovs,

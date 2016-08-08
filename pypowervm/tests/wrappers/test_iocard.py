@@ -202,11 +202,11 @@ class TestVNIC(twrap.TestWrapper):
 
     def test_vnic_and_backdev_bld(self):
         # Defaults in kwargs
-        vnic = card.VNIC.bld(self.adpt, 2)
+        vnic = card.VNIC.bld(self.adpt)
         dets = vnic.details
         backdevs = vnic.back_devs
         self.assertEqual(self.adpt, vnic.adapter)
-        self.assertEqual(2, dets.pvid)
+        self.assertIsNone(dets.pvid)
         self.assertIsNotNone(backdevs)
         self.assertEqual(0, len(backdevs))
         # Fields without setters
@@ -233,7 +233,8 @@ class TestVNIC(twrap.TestWrapper):
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
                                          capacity=0.3456789)]
         vnic = card.VNIC.bld(
-            self.adpt, 7, slot_num=8, allowed_vlans=[1, 2], mac_addr='m:a:c',
+            self.adpt, pvid=7, slot_num=8, allowed_vlans=[1, 2],
+            mac_addr='m:a:c',
             allowed_macs=['AB:12:CD:34:EF:56', '12ab34cd56ef'],
             back_devs=backdevs)
         dets = vnic.details
@@ -268,7 +269,7 @@ class TestVNIC(twrap.TestWrapper):
 
     def test_details_props(self):
         dets = self.dwrap.details
-        self.assertEqual(0, dets.pvid)
+        self.assertIsNone(dets.pvid)
         dets.pvid = 123
         self.assertEqual(123, dets.pvid)
         self.assertEqual(u.VLANList.ALL, dets.allowed_vlans)
