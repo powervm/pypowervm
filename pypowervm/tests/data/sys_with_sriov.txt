@@ -326,9 +326,11 @@ BODY{
 <Atom/>
                             </Metadata>
                             <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredFlowControl kb="CUD" kxe="false">false</ConfiguredFlowControl>
                             <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
                             <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
                             <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <ConfiguredPortSwitchMode kb="CUD" kxe="false">Veb</ConfiguredPortSwitchMode>
                             <CurrentConnectionSpeed kb="ROR" kxe="false">E10Mbps</CurrentConnectionSpeed>
                             <CurrentOptions kb="ROR" kxe="false">fullDuplex</CurrentOptions>
                             <CurrentOptions kb="ROR" kxe="false">linkUp</CurrentOptions>
@@ -384,9 +386,11 @@ BODY{
 <Atom/>
                             </Metadata>
                             <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredFlowControl kb="CUD" kxe="false">false</ConfiguredFlowControl>
                             <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
                             <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
                             <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <ConfiguredPortSwitchMode kb="CUD" kxe="false">Veb</ConfiguredPortSwitchMode>
                             <CurrentConnectionSpeed kb="ROR" kxe="false">Unknown</CurrentConnectionSpeed>
                             <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
                             <Label kxe="false" kb="CUR"/>
@@ -445,9 +449,11 @@ BODY{
 <Atom/>
                             </Metadata>
                             <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredFlowControl kb="CUD" kxe="false">false</ConfiguredFlowControl>
                             <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
                             <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
                             <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <ConfiguredPortSwitchMode kb="CUD" kxe="false">Veb</ConfiguredPortSwitchMode>
                             <CurrentConnectionSpeed kb="ROR" kxe="false">E1Gbps</CurrentConnectionSpeed>
                             <CurrentOptions kb="ROR" kxe="false">fullDuplex</CurrentOptions>
                             <CurrentOptions kb="ROR" kxe="false">linkUp</CurrentOptions>
@@ -494,9 +500,11 @@ BODY{
 <Atom/>
                             </Metadata>
                             <ConfiguredConnectionSpeed kxe="false" kb="CUR">Auto</ConfiguredConnectionSpeed>
+                            <ConfiguredFlowControl kb="CUD" kxe="false">false</ConfiguredFlowControl>
                             <ConfiguredMTU kb="CUR" kxe="false">E_1500</ConfiguredMTU>
                             <ConfiguredOptions kxe="false" kb="CUR">autoDuplex</ConfiguredOptions>
                             <ConfiguredOptions kxe="false" kb="CUR">Veb</ConfiguredOptions>
+                            <ConfiguredPortSwitchMode kb="CUD" kxe="false">Veb</ConfiguredPortSwitchMode>
                             <CurrentConnectionSpeed kb="ROR" kxe="false">Unknown</CurrentConnectionSpeed>
                             <CurrentOptions kb="ROR" kxe="false">Veb</CurrentOptions>
                             <Label kxe="false" kb="CUR"/>
