@@ -110,7 +110,7 @@ class TestElementList(twrap.TestWrapper):
     def _validate_xml(self, val_list):
         outer_tag = self.pport.schema_type
         tag_before = 'ConfiguredMTU'
-        tag_after = 'CurrentConnectionSpeed'
+        tag_after = 'ConfiguredPortSwitchMode'
         # Opening
         tag_pat_fmt = r'<%s(\s[^>]*)?>'
         elem_pat_fmt = tag_pat_fmt + r'%s</%s>\s*'

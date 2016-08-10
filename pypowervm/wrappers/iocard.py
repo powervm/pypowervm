@@ -40,8 +40,10 @@ _SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
 # SR-IOV physical port constants
 
 _SRIOVPP_CFG_SPEED = 'ConfiguredConnectionSpeed'
+_SRIOVPP_CFG_FLOWCTL = 'ConfiguredFlowControl'
 _SRIOVPP_CFG_MTU = 'ConfiguredMTU'
 _SRIOVPP_CFG_OPTIONS = 'ConfiguredOptions'
+_SRIOVPP_CFG_SWMODE = 'ConfiguredPortSwitchMode'
 _SRIOVPP_CURR_SPEED = 'CurrentConnectionSpeed'
 _SRIOVPP_CURR_OPTIONS = 'CurrentOptions'
 _SRIOVPP_LBL = 'Label'
@@ -84,8 +86,8 @@ _SRIOVPP_MX_SUPP_FCOE_LPS = 'MaxSupportedFiberChannelOverEthernetLogicalPorts'
 _SRIOVPP_MAX_FC_TARGETS = 'MaximumFiberChannelTargets'
 
 _SRIOVPP_EL_ORDER = (
-    _SRIOVPP_CFG_SPEED, _SRIOVPP_CFG_MTU,
-    _SRIOVPP_CFG_OPTIONS, _SRIOVPP_CURR_SPEED,
+    _SRIOVPP_CFG_SPEED, _SRIOVPP_CFG_FLOWCTL, _SRIOVPP_CFG_MTU,
+    _SRIOVPP_CFG_OPTIONS, _SRIOVPP_CFG_SWMODE, _SRIOVPP_CURR_SPEED,
     _SRIOVPP_CURR_OPTIONS, _SRIOVPP_LBL, _SRIOVPP_LOC_CODE,
     _SRIOVPP_MAX_DIAG_LPS, _SRIOVPP_MAX_PROM_LPS,
     _SRIOVPP_ID, _SRIOVPP_CAPABILITIES, _SRIOVPP_TYPE,
@@ -252,6 +254,13 @@ class SRIOVSpeed(object):
     E40G = 'E40Gpbs'
     E100G = 'E100Gpbs'
     AUTO = 'Auto'
+    UNKNOWN = 'Unknown'
+
+
+class SRIOVPPMTU(object):
+    """Enumeration for SRIOV PP MTU (from SRIOVPhysicalPortMTU.Enum)."""
+    E1500 = "E_1500"
+    E9000 = "E_9000"
     UNKNOWN = 'Unknown'
 
 
@@ -511,6 +520,34 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
     @property
     def curr_speed(self):
         return self._get_val_str(_SRIOVPP_CURR_SPEED)
+
+    @property
+    def mtu(self):
+        """Result should be a SRIOVPPMTU value."""
+        return self._get_val_str(_SRIOVPP_CFG_MTU)
+
+    @mtu.setter
+    def mtu(self, val):
+        """Input val should be a SRIOVPPMTU value."""
+        self.set_parm_value(_SRIOVPP_CFG_MTU, val)
+
+    @property
+    def switch_mode(self):
+        """Result should be a network.VSwitchMode value."""
+        return self._get_val_str(_SRIOVPP_CFG_SWMODE)
+
+    @switch_mode.setter
+    def switch_mode(self, val):
+        """Input val should be a network.VSwitchMode value."""
+        self.set_parm_value(_SRIOVPP_CFG_SWMODE, val)
+
+    @property
+    def flow_ctl(self):
+        return self._get_val_bool(_SRIOVPP_CFG_FLOWCTL)
+
+    @flow_ctl.setter
+    def flow_ctl(self, val):
+        self.set_parm_value(_SRIOVPP_CFG_FLOWCTL, u.sanitize_bool_for_api(val))
 
 
 @ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
