@@ -1284,68 +1284,6 @@ class IOSlot(ewrap.ElementWrapper):
     def required(self, val):
         self.set_parm_value(_IO_SLOT_REQ, u.sanitize_bool_for_api(val))
 
-    def __get_prop(self, func):
-        """Thin wrapper to get the Associated I/O Slot and get a property."""
-        elem = self._find(ASSOC_IO_SLOT_ROOT)
-        if elem is None:
-            return None
-
-        # Build the Associated IO Slot, find the function and execute it.
-        assoc_io_slot = self.AssociatedIOSlot.wrap(elem)
-        return getattr(assoc_io_slot, func)
-
-    @property
-    def bus_grp_required(self):
-        return self.__get_prop('bus_grp_required')
-
-    @property
-    def description(self):
-        return self.__get_prop('description')
-
-    @property
-    def phys_loc(self):
-        return self.__get_prop('phys_loc')
-
-    @property
-    def pc_adpt_id(self):
-        return self.__get_prop('pc_adpt_id')
-
-    @property
-    def pci_class(self):
-        return self.__get_prop('pci_class')
-
-    @property
-    def pci_dev_id(self):
-        return self.__get_prop('pci_dev_id')
-
-    @property
-    def pci_subsys_dev_id(self):
-        return self.__get_prop('pci_subsys_dev_id')
-
-    @property
-    def pci_mfg_id(self):
-        return self.__get_prop('pci_mfg_id')
-
-    @property
-    def pci_rev_id(self):
-        return self.__get_prop('pci_rev_id')
-
-    @property
-    def pci_vendor_id(self):
-        return self.__get_prop('pci_vendor_id')
-
-    @property
-    def pci_subsys_vendor_id(self):
-        return self.__get_prop('pci_subsys_vendor_id')
-
-    @property
-    def drc_index(self):
-        return self.__get_prop('drc_index')
-
-    @property
-    def drc_name(self):
-        return self.__get_prop('drc_name')
-
     @property
     def adapter(self):
         """DEPRECATED - use 'io_adapter' method instead."""
@@ -1356,10 +1294,24 @@ class IOSlot(ewrap.ElementWrapper):
         return self.io_adapter
 
     @property
-    def io_adapter(self):
-        """Returns the physical I/O Adapter for this slot.
+    def _asio_slot(self):
+        return self.AssociatedIOSlot.wrap(self._find(ASSOC_IO_SLOT_ROOT))
 
-        This will be one of two types.  Either a generic I/O Adapter or
-        a Physical Fibre Channel Adapter (PhysFCAdapter).
-        """
-        return self.__get_prop('io_adapter')
+    # Nested @propertys from AssociatedIOSlot.
+    bus_grp_required = u.nestedprop(_asio_slot,
+                                    AssociatedIOSlot.bus_grp_required)
+    description = u.nestedprop(_asio_slot, AssociatedIOSlot.description)
+    phys_loc = u.nestedprop(_asio_slot, AssociatedIOSlot.phys_loc)
+    pc_adpt_id = u.nestedprop(_asio_slot, AssociatedIOSlot.pc_adpt_id)
+    pci_class = u.nestedprop(_asio_slot, AssociatedIOSlot.pci_class)
+    pci_dev_id = u.nestedprop(_asio_slot, AssociatedIOSlot.pci_dev_id)
+    pci_subsys_dev_id = u.nestedprop(_asio_slot,
+                                     AssociatedIOSlot.pci_subsys_dev_id)
+    pci_mfg_id = u.nestedprop(_asio_slot, AssociatedIOSlot.pci_mfg_id)
+    pci_rev_id = u.nestedprop(_asio_slot, AssociatedIOSlot.pci_rev_id)
+    pci_vendor_id = u.nestedprop(_asio_slot, AssociatedIOSlot.pci_vendor_id)
+    pci_subsys_vendor_id = u.nestedprop(_asio_slot,
+                                        AssociatedIOSlot.pci_subsys_vendor_id)
+    drc_index = u.nestedprop(_asio_slot, AssociatedIOSlot.drc_index)
+    drc_name = u.nestedprop(_asio_slot, AssociatedIOSlot.drc_name)
+    io_adapter = u.nestedprop(_asio_slot, AssociatedIOSlot.io_adapter)
