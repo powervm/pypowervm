@@ -651,6 +651,83 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         return self._get_val_str(_SRIOVLP_LOC_CODE)
 
 
+@ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
+                               child_order=_VNICD_EL_ORDER)
+class VNICDetails(ewrap.ElementWrapper):
+    """The 'Details' sub-element of a VirtualNICDedicated."""
+
+    @classmethod
+    def _bld_new(cls, adapter, pvid=None, allowed_vlans=u.VLANList.ALL,
+                 mac_addr=None, allowed_macs=u.MACList.ALL):
+        """Create a new VNICDetails wrapper suitable for insertion into a VNIC.
+
+        Not to be called outside of VNIC.bld().
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
+                     traffic is untagged.
+        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
+                              Specify pypowervm.util.VLANList.ALL to allow all
+                              VLANs or .NONE to allow no VLANs on this vNIC.
+                              Default: ALL.
+        :param mac_addr: MAC address for the vNIC.
+        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
+                             Specify pypowervm.util.MACList.ALL to allow all
+                             MAC addresses, or .NONE to allow no MAC addresses
+                             on this vNIC.  Default: ALL.
+        :return: A new VNICDetails wrapper.
+        """
+        vnicd = super(VNICDetails, cls)._bld(adapter)
+        if pvid is not None:
+            vnicd.pvid = pvid
+        vnicd.allowed_vlans = allowed_vlans
+        if mac_addr is not None:
+            vnicd.mac = mac_addr
+        vnicd.allowed_macs = allowed_macs
+        return vnicd
+
+    @property
+    def pvid(self):
+        """The integer port VLAN ID, or None if the vNIC has no PVID."""
+        return self._get_val_int(_VNICD_PVID) or None
+
+    @pvid.setter
+    def pvid(self, val):
+        self.set_parm_value(_VNICD_PVID, val)
+
+    @property
+    def allowed_vlans(self):
+        vlan_str = self._get_val_str(_VNICD_ALLOWED_VLANS)
+        return u.VLANList.unmarshal(vlan_str) if vlan_str is not None else None
+
+    @allowed_vlans.setter
+    def allowed_vlans(self, vlans):
+        self.set_parm_value(_VNICD_ALLOWED_VLANS, u.VLANList.marshal(vlans))
+
+    @property
+    def mac(self):
+        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
+        return self._get_val_str(_VNICD_MAC)
+
+    @mac.setter
+    def mac(self, val):
+        self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val))
+
+    @property
+    def allowed_macs(self):
+        amstr = self._get_val_str(_VNICD_ALLOWED_OS_MACS)
+        return u.MACList.unmarshal(amstr) if amstr is not None else None
+
+    @allowed_macs.setter
+    def allowed_macs(self, maclist):
+        self.set_parm_value(_VNICD_ALLOWED_OS_MACS, u.MACList.marshal(maclist))
+
+    @property
+    def capacity(self):
+        """The capacity (float, 0.0-1.0) of the active backing logical port."""
+        return self._get_val_percent(_VNICD_DES_CAP_PCT)
+
+
 @ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
 class VNIC(ewrap.EntryWrapper):
     """A dedicated, possibly-redundant Virtual NIC."""
@@ -747,6 +824,11 @@ class VNIC(ewrap.EntryWrapper):
     def _details(self, val):
         self.element.replace(self._find_or_seed(_VNIC_DETAILS), val.element)
 
+    # Proxy @propertys from details
+    pvid, allowed_vlans, mac, allowed_macs, capacity = u.proxyprops(
+        details, VNICDetails.pvid, VNICDetails.allowed_vlans, VNICDetails.mac,
+        VNICDetails.allowed_macs, VNICDetails.capacity)
+
     @property
     def back_devs(self):
         return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
@@ -756,83 +838,6 @@ class VNIC(ewrap.EntryWrapper):
     @back_devs.setter
     def back_devs(self, new_devs):
         self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
-
-
-@ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
-                               child_order=_VNICD_EL_ORDER)
-class VNICDetails(ewrap.ElementWrapper):
-    """The 'Details' sub-element of a VirtualNICDedicated."""
-
-    @classmethod
-    def _bld_new(cls, adapter, pvid=None, allowed_vlans=u.VLANList.ALL,
-                 mac_addr=None, allowed_macs=u.MACList.ALL):
-        """Create a new VNICDetails wrapper suitable for insertion into a VNIC.
-
-        Not to be called outside of VNIC.bld().
-
-        :param adapter: pypowervm.adapter.Adapter for REST API communication.
-        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
-                     traffic is untagged.
-        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
-                              Specify pypowervm.util.VLANList.ALL to allow all
-                              VLANs or .NONE to allow no VLANs on this vNIC.
-                              Default: ALL.
-        :param mac_addr: MAC address for the vNIC.
-        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
-                             Specify pypowervm.util.MACList.ALL to allow all
-                             MAC addresses, or .NONE to allow no MAC addresses
-                             on this vNIC.  Default: ALL.
-        :return: A new VNICDetails wrapper.
-        """
-        vnicd = super(VNICDetails, cls)._bld(adapter)
-        if pvid is not None:
-            vnicd.pvid = pvid
-        vnicd.allowed_vlans = allowed_vlans
-        if mac_addr is not None:
-            vnicd.mac = mac_addr
-        vnicd.allowed_macs = allowed_macs
-        return vnicd
-
-    @property
-    def pvid(self):
-        """The integer port VLAN ID, or None if the vNIC has no PVID."""
-        return self._get_val_int(_VNICD_PVID) or None
-
-    @pvid.setter
-    def pvid(self, val):
-        self.set_parm_value(_VNICD_PVID, val)
-
-    @property
-    def allowed_vlans(self):
-        vlan_str = self._get_val_str(_VNICD_ALLOWED_VLANS)
-        return u.VLANList.unmarshal(vlan_str) if vlan_str is not None else None
-
-    @allowed_vlans.setter
-    def allowed_vlans(self, vlans):
-        self.set_parm_value(_VNICD_ALLOWED_VLANS, u.VLANList.marshal(vlans))
-
-    @property
-    def mac(self):
-        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
-        return self._get_val_str(_VNICD_MAC)
-
-    @mac.setter
-    def mac(self, val):
-        self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val))
-
-    @property
-    def allowed_macs(self):
-        amstr = self._get_val_str(_VNICD_ALLOWED_OS_MACS)
-        return u.MACList.unmarshal(amstr) if amstr is not None else None
-
-    @allowed_macs.setter
-    def allowed_macs(self, maclist):
-        self.set_parm_value(_VNICD_ALLOWED_OS_MACS, u.MACList.marshal(maclist))
-
-    @property
-    def capacity(self):
-        """The capacity (float, 0.0-1.0) of the active backing logical port."""
-        return self._get_val_percent(_VNICD_DES_CAP_PCT)
 
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
@@ -915,39 +920,13 @@ class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
     Flattens this two step heirarchy to pull the information needed directly
     from the IOAdapter element.
     """
-    def __get_prop(self, func):
-        """Thin wrapper to get the IOAdapter and get a property."""
-        elem = self._find('IOAdapter')
-        if elem is None:
-            return None
-
-        io_adpt = IOAdapter.wrap(elem)
-        return getattr(io_adpt, func)
-
     @property
-    def id(self):
-        return self.__get_prop('id')
+    def _io_adap(self):
+        return IOAdapter.wrap(self._find(IO_ADPT_ROOT))
 
-    @property
-    def description(self):
-        return self.__get_prop('description')
-
-    @property
-    def dev_name(self):
-        return self.__get_prop('dev_name')
-
-    @property
-    def dev_type(self):
-        return self.__get_prop('dev_type')
-
-    @property
-    def drc_name(self):
-        return self.__get_prop('drc_name')
-
-    @property
-    def phys_loc_code(self):
-        return self.__get_prop('phys_loc_code')
-
-    @property
-    def udid(self):
-        return self.__get_prop('udid')
+    # Proxy @propertys from IOAdapter
+    id, description, dev_name, dev_type, drc_name, phys_loc_code, udid = (
+        u.proxyprops(
+            _io_adap, IOAdapter.id, IOAdapter.description, IOAdapter.dev_name,
+            IOAdapter.dev_type, IOAdapter.drc_name, IOAdapter.phys_loc_code,
+            IOAdapter.udid))

@@ -272,8 +272,13 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(6, bd2.pport_id)
         self.assertEqual(0.3457, bd2.capacity)
 
-    def test_details_props(self):
-        dets = self.dwrap.details
+    def test_details_props_inner(self):
+        self._test_details_props(self.dwrap.details)
+
+    def test_details_props_outer(self):
+        self._test_details_props(self.dwrap)
+
+    def _test_details_props(self, dets):
         self.assertIsNone(dets.pvid)
         dets.pvid = 123
         self.assertEqual(123, dets.pvid)
@@ -281,6 +286,10 @@ class TestVNIC(twrap.TestWrapper):
         dets.allowed_vlans = [1, 2, 3]
         self.assertEqual([1, 2, 3], dets.allowed_vlans)
         self.assertEqual(0.02, dets.capacity)
+
+        def bad_capacity_setter(val):
+            dets.capacity = val
+        self.assertRaises(AttributeError, bad_capacity_setter, '0.04')
 
         def bad_vlans_setter(val):
             dets.allowed_vlans = val
@@ -291,7 +300,8 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual('12AB34CD56EF', dets.mac)
         self.assertEqual(u.MACList.ALL, dets.allowed_macs)
         dets.allowed_macs = ['AB:12:cd:34:EF:56', '12ab34CD56ef']
-        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'], dets.allowed_macs)
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
+                         dets.allowed_macs)
 
         def bad_macs_setter(val):
             dets.allowed_macs = val
