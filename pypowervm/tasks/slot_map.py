@@ -167,7 +167,7 @@ class SlotMapStore(object):
             self._reg_slot(IOCLASS.CNA, vnet_w.mac, vnet_w.slot,
                            extra_spec=cna_map[vnet_w.vswitch_id])
         elif isinstance(vnet_w, ioc.VNIC):
-            self._reg_slot(IOCLASS.VNIC, vnet_w.details.mac, vnet_w.slot)
+            self._reg_slot(IOCLASS.VNIC, vnet_w.mac, vnet_w.slot)
         else:
             raise pvm_ex.InvalidVirtualNetworkDeviceType(wrapper=vnet_w)
 
@@ -181,7 +181,7 @@ class SlotMapStore(object):
         if isinstance(vnet_w, net.CNA):
             self._drop_slot(IOCLASS.CNA, vnet_w.mac, vnet_w.slot)
         elif isinstance(vnet_w, ioc.VNIC):
-            self._drop_slot(IOCLASS.VNIC, vnet_w.details.mac, vnet_w.slot)
+            self._drop_slot(IOCLASS.VNIC, vnet_w.mac, vnet_w.slot)
         else:
             raise pvm_ex.InvalidVirtualNetworkDeviceType(wrapper=vnet_w)
 

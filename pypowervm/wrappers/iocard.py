@@ -651,113 +651,6 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         return self._get_val_str(_SRIOVLP_LOC_CODE)
 
 
-@ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
-class VNIC(ewrap.EntryWrapper):
-    """A dedicated, possibly-redundant Virtual NIC."""
-
-    @classmethod
-    def bld(cls, adapter, pvid=None, slot_num=None,
-            allowed_vlans=u.VLANList.ALL, mac_addr=None,
-            allowed_macs=u.MACList.ALL, back_devs=None):
-        """Build a new VNIC wrapper suitable for .create()
-
-        A VNIC is a CHILD object on a LogicalPartition.  Usage models:
-            vnic = VNIC.bld(...)
-            vnic.back_devs.append(back_dev1)
-            ...
-        or
-            vnic = VNIC.bld(..., back_devs=[back_dev1, back_dev2, ...])
-        then
-            vnic.create(parent=lpar_wrap)
-
-        :param adapter: pypowervm.adapter.Adapter for REST API communication.
-        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
-                     traffic is untagged.
-        :param slot_num: Desired virtual slot number on the owning LPAR.
-        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
-                              Specify pypowervm.util.VLANList.ALL to allow all
-                              VLANs or .NONE to allow no VLANs on this vNIC.
-                              Default: ALL.
-        :param mac_addr: MAC address for the vNIC.
-        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
-                             Specify pypowervm.util.MACList.ALL to allow all
-                             MAC addresses, or .NONE to allow no MAC addresses
-                             on this vNIC.  Default: ALL.
-        :param back_devs: List of VNICBackDev wrappers each indicating a
-                          combination of VIOS, SRIOV adapter, and physical port
-                          on which to create the VF for the backing device.
-                          See VNICBackDev.bld.  If not specified to bld, at
-                          least one must be added before the VNIC can be
-                          created.
-        :return: A new VNIC wrapper.
-        """
-        vnic = super(VNIC, cls)._bld(adapter)
-        if slot_num is not None:
-            vnic._slot(slot_num)
-        else:
-            vnic._use_next_avail_slot_id = True
-
-        vnic._details(VNICDetails._bld_new(
-            adapter, pvid=pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
-            allowed_macs=allowed_macs))
-
-        if back_devs:
-            vnic.back_devs = back_devs
-        return vnic
-
-    @property
-    def drc_name(self):
-        return self._get_val_str(_VNIC_DRC_NAME)
-
-    @property
-    def lpar_id(self):
-        """The integer ID, not UUID, of the LPAR owning this VNIC."""
-        return self._get_val_int(_VNIC_LPAR_ID)
-
-    @property
-    def slot(self):
-        return self._get_val_int(_VNIC_SLOT_NUM)
-
-    def _slot(self, val):
-        self.set_parm_value(_VNIC_SLOT_NUM, val)
-
-    @property
-    def _use_next_avail_slot_id(self):
-        """Use next available (high) slot ID, true or false."""
-        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
-                       if self.traits.has_high_slot
-                       else _VNIC_USE_NEXT_AVAIL_SLOT)
-        return self._get_val_bool(unasi_field)
-
-    @_use_next_avail_slot_id.setter
-    def _use_next_avail_slot_id(self, unasi):
-        """Use next available (high) slot ID.
-
-        :param unasi: Boolean value to set (True or False)
-        """
-        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
-                       if self.traits.has_high_slot
-                       else _VNIC_USE_NEXT_AVAIL_SLOT)
-        self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
-
-    @property
-    def details(self):
-        return VNICDetails.wrap(self._find_or_seed(_VNIC_DETAILS))
-
-    def _details(self, val):
-        self.element.replace(self._find_or_seed(_VNIC_DETAILS), val.element)
-
-    @property
-    def back_devs(self):
-        return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
-                                     child_class=VNICBackDev,
-                                     indirect=_VNICBD_CHOICE)
-
-    @back_devs.setter
-    def back_devs(self, new_devs):
-        self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
-
-
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
 class VNICDetails(ewrap.ElementWrapper):
@@ -833,6 +726,119 @@ class VNICDetails(ewrap.ElementWrapper):
     def capacity(self):
         """The capacity (float, 0.0-1.0) of the active backing logical port."""
         return self._get_val_percent(_VNICD_DES_CAP_PCT)
+
+
+@ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
+class VNIC(ewrap.EntryWrapper):
+    """A dedicated, possibly-redundant Virtual NIC."""
+
+    @classmethod
+    def bld(cls, adapter, pvid=None, slot_num=None,
+            allowed_vlans=u.VLANList.ALL, mac_addr=None,
+            allowed_macs=u.MACList.ALL, back_devs=None):
+        """Build a new VNIC wrapper suitable for .create()
+
+        A VNIC is a CHILD object on a LogicalPartition.  Usage models:
+            vnic = VNIC.bld(...)
+            vnic.back_devs.append(back_dev1)
+            ...
+        or
+            vnic = VNIC.bld(..., back_devs=[back_dev1, back_dev2, ...])
+        then
+            vnic.create(parent=lpar_wrap)
+
+        :param adapter: pypowervm.adapter.Adapter for REST API communication.
+        :param pvid: Port VLAN ID for this vNIC.  If not specified, the vNIC's
+                     traffic is untagged.
+        :param slot_num: Desired virtual slot number on the owning LPAR.
+        :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
+                              Specify pypowervm.util.VLANList.ALL to allow all
+                              VLANs or .NONE to allow no VLANs on this vNIC.
+                              Default: ALL.
+        :param mac_addr: MAC address for the vNIC.
+        :param allowed_macs: List of string MAC addresses allowed on this vNIC.
+                             Specify pypowervm.util.MACList.ALL to allow all
+                             MAC addresses, or .NONE to allow no MAC addresses
+                             on this vNIC.  Default: ALL.
+        :param back_devs: List of VNICBackDev wrappers each indicating a
+                          combination of VIOS, SRIOV adapter, and physical port
+                          on which to create the VF for the backing device.
+                          See VNICBackDev.bld.  If not specified to bld, at
+                          least one must be added before the VNIC can be
+                          created.
+        :return: A new VNIC wrapper.
+        """
+        vnic = super(VNIC, cls)._bld(adapter)
+        if slot_num is not None:
+            vnic._slot(slot_num)
+        else:
+            vnic._use_next_avail_slot_id = True
+
+        vnic._details = VNICDetails._bld_new(
+            adapter, pvid=pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
+            allowed_macs=allowed_macs)
+
+        if back_devs:
+            vnic.back_devs = back_devs
+        return vnic
+
+    @property
+    def drc_name(self):
+        return self._get_val_str(_VNIC_DRC_NAME)
+
+    @property
+    def lpar_id(self):
+        """The integer ID, not UUID, of the LPAR owning this VNIC."""
+        return self._get_val_int(_VNIC_LPAR_ID)
+
+    @property
+    def slot(self):
+        return self._get_val_int(_VNIC_SLOT_NUM)
+
+    def _slot(self, val):
+        self.set_parm_value(_VNIC_SLOT_NUM, val)
+
+    @property
+    def _use_next_avail_slot_id(self):
+        """Use next available (high) slot ID, true or false."""
+        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _VNIC_USE_NEXT_AVAIL_SLOT)
+        return self._get_val_bool(unasi_field)
+
+    @_use_next_avail_slot_id.setter
+    def _use_next_avail_slot_id(self, unasi):
+        """Use next available (high) slot ID.
+
+        :param unasi: Boolean value to set (True or False)
+        """
+        unasi_field = (_VNIC_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _VNIC_USE_NEXT_AVAIL_SLOT)
+        self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
+
+    @property
+    def _details(self):
+        return VNICDetails.wrap(self._find_or_seed(_VNIC_DETAILS))
+
+    @_details.setter
+    def _details(self, val):
+        self.element.replace(self._find_or_seed(_VNIC_DETAILS), val.element)
+
+    # Proxy @propertys from _details
+    pvid, allowed_vlans, mac, allowed_macs, capacity = u.proxyprops(
+        _details, VNICDetails.pvid, VNICDetails.allowed_vlans, VNICDetails.mac,
+        VNICDetails.allowed_macs, VNICDetails.capacity)
+
+    @property
+    def back_devs(self):
+        return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
+                                     child_class=VNICBackDev,
+                                     indirect=_VNICBD_CHOICE)
+
+    @back_devs.setter
+    def back_devs(self, new_devs):
+        self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
 
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
@@ -915,39 +921,13 @@ class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
     Flattens this two step heirarchy to pull the information needed directly
     from the IOAdapter element.
     """
-    def __get_prop(self, func):
-        """Thin wrapper to get the IOAdapter and get a property."""
-        elem = self._find('IOAdapter')
-        if elem is None:
-            return None
-
-        io_adpt = IOAdapter.wrap(elem)
-        return getattr(io_adpt, func)
-
     @property
-    def id(self):
-        return self.__get_prop('id')
+    def _io_adap(self):
+        return IOAdapter.wrap(self._find(IO_ADPT_ROOT))
 
-    @property
-    def description(self):
-        return self.__get_prop('description')
-
-    @property
-    def dev_name(self):
-        return self.__get_prop('dev_name')
-
-    @property
-    def dev_type(self):
-        return self.__get_prop('dev_type')
-
-    @property
-    def drc_name(self):
-        return self.__get_prop('drc_name')
-
-    @property
-    def phys_loc_code(self):
-        return self.__get_prop('phys_loc_code')
-
-    @property
-    def udid(self):
-        return self.__get_prop('udid')
+    # Proxy @propertys from IOAdapter
+    id, description, dev_name, dev_type, drc_name, phys_loc_code, udid = (
+        u.proxyprops(
+            _io_adap, IOAdapter.id, IOAdapter.description, IOAdapter.dev_name,
+            IOAdapter.dev_type, IOAdapter.drc_name, IOAdapter.phys_loc_code,
+            IOAdapter.udid))
