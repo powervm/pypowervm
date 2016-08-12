@@ -546,6 +546,45 @@ def parent_spec(parent, parent_type, parent_uuid):
     return parent_type, parent_uuid
 
 
+def nestedprop(midprop, endprop):
+    """Expose a nested @propertys as a top-level @property.
+
+    Example:
+    class Bar(...):
+        @property
+        def baz(self):
+            return something
+
+    class Foo(...):
+        @property
+        def bar(self):
+            return Bar(...)
+
+        baz, = nestedprop(bar, Bar.baz)
+
+    f = Foo()
+    f.baz is f.bar.baz  # True
+
+    :param midprop: The intermediate @property through which the endprop is
+                    proxied.
+    :param endprop: The @property being proxied.
+    :return: A @property with the same effective fget and fset as
+             <midprop>.<endprop>.
+    """
+    def _proxyprop(endprop):
+        def _fget(obj):
+            return endprop.fget(midprop.fget(obj))
+
+        def _fset(obj, val):
+            if endprop.fset is None:
+                # Mimic native behavior
+                raise AttributeError("can't set attribute")
+            endprop.fset(midprop.fget(obj), val)
+
+        return property(fget=_fget, fset=_fset)
+    return _proxyprop(endprop)
+
+
 @six.add_metaclass(abc.ABCMeta)
 class _AllowedList(object):
     """For REST fields taking 'ALL', 'NONE', or [list of values].
