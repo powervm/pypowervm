@@ -316,3 +316,9 @@ class CantUpdatePPortsInUse(AbstractMsgFmtError):
     msg_fmt = _("The ManagedSystem update was not attempted because changes "
                 "were requested to one or more SR-IOV physical ports which "
                 "are in use by vNICs.\n%(warnings)s")
+
+
+class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
+    msg_fmt = _("Unable to create VNC based virtual terminal.  Consider using "
+                "the force flag to attempt to close other terminals that "
+                "may currently be open for this VM.  The error is: %(err)s")

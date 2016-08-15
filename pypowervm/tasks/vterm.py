@@ -99,11 +99,14 @@ def _close_vterm_local(adapter, lpar_uuid):
             _LOCAL_VNC_SERVERS[vnc_port].stop()
 
 
-def open_localhost_vnc_vterm(adapter, lpar_uuid):
+def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
     """Opens a VNC vTerm to a given LPAR.  Always binds to localhost.
 
     :param adapter: The adapter to drive the PowerVM API
     :param lpar_uuid: Partition UUID.
+    :param force: (Optional, Default: False) If set to true will force the
+                  console to be opened as VNC even if it is already opened
+                  via some other means.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -113,7 +116,18 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
 
     cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
-    std_out = _run_proc(cmd)[0]
+    std_out, std_err = _run_proc(cmd)
+
+    if 'PVME' in std_err:
+        # This can happen if the vterm was out of band created, without the
+        # VNC flag.  Remove the vterm and try again.
+        if force:
+            LOG.warning(_("Invalid output on vterm open.  Trying to reset the "
+                          "vterm.  Error was %s"), std_err)
+            close_vterm(adapter, lpar_uuid)
+            std_out = _run_proc(cmd)[0]
+        else:
+            raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
 
     # The first line of the std_out should be the VNC port
     return int(std_out.splitlines()[0])
