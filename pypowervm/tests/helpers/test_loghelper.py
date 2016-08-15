@@ -64,8 +64,8 @@ class TestLogHelper(testtools.TestCase):
             adpt._request('method1', 'path', body='the body %d' % x)
         log_hlp._write_thread_log()
         # Each req/resp pair is 2 log entries but headers and body
-        # are logged separately, so with maxlogs=5, it's 5 * 2 * 2.
-        self.assertEqual(mock_log.info.call_count, (5 * 2 * 2))
+        # are logged separately, so with maxlogs=3, it's 3 * 2 * 2.
+        self.assertEqual(mock_log.info.call_count, (3 * 2 * 2))
 
         mock_log.reset_mock()
         # Add a few records
@@ -87,12 +87,12 @@ class TestLogHelper(testtools.TestCase):
 
         # Ensure the log storage is initialized correctly, and we can change
         # the default value
-        hlp_size = functools.partial(log_hlp.log_helper, max_logs=20)
+        hlp_size = functools.partial(log_hlp.log_helper, max_logs=12)
         adpt1 = adp.Adapter(self.sess, use_cache=False, helpers=hlp_size)
         self.sess.request.side_effect = None
         with mock.patch('pypowervm.helpers.log_helper.'
                         '_init_thread_stg') as mock_init:
             adpt1._request('method1', 'path', body='the body')
-            # Should be called with 40 since 20 * 2 entries.
+            # Should be called with 24 since 12 * 2 entries.
             self.assertEqual(mock_init.call_args_list,
-                             [mock.call(max_entries=40)])
+                             [mock.call(max_entries=24)])
