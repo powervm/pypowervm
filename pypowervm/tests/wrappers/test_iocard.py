@@ -208,23 +208,22 @@ class TestVNIC(twrap.TestWrapper):
     def test_vnic_and_backdev_bld(self):
         # Defaults in kwargs
         vnic = card.VNIC.bld(self.adpt)
-        dets = vnic.details
         backdevs = vnic.back_devs
         self.assertEqual(self.adpt, vnic.adapter)
-        self.assertIsNone(dets.pvid)
+        self.assertIsNone(vnic.pvid)
         self.assertIsNotNone(backdevs)
         self.assertEqual(0, len(backdevs))
         # Fields without setters
         self.assertIsNone(vnic.drc_name)
         self.assertIsNone(vnic.lpar_id)
-        self.assertIsNone(dets.capacity)
+        self.assertIsNone(vnic.capacity)
         # Fields with setters not invoked (because not specified)
         self.assertIsNone(vnic.slot)
         self.assertTrue(vnic._use_next_avail_slot_id)
         self.assertFalse(vnic._get_val_bool(card._VNIC_USE_NEXT_AVAIL_SLOT))
-        self.assertEqual(u.VLANList.ALL, dets.allowed_vlans)
-        self.assertIsNone(dets.mac)
-        self.assertEqual(u.MACList.ALL, dets.allowed_macs)
+        self.assertEqual(u.VLANList.ALL, vnic.allowed_vlans)
+        self.assertIsNone(vnic.mac)
+        self.assertEqual(u.MACList.ALL, vnic.allowed_macs)
 
         # Values in kwargs
 
@@ -242,18 +241,17 @@ class TestVNIC(twrap.TestWrapper):
             mac_addr='m:a:c',
             allowed_macs=['AB:12:CD:34:EF:56', '12ab34cd56ef'],
             back_devs=backdevs)
-        dets = vnic.details
         backdevs = vnic.back_devs
         self.assertEqual(self.adpt, vnic.adapter)
         self.assertIsNone(vnic.drc_name)
         self.assertIsNone(vnic.lpar_id)
-        self.assertEqual(7, dets.pvid)
+        self.assertEqual(7, vnic.pvid)
         self.assertEqual(8, vnic.slot)
         self.assertFalse(vnic._use_next_avail_slot_id)
         self.assertFalse(vnic._get_val_bool(card._VNIC_USE_NEXT_AVAIL_SLOT))
-        self.assertEqual([1, 2], dets.allowed_vlans)
-        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'], dets.allowed_macs)
-        self.assertEqual('MAC', dets.mac)
+        self.assertEqual([1, 2], vnic.allowed_vlans)
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'], vnic.allowed_macs)
+        self.assertEqual('MAC', vnic.mac)
         self.assertIsNotNone(backdevs)
         self.assertEqual(2, len(backdevs))
         bd1, bd2 = backdevs
@@ -272,8 +270,13 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(6, bd2.pport_id)
         self.assertEqual(0.3457, bd2.capacity)
 
-    def test_details_props(self):
-        dets = self.dwrap.details
+    def test_details_props_inner(self):
+        self._test_details_props(self.dwrap._details)
+
+    def test_details_props_outer(self):
+        self._test_details_props(self.dwrap)
+
+    def _test_details_props(self, dets):
         self.assertIsNone(dets.pvid)
         dets.pvid = 123
         self.assertEqual(123, dets.pvid)
@@ -281,6 +284,10 @@ class TestVNIC(twrap.TestWrapper):
         dets.allowed_vlans = [1, 2, 3]
         self.assertEqual([1, 2, 3], dets.allowed_vlans)
         self.assertEqual(0.02, dets.capacity)
+
+        def bad_capacity_setter(val):
+            dets.capacity = val
+        self.assertRaises(AttributeError, bad_capacity_setter, '0.04')
 
         def bad_vlans_setter(val):
             dets.allowed_vlans = val
@@ -291,7 +298,8 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual('12AB34CD56EF', dets.mac)
         self.assertEqual(u.MACList.ALL, dets.allowed_macs)
         dets.allowed_macs = ['AB:12:cd:34:EF:56', '12ab34CD56ef']
-        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'], dets.allowed_macs)
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
+                         dets.allowed_macs)
 
         def bad_macs_setter(val):
             dets.allowed_macs = val

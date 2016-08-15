@@ -169,7 +169,7 @@ _VNIC_EL_ORDER = (
     _VNIC_USE_NEXT_AVAIL_HIGH_SLOT, _VNIC_SLOT_NUM, _VNIC_ENABLED,
     _VNIC_DETAILS, _VNIC_BACK_DEVS)
 
-# Properties for VNICDetails (schema: VirtualNICDetails.Type)
+# Properties for _VNICDetails (schema: VirtualNICDetails.Type)
 _VNICD_PVID = 'PortVLANID'
 _VNICD_PVID_PRI = 'PortVLANIDPriority'
 _VNICD_ALLOWED_VLANS = 'AllowedVLANIDs'
@@ -697,9 +697,9 @@ class VNIC(ewrap.EntryWrapper):
         else:
             vnic._use_next_avail_slot_id = True
 
-        vnic._details(VNICDetails._bld_new(
+        vnic._details = _VNICDetails._bld_new(
             adapter, pvid=pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
-            allowed_macs=allowed_macs))
+            allowed_macs=allowed_macs)
 
         if back_devs:
             vnic.back_devs = back_devs
@@ -741,9 +741,49 @@ class VNIC(ewrap.EntryWrapper):
         self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
 
     @property
-    def details(self):
-        return VNICDetails.wrap(self._find_or_seed(_VNIC_DETAILS))
+    def pvid(self):
+        """The integer port VLAN ID, or None if the vNIC has no PVID."""
+        return self._details.pvid
 
+    @pvid.setter
+    def pvid(self, val):
+        self._details.pvid = val
+
+    @property
+    def allowed_vlans(self):
+        return self._details.allowed_vlans
+
+    @allowed_vlans.setter
+    def allowed_vlans(self, vlans):
+        self._details.allowed_vlans = vlans
+
+    @property
+    def mac(self):
+        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
+        return self._details.mac
+
+    @mac.setter
+    def mac(self, val):
+        self._details.mac = val
+
+    @property
+    def allowed_macs(self):
+        return self._details.allowed_macs
+
+    @allowed_macs.setter
+    def allowed_macs(self, maclist):
+        self._details.allowed_macs = maclist
+
+    @property
+    def capacity(self):
+        """The capacity (float, 0.0-1.0) of the active backing logical port."""
+        return self._details.capacity
+
+    @property
+    def _details(self):
+        return _VNICDetails.wrap(self._find_or_seed(_VNIC_DETAILS))
+
+    @_details.setter
     def _details(self, val):
         self.element.replace(self._find_or_seed(_VNIC_DETAILS), val.element)
 
@@ -760,13 +800,13 @@ class VNIC(ewrap.EntryWrapper):
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
-class VNICDetails(ewrap.ElementWrapper):
+class _VNICDetails(ewrap.ElementWrapper):
     """The 'Details' sub-element of a VirtualNICDedicated."""
 
     @classmethod
     def _bld_new(cls, adapter, pvid=None, allowed_vlans=u.VLANList.ALL,
                  mac_addr=None, allowed_macs=u.MACList.ALL):
-        """Create a new VNICDetails wrapper suitable for insertion into a VNIC.
+        """Create a new _VNICDetails wrapper suitable for insertion into a VNIC.
 
         Not to be called outside of VNIC.bld().
 
@@ -782,9 +822,9 @@ class VNICDetails(ewrap.ElementWrapper):
                              Specify pypowervm.util.MACList.ALL to allow all
                              MAC addresses, or .NONE to allow no MAC addresses
                              on this vNIC.  Default: ALL.
-        :return: A new VNICDetails wrapper.
+        :return: A new _VNICDetails wrapper.
         """
-        vnicd = super(VNICDetails, cls)._bld(adapter)
+        vnicd = super(_VNICDetails, cls)._bld(adapter)
         if pvid is not None:
             vnicd.pvid = pvid
         vnicd.allowed_vlans = allowed_vlans
