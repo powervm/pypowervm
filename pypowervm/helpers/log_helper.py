@@ -120,7 +120,7 @@ def _write_thread_log():
         pass
 
 
-def log_helper(func, max_logs=5):
+def log_helper(func, max_logs=3):
     """Log recent requests/responses on exception.
 
     This helper stashes the requests/responses it sees passing through to
