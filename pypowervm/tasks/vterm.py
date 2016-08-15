@@ -99,11 +99,14 @@ def _close_vterm_local(adapter, lpar_uuid):
             _LOCAL_VNC_SERVERS[vnc_port].stop()
 
 
-def open_localhost_vnc_vterm(adapter, lpar_uuid):
+def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
     """Opens a VNC vTerm to a given LPAR.  Always binds to localhost.
 
     :param adapter: The adapter to drive the PowerVM API
     :param lpar_uuid: Partition UUID.
+    :param force: (Optional, Default: False) If set to true will force the
+                  console to be opened as VNC even if it is already opened
+                  via some other means.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -113,7 +116,18 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
 
     cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
-    std_out = _run_proc(cmd)[0]
+    std_out, std_err = _run_proc(cmd)
+
+    if 'PVME' in std_err:
+        # This can happen if the vterm was out of band created, without the
+        # VNC flag.  Remove the vterm and try again.
+        if force:
+            LOG.warning(_("Invalid output on vterm open.  Trying to reset the "
+                          "vterm.  Error was %s"), std_err)
+            close_vterm(adapter, lpar_uuid)
+            std_out = _run_proc(cmd)[0]
+        else:
+            raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
 
     # The first line of the std_out should be the VNC port
     return int(std_out.splitlines()[0])
@@ -121,7 +135,8 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
 
 def open_remotable_vnc_vterm(
         adapter, lpar_uuid, local_ip, remote_ips=None, vnc_path=None,
-        use_x509_auth=False, ca_certs=None, server_cert=None, server_key=None):
+        use_x509_auth=False, ca_certs=None, server_cert=None, server_key=None,
+        force=False):
     """Opens a VNC vTerm to a given LPAR.  Wraps in some validation.
 
     Must run on the management partition.
@@ -159,6 +174,9 @@ def open_remotable_vnc_vterm(
     :param server_key: (Optional, Default: None) Path to Server private key
                        to use for verifying VNC X509 Authentication.  Only
                        used if use_x509_auth is set to True.
+    :param force: (Optional, Default: False) If set to true will force the
+                  console to be opened as VNC even if it is already opened
+                  via some other means.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -167,7 +185,7 @@ def open_remotable_vnc_vterm(
 
     # Open the VNC Port.  If already open, it will just return the same port,
     # so no harm re-opening.  The stdout will just print out the existing port.
-    vnc_port = open_localhost_vnc_vterm(adapter, lpar_uuid)
+    vnc_port = open_localhost_vnc_vterm(adapter, lpar_uuid, force=False)
 
     # See if we have a VNC repeater already...if so, nothing to do.  If not,
     # start it up.
