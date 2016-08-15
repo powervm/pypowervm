@@ -157,6 +157,7 @@ class TestFC(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
+        self.assertEqual(1, mock_job.wrap.call_count)
 
     @mock.patch('pypowervm.tasks.hdisk._fc._lua_recovery_xml')
     @mock.patch('pypowervm.tasks.hdisk._fc._process_lua_result')
@@ -180,6 +181,7 @@ class TestFC(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(1, mock_adapter.read.call_count)
         self.assertEqual(1, mock_lua_result.call_count)
+        self.assertEqual(1, mock_job.wrap.call_count)
         mock_lua_xml.assert_called_with({itls[0]}, mock_adapter,
                                         vendor='OTHER')
 
@@ -217,12 +219,14 @@ class TestFC(unittest.TestCase):
             self.assertEqual(1, mock_fsl.call_count)
             mock_ftsk.assert_called_with('scrub_vios_vuuid', mock.ANY)
             self.assertEqual(1, mock_alsst.call_count)
+            self.assertEqual(1, mock_ewget.call_count)
             mock_luar.assert_has_calls(
                 [mock.call('adp', 'vuuid', ['itls'],
                            vendor=fc.LUAType.OTHER)] * 2)
             mock_fsl.reset_mock()
             mock_alsst.reset_mock()
             mock_ftsk.reset_mock()
+            mock_ewget.reset_mock()
 
         for st, dev in no_retry_rets:
             set_luar_side_effect(st, dev)
@@ -233,6 +237,7 @@ class TestFC(unittest.TestCase):
             self.assertEqual(0, mock_ftsk.call_count)
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
+            self.assertEqual(0, mock_ewget.call_count)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
                                          vendor=fc.LUAType.OTHER)
 
@@ -250,9 +255,11 @@ class TestFC(unittest.TestCase):
             self.assertEqual(0, mock_ftsk.call_count)
             self.assertEqual(0, mock_alsst.call_count)
             self.assertEqual(1, mock_luar.call_count)
+            self.assertLessEqual(mock_ewget.call_count, 1)
             mock_luar.assert_called_with('adp', 'vuuid', ['itls'],
                                          vendor=fc.LUAType.OTHER)
             mock_fsl.reset_mock()
+            mock_ewget.reset_mock()
 
     @mock.patch('pypowervm.wrappers.job.Job.job_status', new=mock.Mock())
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
@@ -266,6 +273,7 @@ class TestFC(unittest.TestCase):
         # Validate method invocations
         self.assertEqual(2, mock_adapter.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_status.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.adapter.Adapter')
@@ -276,6 +284,7 @@ class TestFC(unittest.TestCase):
         def verify_run_job(vios_uuid, job_parms=None):
             self.assertEqual('vios_uuid', vios_uuid)
             self.assertEqual(1, len(job_parms))
+            self.assertEqual('vios_uuid', vios_uuid)
             job_parm = (b'<web:JobParameter xmlns:web="http://www.ibm.com/'
                         b'xmlns/systems/power/firmware/web/mc/2012_10/" '
                         b'schemaVersion="V1_0"><web:ParameterName>devName'

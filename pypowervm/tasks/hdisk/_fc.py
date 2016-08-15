@@ -453,7 +453,6 @@ def get_pg83_via_job(adapter, vios_uuid, udid):
         return None
     xml_resp = result.get('OutputXML', result.get('StdOut'))
     LOG.debug('QUERY_INVENTORY result: %s' % xml_resp)
-
     return _parse_pg83_xml(xml_resp)
 
 
