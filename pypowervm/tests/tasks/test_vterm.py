@@ -80,6 +80,58 @@ class TestVterm(testtools.TestCase):
                                                '--local'])
         self.assertEqual(5903, resp)
 
+    @mock.patch('pypowervm.tasks.vterm.close_vterm')
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_open_vnc_vterm_bad_force(self, mock_run_proc, mock_get_lpar_id,
+                                      mock_close):
+        """Validates the output from the mkvterm if a vterm is active."""
+        mock_get_lpar_id.return_value = '4'
+        std_out_1 = ""
+        std_err_1 = ("[PVME01040120-0006] Required parameter --vnc or its "
+                     "value is missing or not valid.")
+        std_out_2 = '5903'
+        std_err_2 = ('VNC is started on port 5903 for localhost access '
+                     'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.side_effect = [(std_out_1, std_err_1),
+                                     (std_out_2, std_err_2)]
+
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid',
+                                              force=True)
+
+        # Validation
+        mock_close.assert_called_once_with(self.adpt, 'lpar_uuid')
+        mock_run_proc.assert_called_with(['mkvterm', '--id', '4', '--vnc',
+                                          '--local'])
+        self.assertEqual(2, mock_run_proc.call_count)
+        self.assertEqual(5903, resp)
+
+    @mock.patch('pypowervm.tasks.vterm.close_vterm')
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_open_vnc_vterm_bad_first_fail(self, mock_run_proc,
+                                           mock_get_lpar_id, mock_close):
+        """Validates the output from the mkvterm if a vterm is active."""
+        mock_get_lpar_id.return_value = '4'
+        std_out_1 = ""
+        std_err_1 = ("[PVME01040120-0006] Required parameter --vnc or its "
+                     "value is missing or not valid.")
+        std_out_2 = '5903'
+        std_err_2 = ('VNC is started on port 5903 for localhost access '
+                     'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.side_effect = [(std_out_1, std_err_1),
+                                     (std_out_2, std_err_2)]
+
+        self.assertRaises(pexc.VNCBasedTerminalFailedToOpen,
+                          vterm.open_localhost_vnc_vterm, self.adpt,
+                          'lpar_uuid')
+
+        # Validation
+        mock_close.assert_not_called()
+        mock_run_proc.assert_called_with(['mkvterm', '--id', '4', '--vnc',
+                                          '--local'])
+        self.assertEqual(1, mock_run_proc.call_count)
+
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
     @mock.patch('pypowervm.tasks.vterm._run_proc')
     def test_close_vterm_local(self, mock_run_proc, mock_get_lpar_id):
