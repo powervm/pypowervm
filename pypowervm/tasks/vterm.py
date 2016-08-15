@@ -115,6 +115,14 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid):
     cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
     std_out = _run_proc(cmd)[0]
 
+    if len(std_out.splitlines()) == 0:
+        # This can happen if the vterm was out of band created, without the
+        # VNC flag.  Remove the vterm and try again.
+        LOG.warning(_("Invalid output on vterm open.  Trying to reset the "
+                      "vterm."))
+        close_vterm(adapter, lpar_uuid)
+        std_out = _run_proc(cmd)[0]
+
     # The first line of the std_out should be the VNC port
     return int(std_out.splitlines()[0])
 
