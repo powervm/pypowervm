@@ -20,6 +20,7 @@ import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.util as u
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
+import pypowervm.wrappers.network as net
 
 
 class TestSRIOVAdapter(twrap.TestWrapper):
@@ -130,6 +131,18 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual(0.02, eth_port.allocated_capacity)
 
         self.assertEqual(card.SRIOVSpeed.E1G, eth_port.curr_speed)
+
+        self.assertEqual(card.SRIOVPPMTU.E1500, eth_port.mtu)
+        eth_port.mtu = card.SRIOVPPMTU.E9000
+        self.assertEqual(card.SRIOVPPMTU.E9000, eth_port.mtu)
+
+        self.assertFalse(eth_port.flow_ctl)
+        eth_port.flow_ctl = True
+        self.assertTrue(eth_port.flow_ctl)
+
+        self.assertEqual(net.VSwitchMode.VEB, eth_port.switch_mode)
+        eth_port.switch_mode = net.VSwitchMode.VEPA
+        self.assertEqual(net.VSwitchMode.VEPA, eth_port.switch_mode)
 
 
 class TestLogicalPort(twrap.TestWrapper):

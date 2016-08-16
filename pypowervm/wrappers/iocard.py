@@ -40,8 +40,10 @@ _SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
 # SR-IOV physical port constants
 
 _SRIOVPP_CFG_SPEED = 'ConfiguredConnectionSpeed'
+_SRIOVPP_CFG_FLOWCTL = 'ConfiguredFlowControl'
 _SRIOVPP_CFG_MTU = 'ConfiguredMTU'
 _SRIOVPP_CFG_OPTIONS = 'ConfiguredOptions'
+_SRIOVPP_CFG_SWMODE = 'ConfiguredPortSwitchMode'
 _SRIOVPP_CURR_SPEED = 'CurrentConnectionSpeed'
 _SRIOVPP_CURR_OPTIONS = 'CurrentOptions'
 _SRIOVPP_LBL = 'Label'
@@ -84,8 +86,8 @@ _SRIOVPP_MX_SUPP_FCOE_LPS = 'MaxSupportedFiberChannelOverEthernetLogicalPorts'
 _SRIOVPP_MAX_FC_TARGETS = 'MaximumFiberChannelTargets'
 
 _SRIOVPP_EL_ORDER = (
-    _SRIOVPP_CFG_SPEED, _SRIOVPP_CFG_MTU,
-    _SRIOVPP_CFG_OPTIONS, _SRIOVPP_CURR_SPEED,
+    _SRIOVPP_CFG_SPEED, _SRIOVPP_CFG_FLOWCTL, _SRIOVPP_CFG_MTU,
+    _SRIOVPP_CFG_OPTIONS, _SRIOVPP_CFG_SWMODE, _SRIOVPP_CURR_SPEED,
     _SRIOVPP_CURR_OPTIONS, _SRIOVPP_LBL, _SRIOVPP_LOC_CODE,
     _SRIOVPP_MAX_DIAG_LPS, _SRIOVPP_MAX_PROM_LPS,
     _SRIOVPP_ID, _SRIOVPP_CAPABILITIES, _SRIOVPP_TYPE,
@@ -223,7 +225,7 @@ PFC_PORT_ROOT = 'PhysicalFibreChannelPort'
 
 
 class SRIOVAdapterMode(object):
-    """Enumeration for SRIOV adapter modes (from SRIOVAdapterMode.Enum)."""
+    """Enumeration for SR-IOV adapter modes (from SRIOVAdapterMode.Enum)."""
     SRIOV = 'Sriov'
     DEDICATED = 'Dedicated'
     FORCE_DEDICATED = 'ForceDedicated'
@@ -231,7 +233,7 @@ class SRIOVAdapterMode(object):
 
 
 class SRIOVAdapterState(object):
-    """Enumeration for SRIOV adapter states (from SRIOVAdapterState.Enum)."""
+    """Enumeration for SR-IOV adapter states (from SRIOVAdapterState.Enum)."""
     INITIALIZING = 'Initializing'
     NOT_CONFIG = 'NotConfigured'
     POWERED_OFF = 'PoweredOff'
@@ -244,7 +246,7 @@ class SRIOVAdapterState(object):
 
 
 class SRIOVSpeed(object):
-    """Enumeration for SRIOV speed (from SRIOVConnectionSpeed.Enum)."""
+    """Enumeration for SR-IOV speed (from SRIOVConnectionSpeed.Enum)."""
     E10M = 'E10Mbps'
     E100M = 'E100Mbps'
     E1G = 'E1Gbps'
@@ -252,6 +254,13 @@ class SRIOVSpeed(object):
     E40G = 'E40Gpbs'
     E100G = 'E100Gpbs'
     AUTO = 'Auto'
+    UNKNOWN = 'Unknown'
+
+
+class SRIOVPPMTU(object):
+    """SR-IOV Phys Port Max Transmission Unit (SRIOVPhysicalPortMTU.Enum)."""
+    E1500 = "E_1500"
+    E9000 = "E_9000"
     UNKNOWN = 'Unknown'
 
 
@@ -426,7 +435,7 @@ class SRIOVAdapter(IOAdapter):
 @ewrap.ElementWrapper.pvm_type('SRIOVEthernetPhysicalPort', has_metadata=True,
                                child_order=_SRIOVEPP_EL_ORDER)
 class SRIOVEthPPort(ewrap.ElementWrapper):
-    """The SRIOV Ethernet Physical port."""
+    """The SR-IOV Ethernet Physical port."""
 
     def __init__(self):
         super(SRIOVEthPPort, self).__init__()
@@ -512,19 +521,47 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
     def curr_speed(self):
         return self._get_val_str(_SRIOVPP_CURR_SPEED)
 
+    @property
+    def mtu(self):
+        """Result should be a SRIOVPPMTU value."""
+        return self._get_val_str(_SRIOVPP_CFG_MTU)
+
+    @mtu.setter
+    def mtu(self, val):
+        """Input val should be a SRIOVPPMTU value."""
+        self.set_parm_value(_SRIOVPP_CFG_MTU, val)
+
+    @property
+    def switch_mode(self):
+        """Result should be a network.VSwitchMode value."""
+        return self._get_val_str(_SRIOVPP_CFG_SWMODE)
+
+    @switch_mode.setter
+    def switch_mode(self, val):
+        """Input val should be a network.VSwitchMode value."""
+        self.set_parm_value(_SRIOVPP_CFG_SWMODE, val)
+
+    @property
+    def flow_ctl(self):
+        return self._get_val_bool(_SRIOVPP_CFG_FLOWCTL)
+
+    @flow_ctl.setter
+    def flow_ctl(self, val):
+        self.set_parm_value(_SRIOVPP_CFG_FLOWCTL, u.sanitize_bool_for_api(val))
+
 
 @ewrap.ElementWrapper.pvm_type('SRIOVConvergedNetworkAdapterPhysicalPort',
                                has_metadata=True,
                                child_order=_SRIOVCPP_EL_ORDER)
 class SRIOVConvPPort(SRIOVEthPPort):
-    """The SRIOV Converged Physical port."""
+    """The SR-IOV Converged Physical port."""
     pass
 
 
 @ewrap.EntryWrapper.pvm_type('SRIOVEthernetLogicalPort',
                              child_order=_SRIOVLP_EL_ORDER)
 class SRIOVEthLPort(ewrap.EntryWrapper):
-    """The SRIOV Ethernet Logical port."""
+    """The SR-IOV Ethernet Logical port."""
 
     @classmethod
     def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, mac=None,
@@ -684,7 +721,7 @@ class VNIC(ewrap.EntryWrapper):
                              MAC addresses, or .NONE to allow no MAC addresses
                              on this vNIC.  Default: ALL.
         :param back_devs: List of VNICBackDev wrappers each indicating a
-                          combination of VIOS, SRIOV adapter, and physical port
+                          combination of VIOS, SR-IOV adapter and physical port
                           on which to create the VF for the backing device.
                           See VNICBackDev.bld.  If not specified to bld, at
                           least one must be added before the VNIC can be
@@ -838,7 +875,7 @@ class VNICDetails(ewrap.ElementWrapper):
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
 class VNICBackDev(ewrap.ElementWrapper):
-    """SRIOV backing device for a vNIC."""
+    """SR-IOV backing device for a vNIC."""
 
     @classmethod
     def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None):
@@ -847,10 +884,10 @@ class VNICBackDev(ewrap.ElementWrapper):
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
         :param vios_uuid: String UUID of the Virtual I/O Server to host the
                           vNIC server for this backing device.
-        :param sriov_adap_id: Integer SRIOV Adapter ID of the SRIOV adapter
+        :param sriov_adap_id: Integer SR-IOV Adapter ID of the SR-IOV adapter
                               owning the physical port on which the backing VF
                               is to be created: SRIOVAdapter.sriov_adap_id.
-        :param pport_id: Integer physical port ID of the SRIOV physical port on
+        :param pport_id: Integer physical port ID of SR-IOV physical port on
                          which the VF is to be created: SRIOVEthPPort.port_id
         :param capacity: Float value between 0.0 and 1.0 indicating the minimum
                          fraction of the physical port's bandwidth allocated to
