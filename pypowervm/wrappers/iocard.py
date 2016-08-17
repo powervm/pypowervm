@@ -251,8 +251,8 @@ class SRIOVSpeed(object):
     E100M = 'E100Mbps'
     E1G = 'E1Gbps'
     E10G = 'E10Gbps'
-    E40G = 'E40Gpbs'
-    E100G = 'E100Gpbs'
+    E40G = 'E40Gbps'
+    E100G = 'E100Gbps'
     AUTO = 'Auto'
     UNKNOWN = 'Unknown'
 
