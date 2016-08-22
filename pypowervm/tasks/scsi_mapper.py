@@ -125,7 +125,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                        fuse_limit=32, lpar_slot_num=None, lua=None):
+                        fuse_limit=32, lpar_slot_num=None, lua=None,
+                        target_name=None):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -153,6 +154,9 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                 TargetDevice.  If None, the LUA will be assigned by the server.
                 Should be specified for all of the VSCSIMappings for a
                 particular bus, or none of them.
+    :param target_name: (Optional, Default: None) The name of the Target
+                        mapping. If None, the target_name will be assigned by
+                        the server.
     :return: The SCSI mapping that can be added to the vios_w.  This does not
              do any updates to the wrapper itself.
     """
@@ -183,11 +187,12 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     # to build from scratch.
     if clonable_map is not None:
         scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(
-            clonable_map, storage_elem, lpar_slot_num=lpar_slot_num, lua=lua)
+            clonable_map, storage_elem, lpar_slot_num=lpar_slot_num, lua=lua,
+            target_name=target_name)
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(
             adapter, host_uuid, lpar_uuid, storage_elem,
-            lpar_slot_num=lpar_slot_num, lua=lua)
+            lpar_slot_num=lpar_slot_num, lua=lua, target_name=target_name)
     return scsi_map
 
 
