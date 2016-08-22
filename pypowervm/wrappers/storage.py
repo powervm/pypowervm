@@ -237,6 +237,7 @@ _TD_PV_TD = 'PhysicalVolumeVirtualTargetDevice'
 _TD_VOPT_TD = 'VirtualOpticalTargetDevice'
 _TD_VDISK_TD = 'LogicalVolumeVirtualTargetDevice'
 _TD_LUA = 'LogicalUnitAddress'
+_TD_NAME = 'TargetName'
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -392,16 +393,19 @@ class _VTargetDevMethods(ewrap.Wrapper):
     """Base class for {storage_type}TargetDevice of an active VSCSIMapping."""
 
     @classmethod
-    def bld(cls, adapter, lua):
+    def bld(cls, adapter, lua, name=None):
         """Build a new Virtual Target Device.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param lua: Logical Unit Address string to assign to the new VTD.
+        :param name: (Optional, Default None) Name of the TargetDev. If None
+                     name will be assigned by the server
         :return: A new {storage_type}TargetDev, where {storage_type} is
                  appropriate to the subclass.
         """
         vtd = super(_VTargetDevMethods, cls)._bld(adapter)
         vtd._lua(lua)
+        vtd._name(name)
         return vtd
 
     @property
@@ -412,6 +416,15 @@ class _VTargetDevMethods(ewrap.Wrapper):
     def _lua(self, val):
         """Set the Logical Unit Address of this target device."""
         self.set_parm_value(_TD_LUA, val)
+
+    @property
+    def name(self):
+        """Target Name of the device"""
+        return self._get_val_str(_TD_NAME)
+
+    def _name(self, val):
+        """Set the Target Name of the device"""
+        self.set_parm_value(_TD_NAME, val)
 
 
 @ewrap.ElementWrapper.pvm_type(_TD_LU_TD, has_metadata=True)

@@ -301,7 +301,7 @@ class TestViosMappings(twrap.TestWrapper):
         pv = pvm_stor.PV.bld(self.adpt, 'disk_name', 'udid')
         vmap = vios.VSCSIMapping.bld(self.adpt, 'host_uuid',
                                      'client_lpar_uuid', pv,
-                                     lpar_slot_num=5)
+                                     lpar_slot_num=5, target_name='fake_name')
         self.assertIsNotNone(vmap)
         self.assertIsNotNone(vmap.element)
         self.assertEqual('Client', vmap.client_adapter.side)
@@ -309,12 +309,13 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
         self.assertEqual('a_link', vmap.client_lpar_href)
+        self.assertEqual('fake_name', vmap.target_dev.name)
         self.assertIsInstance(vmap.backing_storage, pvm_stor.PV)
 
         # Test cloning
         pv2 = pvm_stor.PV.bld(self.adpt, 'disk_name2', 'udid2')
         vmap2 = vios.VSCSIMapping.bld_from_existing(
-            vmap, pv2, lpar_slot_num=6, lua='pv_lua')
+            vmap, pv2, lpar_slot_num=6, lua='pv_lua', target_name='fake_name')
         self.assertIsNotNone(vmap2)
         self.assertIsNotNone(vmap2.element)
         self.assertEqual('Client', vmap2.client_adapter.side)
@@ -324,6 +325,7 @@ class TestViosMappings(twrap.TestWrapper):
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
         self.assertEqual('a_link', vmap2.client_lpar_href)
+        self.assertEqual('fake_name', vmap.target_dev.name)
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.PV)
 
     def test_clone_scsi_mapping_no_storage(self):

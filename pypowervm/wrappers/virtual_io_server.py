@@ -452,11 +452,12 @@ class VStorageMapping(ewrap.ElementWrapper):
 @ewrap.Wrapper.base_pvm_type
 class _STDevMethods(ewrap.ElementWrapper):
     """Methods for storage and target common to STDev and VSCSIMapping."""
-    def _set_stg_and_tgt(self, adapter, stg_ref, lua=None):
+    def _set_stg_and_tgt(self, adapter, stg_ref, lua=None, target_name=None):
         self._backing_storage(stg_ref)
         if lua is not None:
             # Build a *TargetDev of the appropriate type for this stg_ref
-            self._target_dev(stg_ref.target_dev_type.bld(adapter, lua))
+            self._target_dev(stg_ref.target_dev_type.bld(adapter, lua,
+                                                         target_name))
 
     @property
     def backing_storage(self):
@@ -573,7 +574,7 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
-            lpar_slot_num=None, lua=None):
+            lpar_slot_num=None, lua=None, target_name=None):
         """Creates a new VSCSIMapping
 
         :param adapter: The pypowervm Adapter that will be used to create the
@@ -589,6 +590,9 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
                     the TargetDevice.  If None, the LUA will be assigned by the
                     server.  Should be specified for all of the VSCSIMappings
                     for a particular bus, or none of them.
+        :param target_name: (Optional, Default: None) Name of the TargetDevice
+                            If None, the target_name will be assigned by the
+                            server.
         :return: The newly-created VSCSIMapping.
         """
         s_map = super(VSCSIMapping, cls)._bld(adapter)
@@ -598,12 +602,13 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
         s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
             adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
-        s_map._set_stg_and_tgt(adapter, stg_ref, lua=lua)
+        s_map._set_stg_and_tgt(adapter, stg_ref, lua=lua,
+                               target_name=target_name)
         return s_map
 
     @classmethod
     def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None,
-                          lua=None):
+                          lua=None, target_name=None):
         """Clones the existing mapping, but swaps in the new storage elem.
 
         :param existing_map: The existing VSCSIMapping to clone.
@@ -617,6 +622,9 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
                     the TargetDevice.  If None, the LUA will be assigned by the
                     server.  Should be specified for all of the VSCSIMappings
                     for a particular bus, or none of them.
+        :param target_name: (Optional, Default: None) Name of the TargetDevice
+                            If None, the target_name will be assigned by the
+                            server.
         :return: The newly-created VSCSIMapping.
         """
         # We do NOT want the source's TargetDevice element, so we explicitly
@@ -640,7 +648,10 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
                                    "backing storage device!"))
             # Build a *TargetDev of the appropriate type for this stg_ref
             new_map._target_dev(stg_ref.target_dev_type.bld(
-                existing_map.adapter, lua))
+                existing_map.adapter, lua, target_name))
+        elif target_name is not None:
+            new_map._target_dev(stg_ref.target_dev_type.bld(
+                existing_map.adapter, lua, target_name))
         return new_map
 
 
