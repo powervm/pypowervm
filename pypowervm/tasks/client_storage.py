@@ -53,6 +53,42 @@ def udid_to_scsi_mapping(vios_w, udid, lpar_id, ignore_orphan=True):
     return None
 
 
+def devname_to_scsi_mapping(vios_w, devname, lpar_id, ignore_orphan=True):
+    """Finds the SCSI mapping (if any) for a given backing storage devname.
+
+    This is a helper method that will parse through a given VIOS wrapper
+    (retrieved with pypowervm.const.XAG.VIO_SMAP) and will find the client
+    SCSI mapping for a given backing storage element (LU, PV, LV, VOpt).
+
+    :param vios_w: The Virtual I/O Server wrapper.  Should have the Storage
+                   and SCSI mapping XAG associated with it.
+    :param devname: The volume's devname.
+    :param lpar_id: The LPARs 'short' id.
+    :param ignore_orphan: (Optional, Default: True) If set to True, any orphan
+                          SCSI mappings (those with no client adapter) will be
+                          ignored.
+    :return: The first matching SCSI mapping (or None).
+    """
+    for scsi_map in vios_w.scsi_mappings:
+        # No backing storage, then ignore.
+        if not scsi_map.backing_storage:
+            continue
+
+        # If there is not a client adapter, it isn't attached fully.
+        if not scsi_map.client_adapter and ignore_orphan:
+            continue
+
+        # Is it for the right LPAR?  (The server adapter is present even if
+        # it's an orphan.)
+        if lpar_id != scsi_map.server_adapter.lpar_id:
+            continue
+
+        if scsi_map.backing_storage.name == devname:
+            return scsi_map
+
+    return None
+
+
 def c_wwpn_to_vfc_mapping(vios_w, c_wwpn):
     """Finds the vFC mapping (if any) for a given client WWPN.
 

@@ -45,6 +45,27 @@ class TestClientStorage(twrap.TestWrapper):
         # 4th mapping has client adapter but no backing storage
         self.assertIsNone(clstor.udid_to_scsi_mapping(self.dwrap, 'bogus', 22))
 
+    def test_devname2scsi(self):
+        """Test udid_to_scsi_mapping."""
+
+        maps = self.dwrap.scsi_mappings
+        # 2nd mapping has no client adapter
+        lpar_id = maps[1].server_adapter.lpar_id
+        # Default: ignore orphan
+        self.assertIsNone(clstor.devname_to_scsi_mapping(
+            self.dwrap, maps[1].backing_storage.name, lpar_id))
+        # Don't ignore orphan
+        self.assertEqual(maps[1], clstor.devname_to_scsi_mapping(
+            self.dwrap, maps[1].backing_storage.name, lpar_id,
+            ignore_orphan=False))
+        # Doesn't work if the LPAR ID is wrong
+        self.assertIsNone(clstor.devname_to_scsi_mapping(
+            self.dwrap, maps[1].backing_storage.name, 123,
+            ignore_orphan=False))
+
+        # 4th mapping has client adapter but no backing storage
+        self.assertIsNone(clstor.udid_to_scsi_mapping(self.dwrap, 'bogus', 22))
+
     def test_c_wwpn_to_vfc(self):
         """Test c_wwpn_to_vfc_mapping."""
         # Since the first two VFC mappings have no client adapter, this test
