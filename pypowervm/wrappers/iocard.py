@@ -938,6 +938,9 @@ class VNICBackDev(ewrap.ElementWrapper):
         :return: A new VNICBackDev, suitable for inclusion in a VNIC wrapper.
         """
         bdev = super(VNICBackDev, cls)._bld(adapter)
+        # This is required, even though it can have only one possible value
+        # (for now), so don't bother with a @property or enum (for now).
+        bdev.set_parm_value(_VNICBD_DEV_TYP, 'SRIOV')
         # TODO(IBM): Verify that this can be ManagedSystem-less
         bdev._vios_href(adapter.build_href(_VIOS, vios_uuid, xag=[]))
         bdev._sriov_adap_id(sriov_adap_id)
