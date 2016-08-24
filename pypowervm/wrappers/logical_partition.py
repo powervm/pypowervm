@@ -26,18 +26,18 @@ import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
 
-_LPAR_VFCA = 'VirtualFibreChannelClientAdapters'
-_LPAR_VSCA = 'VirtualSCSIClientAdapters'
-_LPAR_DED_NICS = 'DedicatedVirtualNICs'
 _LPAR_MIG_STG_VIOS_DATA_STATUS = 'MigrationStorageViosDataStatus'
 _LPAR_MIG_STG_VIOS_DATA_TIME = 'MigrationStorageViosDataTimestamp'
 _LPAR_RR = 'RemoteRestartCapable'
 _LPAR_SRR = 'SimplifiedRemoteRestartCapable'
 _LPAR_HAS_DED_PROCS_FOR_MIG = 'HasDedicatedProcessorsForMigration'
 _LPAR_SUSPEND_CAP = 'SuspendCapable'
+_LPAR_MIG_DISABLE = 'MigrationDisable'
 _LPAR_MIG_STATE = 'MigrationState'
 _LPAR_RR_STATE = 'RemoteRestartState'
+_LPAR_PRI_PGING_SVC_PART = 'PrimaryPagingServicePartition'
 _LPAR_POWER_MGT_MODE = 'PowerManagementMode'
+_LPAR_SEC_PGING_SVC_PART = 'SecondaryPagingServicePartition'
 _LPAR_USES_HSL_OPTICONN = 'UsesHighSpeedLinkOpticonnect'
 _LPAR_USES_VIRT_OPTICONN = 'UsesVirtualOpticonnect'
 _LPAR_VFC_CLIENT_ADPTS = 'VirtualFibreChannelClientAdapters'
@@ -48,13 +48,13 @@ _LPAR_DES_IPL_SRC = 'DesignatedIPLSource'
 _LPAR_DED_VNICS = 'DedicatedVirtualNICs'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
-    _LPAR_VFCA, _LPAR_VSCA, _LPAR_DED_NICS, _LPAR_MIG_STG_VIOS_DATA_STATUS,
-    _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR, _LPAR_SRR,
-    _LPAR_HAS_DED_PROCS_FOR_MIG, _LPAR_SUSPEND_CAP, _LPAR_MIG_STATE,
-    _LPAR_RR_STATE, _LPAR_POWER_MGT_MODE, _LPAR_USES_HSL_OPTICONN,
-    _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS, _LPAR_VSCSI_CLIENT_ADPTS,
-    _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID, _LPAR_DES_IPL_SRC,
-    _LPAR_DED_VNICS)
+    _LPAR_MIG_STG_VIOS_DATA_STATUS, _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR,
+    _LPAR_SRR, _LPAR_HAS_DED_PROCS_FOR_MIG, _LPAR_SUSPEND_CAP,
+    _LPAR_MIG_DISABLE, _LPAR_MIG_STATE, _LPAR_RR_STATE,
+    _LPAR_PRI_PGING_SVC_PART, _LPAR_POWER_MGT_MODE, _LPAR_SEC_PGING_SVC_PART,
+    _LPAR_USES_HSL_OPTICONN, _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS,
+    _LPAR_VSCSI_CLIENT_ADPTS, _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID,
+    _LPAR_DES_IPL_SRC, _LPAR_DED_VNICS)
 
 
 class IPLSrc(object):
