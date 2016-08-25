@@ -144,6 +144,21 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         eth_port.switch_mode = net.VSwitchMode.VEPA
         self.assertEqual(net.VSwitchMode.VEPA, eth_port.switch_mode)
 
+    def test_physical_ports_no_vivify(self):
+        """Don't accidentally vivify [Converged]EthernetPhysicalPorts.
+
+        See https://bugs.launchpad.net/pypowervm/+bug/1617050
+        This test case has to prove that, when EthernetPhysicalPorts doesn't
+        exist in the XML, asking for phys_ports doesn't create it.
+        """
+        # 2nd and 3rd SRIOV adapters have no pports
+        adp = self.sriovs[1]
+        self.assertNotIn('<EthernetPhysicalPorts ', adp.toxmlstring())
+        self.assertNotIn('<ConvergedEthernetPhysicalPorts ', adp.toxmlstring())
+        self.assertEqual([], adp.phys_ports)
+        self.assertNotIn('<EthernetPhysicalPorts ', adp.toxmlstring())
+        self.assertNotIn('<ConvergedEthernetPhysicalPorts ', adp.toxmlstring())
+
 
 class TestLogicalPort(twrap.TestWrapper):
 

@@ -398,17 +398,17 @@ class SRIOVAdapter(IOAdapter):
 
     def _convergedphysicalports(self):
         """Retrieve all Converged physical ports."""
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS),
-            child_class=SRIOVConvPPort)
-        return es
+        elem = self._find(_SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS)
+        if elem is None:
+            return None
+        return ewrap.WrapperElemList(elem, child_class=SRIOVConvPPort)
 
     def _ethernetphysicalports(self):
         """Retrieve all Ethernet physical ports."""
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_SRIOV_ETHERNET_PHYSICAL_PORTS),
-            child_class=SRIOVEthPPort)
-        return es
+        elem = self._find(_SRIOV_ETHERNET_PHYSICAL_PORTS)
+        if elem is None:
+            return None
+        return ewrap.WrapperElemList(elem, child_class=SRIOVEthPPort)
 
     @property
     def phys_ports(self):
@@ -422,9 +422,9 @@ class SRIOVAdapter(IOAdapter):
         allports = []
         cports = self._convergedphysicalports()
         eports = self._ethernetphysicalports()
-        for c in cports:
+        for c in cports or []:
             allports.append(c)
-        for e in eports:
+        for e in eports or []:
             allports.append(e)
         # Set the ports' backpointers to this SRIOVAdapter
         for pport in allports:
