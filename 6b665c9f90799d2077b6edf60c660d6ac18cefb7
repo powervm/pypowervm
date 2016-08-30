@@ -1,0 +1,8 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+1: FRIED, ERIC P. <efried@us.ibm.com>
+Code-Review+2: Reznechek, Adam D. <adreznec@us.ibm.com>
+Submitted-by: Thorstensen, Andrew  (Drew) <thorst@us.ibm.com>
+Submitted-at: Tue, 30 Aug 2016 12:56:01 -0500
+Reviewed-on: http://morpheus.rch.stglabs.ibm.com/3696
+Project: pypowervm
+Branch: refs/heads/develop
