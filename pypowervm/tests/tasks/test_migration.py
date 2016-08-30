@@ -58,7 +58,8 @@ class TestMigration(testtools.TestCase):
                      (mig.OVS_OVERRIDE, '2'),
                      (mig.VLAN_BRIDGE_OVERRIDE, '2')]
         mapping_list = [(mig.VFC_MAPPINGS, ['1/1/1', '3/3/3//3']),
-                        (mig.VSCSI_MAPPINGS, ['2/2/2'])]
+                        (mig.VSCSI_MAPPINGS, ['2/2/2']),
+                        (mig.VLAN_MAPPINGS, ['4/4', '5/5/6\\,7'])]
         mock_run_job.side_effect = u.get_parm_checker(
             self, '1234', parm_list, exp_job_mappings=mapping_list,
             exp_timeout=1800 * 4)
@@ -67,6 +68,7 @@ class TestMigration(testtools.TestCase):
                          tgt_mgmt_svr='host', tgt_mgmt_usr='usr',
                          virtual_fc_mappings=['1/1/1', '3/3/3//3'],
                          virtual_scsi_mappings=['2/2/2'],
+                         vlan_mappings=['4/4', '5/5/6\\,7'],
                          dest_msp_name='vios1', source_msp_name='vios2',
                          spp_id='5', sdn_override=True,
                          vlan_check_override=True)
