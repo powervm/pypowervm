@@ -35,6 +35,7 @@ TGT_RMT_HMC = 'TargetRemoteHMCIPAddress'
 TGT_RMT_HMC_USR = 'TargetRemoteHMCUserID'
 VFC_MAPPINGS = 'VirtualFCMappings'
 VSCSI_MAPPINGS = 'VirtualSCSIMappings'
+VLAN_MAPPINGS = 'VlanMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
@@ -44,13 +45,12 @@ VLAN_BRIDGE_OVERRIDE = 'VLANBridgeOverride'
 _OVERRIDE_OK = '2'
 
 
-def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
-                 tgt_mgmt_svr=None, tgt_mgmt_usr=None,
-                 virtual_fc_mappings=None, virtual_scsi_mappings=None,
-                 dest_msp_name=None, source_msp_name=None, spp_id=None,
-                 timeout=CONF.pypowervm_job_request_timeout * 4,
-                 sdn_override=False, vlan_check_override=False):
-
+def migrate_lpar(
+        lpar, tgt_mgd_sys, validate_only=False, tgt_mgmt_svr=None,
+        tgt_mgmt_usr=None, virtual_fc_mappings=None,
+        virtual_scsi_mappings=None, dest_msp_name=None, source_msp_name=None,
+        spp_id=None, timeout=CONF.pypowervm_job_request_timeout * 4,
+        sdn_override=False, vlan_check_override=False, vlan_mappings=None):
     """Method to migrate a logical partition.
 
     :param lpar: The LPAR wrapper of the logical partition to migrate.
@@ -78,6 +78,9 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
                                 tell the Virtual I/O Server not to validate
                                 that the other VIOS has the VLAN
                                 pre-provisioned.
+    :param vlan_mappings: The vlan mappings that indicate what the VLAN should
+        be on the target system for a given MAC address.  If not provided, the
+        original VLANs will be used.  See information below.
 
     virtual_fc_mappings:
 
@@ -121,6 +124,23 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
     12/vios1//16 specifies a mapping of the virtual SCSI adapter with slot
     number 12 to slot number 16 on the VIOS partition vios1 on the destination
     managed system.
+
+    vlan_mappings:
+
+    List of vlan mappings, with each mapping having the following format:
+
+    MAC/PVID[/VLAN_A VLAN_B]
+
+    The first '/' must be present.  The first field is the MAC address of the
+    adapter.  The MAC address must be exactly 12 digits, case insensitive,
+    without colons in it.  The second is what the target PVID should be set to
+    for that adapter.  The remaining is a list of additional VLANs that could
+    be specified for adapters that have additional VLANs.  The list of
+    additional VLANs is space delimited.
+
+    For example:
+    001122334455/12 specifies a mapping where the adapter with MAC address
+    001122334455 should have a PVID of 12 on the target system.
     """
 
     op = (_SUFFIX_PARM_MIGRATE_VALIDATE
@@ -151,7 +171,8 @@ def migrate_lpar(lpar, tgt_mgd_sys, validate_only=False,
     # The mappings are special.  They require a join so that they are comma
     # separated down to the API.
     for kw, val in [(VFC_MAPPINGS, virtual_fc_mappings),
-                    (VSCSI_MAPPINGS, virtual_scsi_mappings)]:
+                    (VSCSI_MAPPINGS, virtual_scsi_mappings),
+                    (VLAN_MAPPINGS, vlan_mappings)]:
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, ",".join(val)))
