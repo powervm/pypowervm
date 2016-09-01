@@ -319,6 +319,4 @@ class CantUpdatePPortsInUse(AbstractMsgFmtError):
 
 
 class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
-    msg_fmt = _("Unable to create VNC based virtual terminal.  Consider using "
-                "the force flag to attempt to close other terminals that "
-                "may currently be open for this VM.  The error is: %(err)s")
+    msg_fmt = _("Unable to create VNC based virtual terminal: %(err)s")
