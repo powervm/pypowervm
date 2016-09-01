@@ -115,22 +115,34 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
 
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
 
-    cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
-    std_out, std_err = _run_proc(cmd)
+    def _run_mkvterm_cmd(lpar_uuid, force):
+        cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
+        ret_code, std_out, std_err = _run_proc(cmd)
 
-    if 'PVME' in std_err:
-        # This can happen if the vterm was out of band created, without the
-        # VNC flag.  Remove the vterm and try again.
-        if force:
+        # If the vterm was already started, the mkvterm command will always
+        # return an error message with a return code of 3.  However, there
+        # are 2 scenarios here, one where it was started with the VNC option
+        # previously, which we will get a valid port number back (which is
+        # the good path scenario), and one where it was started out-of-band
+        # where we will get no port.  If it is the out-of-band scenario and
+        # they asked us to force the connection, then we will attempt to
+        # terminate the old vterm session so we can start up one with VNC.
+        if force and ret_code == 3 and not _parse_vnc_port(std_out):
             LOG.warning(_("Invalid output on vterm open.  Trying to reset the "
                           "vterm.  Error was %s"), std_err)
             close_vterm(adapter, lpar_uuid)
-            std_out = _run_proc(cmd)[0]
-        else:
+            ret_code, std_out, std_err = _run_proc(cmd)
+
+        # The only error message that is fine is a return code of 3 that a
+        # session is already started, where we got back the port back meaning
+        # that it was started as VNC.  Else, raise up the error message.
+        if ret_code != 0 and not (ret_code == 3 and _parse_vnc_port(std_out)):
             raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
 
-    # The first line of the std_out should be the VNC port
-    return int(std_out.splitlines()[0])
+        # Parse the VNC Port out of the stdout returned from mkvterm
+        return _parse_vnc_port(std_out)
+
+    return _run_mkvterm_cmd(lpar_uuid, force)
 
 
 def open_remotable_vnc_vterm(
@@ -210,26 +222,33 @@ def open_remotable_vnc_vterm(
 def _run_proc(cmd):
     """Simple wrapper to run a process.
 
-    Will return the stdout and stderr.  Does not look at output code, as it is
-    typical that mkvterm can return a non-zero error code to indicate partial
-    success.
+    Will return the return code along with the stdout and stderr.  It is the
+    decision of the caller if it wishes to honor or ignore the return code.
 
-    This is why check_output does not suffice.
-
-    :return: The stdout and stderr from the command.
+    :return: The return code, stdout and stderr from the command.
     """
     process = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                close_fds=True, env=None)
     process.wait()
     stdout, stderr = process.communicate()
-    return stdout, stderr
+    return process.returncode, stdout, stderr
 
 
 def _get_lpar_id(adapter, lpar_uuid):
     lpar_resp = adapter.read(pvm_lpar.LPAR.schema_type, root_id=lpar_uuid,
                              suffix_type='quick', suffix_parm='PartitionID')
     return lpar_resp.body
+
+
+def _parse_vnc_port(std_out):
+    """Parse the VNC port number out of the standard output from mkvterm.
+
+    :return:  The port number parsed otherwise None if no valid port
+    """
+    # The first line of the std_out should be the VNC port
+    line = std_out.splitlines()[0] if std_out else None
+    return int(line) if line and line.isdigit() else None
 
 
 class _VNCRepeaterServer(threading.Thread):
