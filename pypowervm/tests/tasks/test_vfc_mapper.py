@@ -294,6 +294,45 @@ class TestVFCMapper(unittest.TestCase):
                           vfc_mapper.build_migration_mappings_for_fabric,
                           vios_wraps, p_wwpns, client_slots)
 
+    def test_build_migration_mappings(self):
+        vios_wraps = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        fabric_data = {'A': {'slots': [3, 4],
+                             'p_port_wwpns': ["10000090FA5371F1",
+                                              "10000090FA53720A"]},
+                       'B': {'slots': [5, 6],
+                             'p_port_wwpns': ["10000090FA5371F2",
+                                              "10000090FA537209"]}}
+        slot_peers = [[3, 5], [4, 6]]
+        resp = vfc_mapper.build_migration_mappings(vios_wraps, fabric_data,
+                                                   slot_peers)
+        self.assertEqual(4, len(resp))
+        self.assertEqual(set(resp), {'4/nimbus-ch03-p2-vios1/1//fcs1',
+                                     '6/nimbus-ch03-p2-vios1/1//fcs0',
+                                     '3/nimbus-ch03-p2-vios2/2//fcs0',
+                                     '5/nimbus-ch03-p2-vios2/2//fcs1'})
+
+        fabric_data = {'A': {'slots': [3],
+                             'p_port_wwpns': ["10000090FA5371F1"]},
+                       'B': {'slots': [5, 6],
+                             'p_port_wwpns': ["10000090FA5371F2",
+                                              "10000090FA537209"]}}
+        slot_peers = [[3, 5], [6]]
+        resp = vfc_mapper.build_migration_mappings(vios_wraps, fabric_data,
+                                                   slot_peers)
+        self.assertEqual(3, len(resp))
+        self.assertEqual(set(resp), {'5/nimbus-ch03-p2-vios2/2//fcs1',
+                                     '3/nimbus-ch03-p2-vios2/2//fcs0',
+                                     '6/nimbus-ch03-p2-vios1/1//fcs0'})
+        # Use invalid ports
+        fabric_data = {'A': {'slots': [3],
+                             'p_port_wwpns': ["10000090FA5371F1"]},
+                       'B': {'slots': [5],
+                             'p_port_wwpns': ["10000090FA537209"]}}
+        slot_peers = [[3, 5]]
+        self.assertRaises(e.UnableToFindFCPortMap,
+                          vfc_mapper.build_migration_mappings,
+                          vios_wraps, fabric_data, slot_peers)
+
 
 class TestPortMappings(twrap.TestWrapper):
     file = VIOS_FEED
