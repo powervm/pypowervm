@@ -374,7 +374,8 @@ class TestPortMappings(twrap.TestWrapper):
                          vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcs0'))
         self.assertIsNone(vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcsX'))
 
-    def test_add_port_bad_pfc(self):
+    @mock.patch('lxml.etree.tostring')
+    def test_add_port_bad_pfc(self, mock_tostring):
         """Validates that an error will be thrown with a bad pfc port."""
         # Build the mappings - the provided WWPN is bad
         vfc_map = ('10000090FA5371F9', '0 1')
@@ -384,6 +385,8 @@ class TestPortMappings(twrap.TestWrapper):
             self.assertRaises(e.UnableToDerivePhysicalPortForNPIV,
                               vfc_mapper.add_map,
                               self.entries[0], 'host_uuid', FAKE_UUID, vfc_map)
+        mock_tostring.assert_called_once_with(
+            self.entries[0].entry.element.element, pretty_print=True)
 
     def ensure_does_not_have_wwpns(self, vios_w, wwpns):
         for vfc_map in vios_w.vfc_mappings:
