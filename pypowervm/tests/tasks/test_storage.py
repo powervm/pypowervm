@@ -340,7 +340,7 @@ class TestRMSTorage(testtools.TestCase):
         # dev doesn't have a UDID
         with self.assertLogs(ts.__name__, 'WARNING'):
             self.assertIsNone(ts._rm_dev_by_udid(dev1, None))
-            dev1.toxmlstring.assert_called_with()
+            dev1.toxmlstring.assert_called_with(pretty_print=True)
         # Remove from empty list returns None, and warns (like not-found)
         dev1.udid = 123
         with self.assertLogs(ts.__name__, 'WARNING'):

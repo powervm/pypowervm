@@ -97,6 +97,18 @@ class TestElement(twrap.TestWrapper):
         # TODO(IBM): ...but it doesn't.  See comment in that method.
         # self.assertEqual(num_lg, len(self.dwrap.load_grps))
 
+    @mock.patch('lxml.etree.tostring')
+    def test_toxmlstring(self, mock_tostring):
+        newel = ent.Element('foo', None)
+        # No args
+        self.assertEqual(mock_tostring.return_value, newel.toxmlstring())
+        mock_tostring.assert_called_once_with(newel.element)
+        # With kwargs
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value,
+                         newel.toxmlstring(one=2, three=4))
+        mock_tostring.assert_called_once_with(newel.element, one=2, three=4)
+
 
 class TestElementList(twrap.TestWrapper):
     file = SYS_SRIOV_FILE
@@ -321,6 +333,20 @@ class TestEntryWrapper(testtools.TestCase):
         self.assertEqual('1', ew[0].etag)
         self.assertEqual(e2, ew[1].entry)
         self.assertEqual('2', ew[1].etag)
+
+    @mock.patch('lxml.etree.tostring')
+    def test_toxmlstring(self, mock_tostring):
+        wrp = ewrap.EntryWrapper.wrap(ent.Entry(
+            {}, ent.Element('fake_entry', None), None))
+        # No args
+        self.assertEqual(mock_tostring.return_value, wrp.toxmlstring())
+        mock_tostring.assert_called_once_with(wrp.entry.element)
+        # With kwargs
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value,
+                         wrp.toxmlstring(one=2, three=4))
+        mock_tostring.assert_called_once_with(
+            wrp.entry.element, one=2, three=4)
 
 
 class TestElementWrapper(testtools.TestCase):

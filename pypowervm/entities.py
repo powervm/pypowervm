@@ -256,8 +256,15 @@ class Element(object):
         e.element = element
         return e
 
-    def toxmlstring(self):
-        return etree.tostring(self.element)
+    def toxmlstring(self, **kwargs):
+        """Produce an XML dump of this Element.
+
+        :param kwargs: Keyword arguments to pass directly through to
+                       etree.tostring().  For example, use pretty_print=True to
+                       format the XML in a visually-pleasing manner.
+        :return: An XML string representing this Element.
+        """
+        return etree.tostring(self.element, **kwargs)
 
     @property
     def tag(self):

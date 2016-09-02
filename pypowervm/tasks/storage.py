@@ -526,7 +526,7 @@ def _rm_dev_by_udid(dev, devlist):
     """
     if not dev.udid:
         LOG.warning(_("Ignoring device because it lacks a UDID:\n%s"),
-                    dev.toxmlstring())
+                    dev.toxmlstring(pretty_print=True))
         return None
 
     matches = [realdev for realdev in devlist if realdev.udid == dev.udid]

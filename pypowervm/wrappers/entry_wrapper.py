@@ -607,8 +607,15 @@ class Wrapper(object):
         link.attrib['href'] = href
         link.attrib['rel'] = 'related'
 
-    def toxmlstring(self):
-        return self.element.toxmlstring()
+    def toxmlstring(self, **kwargs):
+        """Produce an XML dump of this Wrapper's Element.
+
+        :param kwargs: Keyword arguments to pass directly through to
+                       etree.tostring().  For example, use pretty_print=True to
+                       format the XML in a visually-pleasing manner.
+        :return: An XML string representing this Element.
+        """
+        return self.element.toxmlstring(**kwargs)
 
     @classmethod
     def _bld_element(cls, adapter, tag=None, has_metadata=has_metadata,
