@@ -28,6 +28,8 @@ from pypowervm.wrappers import job as pvm_job
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
+import six
+
 LOG = logging.getLogger(__name__)
 
 
@@ -636,4 +638,114 @@ def build_migration_mappings_for_fabric(vios_wraps, p_port_wwpns,
         # We do not specify the vios-virtual-slot-number.
         resp.append(str(client_slot) + "/" + vios_w.name + "/" +
                     str(vios_w.id) + "//" + port.name)
+    return resp
+
+
+def _split_ports_per_fabric(slot_grouping, fabric_data):
+    """Splits the slots per fabric which are to be placed on the same VIOS"""
+    resp = {}
+    for fabric in fabric_data:
+        slots = [x for x in fabric_data[fabric]['slots'] if x in slot_grouping]
+        if not slots:
+            continue
+
+        resp[fabric] = {'slots': slots,
+                        'p_port_wwpns': fabric_data[fabric]['p_port_wwpns']}
+    return resp
+
+
+def _does_vios_support_split_map(vios_w, split_map):
+    """split_map provided by _split_ports_per_fabric."""
+    for fabric_map in six.itervalues(split_map):
+        needed_pports = len(fabric_map['slots'])
+        fabric_pports_on_vios = _find_ports_on_vio(
+            vios_w, fabric_map['p_port_wwpns'])
+        if len(fabric_pports_on_vios) < needed_pports:
+            return False
+    return True
+
+
+def build_migration_mappings(vios_wraps, fabric_data, slot_peers):
+    """Builds the vFC migration mappings.
+
+    Looks holistically at the system.  Should generally be used instead of
+    build_migration_mappings_for_fabric.
+
+    :param vios_wraps: The VIOS wrappers for the target system.  Must
+                       have the VIO_FMAP xag specified.
+    :param fabric_data: Dictionary where the key is the fabric name.  The
+                        value is another dictionary with the slots and the
+                        p_port_wwpns.
+
+                        Ex:
+                        { 'A': {'slots': [3, 4, 5], p_port_wwpns: [1, 2, 3] },
+                          'B': {'slots': [6, 7, 8], p_port_wwpns: [4, 5] } }
+
+                        The slot indicates which slots from the client slots
+                        align with which fabric.
+
+    :param slot_peers: An array of arrays.  Indicates all of the slots that
+                       need to be grouped together on a given VIOS.
+
+                       Ex:
+                       [ [3, 6, 7], [4, 8], [5] ]
+
+                       Indicates that (based on the data from fabric_data)
+                       one VIOS must host client slot 3 (from fabric A) and
+                       slots 6 and 7 (from fabric B).  Then another VIOS must
+                       host client slot 4 (from fabric A) and client slot 8
+                       (from fabric B).  And the third VIOS must only host
+                       client slot 5 (from fabric A).
+    :return: List of mappings that can be passed into the migration.py
+             for the live migration.  The format is defined within the
+             migration.py, migrate_lpar method.
+    """
+
+    # First sort the slot peers.  The one with the most peers needs to go first
+    # then work down from there.
+    slot_peers = sorted(slot_peers, key=len, reverse=True)
+
+    vios_to_split_map = {}
+
+    # We create a map of all the VIOSes and their corresponding slots
+    for peer_grouping in slot_peers:
+        split_map = _split_ports_per_fabric(peer_grouping, fabric_data)
+	LOG.debug("split_map %s" % split_map)
+        for vios_w in vios_wraps:
+            LOG.debug("Checking vios name %(name)s vios fc ports %(port)s" % 
+                      dict(name=vios_w.name,
+                           port=[port.wwpn for port in vios_w.pfc_ports]))
+            found_vios = False
+            if vios_w in vios_to_split_map.keys():
+                continue
+            if not _does_vios_support_split_map(vios_w, split_map):
+                continue
+            vios_to_split_map[vios_w] = split_map
+            found_vios = True
+            break
+        # When no vios match is found for peer group error
+        if not found_vios:
+            raise e.UnableToFindFCPortMap()
+
+    LOG.debug("vios_to_split_map %s" % vios_to_split_map)
+    resp = []
+    # Each VIOS has a split map.  the split map contains the fabric (as
+    # the key), the physical port wwpns, and the slots.
+    for vios_w, split_map in six.iteritems(vios_to_split_map):
+        for fabric_map in six.itervalues(split_map):
+            p_port_wwpns = fabric_map['p_port_wwpns']
+            slots = fabric_map['slots']
+            basic_mappings = derive_base_npiv_map([vios_w], p_port_wwpns,
+                                                  len(slots))
+            for basic_map, client_slot in zip(basic_mappings, slots):
+                # Find the appropriate VIOS hosting this physical port.
+                vios_w, port = find_vios_for_wwpn([vios_w], basic_map[0])
+
+                # The format is:
+                #     virtual-slot-number/vios-lpar-name/vios-lpar-ID
+                #     [/[vios-virtual-slot-number][/[vios-fc-port-name]]]
+                #
+                # We do not specify the vios-virtual-slot-number.
+                resp.append(str(client_slot) + "/" + vios_w.name + "/" +
+                            str(vios_w.id) + "//" + port.name)
     return resp
