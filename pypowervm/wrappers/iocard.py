@@ -834,6 +834,15 @@ class VNIC(ewrap.EntryWrapper):
     def back_devs(self, new_devs):
         self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
 
+    @property
+    def auto_pri_failover(self):
+        return self._details.auto_pri_failover._get_val_bool(
+            _VNICBD_FAILOVER_PRI)
+
+    @auto_pri_failover.setter
+    def auto_pri_failover(self, val):
+        self._details.auto_pri_failover = val
+
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
@@ -911,6 +920,14 @@ class _VNICDetails(ewrap.ElementWrapper):
         """The capacity (float, 0.0-1.0) of the active backing logical port."""
         return self._get_val_percent(_VNICD_DES_CAP_PCT)
 
+    @property
+    def auto_pri_failover(self):
+        return self._get_val_bool(_VNICBD_FAILOVER_PRI)
+
+    @auto_pri_failover.setter
+    def auto_pri_failover(self, val):
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, u.sanitize_bool_for_api(val))
+
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
@@ -918,7 +935,8 @@ class VNICBackDev(ewrap.ElementWrapper):
     """SR-IOV backing device for a vNIC."""
 
     @classmethod
-    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None):
+    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
+            failover_pri=None):
         """Create a new VNICBackDev, suitable for inclusion in a VNIC wrapper.
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
@@ -944,6 +962,8 @@ class VNICBackDev(ewrap.ElementWrapper):
         bdev._pport_id(pport_id)
         if capacity is not None:
             bdev._capacity(capacity)
+        if failover_pri is not None:
+            bdev.failover_pri = failover_pri
         return bdev
 
     @property
@@ -983,6 +1003,14 @@ class VNICBackDev(ewrap.ElementWrapper):
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
                             u.sanitize_percent_for_api(float_val))
+
+    @property
+    def pri_failover(self):
+        return self._get_val_int(_VNICBD_FAILOVER_PRI)
+
+    @pri_failover.setter
+    def pri_failover(self, val):
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, val)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
