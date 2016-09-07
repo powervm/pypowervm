@@ -252,6 +252,11 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(u.VLANList.ALL, vnic.allowed_vlans)
         self.assertIsNone(vnic.mac)
         self.assertEqual(u.MACList.ALL, vnic.allowed_macs)
+        self.assertFalse(vnic.auto_pri_failover)
+        vnic.auto_pri_failover = True
+        self.assertTrue(vnic.auto_pri_failover)
+        vnic.auto_pri_failover = False
+        self.assertFalse(vnic.auto_pri_failover)
 
         # Values in kwargs
 
@@ -263,7 +268,7 @@ class TestVNIC(twrap.TestWrapper):
 
         backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4),
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
-                                         capacity=0.3456789)]
+                                         capacity=0.3456789, pri_failover=50)]
         vnic = card.VNIC.bld(
             self.adpt, pvid=7, slot_num=8, allowed_vlans=[1, 2],
             mac_addr='m:a:c',
@@ -297,6 +302,12 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(5, bd2.sriov_adap_id)
         self.assertEqual(6, bd2.pport_id)
         self.assertEqual(0.3457, bd2.capacity)
+        self.assertIsNone(bd1.pri_failover)
+        self.assertEqual(bd2.pri_failover, 50)
+        bd1.pri_failover = 42
+        bd2.pri_failover = 60
+        self.assertEqual(bd1.pri_failover, 42)
+        self.assertEqual(bd2.pri_failover, 60)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
