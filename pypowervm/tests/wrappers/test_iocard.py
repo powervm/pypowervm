@@ -252,6 +252,11 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(u.VLANList.ALL, vnic.allowed_vlans)
         self.assertIsNone(vnic.mac)
         self.assertEqual(u.MACList.ALL, vnic.allowed_macs)
+        self.assertIsNone(vnic.auto_pri_failover)
+        vnic.auto_pri_failover = False
+        self.assertIsNone(vnic.auto_pri_failover, False)
+        vnic.auto_pri_failover = True
+        self.assertIsNone(vnic.auto_pri_failover, True)
 
         # Values in kwargs
 
@@ -297,6 +302,12 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(5, bd2.sriov_adap_id)
         self.assertEqual(6, bd2.pport_id)
         self.assertEqual(0.3457, bd2.capacity)
+        self.assertEqual(bd1.pri_failover, None)
+        self.assertEqual(bd2.pri_failover, None)
+        bd1.pri_failover = 42
+        bd2.pri_failover = 60
+        self.assertEqual(bd1.pri_failover, 42)
+        self.assertEqual(bd2.pri_failover, 60)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
