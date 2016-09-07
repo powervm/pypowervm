@@ -297,6 +297,12 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(5, bd2.sriov_adap_id)
         self.assertEqual(6, bd2.pport_id)
         self.assertEqual(0.3457, bd2.capacity)
+        self.assertEqual(bd1.failover_pri, 50)
+        self.assertEqual(bd2.failover_pri, 50)
+        bd1.failover_pri = 42
+        bd2.failover_pri = 60
+        self.assertEqual(bd1.failover_pri, 42)
+        self.assertEqual(bd2.failover_pri, 60)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)

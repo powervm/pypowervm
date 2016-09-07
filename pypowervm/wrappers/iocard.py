@@ -918,7 +918,8 @@ class VNICBackDev(ewrap.ElementWrapper):
     """SR-IOV backing device for a vNIC."""
 
     @classmethod
-    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None):
+    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
+            failover_pri=None):
         """Create a new VNICBackDev, suitable for inclusion in a VNIC wrapper.
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
@@ -944,6 +945,8 @@ class VNICBackDev(ewrap.ElementWrapper):
         bdev._pport_id(pport_id)
         if capacity is not None:
             bdev._capacity(capacity)
+        if failover_pri is not None:
+            bdev.failover_pri = failover_pri
         return bdev
 
     @property
@@ -983,6 +986,14 @@ class VNICBackDev(ewrap.ElementWrapper):
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
                             u.sanitize_percent_for_api(float_val))
+
+    @property
+    def failover_pri(self):
+        return self._get_val_int(_VNICBD_FAILOVER_PRI)
+
+    @failover_pri.setter
+    def failover_pri(self, val):
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, val)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
