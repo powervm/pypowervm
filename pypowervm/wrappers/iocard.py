@@ -834,6 +834,14 @@ class VNIC(ewrap.EntryWrapper):
     def back_devs(self, new_devs):
         self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
 
+    @property
+    def auto_failover_pri(self):
+        return self._details.auto_failover_pri
+
+    @auto_failover_pri.setter
+    def auto_failover_pri(self, val):
+        self._details.auto_failover_pri = val
+
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
@@ -911,6 +919,14 @@ class _VNICDetails(ewrap.ElementWrapper):
         """The capacity (float, 0.0-1.0) of the active backing logical port."""
         return self._get_val_percent(_VNICD_DES_CAP_PCT)
 
+    @property
+    def auto_failover_pri(self):
+        return self._get_val_bool(_VNICD_AUTO_FB)
+
+    @auto_failover_pri.setter
+    def auto_failover_pri(self, val):
+        self.set_parm_value(_VNICD_AUTO_FB, u.sanitize_bool_for_api(val))
+
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
@@ -918,7 +934,8 @@ class VNICBackDev(ewrap.ElementWrapper):
     """SR-IOV backing device for a vNIC."""
 
     @classmethod
-    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None):
+    def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
+            failover_pri=None):
         """Create a new VNICBackDev, suitable for inclusion in a VNIC wrapper.
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
@@ -935,6 +952,8 @@ class VNICBackDev(ewrap.ElementWrapper):
                          of SRIOVEthPPort.min_granularity for the physical port
                          indicated by pport_id.  If not specified,
                          SRIOVEthPPort.min_granularity is used by the platform.
+        :param failover_pri: Positive integer value representing the failover
+                             priority of this backing device.
         :return: A new VNICBackDev, suitable for inclusion in a VNIC wrapper.
         """
         bdev = super(VNICBackDev, cls)._bld(adapter)
@@ -944,6 +963,8 @@ class VNICBackDev(ewrap.ElementWrapper):
         bdev._pport_id(pport_id)
         if capacity is not None:
             bdev._capacity(capacity)
+        if failover_pri is not None:
+            bdev.failover_pri = failover_pri
         return bdev
 
     @property
@@ -984,12 +1005,27 @@ class VNICBackDev(ewrap.ElementWrapper):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
                             u.sanitize_percent_for_api(float_val))
 
+    @property
+    def failover_pri(self):
+        """
+        The failover priority value for this backing device.
+
+        :return: A value between 1 and 100, inclusive, with a lower number
+                 indicating the higher priority (i.e. the backingdevice with
+                 priority 1 will take precedence over that with priority 2).
+        """
+        return self._get_val_int(_VNICBD_FAILOVER_PRI)
+
+    @failover_pri.setter
+    def failover_pri(self, val):
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, val)
+
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
 class LinkAggrIOAdapterChoice(ewrap.ElementWrapper):
     """A free I/O Adapter link aggregation choice.
 
-    Flattens this two step heirarchy to pull the information needed directly
+    Flattens this two step hierarchy to pull the information needed directly
     from the IOAdapter element.
     """
     def __get_prop(self, func):
