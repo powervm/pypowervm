@@ -102,6 +102,48 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsInstance(vopt, stor.VOptMedia)
         self.assertEqual('test2', v_opt.media_name)
 
+    @mock.patch.object(ts.LOG, 'warning')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vopt_w_retry(self, mock_create_file, mock_log_warn):
+        """Tests the uploads of the virtual disks with an upload retry."""
+
+        mock_create_file.return_value = self._fake_meta()
+        self.adpt.upload_file.side_effect = [exc.Error("error"),
+                                             object()]
+
+        v_opt, f_wrap = ts.upload_vopt(self.adpt, self.v_uuid, None, 'test2',
+                                       f_size=50)
+
+        # Test that vopt was 'uploaded'
+        self.adpt.upload_file.assert_called_with(mock.ANY, None)
+        self.assertIsNone(f_wrap)
+        self.assertIsNotNone(v_opt)
+        self.assertIsInstance(v_opt, stor.VOptMedia)
+        self.assertEqual('test2', v_opt.media_name)
+
+        # Validate that there was a warning log call and multiple executions
+        # of the upload
+        mock_log_warn.assert_called_once()
+        self.assertEqual(2, self.adpt.upload_file.call_count)
+
+        # Ensure cleanup was called
+        self.adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+
+    @mock.patch.object(ts.LOG, 'warning')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vopt_w_fail(self, mock_create_file, mock_log_warn):
+        """Tests the uploads of the virtual disks with an upload fail."""
+        mock_create_file.return_value = self._fake_meta()
+        self.adpt.upload_file.side_effect = exc.Error("error")
+
+        self.assertRaises(exc.Error, ts.upload_vopt, self.adpt, self.v_uuid,
+                          None, 'test2', f_size=50)
+
+        # Three loops (so three logging calls) before the failure bubbles up
+        self.assertEqual(3, mock_log_warn.call_count)
+
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
