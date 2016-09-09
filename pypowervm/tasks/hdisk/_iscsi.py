@@ -24,6 +24,7 @@ from pypowervm.wrappers.virtual_io_server import VIOS
 
 LOG = logging.getLogger(__name__)
 _JOB_NAME = "ISCSIDiscovery"
+_ISCSI_LOGOUT = "ISCSILogout"
 
 
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
@@ -80,3 +81,20 @@ def discover_iscsi_initiator(adapter, vios_uuid):
 
     # InitiatorName: iqn.2010-10.org.openstack:volume-4a75e9f7-dfa3
     return results.get('InitiatorName')
+
+
+def iscsi_logout(adapter, targetIQN, vios_uuid):
+    """Logout of an iSCSI session.
+
+    :param adapter: pypowervm adapter
+    :param targetIQN: The IQN (iSCSI Qualified Name) of the created volume on
+                      the target. (e.g. iqn.2016-06.world.srv:target00)
+    :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    """
+    resp = adapter.read(VIOS.schema_type, vios_uuid,
+                        suffix_type=c.SUFFIX_TYPE_DO,
+                        suffix_parm=(_ISCSI_LOGOUT))
+    job_wrapper = job.Job.wrap(resp)
+
+    job_parms = [job_wrapper.create_job_parameter('targetIQN', targetIQN)]
+    job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
