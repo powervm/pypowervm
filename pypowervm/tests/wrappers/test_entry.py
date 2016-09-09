@@ -1054,6 +1054,7 @@ class TestSearch(testtools.TestCase):
         # Do the search (with class as parent_type)
         wraps = net.VNet.search(self.adp, parent_type=vios.VIOS, tagged=True)
         # Make sure we got the right networks
+        self.assertEqual(4, len(wraps))
         for wrap, expected_vlanid in zip(wraps, (1234, 2, 1001, 1000)):
             self.assertIsInstance(wrap, net.VNet)
             self.assertTrue(wrap.tagged)

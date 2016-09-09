@@ -1054,7 +1054,7 @@ class EntryWrapper(Wrapper):
                 ret = resp
             else:
                 ret.feed.entries.extend(resp.feed.entries)
-            return ret
+        return ret
 
     def create(self, parent_type=None, parent_uuid=None, timeout=-1,
                parent=None):
