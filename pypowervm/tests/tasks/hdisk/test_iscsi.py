@@ -71,3 +71,24 @@ class TestIscsi(testtools.TestCase):
         self.adpt.read.assert_called_once_with(*args, **kwargs)
         self.assertEqual('fake_iqn', initiator)
         self.assertEqual(1, mock_run_job.call_count)
+
+    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
+    @mock.patch('pypowervm.wrappers.job.Job.wrap')
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.wrappers.job.Job.get_job_results_as_dict')
+    def test_iscsi_logout(self, mock_job_res, mock_run_job, mock_job_w,
+                          mock_job_p):
+        mock_job_w.return_value = self.mock_job
+        mock_uuid = 'uuid'
+        mock_iqn = 'fake_iqn'
+        mock_parm = mock.MagicMock()
+        mock_job_p.return_value = mock_parm
+        args = ['VirtualIOServer', mock_uuid]
+        kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSILogout')}
+        iscsi.iscsi_logout(self.adpt, mock_iqn, mock_uuid)
+
+        self.adpt.read.assert_called_once_with(*args, **kwargs)
+        mock_run_job.assert_called_once_with(mock_uuid, job_parms=[mock_parm],
+                                             timeout=120)
+        mock_job_p.assert_any_call('targetIQN', mock_iqn)
+        self.assertEqual(1, mock_run_job.call_count)
