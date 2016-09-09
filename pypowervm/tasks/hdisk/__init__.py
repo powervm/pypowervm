@@ -31,3 +31,4 @@ remove_hdisk = _fc.remove_hdisk
 get_pg83_via_job = _fc.get_pg83_via_job
 discover_iscsi = _iscsi.discover_iscsi
 discover_iscsi_initiator = _iscsi.discover_iscsi_initiator
+iscsi_logout = _iscsi.iscsi_logout
