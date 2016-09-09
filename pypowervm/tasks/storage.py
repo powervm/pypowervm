@@ -269,50 +269,10 @@ def _upload_stream(vio_file, d_stream):
             # It works by writing to a file 'pipe'.  This is harder to
             # coordinate.  But the vio_file's 'asset_file' tells us where
             # to write the stream to.
-
-            # A reader to tell the API we have nothing to upload
-            class EmptyReader(object):
-                def read(self, size):
-                    return None
-
-            with futures.ThreadPoolExecutor(max_workers=2) as th:
-                # The upload file is a blocking call (won't return until pipe
-                # is fully written to), which is why we put it in another
-                # thread.
-                upload_f = th.submit(vio_file.adapter.upload_file,
-                                     vio_file.element, EmptyReader())
-
-                # Create a function that streams to the FIFO pipe
-                out_stream = open(vio_file.asset_file, 'a+b', 0)
-
-                def copy_func(in_stream, out_stream):
-                    while True:
-                        chunk = d_stream.read(65536)
-                        if not chunk:
-                            break
-                        out_stream.write(chunk)
-
-                        # Yield to other threads
-                        time.sleep(0)
-
-                    # The close indicates to the other side we are done.  Will
-                    # force the upload_file to return.
-                    out_stream.close()
-                copy_f = th.submit(copy_func, d_stream, out_stream)
-
-            try:
-                # Make sure we call the results.  This is just to make sure it
-                # doesn't have exceptions
-                for io_future in futures.as_completed([upload_f, copy_f]):
-                    io_future.result()
-            finally:
-                # If the upload failed, then make sure we close the stream.
-                # This will ensure that if one of the threads fail, both fail.
-                # Note that if it is already closed, this no-ops.
-                out_stream.close()
+            _upload_stream_coordinated(vio_file, d_stream)
         else:
             # Upload the file directly to the REST API server.
-            vio_file.adapter.upload_file(vio_file.element, d_stream)
+            _upload_stream_api(vio_file, d_stream)
     finally:
         # Must release the semaphore
         _UPLOAD_SEM.release()
@@ -326,6 +286,67 @@ def _upload_stream(vio_file, d_stream):
                             'File uuid: %s') % vio_file.uuid)
             return vio_file
     return None
+
+
+def _upload_stream_api(vio_file, d_stream):
+    i = 0
+    while True:
+        try:
+            # Very rarely (think one in a thousand) there appears to be a
+            # hiccup in the upload processing.  A simple retry mechanism
+            # should be enough to push it through
+            vio_file.adapter.upload_file(vio_file.element, d_stream)
+            break
+        except exc.Error:
+            if i < 3:
+                LOG.warning(_("Encountered an issue while uploading. "
+                              "Will retry."))
+            else:
+                raise
+            i += 1
+
+
+def _upload_stream_coordinated(vio_file, d_stream):
+    # A reader to tell the API we have nothing to upload
+    class EmptyReader(object):
+        def read(self, size):
+            return None
+
+    with futures.ThreadPoolExecutor(max_workers=2) as th:
+        # The upload file is a blocking call (won't return until pipe
+        # is fully written to), which is why we put it in another
+        # thread.
+        upload_f = th.submit(vio_file.adapter.upload_file,
+                             vio_file.element, EmptyReader())
+
+        # Create a function that streams to the FIFO pipe
+        out_stream = open(vio_file.asset_file, 'a+b', 0)
+
+        def copy_func(in_stream, out_stream):
+            while True:
+                chunk = d_stream.read(65536)
+                if not chunk:
+                    break
+                out_stream.write(chunk)
+
+                # Yield to other threads
+                time.sleep(0)
+
+            # The close indicates to the other side we are done.  Will
+            # force the upload_file to return.
+            out_stream.close()
+        copy_f = th.submit(copy_func, d_stream, out_stream)
+
+    try:
+        # Make sure we call the results.  This is just to make sure it
+        # doesn't have exceptions
+        for io_future in futures.as_completed([upload_f, copy_f]):
+            io_future.result()
+    finally:
+        # If the upload failed, then make sure we close the stream.
+        # This will ensure that if one of the threads fail, both fail.
+        # Note that if it is already closed, this no-ops.
+        out_stream.close()
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
