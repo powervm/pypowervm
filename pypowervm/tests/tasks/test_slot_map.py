@@ -664,15 +664,6 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         # ...max_vslots returns the exact value
         self.assertEqual(23, rsm.get_max_vslots())
 
-    def test_rebuild_fails_w_lu(self):
-        """Test RebuildSlotMap fails when LUs exist in topology."""
-        smt = self.smt_impl('foo')
-        smt._slot_topo = SCSI_W_LU
-        self.assertRaises(
-            pv_e.InvalidHostForRebuildInvalidIOType,
-            slot_map.RebuildSlotMap, smt,
-            [self.vio1, self.vio2], VOL_TO_VIO1, {})
-
     def test_rebuild_fails_w_vopt(self):
         """Test RebuildSlotMap fails when a Vopt exists in topology."""
         smt = self.smt_impl('foo')
@@ -691,12 +682,40 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             slot_map.RebuildSlotMap, smt,
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
+    def test_lu_vscsi_build_out_1(self):
+        """Test RebuildSlotMap deterministic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = SCSI_LU_1
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+                                      VOL_TO_VIO1, {})
+
+        # Deterministic. vios1 gets slot 1
+        for udid in rsm._build_map['LU']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_LU_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # Deterministic. vios2 gets slot 2
+        for udid in rsm._build_map['LU']['vios2']:
+            slot, lua = rsm.get_vscsi_slot(self.vio2, udid)
+            self.assertEqual(2, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_LU_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio1, 'lu_udid4')
+        self.assertIsNone(slot)
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'lu_udid2')
+        self.assertIsNone(slot)
+
     def test_pv_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_1
         rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
-                                      VOL_TO_VIO2, {})
+                                      VOL_TO_VIO1, {})
 
         # Deterministic. vios1 gets slot 1
         for udid in rsm._build_map['PV']['vios1']:
@@ -723,46 +742,75 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertIsNone(
             rsm.get_pv_vscsi_slot(self.vio2, 'pv_udid2'))
 
-    def test_pv_vscsi_build_out_arbitrary_dest_vioses(self):
+    def test_mix_vscsi_build_out_1(self):
+        """Test RebuildSlotMap deterministic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = SCSI_MIX_1
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+                                      VOL_TO_VIO1, {})
+
+        # Deterministic. vios1 gets slot 1
+        for udid in rsm._build_map['PV']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_MIX_1[slot][slot_map.IOCLASS.PV][udid], lua)
+
+        for udid in rsm._build_map['LU']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_MIX_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'lu_udid2')
+        self.assertIsNone(slot)
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'pv_udid2')
+        self.assertIsNone(slot)
+
+    def test_vscsi_build_out_arbitrary_dest_vioses(self):
         """Test RebuildSlotMap with multiple candidate dest VIOSes."""
         smt = self.smt_impl('foo')
-        smt._slot_topo = SCSI_PV_ARB_MAP
+        smt._slot_topo = SCSI_ARB_MAP
 
         rsm = slot_map.RebuildSlotMap(
             smt, [self.vio1, self.vio2], VTV_2V_ARB, {})
 
         # Since this isn't deterministic we want to make sure each UDID
         # got their slot assigned to one VIOS and not the other.
-        expected_map = {'pv_udid1': 47, 'pv_udid2': 9, 'pv_udid3': 23,
+        expected_map = {'lu_udid1': 47, 'pv_udid2': 9, 'lu_udid3': 23,
                         'pv_udid4': 56}
         for udid, eslot in six.iteritems(expected_map):
-            if not rsm.get_pv_vscsi_slot(self.vio1, udid):
-                self.assertEqual(
-                    eslot, rsm.get_pv_vscsi_slot(self.vio2, udid))
-            else:
-                self.assertEqual(
-                    eslot, rsm.get_pv_vscsi_slot(self.vio1, udid))
-                self.assertIsNone(rsm.get_pv_vscsi_slot(self.vio2, udid))
             aslot1, lua1 = rsm.get_vscsi_slot(self.vio1, udid)
             aslot2, lua2 = rsm.get_vscsi_slot(self.vio2, udid)
             if aslot1 is None:
                 self.assertEqual(eslot, aslot2)
-                self.assertEqual(
-                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua2)
+                if SCSI_ARB_MAP[eslot].get(slot_map.IOCLASS.LU):
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.LU][udid], lua2)
+                else:
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua2)
             else:
                 self.assertEqual(eslot, aslot1)
-                self.assertEqual(
-                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua1)
+                self.assertIsNone(aslot2)
+                if SCSI_ARB_MAP[eslot].get(slot_map.IOCLASS.LU):
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.LU][udid], lua1)
+                else:
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua1)
 
-    def test_pv_vscsi_build_out_full_coverage(self):
+    def test_vscsi_build_out_full_coverage(self):
         """Test rebuild with 2 slots per udid and 2 candidate VIOSes."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_2S_2V_MAP
 
         rsm = slot_map.RebuildSlotMap(
             smt, [self.vio1, self.vio2], VTV_2V_ARB, {})
-        expected_map = {'pv_udid1': [5, 23], 'pv_udid2': [6, 24],
-                        'pv_udid3': [7, 25], 'pv_udid4': [8, 26]}
+        expected_map = {'lu_udid1': [5, 23], 'pv_udid2': [6, 24],
+                        'lu_udid3': [7, 25], 'pv_udid4': [8, 26]}
 
         # We know what slots the UDIDs should get but not what VIOSes they'll
         # belong to. So we'll assert that one VIOS gets 1 slot and the other
@@ -872,19 +920,6 @@ class TestRebuildSlotMap(TestRebuildSlotMapLegacy):
         super(TestRebuildSlotMap, self).__init__(*args, **kwargs)
         self.smt_impl = SlotMapTestImpl
 
-SCSI_W_LU = {
-    1: {
-        slot_map.IOCLASS.LU: {
-            'lu_udid1': 'lu_lua_1',
-            'lu_udid2': 'lu_lua_2'
-        },
-        slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1',
-            'pv_udid2': 'pv_lua_2'
-        }
-    }
-}
-
 SCSI_W_VOPT = {
     1: {
         slot_map.IOCLASS.VOPT: {
@@ -910,6 +945,23 @@ SCSI_W_VDISK = {
     }
 }
 
+SCSI_LU_1 = {
+    1: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid2': 'lu_lua_2',
+            'lu_udid3': 'lu_lua_3'
+        }
+    },
+    2: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid3': 'lu_lua_3',
+            'lu_udid4': 'lu_lua_4'
+        }
+    }
+}
+
 SCSI_PV_1 = {
     1: {
         slot_map.IOCLASS.PV: {
@@ -927,10 +979,23 @@ SCSI_PV_1 = {
     }
 }
 
-SCSI_PV_ARB_MAP = {
-    47: {
+SCSI_MIX_1 = {
+    1: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid2': 'lu_lua_2'
+        },
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2'
+        }
+    }
+}
+
+SCSI_ARB_MAP = {
+    47: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1'
         }
     },
     9: {
@@ -939,8 +1004,8 @@ SCSI_PV_ARB_MAP = {
         }
     },
     23: {
-        slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+        slot_map.IOCLASS.LU: {
+            'lu_udid3': 'lu_lua_3'
         }
     },
     56: {
@@ -953,7 +1018,7 @@ SCSI_PV_ARB_MAP = {
 SCSI_PV_2S_2V_MAP = {
     5: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'lu_udid1': 'pv_lua_1'
         }
     },
     6: {
@@ -963,7 +1028,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     7: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+            'lu_udid3': 'pv_lua_3'
         }
     },
     8: {
@@ -973,7 +1038,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'lu_udid1': 'pv_lua_1'
         }
     },
     24: {
@@ -983,7 +1048,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     25: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+            'lu_udid3': 'pv_lua_3'
         }
     },
     26: {
@@ -1028,7 +1093,13 @@ VOL_TO_VIO1 = {
         'vios2'
     ],
     'lu_udid2': [
+        'vios1'
+    ],
+    'lu_udid3': [
         'vios1',
+        'vios2'
+    ],
+    'lu_udid4': [
         'vios2'
     ],
     'pv_udid1': [
@@ -1036,7 +1107,13 @@ VOL_TO_VIO1 = {
         'vios2'
     ],
     'pv_udid2': [
+        'vios1'
+    ],
+    'pv_udid3': [
         'vios1',
+        'vios2'
+    ],
+    'pv_udid4': [
         'vios2'
     ]
 }
@@ -1074,7 +1151,7 @@ VOL_TO_VIO_1_VIOS_PV1 = {
 }
 
 VTV_2V_ARB = {
-    'pv_udid1': [
+    'lu_udid1': [
         'vios1',
         'vios2'
     ],
@@ -1082,7 +1159,7 @@ VTV_2V_ARB = {
         'vios1',
         'vios2'
     ],
-    'pv_udid3': [
+    'lu_udid3': [
         'vios1',
         'vios2'
     ],
