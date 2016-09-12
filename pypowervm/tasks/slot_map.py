@@ -550,16 +550,16 @@ class RebuildSlotMap(BuildSlotMap):
     layout.
     """
 
-    def __init__(self, slot_store, vios_wraps, pv_vscsi_vol_to_vio,
+    def __init__(self, slot_store, vios_wraps, vscsi_vol_to_vio,
                  npiv_fabrics):
         """Initializes the rebuild map.
 
         :param slot_store: The existing instances SlotMapStore.
         :param vios_wraps: List of VIOS EntryWrappers.  Must have been
                            retrieved with the appropriate XAGs.
-        :param pv_vscsi_vol_to_vio: The physical volume to virtual I/O server
-                                    mapping.  Of the following format:
-                                    { 'udid' : [ 'vios_uuid', 'vios_uuid'] }
+        :param vscsi_vol_to_vio: The volume to virtual I/O server mapping.
+                                 Of the following format:
+                                 { 'udid' : [ 'vios_uuid', 'vios_uuid'] }
         :param npiv_fabrics: List of vFC fabric names.
         """
         super(RebuildSlotMap, self).__init__(slot_store)
@@ -571,7 +571,7 @@ class RebuildSlotMap(BuildSlotMap):
         self._vnic_build_out()
 
         # Next up is vSCSI
-        self._pv_vscsi_build_out(pv_vscsi_vol_to_vio)
+        self._vscsi_build_out(vscsi_vol_to_vio)
 
         # And finally vFC (npiv)
         self._npiv_build_out(npiv_fabrics)
@@ -608,7 +608,7 @@ class RebuildSlotMap(BuildSlotMap):
                  supported* storage elements attached to this slot.  The dict
                  is ordered such that an iterator over its keys will return the
                  slot_num with the highest count first, etc.
-                 *Only PV is supported at this time.
+                 *Only PV and LU are supported at this time.
         """
         slots_order = {}
         for slot in self._slot_store.topology:
@@ -618,17 +618,14 @@ class RebuildSlotMap(BuildSlotMap):
             if io_dict.get(IOCLASS.VDISK):
                 raise pvm_ex.InvalidHostForRebuildInvalidIOType(
                     io_type='Virtual Disk')
-            elif io_dict.get(IOCLASS.LU):
-                # TODO(thorst) fix in future version.  Should be supported.
-                raise pvm_ex.InvalidHostForRebuildInvalidIOType(
-                    io_type='Logical Unit')
             elif io_dict.get(IOCLASS.VOPT):
                 raise pvm_ex.InvalidHostForRebuildInvalidIOType(
                     io_type='Virtual Optical Media')
 
             # Create a dictionary of slots to the number of mappings per
             # slot. This will determine which slots we assign first.
-            slots_order[slot] = len(io_dict.get(IOCLASS.PV, {}))
+            slots_order[slot] = (len(io_dict.get(IOCLASS.PV, {})) +
+                                 len(io_dict.get(IOCLASS.LU, {})))
 
         # For VSCSI we need to figure out which slot numbers have the most
         # mappings and assign these ones to VIOSes first in descending order.
@@ -643,8 +640,8 @@ class RebuildSlotMap(BuildSlotMap):
 
         return slots_order
 
-    def _pv_vscsi_build_out(self, vol_to_vio):
-        """Builds the '_build_map' for the PV physical volumes."""
+    def _vscsi_build_out(self, vol_to_vio):
+        """Builds the '_build_map' for physical volumes and logical units."""
         slots_order = self._vscsi_build_slot_order()
 
         # We're going to use the vol_to_vio dictionary for consistency and
@@ -653,14 +650,20 @@ class RebuildSlotMap(BuildSlotMap):
         vol_to_vio_cp = copy.deepcopy(vol_to_vio)
 
         for slot in slots_order:
-            if not self._slot_store.topology[slot].get(IOCLASS.PV):
+            slot_topo = self._slot_store.topology[slot]
+            if not slot_topo.get(IOCLASS.PV) and not slot_topo.get(IOCLASS.LU):
                 continue
             # Initialize the set of candidate VIOSes to all available VIOSes.
-            # We'll filter out and remove any VIOSes that can't host any PV for
-            # this slot.
+            # We'll filter out and remove any VIOSes that can't host any PV or
+            # LU for this slot.
             candidate_vioses = set(vio.uuid for vio in self.vios_wraps)
 
-            for udid in self._slot_store.topology[slot][IOCLASS.PV]:
+            slot_info = [(udid, lua, IOCLASS.PV) for udid, lua in
+                         six.iteritems(slot_topo.get(IOCLASS.PV, {}))]
+            slot_info.extend([(udid, lua, IOCLASS.LU) for udid, lua in
+                              six.iteritems(slot_topo.get(IOCLASS.LU, {}))])
+
+            for udid, lua, stg_class in slot_info[:2]:
 
                 # If the UDID isn't anywhere to be found on the destination
                 # VIOSes then we have a problem.
@@ -681,11 +684,10 @@ class RebuildSlotMap(BuildSlotMap):
             # TODO(IBM): Perhaps find a way to ensure better distribution.
             vios_uuid_for_slot = candidate_vioses.pop()
 
-            for udid, lua in six.iteritems(self._slot_store.topology[slot]
-                                           [IOCLASS.PV]):
+            for udid, lua, stg_class in slot_info:
 
-                self._put_vios_val(IOCLASS.PV, vios_uuid_for_slot, udid, (slot,
-                                                                          lua))
+                self._put_vios_val(stg_class, vios_uuid_for_slot, udid,
+                                   (slot, lua))
 
                 # There's somewhat of a problem with this. We want to remove
                 # the VIOS UUID we're picking from this list so that other
