@@ -239,7 +239,10 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
             # Is it in the candidate list?
             if pport.loc_code not in pports:
                 continue
-            # Does it have space?
+            # Does it have available logical ports?
+            if pport.cfg_lps >= pport.cfg_max_lps:
+                continue
+            # Does it have capacity?
             des_cap = pport.min_granularity
             if capacity is not None:
                 # Must be at least min_granularity.
