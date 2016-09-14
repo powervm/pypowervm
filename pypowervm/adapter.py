@@ -22,6 +22,7 @@ import datetime as dt
 import errno
 import hashlib
 import os
+import urllib
 import uuid
 
 if os.name == 'posix':
@@ -728,16 +729,51 @@ class Adapter(object):
     def read(self, root_type, root_id=None, child_type=None, child_id=None,
              suffix_type=None, suffix_parm=None, detail=None, service='uom',
              etag=None, timeout=-1, auditmemento=None, age=-1, xag=None,
-             sensitive=False, helpers=None):
+             sensitive=False, helpers=None, add_qp=None):
         """Retrieve an existing resource.
 
         Will build the URI path using the provided arguments.
+
+        :param root_type: String ROOT REST element type.
+        :param root_id: String ROOT REST element UUID.  If unspecified, the
+                        feed of root_type is fetched.  Required if child_type
+                        is specified.
+        :param child_type: String CHILD REST element type.
+        :param child_id: String CHILD REST element UUID.  If unspecified, the
+                         feed of child_type is fetched.
+        :param suffix_type: Suffix type added to the path (with '/').  For
+                            special URIs, like Job requests (e.g. 'do' in
+                            .../do/Something).
+        :param suffix_param: Suffix parameter added to the path (with '/'). For
+                             special URIs, like Job requests (e.g. 'Something'
+                             in .../do/Something).
+        :param detail: Requested detail level of the response.  Obsolete.
+        :param service: REST service type, one of pypowervm.const.SERVICE_BY_NS
+        :param etag: Not used (caching disabled).
+        :param timeout: Timeout in seconds for the HTTP request.
+        :param auditmemento: X-Audit-Memento header registered in the REST
+                             server logs for debug purposes, allowing this
+                             request to be identified therein.
+        :param age: Not used (caching disabled).
+        :param xag: List of extended attribute group enum values.  If
+                    unspecified or None, 'None' will be appended.  If the empty
+                    list (xag=[]), no extended attribute query parameter will
+                    be added, resulting in the server's default extended
+                    attribute group behavior.
+        :param sensitive: If True, headers and payloads will be hidden in log
+                          entries.
+        :param helpers: A list of decorator methods in which to wrap the HTTP
+                        request call.  See the pypowervm.helpers package for
+                        examples.
+        :param add_qp: Optional list of (key, value) tuples to add to the query
+                       string of the request.
+        :return: Response object representing the result of the query.
         """
         self._validate('read', root_type, root_id, child_type, child_id,
                        suffix_type, suffix_parm, detail)
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
-                               xag=xag)
+                               xag=xag, add_qp=add_qp)
         return self.read_by_path(path, etag, timeout=timeout,
                                  auditmemento=auditmemento, age=age,
                                  sensitive=sensitive, helpers=helpers)
@@ -1147,7 +1183,7 @@ class Adapter(object):
     @classmethod
     def build_path(cls, service, root_type, root_id=None, child_type=None,
                    child_id=None, suffix_type=None, suffix_parm=None,
-                   detail=None, xag=None):
+                   detail=None, xag=None, add_qp=None):
         path = c.API_BASE_PATH + service + '/' + root_type
         if root_id:
             path += '/' + root_id
@@ -1155,11 +1191,13 @@ class Adapter(object):
                 path += '/' + child_type
                 if child_id:
                     path += '/' + child_id
-        return cls.extend_path(path, suffix_type, suffix_parm, detail, xag)
+        return cls.extend_path(path, suffix_type=suffix_type,
+                               suffix_parm=suffix_parm, detail=detail,
+                               xag=xag, add_qp=add_qp)
 
     @staticmethod
     def extend_path(basepath, suffix_type=None, suffix_parm=None, detail=None,
-                    xag=None):
+                    xag=None, add_qp=None):
         """Extend a base path with zero or more of suffix, detail, and xag.
 
         :param basepath: The path string to be extended.
@@ -1172,7 +1210,9 @@ class Adapter(object):
                     list (xag=[]), no extended attribute query parameter will
                     be added, resulting in the server's default extended
                     attribute group behavior.
-        :return:
+        :param add_qp: Optional list of (key, value) tuples to add to the query
+                       string of the request.
+        :return: String base path (without protocol://server:port part).
         """
         path = basepath
         if suffix_type:
@@ -1192,6 +1232,14 @@ class Adapter(object):
             if suffix_type in xagless_suffixes:
                 xag = []
         path = util.check_and_apply_xag(path, xag)
+
+        if add_qp:
+            parsed = urlparse.urlsplit(path)
+            qparms = urlparse.parse_qsl(parsed.query) if parsed.query else []
+            qparms.extend(add_qp)
+            qstr = urllib.urlencode(qparms)
+            path = urlparse.urlunsplit((parsed.scheme, parsed.netloc,
+                                        parsed.path, qstr, parsed.fragment))
 
         return path
 
