@@ -252,11 +252,11 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(u.VLANList.ALL, vnic.allowed_vlans)
         self.assertIsNone(vnic.mac)
         self.assertEqual(u.MACList.ALL, vnic.allowed_macs)
-        self.assertFalse(vnic.auto_failover_pri)
-        vnic.auto_failover_pri = True
-        self.assertTrue(vnic.auto_failover_pri)
-        vnic.auto_failover_pri = False
-        self.assertFalse(vnic.auto_failover_pri)
+        self.assertFalse(vnic.auto_pri_failover)
+        vnic.auto_pri_failover = True
+        self.assertTrue(vnic.auto_pri_failover)
+        vnic.auto_pri_failover = False
+        self.assertFalse(vnic.auto_pri_failover)
 
         # Values in kwargs
 

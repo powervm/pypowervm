@@ -835,12 +835,12 @@ class VNIC(ewrap.EntryWrapper):
         self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
 
     @property
-    def auto_failover_pri(self):
-        return self._details.auto_failover_pri
+    def auto_pri_failover(self):
+        return self._details.auto_pri_failover
 
-    @auto_failover_pri.setter
-    def auto_failover_pri(self, val):
-        self._details.auto_failover_pri = val
+    @auto_pri_failover.setter
+    def auto_pri_failover(self, val):
+        self._details.auto_pri_failover = val
 
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
@@ -920,11 +920,11 @@ class _VNICDetails(ewrap.ElementWrapper):
         return self._get_val_percent(_VNICD_DES_CAP_PCT)
 
     @property
-    def auto_failover_pri(self):
+    def auto_pri_failover(self):
         return self._get_val_bool(_VNICD_AUTO_FB)
 
-    @auto_failover_pri.setter
-    def auto_failover_pri(self, val):
+    @auto_pri_failover.setter
+    def auto_pri_failover(self, val):
         self.set_parm_value(_VNICD_AUTO_FB, u.sanitize_bool_for_api(val))
 
 
