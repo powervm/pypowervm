@@ -1,0 +1,911 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh event_feed.txt
+#
+####################################################
+INFO{
+{'comment': None, 'path': 'Event', 'reason': 'OK', 'status': 200}
+END OF SECTION}
+HEADERS{
+{'X-Powered-By': 'Servlet/3.1', 'Transfer-Encoding': 'chunked', 'X-TransactionRecord-Uuid': '6148f006-14dc-4c7f-9e15-204831b0f426', 'X-HMC-Schema-Version': 'V1_3_0', 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'Last-Modified': 'Thu, 15 Sep 2016 20:18:21 GMT', 'X-Transaction-ID': 'XT10002170', 'Cache-Control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'Set-Cookie': 'JSESSIONID=00001o3HkNTofVHzVLVuVhMCL6Y:6b9de794-8590-4eb9-b376-d2a5483686df; Path=/; Secure; HttpOnly', 'Date': 'Thu, 15 Sep 2016 20:18:21 GMT', 'X-MC-Type': 'PVM', 'Content-Type': 'application/atom+xml', 'ETag': '1241218321'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>3d13f965-e38b-3c65-bfa4-e347046da56f</id>
+    <updated>2016-09-15T16:18:21.326-04:00</updated>
+    <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event?group=None"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>510ae1e6-3e86-34c6-bf4c-c638e76a5f68</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.335-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/510ae1e6-3e86-34c6-bf4c-c638e76a5f68?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1427405456</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>510ae1e6-3e86-34c6-bf4c-c638e76a5f68</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">ADD_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006548</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/1E6FC741-6253-4B69-B88B-8A44BED92145</EventData>
+    <EventDetail kxe="false" kb="ROR"/>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>4d3bc887-ba46-3ce7-a519-22716146b53f</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.336-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/4d3bc887-ba46-3ce7-a519-22716146b53f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">265059762</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4d3bc887-ba46-3ce7-a519-22716146b53f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006549</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>3ad0fbb6-8498-33be-862b-a1207cb7e702</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.337-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/3ad0fbb6-8498-33be-862b-a1207cb7e702?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1496155289</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>3ad0fbb6-8498-33be-862b-a1207cb7e702</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">DELETE_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006550</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/1E6FC741-6253-4B69-B88B-8A44BED92145</EventData>
+    <EventDetail kxe="false" kb="ROR"/>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>d3667d39-6a27-3e00-96ef-0dc6e3c28a13</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.338-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/d3667d39-6a27-3e00-96ef-0dc6e3c28a13?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1816704714</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>d3667d39-6a27-3e00-96ef-0dc6e3c28a13</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">ADD_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006551</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR"/>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>16e5340e-4cdd-398a-9f29-531e21f06829</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.338-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/16e5340e-4cdd-398a-9f29-531e21f06829?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-760365602</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>16e5340e-4cdd-398a-9f29-531e21f06829</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006552</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">NVRAM</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>8dc75f20-c833-363e-b1b4-dceec1e8a4ce</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.339-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/8dc75f20-c833-363e-b1b4-dceec1e8a4ce?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1891405832</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8dc75f20-c833-363e-b1b4-dceec1e8a4ce</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006553</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>1e079de1-e10f-3ff7-96d3-19e2167b188d</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.340-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/1e079de1-e10f-3ff7-96d3-19e2167b188d?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">313787948</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>1e079de1-e10f-3ff7-96d3-19e2167b188d</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006554</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>492f0aba-c888-3c30-9566-2665c7e5060f</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.340-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/492f0aba-c888-3c30-9566-2665c7e5060f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1895154154</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>492f0aba-c888-3c30-9566-2665c7e5060f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006555</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>c0a7bbed-4a50-36a9-8421-fe147ed43e41</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.341-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/c0a7bbed-4a50-36a9-8421-fe147ed43e41?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1208499057</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c0a7bbed-4a50-36a9-8421-fe147ed43e41</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006556</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">PartitionState,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>79aae91f-15ef-3c82-88b9-1807167b052b</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.342-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/79aae91f-15ef-3c82-88b9-1807167b052b?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1898902476</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>79aae91f-15ef-3c82-88b9-1807167b052b</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006557</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>900779d6-1404-3d28-9e2c-f30f10f452af</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.343-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/900779d6-1404-3d28-9e2c-f30f10f452af?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-662619128</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>900779d6-1404-3d28-9e2c-f30f10f452af</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006558</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>5d85d159-8dbf-3f2f-b52e-4b7f675a146d</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.343-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/5d85d159-8dbf-3f2f-b52e-4b7f675a146d?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1396030668</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>5d85d159-8dbf-3f2f-b52e-4b7f675a146d</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">ADD_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006559</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/Tier/665971d0-2ac6-3201-9ebd-e08a198973b2/LogicalUnit/e47ddc5f-5cd6-3134-a749-1fb73a0363e7</EventData>
+    <EventDetail kxe="false" kb="ROR">LogicalUnit</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>c46d2dae-a439-311b-a076-7014ed218abe</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.344-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/c46d2dae-a439-311b-a076-7014ed218abe?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">603848151</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c46d2dae-a439-311b-a076-7014ed218abe</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006560</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/Tier/665971d0-2ac6-3201-9ebd-e08a198973b2</EventData>
+    <EventDetail kxe="false" kb="ROR">Tier</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>39d8556a-be4d-35f6-9f5e-c664a2a7b6d1</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.345-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/39d8556a-be4d-35f6-9f5e-c664a2a7b6d1?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">823670728</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>39d8556a-be4d-35f6-9f5e-c664a2a7b6d1</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006561</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/Tier/665971d0-2ac6-3201-9ebd-e08a198973b2/LogicalUnit/e47ddc5f-5cd6-3134-a749-1fb73a0363e7</EventData>
+    <EventDetail kxe="false" kb="ROR">derived</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>50eb341b-7e33-374a-b3f2-6c504b97abd2</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.345-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/50eb341b-7e33-374a-b3f2-6c504b97abd2?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">514771863</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>50eb341b-7e33-374a-b3f2-6c504b97abd2</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006562</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/Tier/665971d0-2ac6-3201-9ebd-e08a198973b2</EventData>
+    <EventDetail kxe="false" kb="ROR">other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>0ebccbbd-db7a-347d-a9ab-7f008240cae2</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.346-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/0ebccbbd-db7a-347d-a9ab-7f008240cae2?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1918118943</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0ebccbbd-db7a-347d-a9ab-7f008240cae2</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006563</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">freeIOAdaptersForLinkAggregation</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>613b00b4-ed42-35a0-ad61-6b2966f5b136</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.347-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/613b00b4-ed42-35a0-ad61-6b2966f5b136?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">188421573</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>613b00b4-ed42-35a0-ad61-6b2966f5b136</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006564</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">freeIOAdaptersForLinkAggregation</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>a20c3507-82ad-3781-8991-bf11ea52bd4f</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.347-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/a20c3507-82ad-3781-8991-bf11ea52bd4f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">373761100</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>a20c3507-82ad-3781-8991-bf11ea52bd4f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006565</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>41386b9b-8783-3bdc-8403-1e55aea566a4</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.348-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/41386b9b-8783-3bdc-8403-1e55aea566a4?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1955127306</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>41386b9b-8783-3bdc-8403-1e55aea566a4</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006566</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>cd22556f-0548-3fb7-8315-27bd61e2b818</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.349-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/cd22556f-0548-3fb7-8315-27bd61e2b818?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">377509422</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>cd22556f-0548-3fb7-8315-27bd61e2b818</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006567</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>3ffd907d-b2e5-3e42-959b-1a11f4fc653e</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.349-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/3ffd907d-b2e5-3e42-959b-1a11f4fc653e?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-604520137</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>3ffd907d-b2e5-3e42-959b-1a11f4fc653e</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006568</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>e2d5776f-a114-333d-9baf-159280cc4af5</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.350-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/e2d5776f-a114-333d-9baf-159280cc4af5?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">381257744</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>e2d5776f-a114-333d-9baf-159280cc4af5</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006569</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>4489270c-70fe-39ab-8863-4ede34b6361b</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.351-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/4489270c-70fe-39ab-8863-4ede34b6361b?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1870422532</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>4489270c-70fe-39ab-8863-4ede34b6361b</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006570</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>6f28a17f-b0f7-35b3-9033-3a20de9e517b</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.352-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/6f28a17f-b0f7-35b3-9033-3a20de9e517b?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">424363447</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6f28a17f-b0f7-35b3-9033-3a20de9e517b</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006571</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>8e576ddd-aad4-31c8-a53f-c4d801d83a47</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.352-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/8e576ddd-aad4-31c8-a53f-c4d801d83a47?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1733881994</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>8e576ddd-aad4-31c8-a53f-c4d801d83a47</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006572</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">VirtualSCSIMappings</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>30311fe5-4943-3a2e-89ec-e2ea949ef68f</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.353-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/30311fe5-4943-3a2e-89ec-e2ea949ef68f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1732007833</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>30311fe5-4943-3a2e-89ec-e2ea949ef68f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006573</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">VirtualSCSIMappings</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>b2f2e69b-9fee-3141-9628-9c7abda9d35a</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.354-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/b2f2e69b-9fee-3141-9628-9c7abda9d35a?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">833262093</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>b2f2e69b-9fee-3141-9628-9c7abda9d35a</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006574</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">VirtualSCSIMappings</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>c2e9fc10-2a01-3d93-8dd5-bf5c38a6e088</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.354-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/c2e9fc10-2a01-3d93-8dd5-bf5c38a6e088?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">835136254</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c2e9fc10-2a01-3d93-8dd5-bf5c38a6e088</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006575</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">VirtualSCSIMappings</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>7cb330aa-6e91-33ae-a512-73e2be315307</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.355-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/7cb330aa-6e91-33ae-a512-73e2be315307?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-636670976</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>7cb330aa-6e91-33ae-a512-73e2be315307</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006576</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">NVRAM</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>c50ea120-be79-3100-9d8c-5b29c21e3a5a</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.356-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/c50ea120-be79-3100-9d8c-5b29c21e3a5a?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">5713998</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>c50ea120-be79-3100-9d8c-5b29c21e3a5a</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006577</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/113ABFC5-FE3C-4321-A845-310C7A37F276</EventData>
+    <EventDetail kxe="false" kb="ROR">PartitionState,PartitionName,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>ef0ec4ab-6457-33e4-84f2-0671c611fb65</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.357-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/ef0ec4ab-6457-33e4-84f2-0671c611fb65?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1739159690</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>ef0ec4ab-6457-33e4-84f2-0671c611fb65</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006578</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04</EventData>
+    <EventDetail kxe="false" kb="ROR">PartitionState,PartitionName,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>df1c6322-4cda-3685-8614-6bed4aa679a4</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.357-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/df1c6322-4cda-3685-8614-6bed4aa679a4?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1086678592</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>df1c6322-4cda-3685-8614-6bed4aa679a4</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006579</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">PartitionState,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>056e9bf3-b6b7-3c0c-893f-706500774899</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.358-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/056e9bf3-b6b7-3c0c-893f-706500774899?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">480588277</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>056e9bf3-b6b7-3c0c-893f-706500774899</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006580</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>798d85fc-ebe7-3685-92f6-b2f28e571e7f</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.359-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/798d85fc-ebe7-3685-92f6-b2f28e571e7f?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1043572889</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>798d85fc-ebe7-3685-92f6-b2f28e571e7f</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006581</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">PartitionState,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>99ab3339-675a-3c49-a888-c4029aca349a</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.359-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/99ab3339-675a-3c49-a888-c4029aca349a?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">484336599</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>99ab3339-675a-3c49-a888-c4029aca349a</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006582</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3</EventData>
+    <EventDetail kxe="false" kb="ROR">Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>0235867e-67bc-328a-993c-e20a359bffdf</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.360-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/0235867e-67bc-328a-993c-e20a359bffdf?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-584194468</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>0235867e-67bc-328a-993c-e20a359bffdf</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006583</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">NVRAM</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+    <entry>
+        <id>9cf6946f-7e82-3183-86f7-9d0a975017ca</id>
+        <title>Event</title>
+        <published>2016-09-15T16:18:21.361-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/Event/9cf6946f-7e82-3183-86f7-9d0a975017ca?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1600796637</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=Event">
+            <Event:Event xmlns:Event="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+    <Metadata>
+        <Atom>
+            <AtomID>9cf6946f-7e82-3183-86f7-9d0a975017ca</AtomID>
+            <AtomCreated>0</AtomCreated>
+        </Atom>
+    </Metadata>
+    <EventType kxe="false" kb="ROR">MODIFY_URI</EventType>
+    <EventID kxe="false" kb="ROR">1473962006584</EventID>
+    <EventData kxe="false" kb="ROR">http://localhost:12080/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/LogicalPartition/0AAD02EB-BDFE-49F3-9806-92EEBCE354C4</EventData>
+    <EventDetail kxe="false" kb="ROR">ReferenceCode,Other</EventDetail>
+</Event:Event>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}
