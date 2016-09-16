@@ -39,7 +39,8 @@ PPORT_MOD_LOCK = lock.ReaderWriterLock()
 
 
 def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
-                       min_redundancy=1, max_redundancy=2, capacity=None):
+                       min_redundancy=1, max_redundancy=2, capacity=None,
+                       check_port_status=False):
     """Set a vNIC's backing devices over given SRIOV physical ports and VIOSes.
 
     Assign the backing devices to a iocard.VNIC wrapper using an anti-affinity
@@ -112,6 +113,9 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
                      assigned to each individual backing device after the fact
                      to achieve more control; but in that case, the consumer is
                      responsible for validating sufficient available capacity.)
+    :param check_port_status: If True, only ports with link-up status will be
+                              considered for allocation.  If False (the
+                              default), link-down ports may be used.
     :raise NoRunningSharedSriovAdapters: If no SR-IOV adapters in Sriov mode
                                          and Running state can be found.
     :raise NotEnoughActiveVioses: If no active (including RMC) VIOSes can be
@@ -135,7 +139,7 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
     # Get the subset of backing ports corresponding to the specified location
     # codes which have enough space for new VFs.
     pport_wraps = _get_good_pport_list(sriov_adaps, pports, capacity,
-                                       min_redundancy)
+                                       min_redundancy, check_port_status)
 
     # At this point, we've validated enough that we won't raise.  Start by
     # clearing any existing backing devices.
@@ -207,7 +211,39 @@ def _get_good_sriovs(adap, sriov_adaps=None):
     return good_adaps
 
 
-def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
+def _port_ok(port, pports, capacity, check_link_status):
+    """Checks whether a physical port is acceptable for use as a backing dev.
+
+    :param port: SRIOVEthPPort wrapper to check
+    :param pports: A list of string physical location codes of the physical
+                   ports to consider.
+    :param capacity: (float) Minimum capacity which must be available on the
+                     port.  If None, available port capacity is validated using
+                     the port's min_granularity.
+    :param check_link_status: If True, ports with link-down status will fail.
+    :return: True if the port passes all checks; False otherwise.
+    """
+    # Is it in the candidate list?
+    if port.loc_code not in pports:
+        return False
+    # Is the link state up
+    if check_link_status and not port.link_status:
+        return False
+    # Does it have available logical ports?
+    if port.cfg_lps >= port.cfg_max_lps:
+        return False
+    # Does it have capacity?
+    des_cap = port.min_granularity
+    if capacity is not None:
+        # Must be at least min_granularity.
+        des_cap = max(des_cap, capacity)
+    if port.allocated_capacity + des_cap > 1.0:
+        return False
+    return True
+
+
+def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns,
+                         check_link_status):
     """Get a list of SRIOV*PPort filtered by capacity and specified pports.
 
     Builds a list of pypowervm.wrappers.iocard.SRIOV*PPort from sriov_adaps
@@ -229,6 +265,8 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
     :param min_returns: The minimum acceptable number of ports to return.  If
                         the filtered list has fewer than this number of ports,
                         InsufficientSRIOVCapacity is raised.
+    :param check_link_status: If True, ports with link-down status will not be
+                              returned.  If False, link status is not checked.
     :raise InsufficientSRIOVCapacity: If the final list contains fewer than
                                       min_returns ports.
     :return: A filtered list of SRIOV*PPort wrappers.
@@ -236,21 +274,9 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns):
     pport_wraps = []
     for sriov in sriov_adaps:
         for pport in sriov.phys_ports:
-            # Is it in the candidate list?
-            if pport.loc_code not in pports:
-                continue
-            # Does it have available logical ports?
-            if pport.cfg_lps >= pport.cfg_max_lps:
-                continue
-            # Does it have capacity?
-            des_cap = pport.min_granularity
-            if capacity is not None:
-                # Must be at least min_granularity.
-                des_cap = max(des_cap, capacity)
-            if pport.allocated_capacity + des_cap > 1.0:
-                continue
-            pp2add = copy.deepcopy(pport)
-            pport_wraps.append(pp2add)
+            if _port_ok(pport, pports, capacity, check_link_status):
+                pp2add = copy.deepcopy(pport)
+                pport_wraps.append(pp2add)
 
     if len(pport_wraps) < min_returns:
         raise ex.InsufficientSRIOVCapacity(min_vfs=min_returns,
