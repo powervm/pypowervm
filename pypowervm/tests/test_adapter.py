@@ -237,6 +237,81 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(200, ret_read_value.status)
         self.assertEqual(reqpath, ret_read_value.reqpath)
 
+    @mock.patch('pypowervm.adapter.Adapter._validate')
+    @mock.patch('pypowervm.adapter.Adapter.build_path')
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_read2(self, mock_rbp, mock_bld, mock_val):
+        """Validate shallow flow & arg passing."""
+        adap = adp.Adapter(session=self.sess)
+        # Defaults
+        self.assertEqual(mock_rbp.return_value, adap.read('root_type'))
+        mock_val.assert_called_once_with(
+            'read', 'root_type', None, None, None, None, None, None)
+        mock_bld.assert_called_once_with(
+            'uom', 'root_type', None, None, None, None, None, None, xag=None,
+            add_qp=None)
+        mock_rbp.assert_called_once_with(
+            mock_bld.return_value, None, timeout=-1, auditmemento=None, age=-1,
+            sensitive=False, helpers=None)
+        # Specified kwargs
+        mock_val.reset_mock()
+        mock_bld.reset_mock()
+        mock_rbp.reset_mock()
+        self.assertEqual(mock_rbp.return_value, adap.read(
+            'root_type', root_id='root_id', child_type='child_type',
+            child_id='child_id', suffix_type='suffix_type',
+            suffix_parm='suffix_parm', detail='detail', service='service',
+            etag='etag', timeout='timeout', auditmemento='auditmemento',
+            age='age', xag='xag', sensitive='sensitive', helpers='helpers',
+            add_qp='add_qp'))
+        mock_val.assert_called_once_with(
+            'read', 'root_type', 'root_id', 'child_type', 'child_id',
+            'suffix_type', 'suffix_parm', 'detail')
+        mock_bld.assert_called_once_with(
+            'service', 'root_type', 'root_id', 'child_type', 'child_id',
+            'suffix_type', 'suffix_parm', 'detail', xag='xag', add_qp='add_qp')
+        mock_rbp.assert_called_once_with(
+            mock_bld.return_value, 'etag', timeout='timeout',
+            auditmemento='auditmemento', age='age', sensitive='sensitive',
+            helpers='helpers')
+
+    @mock.patch('pypowervm.adapter.Adapter.extend_path')
+    def test_build_path(self, mock_exp):
+        """Validate build_path."""
+        adap = adp.Adapter(session=self.sess)
+        # Defaults
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
+            detail=None, xag=None, add_qp=None)
+        # child specs ignored if no root ID
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', child_type='child_type',
+            child_id='child_id'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
+            detail=None, xag=None, add_qp=None)
+        # child ID ignored if no child type
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', root_id='root_id', child_id='child_id'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type/root_id', suffix_type=None,
+            suffix_parm=None, detail=None, xag=None, add_qp=None)
+        # Specified kwargs (including full child spec
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', root_id='root_id', child_type='child_type',
+            child_id='child_id', suffix_type='suffix_type',
+            suffix_parm='suffix_parm', detail='detail', xag='xag',
+            add_qp='add_qp'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type/root_id/child_type/child_id',
+            suffix_type='suffix_type', suffix_parm='suffix_parm',
+            detail='detail', xag='xag', add_qp='add_qp')
+
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_headers(self, mock_request):
         def validate_hdrs_func(acc=None, inm=None):
@@ -504,6 +579,30 @@ class TestAdapter(testtools.TestCase):
             'basepath?foo=1,2,3&group=a,b,c&foo=4,5,6',
             adapter.extend_path('basepath?foo=4,5,6&group=None&foo=1,2,3',
                                 xag=['a', 'b', 'c']))
+
+        # Additional queryparams (add_qp)
+        # Explicit None
+        self._assert_paths_equivalent(
+            'basepath', adapter.extend_path('basepath', xag=[], add_qp=None))
+        # Proper escaping
+        self._assert_paths_equivalent(
+            'basepath?one=%23%24%25%5E%26',
+            adapter.extend_path('basepath', xag=[], add_qp=[('one', '#$%^&')]))
+        # Duplicated keys (order preserved) and proper handling of non-strings
+        self._assert_paths_equivalent(
+            'basepath?1=3&1=2',
+            adapter.extend_path('basepath', xag=[], add_qp=[(1, 3), (1, 2)]))
+        # Proper behavior combined with implicit xag
+        self._assert_paths_equivalent(
+            'basepath?group=None&key=value&something=else',
+            adapter.extend_path(
+                'basepath', add_qp=[('key', 'value'), ('something', 'else')]))
+        # Combined with xags and an existing querystring
+        self._assert_paths_equivalent(
+            'basepath?already=here&group=a,b,c&key=value&something=else',
+            adapter.extend_path(
+                'basepath?already=here', xag=['a', 'b', 'c'],
+                add_qp=[('key', 'value'), ('something', 'else')]))
 
     @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('pypowervm.adapter.Adapter.read_by_path')
