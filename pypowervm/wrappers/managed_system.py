@@ -53,6 +53,10 @@ _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
 _SHR_PROC_POOL_CAP = u.xpath(
     _SYS_CAPABILITIES, 'SharedProcessorPoolCapable')
+_VNIC_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICDedicatedSRIOVCapable')
+_VNIC_FAILOVER_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICFailOverCapable')
+_DYN_SRR_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'DynamicSimplifiedRemoteRestartToggleCapable')
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -262,7 +266,12 @@ class System(ewrap.EntryWrapper):
                     'linux_capable':
                     self._get_val_bool(_LINUX_CAP, True),
                     'shared_processor_pool_capable':
-                    self._get_val_bool(_SHR_PROC_POOL_CAP, False)}
+                    self._get_val_bool(_SHR_PROC_POOL_CAP, False),
+                    'dynamic_srr_capable':
+                    self._get_val_bool(_DYN_SRR_CAP, False),
+                    'vnic_capable': self._get_val_bool(_VNIC_CAP, False),
+                    'vnic_failover_capable':
+                    self._get_val_bool(_VNIC_FAILOVER_CAP, False)}
         return cap_data
 
     @property

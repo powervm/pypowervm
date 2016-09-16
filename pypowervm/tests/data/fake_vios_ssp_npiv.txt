@@ -458,6 +458,8 @@ BODY{
     <IsServicePartition kb="CUD" kxe="false">false</IsServicePartition>
     <APICapable kb="CUD" kxe="false">true</APICapable>
     <ManagerPassthroughCapable kb="CUD" kxe="false">true</ManagerPassthroughCapable>
+    <IsVNICCapable kxe="false" kb="CUD">true</IsVNICCapable>
+    <VNICFailOverCapable ksv="V1_4_0" kb="CUD" kxe="false">true</VNICFailOverCapable>
     <MediaRepositories kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>
             <Atom/>
