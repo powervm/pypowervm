@@ -399,6 +399,14 @@ class VIOS(bp.BasePartition):
         """
         return False, _('Partition of VIOS type is not LPM capable')
 
+    @property
+    def vnic_capable(self):
+        return self._get_val_bool(_VIO_VNIC_CAP)
+
+    @property
+    def vnic_failover_capable(self):
+        return self._get_val_bool(_VIO_VNIC_FAILOVER_CAP)
+
 
 @six.add_metaclass(abc.ABCMeta)
 @ewrap.Wrapper.base_pvm_type

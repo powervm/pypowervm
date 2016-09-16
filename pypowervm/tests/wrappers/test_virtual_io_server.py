@@ -65,6 +65,10 @@ class TestVIOSWrapper(twrap.TestWrapper):
     def test_license_accept(self):
         self.assertTrue(self.dwrap.is_license_accepted)
 
+    def test_vnic_capabilities(self):
+        self.assertTrue(self.dwrap.vnic_capable)
+        self.assertTrue(self.dwrap.vnic_failover_capable)
+
     def test_hdisk_reserve_policy_found(self):
         # Most are NoReserve; look for the only one that's SinglePath to make
         # sure we're actually searching rather than picking first/last/random

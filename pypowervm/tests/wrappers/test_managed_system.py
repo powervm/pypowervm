@@ -226,7 +226,9 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'ibmi_capable': True,
                     'linux_capable': False,
                     'shared_processor_pool_capable': True,
-                    'active_memory_expansion_capable': True
+                    'active_memory_expansion_capable': True,
+                    'vnic_capable': True,
+                    'vnic_failover_capable': True
                     }
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
@@ -238,7 +240,9 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'ibmi_capable': False,
                    'linux_capable': True,
                    'shared_processor_pool_capable': False,
-                   'active_memory_expansion_capable': False
+                   'active_memory_expansion_capable': False,
+                   'vnic_capable': False,
+                   'vnic_failover_capable': False
                    }
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
@@ -266,7 +270,9 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'active_migrations_in_progress': 0,
                          'inactive_migrations_in_progress': 0,
                          'proc_compat': 'default,POWER5,POWER6,'
-                         'POWER6_Enhanced,POWER6_Plus_Enhanced,POWER7'
+                         'POWER6_Enhanced,POWER6_Plus_Enhanced,POWER7',
+                         'vnic_capable': True,
+                         'vnic_failover_capable': True
                          }
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,

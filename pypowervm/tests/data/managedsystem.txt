@@ -121,6 +121,8 @@ BODY{
         <VirtualTrustedPlatformModuleCapable kb="ROO" kxe="false">true</VirtualTrustedPlatformModuleCapable>
         <VLANStatisticsCapable kb="ROO" kxe="false">true</VLANStatisticsCapable>
         <VirtualEthernetCustomMACAddressCapable kb="ROR" kxe="false">true</VirtualEthernetCustomMACAddressCapable>
+        <VirtualNICDedicatedSRIOVCapable kxe="false" kb="ROO">true</VirtualNICDedicatedSRIOVCapable>
+        <VirtualNICFailOverCapable ksv="V1_4_0" kxe="false" kb="ROO">true</VirtualNICFailOverCapable>
     </AssociatedSystemCapabilities>
     <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>
