@@ -585,12 +585,12 @@ class RebuildSlotMap(BuildSlotMap):
         :return: MAC Address for the NIC.
         :return: Integer client slot number for the NIC.
         """
-        # On a rebuild specifically, the MGMT VIF may not be there.  If that
+        # On a rebuild specifically, the MGMT CNA may not be there.  If that
         # is the case, we want to make sure that it is the next available slot.
         mgmt_vea = self._build_map.get(IOCLASS.MGMT_CNA, {})
         slot = mgmt_vea.get('slot')
 
-        # If the slot is None, that means the MGMT vif wasn't there initially
+        # If the slot is None, that means the MGMT CNA wasn't there initially
         # but its being requested for the rebuild.
         if slot is None:
             # Make sure there were slots, then use the 'next highest' available
