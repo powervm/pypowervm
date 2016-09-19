@@ -17,6 +17,7 @@
 """Wrappers, constants, and helpers around IOAdapter and its children."""
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.network as net
 
 # Constants for generic I/O Adapter
 IO_ADPT_ROOT = 'IOAdapter'
@@ -560,7 +561,7 @@ class SRIOVConvPPort(SRIOVEthPPort):
 
 @ewrap.EntryWrapper.pvm_type('SRIOVEthernetLogicalPort',
                              child_order=_SRIOVLP_EL_ORDER)
-class SRIOVEthLPort(ewrap.EntryWrapper):
+class SRIOVEthLPort(net.VIFBase):
     """The SR-IOV Ethernet Logical port."""
 
     @classmethod
@@ -594,7 +595,7 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         if pvid is not None:
             lport.pvid = pvid
         if mac is not None:
-            lport._mac(mac)
+            lport.mac = mac
         lport._is_promisc(is_promisc)
         if cfg_capacity:
             lport._cfg_capacity(cfg_capacity)
@@ -652,27 +653,6 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         self.set_parm_value(_SRIOVLP_PPORT_ID, value)
 
     @property
-    def pvid(self):
-        return self._get_val_int(_SRIOVLP_PVID)
-
-    @pvid.setter
-    def pvid(self, value):
-        self.set_parm_value(_SRIOVLP_PVID, value)
-
-    @property
-    def mac(self):
-        """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits).
-
-        This is the MAC address "burned into" the logical port.  The actual MAC
-        address on the interface (cur_mac) may be this value or the value set
-        from within the OS on the VM.
-        """
-        return self._get_val_str(_SRIOVLP_MAC)
-
-    def _mac(self, value):
-        self.set_parm_value(_SRIOVLP_MAC, u.sanitize_mac_for_api(value))
-
-    @property
     def cur_mac(self):
         """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits).
 
@@ -689,7 +669,7 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
 
 
 @ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
-class VNIC(ewrap.EntryWrapper):
+class VNIC(net.VIFBase):
     """A dedicated, possibly-redundant Virtual NIC."""
 
     @classmethod

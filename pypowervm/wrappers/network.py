@@ -16,7 +16,10 @@
 
 """Wrappers for virtual networking objects."""
 
+import abc
 import copy
+import json
+import six
 
 from oslo_log import log as logging
 
@@ -24,10 +27,12 @@ import pypowervm.const as c
 import pypowervm.entities as ent
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
+from pypowervm.wrappers import event
 
 LOG = logging.getLogger(__name__)
 
 _PVID = 'PortVLANID'
+_MAC = 'MACAddress'
 
 _VSW_NAME = 'SwitchName'
 _VSW_ID = 'SwitchID'
@@ -104,7 +109,7 @@ _TA_VIRTUAL_SLOT = 'VirtualSlotNumber'
 _TA_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _TA_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
 _TA_ALLOWED_MAC = 'AllowedOperatingSystemMACAddresses'
-_TA_MAC = 'MACAddress'
+_TA_MAC = _MAC
 _TA_PVID = _PVID
 _TA_QOS_PRI = 'QualityOfServicePriorityEnabled'
 _TA_VLAN_IDS = 'TaggedVLANIDs'
@@ -131,7 +136,7 @@ _VNET_TAG = 'TaggedNetwork'
 
 _VADPT_DEV_NAME = 'DeviceName'
 _VADPT_LOCATION_CODE = 'LocationCode'
-_VADPT_MAC_ADDR = 'MACAddress'
+_VADPT_MAC_ADDR = _MAC
 _VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
 _VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
 _VADPT_VSWITCH = 'AssociatedVirtualSwitch'
@@ -182,6 +187,101 @@ def _order_by_pvid(adapters, pvid):
             # Otherwise, throw it on the back
             resp_list.append(adapter)
     return resp_list
+
+
+@six.add_metaclass(abc.ABCMeta)
+@ewrap.EntryWrapper.base_pvm_type
+class VIFBase(ewrap.EntryWrapper):
+    """Base class for a Virtual Interface.
+
+    In this context, a virtual interface (VIF) is a virtual network device
+    - whose parent/ROOT (from a REST perspective) is an LPAR; and
+    - which has a PVID and a MAC address.
+
+    This class provides overrides for EntryWrapper.create, .update, and .delete
+    which push custom Events for those actions, since the platform does not
+    currently supply them.  We include the PVID and MAC address in the payload
+    so that consumers performing generic VIF operations might be able to
+    correlate the new device without performing a GET.
+
+    Event structure:
+    type: CUSTOM_CLIENT_EVENT
+    data: <REST URI of the object>
+    detail: JSON string representing
+            {'action': <'create'|'update'|'delete'>,
+             'pvid': <PVID>, 'mac': <MAC address>,
+             'orig_pvid' <PVID>,  # update only
+             'orig_mac': <MAC address>  # update only
+            }
+    """
+    @staticmethod
+    def _push_event(vif, action, **extra_detail):
+        """Push an Event for a VIF action.
+
+        :param vif: VIFBase (subclass) object affected by the event.
+        :param action: The action associated with the Event - one of
+                       ('create', 'update', 'delete').
+        :param extra_detail: Additional key=value pairs to be included in the
+                             Event.detail.
+        """
+        # Event data is the URI, with no querystring or fragment.
+        data = u.dice_href(vif.href, include_scheme_netloc=True,
+                           include_query=False, include_fragment=False)
+        detail = json.dumps(dict(action=action, pvid=vif.pvid, mac=vif.mac,
+                                 **extra_detail))
+        evt = event.Event.bld(vif.adapter, data, detail).create()
+        LOG.info("Pushed custom event: %s", str(evt))
+
+    def create(self, **kwargs):
+        """Create the VIF and push a custom 'create' event.
+
+        :param kwargs: Arguments to EntryWrapper.create.
+        :return: Wrapper of the subclass type representing the created object.
+        """
+        vif = super(VIFBase, self).create(**kwargs)
+        self._push_event(vif, 'create')
+        return vif
+
+    def update(self, **kwargs):
+        """Update the VIF and push a custom 'update' event.
+
+        :param kwargs: Arguments to EntryWrapper.update.
+        :return: Wrapper of the subclass type representing the updated object.
+        """
+        vif = super(VIFBase, self).update(**kwargs)
+        self._push_event(vif, 'update', orig_pvid=self.pvid, orig_mac=self.mac)
+        return vif
+
+    def delete(self):
+        """Delete the VIF and push a custom 'delete' event."""
+        super(VIFBase, self).delete()
+        self._push_event(self, 'delete')
+
+    @property
+    def mac(self):
+        """Returns the Mac Address for the VIF.
+
+        Typical format would be: AABBCCDDEEFF
+        The API returns a format with no colons and is upper cased.
+
+        This is the MAC address "burned into" the virtual device.  The actual
+        MAC address on the interface may be this value or the value set from
+        within the OS on the VM.
+        """
+        return self._get_val_str(_MAC)
+
+    @mac.setter
+    def mac(self, new_val):
+        self.set_parm_value(_MAC, u.sanitize_mac_for_api(new_val))
+
+    @property
+    def pvid(self):
+        """Returns the Port VLAN ID (int value)."""
+        return self._get_val_int(_PVID)
+
+    @pvid.setter
+    def pvid(self, new_val):
+        self.set_parm_value(_PVID, new_val)
 
 
 @ewrap.EntryWrapper.pvm_type('VirtualSwitch', has_metadata=True,
@@ -1001,7 +1101,7 @@ class VNet(ewrap.EntryWrapper):
 
 
 @ewrap.EntryWrapper.pvm_type('ClientNetworkAdapter')
-class CNA(ewrap.EntryWrapper):
+class CNA(VIFBase):
     """Wrapper object for ClientNetworkAdapter schema."""
 
     @classmethod
@@ -1108,15 +1208,6 @@ class CNA(ewrap.EntryWrapper):
         self.set_parm_value(unasi_field, u.sanitize_bool_for_api(unasi))
 
     @property
-    def mac(self):
-        """Returns the Mac Address for the adapter.
-
-        Typical format would be: AABBCCDDEEFF
-        The API returns a format with no colons and is upper cased.
-        """
-        return self._get_val_str(_VADPT_MAC_ADDR)
-
-    @property
     def vsi_type_id(self):
         """Returns the virtual station interface type id."""
         return self._get_val_str(_VADPT_VSI_TYPE_ID)
@@ -1130,20 +1221,6 @@ class CNA(ewrap.EntryWrapper):
     def vsi_type_manager_id(self):
         """Returns the virtual station interface manager id."""
         return self._get_val_str(_VADPT_VSI_MANAGER_ID)
-
-    @mac.setter
-    def mac(self, new_val):
-        new_mac = u.sanitize_mac_for_api(new_val)
-        self.set_parm_value(_VADPT_MAC_ADDR, new_mac)
-
-    @property
-    def pvid(self):
-        """Returns the Port VLAN ID (int value)."""
-        return self._get_val_int(_VADPT_PVID)
-
-    @pvid.setter
-    def pvid(self, new_val):
-        self.set_parm_value(_VADPT_PVID, new_val)
 
     @property
     def enabled(self):
