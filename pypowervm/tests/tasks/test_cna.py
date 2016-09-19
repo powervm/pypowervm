@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+import json
 import mock
 
 from pypowervm import adapter as adp
@@ -37,8 +37,13 @@ class TestCNA(twrap.TestWrapper):
     wrapper_class_to_test = pvm_net.VSwitch
 
     @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    def test_crt_cna(self, mock_vnet_find):
+    @mock.patch('pypowervm.wrappers.event.Event.bld')
+    def test_crt_cna(self, mock_event_bld, mock_vnet_find):
         """Tests the creation of Client Network Adapters."""
+        href = ('http://localhost:12080/rest/api/uom/LogicalPartition/1234/Cli'
+                'entNetworkAdapter/5678')
+        event = mock.Mock()
+
         # Create a side effect that can validate the input into the create
         # call.
         def validate_of_create(*kargs, **kwargs):
@@ -46,40 +51,43 @@ class TestCNA(twrap.TestWrapper):
             self.assertEqual('LogicalPartition', kargs[1])
             self.assertEqual('fake_lpar', kwargs.get('root_id'))
             self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
-            return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
+            ent = pvm_net.CNA.bld(self.adpt, 1, 'href', mac_addr='MAC').entry
+            ent.properties['links'] = {'SELF': [href]}
+            return ent
         self.adpt.create.side_effect = validate_of_create
+
+        def validate_event_bld(adap, data, detail):
+            self.assertEqual(self.adpt, adap)
+            self.assertEqual(href, data)
+            self.assertEqual(dict(action='create', pvid=1, mac='MAC'),
+                             json.loads(detail))
+            return event
+        mock_event_bld.side_effect = validate_event_bld
+
+        # The VSWitch
         self.adpt.read.return_value = self.resp
 
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
-        self.assertIsNotNone(n_cna)
         self.assertIsInstance(n_cna, pvm_net.CNA)
-        self.assertEqual(1, mock_vnet_find.call_count)
+        mock_vnet_find.assert_called_once_with(
+            self.adpt, 'fake_host', '5', mock.ANY)
+        # Validate event
+        self.assertEqual(1, mock_event_bld.call_count)
+        event.create.assert_called_once_with()
 
-    @mock.patch('pypowervm.tasks.cna._find_or_create_vnet')
-    def test_crt_cna_no_vnet_crt(self, mock_vnet_find):
-        """Tests the creation of Client Network Adapters.
+        mock_vnet_find.reset_mock()
+        mock_event_bld.reset_mock()
+        event.reset_mock()
 
-        The virtual network creation shouldn't be done in this flow.
-        """
-        # PVMish Traits
+        # PVMish Traits: The virtual network creation shouldn't be done now.
         self.adptfx.set_traits(fx.LocalPVMTraits)
 
-        self.adpt.read.return_value = self.resp
-
-        # Create a side effect that can validate the input into the create
-        # call.
-        def validate_of_create(*kargs, **kwargs):
-            self.assertIsNotNone(kargs[0])
-            self.assertEqual('LogicalPartition', kargs[1])
-            self.assertEqual('fake_lpar', kwargs.get('root_id'))
-            self.assertEqual('ClientNetworkAdapter', kwargs.get('child_type'))
-            return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
-        self.adpt.create.side_effect = validate_of_create
-
         n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
-        self.assertIsNotNone(n_cna)
         self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(0, mock_vnet_find.call_count)
+        # Validate event
+        self.assertEqual(1, mock_event_bld.call_count)
+        event.create.assert_called_once_with()
 
     def test_find_or_create_vswitch(self):
         """Validates that a vswitch can be created."""
