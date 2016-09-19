@@ -23,6 +23,7 @@ import pypowervm.const as pc
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.pvmhttp as pvmhttp
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+from pypowervm.tests.wrappers import test_iocard
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.virtual_io_server as vios
 
@@ -727,6 +728,9 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertFalse(self.dwrap.enabled)
         self.dwrap.enabled = True
         self.assertTrue(self.dwrap.enabled)
+
+    def test_crud_overrides(self):
+        test_iocard.test_crud_overrides(self)
 
 if __name__ == "__main__":
     unittest.main()

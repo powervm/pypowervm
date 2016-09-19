@@ -14,6 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+import json
+import mock
 import unittest
 
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
@@ -21,6 +24,66 @@ import pypowervm.util as u
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
+
+
+@mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.create')
+@mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.update')
+@mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.delete')
+@mock.patch('pypowervm.wrappers.event.Event')
+def test_crud_overrides(test_class, mock_event, mock_del, mock_upd, mock_crt):
+    """Validate .create(), .update(), and .delete()."""
+    event = mock.Mock()
+
+    # Side effect for Event.bld
+    def validate_event_bld(**exp_detail):
+        def _event_bld(adap, data, detail):
+            test_class.assertEqual(test_class.adpt, adap)
+            # Chop off '?group=None'
+            exp_href = test_class.dwrap.href
+            if '?' in exp_href:
+                exp_href = exp_href[:exp_href.index('?')]
+            test_class.assertEqual(exp_href, data)
+            test_class.assertEqual(exp_detail, json.loads(detail))
+            return event
+        return _event_bld
+
+    # Validate .create()
+    mock_crt.return_value = test_class.dwrap
+    mock_event.bld.side_effect = validate_event_bld(
+        action='create', pvid=test_class.dwrap.pvid, mac=test_class.dwrap.mac)
+    # Run the create
+    test_class.assertEqual(test_class.dwrap, test_class.dwrap.create())
+    mock_crt.assert_called_once_with()
+    test_class.assertEqual(1, mock_event.bld.call_count)
+    event.create.assert_called_once_with()
+
+    mock_event.bld.reset_mock()
+    event.create.reset_mock()
+
+    # Validate .update()
+    mock_upd.return_value = copy.copy(test_class.dwrap)
+    # Ensure the original & changed values are reflected in the Event.
+    mock_upd.return_value.pvid = 1234
+    mock_upd.return_value.mac = 'MAC'
+    mock_event.bld.side_effect = validate_event_bld(
+        action='update', orig_pvid=test_class.dwrap.pvid,
+        orig_mac=test_class.dwrap.mac, pvid=1234, mac='MAC')
+    # Run the update
+    test_class.assertEqual(mock_upd.return_value, test_class.dwrap.update())
+    mock_upd.assert_called_once_with()
+    test_class.assertEqual(1, mock_event.bld.call_count)
+    event.create.assert_called_once_with()
+
+    mock_event.bld.reset_mock()
+    event.create.reset_mock()
+
+    # Validate .delete()
+    mock_event.bld.side_effect = validate_event_bld(
+        action='delete', pvid=test_class.dwrap.pvid, mac=test_class.dwrap.mac)
+    test_class.dwrap.delete()
+    mock_del.assert_called_once_with()
+    test_class.assertEqual(1, mock_event.bld.call_count)
+    event.create.assert_called_once_with()
 
 
 class TestSRIOVAdapter(twrap.TestWrapper):
@@ -223,6 +286,9 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(2230, lport.pvid)
         self.assertEqual('12AB34CD56EF', lport.mac)
 
+    def test_crud_overrides(self):
+        test_crud_overrides(self)
+
 
 class TestVNIC(twrap.TestWrapper):
     file = 'vnic_feed.txt'
@@ -308,6 +374,9 @@ class TestVNIC(twrap.TestWrapper):
         bd2.failover_pri = 60
         self.assertEqual(bd1.failover_pri, 42)
         self.assertEqual(bd2.failover_pri, 60)
+
+    def test_crud_overrides(self):
+        test_crud_overrides(self)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
