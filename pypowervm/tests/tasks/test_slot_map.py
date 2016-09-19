@@ -577,7 +577,7 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
                                       ['fab1'])
         self.assertEqual((None, 7), rsm.get_mgmt_vea_slot())
         # Second call should return the same slot, as there is only one mgmt
-        # vif per VM
+        # CNA per VM
         self.assertEqual((None, 7), rsm.get_mgmt_vea_slot())
 
         # Make sure it returns the existing MGMT switch
