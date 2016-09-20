@@ -15,6 +15,7 @@
 #    under the License.
 
 """Wrappers, constants, and helpers around IOAdapter and its children."""
+import pypowervm.const as pc
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 
@@ -1017,7 +1018,7 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     @failover_pri.setter
     def failover_pri(self, val):
-        self.set_parm_value(_VNICBD_FAILOVER_PRI, val)
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, val, attrib=pc.ATTR_KSV140)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
