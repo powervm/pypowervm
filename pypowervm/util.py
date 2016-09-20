@@ -591,6 +591,9 @@ class _AllowedList(object):
         if val in cls._GOOD_STRINGS:
             return val
         if isinstance(val, list):
+            if (len(val) == 1 and isinstance(val[0], str)
+                    and val[0].upper() in cls._GOOD_STRINGS):
+                return val[0].upper()
             return ' '.join([cls.sanitize_for_api(ival) for ival in val])
         # Not a list, not a good value
         raise ValueError(_("Invalid value '%(bad_val)s'.  Expected one of "

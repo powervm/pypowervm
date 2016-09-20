@@ -379,6 +379,9 @@ class TestAllowedList(unittest.TestCase):
             for cls in (util.VLANList, util.MACList):
                 self.assertEqual(val, cls.unmarshal(val))
                 self.assertEqual(val, cls.marshal(val))
+        for val in (['all'], ['none']):
+            for cls in (util.VLANList, util.MACList):
+                self.assertEqual(val[0].upper(), cls.marshal(val))
 
     def test_unmarshal(self):
         # Test VLAN lists
