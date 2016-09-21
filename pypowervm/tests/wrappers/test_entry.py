@@ -608,11 +608,11 @@ class TestWrapperElemList(testtools.TestCase):
         self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 2)
         # Works with indirect
         self.assertIsInstance(self.backdev_wel[0], card.VNICBackDev)
-        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 1)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 2)
 
     def test_length(self):
         self.assertEqual(2, len(self.seas_wel))
-        self.assertEqual(1, len(self.backdev_wel))
+        self.assertEqual(2, len(self.backdev_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
@@ -625,14 +625,14 @@ class TestWrapperElemList(testtools.TestCase):
         # Appending to indirect
         backdev = copy.deepcopy(self.backdev_wel[0])
         self.backdev_wel.append(backdev)
-        self.assertEqual(2, len(self.backdev_wel))
+        self.assertEqual(3, len(self.backdev_wel))
 
         # Make sure we can also remove what was just added.
         self.seas_wel.remove(sea_add)
         self.assertEqual(2, len(self.seas_wel))
         # Removing from indirect
         self.backdev_wel.remove(backdev)
-        self.assertEqual(1, len(self.backdev_wel))
+        self.assertEqual(2, len(self.backdev_wel))
 
     def test_extend(self):
         seas = [
@@ -649,7 +649,7 @@ class TestWrapperElemList(testtools.TestCase):
         backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 2),
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4)]
         self.backdev_wel.extend(backdevs)
-        self.assertEqual(3, len(self.backdev_wel))
+        self.assertEqual(4, len(self.backdev_wel))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
@@ -661,7 +661,7 @@ class TestWrapperElemList(testtools.TestCase):
         # With indirect
         self.backdev_wel.remove(card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1,
                                                      2))
-        self.assertEqual(2, len(self.backdev_wel))
+        self.assertEqual(3, len(self.backdev_wel))
         # Non-equivalent one doesn't work
         self.assertRaises(ValueError, self.backdev_wel.remove,
                           card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 3))
