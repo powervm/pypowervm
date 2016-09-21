@@ -358,6 +358,8 @@ class TestVNIC(twrap.TestWrapper):
             '439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1-349'
             '6-9af6-8cd562f0e839', backdev.lport_href)
         self.assertEqual(0.02, backdev.capacity)
+        self.assertFalse(backdev.is_active)
+        self.assertEqual(backdev.status, card.VNICBackDevStatus.LINK_DOWN)
 
 if __name__ == "__main__":
     unittest.main()

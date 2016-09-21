@@ -63,6 +63,8 @@ BODY{
                 </Metadata>
                 <DeviceType kxe="false" kb="COR">SRIOV</DeviceType>
                 <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83" rel="related"/>
+                <IsActive ksv="V1_4_0" kxe="false" kb="ROR">false</IsActive>
+                <Status ksv="V1_4_0" kxe="false" kb="ROR">LINK_DOWN</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">1</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
@@ -117,6 +119,8 @@ BODY{
                 </Metadata>
                 <DeviceType kxe="false" kb="COR">SRIOV</DeviceType>
                 <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83" rel="related"/>
+                <IsActive ksv="V1_4_0" kxe="false" kb="ROR">true</IsActive>
+                <Status ksv="V1_4_0" kxe="false" kb="ROR">OPERATIONAL</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">2</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>

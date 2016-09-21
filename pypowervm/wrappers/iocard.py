@@ -265,6 +265,17 @@ class SRIOVPPMTU(object):
     UNKNOWN = 'Unknown'
 
 
+class VNICBackDevStatus(object):
+    """Enumeration of possible VNIC backing device statuses."""
+    OPERATIONAL = 'OPERATIONAL'
+    POWERED_OFF = 'POWERED_OFF'
+    LINK_DOWN = 'LINK_DOWN'
+    NETWORK_ERROR = 'NETWORK_ERROR'
+    UNRESPONSIVE = 'UNRESPONSIVE'
+    ADAPTER_ERROR = 'ADAPTER_ERROR'
+    UNKNOWN = 'UNKNOWN'
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -1019,6 +1030,14 @@ class VNICBackDev(ewrap.ElementWrapper):
     @failover_pri.setter
     def failover_pri(self, val):
         self.set_parm_value(_VNICBD_FAILOVER_PRI, val, attrib=pc.ATTR_KSV140)
+
+    @property
+    def is_active(self):
+        return self._get_val_bool(_VNICBD_ACTIVE)
+
+    @property
+    def status(self):
+        return self._get_val_str(_VNICBD_STATUS)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
