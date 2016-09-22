@@ -323,18 +323,32 @@ def _upload_stream_coordinated(vio_file, d_stream):
         out_stream = open(vio_file.asset_file, 'a+b', 0)
 
         def copy_func(in_stream, out_stream):
-            while True:
-                chunk = d_stream.read(65536)
-                if not chunk:
-                    break
-                out_stream.write(chunk)
+            try:
+                LOG.debug("Starting to read from stream for image upload.")
+                i = 0
 
-                # Yield to other threads
-                time.sleep(0)
+                while True:
+                    chunk = d_stream.read(65536)
+                    if not chunk:
+                        break
+                    out_stream.write(chunk)
 
-            # The close indicates to the other side we are done.  Will
-            # force the upload_file to return.
-            out_stream.close()
+                    if i % 100 == 0:
+                        LOG.debug("Uploaded chunk %s to the server" % str(i))
+                    i += 1
+
+                    # Yield to other threads
+                    time.sleep(0)
+            except Exception as e:
+                LOG.error(_("Encountered an error while uploading a "
+                            "file to the server."))
+                LOG.exception(e)
+                raise
+            finally:
+                # The close indicates to the other side we are done.  Will
+                # force the upload_file to return.
+                out_stream.close()
+
         copy_f = th.submit(copy_func, d_stream, out_stream)
 
     try:
@@ -346,6 +360,8 @@ def _upload_stream_coordinated(vio_file, d_stream):
         # If the upload failed, then make sure we close the stream.
         # This will ensure that if one of the threads fail, both fail.
         # Note that if it is already closed, this no-ops.
+        #
+        # If it had already been closed, no issue.
         out_stream.close()
 
 
