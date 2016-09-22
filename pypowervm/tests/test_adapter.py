@@ -51,6 +51,15 @@ response_text = testlib.file2b("event.xml")
 NET_BRIDGE_FILE = 'fake_network_bridge.txt'
 
 
+class MyWrapperEventHandler(adp.WrapperEventHandler):
+    def __init__(self):
+        super(MyWrapperEventHandler, self).__init__()
+        self.process_called_with = []
+
+    def process(self, events):
+        self.process_called_with.append(events)
+
+
 class TestAdapter(testtools.TestCase):
     """Test cases to test the adapter classes and methods."""
 
@@ -108,25 +117,30 @@ class TestAdapter(testtools.TestCase):
         self.sess = None
         super(TestAdapter, self).tearDown()
 
-    def test_event_listener(self):
+    @mock.patch('pypowervm.wrappers.event.Event.wrap')
+    def test_event_listener(self, mock_evt_wrap):
 
         with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
                 mock.patch.object(adp, '_EventPollThread') as mock_poll:
             # With some fake events, event listener can be initialized
             self.sess._sessToken = 'token'.encode('utf-8')
-            m_events.return_value = {'general': 'init'}, []
+            m_events.return_value = {'general': 'init'}, 'raw_evt', 'wrap_evt'
             event_listen = self.sess.get_event_listener()
+            self.assertEqual(15, event_listen.interval)
             self.assertIsNotNone(event_listen)
 
             # Register the fake handlers and ensure they are called
             evh = mock.Mock(spec=adp.EventHandler, autospec=True)
             raw_evh = mock.Mock(spec=adp.RawEventHandler, autospec=True)
+            wrap_evh = MyWrapperEventHandler()
             event_listen.subscribe(evh)
             event_listen.subscribe(raw_evh)
-            events, raw_events = event_listen._get_events()
-            event_listen._dispatch_events(events, raw_events)
-            self.assertTrue(evh.process.called)
-            self.assertTrue(raw_evh.process.called)
+            event_listen.subscribe(wrap_evh)
+            events, raw_events, evtwraps = event_listen._get_events()
+            event_listen._dispatch_events(events, raw_events, evtwraps)
+            evh.process.assert_called_once_with({'general': 'init'})
+            raw_evh.process.assert_called_once_with('raw_evt')
+            self.assertEqual(['wrap_evt'], wrap_evh.process_called_with)
             self.assertTrue(mock_poll.return_value.start.called)
 
             # Ensure getevents() gets legacy events
@@ -139,9 +153,11 @@ class TestAdapter(testtools.TestCase):
             # Fabricate some mock entries, so format gets called.
             mock_read.return_value.feed.entries = (['entry'])
 
-            self.assertEqual(({}, []), event_listen._get_events())
+            self.assertEqual(({}, [], mock_evt_wrap.return_value),
+                             event_listen._get_events())
             self.assertTrue(mock_read.called)
             self.assertTrue(mock_format.called)
+            mock_evt_wrap.assert_called_once_with(mock_read.return_value)
 
         # Test _format_events
         event_data = [
@@ -844,7 +860,7 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         self.mock_events = self.useFixture(
             fixtures.MockPatchObject(adp._EventListener, '_get_events')).mock
         # Mock the initial events coming in on start
-        self.mock_events.return_value = {'general': 'init'}, []
+        self.mock_events.return_value = {'general': 'init'}, [], []
 
     def test_instantiation(self):
         """Direct instantiation of EventListener is not allowed."""
