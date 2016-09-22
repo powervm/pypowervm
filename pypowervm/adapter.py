@@ -78,7 +78,8 @@ class Session(object):
 
     def __init__(self, host='localhost', username=None, password=None,
                  auditmemento=None, protocol=None, port=None, timeout=1200,
-                 certpath='/etc/ssl/certs/', certext='.crt', conn_tries=1):
+                 certpath='/etc/ssl/certs/', certext='.crt', conn_tries=1,
+                 event_listener_interval=15):
         """Persistent authenticated session with the REST API server.
 
         Two authentication modes are supported: password- and file-based.
@@ -114,6 +115,14 @@ class Session(object):
                            means we only try once.  We sleep for two seconds
                            (subject to change in future versions) between
                            retries.
+        :param event_listener_interval: Polling interval, in seconds, for the
+                                        event listener to query the server for
+                                        new events.  This defaults to 15 for
+                                        backward compatibility; however, it is
+                                        recommended that new clients use zero,
+                                        since the Event API has a built-in
+                                        looping interval rendering it pseudo-
+                                        synchronous.
         :return: A logged-on session suitable for passing to the Adapter
                  constructor.
         """
@@ -169,6 +178,7 @@ class Session(object):
         self._logged_in = False
         self._relogin_unsafe = False
         self._eventlistener = None
+        self._event_listener_interval = event_listener_interval
 
         # Will be set by _logon()
         self._sessToken = None
@@ -206,7 +216,8 @@ class Session(object):
     def get_event_listener(self):
         if not self.has_event_listener:
             LOG.info(_("Setting up event listener for %s"), self.host)
-            self._eventlistener = _EventListener(self)
+            self._eventlistener = _EventListener(
+                self, interval=self._event_listener_interval)
         return self._eventlistener
 
     @property
@@ -1489,7 +1500,7 @@ class EventListener(object):
 
 
 class _EventListener(EventListener):
-    def __init__(self, session, timeout=-1, interval=15):
+    def __init__(self, session, timeout=-1, interval=None):
         """The event listener associated with a Session.
 
         This class should not be instantiated directly.  Instead construct
@@ -1498,7 +1509,7 @@ class _EventListener(EventListener):
         :param session: The Session this listener is to use.
         :param timeout: How long to wait for any events to be returned.
             -1 = wait indefinitely
-        :param interval: How often to query for events.
+        :param interval: DEPRECATED.  Use Session(event_listener_interval).
         """
         if session is None:
             raise ValueError(_('Session must not be None'))
@@ -1507,7 +1518,7 @@ class _EventListener(EventListener):
                                'session.'))
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
-        self.interval = interval
+        self.interval = interval or 0
         self._lock = threading.RLock()
         self.handlers = []
         self._pthread = None
@@ -1517,7 +1528,7 @@ class _EventListener(EventListener):
             # because we don't want a circular reference to the session.
             self.adp = Adapter(weakref.proxy(session), use_cache=False)
             # initialize
-            events, raw_events = self._get_events()
+            events, raw_events, evtwraps = self._get_events()
         except pvmex.Error as e:
             raise pvmex.Error(_('Failed to initialize event feed listener: '
                                 '%s') % e)
@@ -1526,7 +1537,7 @@ class _EventListener(EventListener):
             raise ValueError(_('Application id "%s" is not unique') %
                              self.appid)
         # No errors initializing, so dispatch what we recieved.
-        self._dispatch_events(events, raw_events)
+        self._dispatch_events(events, raw_events, evtwraps)
 
     def subscribe(self, handler):
         if not isinstance(handler, _EventHandler):
@@ -1585,7 +1596,10 @@ class _EventListener(EventListener):
             for entry in resp.feed.entries:
                 self._format_events(entry, events, raw_events)
 
-        return events, raw_events
+        # Do this here to avoid circular imports
+        import pypowervm.wrappers.event as event_wrap
+
+        return events, raw_events, event_wrap.Event.wrap(resp)
 
     def _format_events(self, entry, events, raw_events):
         """Formats an event Entry into events and raw events.
@@ -1623,10 +1637,21 @@ class _EventListener(EventListener):
         raw_events.append({'EventType': etype, 'EventData': href,
                            'EventID': eid, 'EventDetail': edetail})
 
-    def _dispatch_events(self, events, raw_events):
+    def _dispatch_events(self, events, raw_events, wrap_events):
+        """Invoke appropriate EventHandler 'process' callback.
+
+        :param events: Events dict of the format {<uri>: <action>} - see
+                       docstring for EventHandler.process.
+        :param raw_events: List of event dicts of the format
+                           {'EventType': <type>, 'EventData': <uri>,
+                            'EventID': <id>, 'EventDetail': <detail>}
+        :param wrap_events: List of pypowervm.wrappers.event.Event wrappers.
+        """
 
         def call_handlers():
             try:
+                if isinstance(h, WrapperEventHandler):
+                    h.process(wrap_events)
                 if isinstance(h, RawEventHandler):
                     h.process(raw_events)
                 else:
@@ -1720,6 +1745,28 @@ class RawEventHandler(_EventHandler):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
+class WrapperEventHandler(_EventHandler):
+    """Used to handle wrapped events from the API.
+
+    With this handler, no processing is done on the events. The events
+    will be passed as a list of pypowervm.wrappers.event.Event.
+
+    Implement this class and add it to the Session's event listener to process
+    events back from the API.
+    """
+
+    @abc.abstractmethod
+    def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: A list of pypowervm.wrappers.event.Event that has come
+                       back from the system.  See that wrapper class for
+                       details.
+        """
+        pass
+
+
 class _EventPollThread(threading.Thread):
     def __init__(self, eventlistener, interval):
         threading.Thread.__init__(self)
@@ -1730,8 +1777,8 @@ class _EventPollThread(threading.Thread):
 
     def run(self):
         while not self.done:
-            events, raw_events = self.eventlistener._get_events()
-            self.eventlistener._dispatch_events(events, raw_events)
+            events, raw_events, evtwraps = self.eventlistener._get_events()
+            self.eventlistener._dispatch_events(events, raw_events, evtwraps)
             interval = self.interval
             while interval > 0 and not self.done:
                 time.sleep(1)
