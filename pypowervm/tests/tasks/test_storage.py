@@ -210,6 +210,34 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
+    @mock.patch('pypowervm.tasks.storage.open')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_stream_coordinated_with_fail(self, mock_create_file,
+                                                 mock_open):
+        """Tests the uploads of a virtual disk with a failure."""
+        mock_file = self._fake_meta()
+        mock_create_file.return_value = mock_file
+
+        class DownStream(object):
+            def __init__(self):
+                self.i = 0
+
+            def read(self, *kargs, **kwargs):
+                self.i += 1
+                if self.i == 1000:
+                    raise IOError()
+                return self.i
+
+        mock_output_stream = mock.MagicMock()
+        mock_open.return_value = mock_output_stream
+
+        # Run the code
+        self.assertRaises(IOError, ts._upload_stream_coordinated,
+                          mock_file, DownStream())
+
+        # The call count should be two
+        self.assertEqual(1, mock_output_stream.close.call_count)
+
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
         """Tests the failure path for uploading of the virtual disks."""
