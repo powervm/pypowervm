@@ -1489,7 +1489,7 @@ class EventListener(object):
 
 
 class _EventListener(EventListener):
-    def __init__(self, session, timeout=-1, interval=15):
+    def __init__(self, session, timeout=-1, **kwargs):
         """The event listener associated with a Session.
 
         This class should not be instantiated directly.  Instead construct
@@ -1507,7 +1507,6 @@ class _EventListener(EventListener):
                                'session.'))
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
-        self.interval = interval
         self._lock = threading.RLock()
         self.handlers = []
         self._pthread = None
@@ -1538,7 +1537,7 @@ class _EventListener(EventListener):
                 raise ValueError(_('This handler is already subscribed'))
             self.handlers.append(handler)
             if not self._pthread:
-                self._pthread = _EventPollThread(self, self.interval)
+                self._pthread = _EventPollThread(self)
                 self._pthread.start()
 
     def unsubscribe(self, handler):
@@ -1721,10 +1720,9 @@ class RawEventHandler(_EventHandler):
 
 
 class _EventPollThread(threading.Thread):
-    def __init__(self, eventlistener, interval):
+    def __init__(self, eventlistener):
         threading.Thread.__init__(self)
         self.eventlistener = eventlistener
-        self.interval = interval
         self.done = False
         # self.daemon = True
 
@@ -1732,10 +1730,6 @@ class _EventPollThread(threading.Thread):
         while not self.done:
             events, raw_events = self.eventlistener._get_events()
             self.eventlistener._dispatch_events(events, raw_events)
-            interval = self.interval
-            while interval > 0 and not self.done:
-                time.sleep(1)
-                interval -= 1
 
     def stop(self):
         self.done = True
