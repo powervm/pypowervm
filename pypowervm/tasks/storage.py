@@ -306,6 +306,41 @@ def _upload_stream_api(vio_file, d_stream):
             i += 1
 
 
+def _copy_func(vio_file, in_stream, out_stream):
+    try:
+        LOG.info(_("Starting to read from stream for image upload "
+                   "to %s."), vio_file.asset_file)
+        i = 0
+
+        while True:
+            chunk = in_stream.read(65536)
+            if not chunk:
+                break
+            out_stream.write(chunk)
+
+            if i % 100 == 0:
+                LOG.debug("Uploaded chunk %d to the server for file %s",
+                          i, vio_file.asset_file)
+            i += 1
+
+            # Yield to other threads
+            time.sleep(0)
+    except Exception as e:
+        LOG.error(_("Encountered an error while uploading to file "
+                    "%s to the server."), vio_file.asset_file)
+        # We specifically log the exception here.  The reason being is that
+        # this runs in separate threads.  If the other thread has an exception
+        # this may just be hidden.  Force a log, even though it may be
+        # redundant.
+        LOG.exception(e)
+        raise
+    finally:
+        LOG.info(_("Closing stream for image upload %s"), vio_file.asset_file)
+        # The close indicates to the other side we are done.  Will
+        # force the upload_file to return.
+        out_stream.close()
+
+
 def _upload_stream_coordinated(vio_file, d_stream):
     # A reader to tell the API we have nothing to upload
     class EmptyReader(object):
@@ -322,31 +357,12 @@ def _upload_stream_coordinated(vio_file, d_stream):
         # Create a function that streams to the FIFO pipe
         out_stream = open(vio_file.asset_file, 'a+b', 0)
 
-        def copy_func(in_stream, out_stream):
-            while True:
-                chunk = d_stream.read(65536)
-                if not chunk:
-                    break
-                out_stream.write(chunk)
-
-                # Yield to other threads
-                time.sleep(0)
-
-            # The close indicates to the other side we are done.  Will
-            # force the upload_file to return.
-            out_stream.close()
-        copy_f = th.submit(copy_func, d_stream, out_stream)
-
-    try:
-        # Make sure we call the results.  This is just to make sure it
-        # doesn't have exceptions
-        for io_future in futures.as_completed([upload_f, copy_f]):
-            io_future.result()
-    finally:
-        # If the upload failed, then make sure we close the stream.
-        # This will ensure that if one of the threads fail, both fail.
-        # Note that if it is already closed, this no-ops.
-        out_stream.close()
+        # Submit the threads
+        copy_f = th.submit(_copy_func, vio_file, d_stream, out_stream)
+    # Make sure we call the results.  This is just to make sure it
+    # doesn't have exceptions
+    for io_future in futures.as_completed([upload_f, copy_f]):
+        io_future.result()
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
