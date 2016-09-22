@@ -61,9 +61,12 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
             # Only retried once, after the 404
             mock_sleep.assert_called_once_with(2)
 
-    @mock.patch('pypowervm.adapter.Session._logon')
-    def test_session_init(self, mock_logon):
+    @mock.patch('pypowervm.adapter.Session._logon', new=mock.Mock())
+    @mock.patch('pypowervm.adapter._EventListener._get_events')
+    def test_session_init(self, mock_get_evts):
         """Ensure proper parameter handling in the Session initializer."""
+        mock_get_evts.return_value = {'general': 'init'}, [], []
+        sessToken = 'sessToken'.encode('utf-8')
         logfx = self.useFixture(fx.LoggingFx())
         # No params - local, file-based, http.
         sess = adp.Session()
@@ -79,6 +82,9 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         self.assertEqual('.crt', sess.certext)
         # localhost + http is okay
         self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
+        # Proper defaulting of event_listener_interval
+        sess._sessToken = sessToken
+        self.assertEqual(15, sess.get_event_listener().interval)
 
         # Verify unique session names
         sess2 = adp.Session()
@@ -98,6 +104,11 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay
         self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
+
+        # Ensure proper passing of event_listener_interval
+        sess = adp.Session(event_listener_interval=3)
+        sess._sessToken = sessToken
+        self.assertEqual(3, sess.get_event_listener().interval)
 
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init_remote_http(self, mock_logon):
