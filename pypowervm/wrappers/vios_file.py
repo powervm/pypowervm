@@ -157,7 +157,7 @@ class File(ewrap.EntryWrapper):
         Only used in conjunction with DISK_IMAGE_COORDINATED.
 
         Provides the path to a file on the local system where data can be sent
-        during an upload operation.  This is used for signifcant speed
+        during an upload operation.  This is used for significant speed
         improvements as the REST API server does not need to be involved with
         the upload.
         """
