@@ -1512,12 +1512,16 @@ class _EventListener(EventListener):
         self.handlers = []
         self._pthread = None
         self.host = session.host
+        self.adp = None
+        self._prime(session)
+
+    def _prime(self, session):
         try:
             # Establish a weak reference proxy to the session.  This is needed
             # because we don't want a circular reference to the session.
             self.adp = Adapter(weakref.proxy(session), use_cache=False)
             # initialize
-            events, raw_events = self._get_events()
+            events, raw_events, evtwraps = self._get_events()
         except pvmex.Error as e:
             raise pvmex.Error(_('Failed to initialize event feed listener: '
                                 '%s') % e)
@@ -1526,7 +1530,7 @@ class _EventListener(EventListener):
             raise ValueError(_('Application id "%s" is not unique') %
                              self.appid)
         # No errors initializing, so dispatch what we recieved.
-        self._dispatch_events(events, raw_events)
+        self._dispatch_events(events, raw_events, evtwraps)
 
     def subscribe(self, handler):
         if not isinstance(handler, _EventHandler):
@@ -1585,7 +1589,10 @@ class _EventListener(EventListener):
             for entry in resp.feed.entries:
                 self._format_events(entry, events, raw_events)
 
-        return events, raw_events
+        # Do this here to avoid circular imports
+        import pypowervm.wrappers.event as event_wrap
+
+        return events, raw_events, event_wrap.Event.wrap(resp)
 
     def _format_events(self, entry, events, raw_events):
         """Formats an event Entry into events and raw events.
@@ -1623,21 +1630,32 @@ class _EventListener(EventListener):
         raw_events.append({'EventType': etype, 'EventData': href,
                            'EventID': eid, 'EventDetail': edetail})
 
-    def _dispatch_events(self, events, raw_events):
+    def _dispatch_events(self, events, raw_events, wrap_events):
+        """Invoke appropriate EventHandler 'process' callback.
 
-        def call_handlers():
+        :param events: Events dict of the format {<uri>: <action>} - see
+                       docstring for EventHandler.process.
+        :param raw_events: List of event dicts of the format
+                           {'EventType': <type>, 'EventData': <uri>,
+                            'EventID': <id>, 'EventDetail': <detail>}
+        :param wrap_events: List of pypowervm.wrappers.event.Event wrappers.
+        """
+
+        def call_handler(handler):
             try:
-                if isinstance(h, RawEventHandler):
-                    h.process(raw_events)
+                if isinstance(handler, WrapperEventHandler):
+                    handler.process(wrap_events)
+                elif isinstance(handler, RawEventHandler):
+                    handler.process(raw_events)
                 else:
-                    h.process(events)
+                    handler.process(events)
             except Exception:
                 LOG.exception(_('Error while processing PowerVM events'))
 
         # Notify subscribers
         with self._lock:
-            for h in self.handlers:
-                call_handlers()
+            for hndlr in self.handlers:
+                call_handler(hndlr)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -1720,6 +1738,28 @@ class RawEventHandler(_EventHandler):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
+class WrapperEventHandler(_EventHandler):
+    """Used to handle wrapped events from the API.
+
+    With this handler, no processing is done on the events. The events
+    will be passed as a list of pypowervm.wrappers.event.Event.
+
+    Implement this class and add it to the Session's event listener to process
+    events back from the API.
+    """
+
+    @abc.abstractmethod
+    def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: A list of pypowervm.wrappers.event.Event that has come
+                       back from the system.  See that wrapper class for
+                       details.
+        """
+        pass
+
+
 class _EventPollThread(threading.Thread):
     def __init__(self, eventlistener, interval):
         threading.Thread.__init__(self)
@@ -1730,8 +1770,8 @@ class _EventPollThread(threading.Thread):
 
     def run(self):
         while not self.done:
-            events, raw_events = self.eventlistener._get_events()
-            self.eventlistener._dispatch_events(events, raw_events)
+            events, raw_events, evtwraps = self.eventlistener._get_events()
+            self.eventlistener._dispatch_events(events, raw_events, evtwraps)
             interval = self.interval
             while interval > 0 and not self.done:
                 time.sleep(1)

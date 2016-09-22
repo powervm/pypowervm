@@ -61,9 +61,11 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
             # Only retried once, after the 404
             mock_sleep.assert_called_once_with(2)
 
-    @mock.patch('pypowervm.adapter.Session._logon')
-    def test_session_init(self, mock_logon):
+    @mock.patch('pypowervm.adapter.Session._logon', new=mock.Mock())
+    @mock.patch('pypowervm.adapter._EventListener._get_events')
+    def test_session_init(self, mock_get_evts):
         """Ensure proper parameter handling in the Session initializer."""
+        mock_get_evts.return_value = {'general': 'init'}, [], []
         logfx = self.useFixture(fx.LoggingFx())
         # No params - local, file-based, http.
         sess = adp.Session()
