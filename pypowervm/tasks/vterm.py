@@ -39,12 +39,19 @@ LOG = logging.getLogger(__name__)
 
 _SUFFIX_PARM_CLOSE_VTERM = 'CloseVterm'
 
-# Used to track the VNC Repeaters.  These are global variables used below.
-# Since they are defined up here, need to use global as a way for modification
-# of the fields to stick.  We do this so that we keep track of all of the
-# connections.
-_LOCAL_VNC_SERVERS = {}
-_LOCAL_VNC_UUID_TO_PORT = {}
+# Used to track of the mapping between the ports and the Listeners/Repeaters
+# that we construct for those and also keeping track of which local port
+# is for a given LPAR UUID and want VNC Path String is provided for the LPAR.
+#
+# These are global variables used below. Since they are defined up here, need
+# to use global as a way for modification of the fields to stick.  We do this
+# so that we keep track of all of the connections.
+_VNC_REMOTE_PORT_TO_LISTENER = {}
+_VNC_LOCAL_PORT_TO_REPEATER = {}
+_VNC_UUID_TO_LOCAL_PORT = {}
+_VNC_PATH_TO_UUID = {}
+# For the single remote port case, we will hard-code that to 5901 for now
+_REMOTE_PORT = 5901
 
 
 def close_vterm(adapter, lpar_uuid):
@@ -93,10 +100,10 @@ def _close_vterm_local(adapter, lpar_uuid):
 
     # Stop the port.
     with lock.lock('powervm_vnc_term'):
-        global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
-        vnc_port = _LOCAL_VNC_UUID_TO_PORT.get(lpar_uuid, 0)
-        if vnc_port in _LOCAL_VNC_SERVERS:
-            _LOCAL_VNC_SERVERS[vnc_port].stop()
+        global _VNC_LOCAL_PORT_TO_REPEATER, _VNC_UUID_TO_LOCAL_PORT
+        vnc_port = _VNC_UUID_TO_LOCAL_PORT.get(lpar_uuid, 0)
+        if vnc_port in _VNC_LOCAL_PORT_TO_REPEATER:
+            _VNC_LOCAL_PORT_TO_REPEATER[vnc_port].stop()
 
 
 def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
@@ -174,7 +181,10 @@ def open_remotable_vnc_vterm(
                      correct path a 200 OK will be returned.
 
                      If no vnc_path is specified, then no path is expected
-                     to be passed in by the VNC client.
+                     to be passed in by the VNC client and it will listen
+                     on the same remote port as local port.  If the path is
+                     specified then it will listen on the on a single remote
+                     port of 5901 and determine the LPAR based on this path.
     :param use_x509_auth: (Optional, Default: False) If enabled, uses X509
                           Authentication for the VNC sessions started for VMs.
     :param ca_certs: (Optional, Default: None) Path to CA certificate to
@@ -191,32 +201,46 @@ def open_remotable_vnc_vterm(
                   via some other means.
     :return: The VNC Port that the terminal is running on.
     """
+    global _VNC_UUID_TO_LOCAL_PORT, _VNC_PATH_TO_UUID
     # This API can only run if local.
     if not adapter.traits.local_api:
         raise pvm_exc.ConsoleNotLocal()
 
     # Open the VNC Port.  If already open, it will just return the same port,
     # so no harm re-opening.  The stdout will just print out the existing port.
-    vnc_port = open_localhost_vnc_vterm(adapter, lpar_uuid, force=force)
+    local_port = open_localhost_vnc_vterm(adapter, lpar_uuid, force=force)
+    # If a VNC path is provided then we have a way to map an incoming
+    # connection to a given LPAR and will use the single 5901 port, otherwise
+    # we need to listen for remote connections on the same port as the local
+    # one so we know which VNC session to forward the connection's data to
+    remote_port = _REMOTE_PORT if vnc_path is not None else local_port
+    _VNC_UUID_TO_LOCAL_PORT[lpar_uuid] = local_port
+
+    # We will use a flag to the Socket Listener to tell it whether the
+    # user provided us a VNC Path we should use to look up the UUID from
+    if vnc_path is not None:
+        verify_vnc_path = True
+        _VNC_PATH_TO_UUID[vnc_path] = lpar_uuid
+    else:
+        verify_vnc_path = False
 
     # See if we have a VNC repeater already...if so, nothing to do.  If not,
     # start it up.
     with lock.lock('powervm_vnc_term'):
-        global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
-        if vnc_port not in _LOCAL_VNC_SERVERS:
-            repeater = _VNCRepeaterServer(
-                adapter, lpar_uuid, local_ip, vnc_port, remote_ips=remote_ips,
-                vnc_path=vnc_path)
+        if remote_port not in _VNC_REMOTE_PORT_TO_LISTENER:
+            global _VNC_REMOTE_PORT_TO_LISTENER
+            listener = _VNCSocketListener(
+                adapter, remote_port, local_ip, verify_vnc_path,
+                remote_ips=remote_ips)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
-                repeater.set_x509_certificates(
+                listener.set_x509_certificates(
                     ca_certs, server_cert, server_key)
-            _LOCAL_VNC_SERVERS[vnc_port] = repeater
-            _LOCAL_VNC_UUID_TO_PORT[lpar_uuid] = vnc_port
+            _VNC_REMOTE_PORT_TO_LISTENER[remote_port] = listener
 
-            repeater.start()
+            listener.start()
 
-    return vnc_port
+    return remote_port
 
 
 def _run_proc(cmd):
@@ -251,56 +275,42 @@ def _parse_vnc_port(std_out):
     return int(line) if line and line.isdigit() else None
 
 
-class _VNCRepeaterServer(threading.Thread):
-    """Repeats a VNC connection from localhost to a given client.
+class _VNCSocketListener(threading.Thread):
+    """Provides a listener bound to a remote-accessible port for VNC access.
 
-    This is useful because it provides an additional layer of validation that
-    the correct client will consume the connection.  This can be done with
-    a restricted list of source IPs, or via validation string checks.
+    The VNC sessions set up by mkvterm only allow access from the localhost, so
+    this listener provides an additional listener on a remote-accessible port
+    to all incoming connections for VNC sessions.
 
-    The validation string requires that a client first send a given message
-    (before jumping to VNC negotiation).  If the validation_check string
-    matches, the repeater will pass on the validation_success message.  If it
-    does not match, the validation_fail message will be sent and the port will
-    be closed.
-
-    This is a very light weight thread, only one is needed per PowerVM LPAR.
+    This listener may be setup by the caller in a way so that there is only a
+    single remote port for all VNC sessions or that there is one port per VM.
+    This listener will accept incoming connections, establish authentication of
+    the requester (if x509 authentication is enabled), and will determine what
+    LPAR UUID the request is for and establish connections to the local port
+    and setup a repeater to forward the data between the two sides.
     """
 
-    def __init__(self, adapter, lpar_uuid, local_ip, port, remote_ips=None,
-                 vnc_path=None):
-        """Creates the repeater.
+    def __init__(self, adapter, remote_port, local_ip, verify_vnc_path,
+                 remote_ips=None):
+        """Creates the listener bound to a remote-accessible port.
 
         :param adapter: The pypowervm adapter
-        :param lpar_uuid: Partition UUID.
-        :param local_ip: The IP Address to bind the VNC server to.  This would
+        :param remote_port: The port to bind to for remote connections.
+        :param local_ip: The IP address to bind the VNC server to. This would
                          be the IP of the management network on the system.
+        :param verify_vnc_path: Boolean to determine whether we verify the
+                                vnc_path.
         :param remote_ips: (Optional, Default: None) A binding to only accept
                            clients that are from a specific list of IP
                            addresses through. Default is None, and therefore
                            will allow any remote IP to connect.
-        :param vnc_path: (Optional, Default: None) If provided, the vnc client
-                         must pass in this path (in HTTP format) to connect to
-                         the VNC server.
-
-                         The path is in HTTP format.  So if the vnc_path is
-                         'Test' the first packet request into the VNC must be:
-                         "CONNECT Test HTTP/1.1\r\n\r\n"
-
-                         If the client passes in an invalid request, a 400 Bad
-                         Request will be returned.  If the client sends in the
-                         correct path a 200 OK will be returned.
-
-                         If no vnc_path is specified, then no path is expected
-                         to be passed in by the VNC client.
         """
-        super(_VNCRepeaterServer, self).__init__()
+        super(_VNCSocketListener, self).__init__()
 
         self.adapter = adapter
-        self.lpar_uuid = lpar_uuid
+        self.remote_port = remote_port
         self.local_ip = local_ip
-        self.port = port
-        self.vnc_path = vnc_path
+        self.verify_vnc_path = verify_vnc_path
         self.remote_ips = remote_ips
         self.x509_certs = None
 
@@ -322,83 +332,39 @@ class _VNCRepeaterServer(threading.Thread):
             ca_certs=ca_certs, server_cert=server_cert, server_key=server_key)
 
     def stop(self):
-        """Stops the repeater from running."""
+        """Stops the listener from running."""
         # This will stop listening for all clients
         self.alive = False
 
         # Remove ourselves from the VNC listeners.
-        global _LOCAL_VNC_SERVERS, _LOCAL_VNC_UUID_TO_PORT
-        if self.port in _LOCAL_VNC_SERVERS:
-            del _LOCAL_VNC_SERVERS[self.port]
-        if self.lpar_uuid in _LOCAL_VNC_UUID_TO_PORT:
-            del _LOCAL_VNC_UUID_TO_PORT[self.lpar_uuid]
+        if self.remote_port in _VNC_REMOTE_PORT_TO_LISTENER:
+            global _VNC_REMOTE_PORT_TO_LISTENER
+            del _VNC_REMOTE_PORT_TO_LISTENER[self.remote_port]
 
     def run(self):
-        """Used by the thread to run the repeater."""
+        """Used by the thread to run the listener."""
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind((self.local_ip, self.port))
-        LOG.info(_("VNCRepeater Server Listening on ip=%(ip)s port=%(port)s") %
-                 {'ip': self.local_ip, 'port': self.port})
+        server.bind((self.local_ip, self.remote_port))
+        LOG.info(_("VNCSocket Listener Listening on ip=%(ip)s port=%(port)s") %
+                 {'ip': self.local_ip, 'port': self.remote_port})
         server.listen(10)
-        # The list of peers keeps track of the client and the server.  This
-        # is a 1 to 1 mapping between sockets.  As the localhost receives data
-        # it gets sent to its peer (the client).  As the client receives data
-        # it gets sent to its peer (the localhost).
-        peers = {}
 
         while self.alive:
-            # The select will determine which inputs (and outputs/excepts)
-            # have input waiting for them.
-            # The input_list consists of:
-            # - The main server, accepting new requests
-            # - N pairs of inputs.  Each pair is an independent entry...
-            # --- Side 1 is client vnc to localhost vnc
-            # --- Side 2 is localhost vnc to client vnc
-            # --- They are a pair of inputs, such that whenever they receive
-            #     input, they send to their peer's output.
-            input_list = list(peers) + [server]
-            s_inputs = select.select(input_list, [], [], 1)[0]
-
+            # Listen on the server socket for incoming connections
+            s_inputs = select.select([server], [], [], 1)[0]
             for s_input in s_inputs:
-                # If the input is the server, then we have a new client
-                # requesting access.
-                if s_input == server:
-                    # If a new client, then just skip back to start.  Note
-                    # that if new_client fails, nothing is added to the
-                    # s_inputs list.  So no harm in case of failure.
-                    self._new_client(server, peers)
-                    continue
-
-                # At this point, we need to read the data.  We know that data
-                # is ready.  However, if that data that is ready is length
-                # 0, then we know that we're ready to close this.
-                data = s_input.recv(4096)
-                if len(data) == 0:
-                    self._close_client(s_input, peers)
-
-                    # Note that we have to break here.  We do that because the
-                    # peer dictionary has changed with the close.  So the list
-                    # to iterate over should be re-evaluated.
-                    # The remaining inputs will just be picked up on the next
-                    # pass, so nothing to worry about.
-                    break
-
-                # Just process the data.
-                peers[s_input].send(data)
-
-        # At this point, force a close on all remaining inputs.
-        for input_socket in peers:
-            input_socket.close()
+                # Establish a new client connection & repeater between the two
+                self._new_client(s_input)
         server.close()
 
-    def _new_client(self, server, peers):
+    def _new_client(self, server):
         """Listens for a new client.
 
         :param server: The server socket.
-        :param peers: The peer dictionary.  Will map the new client to the new
-                      forwarding port.
         """
+        global _VNC_UUID_TO_LOCAL_PORT
+
         # This is the socket FROM the client side.  client_addr is a tuple
         # of format ('1.2.3.4', '5678') - ip and port.
         client_socket, client_addr = server.accept()
@@ -411,8 +377,9 @@ class _VNCRepeaterServer(threading.Thread):
             client_socket.close()
             return
 
-        # If the client socket has a validation string.
-        if self.vnc_path is not None:
+        # If they gave use a VNC Path to look for in the connection string
+        # then we will do that now otherwise just skip over the header info
+        if self.verify_vnc_path:
             # Check to ensure that there is output waiting.
             c_input = select.select([client_socket], [], [], 1)[0]
 
@@ -427,9 +394,8 @@ class _VNCRepeaterServer(threading.Thread):
             # We know we had data waiting.  Receive (at max) the vnc_path
             # string.  All data after this validation string is the
             # actual VNC data.
-            correct_path, http_code = self._check_http_connect(client_socket,
-                                                               self.vnc_path)
-            if correct_path:
+            lpar_uuid, http_code = self._check_http_connect(client_socket)
+            if lpar_uuid:
                 # Send back the success message.
                 client_socket.sendall("HTTP/%s 200 OK\r\n\r\n" % http_code)
             else:
@@ -438,27 +404,32 @@ class _VNCRepeaterServer(threading.Thread):
                                       http_code)
                 client_socket.close()
                 return
+        # If we had no VNC Path to match against, then the local port is
+        # going to be the same as the remote port and we need to figure
+        # out what the LPAR UUID is for that given local port VNC session
+        else:
+            lpar_uuid = (k for k, v in _VNC_UUID_TO_LOCAL_PORT.items()
+                         if v == self.remote_port).next()
 
         # Setup the forwarding socket to the local LinuxVNC session
-        self._setup_forwarding_socket(peers, client_socket)
+        self._setup_forwarding_socket(lpar_uuid, client_socket)
 
-        # If for some reason, the VNC was being killed, abort it
-        if self.vnc_killer is not None:
-            self.vnc_killer.abort()
-            self.vnc_killer = None
-
-    def _setup_forwarding_socket(self, peers, client_socket):
+    def _setup_forwarding_socket(self, lpar_uuid, client_socket):
         """Setup the forwarding socket to the local LinuxVNC session.
 
-        :param peers: The peer dictionary.  Will map the new client to the new
-                      forwarding port.
+        :param lpar_uuid: The UUID of the lpar for which we are forwarding.
         :param client_socket:  The client-side socket to receive data from.
         """
+        local_port = _VNC_UUID_TO_LOCAL_PORT.get(lpar_uuid)
+
+        # If for some reason no mapping to a local port, then give up
+        if local_port is None:
+            client_socket.close()
         # Get the forwarder.  This will be the socket we read FROM the
         # localhost.  When this receives data, it will be sent to the client
         # socket.
         fwd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        fwd.connect(('127.0.0.1', self.port))
+        fwd.connect(('127.0.0.1', local_port))
 
         # If we were told to enable VeNCrypt using X509 Authentication, do so
         if self.x509_certs is not None:
@@ -470,9 +441,17 @@ class _VNCRepeaterServer(threading.Thread):
                 return
             client_socket = ssl_socket
 
-        # Set them up as peers in the dictionary.  They will now be considered
-        # as input sources.
-        peers[fwd], peers[client_socket] = client_socket, fwd
+        # See if we need to start up a new repeater for the given local port
+        if local_port not in _VNC_LOCAL_PORT_TO_REPEATER:
+            global _VNC_LOCAL_PORT_TO_REPEATER
+            _VNC_LOCAL_PORT_TO_REPEATER[local_port] = \
+                _VNCRepeaterServer(self.adapter, lpar_uuid, local_port,
+                                   client_socket, fwd)
+            _VNC_LOCAL_PORT_TO_REPEATER[local_port].start()
+        else:
+            global _VNC_LOCAL_PORT_TO_REPEATER
+            _VNC_LOCAL_PORT_TO_REPEATER[local_port].\
+                add_socket_connection_pair(client_socket, fwd)
 
     def _enable_x509_authentication(self, client_socket, server_socket):
         """Enables and Handshakes VeNCrypt using X509 Authentication.
@@ -569,46 +548,140 @@ class _VNCRepeaterServer(threading.Thread):
         client_socket.sendall(six.int2byte(1))
         return True
 
-    def _check_http_connect(self, client_socket, vnc_path):
-        """Determines if the vnc_path matches the HTTP connect string.
+    def _check_http_connect(self, client_socket):
+        """Parse the HTTP connect string to find the LPAR UUID.
 
         :param client_socket: The client socket sending the data.
-        :param vnc_path: The path for the HTTP Connect Request.
-        :returns correct_path: True if the client sent the expected path.
-                               False otherwise.
+        :returns lpar_uuid: The LPAR UUID parsed from the connect string.
         :returns http_code: The HTTP Connection code used for the client
                             connection.
         """
+        global _VNC_PATH_TO_UUID
+
         # Get the expected header.
-        header_len = len("CONNECT %s HTTP/1.1\r\n\r\n" % vnc_path)
+        header_len = len("CONNECT %s HTTP/1.1\r\n\r\n" % ('x' * 36))
         value = client_socket.recv(header_len)
 
         # Find the HTTP Code (if you can...)
         pat = r'^CONNECT\s+(\S+)\s+HTTP/(.*)\r\n\r\n$'
         res = re.match(pat, value)
-        path_match = res and res.groups()[0] == vnc_path
+        vnc_path = res.groups()[0] if res else None
         http_code = res.groups()[1] if res else '1.1'
-        return path_match, http_code
+        return _VNC_PATH_TO_UUID.get(vnc_path), http_code
 
-    def _close_client(self, s_input, peers):
+
+class _VNCRepeaterServer(threading.Thread):
+    """Repeats a VNC connection from localhost to a given client.
+
+    This class is separated out from the Socket Listener so that there can
+    be one thread doing the actual repeating/forwarded of the data for the
+    VNC sessions for a single LPAR.  Otherwise if there are sessions to a lot
+    of LPAR's with sessions, one overall thread might get overloaded.
+
+    This class will be provided a pair of peer socket connections and will
+    listen for data from each of them and forward to the other until the
+    connection on one side goes down in which it will close the connection
+    to the other side.
+
+    Also, if no connections are open for a given local port VNC session,
+    after a 5 minute window it will run rmvterm to close the terminal console
+    to clean up sessions that are no longer being used.
+    """
+
+    def __init__(self, adapter, lpar_uuid, local_port, client_socket=None,
+                 local_socket=None):
+        """Creates the repeater.
+
+        :param adapter: The pypowervm adapter
+        :param lpar_uuid: Partition UUID.
+        :param local_port: The local port bound to by the VNC session.
+        :param client_socket: (Optional, Default: None) The socket descriptor
+                              of the incoming client connection.
+        :param local_socket: (Optional, Default: None) The socket descriptor of
+                             the VNC session connection forwarding data to.
+        """
+        super(_VNCRepeaterServer, self).__init__()
+
+        self.peers = dict()
+        self.adapter = adapter
+        self.lpar_uuid = lpar_uuid
+        self.local_port = local_port
+        self.alive = True
+        self.vnc_killer = None
+
+        # Add the connection passed into us to the forwarding list
+        if client_socket is not None and local_socket is not None:
+            self.add_socket_connection_pair(client_socket, local_socket)
+
+    def stop(self):
+        """Stops the repeater from running."""
+        # This will stop listening for all clients
+        self.alive = False
+
+        # Remove ourselves from the VNC listeners.
+        if self.local_port in _VNC_LOCAL_PORT_TO_REPEATER:
+            global _VNC_LOCAL_PORT_TO_REPEATER
+            del _VNC_LOCAL_PORT_TO_REPEATER[self.local_port]
+
+    def run(self):
+        """Used by the thread to run the repeater."""
+        while self.alive:
+            # Do a select to wait for data on each of the socket connections
+            input_list = list(self.peers)
+            s_inputs = select.select(input_list, [], [], 1)[0]
+
+            for s_input in s_inputs:
+                # At this point, we need to read the data.  We know that data
+                # is ready.  However, if that data that is ready is length
+                # 0, then we know that we're ready to close this.
+                data = s_input.recv(4096)
+                if len(data) == 0:
+                    self._close_client(s_input)
+
+                    # Note that we have to break here.  We do that because the
+                    # peer dictionary has changed with the close.  So the list
+                    # to iterate over should be re-evaluated.
+                    # The remaining inputs will just be picked up on the next
+                    # pass, so nothing to worry about.
+                    break
+
+                # Just process the data.
+                self.peers[s_input].send(data)
+
+        # At this point, force a close on all remaining inputs.
+        for input_socket in self.peers:
+            input_socket.close()
+
+    def add_socket_connection_pair(self, client_socket, local_socket):
+        """Adds the pair of socket connections to the list to forward data for.
+
+        :param client_socket: The client-side incoming socket.
+        :param local_socket: The local socket for the VNC session.
+        """
+        self.peers[local_socket] = client_socket
+        self.peers[client_socket] = local_socket
+        # If for some reason the VNC was being killed, abort it
+        if self.vnc_killer is not None:
+            self.vnc_killer.abort()
+            self.vnc_killer = None
+
+    def _close_client(self, s_input):
         """Closes down a client.
 
         :param s_input: The socket that has received a close.
-        :param peers: The dictionary that maps the clients and the forwarding
-                      sockets to each other.
         """
         # Close the sockets
-        peer = peers[s_input]
+        peer = self.peers[s_input]
         peer.close()
         s_input.close()
 
         # And remove from the peer list, so that we've removed all pointers to
         # them
-        del peers[peer]
-        del peers[s_input]
+        del self.peers[peer]
+        del self.peers[s_input]
 
         # If this was the last port, close the local connection
-        if len(peers) == 0:
+        if len(self.peers) == 0:
             self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid)
             self.vnc_killer.start()
 
