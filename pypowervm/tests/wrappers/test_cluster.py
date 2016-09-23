@@ -91,6 +91,10 @@ class TestCluster(twrap.TestWrapper):
             '7213-4956-A011-77D43CC4ACCC')
         self.assertEqual(
             node.vios_uuid, '58C9EB1D-7213-4956-A011-77D43CC4ACCC')
+        self.assertEqual(clust.NodeState.UP, nodes[0].state)
+        # Validate other NodeState enum values
+        self.assertEqual(clust.NodeState.DOWN, nodes[1].state)
+        self.assertEqual(clust.NodeState.UNKNOWN, nodes[2].state)
         # Make sure the different Node entries are there
         self.assertEqual(nodes[1].hostname, 'bar.example.com')
         # Test MTMS

@@ -70,6 +70,7 @@ BODY{
             </MachineTypeModelAndSerialNumber>
             <VirtualIOServerLevel kb="CUD" kxe="false">2.2.3.4</VirtualIOServerLevel>
             <VirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/98498bed-c78a-3a4f-b90a-4b715418fcb6/VirtualIOServer/58C9EB1D-7213-4956-A011-77D43CC4ACCC" rel="related"/>
+            <State ksv="V1_3_0" kb="ROR" kxe="false">Up</State>
         </Node>
         <Node schemaVersion="V1_2_0">
             <Metadata>
@@ -87,6 +88,7 @@ BODY{
             </MachineTypeModelAndSerialNumber>
             <VirtualIOServerLevel kb="CUD" kxe="false">2.2.4.0</VirtualIOServerLevel>
             <VirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/VirtualIOServer/6424120D-CA95-437D-9C18-10B06F4B3400" rel="related"/>
+            <State ksv="V1_3_0" kb="ROR" kxe="false">Down</State>
         </Node>
         <Node schemaVersion="V1_2_0">
             <Metadata>
@@ -104,6 +106,7 @@ BODY{
             </MachineTypeModelAndSerialNumber>
             <VirtualIOServerLevel kb="CUD" kxe="false">2.2.4.0</VirtualIOServerLevel>
             <VirtualIOServer kb="CUD" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/67dca605-3923-34da-bd8f-26a378fc817f/VirtualIOServer/10B06F4B-437D-9C18-CA95-34006424120D" rel="related"/>
+            <State ksv="V1_3_0" kb="ROR" kxe="false">Unknown</State>
         </Node>
     </Node>
 </Cluster:Cluster>
