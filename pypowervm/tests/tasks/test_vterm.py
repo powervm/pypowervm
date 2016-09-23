@@ -158,16 +158,33 @@ class TestVterm(testtools.TestCase):
         mock_run_proc.assert_called_once_with(['rmvterm', '--id', '2'])
 
 
-class TestVNCRepeaterServer(testtools.TestCase):
-    """Unit Tests for _VNCRepeaterServer vterm."""
+class TestVNCSocketListener(testtools.TestCase):
+    """Unit Tests for _VNCSocketListener vterm."""
 
     def setUp(self):
-        super(TestVNCRepeaterServer, self).setUp()
+        super(TestVNCSocketListener, self).setUp()
         self.adpt = self.useFixture(
             fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
-        self.srv = vterm._VNCRepeaterServer(
-            self.adpt, 'uuid', '1.2.3.4', '5800', remote_ips=['1.2.3.5'],
-            vnc_path='path')
+
+        self.srv = vterm._VNCSocketListener(
+            self.adpt, '5901', '1.2.3.4', True, remote_ips=['1.2.3.5'])
+        self.rptr = vterm._VNCRepeaterServer(self.adpt, 'uuid', '5800')
+
+        vterm._VNC_LOCAL_PORT_TO_REPEATER['5800'] = self.rptr
+        vterm._VNC_PATH_TO_UUID['path'] = 'uuid'
+        vterm._VNC_PATH_TO_UUID['test'] = 'uuid'
+        vterm._VNC_UUID_TO_LOCAL_PORT['uuid'] = '5800'
+
+    def tearDown(self):
+        """Tear down the Session instance."""
+
+        vterm._VNC_PATH_TO_UUID['path'] = None
+        vterm._VNC_PATH_TO_UUID['test'] = None
+        vterm._VNC_UUID_TO_LOCAL_PORT['1.2.3.4'] = None
+        vterm._VNC_LOCAL_PORT_TO_REPEATER['5800'] = None
+        self.rptr = None
+
+        super(TestVNCSocketListener, self).tearDown()
 
     def test_stop(self):
         self.assertTrue(self.srv.alive)
@@ -183,36 +200,28 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_select.return_value = [mock_c_sock], None, None
         mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
         mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
-        peers = {}
 
-        self.srv._new_client(mock_srv, peers)
+        self.srv._new_client(mock_srv)
 
         mock_c_sock.sendall.assert_called_once_with(
             "HTTP/1.8 200 OK\r\n\r\n")
         mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
+
         self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
-                         peers)
+                         self.rptr.peers)
 
     def test_check_http_connect(self):
-        # Test a string that has no HTTP coding at all
         sock = mock.MagicMock()
         sock.recv.return_value = "INVALID"
-        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
-        self.assertFalse(correct_path)
+        uuid, http_code = self.srv._check_http_connect(sock)
+        self.assertIsNone(uuid)
         self.assertEqual('1.1', http_code)
-
-        # Test a string that has an HTTP code, but doesn't match the path
-        sock.reset_mock()
-        sock.recv.return_value = 'CONNECT test HTTP/1.8\r\n\r\n'
-        correct_path, http_code = self.srv._check_http_connect(sock, 'invalid')
-        self.assertFalse(correct_path)
-        self.assertEqual('1.8', http_code)
 
         # Test a good string
         sock.reset_mock()
         sock.recv.return_value = 'CONNECT test HTTP/2.0\r\n\r\n'
-        correct_path, http_code = self.srv._check_http_connect(sock, 'test')
-        self.assertTrue(correct_path)
+        uuid, http_code = self.srv._check_http_connect(sock)
+        self.assertEqual('uuid', uuid)
         self.assertEqual('2.0', http_code)
 
     def test_new_client_bad_ip(self):
@@ -220,11 +229,10 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_srv = mock.MagicMock()
         mock_c_sock = mock.MagicMock()
         mock_srv.accept.return_value = mock_c_sock, ('1.2.3.8', '40675')
-        peers = {}
 
-        self.srv._new_client(mock_srv, peers)
+        self.srv._new_client(mock_srv)
 
-        self.assertEqual(peers, {})
+        self.assertEqual(self.rptr.peers, {})
         self.assertEqual(1, mock_c_sock.close.call_count)
 
     @mock.patch('select.select')
@@ -233,11 +241,10 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_c_sock = mock.MagicMock()
         mock_select.return_value = None, None, None
         mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
-        peers = {}
 
         # This mock has no 'socket ready'.
-        self.srv._new_client(mock_srv, peers)
-        self.assertEqual(peers, {})
+        self.srv._new_client(mock_srv)
+        self.assertEqual(self.rptr.peers, {})
         mock_c_sock.sendall.assert_called_with(
             "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
@@ -246,8 +253,8 @@ class TestVNCRepeaterServer(testtools.TestCase):
         mock_c_sock.reset_mock()
         mock_select.return_value = [mock_c_sock], None, None
         mock_c_sock.recv.return_value = 'bad_check'
-        self.srv._new_client(mock_srv, peers)
-        self.assertEqual(peers, {})
+        self.srv._new_client(mock_srv)
+        self.assertEqual(self.rptr.peers, {})
         mock_c_sock.sendall.assert_called_with(
             "HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
@@ -255,49 +262,48 @@ class TestVNCRepeaterServer(testtools.TestCase):
     @mock.patch('pypowervm.tasks.vterm._close_vterm_local')
     def test_close_client(self, mock_close):
         client, server = mock.Mock(), mock.Mock()
-        peers = {client: server, server: client}
-
+        self.rptr.add_socket_connection_pair(client, server)
         with mock.patch('time.sleep'):
-            self.srv._close_client(client, peers)
+            self.rptr._close_client(client)
 
             self.assertTrue(client.close.called)
             self.assertTrue(server.close.called)
-            self.assertEqual({}, peers)
+            self.assertEqual({}, self.rptr.peers)
 
             # Get the killer off the thread and wait for it to complete.
-            self.srv.vnc_killer.join()
+            self.rptr.vnc_killer.join()
             mock_close.assert_called_once_with(self.adpt, 'uuid')
 
-    @mock.patch('pypowervm.tasks.vterm._VNCRepeaterServer._new_client')
+    @mock.patch('pypowervm.tasks.vterm._VNCSocketListener._new_client')
     @mock.patch('select.select')
     @mock.patch('socket.socket')
     def test_run_new_client(self, mock_socket, mock_select, mock_new_client):
         mock_server = mock.MagicMock()
         mock_socket.return_value = mock_server
-        mock_client_peer, mock_server_peer = mock.MagicMock(), mock.MagicMock()
-        mock_client_peer.recv.return_value = 'data'
+        mock_server.count = 0
 
         # Used to make sure we don't loop indefinitely.
         bad_select = mock.MagicMock()
-        bad_select.recv.side_effect = Exception('Invalid Loop Call')
 
-        # Mocks how data is received.  First is a new client.  Second is data
-        # from client.  Last should never happen.
+        # Since we are only listening on the server socket, we will have it
+        # return that same socket the first 2 times, and then also return a
+        # bad socket just to make sure we appropriately broke out before then
         mock_select.side_effect = [([mock_server], [], []),
-                                   ([mock_client_peer], [], []),
+                                   ([mock_server], [], []),
                                    ([bad_select], [], [])]
 
-        def new_client(server, peers):
-            peers[mock_client_peer] = mock_server_peer
-            peers[mock_server_peer] = mock_client_peer
+        def new_client(server):
+            # Keep track of a counter so we make sure we break out of the
+            # loop after the 2nd call to make sure it works twice at least
+            if server.count == 1:
+                self.srv.alive = False
+            # We are setting alive to false after the 2nd
+            # so we want to make sure it doesn't get here
+            if server == bad_select:
+                raise Exception('Invalid Loop Call')
+            server.count += 1
 
         mock_new_client.side_effect = new_client
-
-        def send_data(data):
-            self.assertEqual('data', data)
-            self.srv.alive = False
-
-        mock_server_peer.send.side_effect = send_data
 
         # If this runs...we've pretty much validated.  Because it will end.
         # If it doesn't end...the fail in the 'select' side effect shoudl catch
@@ -306,8 +312,6 @@ class TestVNCRepeaterServer(testtools.TestCase):
 
         # Make sure the close was called on all of the sockets.
         self.assertTrue(mock_server.close.called)
-        self.assertTrue(mock_client_peer.close.called)
-        self.assertTrue(mock_server_peer.close.called)
 
         # Make sure the select was called with a timeout.
         mock_select.assert_called_with(mock.ANY, mock.ANY, mock.ANY, 1)
