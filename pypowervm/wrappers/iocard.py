@@ -577,6 +577,7 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
 
     @classmethod
     def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, mac=None,
+            allowed_vlans=u.VLANList.ALL, allowed_macs=u.MACList.ALL,
             is_promisc=False, cfg_capacity=None):
         """Create a wrapper used to create a logical port on the server.
 
@@ -588,6 +589,14 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
                      untagged traffic passing through this port will have
                      this VLAN tag added.
         :param mac: The MAC address to assign to the logical port.
+        :param allowed_vlans: An integer list of VLANS allowed on this logical
+                              port. Specify pypowervm.util.VLANList.ALL to
+                              allow all VLANs or .NONE to allow no VLANs on
+                              this logical port. Default: ALL.
+        :param allowed_macs: List of string MAC addresses allowed on this
+                             logical port. Specify pypowervm.util.MACList.ALL
+                             to allow all MAC addresses, or .NONE to allow no
+                             MAC addresses on this logical port.  Default: ALL.
         :param is_promisc: Set to True if using the logical port for bridging
                            (e.g. SEA, OVS, etc.); False if assigning directly
                            to an LPAR.  Only one logical port per physical port
@@ -605,8 +614,10 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         lport._pport_id(pport_id)
         if pvid is not None:
             lport.pvid = pvid
+        lport.allowed_vlans = allowed_vlans
         if mac is not None:
             lport._mac(mac)
+        lport.allowed_macs = allowed_macs
         lport._is_promisc(is_promisc)
         if cfg_capacity:
             lport._cfg_capacity(cfg_capacity)
@@ -672,6 +683,15 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         self.set_parm_value(_SRIOVLP_PVID, value)
 
     @property
+    def allowed_vlans(self):
+        vlan_str = self._get_val_str(_SRIOVLP_ALLOWED_VLANS)
+        return u.VLANList.unmarshal(vlan_str) if vlan_str is not None else None
+
+    @allowed_vlans.setter
+    def allowed_vlans(self, vlans):
+        self.set_parm_value(_SRIOVLP_ALLOWED_VLANS, u.VLANList.marshal(vlans))
+
+    @property
     def mac(self):
         """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits).
 
@@ -683,6 +703,15 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
 
     def _mac(self, value):
         self.set_parm_value(_SRIOVLP_MAC, u.sanitize_mac_for_api(value))
+
+    @property
+    def allowed_macs(self):
+        amstr = self._get_val_str(_SRIOVLP_ALLOWED_MACS)
+        return u.MACList.unmarshal(amstr) if amstr is not None else None
+
+    @allowed_macs.setter
+    def allowed_macs(self, maclist):
+        self.set_parm_value(_SRIOVLP_ALLOWED_MACS, u.MACList.marshal(maclist))
 
     @property
     def cur_mac(self):

@@ -175,7 +175,9 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(0.02, lport.cfg_capacity)
         self.assertEqual(2, lport.pport_id)
         self.assertEqual(0, lport.pvid)
+        self.assertEqual(u.VLANList.ALL, lport.allowed_vlans)
         self.assertEqual('8ACA227C6E00', lport.mac)
+        self.assertEqual(u.MACList.NONE, lport.allowed_macs)
         self.assertEqual('000000000000', lport.cur_mac)
         self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
 
@@ -186,6 +188,10 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertTrue(lport.is_promisc)
         lport._pport_id(3)
         self.assertEqual(3, lport.pport_id)
+        lport.allowed_vlans = [1, 2, 3]
+        self.assertEqual([1, 2, 3], lport.allowed_vlans)
+        lport.allowed_macs = u.MACList.ALL
+        self.assertEqual(u.MACList.ALL, lport.allowed_macs)
         lport._cfg_capacity(0.0)
         self.assertEqual(0.0, lport.cfg_capacity)
         lport._cfg_capacity(1.0)
@@ -211,17 +217,22 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertIsNone(lport.cfg_capacity)
         self.assertEqual(6, lport.pport_id)
         self.assertIsNone(lport.pvid)
+        self.assertEqual(u.MACList.ALL, lport.allowed_vlans)
         self.assertIsNone(lport.mac)
+        self.assertEqual(u.MACList.ALL, lport.allowed_macs)
         # With explicit kwargs
         lport = card.SRIOVEthLPort.bld(
             self.adpt, 5, 6, pvid=2230, mac='12:ab:34:CD:56:ef',
+            allowed_vlans=[1, 2, 3], allowed_macs=u.MACList.NONE,
             is_promisc=True, cfg_capacity=0.05)
         self.assertEqual(5, lport.sriov_adap_id)
         self.assertTrue(lport.is_promisc)
         self.assertEqual(0.05, lport.cfg_capacity)
         self.assertEqual(6, lport.pport_id)
         self.assertEqual(2230, lport.pvid)
+        self.assertEqual([1, 2, 3], lport.allowed_vlans)
         self.assertEqual('12AB34CD56EF', lport.mac)
+        self.assertEqual(u.MACList.NONE, lport.allowed_macs)
 
 
 class TestVNIC(twrap.TestWrapper):
