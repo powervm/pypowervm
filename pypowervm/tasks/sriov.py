@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 PPORT_MOD_LOCK = lock.ReaderWriterLock()
 
 
-def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
+def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
                        min_redundancy=1, max_redundancy=2, capacity=None,
                        check_port_status=False):
     """Set a vNIC's backing devices over given SRIOV physical ports and VIOSes.
@@ -82,6 +82,13 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
     specifying parameters such that:
         min_redundancy == len(pports) <= max_redundancy
 
+    This method acts on the vNIC-related capabilities on the system and VIOSes:
+    - If the system is not vNIC capable, the method will fail.
+    - If none of the active VIOSes are vNIC capable, the method will fail.
+    - If min_redundancy > 1,
+        - the system must be vNIC failover capable, and
+        - at least one active VIOS must be vNIC failover capable.
+
     :param vnic_w: iocard.VNIC wrapper, as created via VNIC.bld().  If
                    vnic_w.back_devs is nonempty, it is cleared and replaced.
                    This parameter is modified by the method (there is no return
@@ -92,16 +99,17 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
                    physical ports to be considered as backing devices for the
                    vNIC.  This does not mean that all of these ports will be
                    used.
-    :param sriov_adaps: Pre-fetched list of all iocard.SRIOVAdapter wrappers on
-                        the host.  If not specified, the data will be fetched
-                        from the server.
+    :param sys_w: Pre-fetched pypowervm.wrappers.managed_system.System wrapper.
+                  If not specified, it will be fetched from the server.
     :param vioses: List of VIOS wrappers to consider for distribution of vNIC
                    servers.  Not all listed VIOSes will necessarily be used.
                    If not specified, the feed of all active (including RMC)
                    VIOSes will be fetched from the server.  If specified, the
                    list will be filtered to include only active (including RMC)
                    VIOSes (according to the wrappers - the server is not re-
-                   checked).
+                   checked).  The list is also filtered to remove VIOSes which
+                   are not vNIC capable; and, if min_redundancy > 1, to remove
+                   VIOSes which are not vNIC failover capable.
     :param min_redundancy: Minimum number of backing devices to assign.  If the
                            method can't allocate at least this many VFs,
                            InsufficientSRIOVCapacity will be raised.
@@ -122,17 +130,28 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
                                   found.
     :raise InsufficientSRIOVCapacity: If the method was not able to allocate
                                       enough VFs to satisfy min_redundancy.
+    :raise SystemNotVNICCapable: If the managed system is not vNIC capable.
+    :raise NoVNICCapableVIOSes: If there are no vNIC-capable VIOSes.
+    :raise VNICFailoverNotSupportedSys: If min_redundancy > 1, and the system
+                                 is not vNIC failover capable.
+    :raise VNICFailoverNotSupportedVIOS: If min_redundancy > 1, and there are
+                                         no vNIC failover-capable VIOSes.
     """
     # An Adapter to work with
     adap = vnic_w.adapter
     if adap is None:
         raise ValueError('Developer error: Must build vnic_w with an Adapter.')
 
-    sriov_adaps = _get_good_sriovs(adap, sriov_adaps)
+    # Check vNIC capability on the system
+    sys_w = _check_sys_vnic_capabilities(adap, sys_w, min_redundancy)
 
-    # Ensure we have VIOSes
-    vioses = tpar.get_active_vioses(adap, xag=[], vios_wraps=vioses,
-                                    find_min=1)
+    # Filter SR-IOV adapters
+    sriov_adaps = _get_good_sriovs(sys_w.asio_config.sriov_adapters)
+
+    # Get VIOSes which are a) active, b) vNIC capable, and c) vNIC failover
+    # capable, if necessary.
+    vioses = _check_and_filter_vioses(adap, vioses, min_redundancy)
+
     # Try not to end up lopsided on one VIOS
     random.shuffle(vioses)
 
@@ -181,20 +200,77 @@ def set_vnic_back_devs(vnic_w, pports, sriov_adaps=None, vioses=None,
         pport_wraps.remove(pp2use)
 
 
-def _get_good_sriovs(adap, sriov_adaps=None):
+def _check_sys_vnic_capabilities(adap, sys_w, min_redundancy):
+    """Validate vNIC capabilities on the Managed System.
+
+    :param adap: pypowervm Adapter.
+    :param sys_w: pypowervm.wrappers.managed_system.System wrapper.  If None,
+                  it is retrieved from the host.
+    :param min_redundancy: If greater than 1, this method will verify that the
+                           System is vNIC failover-capable.  Otherwise, this
+                           check is skipped.
+    :return: The System wrapper.
+    :raise SystemNotVNICCapable: If the System is not vNIC capable.
+    :raise VNICFailoverNotSupportedSys: If min_redundancy > 1 and the System is
+                                        not vNIC failover capable.
+    """
+    if sys_w is None:
+        sys_w = ms.System.get(adap)[0]
+
+    caps = sys_w.get_capabilities()
+    if not caps.get('vnic_capable'):
+        raise ex.SystemNotVNICCapable()
+    if min_redundancy > 1 and not caps.get('vnic_failover_capable'):
+        raise ex.VNICFailoverNotSupportedSys(minred=min_redundancy)
+
+    return sys_w
+
+
+def _check_and_filter_vioses(adap, vioses, min_redundancy):
+    """Return active VIOSes with appropriate vNIC capabilities.
+
+    Remove all VIOSes which are not active or not vNIC capable.  If
+    min_redundancy > 1, failover is required, so remove VIOSes that are not
+    also vNIC failover capable.  Error if no VIOSes remain.
+
+    :param adap: pypowervm Adapter.
+    :param vioses: List of pypowervm.wrappers.virtual_io_server.VIOS to check.
+                   If None, all active VIOSes are retrieved from the server.
+    :param min_redundancy: If greater than 1, the return list will include only
+                           vNIC failover-capable VIOSes.  Otherwise, all VIOSes
+                           are returned.
+    :return: The filtered list of VIOS wrappers.
+    :raise NotEnoughActiveVioses: If no active (including RMC) VIOSes can be
+                                  found.
+    :raise NoVNICCapableVIOSes: If none of the vioses are vNIC capable.
+    :raise VNICFailoverNotSupportedVIOS: If min_redundancy > 1 and none of the
+                                         vioses is vNIC failover capable.
+    """
+    # This raises if none are found
+    vioses = tpar.get_active_vioses(adap, xag=[], vios_wraps=vioses,
+                                    find_min=1)
+    # Filter by vNIC capability
+    vioses = [vios for vios in vioses if vios.vnic_capable]
+    if not vioses:
+        raise ex.NoVNICCapableVIOSes()
+
+    # Filter by failover capability, if needed.
+    if min_redundancy > 1:
+        vioses = [vios for vios in vioses if vios.vnic_failover_capable]
+        if not vioses:
+            raise ex.VNICFailoverNotSupportedVIOS(minred=min_redundancy)
+
+    return vioses
+
+
+def _get_good_sriovs(sriov_adaps):
     """(Retrieve and) filter SR-IOV adapters to those Running in Sriov mode.
 
-    :param adap: pypowervm.adapter.Adapter for REST API communication.  Only
-                 required if sriov_adaps is None.
     :param sriov_adaps: List of SRIOVAdapter wrappers to filter by mode/state.
-                        If unspecified, the Managed System will be retrieved
-                        from the server and its SR-IOV Adapters used.
     :return: List of SR-IOV adapters in Running state and in Sriov mode.
     :raise NoRunningSharedSriovAdapters: If no SR-IOV adapters can be found in
                                          Sriov mode and Running state.
     """
-    if sriov_adaps is None:
-        sriov_adaps = ms.System.get(adap)[0].asio_config.sriov_adapters
     # Filter SRIOV adapters to those in the correct mode/state
     good_adaps = [sriov for sriov in sriov_adaps if
                   sriov.mode == card.SRIOVAdapterMode.SRIOV and
