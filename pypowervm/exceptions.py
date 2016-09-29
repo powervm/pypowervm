@@ -306,6 +306,24 @@ class InsufficientSRIOVCapacity(AbstractMsgFmtError):
                 "%(min_vfs)d.  Found %(found_vfs)d viable backing device(s).")
 
 
+class SystemNotVNICCapable(AbstractMsgFmtError):
+    msg_fmt = _("The Managed System is not vNIC capable.")
+
+
+class NoVNICCapableVIOSes(AbstractMsgFmtError):
+    msg_fmt = _("There are no active vNIC-capable VIOSes.")
+
+
+class VNICFailoverNotSupportedSys(AbstractMsgFmtError):
+    msg_fmt = _("A minimum redundancy of %(minred)d was specified, but the "
+                "Managed System is not vNIC failover capable.")
+
+
+class VNICFailoverNotSupportedVIOS(AbstractMsgFmtError):
+    msg_fmt = _("A minimum redundancy of %(minred)d was specified, but there "
+                "are no active vNIC failover-capable VIOSes.")
+
+
 class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
     msg_fmt = _("Unable to locate the volume group %(vol_grp)s to store the "
                 "virtual optical media within.  Unable to create the "

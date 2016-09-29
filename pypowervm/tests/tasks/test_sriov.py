@@ -52,6 +52,14 @@ down_sriov = fake_sriov(card.SRIOVAdapterMode.SRIOV,
                         card.SRIOVAdapterState.FAILED, 68, [])
 
 
+def sys_wrapper(sriovs, vnic_capable=True, vnic_failover_capable=True):
+    mock_sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=sriovs))
+    mock_sys.get_capabilities.return_value = {
+        'vnic_capable': vnic_capable,
+        'vnic_failover_capable': vnic_failover_capable}
+    return mock_sys
+
+
 class TestSriov(testtools.TestCase):
 
     def setUp(self):
@@ -72,30 +80,16 @@ class TestSriov(testtools.TestCase):
         # Mark link status down on 5/55.
         self.fake_sriovs[6].phys_ports[4].link_status = False
 
-    @mock.patch('pypowervm.wrappers.managed_system.System.get')
-    def test_get_good_sriovs(self, mock_get):
+    def test_get_good_sriovs(self):
         """Test _get_good_sriovs helper."""
-        # When sriov_adaps=None, does a GET.
-        mock_get.return_value = [mock.Mock(asio_config=mock.Mock(
-            sriov_adapters=self.fake_sriovs))]
-        sriovs = tsriov._get_good_sriovs('adap')
-        mock_get.assert_called_once_with('adap')
-        self.assertEqual(5, len(sriovs))
-        self.assertEqual(['sriov_loc%d' % x for x in range(1, 6)],
-                         [sriov.phys_loc_code for sriov in sriovs])
-
-        # When sriov_adaps is passed in.
-        mock_get.reset_mock()
-        sriovs = tsriov._get_good_sriovs('adap', sriov_adaps=self.fake_sriovs)
-        mock_get.assert_not_called()
+        sriovs = tsriov._get_good_sriovs(self.fake_sriovs)
         self.assertEqual(5, len(sriovs))
         self.assertEqual(['sriov_loc%d' % x for x in range(1, 6)],
                          [sriov.phys_loc_code for sriov in sriovs])
 
         # Error case: none found.
         self.assertRaises(ex.NoRunningSharedSriovAdapters,
-                          tsriov._get_good_sriovs, 'adap',
-                          sriov_adaps=[ded_sriov, down_sriov])
+                          tsriov._get_good_sriovs, [ded_sriov, down_sriov])
 
     def test_get_good_pport_list(self):
         """Test _get_good_pport_list helper."""
@@ -140,10 +134,87 @@ class TestSriov(testtools.TestCase):
             True)
         validate_pports(pports, {12, 52, 54, 42, 13, 41, 56, 57, 21, 51, 11})
 
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    def test_check_sys_vnic_capabilities(self, mock_sys_get):
+        sys_yes_yes = sys_wrapper(None)
+        sys_yes_no = sys_wrapper(None, vnic_failover_capable=False)
+        sys_no_yes = sys_wrapper(None, vnic_capable=False)
+        sys_no_no = sys_wrapper(None, vnic_capable=False,
+                                vnic_failover_capable=False)
+        # With sys param None, does a get; vnic & failover checks pass
+        mock_sys_get.return_value = [sys_yes_yes]
+        self.assertEqual(sys_yes_yes,
+                         tsriov._check_sys_vnic_capabilities('adap', None, 2))
+        mock_sys_get.assert_called_once_with('adap')
+
+        mock_sys_get.reset_mock()
+
+        # No get; vnic & !failover ok
+        self.assertEqual(
+            sys_yes_no,
+            tsriov._check_sys_vnic_capabilities('adap', sys_yes_no, 1))
+        mock_sys_get.assert_not_called()
+
+        # Same, but 0 is a valid min
+        self.assertEqual(
+            sys_yes_no,
+            tsriov._check_sys_vnic_capabilities('adap', sys_yes_no, 0))
+
+        # vnic & !failover !ok
+        self.assertRaises(
+            ex.VNICFailoverNotSupportedSys,
+            tsriov._check_sys_vnic_capabilities, 'adap', sys_yes_no, 2)
+
+        # !vnic !ok even if failover ok (which would really never happen)
+        self.assertRaises(
+            ex.SystemNotVNICCapable,
+            tsriov._check_sys_vnic_capabilities, 'adap', sys_no_yes, 2)
+
+        # !vnic !failover !ok
+        self.assertRaises(
+            ex.SystemNotVNICCapable,
+            tsriov._check_sys_vnic_capabilities, 'adap', sys_no_no, 1)
+
     @mock.patch('pypowervm.tasks.partition.get_active_vioses')
+    def test_check_and_filter_vioses(self, mock_vioget):
+        vios_yes_yes = mock.Mock(vnic_capable=True, vnic_failover_capable=True)
+        vios_yes_no = mock.Mock(vnic_capable=True, vnic_failover_capable=False)
+        vios_no_yes = mock.Mock(vnic_capable=False, vnic_failover_capable=True)
+        vios_no_no = mock.Mock(vnic_capable=False, vnic_failover_capable=False)
+
+        # No redundancy, no pre-seeded list.
+        violist = [vios_yes_yes, vios_yes_no, vios_no_yes, vios_no_no]
+        mock_vioget.return_value = violist
+        self.assertEqual([vios_yes_yes, vios_yes_no],
+                         tsriov._check_and_filter_vioses('adap', None, 1))
+        mock_vioget.assert_called_once_with('adap', xag=[], vios_wraps=None,
+                                            find_min=1)
+
+        mock_vioget.reset_mock()
+
+        # With redundancy, pre-seeded list
+        self.assertEqual([vios_yes_yes], tsriov._check_and_filter_vioses(
+            'adap', violist, 2))
+        mock_vioget.assert_called_once_with('adap', xag=[],
+                                            vios_wraps=violist, find_min=1)
+
+        # None capable
+        violist = [vios_no_yes, vios_no_no]
+        mock_vioget.return_value = violist
+        self.assertRaises(ex.NoVNICCapableVIOSes,
+                          tsriov._check_and_filter_vioses, 'adap', None, 1)
+
+        # None redundancy capable
+        violist = [vios_yes_no, vios_no_yes, vios_no_no]
+        mock_vioget.return_value = violist
+        self.assertRaises(ex.VNICFailoverNotSupportedVIOS,
+                          tsriov._check_and_filter_vioses, 'adap', None, 2)
+
+    @mock.patch('pypowervm.tasks.sriov._check_and_filter_vioses')
     @mock.patch('random.shuffle')
     def test_set_vnic_back_devs(self, mock_shuffle, mock_vioget):
         """Test set_vnic_back_devs."""
+        mock_sys = sys_wrapper(self.fake_sriovs)
         mock_vioget.return_value = [mock.Mock(uuid='vios_uuid1'),
                                     mock.Mock(uuid='vios_uuid2'),
                                     mock.Mock(uuid='vios_uuid3')]
@@ -151,14 +222,13 @@ class TestSriov(testtools.TestCase):
         vnic = card.VNIC.bld(self.adpt, pvid=5)
         self.assertEqual(0, len(vnic.back_devs))
         # Silly case: min/max of zero
-        tsriov.set_vnic_back_devs(vnic, [], sriov_adaps=self.fake_sriovs,
-                                  min_redundancy=0, max_redundancy=0)
+        tsriov.set_vnic_back_devs(vnic, [], sys_w=mock_sys, min_redundancy=0,
+                                  max_redundancy=0)
         self.assertEqual(0, len(vnic.back_devs))
-        mock_vioget.assert_called_once_with(self.adpt, xag=[], vios_wraps=None,
-                                            find_min=1)
+        mock_vioget.assert_called_once_with(self.adpt, None, 0)
         # max_redundancy is capped by len(pports)
-        tsriov.set_vnic_back_devs(vnic, [], sriov_adaps=self.fake_sriovs,
-                                  min_redundancy=0, max_redundancy=10)
+        tsriov.set_vnic_back_devs(vnic, [], sys_w=mock_sys, min_redundancy=0,
+                                  max_redundancy=10)
         self.assertEqual(0, len(vnic.back_devs))
 
         cap = 0.019
@@ -187,7 +257,7 @@ class TestSriov(testtools.TestCase):
 
         # Use 'em all
         tsriov.set_vnic_back_devs(vnic, ['pport_loc%d' % x for x in range(60)],
-                                  sriov_adaps=self.fake_sriovs, capacity=cap,
+                                  sys_w=mock_sys, capacity=cap,
                                   min_redundancy=0, max_redundancy=100)
         self.assertEqual(all_back_devs,
                          [(bd.vios_href, bd.sriov_adap_id, bd.pport_id,
@@ -195,7 +265,7 @@ class TestSriov(testtools.TestCase):
 
         # Check port status - 55 drops off
         tsriov.set_vnic_back_devs(vnic, ['pport_loc%d' % x for x in range(60)],
-                                  sriov_adaps=self.fake_sriovs, capacity=cap,
+                                  sys_w=mock_sys, capacity=cap,
                                   min_redundancy=0, max_redundancy=100,
                                   check_port_status=True)
         self.assertEqual(live_back_devs,
@@ -206,7 +276,7 @@ class TestSriov(testtools.TestCase):
         self.assertRaises(
             ex.InsufficientSRIOVCapacity, tsriov.set_vnic_back_devs, vnic,
             ['pport_loc%d' % x for x in range(60)],
-            sriov_adaps=self.fake_sriovs, capacity=cap, min_redundancy=13,
+            sys_w=mock_sys, capacity=cap, min_redundancy=13,
             max_redundancy=100)
 
         # The passed-in wrapper isn't modified if the method raises.
@@ -218,7 +288,7 @@ class TestSriov(testtools.TestCase):
         # By reusing vnic without resetting its back_devs, we're proving the
         # documented behavior that the method clears first.
         tsriov.set_vnic_back_devs(vnic, ['pport_loc%d' % x for x in range(60)],
-                                  sriov_adaps=self.fake_sriovs, capacity=cap,
+                                  sys_w=mock_sys, capacity=cap,
                                   min_redundancy=0, max_redundancy=5)
         self.assertEqual(all_back_devs[:5],
                          [(bd.vios_href, bd.sriov_adap_id, bd.pport_id,
