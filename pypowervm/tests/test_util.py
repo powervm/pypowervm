@@ -228,6 +228,28 @@ class TestUtil(unittest.TestCase):
         path = 'https://server:1234/rest/api/uom/Obj/' + dummyuuid1
         self.assertEqual(dummyuuid1, util.get_req_path_uuid(path, root=True))
 
+    def test_get_rest_obj_details_from_path(self):
+        tests = [
+            ('bogus', (None, None, None, None)),
+            ('/rest/api', (None, None, None, None)),
+            ('/rest/api/uom', (None, None, None, None)),
+            ('/rest/api/uom/foo', ('foo', None, None, None)),
+            ('/rest/api/uom/foo/', ('foo', None, None, None)),
+            ('/rest/api/uom/foo/95329c84-9a01-330f-809e-2e5577110d1e',
+             ('foo', '95329c84-9a01-330f-809e-2e5577110d1e', None, None)),
+            ('/rest/api/uom/foo/95329c84-9a01-330f-809e-2e5577110d1e///',
+             ('foo', '95329c84-9a01-330f-809e-2e5577110d1e', None, None)),
+            ('/rest/api/uom/foo/95329c84-9a01-330f-809e-2e5577110d1e/bar',
+             ('foo', '95329c84-9a01-330f-809e-2e5577110d1e', 'bar', None)),
+            ('/rest/api/uom/foo/95329c84-9a01-330f-809e-2e5577110d1e/bar/70459'
+             '846-6c0f-32d2-ac61-fb26a8ed810b',
+             ('foo', '95329c84-9a01-330f-809e-2e5577110d1e', 'bar',
+              '70459846-6c0f-32d2-ac61-fb26a8ed810b')),
+            ('/rest/api/uom/foo/95329c84-9a01-330f-809e-2e5577110d1e/bar/70459'
+             '846-6c0f-32d2-ac61-fb26a8ed810b/baz', (None, None, None, None))]
+        for path, exp in tests:
+            self.assertEqual(exp, util.get_rest_obj_details_from_path(path))
+
     def test_extend_basepath(self):
         ext = '/foo'
         # Various forms without query params or fragments

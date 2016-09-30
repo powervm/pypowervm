@@ -297,6 +297,53 @@ def get_uuid_xag_from_path(path):
     return uuid.lower(), qparms.get('group', [None])[0]
 
 
+def get_rest_obj_details_from_path(path):
+    """Dices a URI and returns root/child type & uuid.
+
+    Never raises.  If something goes wrong, the return is
+    None, None, None, None.
+
+    :param path: A REST URI or path.
+    :return root_type: The ROOT schema type, as a string.  None if path is not
+                       a valid REST object URI.
+    :return root_uuid: The UUID of the ROOT object, as a string, without any
+                       conversion (case is preserved, etc.).  None if path is
+                       not a valid REST object URI, or if it represents a ROOT
+                       feed.
+    :return child_type: The CHILD schema type, as a string.  None if path is
+                        not a valid REST CHILD URI.
+    :return child_uuid: The UUID of the CHILD object, as a string, without any
+                        conversion.  None if path is not a valid REST CHILD
+                        entry URI.
+    """
+    root_type, root_uuid, child_type, child_uuid = None, None, None, None
+    try:
+        diced = dice_href(path, include_query=False, include_fragment=False)
+        split = diced.strip('/').split('/')
+        uuids = [chk for chk in split if re.match(const.UUID_REGEX_WORD, chk)]
+        if len(uuids) == 2:
+            # If there are two UUIDs, they had better be in the right spots.
+            if [split[-3], split[-1]] == uuids:
+                root_type, root_uuid, child_type, child_uuid = split[-4:]
+                # Else not a valid URI - default Nones
+        elif len(uuids) == 1:
+            # Either a ROOT entry or a CHILD feed
+            if split[-2] == uuids[0]:
+                # CHILD feed
+                root_type, root_uuid, child_type = split[-3:]
+            elif split[-1] == uuids[0]:
+                # ROOT entry
+                root_type, root_uuid = split[-2:]
+            # Else the UUID is in a bogus spot - default Nones
+        elif len(split) >= 4:
+            # Have to assume it's a ROOT feed
+            root_type = split[-1]
+    except Exception:
+        LOG.debug("Failed to parse URI '%s': %s", path)
+    finally:
+        return root_type, root_uuid, child_type, child_uuid
+
+
 def convert_bytes_to_gb(bytes_, low_value=.0001, dp=None):
     """Converts an integer of bytes to a decimal representation of gigabytes.
 
