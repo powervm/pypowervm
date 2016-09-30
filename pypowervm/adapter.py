@@ -1571,6 +1571,7 @@ class _EventListener(EventListener):
         """Gets the events and formats them into 'events' and 'raw_events'."""
         events = {}
         raw_events = []
+        event_wraps = []
         resp = None
 
         # Read event feed
@@ -1578,19 +1579,19 @@ class _EventListener(EventListener):
             resp = self.adp.read('Event?QUEUE_CLIENTKEY_METHOD='
                                  'USE_APPLICATIONID&QUEUE_APPLICATIONID=%s'
                                  % self.appid, timeout=self.timeout)
-        except pvmex.Error:
-            # TODO(IBM): improve error handling
-            LOG.exception(_('Error while getting PowerVM events'))
+        except Exception as e:
+            LOG.exception(_('Error while getting PowerVM events: %s'), e)
+            # Don't die.  The handler will retry.
 
         if resp:
             # Parse event feed
             for entry in resp.feed.entries:
                 self._format_events(entry, events, raw_events)
+            # Do this here to avoid circular imports
+            import pypowervm.wrappers.event as event_wrap
+            event_wraps = event_wrap.Event.wrap(resp)
 
-        # Do this here to avoid circular imports
-        import pypowervm.wrappers.event as event_wrap
-
-        return events, raw_events, event_wrap.Event.wrap(resp)
+        return events, raw_events, event_wraps
 
     def _format_events(self, entry, events, raw_events):
         """Formats an event Entry into events and raw events.
@@ -1619,7 +1620,7 @@ class _EventListener(EventListener):
         elif etype in ['MODIFY_URI', 'INVALID_URI', 'HIDDEN_URI']:
             if href not in events:
                 events[href] = 'invalidate'
-        elif etype not in ['VISIBLE_URI']:
+        elif etype not in ['VISIBLE_URI', 'CUSTOM_CLIENT_EVENT']:
             LOG.error(_('Unexpected EventType=%s'), etype)
 
         # Now format the event for the raw handlers

@@ -140,13 +140,25 @@ class TestAdapter(testtools.TestCase):
         with mock.patch.object(event_listen, '_format_events') as mock_format,\
                 mock.patch.object(event_listen.adp, 'read') as mock_read:
 
+            # Ensure exception path doesn't kill the thread
+            mock_read.side_effect = Exception()
+            self.assertEqual(({}, [], []), event_listen._get_events())
+            self.assertEqual(1, mock_read.call_count)
+            mock_format.assert_not_called()
+            mock_evt_wrap.assert_not_called()
+
+            mock_read.reset_mock()
+            # side_effect takes precedence over return_value; so kill it.
+            mock_read.side_effect = None
+
             # Fabricate some mock entries, so format gets called.
-            mock_read.return_value.feed.entries = (['entry'])
+            mock_read.return_value.feed.entries = (['entry1', 'entry2'])
 
             self.assertEqual(({}, [], mock_evt_wrap.return_value),
                              event_listen._get_events())
-            self.assertTrue(mock_read.called)
-            self.assertTrue(mock_format.called)
+            self.assertEqual(1, mock_read.call_count)
+            mock_format.assert_has_calls([mock.call('entry1', {}, []),
+                                          mock.call('entry2', {}, [])])
             mock_evt_wrap.assert_called_once_with(mock_read.return_value)
 
         # Test _format_events
