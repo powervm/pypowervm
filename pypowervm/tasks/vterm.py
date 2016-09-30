@@ -483,11 +483,12 @@ class _VNCSocketListener(threading.Thread):
         """
         # Do a pass-thru of the RFB Version negotiation up-front
         # The length of the version is 12, such as 'RFB 003.007\n'
-        client_socket.sendall(server_socket.recv(12))
-        server_socket.sendall(client_socket.recv(12))
+        client_socket.sendall(self._socket_receive(server_socket, 12))
+        server_socket.sendall(self._socket_receive(client_socket, 12))
         # Since we are doing our own additional authentication
         # just tell the server we are doing No Authentication (1) to it
-        server_socket.recv(six.byte2int(server_socket.recv(1)))
+        auth_size = self._socket_receive(server_socket, 1)
+        self._socket_receive(server_socket, six.byte2int(auth_size))
         server_socket.sendall(six.int2byte(1))
 
     def _auth_type_negotiation(self, client_socket):
@@ -501,13 +502,13 @@ class _VNCSocketListener(threading.Thread):
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(six.int2byte(19))
         client_socket.sendall("\x00\x02")
-        authtype = client_socket.recv(1)
+        authtype = self._socket_receive(client_socket, 1)
         # Make sure the Client supports the VeNCrypt (19) authentication
         if len(authtype) < 1 or six.byte2int(authtype) != 19:
             # Send a 1 telling the client the type wasn't accepted
             client_socket.sendall(six.int2byte(1))
             return False
-        vers = client_socket.recv(2)
+        vers = self._socket_receive(client_socket, 2)
         # Make sure the Client supports at least version 0.2 of it
         if ((len(vers) < 2 or six.byte2int(vers) != 0
              or six.byte2int(vers[1:]) < 2)):
@@ -528,7 +529,7 @@ class _VNCSocketListener(threading.Thread):
         # Tell the client the authentication sub-type is x509None (260)
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(struct.pack('!I', 260))
-        subtyp_raw = client_socket.recv(4)
+        subtyp_raw = self._socket_receive(client_socket, 4)
         # Make sure that the client also supports sub-type x509None (260)
         if 260 not in struct.unpack('!I', subtyp_raw):
             # Send a 0 telling the client the sub-type wasn't accepted
@@ -538,6 +539,21 @@ class _VNCSocketListener(threading.Thread):
         # In this particular case 1 means the sub-type was accepted
         client_socket.sendall(six.int2byte(1))
         return True
+
+    def _socket_receive(self, asocket, bufsize):
+        """Helper method to add a timeout on each receive call.
+
+        This method will raise a timeout exception if it takes > 30 seconds.
+
+        :param asocket: The socket to do the receive on.
+        :param bufsize: The number of bytes to receive.
+        :return data: The data returned from the socket receive.
+        """
+        # Add a 30 second timeout around the receive so that we don't
+        # block forever if for some reason it never received the packet
+        if not select.select([asocket], [], [], 30)[0]:
+            raise socket.timeout('30 second timeout on handshake receive')
+        return asocket.recv(bufsize)
 
     def _check_http_connect(self, client_socket):
         """Parse the HTTP connect string to find the LPAR UUID.

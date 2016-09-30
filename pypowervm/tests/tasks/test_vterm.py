@@ -319,7 +319,7 @@ class TestVNCSocketListener(testtools.TestCase):
     @mock.patch('select.select')
     @mock.patch('ssl.wrap_socket', mock.Mock())
     def test_enable_x509_authentication(self, mock_select):
-        mock_select.return_value = None, None, None
+        mock_select.return_value = [mock.Mock()], None, None
         csock, ssock = _FakeSocket(), _FakeSocket()
         ssock.recv_buffer = b'RFB 003.008\n\x01\x01'
         csock.recv_buffer = b'RFB 003.007\n\x13\x00\x02\x00\x00\x01\x04'
@@ -338,7 +338,7 @@ class TestVNCSocketListener(testtools.TestCase):
 
     @mock.patch('select.select')
     def test_enable_x509_authentication_bad_auth_type(self, mock_select):
-        mock_select.return_value = None, None, None
+        mock_select.return_value = [mock.Mock()], None, None
         csock, ssock = _FakeSocket(), _FakeSocket()
         ssock.recv_buffer = b'RFB 003.008\n\x01\x01'
         csock.recv_buffer = b'RFB 003.007\n\x14\x00\x02\x00\x00\x01\x04'
@@ -354,7 +354,7 @@ class TestVNCSocketListener(testtools.TestCase):
 
     @mock.patch('select.select')
     def test_enable_x509_authentication_bad_auth_version(self, mock_select):
-        mock_select.return_value = None, None, None
+        mock_select.return_value = [mock.Mock()], None, None
         csock, ssock = _FakeSocket(), _FakeSocket()
         ssock.recv_buffer = b'RFB 003.008\n\x01\x01'
         csock.recv_buffer = b'RFB 003.007\n\x13\x00\x01\x00\x00\x01\x04'
@@ -370,7 +370,7 @@ class TestVNCSocketListener(testtools.TestCase):
 
     @mock.patch('select.select')
     def test_enable_x509_authentication_bad_auth_subtype(self, mock_select):
-        mock_select.return_value = None, None, None
+        mock_select.return_value = [mock.Mock()], None, None
         csock, ssock = _FakeSocket(), _FakeSocket()
         ssock.recv_buffer = b'RFB 003.008\n\x01\x01'
         csock.recv_buffer = b'RFB 003.007\n\x13\x00\x02\x00\x00\x01\x03'
