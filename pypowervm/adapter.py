@@ -1619,7 +1619,7 @@ class _EventListener(EventListener):
         elif etype in ['MODIFY_URI', 'INVALID_URI', 'HIDDEN_URI']:
             if href not in events:
                 events[href] = 'invalidate'
-        elif etype not in ['VISIBLE_URI']:
+        elif etype not in ['VISIBLE_URI', 'CUSTOM_CLIENT_EVENT']:
             LOG.error(_('Unexpected EventType=%s'), etype)
 
         # Now format the event for the raw handlers
