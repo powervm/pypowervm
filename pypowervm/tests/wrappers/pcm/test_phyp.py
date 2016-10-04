@@ -140,4 +140,15 @@ class TestPhypLTM(testtools.TestCase):
         self.assertEqual(1, stor.vios_id)
         self.assertEqual(1000, stor.vios_slot)
 
+        # Test that VFC adapter has been parsed.
+        self.assertIsNotNone(good_lpar.storage.v_fc_adpts)
+        self.assertEqual(1, len(good_lpar.storage.v_fc_adpts))
+        vfc_adpts = good_lpar.storage.v_fc_adpts[0]
+        self.assertEqual('U8247.22L.2125D4A-V2-C2',
+                         vfc_adpts.physical_location)
+        self.assertEqual(2, vfc_adpts.vios_id)
+        self.assertEqual(2, len(vfc_adpts.wwpn_pair))
+        self.assertIn(13857705835384867080, vfc_adpts.wwpn_pair)
+        self.assertIn(13857705835384867081, vfc_adpts.wwpn_pair)
+
         # TODO(thorst) Test vfc
