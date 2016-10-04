@@ -211,7 +211,25 @@ BODY{
                 "viosId": 1,
                 "viosAdapterSlotId": 1000
               }
-            ]
+            ],
+            "virtualFiberChannelAdapters": [
+                {
+                    "physicalLocation": "U8247.22L.2125D4A-V2-C2",
+                    "viosId": 2,
+                    "wwpnpair": [
+                        13857705835384867080,
+                        13857705835384867081
+                    ]
+                },
+                {
+                    "physicalLocation": "U8247.22L.2125D4A-V2-C3",
+                    "viosId": 1,
+                    "wwpnPair": [
+                        13857705835384867082,
+                        13857705835384867083
+                    ]
+                }
+             ]
           }
         }
       ],
