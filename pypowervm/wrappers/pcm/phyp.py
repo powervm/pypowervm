@@ -283,5 +283,5 @@ class PhypVirtualFCAdpt(object):
 
     def __init__(self, vfc):
         self.vios_id = vfc.get('viosId')
-        self.wwpn_pair = vfc.get('wwpnPair')
+        self.wwpn_pair = vfc.get('wwpnpair')
         self.physical_location = vfc.get('physicalLocation')
