@@ -444,6 +444,33 @@ class TestSafeUpdatePPort(testtools.TestCase):
                                     mock.call('two')])
 
 
+class TestVNICHelpers(twrap.TestWrapper):
+    file = 'vnic_feed.txt'
+    wrapper_class_to_test = card.VNIC
+
+    def test_mod_vnic_backdevs(self):
+        self.adpt.build_href.return_value = 'href'
+        vnic = self.dwrap
+        bd0, bd1 = vnic.back_devs
+        # Start out with two backing devices
+        self.assertEqual(2, len(vnic.back_devs))
+        # Create a couple of new backing devices to add
+        bd2 = card.VNICBackDev.bld(self.adpt, 'vios1', 5, 6)
+        bd3 = card.VNICBackDev.bld(self.adpt, 'vios2', 7, 8)
+        # The 'action' fields are not set - on the existing ones or the new
+        self.assertEqual([None] * 4,
+                         [bkdev.action for bkdev in (bd0, bd1, bd2, bd3)])
+        # Remove the first one, leave the second one, add the new ones
+        tsriov.mod_vnic_backdevs(vnic, backdevs_to_rm=[bd0],
+                                 backdevs_to_add=[bd2, bd3])
+        # Action fields should be set appropriately
+        self.assertEqual([card.VNICBackDevAction.DELETE_BD,
+                          card.VNICBackDevAction.NO_ACTION,
+                          card.VNICBackDevAction.ADD_BD,
+                          card.VNICBackDevAction.ADD_BD],
+                         [bkdev.action for bkdev in vnic.back_devs])
+
+
 class TestMisc(twrap.TestWrapper):
     file = 'sys_with_sriov.txt'
     wrapper_class_to_test = ms.System

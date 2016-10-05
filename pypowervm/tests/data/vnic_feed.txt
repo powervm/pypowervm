@@ -75,13 +75,13 @@ BODY{
                     <Atom/>
                 </Metadata>
                 <DeviceType kxe="false" kb="COR">SRIOV</DeviceType>
-                <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83" rel="related"/>
+                <AssociatedVirtualIOServer kb="COR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/1cab7366-6b73-342c-9f43-ddfeb9f8edd3/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04" rel="related"/>
                 <IsActive ksv="V1_4_0" kxe="false" kb="ROR">true</IsActive>
                 <Status ksv="V1_4_0" kxe="false" kb="ROR">OPERATIONAL</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">1</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">42.42%</CurrentCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
-                <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1-3496-9af6-8cd562f0e839" rel="related"/>
+                <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="http://9.1.2.3:12080/rest/api/uom/VirtualIOServer/7E84C205-5961-4D78-85AB-D84A6EB83C04/SRIOVEthernetLogicalPort/6b1e47b4-af86-33e4-8236-2bdab00afd78" rel="related"/>
             </VirtualNICSRIOVBackingDevice>
         </VirtualNICBackingDeviceChoice>
     </AssociatedBackingDevices>

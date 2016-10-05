@@ -276,6 +276,18 @@ class VNICBackDevStatus(object):
     UNKNOWN = 'UNKNOWN'
 
 
+class VNICBackDevAction(object):
+    """Backing device actions on POST (VirtualNICBackingDeviceAction.Enum)."""
+    NO_ACTION = 'NO_ACTION'
+    ADD_BD = 'ADD_BD'
+    DELETE_BD = 'DELETE_BD'
+    CHANGE_PRIORITY_OF_BD = 'CHANGE_PRIORITY_OF_BD'
+    RESET_BD = 'RESET_BD'
+    CLEAR_BD_ERRORS = 'CLEAR_BD_ERRORS'
+    FORCE_FAIL_OVER_ON_BD = 'FORCE_FAIL_OVER_ON_BD'
+    ADD_BD_ALLOW_NET_DISRUPT = 'ADD_BD_ALLOW_NET_DISRUPT'
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -972,7 +984,12 @@ class _VNICDetails(ewrap.ElementWrapper):
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
 class VNICBackDev(ewrap.ElementWrapper):
-    """SR-IOV backing device for a vNIC."""
+    """SR-IOV backing device for a vNIC.
+
+    Note: To add or remove backing devices on a VNIC that already exists, the
+    'action' property must be used appropriately.  Recommend using the helper
+    pypowervm.tasks.sriov.mod_vnic_backdevs.
+    """
 
     @classmethod
     def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
@@ -1067,6 +1084,14 @@ class VNICBackDev(ewrap.ElementWrapper):
     @property
     def status(self):
         return self._get_val_str(_VNICBD_STATUS)
+
+    @property
+    def action(self):
+        return self._get_val_str(_VNICBD_ACTION)
+
+    @action.setter
+    def action(self, val):
+        self.set_parm_value(_VNICBD_ACTION, val, attrib=pc.ATTR_KSV140)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
