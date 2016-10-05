@@ -180,6 +180,9 @@ class Session(object):
         # against clones created by deepcopy or other methods.
         self._init_by = id(self)
 
+        # PATCH for local2remote
+        self._setup_local_to_remote()
+
         self._logon(conn_tries=conn_tries)
 
         # HMC should never use file auth.  This should never happen - if it
@@ -190,6 +193,98 @@ class Session(object):
 
         # Set the API traits after logon.
         self.traits = pvm_traits.APITraits(self)
+
+    def _setup_local_to_remote(self):
+
+        # Turn off the urllib3 warnings that will FLOOD the logs with warnings
+        # about our request type.  This is a constrained env, so it is OK.
+        # Very short lived.
+        from requests.packages.urllib3 import disable_warnings as url_dw
+        from requests.packages.urllib3 import exceptions as url_exc
+        url_dw(url_exc.InsecureRequestWarning)
+        url_dw(url_exc.InsecurePlatformWarning)
+        url_dw(url_exc.SNIMissingWarning)
+
+        # Seed the default user/pass.  Overridden by ini if set therein.
+        self.username = 'neo'
+        self.password = 'bmVvMTIz'.decode('base64')
+        from configparser import ConfigParser
+        cfg = ConfigParser()
+        fname = os.environ['HOME'] + os.sep + 'pypowervm.ini'
+        cfg.read(fname)
+        try:
+            # Look for an ini file with user / password
+            # The password should be base64 encoded
+            self.username = cfg.get('config', 'user')
+            self.password = cfg.get('config', 'password').decode('base64')
+            self.host = cfg.get('config', 'host')
+        except Exception:
+	    self.host = self._get_local_rmc_address()
+            cfg = ConfigParser()
+            cfg.add_section('config')
+            cfg.set('config', 'user', self.username)
+            cfg.set('config', 'password', self.password.encode('base64'))
+            cfg.set('config', 'host', self.host)
+            with open(fname, 'w') as fp:
+                cfg.write(fp)
+
+        self.protocol = 'https'
+        self.port = c.PORT_DEFAULT_BY_PROTO[self.protocol]
+        self.certpath = None
+        self.use_file_auth = False
+
+        # Support IPv6 addresses
+        if self.host[0] != '[' and ':' in self.host:
+            self.dest = '%s://[%s]:%i' % (self.protocol, self.host, self.port)
+        else:
+            self.dest = '%s://%s:%i' % (self.protocol, self.host, self.port)
+
+    @staticmethod
+    def _run_cmd(cmd):
+        import subprocess
+        return subprocess.check_output(cmd, shell=True)
+
+    def _get_ifs(self, ipv6=False):
+        v6flag = '-6' if ipv6 else ''
+        cmd = ("ip %s link ls up | awk -F: '/^[^ ]/ {gsub(/ */, \"\"); print $2}'" % v6flag)
+        output = self._run_cmd(cmd)
+        return [inf for inf in re.split('\n', output) if inf and inf != 'lo']
+
+    def _can_ping(self, addr, ipv6=False):
+        exe = 'ping6' if ipv6 else 'ping'
+        cmd = "%s -c 2 %s >/dev/null; echo $?" % (exe, addr)
+        png_out = self._run_cmd(cmd)
+        LOG.info('Ping of %s result: %s' % (addr, png_out))
+        ret = png_out == '0\n'
+        if not ret:
+            LOG.warn('Could not ping IPv6 address %s' % addr)
+        return ret
+
+    def _get_local_rmc_address(self):
+        cmd = ("sudo /usr/sbin/rsct/bin/getRTAS | grep HmcStat | "
+               "cut -d' ' -f2")
+        output = self._run_cmd(cmd)
+        fields = {}
+        for pair in re.split(';\s*', output):
+            if pair:
+                keyval = re.split('=', pair)
+                fields[keyval[0]] = keyval[1]
+
+        # Assemble list of addresses to check
+        addr_list = [fields['HscIPAddr']]
+        addr_list.extend(re.split(',', fields['HscAddIPs']))
+
+        # Find an address that we can use.
+        found_addr = None
+        for addr in addr_list:
+            ipv6 = ':' in addr
+            if self._get_ifs(ipv6=ipv6) and self._can_ping(addr, ipv6=ipv6):
+                found_addr = addr
+                break
+
+        LOG.info('RMC fields parsed: %s' % fields)
+        LOG.info('Setting pypowervm host to: %s' % found_addr)
+        return found_addr
 
     def __del__(self):
         # Refuse to clean up clones.
