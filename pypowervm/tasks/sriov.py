@@ -520,3 +520,32 @@ def find_pport(sys_w, physloc):
             if pport.loc_code == physloc:
                 return pport
     return None
+
+
+def mod_vnic_backdevs(vnic, backdevs_to_rm=(), backdevs_to_add=()):
+    """Make changes to the backing devices of an existing VNIC.
+
+    REST has a different semantic for VNIC backing devices.  When POSTing the
+    VNIC, each backing device must be marked with an 'action' - even the ones
+    that aren't changing.  This method marks additions, removals, and unchanged
+    devices as appropriate.  It does NOT update the VNIC back to the server.
+
+    :param vnic: A VNIC wrapper retrieved from the REST server.
+    :param backdevs_to_rm: A list of VNICBackDev wrappers representing the
+                           backing devices to remove from the VNIC.
+    :param backdevs_to_add: A list of VNICBackDev wrappers to add to the VNIC.
+    :return: The vnic argument, as modified.
+    """
+    # Use logical port URI to match removals
+    rmlocs = [backdev.lport_href for backdev in backdevs_to_rm]
+    # Flag removals and unchanged
+    for backdev in vnic.back_devs:
+        if backdev.lport_href in rmlocs:
+            backdev.action = card.VNICBackDevAction.DELETE_BD
+        else:
+            backdev.action = card.VNICBackDevAction.NO_ACTION
+    # Flag and append adds
+    for backdev in backdevs_to_add:
+        backdev.action = card.VNICBackDevAction.ADD_BD
+        vnic.back_devs.append(backdev)
+    return vnic
