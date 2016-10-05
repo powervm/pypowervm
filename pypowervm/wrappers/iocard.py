@@ -276,6 +276,19 @@ class VNICBackDevStatus(object):
     UNKNOWN = 'UNKNOWN'
 
 
+class VNICBackDevAction(object):
+    """Backing device actions on POST (VirtualNICBackingDeviceAction.Enum)."""
+    NO_ACTION = 'NO_ACTION'
+    ADD_BD = 'ADD_BD'
+    DELETE_BD = 'DELETE_BD'
+    CHANGE_PRIORITY_OF_BD = 'CHANGE_PRIORITY_OF_BD'
+    # The following are not implemented in REST.  Do not use.
+    RESET_BD = 'RESET_BD'
+    CLEAR_BD_ERRORS = 'CLEAR_BD_ERRORS'
+    FORCE_FAIL_OVER_ON_BD = 'FORCE_FAIL_OVER_ON_BD'
+    ADD_BD_ALLOW_NET_DISRUPT = 'ADD_BD_ALLOW_NET_DISRUPT'
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -867,12 +880,18 @@ class VNIC(ewrap.EntryWrapper):
 
     @property
     def back_devs(self):
+        # Note: To remove a backing device on a VNIC that already exists, do
+        # not remove the backing device from the vNIC.  Instead, set its
+        # 'action' property to VNICBackDevAction.DELETE_BD.
         return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
                                      child_class=VNICBackDev,
                                      indirect=_VNICBD_CHOICE)
 
     @back_devs.setter
     def back_devs(self, new_devs):
+        # Note: To remove a backing device on a VNIC that already exists, do
+        # not remove the backing device from the vNIC.  Instead, set its
+        # 'action' property to VNICBackDevAction.DELETE_BD.
         self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
 
     @property
@@ -972,7 +991,12 @@ class _VNICDetails(ewrap.ElementWrapper):
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
 class VNICBackDev(ewrap.ElementWrapper):
-    """SR-IOV backing device for a vNIC."""
+    """SR-IOV backing device for a vNIC.
+
+    Note: To remove a backing device on a VNIC that already exists, do not
+    remove the backing device from the vNIC.  Instead, set its 'action'
+    property to VNICBackDevAction.DELETE_BD.
+    """
 
     @classmethod
     def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
@@ -998,7 +1022,6 @@ class VNICBackDev(ewrap.ElementWrapper):
         :return: A new VNICBackDev, suitable for inclusion in a VNIC wrapper.
         """
         bdev = super(VNICBackDev, cls)._bld(adapter)
-        # TODO(IBM): Verify that this can be ManagedSystem-less
         bdev._vios_href(adapter.build_href(_VIOS, vios_uuid, xag=[]))
         bdev._sriov_adap_id(sriov_adap_id)
         bdev._pport_id(pport_id)
@@ -1006,6 +1029,8 @@ class VNICBackDev(ewrap.ElementWrapper):
             bdev._capacity(capacity)
         if failover_pri is not None:
             bdev.failover_pri = failover_pri
+        # Do this after failover_pri, since that setter modifies action
+        bdev.action = VNICBackDevAction.ADD_BD
         return bdev
 
     @property
@@ -1059,6 +1084,9 @@ class VNICBackDev(ewrap.ElementWrapper):
     @failover_pri.setter
     def failover_pri(self, val):
         self.set_parm_value(_VNICBD_FAILOVER_PRI, val, attrib=pc.ATTR_KSV140)
+        # Mark the backing device action appropriately.  (This is harmless if
+        # the value is unchanged (set to the previous value).)
+        self.action = VNICBackDevAction.CHANGE_PRIORITY_OF_BD
 
     @property
     def is_active(self):
@@ -1067,6 +1095,14 @@ class VNICBackDev(ewrap.ElementWrapper):
     @property
     def status(self):
         return self._get_val_str(_VNICBD_STATUS)
+
+    @property
+    def action(self):
+        return self._get_val_str(_VNICBD_ACTION)
+
+    @action.setter
+    def action(self, val):
+        self.set_parm_value(_VNICBD_ACTION, val, attrib=pc.ATTR_KSV140)
 
 
 @ewrap.ElementWrapper.pvm_type(_IO_ADPT_CHOICE, has_metadata=False)
