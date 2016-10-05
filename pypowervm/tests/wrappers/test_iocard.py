@@ -305,6 +305,7 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual('http://vios_uuid', bd1.vios_href)
         self.assertEqual(3, bd1.sriov_adap_id)
         self.assertEqual(4, bd1.pport_id)
+        self.assertEqual(card.VNICBackDevAction.ADD_BD, bd1.action)
         self.assertIsNone(bd1.capacity)
         self.assertEqual(self.adpt, bd2.adapter)
         self.adpt.build_href.assert_any_call('VirtualIOServer', 'vios_uuid2',
@@ -312,6 +313,7 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual('http://vios_uuid2', bd2.vios_href)
         self.assertEqual(5, bd2.sriov_adap_id)
         self.assertEqual(6, bd2.pport_id)
+        self.assertEqual(card.VNICBackDevAction.ADD_BD, bd2.action)
         self.assertEqual(0.3457, bd2.capacity)
         self.assertIsNone(bd1.failover_pri)
         self.assertEqual(bd2.failover_pri, 50)
@@ -319,6 +321,14 @@ class TestVNIC(twrap.TestWrapper):
         bd2.failover_pri = 60
         self.assertEqual(bd1.failover_pri, 42)
         self.assertEqual(bd2.failover_pri, 60)
+        # Changing the priority sets the action appropriately
+        self.assertEqual(card.VNICBackDevAction.CHANGE_PRIORITY_OF_BD,
+                         bd1.action)
+        self.assertEqual(card.VNICBackDevAction.CHANGE_PRIORITY_OF_BD,
+                         bd2.action)
+        # Test setting the action explicitly
+        bd1.action = card.VNICBackDevAction.DELETE_BD
+        self.assertEqual(card.VNICBackDevAction.DELETE_BD, bd1.action)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
