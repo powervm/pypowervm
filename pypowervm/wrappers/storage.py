@@ -636,9 +636,66 @@ class PV(ewrap.ElementWrapper):
         return None
 
 
+@ewrap.Wrapper.base_pvm_type
+class _VDisk(ewrap.ElementWrapper):
+    """Methods common to VDisk and FileIO."""
+
+    @property
+    def name(self):
+        return self._get_val_str(DISK_NAME)
+
+    @name.setter
+    def name(self, name):
+        self.set_parm_value(DISK_NAME, name)
+
+    @property
+    def label(self):
+        return self._get_val_str(_DISK_LABEL)
+
+    def _label(self, new_label):
+        self.set_parm_value(_DISK_LABEL, new_label)
+
+    @property
+    def capacity(self):
+        """Returns the capacity in GB (float)."""
+        return self._get_val_float(_DISK_CAPACITY)
+
+    @capacity.setter
+    def capacity(self, capacity):
+        self.set_float_gb_value(_DISK_CAPACITY, capacity)
+
+    @property
+    def udid(self):
+        return self._get_val_str(_DISK_UDID)
+
+
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
-class VDisk(ewrap.ElementWrapper):
+class FileIO(_VDisk):
+    """A File I/O object.
+
+    Do not PUT (.create) this wrapper directly.  Attach it to a VSCSIMapping
+    and PUT that instead.
+    """
+    target_dev_type = VDiskTargetDev
+
+    @classmethod
+    def bld(cls, adapter, path):
+        """Creates a FileIO wrapper for inclusion in a VSCSIMapping.
+
+        :param adapter: A pypowervm.adapter.Adapter for the REST API.
+        :param path: The file system path of the File I/O object.
+        :return: An Element that can be attached to a VSCSIMapping to create a
+                 File I/O on the server.
+        """
+        fio = super(FileIO, cls)._bld(adapter)
+        fio.label = path
+        return fio
+
+
+@ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
+                               child_order=_VDISK_EL_ORDER)
+class VDisk(_VDisk):
     """A virtual disk that can be attached to a VM."""
     target_dev_type = VDiskTargetDev
 
@@ -671,34 +728,6 @@ class VDisk(ewrap.ElementWrapper):
         vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
         return vd
-
-    @property
-    def name(self):
-        return self._get_val_str(DISK_NAME)
-
-    @name.setter
-    def name(self, name):
-        self.set_parm_value(DISK_NAME, name)
-
-    @property
-    def label(self):
-        return self._get_val_str(_DISK_LABEL)
-
-    def _label(self, new_label):
-        self.set_parm_value(_DISK_LABEL, new_label)
-
-    @property
-    def capacity(self):
-        """Returns the capacity in GB (float)."""
-        return self._get_val_float(_DISK_CAPACITY)
-
-    @capacity.setter
-    def capacity(self, capacity):
-        self.set_float_gb_value(_DISK_CAPACITY, capacity)
-
-    @property
-    def udid(self):
-        return self._get_val_str(_DISK_UDID)
 
     @property
     def vg_uri(self):
