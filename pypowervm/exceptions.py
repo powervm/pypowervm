@@ -302,8 +302,8 @@ class NoRunningSharedSriovAdapters(AbstractMsgFmtError):
 
 
 class InsufficientSRIOVCapacity(AbstractMsgFmtError):
-    msg_fmt = _("Unable to fulfill minimum redundancy requirement of "
-                "%(min_vfs)d.  Found %(found_vfs)d viable backing device(s).")
+    msg_fmt = _("Unable to fulfill redundancy requirement of %(red)d.  Found "
+                "%(found_vfs)d viable backing device(s).")
 
 
 class SystemNotVNICCapable(AbstractMsgFmtError):
@@ -315,13 +315,13 @@ class NoVNICCapableVIOSes(AbstractMsgFmtError):
 
 
 class VNICFailoverNotSupportedSys(AbstractMsgFmtError):
-    msg_fmt = _("A minimum redundancy of %(minred)d was specified, but the "
-                "Managed System is not vNIC failover capable.")
+    msg_fmt = _("A redundancy of %(red)d was specified, but the Managed "
+                "System is not vNIC failover capable.")
 
 
 class VNICFailoverNotSupportedVIOS(AbstractMsgFmtError):
-    msg_fmt = _("A minimum redundancy of %(minred)d was specified, but there "
-                "are no active vNIC failover-capable VIOSes.")
+    msg_fmt = _("A redundancy of %(red)d was specified, but there are no "
+                "active vNIC failover-capable VIOSes.")
 
 
 class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
