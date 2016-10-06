@@ -15,7 +15,7 @@
 #    under the License.
 
 import mock
-import unittest
+import testtools
 
 import pypowervm.const as pc
 import pypowervm.exceptions as ex
@@ -630,5 +630,11 @@ class TestTargetDevs(twrap.TestWrapper):
             self.assertIsInstance(smaps[1].target_dev, klass)
             self.assertEqual(lua_tag, smaps[1].target_dev.lua)
 
-if __name__ == '__main__':
-    unittest.main()
+
+class TestStorageTypes(testtools.TestCase):
+    def test_fileio(self):
+        fio = stor.FileIO.bld('adap', 'path')
+        self.assertEqual('path', fio.label)
+        self.assertIsNone(fio.name)
+        self.assertIsNone(fio.capacity)
+        self.assertIsNone(fio.udid)
