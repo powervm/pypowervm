@@ -38,9 +38,8 @@ LOG = logging.getLogger(__name__)
 PPORT_MOD_LOCK = lock.ReaderWriterLock()
 
 
-def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
-                       min_redundancy=1, max_redundancy=2, capacity=None,
-                       check_port_status=False):
+def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
+                       capacity=None, check_port_status=False):
     """Set a vNIC's backing devices over given SRIOV physical ports and VIOSes.
 
     Assign the backing devices to a iocard.VNIC wrapper using an anti-affinity
@@ -60,34 +59,28 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
         PPortF (11%)
 
     set_vnic_back_devs(vnic, [PPortA, PPortB, PPortC, PPortD, PPortE, PPortF],
-                       [vios1, vios2], max_redundancy=4)
+                       [vios1, vios2], redundancy=4)
 
     ...we will create backing devices like:
 
     [(vios1, PPortE), (vios2, PPortB), (vios1, PPortD), (vios2, PPortC)]
 
-    This method will strive to allocate as many backing devices as possible, to
-    a maximum of min(max_redundancy, len(pports)).  As part of the algorithm,
-    we will use sriov_adaps to filter out physical ports which are already
-    saturated.  This could err either way due to out-of-band changes:
+    As part of the algorithm, we will use sriov_adaps to filter out physical
+    ports which are already saturated.  This could err either way due to
+    out-of-band changes:
     - We may end up excluding a port which has had some capacity freed up since
-      sriov_adaps was retrieved, possibly resulting in a lower redundancy than
-      may otherwise have been possible; or
+      sriov_adaps was retrieved; or
     - We may attempt to include a port which has become saturated since
       sriov_adaps was retrieved, resulting in an error from the REST server.
-
-    As a result of the above, and of the max_redundancy param, it is not
-    guaranteed that all pports or all vioses will be used.  However, the caller
-    may force all specified pports to be used (or the method will raise) by
-    specifying parameters such that:
-        min_redundancy == len(pports) <= max_redundancy
 
     This method acts on the vNIC-related capabilities on the system and VIOSes:
     - If the system is not vNIC capable, the method will fail.
     - If none of the active VIOSes are vNIC capable, the method will fail.
-    - If min_redundancy > 1,
+    - If redundancy > 1,
         - the system must be vNIC failover capable, and
         - at least one active VIOS must be vNIC failover capable.
+    - If any VIOSes are vNIC failover capable, failover-incapable VIOSes will
+      be ignored.
 
     :param vnic_w: iocard.VNIC wrapper, as created via VNIC.bld().  If
                    vnic_w.back_devs is nonempty, it is cleared and replaced.
@@ -110,11 +103,10 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
                    checked).  The list is also filtered to remove VIOSes which
                    are not vNIC capable; and, if min_redundancy > 1, to remove
                    VIOSes which are not vNIC failover capable.
-    :param min_redundancy: Minimum number of backing devices to assign.  If the
-                           method can't allocate at least this many VFs,
-                           InsufficientSRIOVCapacity will be raised.
-    :param max_redundancy: Maximum number of backing devices to assign.
-                           Ignored if greater than len(pports).
+    :param redundancy: Number of backing devices to assign.  If the method
+                       can't allocate this many VFs after filtering the pports
+                       list, InsufficientSRIOVCapacity will be raised.  Note
+                       that at most one VF is created on each physical port.
     :param capacity: (float) Minimum capacity to assign to each backing device.
                      Must be between 0.0 and 1.0, and must be a multiple of the
                      min_granularity of *all* of the pports.  (Capacity may be
@@ -129,13 +121,14 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
     :raise NotEnoughActiveVioses: If no active (including RMC) VIOSes can be
                                   found.
     :raise InsufficientSRIOVCapacity: If the method was not able to allocate
-                                      enough VFs to satisfy min_redundancy.
+                                      enough VFs to satisfy the specified
+                                      redundancy.
     :raise SystemNotVNICCapable: If the managed system is not vNIC capable.
     :raise NoVNICCapableVIOSes: If there are no vNIC-capable VIOSes.
-    :raise VNICFailoverNotSupportedSys: If min_redundancy > 1, and the system
-                                 is not vNIC failover capable.
-    :raise VNICFailoverNotSupportedVIOS: If min_redundancy > 1, and there are
-                                         no vNIC failover-capable VIOSes.
+    :raise VNICFailoverNotSupportedSys: If redundancy > 1, and the system is
+                                        not vNIC failover capable.
+    :raise VNICFailoverNotSupportedVIOS: If redundancy > 1, and there are no
+                                         vNIC failover-capable VIOSes.
     """
     # An Adapter to work with
     adap = vnic_w.adapter
@@ -143,14 +136,14 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
         raise ValueError('Developer error: Must build vnic_w with an Adapter.')
 
     # Check vNIC capability on the system
-    sys_w = _check_sys_vnic_capabilities(adap, sys_w, min_redundancy)
+    sys_w = _check_sys_vnic_capabilities(adap, sys_w, redundancy)
 
     # Filter SR-IOV adapters
     sriov_adaps = _get_good_sriovs(sys_w.asio_config.sriov_adapters)
 
     # Get VIOSes which are a) active, b) vNIC capable, and c) vNIC failover
     # capable, if necessary.
-    vioses = _check_and_filter_vioses(adap, vioses, min_redundancy)
+    vioses = _check_and_filter_vioses(adap, vioses, redundancy)
 
     # Try not to end up lopsided on one VIOS
     random.shuffle(vioses)
@@ -158,16 +151,11 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
     # Get the subset of backing ports corresponding to the specified location
     # codes which have enough space for new VFs.
     pport_wraps = _get_good_pport_list(sriov_adaps, pports, capacity,
-                                       min_redundancy, check_port_status)
+                                       redundancy, check_port_status)
 
     # At this point, we've validated enough that we won't raise.  Start by
     # clearing any existing backing devices.
     vnic_w.back_devs = []
-
-    # Ideal number of backing devs to assign.  Can't be more than the number of
-    # ports we have to work with.  Must be at least min_redundancy.  If those
-    # conditions are satisfied, use max_redundancy.
-    backdev_goal = max(min_redundancy, min(max_redundancy, len(pport_wraps)))
 
     card_use = {}
     for pport in pport_wraps:
@@ -176,7 +164,7 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
             card_use[said] = {'num_used': 0, 'ports_left': 0}
         card_use[said]['ports_left'] += 1
     vio_idx = 0
-    while pport_wraps and len(vnic_w.back_devs) < backdev_goal:
+    while pport_wraps and len(vnic_w.back_devs) < redundancy:
         # Always rotate VIOSes
         vio = vioses[vio_idx]
         vio_idx = (vio_idx + 1) % len(vioses)
@@ -200,15 +188,15 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None,
         pport_wraps.remove(pp2use)
 
 
-def _check_sys_vnic_capabilities(adap, sys_w, min_redundancy):
+def _check_sys_vnic_capabilities(adap, sys_w, redundancy):
     """Validate vNIC capabilities on the Managed System.
 
     :param adap: pypowervm Adapter.
     :param sys_w: pypowervm.wrappers.managed_system.System wrapper.  If None,
                   it is retrieved from the host.
-    :param min_redundancy: If greater than 1, this method will verify that the
-                           System is vNIC failover-capable.  Otherwise, this
-                           check is skipped.
+    :param redundancy: If greater than 1, this method will verify that the
+                       System is vNIC failover-capable.  Otherwise, this check
+                       is skipped.
     :return: The System wrapper.
     :raise SystemNotVNICCapable: If the System is not vNIC capable.
     :raise VNICFailoverNotSupportedSys: If min_redundancy > 1 and the System is
@@ -220,13 +208,13 @@ def _check_sys_vnic_capabilities(adap, sys_w, min_redundancy):
     caps = sys_w.get_capabilities()
     if not caps.get('vnic_capable'):
         raise ex.SystemNotVNICCapable()
-    if min_redundancy > 1 and not caps.get('vnic_failover_capable'):
-        raise ex.VNICFailoverNotSupportedSys(minred=min_redundancy)
+    if redundancy > 1 and not caps.get('vnic_failover_capable'):
+        raise ex.VNICFailoverNotSupportedSys(red=redundancy)
 
     return sys_w
 
 
-def _check_and_filter_vioses(adap, vioses, min_redundancy):
+def _check_and_filter_vioses(adap, vioses, redundancy):
     """Return active VIOSes with appropriate vNIC capabilities.
 
     Remove all VIOSes which are not active or not vNIC capable.  If
@@ -236,14 +224,15 @@ def _check_and_filter_vioses(adap, vioses, min_redundancy):
     :param adap: pypowervm Adapter.
     :param vioses: List of pypowervm.wrappers.virtual_io_server.VIOS to check.
                    If None, all active VIOSes are retrieved from the server.
-    :param min_redundancy: If greater than 1, the return list will include only
-                           vNIC failover-capable VIOSes.  Otherwise, all VIOSes
-                           are returned.
+    :param redundancy: If greater than 1, the return list will include only
+                       vNIC failover-capable VIOSes.  Otherwise, if any VIOSes
+                       are vNIC failover-capable, non-failover-capable VIOSes
+                       are excluded.
     :return: The filtered list of VIOS wrappers.
     :raise NotEnoughActiveVioses: If no active (including RMC) VIOSes can be
                                   found.
     :raise NoVNICCapableVIOSes: If none of the vioses are vNIC capable.
-    :raise VNICFailoverNotSupportedVIOS: If min_redundancy > 1 and none of the
+    :raise VNICFailoverNotSupportedVIOS: If redundancy > 1 and none of the
                                          vioses is vNIC failover capable.
     """
     # This raises if none are found
@@ -255,10 +244,14 @@ def _check_and_filter_vioses(adap, vioses, min_redundancy):
         raise ex.NoVNICCapableVIOSes()
 
     # Filter by failover capability, if needed.
-    if min_redundancy > 1:
-        vioses = [vios for vios in vioses if vios.vnic_failover_capable]
-        if not vioses:
-            raise ex.VNICFailoverNotSupportedVIOS(minred=min_redundancy)
+    # If any are failover-capable, use just those, regardless of redundancy.
+    failover_only = [vios for vios in vioses if vios.vnic_failover_capable]
+    if redundancy > 1 or any(failover_only):
+        vioses = failover_only
+
+    # At this point, if the list is empty, it's because no failover capability.
+    if not vioses:
+        raise ex.VNICFailoverNotSupportedVIOS(red=redundancy)
 
     return vioses
 
@@ -287,7 +280,7 @@ def _get_good_sriovs(sriov_adaps):
     return good_adaps
 
 
-def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns,
+def _get_good_pport_list(sriov_adaps, pports, capacity, redundancy,
                          check_link_status):
     """Get a list of SRIOV*PPort filtered by capacity and specified pports.
 
@@ -307,13 +300,14 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns,
                      a multiple of the min_granularity of *all* of the pports.
                      If None, available port capacity is validated using each
                      port's min_granularity.
-    :param min_returns: The minimum acceptable number of ports to return.  If
-                        the filtered list has fewer than this number of ports,
-                        InsufficientSRIOVCapacity is raised.
+    :param redundancy: The desired redundancy level (number of ports to
+                       return).required.  If the filtered list has fewer than
+                       this number of ports, InsufficientSRIOVCapacity is
+                       raised.
     :param check_link_status: If True, ports with link-down status will not be
                               returned.  If False, link status is not checked.
     :raise InsufficientSRIOVCapacity: If the final list contains fewer than
-                                      min_returns ports.
+                                      'redundancy' ports.
     :return: A filtered list of SRIOV*PPort wrappers.
     """
     def port_ok(port):
@@ -343,8 +337,8 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, min_returns,
                 pp2add = copy.deepcopy(pport)
                 pport_wraps.append(pp2add)
 
-    if len(pport_wraps) < min_returns:
-        raise ex.InsufficientSRIOVCapacity(min_vfs=min_returns,
+    if len(pport_wraps) < redundancy:
+        raise ex.InsufficientSRIOVCapacity(red=redundancy,
                                            found_vfs=len(pport_wraps))
     LOG.debug('Filtered list of physical ports: %s' %
               str([pport.loc_code for pport in pport_wraps]))
