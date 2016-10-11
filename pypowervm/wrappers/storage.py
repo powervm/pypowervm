@@ -708,6 +708,11 @@ class FileIO(_VDisk):
         fio._vdtype(VDiskType.FILE)
         return fio
 
+    @property
+    def path(self):
+        """Alias for 'label'."""
+        return self.label
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)

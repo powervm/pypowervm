@@ -635,6 +635,7 @@ class TestStorageTypes(testtools.TestCase):
     def test_fileio(self):
         fio = stor.FileIO.bld('adap', 'path')
         self.assertEqual('path', fio.label)
+        self.assertEqual('path', fio.path)
         self.assertIsNone(fio.name)
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
