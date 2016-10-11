@@ -226,13 +226,15 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, self.adpt.read.call_count)
         self.assertEqual(self.v1resp.atom, vios.entry)
 
-        # Now do it again, but passing the vios wrapper and the client UUID
+        # Now do it again, but passing the vios wrapper and the client UUID.
+        # Match by UDID this time.
+        media_udid = '0ebldr1_dfe05349_kyleh_config.iso'
         vios_wrap = pvm_vios.VIOS.wrap(
             tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
         self.adpt.update_by_path.reset_mock()
         self.adpt.read.reset_mock()
         vios, remel = scsi_mapper.remove_vopt_mapping(
-            self.adpt, vios_wrap, LPAR_UUID, media_name=media_name)
+            self.adpt, vios_wrap, LPAR_UUID, udid=media_udid)
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
@@ -301,12 +303,13 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.VOptMedia)
 
-    def test_remove_storage_vdisk(self):
+    def _test_remove_storage_vdisk(self, *args, **kwargs):
+        """Helper to test remove_storage_vdisk with various arguments."""
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
-        def validate_update(*kargs, **kwargs):
+        def validate_update(*kargs, **kwa):
             vios_w = kargs[0]
             self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
@@ -314,8 +317,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        vios, remel = scsi_mapper.remove_vdisk_mapping(
-            self.adpt, 'fake_vios_uuid', 2, disk_names=['Ubuntu1410'])
+        vios, remel = scsi_mapper.remove_vdisk_mapping(*args, **kwargs)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -323,12 +325,21 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.VDisk)
         self.assertEqual(self.v1resp.atom, vios.entry)
 
-    def test_remove_storage_lu(self):
+    def test_remove_storage_vdisk_name(self):
+        self._test_remove_storage_vdisk(
+            self.adpt, 'fake_vios_uuid', 2, disk_names=['Ubuntu1410'])
+
+    def test_remove_storage_vdisk_udid(self):
+        self._test_remove_storage_vdisk(
+            self.adpt, 'fake_vios_uuid', 2,
+            udids=['0300025d4a00007a000000014b36d9deaf.1'])
+
+    def _test_remove_storage_lu(self, *args, **kwargs):
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed from existing
-        def validate_update(*kargs, **kwargs):
+        def validate_update(*kargs, **kwa):
             vios_w = kargs[0]
             self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
@@ -336,8 +347,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        vios, remel = scsi_mapper.remove_lu_mapping(
-            self.adpt, 'fake_vios_uuid', 2)
+        vios, remel = scsi_mapper.remove_lu_mapping(*args, **kwargs)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -345,12 +355,21 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertIsInstance(remel[0], pvm_stor.LU)
         self.assertEqual(self.v1resp.atom, vios.entry)
 
-    def test_remove_pv_mapping(self):
+    def test_remove_storage_lu_all(self):
+        self._test_remove_storage_lu(self.adpt, 'fake_vios_uuid', 2)
+
+    def test_remove_storage_lu_udid(self):
+        self._test_remove_storage_lu(
+            self.adpt, 'fake_vios_uuid', 2,
+            udids=['270c88f8e2d36711e490ce40f2e95daf30a6d61c0dee5ec6f6a011b300'
+                   'b9d0830d'])
+
+    def _test_remove_pv_mapping(self, *args, **kwargs):
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
         # Validate that the mapping was removed to existing
-        def validate_update(*kargs, **kwargs):
+        def validate_update(*kargs, **kwa):
             vios_w = kargs[0]
             self.assertEqual(4, len(vios_w.scsi_mappings))
             return vios_w.entry
@@ -358,14 +377,22 @@ class TestSCSIMapper(testtools.TestCase):
         self.adpt.update_by_path.side_effect = validate_update
 
         # Run the code
-        vios, remel = scsi_mapper.remove_pv_mapping(
-            self.adpt, 'fake_vios_uuid', 2, 'hdisk10')
+        vios, remel = scsi_mapper.remove_pv_mapping(*args, **kwargs)
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
         self.assertEqual(1, len(remel))
         self.assertIsInstance(remel[0], pvm_stor.PV)
         self.assertEqual(self.v1resp.atom, vios.entry)
+
+    def test_remove_pv_mapping_name(self):
+        self._test_remove_pv_mapping(self.adpt, 'fake_vios_uuid', 2, 'hdisk10')
+
+    def test_remove_pv_mapping_udid(self):
+        self._test_remove_pv_mapping(
+            self.adpt, 'fake_vios_uuid', 2, None,
+            udid='01M0lCTTIxNDUxMjQ2MDA1MDc2ODAyODI4NjFEODgwMDAwMDAwMDAwMDA2MA'
+                 '==')
 
     def test_detach_storage(self):
         """Detach storage from some mappings."""
