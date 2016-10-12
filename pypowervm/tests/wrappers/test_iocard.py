@@ -320,6 +320,10 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(bd1.failover_pri, 42)
         self.assertEqual(bd2.failover_pri, 60)
 
+        vnic = card.VNIC.bld(allowed_macs=None, allowed_vlans=None)
+        self.assertEqual(vnic.allowed_vlans, u.VLANList.ALL)
+        self.assertEqual(vnic.allowed_macs, u.MACList.ALL)
+
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
 

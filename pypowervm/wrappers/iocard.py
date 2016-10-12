@@ -755,12 +755,13 @@ class VNIC(ewrap.EntryWrapper):
         :param allowed_vlans: An integer list of VLANS allowed on this vNIC.
                               Specify pypowervm.util.VLANList.ALL to allow all
                               VLANs or .NONE to allow no VLANs on this vNIC.
-                              Default: ALL.
+                              Default: ALL. If None is passed, defaults to ALL.
         :param mac_addr: MAC address for the vNIC.
         :param allowed_macs: List of string MAC addresses allowed on this vNIC.
                              Specify pypowervm.util.MACList.ALL to allow all
                              MAC addresses, or .NONE to allow no MAC addresses
-                             on this vNIC.  Default: ALL.
+                             on this vNIC.  Default: ALL. If None is passed,
+                             defaults to ALL.
         :param back_devs: List of VNICBackDev wrappers each indicating a
                           combination of VIOS, SR-IOV adapter and physical port
                           on which to create the VF for the backing device.
@@ -770,6 +771,10 @@ class VNIC(ewrap.EntryWrapper):
         :return: A new VNIC wrapper.
         """
         vnic = super(VNIC, cls)._bld(adapter)
+        if not allowed_vlans:
+            allowed_vlans = u.VLANList.ALL
+        if not allowed_macs:
+            allowed_macs = u.MACList.ALL
         if slot_num is not None:
             vnic._slot(slot_num)
         else:
