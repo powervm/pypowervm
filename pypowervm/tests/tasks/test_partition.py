@@ -17,7 +17,9 @@
 """Tests for pypowervm.tasks.partition."""
 
 import mock
+import psutil
 import testtools
+import time
 
 import pypowervm.const as c
 import pypowervm.exceptions as ex
@@ -126,6 +128,13 @@ class TestVios(twrap.TestWrapper):
         self.mock_vios_get = vioget_p.start()
         self.addCleanup(vioget_p.stop)
 
+        self.boot_time_orig = psutil.BOOT_TIME
+        psutil.BOOT_TIME = 3600
+
+    def tearDown(self):
+        super(TestVios, self).tearDown()
+        psutil.BOOT_TIME = self.boot_time_orig
+
     def test_get_active_vioses(self):
         self.mock_vios_get.return_value = self.entries
         vioses = tpar.get_active_vioses(self.adpt)
@@ -226,12 +235,24 @@ class TestVios(twrap.TestWrapper):
                                            mock_vios7]
         tpar.validate_vios_ready('adap')
         # We slept.
-        self.assertEqual(120, self.mock_sleep.call_count)
+        self.assertEqual(24, self.mock_sleep.call_count)
         self.mock_sleep.assert_called_with(5)
         # We wound up with rmc_down_vioses
-        mock_warn.assert_called_once_with(mock.ANY, {'time': 600,
+        mock_warn.assert_called_once_with(mock.ANY, {'time': 120,
                                                      'vioses': 'vios3, vios6'})
         # We didn't raise - because some VIOSes were okay.
+
+    @mock.patch('pypowervm.tasks.partition._wait_for_vioses')
+    @mock.patch('pypowervm.tasks.partition.get_active_vioses')
+    def test_validate_vios_ready_default_after_boot(self, mock_get, mock_wait):
+        """Test the higher max_wait_time default when close to boot time."""
+        psutil.BOOT_TIME = time.time() - 900
+
+        mock_wait.return_value = 'vioses', None
+
+        tpar.validate_vios_ready('adap')
+        mock_wait.assert_called_once_with('adap', 600)
+        mock_get.assert_called_once_with('adap', vios_wraps='vioses')
 
     @mock.patch('pypowervm.tasks.partition.LOG.warning')
     def test_no_vioses(self, mock_warn):
