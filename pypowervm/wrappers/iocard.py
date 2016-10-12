@@ -770,6 +770,10 @@ class VNIC(ewrap.EntryWrapper):
         :return: A new VNIC wrapper.
         """
         vnic = super(VNIC, cls)._bld(adapter)
+        if not allowed_vlans:
+            allowed_vlans = u.VLANList.ALL
+        if not allowed_macs:
+            allowed_macs = u.MACList.ALL
         if slot_num is not None:
             vnic._slot(slot_num)
         else:
