@@ -586,19 +586,46 @@ class _AllowedList(object):
         return [cls.parse_val(val) for val in rest_val.split()]
 
     @classmethod
-    def marshal(cls, val):
-        """Produce a string suitable for the REST API."""
-        if val in cls._GOOD_STRINGS:
-            return val
-        if isinstance(val, list):
+    def const_or_list(cls, val):
+        """Return one of the _GOOD_STRINGS, or the (sanitized) original list.
+
+        :param val: One of:
+                    - A string representing one of the _GOOD_STRINGS (case-
+                      insensitive.
+                    - A list containing a single value as above.
+                    - A list containing values appropriate to the subclass.
+        :return: One of:
+                 - A string representing one of the _GOOD_STRINGS (in the
+                   appropriate case).
+                 - A list of the original values, validated and sanitized for
+                   the REST API.
+                 The objective is to be able to pass the return value directly
+                 into a setter or bld method expecting the relevant type.
+        :raise ValueError: If the input could not be interpreted/sanitized as
+                           appropriate to the subclass.
+        """
+        ret = None
+        if isinstance(val, str) and val.upper() in cls._GOOD_STRINGS:
+            ret = val.upper()
+        elif isinstance(val, list):
             if (len(val) == 1 and isinstance(val[0], str)
                     and val[0].upper() in cls._GOOD_STRINGS):
-                return val[0].upper()
-            return ' '.join([cls.sanitize_for_api(ival) for ival in val])
+                ret = val[0].upper()
+            else:
+                ret = [cls.sanitize_for_api(ival) for ival in val]
+        if ret is not None:
+            return ret
         # Not a list, not a good value
         raise ValueError(_("Invalid value '%(bad_val)s'.  Expected one of "
                            "%(good_vals)s, or a list.") %
                          {'bad_val': val, 'good_vals': str(cls._GOOD_STRINGS)})
+
+    @classmethod
+    def marshal(cls, val):
+        """Produce a string suitable for the REST API."""
+        val = cls.const_or_list(val)
+        return (' '.join([str(ival) for ival in val]) if isinstance(val, list)
+                else val)
 
 
 class VLANList(_AllowedList):
@@ -609,10 +636,12 @@ class VLANList(_AllowedList):
 
     @staticmethod
     def sanitize_for_api(val):
-        if type(val) is not int:
-            raise ValueError("Specify a list of VLAN integers, or 'ALL' for "
-                             "all VLANS or 'NONE' for no VLANS.")
-        return str(val)
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            raise ValueError("Specify a list of VLAN integers or integer "
+                             "strings; or 'ALL' for all VLANS or 'NONE' for "
+                             "no VLANS.")
 
 
 class MACList(_AllowedList):
