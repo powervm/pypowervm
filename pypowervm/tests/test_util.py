@@ -375,13 +375,14 @@ class TestUtil(unittest.TestCase):
 
 class TestAllowedList(unittest.TestCase):
     def test_all_none(self):
-        for val in ('ALL', 'NONE'):
-            for cls in (util.VLANList, util.MACList):
+        for cls in (util.VLANList, util.MACList):
+            for val in ('ALL', 'NONE'):
                 self.assertEqual(val, cls.unmarshal(val))
-                self.assertEqual(val, cls.marshal(val))
-        for val in (['all'], ['none']):
-            for cls in (util.VLANList, util.MACList):
-                self.assertEqual(val[0].upper(), cls.marshal(val))
+            for val in ('ALL', 'NONE', 'all', 'none', 'aLl', 'nOnE'):
+                self.assertEqual(val.upper(), cls.marshal(val))
+                self.assertEqual(val.upper(), cls.const_or_list(val))
+                self.assertEqual(val.upper(), cls.marshal([val]))
+                self.assertEqual(val.upper(), cls.const_or_list([val]))
 
     def test_unmarshal(self):
         # Test VLAN lists
@@ -416,3 +417,25 @@ class TestAllowedList(unittest.TestCase):
             self.assertRaises(ValueError, cls.marshal, ' ')
             self.assertRaises(ValueError, cls.marshal, 'bogus')
         self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])
+
+    def test_const_or_list(self):
+        # Test VLAN lists
+        for l2t in ([1, 2], [0], [5, 6, 2230, 3340]):
+            self.assertEqual(l2t, util.VLANList.const_or_list(l2t))
+
+        # Test MAC lists
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
+                         util.MACList.const_or_list(
+                             ['aB:12:Cd:34:eF:56', '12Ab34cD56Ef']))
+        self.assertEqual(['AB12CD34EF56'], util.MACList.const_or_list(
+            ['Ab:12:cD:34:Ef:56']))
+
+        # Test error cases
+        for cls in (util.VLANList, util.MACList):
+            for meth in (cls.marshal, cls.const_or_list):
+                self.assertRaises(ValueError, meth, None)
+                self.assertRaises(ValueError, meth, '')
+                self.assertRaises(ValueError, meth, ' ')
+                self.assertRaises(ValueError, meth, 'bogus')
+        self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])
+        self.assertRaises(ValueError, util.VLANList.const_or_list, ['1', 2])
