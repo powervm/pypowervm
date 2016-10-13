@@ -586,19 +586,27 @@ class _AllowedList(object):
         return [cls.parse_val(val) for val in rest_val.split()]
 
     @classmethod
-    def marshal(cls, val):
-        """Produce a string suitable for the REST API."""
+    def const_or_list(cls, val):
+        """Return one of the _GOOD_STRINGS, or the original list."""
         if val in cls._GOOD_STRINGS:
             return val
         if isinstance(val, list):
             if (len(val) == 1 and isinstance(val[0], str)
                     and val[0].upper() in cls._GOOD_STRINGS):
                 return val[0].upper()
-            return ' '.join([cls.sanitize_for_api(ival) for ival in val])
+            return val
         # Not a list, not a good value
         raise ValueError(_("Invalid value '%(bad_val)s'.  Expected one of "
                            "%(good_vals)s, or a list.") %
                          {'bad_val': val, 'good_vals': str(cls._GOOD_STRINGS)})
+
+    @classmethod
+    def marshal(cls, val):
+        """Produce a string suitable for the REST API."""
+        val = cls.const_or_list(val)
+        if isinstance(val, list):
+            return ' '.join([cls.sanitize_for_api(ival) for ival in val])
+        return val
 
 
 class VLANList(_AllowedList):
