@@ -379,9 +379,11 @@ class TestAllowedList(unittest.TestCase):
             for cls in (util.VLANList, util.MACList):
                 self.assertEqual(val, cls.unmarshal(val))
                 self.assertEqual(val, cls.marshal(val))
+                self.assertEqual(val, cls.const_or_list(val))
         for val in (['all'], ['none']):
             for cls in (util.VLANList, util.MACList):
                 self.assertEqual(val[0].upper(), cls.marshal(val))
+                self.assertEqual(val[0].upper(), cls.const_or_list(val))
 
     def test_unmarshal(self):
         # Test VLAN lists
@@ -415,4 +417,23 @@ class TestAllowedList(unittest.TestCase):
             self.assertRaises(ValueError, cls.marshal, '')
             self.assertRaises(ValueError, cls.marshal, ' ')
             self.assertRaises(ValueError, cls.marshal, 'bogus')
+        self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])
+
+    def test_const_or_list(self):
+        # Test VLAN lists
+        for l2t in ([1, 2], [0], [5, 6, 2230, 3340]):
+            self.assertEqual(l2t, util.VLANList.const_or_list(l2t))
+
+        # Test MAC lists
+        for l2t in (['aB:12:Cd:34:eF:56', '12Ab34cD56Ef'],
+                    ['Ab:12:cD:34:Ef:56']):
+            self.assertEqual(l2t, util.MACList.const_or_list(l2t))
+
+        # Test error cases
+        for cls in (util.VLANList, util.MACList):
+            for meth in (cls.marshal, cls.const_or_list):
+                self.assertRaises(ValueError, meth, None)
+                self.assertRaises(ValueError, meth, '')
+                self.assertRaises(ValueError, meth, ' ')
+                self.assertRaises(ValueError, meth, 'bogus')
         self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])
