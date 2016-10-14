@@ -84,4 +84,11 @@ class MTMS(ewrap.ElementWrapper):
         Does not override default __str__ as that is useful for debug
         purposes.
         """
+        # In the case of Cluster wrappers, it is possible for there
+        # not to be a MTMS attribute on a Node. Python string
+        # concatentation typing will cause this return to fail when
+        # appending 'NoneType' to the operator strings. Get around this
+        # by returning '' if any of the 3 values are None.
+        if not self.machine_type or not self.model or not self.serial:
+            return ''
         return self.machine_type + '-' + self.model + '*' + self.serial
