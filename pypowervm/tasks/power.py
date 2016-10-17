@@ -94,7 +94,8 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
 
 @lgc.logcall
 def power_off(part, host_uuid, force_immediate=False, restart=False,
-              timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
+              timeout=CONF.pypowervm_job_request_timeout, add_parms=None,
+              force_immed_on_failure=True):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
@@ -105,15 +106,23 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
     :param timeout: value in seconds for specifying how long to wait for the
                     instance to stop.
     :param add_parms: dict of parameters to pass directly to the job template
+    :param force_immed_on_failure: If True (the default) and the PowerOff fails
+                                   or times out, the method will automatically
+                                   retry as if the force_immediate flag was
+                                   True.  If False, VMPowerOffFailure is raised
+                                   right away in this case.  This argument has
+                                   no effect if force_immediate is True.
     """
     return _power_on_off(part, _SUFFIX_PARM_POWER_OFF, host_uuid,
                          force_immediate=force_immediate, restart=restart,
-                         timeout=timeout, add_parms=add_parms)
+                         timeout=timeout, add_parms=add_parms,
+                         force_immed_on_failure=force_immed_on_failure)
 
 
 def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                   restart=False, timeout=CONF.pypowervm_job_request_timeout,
-                  add_parms=None, synchronous=True):
+                  add_parms=None, synchronous=True,
+                  force_immed_on_failure=True):
     """Internal function to power on or off an instance.
 
     :param part: The LPAR/VIOS wrapper of the instance to act on.
@@ -133,6 +142,13 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                         as the Job has started on the server (that is, achieved
                         any state beyond NOT_ACTIVE).  Note that timeout is
                         still possible in this case.
+    :param force_immed_on_failure: If True (the default) and the PowerOff fails
+                                   or times out, the method will automatically
+                                   retry as if the force_immediate flag was
+                                   True.  If False, VMPowerOffFailure is raised
+                                   right away in this case.  This argument has
+                                   no effect for PowerOn, or if force_immediate
+                                   is True.
     """
     complete = False
     uuid = part.uuid
@@ -179,7 +195,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
             complete = True
         except pexc.JobRequestTimedOut as error:
             if suffix == _SUFFIX_PARM_POWER_OFF:
-                if operation == 'osshutdown':
+                if operation == 'osshutdown' and force_immed_on_failure:
                     # This has timed out, we loop again and attempt to
                     # force immediate vsp. Unless IBMi, in which case we
                     # will try an immediate osshutdown and then
@@ -220,7 +236,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 # If failed for other reasons,
                 # retry with normal vsp power off except for IBM i
                 # where we try immediate osshutdown first
-                elif operation == 'osshutdown':
+                elif operation == 'osshutdown' and force_immed_on_failure:
                     timeout = CONF.pypowervm_job_request_timeout
                     if (part.env == bp.LPARType.OS400 and not add_immediate):
                         add_immediate = True
