@@ -180,6 +180,7 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(u.MACList.NONE, lport.allowed_macs)
         self.assertEqual('000000000000', lport.cur_mac)
         self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
+        self.assertEqual('NOT_VNIC', lport.vnic_port_usage)
 
         # Verify logical port setters
         lport._sriov_adap_id(2)
