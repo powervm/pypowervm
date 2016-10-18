@@ -922,7 +922,8 @@ class _VNICDetails(ewrap.ElementWrapper):
     @property
     def pvid(self):
         """The integer port VLAN ID, or None if the vNIC has no PVID."""
-        return self._get_val_int(_VNICD_PVID) or None
+        pvid_val = self._get_val_int(_VNICD_PVID)
+        return pvid_val if (pvid_val or pvid_val == 0) else None
 
     @pvid.setter
     def pvid(self, val):
