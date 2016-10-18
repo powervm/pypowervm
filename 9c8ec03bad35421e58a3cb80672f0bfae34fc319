@@ -1,0 +1,8 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+1: Kendall, Kris M. <kriskend@us.ibm.com>
+Code-Review+2: Thorstensen, Andrew  (Drew) <thorst@us.ibm.com>
+Submitted-by: BUSH, CHRISTOPHER L. (CHRIS) <clbush@us.ibm.com>
+Submitted-at: Tue, 18 Oct 2016 13:03:15 -0500
+Reviewed-on: http://morpheus.rch.stglabs.ibm.com/4264
+Project: pypowervm
+Branch: refs/heads/develop
