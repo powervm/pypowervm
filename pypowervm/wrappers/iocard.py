@@ -276,6 +276,13 @@ class VNICBackDevStatus(object):
     UNKNOWN = 'UNKNOWN'
 
 
+class VNICPortUsage(object):
+    """Enumeration of possible VNIC port usages."""
+    NOT_VNIC = 'NOT_VNIC'
+    DEDICATED_VNIC = 'DEDICATED_VNIC'
+    SHARED_VNIC = 'SHARED_VNIC'
+
+
 @ewrap.ElementWrapper.pvm_type(IO_ADPT_ROOT, has_metadata=True)
 class IOAdapter(ewrap.ElementWrapper):
     """A generic IO Adapter.
@@ -727,6 +734,10 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     @property
     def loc_code(self):
         return self._get_val_str(_SRIOVLP_LOC_CODE)
+
+    @property
+    def vnic_port_usage(self):
+        return self._get_val_str(_SRIOVLP_VNIC_PORT_USAGE)
 
 
 @ewrap.EntryWrapper.pvm_type(_VNIC_DED, child_order=_VNIC_EL_ORDER)
