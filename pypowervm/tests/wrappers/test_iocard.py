@@ -327,7 +327,7 @@ class TestVNIC(twrap.TestWrapper):
         self._test_details_props(self.dwrap)
 
     def _test_details_props(self, dets):
-        self.assertIsNone(dets.pvid)
+        self.assertEqual(0, dets.pvid)
         dets.pvid = 123
         self.assertEqual(123, dets.pvid)
         self.assertEqual(u.VLANList.ALL, dets.allowed_vlans)
