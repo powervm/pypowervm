@@ -268,7 +268,7 @@ class TestUploadLV(testtools.TestCase):
     def test_upload_new_lu(self, mock_crt_lu, mock_create_file):
         """Tests create/upload of SSP LU."""
         # traits are already set to use the REST API upload
-        ssp = mock.Mock()
+        ssp = mock.Mock(adapter=mock.Mock(traits=mock.Mock(local_api=True)))
         interim_lu = mock.Mock(adapter=self.adpt)
         mock_create_file.return_value = self._fake_meta()
         mock_crt_lu.return_value = ssp, interim_lu
@@ -295,6 +295,12 @@ class TestUploadLV(testtools.TestCase):
             root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
         self.assertIsNone(f_wrap)
 
+        # Make sure it fails if the upload type is not right.
+        ssp = mock.Mock(adapter=mock.Mock(traits=mock.Mock(local_api=False)))
+        self.assertRaises(exc.APINotLocal, ts.upload_new_lu, self.v_uuid, ssp,
+                          None, 'lu1', size_b, d_size=25, sha_chksum='abc123',
+                          upload_type=ts.UploadType.FUNC)
+
     @mock.patch('pypowervm.util.convert_bytes_to_gb')
     @mock.patch('pypowervm.tasks.storage.crt_lu')
     @mock.patch('pypowervm.tasks.storage.upload_lu')
@@ -310,7 +316,8 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum=None)
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.IO_STREAM)
         mock_b2g.reset_mock()
         mock_crt.reset_mock()
         mock_upl.reset_mock()
@@ -323,7 +330,8 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum='sha_chksum')
+                                    sha_chksum='sha_chksum',
+                                    upload_type=ts.UploadType.IO_STREAM)
         mock_b2g.reset_mock()
         mock_crt.reset_mock()
         mock_upl.reset_mock()
@@ -337,7 +345,35 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum=None)
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.IO_STREAM)
+
+    @mock.patch('pypowervm.util.convert_bytes_to_gb')
+    @mock.patch('pypowervm.tasks.storage.crt_lu')
+    @mock.patch('pypowervm.tasks.storage.upload_lu')
+    def test_upload_new_lu_calls_via_func(self, mock_upl, mock_crt, mock_b2g):
+        """Various permutations of how to call upload_new_lu."""
+        mock_crt.return_value = 'ssp_out', 'new_lu'
+        f_size = 10
+
+        # Fail if not local
+        ssp_in = mock.Mock(
+            adapter=mock.Mock(traits=mock.Mock(local_api=False)))
+        self.assertRaises(exc.APINotLocal, ts.upload_new_lu, 'v_uuid', ssp_in,
+                          'd_stream', 'lu_name', f_size,
+                          upload_type=ts.UploadType.FUNC)
+
+        # Successful call
+        ssp_in = mock.Mock(adapter=mock.Mock(traits=mock.Mock(local_api=True)))
+        self.assertEqual(('new_lu', mock_upl.return_value), ts.upload_new_lu(
+            'v_uuid', ssp_in, 'd_stream', 'lu_name', f_size,
+            upload_type=ts.UploadType.FUNC))
+        mock_b2g.assert_called_with(f_size, dp=2)
+        mock_crt.assert_called_with(ssp_in, 'lu_name', mock_b2g.return_value,
+                                    typ=stor.LUType.IMAGE)
+        mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.FUNC)
 
     def test_create_file(self):
         """Validates that the _create_file builds the Element properly."""
