@@ -52,6 +52,90 @@ _LOCK_VOL_GRP = 'vol_grp_lock'
 _UPLOAD_SEM = threading.Semaphore(3)
 
 
+def _setup_upload_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, f_size,
+                        d_size=None, sha_chksum=None):
+    """Initial setup for the upload_new_vdisk* methods."""
+    # Create the new virtual disk.  The size here is in GB.  We can use decimal
+    # precision on the create call.  What the VIOS will then do is determine
+    # the appropriate segment size (pp) and will provide a virtual disk that
+    # is 'at least' that big.  Depends on the segment size set up on the
+    # volume group how much over it could go.
+    #
+    # See note below...temporary workaround needed.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
+    gb_size = util.convert_bytes_to_gb(d_size)
+
+    # Need to round up to the highest GB.
+    gb_size = math.ceil(gb_size)
+    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
+
+    # The file type.  If local API server, then we can use the coordinated
+    # file path.  Otherwise standard upload.
+    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
+                 else vf.FileType.DISK_IMAGE)
+
+    # Next, create the file, but specify the appropriate disk udid from the
+    # Virtual Disk
+    vio_file = _create_file(
+        adapter, d_name, file_type, v_uuid, f_size=f_size,
+        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+
+    return n_vdisk, vio_file
+
+
+def upload_new_vdisk_delegate(adapter, v_uuid, vol_grp_uuid, delegate_func,
+                              d_name, f_size, d_size=None, sha_chksum=None):
+    """Uploads a new virtual disk via a delegate method.
+
+    This method is similar to upload_new_vdisk.  However, upload_new_vdisk
+    takes in a stream, where as this takes in the 'delegate_func'.  The
+    delegate_func is a function that will be invoked when the copying should
+    begin.  That function will be passed in a file path to copy to.
+
+    This method will not return until an EOF is sent to the file path passed
+    in to the delegate_func.  It is the responsibility of the invoker to ensure
+    that is invoked.
+
+    Note: This only works when using the pypowervm API locally.
+
+    :param adapter: The adapter to talk over the API.
+    :param v_uuid: The Virtual I/O Server UUID that will host the disk.
+    :param vol_grp_uuid: The volume group that will host the Virtual Disk's
+                         UUID.
+    :param delegate_func: A method function (as described above) that will be
+                          invoked to stream the data into the virtual disk.
+                          Only one parameter is passed in, and that is the
+                          path to the file to stream the data into.
+    :param d_name: The name that should be given to the disk on the Virtual
+                   I/O Server that will contain the file.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param d_size: (OPTIONAL) The desired size of the new VDisk in bytes.  If
+                     omitted or smaller than f_size, it will be set to match
+                     f_size.
+    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+                       integrity checks.
+    :return: The first return value is the virtual disk that the file is
+             uploaded into.
+    :return: Normally the second return value will be None, indicating that the
+             disk and image were uploaded without issue.  If for some reason
+             the File metadata for the VIOS was not cleaned up, the return
+             value is the File EntryWrapper.  This is simply a metadata marker
+             to be later used to retry the cleanup.
+    """
+    if not adapter.traits.local_api:
+        raise exc.APINotLocal()
+
+    # Do the common setup
+    n_vdisk, vio_file = _setup_upload_vdisk(
+        adapter, v_uuid, vol_grp_uuid, d_name, f_size, d_size=d_size,
+        sha_chksum=sha_chksum)
+
+    # Run the upload with the delegate function
+    maybe_file = _upload_stream(vio_file, None, delegate_func=delegate_func)
+    return n_vdisk, maybe_file
+
+
 def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
                      d_size=None, sha_chksum=None):
     """Creates a new Virtual Disk and uploads a data stream to it.
@@ -79,35 +163,12 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
              value is the File EntryWrapper.  This is simply a metadata marker
              to be later used to retry the cleanup.
     """
+    # Do the common setup
+    n_vdisk, vio_file = _setup_upload_vdisk(
+        adapter, v_uuid, vol_grp_uuid, d_name, f_size, d_size=d_size,
+        sha_chksum=sha_chksum)
 
-    # Create the new virtual disk.  The size here is in GB.  We can use decimal
-    # precision on the create call.  What the VIOS will then do is determine
-    # the appropriate segment size (pp) and will provide a virtual disk that
-    # is 'at least' that big.  Depends on the segment size set up on the
-    # volume group how much over it could go.
-    #
-    # See note below...temporary workaround needed.
-    if d_size is None or d_size < f_size:
-        d_size = f_size
-    gb_size = util.convert_bytes_to_gb(d_size)
-
-    # TODO(IBM) Temporary - need to round up to the highest GB.  This should
-    # be done by the platform in the future.
-    gb_size = math.ceil(gb_size)
-
-    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
-
-    # The file type.  If local API server, then we can use the coordinated
-    # file path.  Otherwise standard upload.
-    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
-                 else vf.FileType.DISK_IMAGE)
-
-    # Next, create the file, but specify the appropriate disk udid from the
-    # Virtual Disk
-    vio_file = _create_file(
-        adapter, d_name, file_type, v_uuid, f_size=f_size,
-        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
-
+    # Run the upload
     maybe_file = _upload_stream(vio_file, d_stream)
     return n_vdisk, maybe_file
 
@@ -147,7 +208,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
 
 def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
                   sha_chksum=None, return_ssp=False):
-    """Creates a new SSP Logical Unit and uploads a data stream to it.
+    """Creates a new SSP Logical Unit and uploads via a delegate function.
 
     Note: return spec varies based on the return_ssp parameter:
 
@@ -200,6 +261,77 @@ def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
     return (ssp, new_lu, maybe_file) if return_ssp else (new_lu, maybe_file)
 
 
+def upload_new_lu_delegate_func(v_uuid, ssp, delegate_func, lu_name, f_size,
+                                d_size=None, sha_chksum=None,
+                                return_ssp=False):
+    """Creates a new SSP Logical Unit and uploads a data stream to it.
+
+    This method is similar to upload_new_lu.  However, upload_new_lu takes in a
+    stream, where as this takes in the 'delegate_func'.  The delegate_func is a
+    function that will be invoked when the copying should begin.  That function
+    will be passed in a file path to copy to.
+
+    This method will not return until an EOF is sent to the file path passed
+    in to the delegate_func.  It is the responsibility of the invoker to ensure
+    that is invoked.
+
+    Note: This only works when using the pypowervm API locally.
+
+    Note: return spec varies based on the return_ssp parameter:
+
+        # Default/legacy behavior
+        new_lu, maybe_file = upload_new_lu(..., return_ssp=False)
+
+        # With return_ssp=True
+        ssp, new_lu, maybe_file = upload_new_lu(..., return_ssp=True)
+
+    :param v_uuid: The UUID of the Virtual I/O Server through which to perform
+                   the upload.  (Note that the new LU will be visible from any
+                   VIOS in the Shared Storage Pool's Cluster.)
+    :param ssp: SSP EntryWrapper representing the Shared Storage Pool on which
+                to create the new Logical Unit.
+    :param delegate_func: A method function (as described above) that will be
+                          invoked to stream the data into the SSP Logical Unit.
+                          Only one parameter is passed in, and that is the
+                          path to the file to stream the data into.
+    :param lu_name: The name that should be given to the new LU.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param d_size: (OPTIONAL) The size of the LU (in bytes).  Not required if
+                   it should match the file.  Must be at least as large as the
+                   file.
+    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+                       integrity checks.
+    :param return_ssp: (OPTIONAL) If True, the return value of the method is a
+                       three-member tuple whose third value is the updated SSP
+                       EntryWrapper.  If False (the default), the method
+                       returns a two-member tuple.
+    :return: If the return_ssp parameter is True, the first return value is the
+             updated SSP EntryWrapper, containing the newly-created and
+             -uploaded LU.  If return_ssp is False, this return value is absent
+             - only the below two values are returned.
+    :return: An LU EntryWrapper corresponding to the Logical Unit into which
+             the file was uploaded.
+    :return: Normally None, indicating that the LU was created and the image
+             was uploaded without issue.  If for some reason the File metadata
+             for the VIOS was not cleaned up, the return value is the File
+             EntryWrapper.  This is simply a marker to be later used to retry
+             the cleanup.
+    """
+    if not ssp.adapter.traits.local_api:
+        raise exc.APINotLocal()
+
+    # Create the new Logical Unit.  The LU size needs to be in decimal GB.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
+    gb_size = util.convert_bytes_to_gb(d_size, dp=2)
+
+    ssp, new_lu = crt_lu(ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
+
+    maybe_file = upload_lu_delegate(v_uuid, new_lu, delegate_func, f_size,
+                                    sha_chksum=sha_chksum)
+    return (ssp, new_lu, maybe_file) if return_ssp else (new_lu, maybe_file)
+
+
 def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
     """Uploads a data stream to an existing SSP Logical Unit.
 
@@ -234,7 +366,50 @@ def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
     return _upload_stream(vio_file, d_stream)
 
 
-def _upload_stream(vio_file, d_stream):
+def upload_lu_delegate(v_uuid, lu, delegate_func, f_size, sha_chksum=None):
+    """Uploads to an existing SSP Logical Unit via a delegate method.
+
+    This method is similar to upload_lu.  However, upload_lu takes in a stream,
+    where as this takes in the 'delegate_func'.  The delegate_func is a
+    function that will be invoked when the copying should begin.  That function
+    will be passed in a file path to copy to.
+
+    This method will not return until an EOF is sent to the file path passed
+    in to the delegate_func.  It is the responsibility of the invoker to ensure
+    that is invoked.
+
+    Note: This only works when using the pypowervm API locally.
+
+    :param v_uuid: The UUID of the Virtual I/O Server through which to perform
+                   the upload.
+    :param lu: LU Wrapper representing the Logical Unit to which to upload the
+               data.  The LU must already exist in the SSP.
+    :param delegate_func: A method function (as described above) that will be
+                          invoked to stream the data into the SSP Logical Unit.
+                          Only one parameter is passed in, and that is the
+                          path to the file to stream the data into.
+    :param f_size: The size (in bytes) of the stream to be uploaded.
+    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+                       integrity checks.
+    :return: Normally the return value will be None, indicating that the image
+             was uploaded without issue.  If for some reason the File metadata
+             for the VIOS was not cleaned up, the return value is the LU
+             EntryWrapper.  This is simply a marker to be later used to retry
+             the cleanup.
+    """
+    if not lu.adapter.traits.local_api:
+        raise exc.APINotLocal()
+
+    # Create the file, specifying the UDID from the new Logical Unit.
+    # The File name matches the LU name.
+    vio_file = _create_file(
+        lu.adapter, lu.name, vf.FileType.DISK_IMAGE_COORDINATED, v_uuid,
+        f_size=f_size, tdev_udid=lu.udid, sha_chksum=sha_chksum)
+
+    return _upload_stream(vio_file, None, delegate_func=delegate_func)
+
+
+def _upload_stream(vio_file, d_stream, delegate_func=None):
     """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
@@ -263,7 +438,9 @@ def _upload_stream(vio_file, d_stream):
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
 
-        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
+        if delegate_func is not None:
+            _upload_stream_delegate(vio_file, delegate_func)
+        elif vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
             # It works by writing to a file 'pipe'.  This is harder to
@@ -359,6 +536,27 @@ def _upload_stream_coordinated(vio_file, d_stream):
 
         # Submit the threads
         copy_f = th.submit(_copy_func, vio_file, d_stream, out_stream)
+    # Make sure we call the results.  This is just to make sure it
+    # doesn't have exceptions
+    for io_future in futures.as_completed([upload_f, copy_f]):
+        io_future.result()
+
+
+def _upload_stream_delegate(vio_file, delegate_method):
+    # A reader to tell the API we have nothing to upload
+    class EmptyReader(object):
+        def read(self, size):
+            return None
+
+    with futures.ThreadPoolExecutor(max_workers=2) as th:
+        # The upload file is a blocking call (won't return until pipe
+        # is fully written to), which is why we put it in another
+        # thread.
+        upload_f = th.submit(vio_file.adapter.upload_file,
+                             vio_file.element, EmptyReader())
+
+        # Submit the delegate method
+        copy_f = th.submit(delegate_method, vio_file.asset_file)
     # Make sure we call the results.  This is just to make sure it
     # doesn't have exceptions
     for io_future in futures.as_completed([upload_f, copy_f]):
