@@ -52,6 +52,35 @@ _LOCK_VOL_GRP = 'vol_grp_lock'
 _UPLOAD_SEM = threading.Semaphore(3)
 
 
+def upload_new_vdisk_delegate(adapter, v_uuid, vol_grp_uuid, delegate_func,
+                              d_name, f_size, d_size=None, sha_chksum=None):
+    # Create the new virtual disk.  The size here is in GB.  We can use decimal
+    # precision on the create call.  What the VIOS will then do is determine
+    # the appropriate segment size (pp) and will provide a virtual disk that
+    # is 'at least' that big.  Depends on the segment size set up on the
+    # volume group how much over it could go.
+    #
+    # See note below...temporary workaround needed.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
+    gb_size = util.convert_bytes_to_gb(d_size)
+
+    # TODO(IBM) Temporary - need to round up to the highest GB.  This should
+    # be done by the platform in the future.
+    gb_size = math.ceil(gb_size)
+
+    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
+
+    # Next, create the file, but specify the appropriate disk udid from the
+    # Virtual Disk
+    vio_file = _create_file(
+        adapter, d_name, vf.FileType.DISK_IMAGE_COORDINATED, v_uuid,
+        f_size=f_size, tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+
+    maybe_file = _upload_stream(vio_file, None, delegate_func=delegate_func)
+    return n_vdisk, maybe_file
+
+
 def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
                      d_size=None, sha_chksum=None):
     """Creates a new Virtual Disk and uploads a data stream to it.
@@ -234,7 +263,7 @@ def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
     return _upload_stream(vio_file, d_stream)
 
 
-def _upload_stream(vio_file, d_stream):
+def _upload_stream(vio_file, d_stream, delegate_func=None):
     """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
@@ -263,7 +292,9 @@ def _upload_stream(vio_file, d_stream):
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
 
-        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
+        if delegate_func is not None:
+            _upload_stream_delegate(vio_file, delegate_func)
+        elif vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
             # It works by writing to a file 'pipe'.  This is harder to
@@ -359,6 +390,27 @@ def _upload_stream_coordinated(vio_file, d_stream):
 
         # Submit the threads
         copy_f = th.submit(_copy_func, vio_file, d_stream, out_stream)
+    # Make sure we call the results.  This is just to make sure it
+    # doesn't have exceptions
+    for io_future in futures.as_completed([upload_f, copy_f]):
+        io_future.result()
+
+
+def _upload_stream_delegate(vio_file, delegate_method):
+    # A reader to tell the API we have nothing to upload
+    class EmptyReader(object):
+        def read(self, size):
+            return None
+
+    with futures.ThreadPoolExecutor(max_workers=2) as th:
+        # The upload file is a blocking call (won't return until pipe
+        # is fully written to), which is why we put it in another
+        # thread.
+        upload_f = th.submit(vio_file.adapter.upload_file,
+                             vio_file.element, EmptyReader())
+
+        # Submit the delegate method
+        copy_f = th.submit(delegate_method, vio_file.asset_file)
     # Make sure we call the results.  This is just to make sure it
     # doesn't have exceptions
     for io_future in futures.as_completed([upload_f, copy_f]):
