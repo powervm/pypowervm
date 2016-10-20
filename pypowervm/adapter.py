@@ -931,7 +931,9 @@ class Adapter(object):
         json_search_str = (c.UUID_REGEX + '/quick$' + '|/quick/' + r'|\.json$')
         if re.search(json_search_str, util.dice_href(path, include_query=False,
                                                      include_fragment=False)):
-            headers['Accept'] = 'application/json'
+            # Successful request will return application/json; errors (like 400
+            # or 404) will return application/atom+xml.
+            headers['Accept'] = '*/*'
         else:
             headers['Accept'] = 'application/atom+xml'
         if etag:
