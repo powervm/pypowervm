@@ -350,7 +350,7 @@ class TestAdapter(testtools.TestCase):
         basepath = c.API_BASE_PATH + 'uom/SomeRootObject'
         uuid = "abcdef01-2345-2345-2345-67890abcdef0"
         hdr_xml = 'application/atom+xml'
-        hdr_json = 'application/json'
+        hdr_json = '*/*'
         etag = 'abc123'
 
         # Root feed
