@@ -283,5 +283,7 @@ class PhypVirtualFCAdpt(object):
 
     def __init__(self, vfc):
         self.vios_id = vfc.get('viosId')
-        self.wwpn_pair = vfc.get('wwpnPair')
+        # The PCM metrics will have wwpnPair as key name in older versions
+        # and wwpnpair as key name in newer versions.
+        self.wwpn_pair = vfc.get('wwpnpair', vfc.get('wwpnPair', []))
         self.physical_location = vfc.get('physicalLocation')
