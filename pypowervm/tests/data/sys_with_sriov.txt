@@ -922,6 +922,7 @@ BODY{
                     <AdapterID kxe="false" kb="ROR">553713680</AdapterID>
                     <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
                     <PhysicalLocation kxe="false" kb="ROR">U78CB.001.WZS06RG-P1-C7</PhysicalLocation>
+                    <SRIOVAdapterID kb="COD" kxe="false">2</SRIOVAdapterID>
                     <AdapterState kb="ROR" kxe="false">NotConfigured</AdapterState>
                     <AdapterMode kxe="false" kb="CUD">Dedicated</AdapterMode>
                 </SRIOVAdapter>
