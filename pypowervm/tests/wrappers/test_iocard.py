@@ -33,7 +33,7 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.sriovs = self.dwrap.asio_config.sriov_adapters
 
     def test_list(self):
-        self.assertEqual(3, len(self.sriovs))
+        self.assertEqual(4, len(self.sriovs))
         for sriov in self.sriovs:
             self.assertIsInstance(sriov, card.SRIOVAdapter)
 
@@ -51,8 +51,8 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         self.assertEqual('553713696', self.sriovs[0].id)
         self.assertEqual(1, self.sriovs[0].sriov_adap_id)
 
-        self.assertEqual('553713680', self.sriovs[1].id)
-        self.assertIsNone(self.sriovs[1].sriov_adap_id)
+        self.assertEqual('553713680', self.sriovs[2].id)
+        self.assertIsNone(self.sriovs[2].sriov_adap_id)
 
     def test_mode(self):
         self.assertEqual('Sriov', self.sriovs[0].mode)
@@ -152,7 +152,7 @@ class TestSRIOVAdapter(twrap.TestWrapper):
         exist in the XML, asking for phys_ports doesn't create it.
         """
         # 2nd and 3rd SRIOV adapters have no pports
-        adp = self.sriovs[1]
+        adp = self.sriovs[2]
         self.assertNotIn('<EthernetPhysicalPorts ', adp.toxmlstring())
         self.assertNotIn('<ConvergedEthernetPhysicalPorts ', adp.toxmlstring())
         self.assertEqual([], adp.phys_ports)
