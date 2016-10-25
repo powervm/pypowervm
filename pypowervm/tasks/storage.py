@@ -62,6 +62,9 @@ class UploadType(object):
     # the 'read' method that returns a chunk of bytes.
     IO_STREAM = 'stream'
 
+    # A parameter-less function that builds an IO_STREAM.
+    IO_STREAM_BUILDER = 'stream_builder'
+
     # A method function that will be invoked to stream the data into the
     # virtual disk. Only one parameter is passed in, and that is the path to
     # the file to stream the data into.
@@ -298,6 +301,9 @@ def _upload_stream(vio_file, io_handle, upload_type):
              is the File EntryWrapper.  This is simply a marker to be later
              used to retry the cleanup.
     """
+    if upload_type == UploadType.IO_STREAM_BUILDER:
+        io_handle, upload_type = io_handle(), UploadType.IO_STREAM
+
     try:
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
