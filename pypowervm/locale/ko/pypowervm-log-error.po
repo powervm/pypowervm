@@ -5,14 +5,14 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.0.0.4\n"
+"Project-Id-Version: pypowervm 1.0.1.dev116\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-09-05 04:30-0400\n"
-"PO-Revision-Date: 2016-09-05 04:30-0400\n"
+"POT-Creation-Date: 2016-10-07 01:34-0400\n"
+"PO-Revision-Date: 2016-10-07 01:34-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.3.4\n"
 
@@ -47,20 +47,20 @@ msgstr ""
 #: pypowervm/utils/lpar_builder.py:476
 #, python-format
 msgid ""
-"Field '%(field)s' has a value below the minimum. Value: %(value)s "
-"Minimum: %(minimum)s"
+"Field '%(field)s' has a value below the minimum. Value: %(value)s Minimum: "
+"%(minimum)s"
 msgstr ""
-"'%(field)s' 필드의 값이 최소값보다 작습니다. 값: %(value)s "
-"최소값: %(minimum)s"
+"필드 '%(field)s'에 최소값 미만의 값이 있습니다. 값: %(value)s 최소값: "
+"%(minimum)s"
 
 #: pypowervm/utils/lpar_builder.py:485
 #, python-format
 msgid ""
-"Field '%(field)s' has a value above the maximum. Value: %(value)s "
-"Maximum: %(maximum)s"
+"Field '%(field)s' has a value above the maximum. Value: %(value)s Maximum: "
+"%(maximum)s"
 msgstr ""
-"'%(field)s' 필드의 값이 최대값보다 큽니다. 값: %(value)s "
-"최대값: %(maximum)s"
+"필드 '%(field)s'에 최대값을 초과하는 값이 있습니다. 값: %(value)s 최대값: "
+"%(maximum)s"
 
 #: pypowervm/utils/lpar_builder.py:539
 #, python-format
@@ -92,24 +92,23 @@ msgstr ""
 #: pypowervm/utils/lpar_builder.py:607
 #, python-format
 msgid ""
-"The managed system does not support active memory expansion. The "
-"expansion factor value '%(value)s' is not valid."
+"The managed system does not support active memory expansion. The expansion "
+"factor value '%(value)s' is not valid."
 msgstr ""
-"관리되는 시스템에서 활성 메모리 확장을 지원하지 않습니다. "
-"확장 계수 값 '%(value)s'이(가) 올바르지 않습니다."
+"관리 대상 시스템이 활성 메모리 확장을 지원하지 않습니다. 확장 "
+"계수 값 '%(value)s'이(가) 올바르지 않습니다. "
 
 #: pypowervm/utils/lpar_builder.py:613
 #, python-format
 msgid ""
-"Active memory expansion value must be greater than or equal to 1.0 and "
-"less than or equal to 10.0. A value of 0 is also valid and indicates that"
-" AME is off. '%(value)s' is not valid."
+"Active memory expansion value must be greater than or equal to 1.0 and less "
+"than or equal to 10.0. A value of 0 is also valid and indicates that AME is "
+"off. '%(value)s' is not valid."
 msgstr ""
-"활성 메모리 확장 값은 1.0 이상 및 10.0 이하여야 합니다. "
-"0 값은 유효하고 AME가 해제되어 있음을 나타냅니다. "
-"'%(value)s'은(는) 올바르지 않습니다."
+"활성 메모리 확장 값은 1.0 이상이고 10.0 이하여야 "
+"합니다. 0 값도 유효하며, 이는 AME가 꺼져 있음을 "
+"표시합니다. '%(value)s'이(가) 올바르지 않습니다. "
 
-
-# ENGL1SH_VERS10N 20054_4 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 51899_4 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 45
-# T9N_SH1P_STR1NG PV132AAP001 1
+# T9N_SH1P_STR1NG PV132AAP001 2
