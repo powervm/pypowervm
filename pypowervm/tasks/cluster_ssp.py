@@ -152,7 +152,8 @@ def _upload_conflict(tier, luname, mkr_luname):
     return False
 
 
-def get_or_upload_image_lu(tier, luname, vios_uuid, stream_func, b_size):
+def get_or_upload_image_lu(tier, luname, vios_uuid, io_handle, b_size,
+                           upload_type=tsk_stg.UploadType.IO_STREAM_BUILDER):
     """Ensures our SSP has an LU containing the specified image.
 
     If an LU of type IMAGE with the specified luname already exists in our SSP,
@@ -174,13 +175,14 @@ def get_or_upload_image_lu(tier, luname, vios_uuid, stream_func, b_size):
                    shortened to satisfy length restrictions.
     :param vios_uuid: The UUID of the Virtual I/O Server through which the
                       upload should be performed, if necessary.
-    :param stream_func: A method providing the data stream to upload.  The
-                        method accepts no parameters.  It must return a file-
-                        handle-like object (one with a read(bytes) method).
-                        This method is only invoked if the image actually needs
-                        to be uploaded.
+    :param io_handle: The I/O handle (as defined by the upload_type).  This is
+                      only used if the image_lu needs to be uploaded.
     :param b_size: Integer size, in bytes, of the image provided by
                    stream_func's return value.
+    :param upload_type: (Optional, Default: IO_STREAM_BUILDER) Defines the way
+                        in which the LU should be uploaded.  Refer to the
+                        UploadType enumeration for valid upload mechanisms.
+                        It defaults to IO_STREAM_BUILDER for legacy reasons.
     :return: LUEnt EntryWrapper representing the image LU.
     """
     # Marker (upload-in-progress) LU name prefixed with 'partxxxxxxxx'
@@ -229,7 +231,8 @@ def get_or_upload_image_lu(tier, luname, vios_uuid, stream_func, b_size):
             tier, new_lu = tsk_stg.crt_lu(
                 tier, luname, u.convert_bytes_to_gb(b_size, dp=2), typ=IMGTYP)
             try:
-                tsk_stg.upload_lu(vios_uuid, new_lu, stream_func(), b_size)
+                tsk_stg.upload_lu(vios_uuid, new_lu, io_handle, b_size,
+                                  upload_type=upload_type)
             except Exception as exc:
                 LOG.exception(exc)
                 # We need to remove the LU so it doesn't block others

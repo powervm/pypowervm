@@ -21,6 +21,7 @@ import uuid
 
 import pypowervm.entities as ent
 import pypowervm.tasks.cluster_ssp as cs
+import pypowervm.tasks.storage as tsk_st
 import pypowervm.tests.tasks.util as tju
 from pypowervm.tests.test_utils import test_wrapper_abc as twrap
 import pypowervm.util as u
@@ -197,11 +198,12 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         self.entries.append(self.img_lu)
         return tier, self.img_lu
 
-    def upload_lu(self, vios_uuid, new_lu, stream, b_size):
+    def upload_lu(self, vios_uuid, new_lu, stream, b_size, upload_type=None):
         self.assertEqual(self.vios_uuid, vios_uuid)
         self.assertEqual(self.img_lu, new_lu)
-        self.assertEqual(self.mock_stream_func.return_value, stream)
+        self.assertEqual(self.mock_stream_func, stream)
         self.assertEqual(self.b_size, b_size)
+        self.assertEqual(tsk_st.UploadType.IO_STREAM_BUILDER, upload_type)
 
     def sleep_conflict_finishes(self, sec):
         """Pretend the conflicting LU finishes while we sleep."""
@@ -246,8 +248,6 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
             self.tier, self.img_lu.name, self.vios_uuid, self.mock_stream_func,
             self.b_size))
 
-        # Invoked the stream func
-        self.mock_stream_func.assert_called_once_with()
         # Uploaded content
         self.assertEqual(1, self.mock_upload_lu.call_count)
         # Removed marker LU

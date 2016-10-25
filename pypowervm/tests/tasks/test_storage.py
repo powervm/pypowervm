@@ -225,6 +225,28 @@ class TestUploadLV(testtools.TestCase):
             self.vg_uuid, None, 'test2', 50, d_size=25, sha_chksum='abc123',
             upload_type=ts.UploadType.FUNC)
 
+    @mock.patch('pypowervm.tasks.storage._upload_stream_coordinated')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_stream_via_stream_bld(self, mock_create_file,
+                                          mock_upload_st_coordinated):
+        """Tests the uploads of a vDisk - via UploadType.IO_STREAM_BUILDER."""
+        mock_file = self._fake_meta()
+        mock_file._enum_type(vf.FileType.DISK_IMAGE_COORDINATED)
+        mock_create_file.return_value = mock_file
+
+        mock_io_stream = mock.MagicMock()
+        mock_io_handle = mock.MagicMock()
+        mock_io_handle.return_value = mock_io_stream
+
+        # Run the code
+        ts._upload_stream(mock_file, mock_io_handle,
+                          ts.UploadType.IO_STREAM_BUILDER)
+
+        # Make sure the function was called.
+        mock_io_handle.assert_called_once_with()
+        mock_upload_st_coordinated.assert_called_once_with(
+            mock_file, mock_io_stream, ts.UploadType.IO_STREAM)
+
     @mock.patch('pypowervm.tasks.storage.open')
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_stream_coordinated_with_fail(self, mock_create_file,
@@ -462,9 +484,9 @@ class TestVDisk(testtools.TestCase):
         self.assertEqual(10, ret.capacity)
 
 
-class TestRMSTorage(testtools.TestCase):
+class TestRMStorage(testtools.TestCase):
     def setUp(self):
-        super(TestRMSTorage, self).setUp()
+        super(TestRMStorage, self).setUp()
         self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
         self.adpt = self.adptfx.adpt
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
