@@ -43,6 +43,12 @@ LOG = logging.getLogger(__name__)
 XPATH_DELIM = '/'
 
 
+def get_uptime():
+    """Returns the number of seconds since system boot, as a float."""
+    with open('/proc/uptime') as uptime:
+        return float(uptime.readline().split()[0])
+
+
 def dice_href(href, include_scheme_netloc=False, include_query=True,
               include_fragment=True):
     """Parse, sanitize, and reassemble an href.

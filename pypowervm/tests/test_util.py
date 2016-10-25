@@ -34,6 +34,9 @@ dummyuuid2 = "67890abc-5432-5432-5432-def0abcdef01"
 class TestUtil(unittest.TestCase):
     """Unit tests for pypowervm.util."""
 
+    def test_get_uptime(self):
+        self.assertIsInstance(util.get_uptime(), float)
+
     def test_get_max_age(self):
         """Clear-box unit test coverage for pypowervm.util.get_max_age().
 
