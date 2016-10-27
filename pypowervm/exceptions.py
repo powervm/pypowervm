@@ -343,3 +343,7 @@ class CantUpdatePPortsInUse(AbstractMsgFmtError):
 
 class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
     msg_fmt = _("Unable to create VNC based virtual terminal: %(err)s")
+
+
+class CacheNotSupportedException(AbstractMsgFmtError):
+    msg_fmt = _("The Adapter cache is not supported.")

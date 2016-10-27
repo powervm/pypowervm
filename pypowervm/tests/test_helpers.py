@@ -30,18 +30,18 @@ def cat_string_helper(func, string):
 
 class TestHelpers(unittest.TestCase):
     def test_none(self):
-        adpt = adp.Adapter('mock_session', use_cache=False, helpers=None)
+        adpt = adp.Adapter('mock_session', helpers=None)
         self.assertEqual([], adpt.helpers)
 
     def test_single(self):
         hlp = functools.partial(cat_string_helper, string="purple!")
-        adpt = adp.Adapter('mock_session', use_cache=False, helpers=hlp)
+        adpt = adp.Adapter('mock_session', helpers=hlp)
         self.assertEqual([hlp], adpt.helpers)
 
     def test_single_list(self):
         hlp = functools.partial(cat_string_helper, string="purple!")
         hlp_list = [hlp]
-        adpt = adp.Adapter('mock_session', use_cache=False, helpers=hlp_list)
+        adpt = adp.Adapter('mock_session', helpers=hlp_list)
         self.assertEqual(hlp_list, adpt.helpers)
         # Use this test to ensure the list returned is a copy
         self.assertNotEqual(id(hlp_list), id(adpt.helpers))
@@ -49,7 +49,7 @@ class TestHelpers(unittest.TestCase):
     def test_multi_list(self):
         hlp1 = functools.partial(cat_string_helper, string="1")
         hlp2 = functools.partial(cat_string_helper, string="2")
-        adpt = adp.Adapter('mock_session', use_cache=False,
+        adpt = adp.Adapter('mock_session',
                            helpers=[hlp1, hlp2])
         self.assertEqual([hlp1, hlp2], adpt.helpers)
 
@@ -57,7 +57,7 @@ class TestHelpers(unittest.TestCase):
     def test_no_helpers(self, mock_sess):
 
         mock_sess.request.return_value = 'ReturnValue'
-        adpt = adp.Adapter(mock_sess, use_cache=False)
+        adpt = adp.Adapter(mock_sess)
         self.assertEqual('ReturnValue',
                          adpt._request('method', 'path'))
 
@@ -70,7 +70,7 @@ class TestHelpers(unittest.TestCase):
 
         mock_sess.request.return_value = 'countdown:'
         adpt = adp.Adapter(
-            mock_sess, use_cache=False, helpers=[hlp1, hlp2, hlp3])
+            mock_sess, helpers=[hlp1, hlp2, hlp3])
         self.assertEqual('countdown:321',
                          adpt._request('method', 'path'))
 
@@ -79,7 +79,7 @@ class TestHelpers(unittest.TestCase):
                          adpt._request('method', 'path', helpers=hlp2))
 
         # No adapter helpers, but request helper
-        adpt = adp.Adapter(mock_sess, use_cache=False)
+        adpt = adp.Adapter(mock_sess)
         self.assertEqual('countdown:1',
                          adpt._request('method', 'path', helpers=[hlp1]))
 
@@ -89,10 +89,10 @@ class TestHelpers(unittest.TestCase):
         hlp = "bad helper, shame on you"
 
         mock_sess.request.return_value = 'Should not get returned'
-        adpt = adp.Adapter(mock_sess, use_cache=False, helpers=hlp)
+        adpt = adp.Adapter(mock_sess, helpers=hlp)
         with self.assertRaises(TypeError):
             adpt._request('method', 'path')
 
-        adpt = adp.Adapter(mock_sess, use_cache=False)
+        adpt = adp.Adapter(mock_sess)
         with self.assertRaises(TypeError):
             adpt._request('method', 'path', helpers=[hlp])

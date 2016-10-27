@@ -42,7 +42,7 @@ class TestLogHelper(testtools.TestCase):
         helpers = log_hlp.log_helper
         response = adp.Response('GET', '/some/path', 200, 'OK', ['headers'])
         self.sess.request.return_value = response
-        adpt = adp.Adapter(self.sess, use_cache=False, helpers=helpers)
+        adpt = adp.Adapter(self.sess, helpers=helpers)
 
         # Test that we get the response we expect passed back unharmed
         self.assertEqual(response,
@@ -88,7 +88,7 @@ class TestLogHelper(testtools.TestCase):
         # Ensure the log storage is initialized correctly, and we can change
         # the default value
         hlp_size = functools.partial(log_hlp.log_helper, max_logs=12)
-        adpt1 = adp.Adapter(self.sess, use_cache=False, helpers=hlp_size)
+        adpt1 = adp.Adapter(self.sess, helpers=hlp_size)
         self.sess.request.side_effect = None
         with mock.patch('pypowervm.helpers.log_helper.'
                         '_init_thread_stg') as mock_init:
