@@ -548,7 +548,7 @@ class TestElementWrapper(testtools.TestCase):
 
     def _verify_response_clone(self, resp1, resp2):
         for attr in ('reqmethod', 'reqpath', 'reqheaders', 'reqbody', 'status',
-                     'reason', 'headers', 'body', 'orig_reqpath', 'adapter'):
+                     'reason', 'headers', 'body', 'adapter'):
             self.assertEqual(getattr(resp1, attr), getattr(resp2, attr))
         self.assertIsNot(resp1.headers, resp2.headers)
         self.assertIs(resp1.adapter, resp2.adapter)
@@ -1082,7 +1082,7 @@ class TestRefresh(testtools.TestCase):
 
     def setUp(self):
         super(TestRefresh, self).setUp()
-        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.adp = apt.Adapter(mock.patch('requests.Session'))
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.old_etag = '123'
         self.clust_old = clust.Cluster.bld(
@@ -1156,8 +1156,7 @@ class TestUpdate(testtools.TestCase):
 
     def setUp(self):
         super(TestUpdate, self).setUp()
-        mock_session = self.useFixture(fx.SessionFx()).sess
-        self.adp = apt.Adapter(mock_session, use_cache=False)
+        self.adp = apt.Adapter(self.useFixture(fx.SessionFx()).sess)
 
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.cl = clust.Cluster.bld(

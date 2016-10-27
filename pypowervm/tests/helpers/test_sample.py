@@ -39,7 +39,7 @@ class TestSampleHelper(testtools.TestCase):
             'GET', '/some/path', 200, 'OK', ['headers'],
             body='Some Text HSCL3205 More Text')
         self.sess.request.side_effect = pvmex.Error('yo', response=fake_resp1)
-        adpt = adp.Adapter(self.sess, use_cache=False, helpers=helpers)
+        adpt = adp.Adapter(self.sess, helpers=helpers)
         self.assertRaises(
             pvmex.Error, adpt._request, 'method', 'path', body='the body')
 

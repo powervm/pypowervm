@@ -130,3 +130,7 @@ Developer Notes
   will be removed no sooner than January 1st, 2017.  You should now use the
   ``pypowervm.tasks.storage.crt_lu`` method to create a linked clone by passing
   the source image LU wrapper via the ``clone`` parameter.
+
+- The Adapter cache is removed as of release 1.0.0.4.  Attempting to
+  create an Adapter with ``use_cache=True`` will result in a
+  ``CacheNotSupportedException``.
