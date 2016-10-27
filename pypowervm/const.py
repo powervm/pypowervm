@@ -18,11 +18,6 @@
 
 import six
 
-# TODO(IBM): is anything else not cacheable?
-UNCACHEABLE = ('/rest/api/web/', '/rest/api/pcm/',
-               '/quick', '/search/', '?detail', '/jobs')
-# TODO(IBM): invalidate SSP cache based on ClusterLULinkedClone jobs
-
 _DEFAULT_SCHEMA_VERSION = 'V1_0'
 _SCHEMA_VER120 = 'V1_2_0'
 _SCHEMA_VER130 = 'V1_3_0'
