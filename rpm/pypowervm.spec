@@ -21,7 +21,6 @@ Requires: python-six >= 1.7.0
 Requires: python-oslo-concurrency >= 0.3.0
 Requires: pytz
 Requires: python-futures
-Requires: python-psutil >= 1.1.1
 Requires: python-taskflow >= 0.7.1
 Requires: python-oslo-context
 
