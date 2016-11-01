@@ -73,6 +73,7 @@ _BP_MGT_PARTITION = 'IsManagementPartition'
 _BP_AUTO_START = 'AutoStart'
 _BP_BOOT_MODE = 'BootMode'
 _BP_NVRAM = 'PartitionNVRAM'
+_BP_UPTIME = 'Uptime'
 _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
@@ -91,8 +92,8 @@ BP_EL_ORDER = (
     _BP_SRIOV_ETH, _BP_SRIOV_ROCE, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH,
     _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
-    _BP_NVRAM, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS,
-    _BP_DESC
+    _BP_NVRAM, _BP_UPTIME, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_ASSOC_TASKS, _BP_DESC
 )
 
 # Partition Capabilities (_CAP)
@@ -695,6 +696,10 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         self.set_parm_value(_BP_NVRAM, nvram,
                             attrib=u.xag_attrs(const.XAG.NVRAM,
                                                base=const.ATTR_KSV130))
+
+    @property
+    def uptime(self):
+        return self._get_val_int(_BP_UPTIME)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
