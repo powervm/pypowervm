@@ -35,10 +35,10 @@ LPAR_FEED_NO_MGMT = 'lpar_ibmi.txt'
 VIO_FEED_NO_MGMT = 'fake_vios_feed2.txt'
 
 
-def mock_vios(name, state, rmc_state, is_mgmt=False):
+def mock_vios(name, state, rmc_state, is_mgmt=False, uptime=3601):
     ret = mock.Mock()
     ret.configure_mock(name=name, state=state, rmc_state=rmc_state,
-                       is_mgmt_partition=is_mgmt)
+                       is_mgmt_partition=is_mgmt, uptime=uptime)
     return ret
 
 
@@ -195,9 +195,7 @@ class TestVios(twrap.TestWrapper):
             ex.FeedTaskEmptyFeed, tpar.build_active_vio_feed_task,
             mock.MagicMock())
 
-    @mock.patch('pypowervm.tasks.partition.LOG.warning')
-    def test_rmc_down_vioses(self, mock_warn):
-        """Time out waiting for up/inactive partitions, but succeed."""
+    def _mk_mock_vioses(self):
         # No
         mock_vios1 = mock_vios('vios1', bp.LPARState.NOT_ACTIVATED,
                                bp.RMCState.INACTIVE)
@@ -221,11 +219,35 @@ class TestVios(twrap.TestWrapper):
         mock_vios7 = mock_vios('vios7', bp.LPARState.RUNNING,
                                bp.RMCState.INACTIVE, is_mgmt=True)
 
-        self.mock_vios_get.return_value = [mock_vios1, mock_vios2, mock_vios3,
-                                           mock_vios4, mock_vios5, mock_vios6,
-                                           mock_vios7]
+        return [mock_vios1, mock_vios2, mock_vios3, mock_vios4, mock_vios5,
+                mock_vios6, mock_vios7]
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_timeout_short(self, mock_warn):
+        """Short timeout because relevant VIOSes have been up a while."""
+
+        self.mock_vios_get.return_value = self._mk_mock_vioses()
+
         tpar.validate_vios_ready('adap')
-        # We slept.
+        # We slept 120s, (24 x 5s) because all VIOSes have been up >1h
+        self.assertEqual(24, self.mock_sleep.call_count)
+        self.mock_sleep.assert_called_with(5)
+        # We wound up with rmc_down_vioses
+        mock_warn.assert_called_once_with(mock.ANY, {'time': 120,
+                                                     'vioses': 'vios3, vios6'})
+        # We didn't raise - because some VIOSes were okay.
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_rmc_down_vioses(self, mock_warn):
+        """Time out waiting for up/inactive partitions, but succeed."""
+
+        vioses = self._mk_mock_vioses()
+        # This one booted "recently"
+        vioses[5].uptime = 3559
+        self.mock_vios_get.return_value = vioses
+
+        tpar.validate_vios_ready('adap')
+        # We slept 600s, (120 x 5s) because one VIOS booted "recently"
         self.assertEqual(120, self.mock_sleep.call_count)
         self.mock_sleep.assert_called_with(5)
         # We wound up with rmc_down_vioses
