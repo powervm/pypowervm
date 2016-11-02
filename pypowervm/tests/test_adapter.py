@@ -226,6 +226,10 @@ class TestAdapter(testtools.TestCase):
         adp.Adapter()
         mock_sess.assert_called_with()
 
+    def test_no_cache(self):
+        self.assertRaises(pvmex.CacheNotSupportedException,
+                          adp.Adapter, use_cache=True)
+
     @mock.patch('requests.Session')
     def test_read(self, mock_session):
         """Test read() method found in the Adapter class."""
@@ -235,7 +239,7 @@ class TestAdapter(testtools.TestCase):
         child_type = 'child'
         child_id = 'child'
         suffix_type = 'quick'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         # Create a Response object, that will serve as a mock return value
         read_response = self._mk_response(200, response_text)
@@ -394,7 +398,7 @@ class TestAdapter(testtools.TestCase):
     def test_create(self, mock_session):
         """Test create() method found in the Adapter class."""
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
         new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
@@ -430,7 +434,7 @@ class TestAdapter(testtools.TestCase):
         etag = 'etag'
         root_type = 'root type'
         root_id = 'root id'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         update_response = self._mk_response(200, response_text)
 
@@ -453,7 +457,7 @@ class TestAdapter(testtools.TestCase):
     @mock.patch('requests.Session')
     def test_upload(self, mock_session):
         # Build the adapter
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         # Mock data
         filedesc_mock = mock.MagicMock()
@@ -500,7 +504,7 @@ class TestAdapter(testtools.TestCase):
     @mock.patch('requests.Session')
     def test_extend_path(self, mock_session):
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
@@ -664,7 +668,7 @@ class TestAdapter(testtools.TestCase):
         # Init test data
         root_type = 'ManagedSystem'
         root_id = 'id'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         delete_response = self._mk_response(204)
 
@@ -702,7 +706,7 @@ class TestAdapter(testtools.TestCase):
         """401 (unauthorized) calling Adapter.create()."""
 
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
         new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
@@ -913,30 +917,6 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         adapter.session._sessToken = 'token'.encode('utf-8')
         # Get construct and event listener
         adapter.session.get_event_listener()
-
-        # Turn off the event listener
-        adapter.session.get_event_listener().shutdown()
-        # Session is still active
-        self.assertFalse(self.mock_logoff.called)
-
-        # The only thing that refers the adapter is our reference
-        self.assertEqual(1, len(gc.get_referrers(adapter)))
-
-    def test_shutdown_cache_adapter(self):
-        """Test garbage collection of the session, event listener.
-
-        Ensures the proper shutdown of the session and event listener when
-        we start with constructing an Adapter w/caching, and EventListener.
-        """
-
-        # Get a session, we need to patch the session
-        sess = adp.Session()
-        sess._sessToken = 'token'.encode('utf-8')
-
-        # Get Adapter
-        adapter = adp.Adapter(sess, use_cache=True)
-        # Done with the session
-        sess = None
 
         # Turn off the event listener
         adapter.session.get_event_listener().shutdown()

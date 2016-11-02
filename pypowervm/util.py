@@ -174,46 +174,6 @@ def is_instance_path(href):
     return re.match(const.UUID_REGEX_WORD, path.rsplit('/', 1)[1])
 
 
-def determine_paths(resp):
-    paths = []
-    for lnk in resp.atom.links.get('SELF', []):
-        paths.append(urlparse.urlparse(lnk).path)
-    if not paths:
-        if resp.reqmethod == 'PUT':
-            # a PUT's reqpath will be the feed, to which we need to add
-            # the new entry id (which didn't exist before the PUT)
-            paths = [extend_basepath(resp.reqpath, '/' + resp.entry.uuid)]
-        else:
-            paths = [resp.reqpath]
-    return paths
-
-
-def get_max_age(path, use_events, schema_version):
-    if any(p in path for p in ['Cluster', 'SharedStoragePool']):
-        # no event support
-        # TODO(IBM): update when event support is added
-        return 15
-    if not use_events or schema_version.startswith('V1_0'):
-        # bad event support
-        # attempt to return the same values used by PowerVC 1.2.0 feed caches
-        # TODO(IBM): make these config options
-        if re.search('/LogicalPartition$', path):
-            return 30
-        if re.search('/VirtualIOServer$', path):
-            return 90
-        if re.search('/SharedProcessorPool$', path):
-            return 600
-        if re.search('/ManagedSystem/%s$' % const.UUID_REGEX, path):
-            return 30
-        else:
-            # TODO(IBM): can we trust the cache longer than 0
-            # for anything else?
-            return 0
-    else:
-        # TODO(IBM): consider extending as we grow more confident in events
-        return 600
-
-
 # TODO(IBM): fix (for MITM attacks) or remove (if using loopback only)
 def validate_certificate(host, port, certpath, certext):
     hostname = re.sub('[:.]', '_', host)
