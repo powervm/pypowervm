@@ -245,11 +245,11 @@ class Session(object):
                                  % method)
 
         if isupload:
-            LOG.debug('sending %s %s headers=%s body=<file contents>',
+            LOG.trace('sending %s %s headers=%s body=<file contents>',
                       method, url,
                       headers if not sensitive else "<sensitive>")
         else:
-            LOG.debug('sending %s %s headers=%s body=%s',
+            LOG.trace('sending %s %s headers=%s body=%s',
                       method, url,
                       headers if not sensitive else "<sensitive>",
                       body if not sensitive else "<sensitive>")
@@ -312,9 +312,9 @@ class Session(object):
                 # TODO(IBM): why does this happen and what else may result?
                 pass
 
-        LOG.debug('result: %s (%s) for %s %s', response.status_code,
+        LOG.trace('result: %s (%s) for %s %s', response.status_code,
                   response.reason, method, url)
-        LOG.debug('response headers: %s',
+        LOG.trace('response headers: %s',
                   response.headers if not sensitive else "<sensitive>")
 
         if response.status_code in [c.HTTPStatus.OK_NO_CONTENT,
@@ -323,7 +323,7 @@ class Session(object):
                             response.reason, response.headers,
                             reqheaders=headers, reqbody=body)
         else:
-            LOG.debug('response body:\n%s',
+            LOG.trace('response body:\n%s',
                       response.text if not sensitive else "<sensitive>")
 
         # re-login processing
