@@ -216,18 +216,44 @@ def _rmc_down(vwrap):
     return False
 
 
+def _vios_wait_timed_out(vwrap, time_waited, max_wait_time):
+    """Determine whether we've waited long enough for this VIOS to come up.
+
+    If max_wait_time is None, we will determine a suitable max_wait_time based
+    on how long the VIOS has been booted.
+
+    Then this method simply returns whether the time_waited exceeds the
+    (specified or generated) max_wait_time.
+
+    :param vwrap: VIOS wrapper to inspect.
+    :param time_waited: The number of seconds the caller has waited thus far.
+    :param max_wait_time: The maximum total number of seconds we should wait
+                          before declaring we've waited long enough.  If None,
+                          a suitable value will be determined based on the
+                          vwrap's uptime.
+    :return: True if we've waited long enough for this VIOS to come up.  False
+             if we should wait some more.
+    """
+    if max_wait_time is None:
+        max_wait_time = 120 if vwrap.uptime > 3600 else 600
+    return time_waited > max_wait_time
+
+
 def _wait_for_vioses(adapter, max_wait_time):
     """Wait for VIOSes to stabilize, and report on their states.
 
     :param adapter: The pypowervm adapter for the query.
     :param max_wait_time: Maximum number of seconds to wait for running VIOSes
-                          to get an active RMC connection.
+                          to get an active RMC connection.  If None, we will
+                          wait longer if the VIOS booted recently, shorter if
+                          it has been up for a while.
     :return: List of all VIOSes returned by the REST API.
     :return: List of all VIOSes which are powered on, but with RMC inactive.
     """
     vios_wraps = []
     rmc_down_vioses = []
     sleep_step = 5
+    time_waited = 0
     while True:
         try:
             vios_wraps = vios.VIOS.get(adapter)
@@ -243,10 +269,11 @@ def _wait_for_vioses(adapter, max_wait_time):
         except Exception as e:
             # Things like "Service Unavailable"
             LOG.warning(e)
-        if max_wait_time <= 0:
+        if all([_vios_wait_timed_out(vwr, time_waited, max_wait_time)
+                for vwr in get_active_vioses(adapter, vios_wraps=vios_wraps)]):
             break
         time.sleep(sleep_step)
-        max_wait_time -= sleep_step
+        time_waited += sleep_step
     return vios_wraps, rmc_down_vioses
 
 
@@ -259,9 +286,10 @@ def validate_vios_ready(adapter, max_wait_time=600):
     by the end of the wait period, the method will complete.
 
     :param adapter: The pypowervm adapter for the query.
-    :param max_wait_time: Maximum number of seconds to wait for running VIOSes
-                          to get an active RMC connection.  Defaults to 600
-                          (ten minutes).
+    :param max_wait_time: Integer maximum number of seconds to wait for running
+                          VIOSes to get an active RMC connection.  Defaults to
+                          None, in which case the wait time for each VIOS will
+                          depend on the time since it booted.
     :raises: A ViosNotAvailable exception if a VIOS is not available by a
              given timeout.
     """
