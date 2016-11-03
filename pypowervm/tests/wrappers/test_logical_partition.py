@@ -515,6 +515,9 @@ class TestLogicalPartition(testtools.TestCase):
         self._shared_wrapper.nvram = 'SomeOtherValue'
         self.assertEqual('SomeOtherValue', self._shared_wrapper.nvram)
 
+    def test_uptime(self):
+        self.assertEqual(1185681, self._dedicated_wrapper.uptime)
+
 
 class TestIBMiSpecific(twrap.TestWrapper):
     """IBMi-specific tests, requiring a test file from an IBMi partition."""
