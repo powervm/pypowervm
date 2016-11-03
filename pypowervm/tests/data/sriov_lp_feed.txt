@@ -60,10 +60,10 @@ BODY{
         </content>
     </entry>
     <entry>
-        <id>080c7f1f-29e9-333a-8034-a5c8a358786e</id>
+        <id>6d9cfdda-ae8b-3c58-bc0c-379a0c5ab154</id>
         <title>SRIOVEthernetLogicalPort</title>
         <published>2016-06-03T16:30:39.796-04:00</published>
-        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort/080c7f1f-29e9-333a-8034-a5c8a358786e?group=None"/>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort/6d9cfdda-ae8b-3c58-bc0c-379a0c5ab154?group=None"/>
         <author>
             <name>IBM Power Systems Management Console</name>
         </author>
@@ -98,6 +98,90 @@ BODY{
                 <IEEE8021QPriority kb="CUD" kxe="false">0</IEEE8021QPriority>
                 <NumberOfAllowedVLANs kxe="false" kb="CUD">0</NumberOfAllowedVLANs>
                 <AllowedVLANs kb="CUD" kxe="false">NONE</AllowedVLANs>
+            </SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort>
+        </content>
+    </entry>
+    <entry>
+        <id>6d9cfdda-ae8b-3c58-bc0c-379a0c5ab155</id>
+        <title>SRIOVEthernetLogicalPort</title>
+        <published>2016-06-03T16:30:39.796-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort/6d9cfdda-ae8b-3c58-bc0c-379a0c5ab155?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1743038943</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SRIOVEthernetLogicalPort">
+            <SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort xmlns:SRIOVEthernetLogicalPort="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>6d9cfdda-ae8b-3c58-bc0c-379a0c5ab155</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <ConfigurationID kb="COD" kxe="false">0</ConfigurationID>
+                <LogicalPortID kb="COD" kxe="false">654327810</LogicalPortID>
+                <AdapterID kxe="false" kb="COR">2</AdapterID>
+                <DynamicReconfigurationConnectorName kb="ROR" kxe="false">PHB 4098</DynamicReconfigurationConnectorName>
+                <IsFunctional kb="ROR" kxe="false">true</IsFunctional>
+                <IsPromiscous kxe="false" kb="CUR">true</IsPromiscous>
+                <IsDiagnostic kb="CUR" kxe="false">false</IsDiagnostic>
+                <IsHugeDMA kb="CUR" kxe="false">false</IsHugeDMA>
+                <DeviceName kxe="false" kb="ROR">unavailable</DeviceName>
+                <ConfiguredCapacity kxe="false" kb="CUR">18.0%</ConfiguredCapacity>
+                <PhysicalPortID kxe="false" kb="COR">1</PhysicalPortID>
+                <PortVLANID kxe="false" kb="CUR">42</PortVLANID>
+                <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0JYF-P1-C10-T1-S2</LocationCode>
+                <TuningBufferID kb="CUR" kxe="false">0</TuningBufferID>
+                <VNICPortUsage kxe="false" kb="ROR">DEDICATED_VNIC</VNICPortUsage>
+                <AllowedMACAddresses kxe="false" kb="CUD">ALL</AllowedMACAddresses>
+                <MACAddress kxe="false" kb="CUD">A65BDDBBAD67</MACAddress>
+                <CurrentMACAddress kxe="false" kb="ROR">A65BDDBBAD67</CurrentMACAddress>
+                <IEEE8021QAllowablePriorities kb="CUD" kxe="false">0</IEEE8021QAllowablePriorities>
+                <IEEE8021QPriority kb="CUD" kxe="false">0</IEEE8021QPriority>
+                <NumberOfAllowedVLANs kxe="false" kb="CUD">10</NumberOfAllowedVLANs>
+                <AllowedVLANs kb="CUD" kxe="false">ALL</AllowedVLANs>
+            </SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort>
+        </content>
+    </entry>
+    <entry>
+        <id>6d9cfdda-ae8b-3c58-bc0c-379a0c5ab156</id>
+        <title>SRIOVEthernetLogicalPort</title>
+        <published>2016-06-03T16:30:39.796-04:00</published>
+        <link rel="SELF" href="http://localhost:12080/rest/api/uom/VirtualIOServer/55F37E22-E616-4004-A60B-33EA11EFE91A/SRIOVEthernetLogicalPort/6d9cfdda-ae8b-3c58-bc0c-379a0c5ab156?group=None"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">1743038943</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=SRIOVEthernetLogicalPort">
+            <SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort xmlns:SRIOVEthernetLogicalPort="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>6d9cfdda-ae8b-3c58-bc0c-379a0c5ab156</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <ConfigurationID kb="COD" kxe="false">0</ConfigurationID>
+                <LogicalPortID kb="COD" kxe="false">654327811</LogicalPortID>
+                <AdapterID kxe="false" kb="COR">2</AdapterID>
+                <DynamicReconfigurationConnectorName kb="ROR" kxe="false">PHB 4099</DynamicReconfigurationConnectorName>
+                <IsFunctional kb="ROR" kxe="false">true</IsFunctional>
+                <IsPromiscous kxe="false" kb="CUR">false</IsPromiscous>
+                <IsDiagnostic kb="CUR" kxe="false">false</IsDiagnostic>
+                <IsHugeDMA kb="CUR" kxe="false">false</IsHugeDMA>
+                <DeviceName kxe="false" kb="ROR">unavailable</DeviceName>
+                <ConfiguredCapacity kxe="false" kb="CUR">2.0%</ConfiguredCapacity>
+                <PhysicalPortID kxe="false" kb="COR">1</PhysicalPortID>
+                <PortVLANID kxe="false" kb="CUR">42</PortVLANID>
+                <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0JYF-P1-C10-T1-S3</LocationCode>
+                <TuningBufferID kb="CUR" kxe="false">0</TuningBufferID>
+                <VNICPortUsage kxe="false" kb="ROR">DEDICATED_VNIC</VNICPortUsage>
+                <AllowedMACAddresses kxe="false" kb="CUD">NONE</AllowedMACAddresses>
+                <MACAddress kxe="false" kb="CUD">A65BDDBBAD68</MACAddress>
+                <CurrentMACAddress kxe="false" kb="ROR">A65BDDBBAD68</CurrentMACAddress>
+                <IEEE8021QAllowablePriorities kb="CUD" kxe="false">0</IEEE8021QAllowablePriorities>
+                <IEEE8021QPriority kb="CUD" kxe="false">0</IEEE8021QPriority>
+                <NumberOfAllowedVLANs kxe="false" kb="CUD">1</NumberOfAllowedVLANs>
+                <AllowedVLANs kb="CUD" kxe="false">ALL</AllowedVLANs>
             </SRIOVEthernetLogicalPort:SRIOVEthernetLogicalPort>
         </content>
     </entry>
