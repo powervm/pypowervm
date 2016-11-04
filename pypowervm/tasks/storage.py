@@ -17,6 +17,8 @@
 """Create, remove, map, unmap, and populate virtual storage objects."""
 
 import math
+import os
+import tempfile
 import threading
 import time
 
@@ -107,9 +109,6 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
              value is the File EntryWrapper.  This is simply a metadata marker
              to be later used to retry the cleanup.
     """
-    if not adapter.traits.local_api and upload_type == UploadType.FUNC:
-        raise exc.APINotLocal()
-
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
     # the appropriate segment size (pp) and will provide a virtual disk that
@@ -217,9 +216,6 @@ def upload_new_lu(v_uuid, ssp, io_handle, lu_name, f_size, d_size=None,
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
-    if upload_type == UploadType.FUNC and not ssp.adapter.traits.local_api:
-        raise exc.APINotLocal()
-
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
         d_size = f_size
@@ -254,9 +250,6 @@ def upload_lu(v_uuid, lu, io_handle, f_size, sha_chksum=None,
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
-    if not lu.adapter.traits.local_api and upload_type == UploadType.FUNC:
-        raise exc.APINotLocal()
-
     # The file type.  If local API server, then we can use the coordinated
     # file path.  Otherwise standard upload.
     file_type = (vf.FileType.DISK_IMAGE_COORDINATED
@@ -386,11 +379,40 @@ def _copy_func(vio_file, in_stream, out_stream):
         out_stream.close()
 
 
+class PipesOutLightsOut(object):
+    '''(╯°□°）╯︵ ┻━┻'''
+
+    def __init__(self, io_handle):
+        self.temp_dir = tempfile.mkdtemp()
+        self.file_path = os.path.join(self.temp_dir, 'pipes_out_lights_out')
+        os.mkfifo(self.file_path)
+
+        # Have the client start writing to the pipe.
+        io_handle(self.file_path)
+
+        # Get a read handle
+        self.fifo_reader = open(self.file_path, 'r')
+
+    def read(self, size):
+        ret = self.fifo_reader.read(size)
+
+        if not ret:
+            self.fifo_reader.close()
+            os.remove(self.file_path)
+            os.rmdir(self.temp_dir)
+
+        return ret
+
+
 def _upload_stream_coordinated(vio_file, io_handle, upload_type):
     # A reader to tell the API we have nothing to upload
     class EmptyReader(object):
         def read(self, size):
             return None
+
+    if vio_file.adapter.traits.local_api and upload_type == UploadType.FUNC:
+        upload_type = UploadType.IO_STREAM
+        io_handle = PipesOutLightsOut(io_handle)
 
     with futures.ThreadPoolExecutor(max_workers=2) as th:
         # The upload file is a blocking call (won't return until pipe
