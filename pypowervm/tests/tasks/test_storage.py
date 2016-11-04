@@ -176,7 +176,7 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
-    @mock.patch('pypowervm.tasks.storage._upload_stream_coordinated')
+    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_coordinated(self, mock_create_file,
                                           mock_stream_func):
@@ -225,7 +225,7 @@ class TestUploadLV(testtools.TestCase):
             self.vg_uuid, None, 'test2', 50, d_size=25, sha_chksum='abc123',
             upload_type=ts.UploadType.FUNC)
 
-    @mock.patch('pypowervm.tasks.storage._upload_stream_coordinated')
+    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_stream_via_stream_bld(self, mock_create_file,
                                           mock_upload_st_coordinated):
@@ -269,7 +269,7 @@ class TestUploadLV(testtools.TestCase):
         mock_open.return_value = mock_output_stream
 
         # Run the code
-        self.assertRaises(IOError, ts._upload_stream_coordinated,
+        self.assertRaises(IOError, ts._upload_stream_local,
                           mock_file, DownStream(), ts.UploadType.IO_STREAM)
 
         # The close count should be only one
@@ -284,8 +284,8 @@ class TestUploadLV(testtools.TestCase):
         mock_io_handle = mock.MagicMock()
 
         # Run the code
-        ts._upload_stream_coordinated(mock_file, mock_io_handle,
-                                      ts.UploadType.FUNC)
+        ts._upload_stream_local(mock_file, mock_io_handle,
+                                ts.UploadType.FUNC)
 
         # Make sure the function was called.
         mock_io_handle.assert_called_once_with(mock_file.asset_file)
