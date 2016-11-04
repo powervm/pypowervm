@@ -299,6 +299,37 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(('schema_type2', 'uuid2'), util.parent_spec(
             None, 'schema_type2', 'uuid2'))
 
+    def test_eintr_retry(self):
+        class MyOSError(OSError):
+            def __init__(self, errno):
+                self.errno = errno
+
+        class MyIOError(IOError):
+            def __init__(self, errno):
+                self.errno = errno
+
+        class MyValError(ValueError):
+            def __init__(self, errno):
+                self.errno = errno
+
+        func = mock.Mock()
+        mock_os_intr = MyOSError(4)
+        mock_io_intr = MyIOError(4)
+        mock_val_intr = MyValError(4)
+        mock_os_hup = MyOSError(1)
+        mock_io_hup = MyIOError(1)
+        func.side_effect = [mock_os_intr, mock_io_intr, mock_val_intr]
+        self.assertRaises(MyValError, util.eintr_retry, func)
+        self.assertEqual(3, func.call_count)
+        func.reset_mock()
+        func.side_effect = mock_os_hup
+        self.assertRaises(MyOSError, util.eintr_retry, func, 1, 'a')
+        func.assert_called_once_with(1, 'a')
+        func.reset_mock()
+        func.side_effect = mock_io_hup
+        self.assertRaises(MyIOError, util.eintr_retry, func)
+        func.assert_called_once_with()
+
 
 class TestAllowedList(unittest.TestCase):
     def test_all_none(self):

@@ -18,6 +18,7 @@
 
 import abc
 import datetime as dt
+import errno
 import hashlib
 import math
 import re
@@ -504,6 +505,30 @@ def parent_spec(parent, parent_type, parent_uuid):
         raise ValueError(_("Developer error: parent_type must be either a "
                            "string schema type or a Wrapper subclass."))
     return parent_type, parent_uuid
+
+
+def eintr_retry(func, *args):
+    """PEP475: Retry syscalls if EINTR signal received.
+
+    https://www.python.org/dev/peps/pep-0475/
+
+    Certain system calls can be interrupted by signal 4 (EINTR) for no good
+    reason.  Per PEP475, these signals should be ignored.  This is implemented
+    by default at the lowest level in py3, but we have to account for it in
+    py2.
+
+    :param func: The syscall to wrap.
+    :param args: Arguments to the syscall.
+    :return: The return value from invoking the syscall.
+    """
+    # See subprocess._eintr_retry_call
+    while True:
+        try:
+            return func(*args)
+        except (OSError, IOError) as e:
+            if e.errno == errno.EINTR:
+                continue
+            raise
 
 
 @six.add_metaclass(abc.ABCMeta)
