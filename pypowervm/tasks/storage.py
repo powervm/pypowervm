@@ -17,6 +17,8 @@
 """Create, remove, map, unmap, and populate virtual storage objects."""
 
 import math
+import os
+import tempfile
 import threading
 import time
 
@@ -107,9 +109,6 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
              value is the File EntryWrapper.  This is simply a metadata marker
              to be later used to retry the cleanup.
     """
-    if not adapter.traits.local_api and upload_type == UploadType.FUNC:
-        raise exc.APINotLocal()
-
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
     # the appropriate segment size (pp) and will provide a virtual disk that
@@ -217,9 +216,6 @@ def upload_new_lu(v_uuid, ssp, io_handle, lu_name, f_size, d_size=None,
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
-    if upload_type == UploadType.FUNC and not ssp.adapter.traits.local_api:
-        raise exc.APINotLocal()
-
     # Create the new Logical Unit.  The LU size needs to be in decimal GB.
     if d_size is None or d_size < f_size:
         d_size = f_size
@@ -254,9 +250,6 @@ def upload_lu(v_uuid, lu, io_handle, f_size, sha_chksum=None,
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
-    if not lu.adapter.traits.local_api and upload_type == UploadType.FUNC:
-        raise exc.APINotLocal()
-
     # The file type.  If local API server, then we can use the coordinated
     # file path.  Otherwise standard upload.
     file_type = (vf.FileType.DISK_IMAGE_COORDINATED
@@ -301,8 +294,27 @@ def _upload_stream(vio_file, io_handle, upload_type):
              is the File EntryWrapper.  This is simply a marker to be later
              used to retry the cleanup.
     """
+    fifo_pipo, th_pool = None, futures.ThreadPoolExecutor(1)
+
     if upload_type == UploadType.IO_STREAM_BUILDER:
         io_handle, upload_type = io_handle(), UploadType.IO_STREAM
+    elif (upload_type == UploadType.FUNC and
+          not vio_file.adapter.traits.local_api):
+        # If you are running a 'function' based upload, but are not local,
+        # you can't use coordinated.  This wraps it in a _RestApiPipe, which
+        # allows the remote user to have a local file to write to.
+        #
+        # To us, this is a FIFO pipe.  We do the following:
+        # - Create the pipe
+        # - Ask the user to write to it.  It is a blocking call, so do this
+        #   in a new thread.
+        # - Get the 'reader' of the pipe.  Transform the upload into a stream
+        #   as the reader is simply a stream of the input into that file pipe.
+        #
+        # The finally block will clean this up at the end.
+        fifo_pipo = _RestApiPipe(io_handle)
+        fifo_pipo_f = th_pool.submit(fifo_pipo.pipe)
+        io_handle, upload_type = fifo_pipo.reader(), UploadType.IO_STREAM
 
     try:
         # Acquire the upload semaphore
@@ -326,6 +338,14 @@ def _upload_stream(vio_file, io_handle, upload_type):
             # Cleanup after the upload
             vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
                                     service='web')
+
+            # If we used the RESTAPIPipe, close it out
+            if fifo_pipo_f:
+                # This waits for the pipe to finish...though it will already
+                # be done.  Next is the close of the pipe to clean the
+                # directory out.
+                fifo_pipo_f.result()
+                fifo_pipo.close()
         except Exception:
             LOG.exception(_('Unable to cleanup after file upload. '
                             'File uuid: %s') % vio_file.uuid)
@@ -351,25 +371,27 @@ def _upload_stream_api(vio_file, d_stream):
             i += 1
 
 
-def _copy_func(vio_file, in_stream, out_stream):
+def _copy_func(vio_file, io_handle, upload_type):
     try:
-        LOG.info(_("Starting to read from stream for image upload "
-                   "to %s."), vio_file.asset_file)
+        LOG.info(_("Starting to read from stream for image upload to %s."),
+                 vio_file.asset_file)
         i = 0
+        with open(vio_file.asset_file, 'a+b', 0) as out_stream:
+            while True:
+                chunk = io_handle.read(65536)
+                if not chunk:
+                    LOG.debug("Reached EOF at chunk %d", i)
+                    break
+                out_stream.write(chunk)
 
-        while True:
-            chunk = in_stream.read(65536)
-            if not chunk:
-                break
-            out_stream.write(chunk)
+                if i % 100 == 0:
+                    LOG.debug("Uploaded chunk %d to the server for file "
+                              "%s", i, vio_file.asset_file)
+                i += 1
 
-            if i % 100 == 0:
-                LOG.debug("Uploaded chunk %d to the server for file %s",
-                          i, vio_file.asset_file)
-            i += 1
+                # Yield to other threads
+                time.sleep(0)
 
-            # Yield to other threads
-            time.sleep(0)
     except Exception as e:
         LOG.error(_("Encountered an error while uploading to file "
                     "%s to the server."), vio_file.asset_file)
@@ -379,11 +401,43 @@ def _copy_func(vio_file, in_stream, out_stream):
         # redundant.
         LOG.exception(e)
         raise
-    finally:
-        LOG.info(_("Closing stream for image upload %s"), vio_file.asset_file)
-        # The close indicates to the other side we are done.  Will
-        # force the upload_file to return.
-        out_stream.close()
+
+
+class _RestApiPipe(object):
+    """A Pipe to used to allow local uploads from a remote user."""
+
+    def __init__(self, file_writer):
+        """Create a _RestApiPipe.
+
+        :param file_writer: A method in the spirit of:
+                            def file_writer(file_path):
+                                with open(file_path, 'w') as out_stream:
+                                    while ...:
+                                        out_stream.write(...)
+        """
+        self.file_writer = file_writer
+
+        # Make the file path
+        self.temp_dir = tempfile.mkdtemp()
+        self.file_path = os.path.join(self.temp_dir, 'REST_API_Pipe')
+        os.mkfifo(self.file_path)
+        self.fifo_reader = None
+
+    def pipe(self):
+        """Asks the client to start writing to the pipe."""
+        self.file_writer(self.file_path)
+
+    def reader(self):
+        """Creates a reader of the FIFO pipe."""
+        self.fifo_reader = open(self.file_path, 'r')
+        return self.fifo_reader
+
+    def close(self):
+        """Closes out and cleans up the pipe."""
+        if self.fifo_reader:
+            self.fifo_reader.close()
+        os.remove(self.file_path)
+        os.rmdir(self.temp_dir)
 
 
 def _upload_stream_coordinated(vio_file, io_handle, upload_type):
@@ -396,8 +450,8 @@ def _upload_stream_coordinated(vio_file, io_handle, upload_type):
         # The upload file is a blocking call (won't return until pipe
         # is fully written to), which is why we put it in another
         # thread.
-        upload_f = th.submit(vio_file.adapter.upload_file,
-                             vio_file.element, EmptyReader())
+        upload_f = th.submit(vio_file.adapter.upload_file, vio_file.element,
+                             EmptyReader())
 
         if upload_type is UploadType.IO_STREAM:
             # Create a function that streams to the FIFO pipe
@@ -409,6 +463,7 @@ def _upload_stream_coordinated(vio_file, io_handle, upload_type):
             # The io_handle is a function.  Just pass it the asset file path
             # and that function will do the copying.
             copy_f = th.submit(io_handle, vio_file.asset_file)
+
     # Make sure we call the results.  This is just to make sure it
     # doesn't have exceptions
     for io_future in futures.as_completed([upload_f, copy_f]):
