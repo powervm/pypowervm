@@ -1,0 +1,8 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+1: Pearson, Amartey S. <apearson@us.ibm.com>
+Code-Review+2: Thorstensen, Andrew  (Drew) <thorst@us.ibm.com>
+Submitted-by: FRIED, ERIC P. <efried@us.ibm.com>
+Submitted-at: Mon, 07 Nov 2016 15:36:25 -0600
+Reviewed-on: http://morpheus.rch.stglabs.ibm.com/4356
+Project: pypowervm
+Branch: refs/heads/release/1.0.0.4
