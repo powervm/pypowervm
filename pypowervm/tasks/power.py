@@ -73,6 +73,19 @@ class KeylockPos(object):
     ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
 
 
+class Force(object):
+    """Enumeration indicating the strategy for forcing power-off."""
+    # The force-immediate option is included on the first pass.
+    TRUE = True
+    # The force-immediate option is not included on the first pass; but if the
+    # power-off fails, it is retried with the force-immediate option included.
+    # This value is False for backward compatibility.
+    ON_FAILURE = False
+    # The force-immediate option is not included.  If the power-off fails, it
+    # is not retried.
+    NO_RETRY = 'no retry'
+
+
 @lgc.logcall
 def power_on(part, host_uuid, add_parms=None, synchronous=True):
     """Will Power On a Logical Partition or Virtual I/O Server.
@@ -93,14 +106,24 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
 
 
 @lgc.logcall
-def power_off(part, host_uuid, force_immediate=False, restart=False,
+def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
               timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
-    :param force_immediate: Boolean.  Perform an immediate power off.
+    :param force_immediate: One of the Force enum values, defaulting to
+                            Force.ON_FAILURE, which behave as follows:
+            - Force.TRUE: The force-immediate option is included on the first
+                          pass.
+            - Force.NO_RETRY: The force-immediate option is not included.  If
+                              the power-off fails or times out,
+                              VMPowerOffFailure is raised immediately.
+            - Force.ON_FAILURE: The force-immediate option is not included on
+                                the first pass; but if the power-off fails
+                                (including timeout), it is retried with the
+                                force-immediate option added.
     :param restart: Boolean.  Perform a restart after the power off.
     :param timeout: value in seconds for specifying how long to wait for the
                     instance to stop.
@@ -111,7 +134,7 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
                          timeout=timeout, add_parms=add_parms)
 
 
-def _power_on_off(part, suffix, host_uuid, force_immediate=False,
+def _power_on_off(part, suffix, host_uuid, force_immediate=Force.ON_FAILURE,
                   restart=False, timeout=CONF.pypowervm_job_request_timeout,
                   add_parms=None, synchronous=True):
     """Internal function to power on or off an instance.
@@ -120,8 +143,18 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
     :param host_uuid: TEMPORARY - The host system UUID that the LPAR/VIOS
                       resides on
-    :param force_immediate: Boolean.  Do immediate shutdown (for PowerOff
-                            suffix only)
+    :param force_immediate: (For PowerOff suffix only) One of the Force enum
+                            values (defaulting to Force.ON_FAILURE), which
+                            behave as follows:
+            - Force.TRUE: The force-immediate option is included on the first
+                          pass.
+            - Force.NO_RETRY: The force-immediate option is not included.  If
+                              the power-off fails or times out,
+                              VMPowerOffFailure is raised immediately.
+            - Force.ON_FAILURE: The force-immediate option is not included on
+                                the first pass; but if the power-off fails
+                                (including timeout), it is retried with the
+                                force-immediate option added.
     :param restart: Boolean.  Do a restart after power off (for PowerOff suffix
                     only)
     :param timeout: Value in seconds for specifying how long to wait for the
@@ -147,7 +180,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
         job_parms = []
         if suffix == _SUFFIX_PARM_POWER_OFF:
             operation = 'osshutdown'
-            if force_immediate:
+            if force_immediate == Force.TRUE:
                 operation = 'shutdown'
                 add_immediate = True
             # Do normal vsp shutdown if flag on or
@@ -179,7 +212,8 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
             complete = True
         except pexc.JobRequestTimedOut as error:
             if suffix == _SUFFIX_PARM_POWER_OFF:
-                if operation == 'osshutdown':
+                if operation == 'osshutdown' and (force_immediate ==
+                                                  Force.ON_FAILURE):
                     # This has timed out, we loop again and attempt to
                     # force immediate vsp. Unless IBMi, in which case we
                     # will try an immediate osshutdown and then
@@ -191,11 +225,11 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                         else:
                             normal_vsp_power_off = True
                     else:
-                        force_immediate = True
+                        force_immediate = Force.TRUE
                 # normal vsp power off did not work, try hard vsp power off
                 elif normal_vsp_power_off:
                     timeout = CONF.pypowervm_job_request_timeout
-                    force_immediate = True
+                    force_immediate = Force.TRUE
                     normal_vsp_power_off = False
                 else:
                     LOG.exception(error)
@@ -220,17 +254,18 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
                 # If failed for other reasons,
                 # retry with normal vsp power off except for IBM i
                 # where we try immediate osshutdown first
-                elif operation == 'osshutdown':
+                elif operation == 'osshutdown' and (force_immediate ==
+                                                    Force.ON_FAILURE):
                     timeout = CONF.pypowervm_job_request_timeout
                     if (part.env == bp.LPARType.OS400 and not add_immediate):
                         add_immediate = True
                     else:
-                        force_immediate = False
+                        force_immediate = Force.NO_RETRY
                         normal_vsp_power_off = True
                 # normal vsp power off did not work, try hard vsp power off
                 elif normal_vsp_power_off:
                     timeout = CONF.pypowervm_job_request_timeout
-                    force_immediate = True
+                    force_immediate = Force.TRUE
                     normal_vsp_power_off = False
                 else:
                     raise pexc.VMPowerOffFailure(reason=emsg,
