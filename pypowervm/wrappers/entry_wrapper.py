@@ -893,6 +893,27 @@ class EntryWrapper(Wrapper):
                             child_type=cls.schema_type, **read_kwargs)
 
     @classmethod
+    def get_by_href(cls, adapter, href, **rbh_kwargs):
+        """Get a wrapper or feed given a URI.
+
+        This can be useful for retrieving wrappers "associated" with other
+        wrappers, where the association is provided via an atom link.  Some
+        examples are TrunkAdapter.associated_vswitch_uri and
+        VNICBackDev.vios_href.
+
+        :param adapter: A pypowervm.adapter.Adapter instance for REST API
+                        communication.
+        :param href: The string URI (including scheme://host:port/) of the
+                     entry or feed to retrieve.
+        :param rbh_kwargs: Keyword arguments to be passed directly to Adapter's
+                           read_by_href method.
+        :return: EntryWrapper subclass of the appropriate type, or a list
+                 thereof, representing the entry/feed associated with the href
+                 parameter.
+        """
+        return cls.wrap(adapter.read_by_href(href, **rbh_kwargs))
+
+    @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
                parent_uuid=None, one_result=False, parent=None, **kwargs):
         """Performs a REST API search.

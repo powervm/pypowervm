@@ -741,8 +741,7 @@ class NetworkBridgerVNET(NetworkBridger):
                  Load Group, None will be returned.
         """
         for vnet_uri in lg.vnet_uri_list:
-            vnet_resp = self.adapter.read_by_href(vnet_uri)
-            vnet_net = pvm_net.VNet.wrap(vnet_resp)
+            vnet_net = pvm_net.VNet.get_by_href(self.adapter, vnet_uri)
             if vnet_net.vlan == vlan:
                 return vnet_net.related_href
         return None
