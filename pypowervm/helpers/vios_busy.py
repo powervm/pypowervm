@@ -24,12 +24,58 @@ persists, it may mean the VIOS is in need of manual intervention.
 import time
 
 import pypowervm.const as c
+import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
-import pypowervm.wrappers.entry_wrapper as ew
-import pypowervm.wrappers.http_error as he
 
 # Make UT a little easier
 SLEEP = time.sleep
+
+# Error codes that indicate the VIOS is busy
+_VIOS_BUSY_ERR_CODES = ['HSCL3205', 'VIOS0014']
+
+
+def _message_scrape(message):
+    """Check HttpError message for strings indicating VIOS busy.
+
+    :param message: The <Message/> field of the HttpError to check.
+    :return: True if the message contains a string indicating VIOS busy; False
+             otherwise.
+    """
+    # The old message met the following criteria
+    if ('VIOS' in message and
+            'is busy processing some other request' in message):
+        return True
+
+    # The new message format is the following
+    if 'The system is currently too busy' in message:
+        return True
+
+    # All others, assume not busy
+    return False
+
+
+def is_vios_busy(message, status):
+    """Determine whether the VIOS is busy, based on HttpErrorResponse data.
+
+    :param message: The string value of the <Message/> field of the
+                    HttpErrorResponse.
+    :param status: The integer value of the <HTTPStatus/> field of the
+                   HttpErrorResponse.
+    :return: True if the VIOS is considered "busy"; False otherwise.
+    """
+    try:
+        if any(code in message for code in _VIOS_BUSY_ERR_CODES):
+            return True
+
+        # Legacy message checks
+        if status != c.HTTPStatus.INTERNAL_ERROR:
+            return False
+
+        return _message_scrape(message)
+
+    except Exception:
+        # If anything went wrong, assume not busy
+        return False
 
 
 def vios_busy_retry_helper(func, max_retries=3, delay=5):
@@ -40,17 +86,30 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
         max_retries (int): Max number retries.
     """
 
-    def is_retry(http_error):
+    def is_retry(resp):
         """Determines if the error is one that can be retried."""
-        # If for some reason it is not an Http Error, it can't be retried.
-        if not isinstance(http_error, he.HttpError):
+        # If the response is empty/invalid, assume no retry
+        if not resp or not resp.body or not resp.entry:
+            return False
+
+        el = ent.Element.wrapelement(resp.entry.element, None)
+        # If it is not an HttpError, it can't be retried.
+        if el.tag != 'HttpErrorResponse':
             return False
 
         # Check if the VIOS is clearly busy, or if there is a service
         # unavailable.  The service unavailable can occur on child objects when
         # a VIOS is busy.
-        return (http_error.is_vios_busy() or
-                http_error.status == c.HTTPStatus.SERVICE_UNAVAILABLE)
+        message = el.find('Message')
+        if message is not None:
+            message = message.text.strip()
+        status = el.find('HTTPStatus')
+        if status is not None and status.text.isdigit():
+            status = int(status.text.strip())
+        else:
+            status = None
+        return (is_vios_busy(message, status) or
+                status == c.HTTPStatus.SERVICE_UNAVAILABLE)
 
     def wrapper(*args, **kwds):
         retries = 0
@@ -64,15 +123,12 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
                     raise
 
                 # See if the system was busy
-                resp = e.response
-                if resp and resp.body and resp.entry:
-                    wrap = ew.EntryWrapper.wrap(resp.entry)
-                    if is_retry(wrap):
-                        retries += 1
-                        # Wait a few seconds before trying again, scaling
-                        # out the delay based on the retry count.
-                        SLEEP(delay * retries)
-                        continue
+                if is_retry(e.response):
+                    retries += 1
+                    # Wait a few seconds before trying again, scaling
+                    # out the delay based on the retry count.
+                    SLEEP(delay * retries)
+                    continue
 
                 # Doesn't look like a VIOS busy error, so just raise it.
                 raise
