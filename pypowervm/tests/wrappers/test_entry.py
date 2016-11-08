@@ -876,6 +876,13 @@ class TestGet(testtools.TestCase):
         # Nothing was ever wrapped
         mock_wrap.assert_not_called()
 
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_get_by_href(self, mock_wrap):
+        self.assertEqual(
+            mock_wrap.return_value,
+            ewrap.EntryWrapper.get_by_href(self.adpt, 'href', one=2, three=4))
+        self.adpt.read_by_href.assert_called_once_with('href', one=2, three=4)
+
 
 class TestSearch(testtools.TestCase):
     """Tests for EntryWrapper.search()."""
