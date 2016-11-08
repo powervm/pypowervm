@@ -41,6 +41,7 @@ import pypowervm.adapter as adp
 import pypowervm.const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
+from pypowervm.helpers import vios_busy as vio_hlp
 import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
@@ -223,8 +224,9 @@ class TestAdapter(testtools.TestCase):
 
     @mock.patch('pypowervm.adapter.Session')
     def test_empty_init(self, mock_sess):
-        adp.Adapter()
+        adap = adp.Adapter()
         mock_sess.assert_called_with()
+        self.assertEqual([vio_hlp.vios_busy_retry_helper], adap._helpers)
 
     def test_no_cache(self):
         self.assertRaises(pvmex.CacheNotSupportedException,

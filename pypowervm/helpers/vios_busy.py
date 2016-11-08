@@ -25,8 +25,6 @@ import time
 
 import pypowervm.const as c
 import pypowervm.exceptions as pvmex
-import pypowervm.wrappers.entry_wrapper as ew
-import pypowervm.wrappers.http_error as he
 
 # Make UT a little easier
 SLEEP = time.sleep
@@ -43,6 +41,7 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
     def is_retry(http_error):
         """Determines if the error is one that can be retried."""
         # If for some reason it is not an Http Error, it can't be retried.
+        import pypowervm.wrappers.http_error as he
         if not isinstance(http_error, he.HttpError):
             return False
 
@@ -66,6 +65,7 @@ def vios_busy_retry_helper(func, max_retries=3, delay=5):
                 # See if the system was busy
                 resp = e.response
                 if resp and resp.body and resp.entry:
+                    import pypowervm.wrappers.entry_wrapper as ew
                     wrap = ew.EntryWrapper.wrap(resp.entry)
                     if is_retry(wrap):
                         retries += 1
