@@ -48,6 +48,7 @@ import weakref
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
+from pypowervm.helpers import vios_busy as vio_hlp
 from pypowervm.i18n import _
 from pypowervm import traits as pvm_traits
 from pypowervm import util
@@ -557,7 +558,8 @@ class Session(object):
 class Adapter(object):
     """REST API Adapter for PowerVM remote management."""
 
-    def __init__(self, session=None, use_cache=False, helpers=None):
+    def __init__(self, session=None, use_cache=False,
+                 helpers=vio_hlp.vios_busy_retry_helper):
         """Create a new Adapter instance, connected to a Session.
 
         :param session: (Optional) A Session instance.  If not specified, a
@@ -566,7 +568,7 @@ class Adapter(object):
         :param use_cache: Do not use.  Caching not supported.
         :param helpers: A list of decorator methods in which to wrap the HTTP
                         request call.  See the pypowervm.helpers package for
-                        examples.
+                        examples.  Default: vios_busy_retry_helper.
         """
         if use_cache:
             raise pvmex.CacheNotSupportedException()
