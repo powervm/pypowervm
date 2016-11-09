@@ -851,9 +851,8 @@ class VNIC(ewrap.EntryWrapper):
         """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
         return self._details.mac
 
-    @mac.setter
-    def mac(self, val):
-        self._details.mac = val
+    def _mac(self, val):
+        self._details._mac(val)
 
     @property
     def allowed_macs(self):
@@ -926,7 +925,7 @@ class _VNICDetails(ewrap.ElementWrapper):
             vnicd.pvid = pvid
         vnicd.allowed_vlans = allowed_vlans
         if mac_addr is not None:
-            vnicd.mac = mac_addr
+            vnicd._mac(mac_addr)
         vnicd.allowed_macs = allowed_macs
         return vnicd
 
@@ -953,8 +952,7 @@ class _VNICDetails(ewrap.ElementWrapper):
         """MAC address of the format XXXXXXXXXXXX (12 uppercase hex digits)."""
         return self._get_val_str(_VNICD_MAC)
 
-    @mac.setter
-    def mac(self, val):
+    def _mac(self, val):
         self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val))
 
     @property
