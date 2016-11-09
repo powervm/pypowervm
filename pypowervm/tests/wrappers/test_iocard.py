@@ -345,8 +345,6 @@ class TestVNIC(twrap.TestWrapper):
         self.assertRaises(ValueError, bad_vlans_setter, 'foo')
         self.assertRaises(ValueError, bad_vlans_setter, ['a', 'b', 'c'])
         self.assertEqual('AE7A25E59A07', dets.mac)
-        dets.mac = '12:ab:34:CD:56:ef'
-        self.assertEqual('12AB34CD56EF', dets.mac)
         self.assertEqual(u.MACList.ALL, dets.allowed_macs)
         dets.allowed_macs = ['AB:12:cd:34:EF:56', '12ab34CD56ef']
         self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
