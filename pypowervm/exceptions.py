@@ -220,15 +220,23 @@ class FoundDevMultipleTimes(AbstractMsgFmtError):
                 "it at most once.")
 
 
-class MultipleExceptionsInFeedTask(Exception):
-    """Exception containing tracebacks in WrappedFailure exceptions.
+class MultipleExceptionsInFeedTask(AbstractMsgFmtError):
+    """Exception concatenating messages in WrappedFailure exceptions.
 
     Exception raised when a pypowervm.utils.transaction.FeedTask run raises a
     tasflow.exceptions.WrappedFailure containing more than one exception.  The
-    message string is a concatenation of the tracebacks of the wrapped
+    message string is a concatenation of the message strings of the wrapped
     exceptions.
     """
-    pass
+    def __init__(self, ft_name, wrapped_failure):
+        # In case the caller wants to trap this and get at the WrappedFailure
+        self.wrapped_failure = wrapped_failure
+        self.msg_fmt = _("FeedTask %(ft_name)s experienced multiple "
+                         "exceptions:\n\t%(concat_msgs)s")
+        concat_msgs = '\n\t'.join([fail.exception_str
+                                   for fail in wrapped_failure])
+        super(MultipleExceptionsInFeedTask, self).__init__(
+            response=None, ft_name=ft_name, concat_msgs=concat_msgs)
 
 
 class ManagementPartitionNotFoundException(AbstractMsgFmtError):
