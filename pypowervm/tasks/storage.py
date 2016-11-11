@@ -439,8 +439,8 @@ def _upload_stream_local(vio_file, io_handle, upload_type):
         else:
             # The io_handle is a function.  Just pass it the asset file path
             # and that function will do the copying.
-            copy_f = th.submit(io_handle, vio_file.asset_file)
-
+            copy_f = th.submit(_wrap_user_stream, io_handle,
+                               vio_file.asset_file)
     # Make sure we call the results.  This is just to make sure it
     # doesn't have exceptions
     for io_future in futures.as_completed([upload_f, copy_f]):
@@ -468,6 +468,36 @@ def _create_file(adapter, f_name, v_uuid, sha_chksum=None, f_size=None,
               else vf.FileType.DISK_IMAGE)
     return vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
                        f_size=f_size, tdev_udid=tdev_udid).create()
+
+
+def _wrap_user_stream(io_handle, asset_file):
+    try:
+        io_handle(asset_file)
+    finally:
+        _ensure_pipe_close(asset_file)
+
+
+def _ensure_pipe_close(file_path):
+    """Will ensure that a 'close file' is sent to a FIFO Pipe.
+
+    This is needed in case there is an exception in client code that was going
+    to write to a FIFO pipe, but hit an exception before it could.  This stops
+    us from blocking the write indefinitely, and never returning from the
+    method.
+
+    :param file_path: The path to the pipe.
+    """
+    # If the path is already gone, just leave.  It was closed.
+    if not os.path.isfile(file_path):
+        return
+
+    try:
+        f = open(file_path, 'a+b', 0)
+        f.close()
+    except Exception as e:
+        LOG.warning(_("An error occurred while closing FIFO pipe at path "
+                      "%s.  Ignoring."), file_path)
+        LOG.exception(e)
 
 
 def default_tier_for_ssp(ssp):
