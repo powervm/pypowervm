@@ -814,17 +814,17 @@ class TestFeedTask(twrap.TestWrapper):
 class TestExceptions(unittest.TestCase):
     def test_exceptions(self):
         def bad1(wrapper, s):
-            bad2(s)
+            bad2(wrapper)
 
-        def bad2(s):
-            bad3()
+        def bad2(wrapper):
+            bad3(wrapper.field)
 
-        def bad3():
-            raise IOError("this is an exception!")
+        def bad3(tag):
+            raise IOError("this is an exception on %s!" % tag)
 
         # With one entry in the feed, one exception should be raised, and it
         # should bubble up as normal.
-        feed = [mock.Mock(spec=lpar.LPAR)]
+        feed = [mock.Mock(spec=lpar.LPAR, field='lpar1')]
         ft = tx.FeedTask('ft', feed).add_functor_subtask(bad1, 'this is bad')
 
         flow = tf_uf.Flow('the flow')
@@ -833,9 +833,9 @@ class TestExceptions(unittest.TestCase):
 
         # With multiple entries in the feed, TaskFlow will wrap the exceptions
         # in a WrappedFailure.  We should repackage it, and the message in the
-        # resulting MultipleExceptionsInFeedTask should contain the right stack
-        # elements.
-        feed.append(mock.Mock(spec=lpar.LPAR))
+        # resulting MultipleExceptionsInFeedTask should contain all the
+        # exception messages.
+        feed.append(mock.Mock(spec=lpar.LPAR, field='lpar2'))
         ft = tx.FeedTask('ft', feed).add_functor_subtask(bad1, 'this is bad')
 
         flow = tf_uf.Flow('the flow')
@@ -843,9 +843,6 @@ class TestExceptions(unittest.TestCase):
         with self.assertRaises(ex.MultipleExceptionsInFeedTask) as mult_ex:
             tf_eng.run(flow)
 
-        # Make sure the WrappedFailure tag and all the methods in the stack
-        # show up in the exception.
-        self.assertIn('WrappedFailure', mult_ex.exception.args[0])
-        self.assertIn('bad1', mult_ex.exception.args[0])
-        self.assertIn('bad2', mult_ex.exception.args[0])
-        self.assertIn('bad3', mult_ex.exception.args[0])
+        # Make sure the wrapped exception messages show up in the exception.
+        self.assertIn('exception on lpar1!', mult_ex.exception.args[0])
+        self.assertIn('exception on lpar2!', mult_ex.exception.args[0])

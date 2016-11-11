@@ -786,10 +786,12 @@ class FeedTask(tf_task.Task):
                 eng.run()
                 rets = eng.storage.fetch_all()
         except tf_ex.WrappedFailure as wfail:
-            raise ex.MultipleExceptionsInFeedTask(
-                '\n' + '\n'.join(
-                    'WrappedFailure:\n%s' % fail.traceback_str
-                    for fail in wfail))
+            LOG.error(_("FeedTask %s experienced multiple exceptions. They "
+                        "are logged individually below."), self.name)
+            for fail in wfail:
+                LOG.exception(fail.exception)
+            raise ex.MultipleExceptionsInFeedTask(self.name, wfail)
+
         # Let a non-wrapped exception (which happens if there's only one
         # element in the feed) bubble up as-is.
 
