@@ -294,8 +294,8 @@ class TestUploadLV(testtools.TestCase):
     @mock.patch('pypowervm.util.retry_io_command')
     @mock.patch('pypowervm.tasks.storage.open')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_stream_coordinated_with_fail(self, mock_create_file,
-                                                 mock_open, mock_retry):
+    def test_upload_stream_local_with_fail(self, mock_create_file, mock_open,
+                                           mock_retry):
         """Tests the uploads of a virtual disk with a failure."""
         mock_file = self._fake_meta()
         mock_create_file.return_value = mock_file
@@ -332,8 +332,9 @@ class TestUploadLV(testtools.TestCase):
         mock_retry.assert_has_calls(
             [open_call] + ([read_call, write_call] * 999))
 
+    @mock.patch('pypowervm.tasks.storage._ensure_pipe_close')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_stream_coordinated_via_func(self, mock_create_file):
+    def test_upload_stream_local_func(self, mock_create_file, mock_epc):
         """Tests the uploads of a virtual disk with UploadType.FUNC."""
         mock_file = self._fake_meta()
         mock_create_file.return_value = mock_file
@@ -346,6 +347,18 @@ class TestUploadLV(testtools.TestCase):
 
         # Make sure the function was called.
         mock_io_handle.assert_called_once_with(mock_file.asset_file)
+        mock_epc.assert_called_once_with(mock_file.asset_file)
+
+    @mock.patch('pypowervm.tasks.storage.os')
+    @mock.patch('pypowervm.tasks.storage.open')
+    def test_ensure_pipe_close(self, mock_open, mock_os):
+        mock_os.path.isfile.return_value = False
+        ts._ensure_pipe_close('path')
+        mock_open.assert_not_called()
+        mock_os.path.isfile.return_value = True
+        ts._ensure_pipe_close('path')
+        mock_open.assert_called_once_with('path', 'a+b', 0)
+        mock_open.return_value.close.assert_called_once_with()
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
