@@ -134,3 +134,28 @@ Developer Notes
 - The Adapter cache is removed as of release 1.0.0.4.  Attempting to
   create an Adapter with ``use_cache=True`` will result in a
   ``CacheNotSupportedException``.
+
+- The property ``pypowervm.wrappers.managed_system.IOSlot.pci_sub_dev_id`` is
+  deprecated and will be removed no sooner than January 1st, 2019. It has been
+  replaced by the ``pypowervm.wrappers.managed_system.IOSlot.pci_subsys_dev_id``
+  property.
+
+- The property ``pypowervm.wrappers.managed_system.IOSlot.pci_revision_id`` is
+  deprecated and will be removed no sooner than January 1st, 2019. It has been
+  replaced by the ``pypowervm.wrappers.managed_system.IOSlot.pci_rev_id``
+  property.
+
+- The property ``pypowervm.wrappers.managed_system.IOSlot.pci_sub_vendor_id`` is
+  deprecated and will be removed no sooner than January 1st, 2019. It has been
+  replaced by the ``pypowervm.wrappers.managed_system.IOSlot.pci_subsys_vendor_id``
+  property.
+
+- The property ``pypowervm.wrappers.managed_system.IOSlot.dyn_reconfig_conn_index``
+  is deprecated and will be removed no sooner than January 1st, 2019. It has
+  been replaced by the ``pypowervm.wrappers.managed_system.IOSlot.drc_index``
+  property.
+
+- The property ``pypowervm.wrappers.managed_system.IOSlot.dyn_reconfig_conn_name``
+  is deprecated and will be removed no sooner than January 1st, 2019. It has been
+  replaced by the ``pypowervm.wrappers.managed_system.IOSlot.drc_name``
+  property.

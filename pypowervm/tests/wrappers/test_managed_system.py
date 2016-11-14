@@ -192,24 +192,24 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_ioslot_pci_class(self):
         self.assertEqual(self.test_ioslot.pci_class, 512)
 
-    def test_ioslot_pci_sub_dev_id(self):
-        self.assertEqual(self.test_ioslot.pci_sub_dev_id, 1202)
+    def test_ioslot_pci_subsys_dev_id(self):
+        self.assertEqual(self.test_ioslot.pci_subsys_dev_id, 1202)
 
-    def test_ioslot_pci_revision_id(self):
-        self.assertEqual(self.test_ioslot.pci_revision_id, 0)
+    def test_ioslot_pci_rev_id(self):
+        self.assertEqual(self.test_ioslot.pci_rev_id, 0)
 
     def test_ioslot_pci_vendor_id(self):
         self.assertEqual(self.test_ioslot.pci_vendor_id, 4116)
 
-    def test_ioslot_pci_sub_vendor_id(self):
-        self.assertEqual(self.test_ioslot.pci_sub_vendor_id, 4116)
+    def test_ioslot_pci_subsys_vendor_id(self):
+        self.assertEqual(self.test_ioslot.pci_subsys_vendor_id, 4116)
 
-    def test_ioslot_dyn_reconfig_conn_index(self):
-        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_index,
+    def test_ioslot_drc_index(self):
+        self.assertEqual(self.test_ioslot.drc_index,
                          553713681)
 
-    def test_ioslot_dyn_reconfig_conn_name(self):
-        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_name,
+    def test_ioslot_drc_name(self):
+        self.assertEqual(self.test_ioslot.drc_name,
                          'U5294.001.CEC1234-P01-C011')
 
     def test_get_aix_capable(self):
