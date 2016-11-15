@@ -104,11 +104,7 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
                         UploadType enumeration for valid upload mechanisms.
     :return: The first return value is the virtual disk that the file is
              uploaded into.
-    :return: Normally the second return value will be None, indicating that the
-             disk and image were uploaded without issue.  If for some reason
-             the File metadata for the VIOS was not cleaned up, the return
-             value is the File EntryWrapper.  This is simply a metadata marker
-             to be later used to retry the cleanup.
+    :return: [Deprecated] This value will be None
     """
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
@@ -133,9 +129,30 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
     vio_file = _create_file(adapter, d_name, file_type, v_uuid, f_size=f_size,
                             tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
-    # Run the upload
-    maybe_file = _upload_stream(vio_file, io_handle, upload_type)
-    return n_vdisk, maybe_file
+    try:
+        # Run the upload
+        _upload_stream(vio_file, io_handle, upload_type)
+    except Exception:
+        _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file)
+
+        # Re-raise the original exception
+        raise
+    return n_vdisk, None
+
+
+def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
+    """Cleans out a bad vDisk after a failed upload."""
+    # Keeps sonar happy.
+    vol_grp = stor.VG.get(adapter, vol_grp_uuid, parent_type=vios.VIOS,
+                          parent_uuid=v_uuid)
+    rm_vg_storage(vol_grp, vdisks=[n_vdisk])
+
+    # Try to delete the file.  It may have already been deleted so just
+    # ignore if it fails
+    try:
+        vio_file.delete()
+    except Exception:
+        pass
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -163,10 +180,11 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
-    f_uuid = _upload_stream(vio_file, d_stream, UploadType.IO_STREAM)
 
-    # Simply return a reference to this.
+    # Build a reference to vOpt.
     reference = stor.VOptMedia.bld_ref(adapter, f_name)
+
+    f_uuid = _upload_stream(vio_file, d_stream, UploadType.IO_STREAM)
 
     return reference, f_uuid
 
