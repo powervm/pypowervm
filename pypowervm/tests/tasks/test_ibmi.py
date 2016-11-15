@@ -22,7 +22,6 @@ from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import ibmi
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as pvm_fx
-from pypowervm.wrappers import network as pvm_net
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FEED = 'fake_vios_feed.txt'
@@ -40,9 +39,6 @@ class TestIBMi(testtools.TestCase):
         self.vio_feed = pvm_vios.VIOS.wrap(
             tju.load_file(VIOS_FEED, self.apt))
         self.vioslist = [self.vio_feed[0], self.vio_feed[1]]
-        self.cna_feed = pvm_net.CNA.wrap(
-            tju.load_file(CNA_FEED, self.apt))
-        self.cnalist = [self.cna_feed[0], self.cna_feed[1]]
 
     @staticmethod
     def _validate_settings(self, boot_type, traits_type, entry):
@@ -50,7 +46,7 @@ class TestIBMi(testtools.TestCase):
         self.assertEqual('normal', entry.keylock_pos)
 
         if traits_type == pvm_fx.LocalPVMTraits:
-            self.assertEqual('3', entry.io_config.tagged_io.console)
+            self.assertEqual('HMC', entry.io_config.tagged_io.console)
         else:
             self.assertEqual('HMC', entry.io_config.tagged_io.console)
         if boot_type == 'npiv':
@@ -60,9 +56,8 @@ class TestIBMi(testtools.TestCase):
             self.assertEqual('2', entry.io_config.tagged_io.load_src)
             self.assertEqual('2', entry.io_config.tagged_io.alt_load_src)
 
-    def _validate_ibmi_settings(self, mock_viosw, mock_cnaw):
+    def _validate_ibmi_settings(self, mock_viosw):
         mock_viosw.return_value = self.vioslist
-        mock_cnaw.return_value = self.cnalist
         mock_lparw = mock.MagicMock()
         mock_lparw.id = 22
 
@@ -91,10 +86,9 @@ class TestIBMiWithHMC(TestIBMi):
     def setUp(self):
         super(TestIBMiWithHMC, self).setUp(pvm_fx.RemoteHMCTraits)
 
-    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.wrap')
-    def test_update_ibmi_settings(self, mock_viosw, mock_cnaw):
-        self._validate_ibmi_settings(mock_viosw, mock_cnaw)
+    def test_update_ibmi_settings(self, mock_viosw):
+        self._validate_ibmi_settings(mock_viosw)
 
 
 class TestIBMiWithPVM(TestIBMi):
@@ -103,18 +97,16 @@ class TestIBMiWithPVM(TestIBMi):
     def setUp(self):
         super(TestIBMiWithPVM, self).setUp(pvm_fx.LocalPVMTraits)
 
-    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.wrap')
-    def test_update_ibmi_settings(self, mock_viosw, mock_cnaw):
-        self._validate_ibmi_settings(mock_viosw, mock_cnaw)
+    def test_update_ibmi_settings(self, mock_viosw):
+        self._validate_ibmi_settings(mock_viosw)
 
-    @mock.patch('pypowervm.wrappers.network.CNA.wrap')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.wrap')
     @mock.patch('pypowervm.wrappers.virtual_io_server.VStorageMapping.'
                 'client_adapter', new_callable=mock.PropertyMock,
                 return_value=None)
     def test_update_ibmi_settings_w_stale_adapters(self, mock_c_adap,
-                                                   mock_viosw, mock_cnaw):
+                                                   mock_viosw):
         mock_lparw = mock.MagicMock()
         mock_lparw.id = 22
         self.assertRaises(pvm_exc.IBMiLoadSourceNotFound,
