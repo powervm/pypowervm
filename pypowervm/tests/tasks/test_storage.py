@@ -144,6 +144,32 @@ class TestUploadLV(testtools.TestCase):
         # Three loops (so three logging calls) before the failure bubbles up
         self.assertEqual(3, mock_log_warn.call_count)
 
+    @mock.patch('pypowervm.wrappers.vios_file.File.delete')
+    @mock.patch('pypowervm.tasks.storage.rm_vg_storage')
+    @mock.patch('pypowervm.wrappers.storage.VG.get')
+    @mock.patch('pypowervm.tasks.storage._upload_stream')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage.crt_vdisk')
+    def test_upload_new_vdisk_failed(
+            self, mock_create_vdisk, mock_create_file, mock_upload_stream,
+            mock_vg_get, mock_rm, mock_file_delete):
+        """Tests the uploads of the virtual disks."""
+        # First need to load in the various test responses.
+        mock_vdisk = mock.Mock()
+        mock_create_vdisk.return_value = mock_vdisk
+        mock_create_file.return_value = self._fake_meta()
+
+        fake_vg = mock.Mock()
+        mock_vg_get.return_value = fake_vg
+
+        mock_upload_stream.side_effect = exc.ConnectionError('fake error')
+
+        self.assertRaises(
+            exc.ConnectionError, ts.upload_new_vdisk, self.adpt, self.v_uuid,
+            self.vg_uuid, None, 'test2', 50, d_size=25, sha_chksum='abc123')
+        mock_file_delete.assert_called_once()
+        mock_rm.assert_called_once_with(fake_vg, vdisks=[mock_vdisk])
+
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
