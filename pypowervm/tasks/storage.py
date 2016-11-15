@@ -135,7 +135,7 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
         tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
     # Run the upload
-    maybe_file = _upload_stream(vio_file, io_handle, upload_type)
+    maybe_file = _upload_stream(n_vdisk, vio_file, io_handle, upload_type)
     return n_vdisk, maybe_file
 
 
@@ -164,10 +164,12 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
-    f_uuid = _upload_stream(vio_file, d_stream, UploadType.IO_STREAM)
 
-    # Simply return a reference to this.
+    # Build a reference to vOpt.
     reference = stor.VOptMedia.bld_ref(adapter, f_name)
+
+    f_uuid = _upload_stream(reference, vio_file, d_stream,
+                            UploadType.IO_STREAM)
 
     return reference, f_uuid
 
@@ -269,10 +271,10 @@ def upload_lu(v_uuid, lu, io_handle, f_size, sha_chksum=None,
         lu.adapter, lu.name, file_type, v_uuid, f_size=f_size,
         tdev_udid=lu.udid, sha_chksum=sha_chksum)
 
-    return _upload_stream(vio_file, io_handle, upload_type)
+    return _upload_stream(lu, vio_file, io_handle, upload_type)
 
 
-def _upload_stream(vio_file, io_handle, upload_type):
+def _upload_stream(element, vio_file, io_handle, upload_type):
     """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
@@ -289,6 +291,8 @@ def _upload_stream(vio_file, io_handle, upload_type):
     It's safe to cleanup VIOS file artifacts directly after uploading, as it
     will not affect the VIOS entity.
 
+    :param element: The entry being uploaded into.  Will be deleted if the
+                    stream into it fails.
     :param vio_file: The File EntryWrapper representing the metadata for the
                      file.
     :param io_handle: The I/O handle (as defined by the upload_type)
@@ -318,6 +322,9 @@ def _upload_stream(vio_file, io_handle, upload_type):
         else:
             # Upload the file directly to the REST API server.
             _upload_stream_api(vio_file, io_handle)
+    except Exception:
+        element.delete()
+        raise
     finally:
         # Must release the semaphore
         _UPLOAD_SEM.release()
