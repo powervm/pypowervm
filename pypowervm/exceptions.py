@@ -177,11 +177,6 @@ class ConsoleNotLocal(AbstractMsgFmtError):
                 "the PowerVM API.")
 
 
-class APINotLocal(AbstractMsgFmtError):
-    msg_fmt = _("Can not invoke this method.  It is only available when "
-                "running pypowervm directly on the NovaLink host.")
-
-
 class WrapperTaskNoSubtasks(AbstractMsgFmtError):
     msg_fmt = _("WrapperTask %(name)s has no subtasks!")
 
