@@ -69,6 +69,51 @@ class TestLPARBuilder(testtools.TestCase):
         self.assertEqual(entry.element.toxmlstring(),
                          six.b(string.rstrip('\n')))
 
+    def test_proc_modes(self):
+        # Base minimum attrs
+        attr = dict(name='TheName', memory=1024, vcpu=1)
+        # No proc keys specified
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertFalse(bldr._shared_proc_keys_specified())
+        self.assertFalse(bldr._dedicated_proc_keys_specified())
+        # Default is shared
+        self.assertTrue(bldr._shared_procs_specified())
+        # Shared proc keys specified
+        for key in ('proc_units', 'max_proc_units', 'min_proc_units',
+                    'uncapped_weight'):
+            bldr = lpar_bldr.LPARBuilder(self.adpt, dict(attr, **{key: 1}),
+                                         self.stdz_sys1)
+            self.assertTrue(bldr._shared_proc_keys_specified())
+            self.assertFalse(bldr._dedicated_proc_keys_specified())
+            self.assertTrue(bldr._shared_procs_specified())
+        # Shared modes specified
+        for mode in ('capped', 'uncapped'):
+            bldr = lpar_bldr.LPARBuilder(
+                self.adpt, dict(attr, sharing_mode=mode), self.stdz_sys1)
+            self.assertTrue(bldr._shared_proc_keys_specified())
+            self.assertFalse(bldr._dedicated_proc_keys_specified())
+            self.assertTrue(bldr._shared_procs_specified())
+        # Dedicated modes specified
+        for mode in ('sre idle proces', 'sre idle procs active',
+                     'sre idle procs always', 'keep idle procs'):
+            bldr = lpar_bldr.LPARBuilder(
+                self.adpt, dict(attr, sharing_mode=mode), self.stdz_sys1)
+            self.assertFalse(bldr._shared_proc_keys_specified())
+            self.assertTrue(bldr._dedicated_proc_keys_specified())
+            self.assertFalse(bldr._shared_procs_specified())
+        # Dedicated proc explicitly true
+        bldr = lpar_bldr.LPARBuilder(
+            self.adpt, dict(attr, dedicated_proc='TRUE'), self.stdz_sys1)
+        self.assertFalse(bldr._shared_proc_keys_specified())
+        self.assertFalse(bldr._dedicated_proc_keys_specified())
+        self.assertFalse(bldr._shared_procs_specified())
+        # Dedicated proc explicitly false
+        bldr = lpar_bldr.LPARBuilder(
+            self.adpt, dict(attr, dedicated_proc='NO'), self.stdz_sys1)
+        self.assertFalse(bldr._shared_proc_keys_specified())
+        self.assertFalse(bldr._dedicated_proc_keys_specified())
+        self.assertTrue(bldr._shared_procs_specified())
+
     def test_builder(self):
         # Build the minimum attributes, Shared Procs
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,

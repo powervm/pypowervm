@@ -65,7 +65,7 @@ RESTRICTED_IO = 'restricted_io'
 # The minimum attributes that must be supplied to create an LPAR
 MINIMUM_ATTRS = (NAME, MEM, VCPU)
 # Keys that indicate that shared processors are being configured
-SHARED_PROC_KEYS = (PROC_UNITS_KEYS, UNCAPPED_WEIGHT)
+SHARED_PROC_KEYS = (PROC_UNITS_KEYS + (UNCAPPED_WEIGHT,))
 
 MEM_LOW_BOUND = 128
 VCPU_LOW_BOUND = 1
