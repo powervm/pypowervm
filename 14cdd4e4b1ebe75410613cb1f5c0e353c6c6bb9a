@@ -1,0 +1,8 @@
+Code-Review+1: Royer, Steven E. <seroyer@us.ibm.com>
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+2: FRIED, ERIC P. <efried@us.ibm.com>
+Submitted-by: BUSH, CHRISTOPHER L. (CHRIS) <clbush@us.ibm.com>
+Submitted-at: Wed, 16 Nov 2016 09:36:05 -0600
+Reviewed-on: http://morpheus.pok.stglabs.ibm.com/4529
+Project: pypowervm
+Branch: refs/heads/release/1.0.0.4
