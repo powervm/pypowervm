@@ -536,7 +536,7 @@ class Wrapper(object):
                               converter=str2percent)
 
     def log_missing_value(self, param):
-        LOG.debug('The expected parameter of %(param)s was not found in '
+        LOG.trace('The expected parameter of %(param)s was not found in '
                   '%(identifier)s' % {"param": param,
                                       "identifier": self._type_and_uuid})
 
