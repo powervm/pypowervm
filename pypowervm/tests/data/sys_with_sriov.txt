@@ -99,6 +99,7 @@ BODY{
                 <Description kb="CUD" kxe="false">SAS RAID Controller, PCIe2, Dual-port 6Gb</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">260</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1224</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">842</PCIVendorID>
@@ -114,6 +115,7 @@ BODY{
                 <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
                 <FeatureCodes kb="ROO" kxe="false">&quot;EN0H,EN0J&quot;</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1039</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">16</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">57888</PCIVendorID>
@@ -129,6 +131,7 @@ BODY{
                 <Description kb="CUD" kxe="false">PCIe2 4-port (10Gb FCoE &amp; 1GbE) SR&amp;RJ45 Adapter</Description>
                 <FeatureCodes kb="ROO" kxe="false">&quot;EN0H,EN0J&quot;</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1039</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">16</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">57888</PCIVendorID>
@@ -144,6 +147,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Empty slot</Description>
                 <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
@@ -159,6 +163,7 @@ BODY{
                 <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
                 <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1056</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">1</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
@@ -174,6 +179,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Empty slot</Description>
                 <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
@@ -189,6 +195,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Universal Serial Bus UHC Spec</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">3075</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1202</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">33345</PCIVendorID>
@@ -204,6 +211,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Empty slot</Description>
                 <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
@@ -219,6 +227,7 @@ BODY{
                 <Description kb="CUD" kxe="false">2-Port 10GbE RoCE SFP+ Adapter</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1046</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">176</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">26448</PCIVendorID>
@@ -234,6 +243,7 @@ BODY{
                 <Description kb="CUD" kxe="false">SAS RAID Controller, PCIe2, Dual-port 6Gb</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">260</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1224</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">2</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">842</PCIVendorID>
@@ -249,6 +259,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Empty slot</Description>
                 <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
@@ -264,6 +275,7 @@ BODY{
                 <Description kb="CUD" kxe="false">2-Port 10GbE RoCE SFP+ Adapter</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1046</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">176</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">26448</PCIVendorID>
@@ -279,6 +291,7 @@ BODY{
                 <Description kb="CUD" kxe="false">Empty slot</Description>
                 <FeatureCodes kb="ROO" kxe="false">0</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">65535</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">65535</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">255</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">65535</PCIVendorID>
@@ -294,6 +307,7 @@ BODY{
                 <Description kb="CUD" kxe="false">1 Gigabit Ethernet (UTP) 4 Port Adapter PCIE-4x/Short</Description>
                 <FeatureCodes kb="ROO" kxe="false">5899</FeatureCodes>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4661</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1056</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">1</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">5719</PCIVendorID>
@@ -309,6 +323,7 @@ BODY{
                 <Description kb="CUD" kxe="false">PCIe2 2-Port 10GbE Base-T Adapter</Description>
                 <FeatureCodes kb="ROO" kxe="false"/>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
+                <PCIDeviceID kb="ROO" kxe="false">4662</PCIDeviceID>
                 <PCISubsystemDeviceID kb="ROO" kxe="false">1170</PCISubsystemDeviceID>
                 <PCIRevisionID kxe="false" kb="ROO">16</PCIRevisionID>
                 <PCIVendorID kb="ROO" kxe="false">5774</PCIVendorID>
