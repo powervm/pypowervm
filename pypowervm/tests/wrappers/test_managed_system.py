@@ -192,6 +192,9 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_ioslot_pci_class(self):
         self.assertEqual(self.test_ioslot.pci_class, 512)
 
+    def test_ioslot_pci_dev_id(self):
+        self.assertEqual(self.test_ioslot.pci_dev_id, 4660)
+
     def test_ioslot_pci_subsys_dev_id(self):
         self.assertEqual(self.test_ioslot.pci_subsys_dev_id, 1202)
 

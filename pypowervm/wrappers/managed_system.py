@@ -120,6 +120,7 @@ _IOSLOT_BUS_GRP_REQ = 'BusGroupingRequired'
 _IOSLOT_DESC = 'Description'
 _IOSLOT_FEAT_CODES = 'FeatureCodes'
 _IOSLOT_PCI_CLASS = 'PCIClass'
+_IOSLOT_PCI_DEV_ID = 'PCIDeviceID'
 _IOSLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
 _IOSLOT_PCI_REV_ID = 'PCIRevisionID'
 _IOSLOT_PCI_VEND_ID = 'PCIVendorID'
@@ -399,6 +400,10 @@ class IOSlot(ewrap.ElementWrapper):
     @property
     def pci_class(self):
         return self._get_val_int(_IOSLOT_PCI_CLASS)
+
+    @property
+    def pci_dev_id(self):
+        return self._get_val_int(_IOSLOT_PCI_DEV_ID)
 
     @property
     def pci_subsys_dev_id(self):
