@@ -38,6 +38,7 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
                 target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
     :return: The device name of the created volume.
+    :return: The UniqueDeviceId of the create volume.
     """
 
     resp = adapter.read(VIOS.schema_type, vios_uuid,
@@ -53,13 +54,13 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
 
-    # DEV_OUTPUT: ["IQN1 dev1", "IQN2 dev2"]
+    # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
     output = ast.literal_eval(results.get('DEV_OUTPUT'))
     # Find dev corresponding to given IQN
     for dev in output:
-        outiqn, outname = dev.split()
+        outiqn, outname, udid = dev.split()
         if outiqn == iqn:
-            return outname
+            return outname, udid
     LOG.error(_("Expected IQN: %(IQN)s not found on iscsi target %(host_ip)s"),
               {'IQN': iqn, 'host_ip': host_ip})
     return None
