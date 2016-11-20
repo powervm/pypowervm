@@ -76,8 +76,13 @@ class UploadType(object):
     # path passed in to the delegate function.  It is the responsibility of the
     # invoker to ensure that the EOF is sent.
     #
-    # Note: This upload mechanism only works when using the pypowervm API
-    # locally.
+    # Note: This function is ideal when using NovaLink locally.  The path
+    # presented to the function is a direct pipe in to the system.  A
+    # compatibility layer is provided for remote connections.  However, in
+    # those cases, a file will be created in the /tmp/ directory on the system.
+    # The file will be streamed there first, and then sent over the REST API.
+    # The library cleans up the file, but there needs to be enough free disk
+    # space in /tmp.
     FUNC = 'delegate_function'
 
 
@@ -364,28 +369,22 @@ def _rest_api_pipe(file_writer):
                                 while ...:
                                     out_stream.write(...)
     """
-    fifo_reader, file_path, temp_dir = None, None, None
+    reader, file_path, temp_dir = None, None, None
     try:
         # Make the file path
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, 'REST_API_Pipe')
-        os.mkfifo(file_path)
-        # Spawn the writer thread
-        with futures.ThreadPoolExecutor(1) as th_pool:
-            writer_f = th_pool.submit(file_writer, file_path)
-            # Create a readable stream on the FIFO pipe.
-            fifo_reader = util.retry_io_command(open, file_path, 'r')
 
-            # Let the caller consume the pipe contents
-            yield fifo_reader
+        # Write to the file
+        file_writer(file_path)
 
-            # Make sure the writer is finished.  This will also raise any
-            # exception the writer caused.
-            writer_f.result()
+        # Open a reader and return
+        reader = util.retry_io_command(open, file_path, 'r')
+        yield reader
     finally:
-        # Close and clean up the FIFO, carefully.  Any step could have raised.
-        if fifo_reader:
-            util.retry_io_command(fifo_reader.close)
+        # Close and clean up the reader, carefully.  Any step could have raised
+        if reader:
+            util.retry_io_command(reader.close)
         if file_path:
             os.remove(file_path)
         if temp_dir:
@@ -412,8 +411,7 @@ def _upload_stream_api(vio_file, io_handle, upload_type):
 
     # If using a FUNCtion-based upload remotely, we have to make that function
     # (which is passed in as io_handle) think it's writing to a local file.  We
-    # spoof this with _RestApiPipe, which uses a fifo (named pipe) that it
-    # populates from d_stream in a separate thread.
+    # spoof this with _RestApiPipe.
     if upload_type == UploadType.FUNC:
         with _rest_api_pipe(io_handle) as in_stream:
             _copy_retry(in_stream)

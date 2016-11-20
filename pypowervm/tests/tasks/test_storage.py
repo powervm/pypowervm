@@ -77,7 +77,6 @@ class TestUploadLV(testtools.TestCase):
         mock_mkdtemp.assert_called_once_with()
         mock_os.path.join.assert_called_once_with(mock_mkdtemp.return_value,
                                                   'REST_API_Pipe')
-        mock_os.mkfifo.assert_called_once_with(mock_os.path.join.return_value)
         mock_writer.assert_called_once_with(mock_os.path.join.return_value)
         mock_os.remove.assert_called_once_with(mock_os.path.join.return_value)
         mock_os.rmdir.assert_called_once_with(mock_mkdtemp.return_value)
