@@ -76,8 +76,13 @@ class UploadType(object):
     # path passed in to the delegate function.  It is the responsibility of the
     # invoker to ensure that the EOF is sent.
     #
-    # Note: This upload mechanism only works when using the pypowervm API
-    # locally.
+    # Note: This function is ideal when using NovaLink locally.  The path
+    # presented to the function is a direct pipe in to the system.  A
+    # compatibility layer is provided for remote connections.  However, in
+    # those cases, a file will be created in the /tmp/ directory on the system.
+    # The file will be streamed there first, and then sent over the REST API.
+    # The library cleans up the file, but there needs to be enough free disk
+    # space in /tmp.
     FUNC = 'delegate_function'
 
 
@@ -369,19 +374,13 @@ def _rest_api_pipe(file_writer):
         # Make the file path
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, 'REST_API_Pipe')
-        os.mkfifo(file_path)
-        # Spawn the writer thread
-        with futures.ThreadPoolExecutor(1) as th_pool:
-            writer_f = th_pool.submit(file_writer, file_path)
-            # Create a readable stream on the FIFO pipe.
-            fifo_reader = util.retry_io_command(open, file_path, 'r')
 
-            # Let the caller consume the pipe contents
-            yield fifo_reader
+        # Write to the file
+        file_writer(file_path)
 
-            # Make sure the writer is finished.  This will also raise any
-            # exception the writer caused.
-            writer_f.result()
+        # Open a reader and return
+        reader = util.retry_io_command(open, file_path, 'r')
+        yield reader
     finally:
         # Close and clean up the FIFO, carefully.  Any step could have raised.
         if fifo_reader:
