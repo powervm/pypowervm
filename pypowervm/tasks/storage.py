@@ -428,7 +428,7 @@ def _copy_func(out_file, io_handle):
     i = 0
     with util.retry_io_command(open, out_file, 'a+b', 0) as out_str:
         while True:
-            chunk = util.retry_io_command(io_handle.read, 65536)
+            chunk = util.get_chunk(io_handle, 65536)
             if not chunk:
                 LOG.debug("Reached EOF at chunk %d", i)
                 break
