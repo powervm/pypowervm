@@ -235,7 +235,7 @@ class Session(object):
 
         isupload = False
         isdownload = False
-        if filehandle:
+        if filehandle is not None:
             if method in ['PUT', 'POST']:
                 isupload = True
             elif method in ['GET']:
@@ -264,10 +264,9 @@ class Session(object):
 
         try:
             if isupload:
-
                 def chunkreader():
                     while True:
-                        d = filehandle.read(chunksize)
+                        d = util.get_chunk(filehandle, chunksize)
                         if not d:
                             break
                         yield d

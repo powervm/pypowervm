@@ -324,21 +324,19 @@ def _upload_stream(vio_file, io_handle, upload_type):
 
     try:
         # Acquire the upload semaphore
-        _UPLOAD_SEM.acquire()
+        with _UPLOAD_SEM():
 
-        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
-            # This path offers low CPU overhead and higher throughput, but
-            # can only be executed if running on the same system as the API.
-            # It works by writing directly to the file represented by the
-            # vio_file's 'asset_file'.
-            _upload_stream_local(vio_file, io_handle, upload_type)
-        else:
-            # Upload the file directly to the REST API server.
-            _upload_stream_api(vio_file, io_handle, upload_type)
+            if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
+                # This path offers low CPU overhead and higher throughput, but
+                # can only be executed if running on the same system as the
+                # API.
+                # It works by writing directly to the file represented by the
+                # vio_file's 'asset_file'.
+                _upload_stream_local(vio_file, io_handle, upload_type)
+            else:
+                # Upload the file directly to the REST API server.
+                _upload_stream_api(vio_file, io_handle, upload_type)
     finally:
-        # Must release the semaphore
-        _UPLOAD_SEM.release()
-
         try:
             # Cleanup after the upload
             vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
@@ -393,33 +391,16 @@ def _rest_api_pipe(file_writer):
 
 
 def _upload_stream_api(vio_file, io_handle, upload_type):
-    def _copy_retry(d_stream):
-        i = 0
-        while True:
-            try:
-                # Very rarely (think one in a thousand) there appears to be a
-                # hiccup in the upload processing.  A simple retry mechanism
-                # should be enough to push it through
-                vio_file.adapter.upload_file(vio_file.element, d_stream)
-                break
-            except exc.Error:
-                if i < 3:
-                    LOG.warning(_("Encountered an issue while uploading. "
-                                  "Will retry."))
-                else:
-                    raise
-                i += 1
-
     # If using a FUNCtion-based upload remotely, we have to make that function
     # (which is passed in as io_handle) think it's writing to a local file.  We
-    # spoof this with _RestApiPipe, which uses a fifo (named pipe) that it
-    # populates from d_stream in a separate thread.
+    # spoof this with _rest_api_pipe, which uses a fifo (named pipe) that it
+    # populates from in_stream in a separate thread.
     if upload_type == UploadType.FUNC:
         with _rest_api_pipe(io_handle) as in_stream:
-            _copy_retry(in_stream)
+            vio_file.adapter.upload_file(vio_file.element, in_stream)
     else:
         # io_handle is already an open, readable stream
-        _copy_retry(io_handle)
+        vio_file.adapter.upload_file(vio_file.element, io_handle)
 
 
 def _copy_func(out_file, io_handle):
@@ -428,7 +409,7 @@ def _copy_func(out_file, io_handle):
     i = 0
     with util.retry_io_command(open, out_file, 'a+b', 0) as out_str:
         while True:
-            chunk = util.retry_io_command(io_handle.read, 65536)
+            chunk = util.get_chunk(io_handle, 65536)
             if not chunk:
                 LOG.debug("Reached EOF at chunk %d", i)
                 break
