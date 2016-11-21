@@ -350,3 +350,8 @@ class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
 
 class CacheNotSupportedException(AbstractMsgFmtError):
     msg_fmt = _("The Adapter cache is not supported.")
+
+
+class ErrorInFuture(AbstractMsgFmtError):
+    msg_fmt = _("There was an error while running a thread.  The original "
+                "error was: %(trace)s")
