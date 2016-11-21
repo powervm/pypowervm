@@ -529,6 +529,27 @@ def retry_io_command(base_cmd, *argv):
                 raise
 
 
+def future_log_if_exception(fut, msgfmt, *msgargs):
+    """Inspect a concurrent.futures Future and generate logs if it raised.
+
+    If the fut param does not indicate an exception, this method does nothing
+    and returns False.
+
+    If the fut param indicates an exception, this method will generate an ERROR
+    log using msgfmt and msgargs, as well as the traceback of fut's exception.
+
+    :param fut: concurrent.futures.Future instance to inspect.
+    :param msgfmt: Internationalized message for the ERROR log.
+    :param msgargs: Positional arguments to LOG.error.
+    :return: True if the future contains an exception; False otherwise.
+    """
+    exc, trb = fut.exception_info()
+    if exc is None:
+        return False
+    LOG.error(msgfmt, *msgargs, exc_info=(exc.__class__, exc, trb))
+    return True
+
+
 @six.add_metaclass(abc.ABCMeta)
 class _AllowedList(object):
     """For REST fields taking 'ALL', 'NONE', or [list of values].
