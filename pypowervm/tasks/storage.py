@@ -137,8 +137,7 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
         # Run the upload
         maybe_file = _upload_stream(vio_file, io_handle, upload_type)
     except Exception:
-        maybe_file = _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid,
-                                           n_vdisk, vio_file)
+        _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file)
 
         # Re-raise the original exception
         raise
@@ -156,9 +155,10 @@ def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
     # ignore if it fails
     try:
         vio_file.delete()
-    except Exception:
-        return vio_file
-    return None
+    except Exception as e:
+        LOG.error(_("Failed to delete vio_file with UUID %s - ignoring."),
+                  vio_file.uuid)
+        LOG.exception(e)
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -326,6 +326,7 @@ def _upload_stream(vio_file, io_handle, upload_type):
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
 
+        start = time.time()
         if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
@@ -335,14 +336,14 @@ def _upload_stream(vio_file, io_handle, upload_type):
         else:
             # Upload the file directly to the REST API server.
             _upload_stream_api(vio_file, io_handle, upload_type)
+        LOG.debug("Upload took %.2fs", time.time() - start)
     finally:
         # Must release the semaphore
         _UPLOAD_SEM.release()
 
         try:
             # Cleanup after the upload
-            vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
-                                    service='web')
+            vio_file.delete()
         except Exception:
             LOG.exception(_('Unable to cleanup after file upload. '
                             'File uuid: %s') % vio_file.uuid)
@@ -434,7 +435,7 @@ def _copy_func(out_file, io_handle):
                 break
             util.retry_io_command(out_str.write, chunk)
 
-            if i % 100 == 0:
+            if i % 1000 == 0:
                 LOG.debug("Uploaded chunk %d to the server for file %s",
                           i, out_file)
             i += 1
@@ -466,24 +467,22 @@ def _upload_stream_local(vio_file, io_handle, upload_type):
             copy_f = th.submit(_wrap_user_stream, io_handle,
                                vio_file.asset_file)
 
-    # Capture, log, and reraise any exceptions on the subthreads.
-    if upload_f.exception():
-        LOG.error(_("Dummy API upload encountered an error uploading file %s"),
-                  vio_file.asset_file)
-        LOG.exception(upload_f.exception())
-    if copy_f.exception():
-        LOG.error(_("Coordinated copying function encountered an error "
-                    "uploading file %s."), vio_file.asset_file)
-        # We specifically log the exception here.  The reason being that this
+        # Log any exceptions on the subthreads.
+        # We specifically log the exceptions here.  The reason being that this
         # runs in a separate thread.  If the other thread has an exception this
         # may just be hidden.  Force a log, even though it may be redundant.
-        LOG.exception(copy_f.exception())
+        util.future_log_if_exception(
+            upload_f, _("Dummy API upload encountered an error uploading file "
+                        "%s"), vio_file.asset_file)
+        util.future_log_if_exception(
+            copy_f, _("Coordinated copying function encountered an error "
+                        "uploading file %s."), vio_file.asset_file)
 
-    # Even if upload_f also raised, this one is more important/relevant.
-    # Use result() to raise the original exception with its original trace.
-    copy_f.result()
-    # If we get here, copy_f succeeded.  If upload_f raised, we'll reraise that
-    upload_f.result()
+        # Even if upload_f also raised, this one is more important/relevant.
+        # Use result() to raise the original exception with its original trace.
+        copy_f.result()
+        # If we get here, copy_f succeeded.  If upload_f raised, reraise that.
+        upload_f.result()
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
