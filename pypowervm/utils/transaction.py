@@ -789,7 +789,7 @@ class FeedTask(tf_task.Task):
             LOG.error(_("FeedTask %s experienced multiple exceptions. They "
                         "are logged individually below."), self.name)
             for fail in wfail:
-                LOG.exception(fail.exception)
+                LOG.exception(fail.pformat(fail.traceback_str))
             raise ex.MultipleExceptionsInFeedTask(self.name, wfail)
 
         # Let a non-wrapped exception (which happens if there's only one
