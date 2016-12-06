@@ -86,6 +86,26 @@ class Force(object):
     NO_RETRY = 'no retry'
 
 
+class RemoveOptical(object):
+    """Valid values for the 'remove_optical_*' parameters in power_on.
+
+    This is primarily used to remove the config drive after install. KEY_NAME
+    is required and maps to a VirtualOpticalMedia name to remove. KEY_TIME is
+    optional and maps to the time, in minutes, to wait before deleting the
+    media.
+
+    Example usage:
+        power_on(..., add_parms={RemoveOptical.KEY_TIME: <Integer>,
+                                 RemoveOptical.KEY_NAME: <String>}, ...)
+    """
+    KEY_NAME = 'remove_optical_name'
+    KEY_TIME = 'remove_optical_time'
+
+    @classmethod
+    def bld_map(cls, name, time=0):
+        return {cls.KEY_NAME: name, cls.KEY_TIME: time}
+
+
 @lgc.logcall
 def power_on(part, host_uuid, add_parms=None, synchronous=True):
     """Will Power On a Logical Partition or Virtual I/O Server.
