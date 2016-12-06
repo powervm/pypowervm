@@ -123,6 +123,43 @@ class TestPower(testtools.TestCase):
         self.assertEqual(1, mock_job_p.call_count)
         mock_job_p.assert_called_with(power.KeylockPos.KEY,
                                       power.KeylockPos.MANUAL)
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms={power.RemoveOptical.KEY_TIME: 30,
+                                  power.RemoveOptical.KEY_NAME: 'testVopt'})
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with(power.RemoveOptical.KEY_TIME, '30',
+                                      power.RemoveOptical.KEY_NAME, 'testVopt')
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms=power.RemoveOptical.bld_map(name="test"))
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with(power.RemoveOptical.KEY_TIME, '30',
+                                      power.RemoveOptical.KEY_NAME, 'test')
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms=power.RemoveOptical.bld_map(name="test2",
+                                                             time=0))
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with(power.RemoveOptical.KEY_TIME, '0',
+                                      power.RemoveOptical.KEY_NAME, 'test2')
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms={power.RemoveOptical.KEY_NAME: 'testVopt'})
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
+        mock_job_p.assert_called_with(power.RemoveOptical.KEY_NAME, 'testVopt')
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
