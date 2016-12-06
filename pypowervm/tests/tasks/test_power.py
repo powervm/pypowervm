@@ -123,6 +123,42 @@ class TestPower(testtools.TestCase):
         self.assertEqual(1, mock_job_p.call_count)
         mock_job_p.assert_called_with(power.KeylockPos.KEY,
                                       power.KeylockPos.MANUAL)
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms={power.RemoveOptical.KEY_TIME: 30,
+                                  power.RemoveOptical.KEY_NAME: 'testVopt'},
+                       synchronous=False)
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(2, mock_job_p.call_count)
+        mock_run_job.assert_has_calls()
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms=power.RemoveOptical.bld_map(name="test"),
+                       synchronous=False)
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(2, mock_job_p.call_count)
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms=power.RemoveOptical.bld_map(name="test2",
+                                                             time=25),
+                       synchronous=False)
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(2, mock_job_p.call_count)
+        mock_run_job.reset_mock()
+        mock_job_p.reset_mock()
+
+        power.power_on(mock_lpar, '1111',
+                       add_parms={power.RemoveOptical.KEY_NAME: 'testVopt'},
+                       synchronous=False)
+        mock_job_p.assert_called_with(power.RemoveOptical.KEY_NAME, 'testVopt')
+        self.assertEqual(1, mock_run_job.call_count)
+        self.assertEqual(1, mock_job_p.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
