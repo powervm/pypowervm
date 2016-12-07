@@ -26,23 +26,24 @@ import time
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
-import taskflow.engines as tf_eng
+from taskflow import engines as tf_eng
 from taskflow.patterns import unordered_flow as tf_uf
-import taskflow.task as tf_tsk
+from taskflow import task as tf_tsk
 
-import pypowervm.const as c
-import pypowervm.exceptions as exc
+from pypowervm import const as c
+from pypowervm import exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.internal_utils import thread_utils as pvm_th
 from pypowervm.tasks import scsi_mapper as sm
 from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
-import pypowervm.wrappers.logical_partition as lpar
-import pypowervm.wrappers.managed_system as sys
-import pypowervm.wrappers.storage as stor
-import pypowervm.wrappers.vios_file as vf
-import pypowervm.wrappers.virtual_io_server as vios
+from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import managed_system as sys
+from pypowervm.wrappers import storage as stor
+from pypowervm.wrappers import vios_file as vf
+from pypowervm.wrappers import virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
 
@@ -79,6 +80,39 @@ class UploadType(object):
     # Note: This upload mechanism only works when using the pypowervm API
     # locally.
     FUNC = 'delegate_function'
+
+
+def _delete_vio_file(vio_file):
+    """Try to delete a File artifact.
+
+    :param vio_file: pypowervm.wrappers.vios_file.File object, retrieved from
+                     the server, representing the File object to delete.
+    :return: If the deletion is successful (or the File was already gone), the
+             method returns None.  Otherwise, the vio_file parameter is
+             returned.
+    """
+    # Try to delete the file.
+    try:
+        vio_file.adapter.delete(vio_file.schema_type, root_id=vio_file.uuid,
+                                service='web')
+    except Exception as e:
+        if not (isinstance(e, exc.HttpError) and
+                e.her_wrap.status == c.HTTPStatus.NOT_FOUND):
+            LOG.error(_("Failed to delete vio_file with UUID %s.  It must be "
+                        "manually deleted."), vio_file.uuid)
+            LOG.exception(e)
+            return vio_file
+    return None
+
+
+def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
+    """Cleans out a bad vDisk after a failed upload."""
+    # Keeps sonar happy.
+    vol_grp = stor.VG.get(adapter, vol_grp_uuid, parent_type=vios.VIOS,
+                          parent_uuid=v_uuid)
+    rm_vg_storage(vol_grp, vdisks=[n_vdisk])
+
+    _delete_vio_file(vio_file)
 
 
 def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
@@ -137,28 +171,11 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
         # Run the upload
         maybe_file = _upload_stream(vio_file, io_handle, upload_type)
     except Exception:
-        maybe_file = _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid,
-                                           n_vdisk, vio_file)
+        _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file)
 
         # Re-raise the original exception
         raise
     return n_vdisk, maybe_file
-
-
-def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
-    """Cleans out a bad vDisk after a failed upload."""
-    # Keeps sonar happy.
-    vol_grp = stor.VG.get(adapter, vol_grp_uuid, parent_type=vios.VIOS,
-                          parent_uuid=v_uuid)
-    rm_vg_storage(vol_grp, vdisks=[n_vdisk])
-
-    # Try to delete the file.  It may have already been deleted so just
-    # ignore if it fails
-    try:
-        vio_file.delete()
-    except Exception:
-        return vio_file
-    return None
 
 
 def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
@@ -326,6 +343,7 @@ def _upload_stream(vio_file, io_handle, upload_type):
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
 
+        start = time.time()
         if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
@@ -335,19 +353,14 @@ def _upload_stream(vio_file, io_handle, upload_type):
         else:
             # Upload the file directly to the REST API server.
             _upload_stream_api(vio_file, io_handle, upload_type)
+        LOG.debug("Upload took %.2fs", time.time() - start)
     finally:
         # Must release the semaphore
         _UPLOAD_SEM.release()
 
-        try:
-            # Cleanup after the upload
-            vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
-                                    service='web')
-        except Exception:
-            LOG.exception(_('Unable to cleanup after file upload. '
-                            'File uuid: %s') % vio_file.uuid)
-            return vio_file
-    return None
+        # Allow the exception to be raised up...if there was one.
+        ret_vio = _delete_vio_file(vio_file)
+    return ret_vio
 
 
 @contextlib.contextmanager
@@ -434,7 +447,7 @@ def _copy_func(out_file, io_handle):
                 break
             util.retry_io_command(out_str.write, chunk)
 
-            if i % 100 == 0:
+            if i % 1000 == 0:
                 LOG.debug("Uploaded chunk %d to the server for file %s",
                           i, out_file)
             i += 1
@@ -449,41 +462,40 @@ def _upload_stream_local(vio_file, io_handle, upload_type):
         def read(self, size):
             return None
 
+    argv = []
+    if upload_type is UploadType.IO_STREAM:
+        # io_handle is a readable stream supplying the image data.  Use our
+        # local copying function to pipe from it to the vio_file.
+        func = _copy_func
+        argv = [io_handle]
+    else:
+        # The io_handle is a function.  Just pass it the asset file path
+        # and that function will do the copying.
+        func = io_handle
+
     with futures.ThreadPoolExecutor(max_workers=2) as th:
         # The upload file is a blocking call (won't return until pipe
         # is fully written to), which is why we put it in another
         # thread.
-        upload_f = th.submit(vio_file.adapter.upload_file, vio_file.element,
-                             EmptyReader())
+        upload_f = pvm_th.submit_thread(th, vio_file.adapter.upload_file,
+                                        vio_file.element, EmptyReader())
 
-        if upload_type is UploadType.IO_STREAM:
-            # io_handle is a readable stream supplying the image data.  Use our
-            # local copying function to pipe from it to the vio_file.
-            copy_f = th.submit(_copy_func, vio_file.asset_file, io_handle)
-        else:
-            # The io_handle is a function.  Just pass it the asset file path
-            # and that function will do the copying.
-            copy_f = th.submit(_wrap_user_stream, io_handle,
-                               vio_file.asset_file)
+        # The real upload thread.
+        copy_f = pvm_th.submit_thread(th, func, vio_file.asset_file, *argv)
 
-    # Capture, log, and reraise any exceptions on the subthreads.
-    if upload_f.exception():
-        LOG.error(_("Dummy API upload encountered an error uploading file %s"),
-                  vio_file.asset_file)
-        LOG.exception(upload_f.exception())
-    if copy_f.exception():
-        LOG.error(_("Coordinated copying function encountered an error "
-                    "uploading file %s."), vio_file.asset_file)
-        # We specifically log the exception here.  The reason being that this
+        # Log any exceptions on the subthreads.
+        # We specifically log the exceptions here.  The reason being that this
         # runs in a separate thread.  If the other thread has an exception this
         # may just be hidden.  Force a log, even though it may be redundant.
-        LOG.exception(copy_f.exception())
+        for fut in futures.as_completed([upload_f, copy_f]):
+            if fut is copy_f:
+                _ensure_pipe_close(vio_file.asset_file, upload_f)
 
-    # Even if upload_f also raised, this one is more important/relevant.
-    # Use result() to raise the original exception with its original trace.
-    copy_f.result()
-    # If we get here, copy_f succeeded.  If upload_f raised, we'll reraise that
-    upload_f.result()
+        # Even if upload_f also raised, this one is more important/relevant.
+        # Use result() to raise the original exception with its original trace.
+        copy_f.result()
+        # If we get here, copy_f succeeded.  If upload_f raised, reraise that.
+        upload_f.result()
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
@@ -506,14 +518,7 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
                        f_size=f_size, tdev_udid=tdev_udid).create()
 
 
-def _wrap_user_stream(io_handle, asset_file):
-    try:
-        io_handle(asset_file)
-    finally:
-        _ensure_pipe_close(asset_file)
-
-
-def _ensure_pipe_close(file_path):
+def _ensure_pipe_close(file_path, upload_future):
     """Will ensure that a 'close file' is sent to a FIFO Pipe.
 
     This is needed in case there is an exception in client code that was going
@@ -521,18 +526,43 @@ def _ensure_pipe_close(file_path):
     us from blocking the write indefinitely, and never returning from the
     method.
 
-    :param file_path: The path to the pipe.
-    """
-    # If the path is already gone, just leave.  It was closed.
-    if not os.path.isfile(file_path):
-        return
+    The upload future is also passed in.  There are scenarios where the clients
+    I/O stream will fail immediately.  When this happens, the EOF can be sent
+    before the REST API starts reading from it.  The upload_future is passed
+    in so that we can retry the EOF send until the REST API closes the upload
+    pipe.  This avoids a nasty race condition.
 
-    try:
-        open(file_path, 'a+b', 0).close()
-    except Exception as e:
-        LOG.warning(_("An error occurred while closing FIFO pipe at path "
-                      "%s.  Ignoring."), file_path)
-        LOG.exception(e)
+    :param file_path: The path to the pipe.
+    :param upload_future: The future to wait for completion of before
+                          returning.
+    """
+    first_loop = True
+    while True:
+        # If the future is marked done, that means that the pipe must have
+        # closed properly and the EOF was received.
+        if upload_future.done():
+            return
+        elif not first_loop:
+            LOG.debug(("The upload thread has not completed yet. This may "
+                       "occur if the EOF was sent before the REST API started "
+                       "reading the I/O pipe. Trying again shortly."))
+        else:
+            first_loop = False
+
+        # If the path is already gone, just leave.  It was closed.
+        if not os.path.exists(file_path):
+            return
+
+        try:
+            LOG.warning(_('Manually closing FIFO pipe at path %s'), file_path)
+            open(file_path, 'a+b', 0).close()
+
+            # Give the future a short period to return control.
+            time.sleep(.5)
+        except Exception as e:
+            LOG.warning(_("An error occurred while closing FIFO pipe at path "
+                          "%s.  Ignoring."), file_path)
+            LOG.exception(e)
 
 
 def default_tier_for_ssp(ssp):
