@@ -18,7 +18,6 @@
 
 import abc
 import copy
-import datetime as dt
 import errno
 import hashlib
 import os
@@ -38,14 +37,14 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 
-import oslo_concurrency.lockutils as locku
 from oslo_log import log as logging
 import requests
 import requests.exceptions as rqex
 import six
+import six.moves.urllib.parse as urllib
 import weakref
 
-from pypowervm import cache
+
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
@@ -246,11 +245,11 @@ class Session(object):
                                  % method)
 
         if isupload:
-            LOG.debug('sending %s %s headers=%s body=<file contents>',
+            LOG.trace('sending %s %s headers=%s body=<file contents>',
                       method, url,
                       headers if not sensitive else "<sensitive>")
         else:
-            LOG.debug('sending %s %s headers=%s body=%s',
+            LOG.trace('sending %s %s headers=%s body=%s',
                       method, url,
                       headers if not sensitive else "<sensitive>",
                       body if not sensitive else "<sensitive>")
@@ -313,9 +312,9 @@ class Session(object):
                 # TODO(IBM): why does this happen and what else may result?
                 pass
 
-        LOG.debug('result: %s (%s) for %s %s', response.status_code,
+        LOG.trace('result: %s (%s) for %s %s', response.status_code,
                   response.reason, method, url)
-        LOG.debug('response headers: %s',
+        LOG.trace('response headers: %s',
                   response.headers if not sensitive else "<sensitive>")
 
         if response.status_code in [c.HTTPStatus.OK_NO_CONTENT,
@@ -324,7 +323,7 @@ class Session(object):
                             response.reason, response.headers,
                             reqheaders=headers, reqbody=body)
         else:
-            LOG.debug('response body:\n%s',
+            LOG.trace('response body:\n%s',
                       response.text if not sensitive else "<sensitive>")
 
         # re-login processing
@@ -558,47 +557,22 @@ class Session(object):
 class Adapter(object):
     """REST API Adapter for PowerVM remote management."""
 
-    # TODO(IBM): way to retrieve cache timestamp along with / instead of data?
-
     def __init__(self, session=None, use_cache=False, helpers=None):
         """Create a new Adapter instance, connected to a Session.
 
         :param session: (Optional) A Session instance.  If not specified, a
                         new, local, file-authentication-based Session will be
                         created and used.
-        :param use_cache: (Optional) Cache REST responses for faster operation.
+        :param use_cache: Do not use.  Caching not supported.
         :param helpers: A list of decorator methods in which to wrap the HTTP
                         request call.  See the pypowervm.helpers package for
                         examples.
         """
-        self.session = session if session else Session()
-        self._cache = None
-        self._refreshtime4path = {}
-        self._helpers = self._standardize_helper_list(helpers)
-        self._cache_handler = None
         if use_cache:
-            self._cache = cache._PVMCache(self.session.host)
-            # Events may not always be sent when they should, but they should
-            # be trustworthy when they are sent.
-            try:
-                self.session.get_event_listener()
-            except Exception:
-                LOG.exception(_('Failed to register for events.  Events will '
-                                'not be used.'))
-            if self.session.has_event_listener:
-                self._cache_handler = _CacheEventHandler(self._cache)
-                self.session.get_event_listener().subscribe(
-                    self._cache_handler)
+            raise pvmex.CacheNotSupportedException()
 
-    def __del__(self):
-        if self._cache_handler is not None:
-            # Depending on the order of garbage collection we can get errors
-            # from unsubscribing if the EventListener was shutdown first.
-            try:
-                self.session.get_event_listener().unsubscribe(
-                    self._cache_handler)
-            except ValueError:
-                pass
+        self.session = session if session else Session()
+        self._helpers = self._standardize_helper_list(helpers)
 
     @staticmethod
     def _standardize_helper_list(helpers):
@@ -700,44 +674,57 @@ class Adapter(object):
         resp = self._request('PUT', path, helpers=helpers, headers=headers,
                              body=element.toxmlstring(), timeout=timeout,
                              auditmemento=auditmemento, sensitive=sensitive)
-        resp_to_cache = None
-        is_cacheable = self._cache and not any(p in path for p in
-                                               c.UNCACHEABLE)
-        if is_cacheable:
-            # TODO(IBM): are there cases where PUT response differs from GET?
-            # TODO(IBM): only cache this when we don't have event support?
-            # If events are supported for this element, they should quickly
-            # invalidate this cache entry. But if events aren't available, or
-            # could be missed, caching the response may be useful.
-            # We will cache unmarshalled to reduce cache overhead, but we do
-            # need to unmarshall to determine all paths to use as cache key, so
-            # save this off (unmarshalled) to cache a little later.
-            resp_to_cache = copy.deepcopy(resp)
         resp._unmarshal_atom()
-        if resp_to_cache:
-            paths = util.determine_paths(resp)
-            new_path = util.extend_basepath(
-                resp.reqpath, '/' + resp.entry.uuid)
-            self._cache.set(new_path, paths, resp_to_cache)
-            # need to invalidate the feeds containing this entry
-            feed_paths = self._cache.get_feed_paths(new_path)
-            for feed_path in feed_paths:
-                self._cache.remove(feed_path)
         return resp
 
     def read(self, root_type, root_id=None, child_type=None, child_id=None,
              suffix_type=None, suffix_parm=None, detail=None, service='uom',
              etag=None, timeout=-1, auditmemento=None, age=-1, xag=None,
-             sensitive=False, helpers=None):
+             sensitive=False, helpers=None, add_qp=None):
         """Retrieve an existing resource.
 
         Will build the URI path using the provided arguments.
+
+        :param root_type: String ROOT REST element type.
+        :param root_id: String ROOT REST element UUID.  If unspecified, the
+                        feed of root_type is fetched.  Required if child_type
+                        is specified.
+        :param child_type: String CHILD REST element type.
+        :param child_id: String CHILD REST element UUID.  If unspecified, the
+                         feed of child_type is fetched.
+        :param suffix_type: Suffix type added to the path (with '/').  For
+                            special URIs, like Job requests (e.g. 'do' in
+                            .../do/Something).
+        :param suffix_param: Suffix parameter added to the path (with '/'). For
+                             special URIs, like Job requests (e.g. 'Something'
+                             in .../do/Something).
+        :param detail: Requested detail level of the response.  Obsolete.
+        :param service: REST service type, one of pypowervm.const.SERVICE_BY_NS
+        :param etag: Not used (caching disabled).
+        :param timeout: Timeout in seconds for the HTTP request.
+        :param auditmemento: X-Audit-Memento header registered in the REST
+                             server logs for debug purposes, allowing this
+                             request to be identified therein.
+        :param age: Not used (caching disabled).
+        :param xag: List of extended attribute group enum values.  If
+                    unspecified or None, 'None' will be appended.  If the empty
+                    list (xag=[]), no extended attribute query parameter will
+                    be added, resulting in the server's default extended
+                    attribute group behavior.
+        :param sensitive: If True, headers and payloads will be hidden in log
+                          entries.
+        :param helpers: A list of decorator methods in which to wrap the HTTP
+                        request call.  See the pypowervm.helpers package for
+                        examples.
+        :param add_qp: Optional list of (key, value) tuples to add to the query
+                       string of the request.
+        :return: Response object representing the result of the query.
         """
         self._validate('read', root_type, root_id, child_type, child_id,
                        suffix_type, suffix_parm, detail)
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
-                               xag=xag)
+                               xag=xag, add_qp=add_qp)
         return self.read_by_path(path, etag, timeout=timeout,
                                  auditmemento=auditmemento, age=age,
                                  sensitive=sensitive, helpers=helpers)
@@ -775,112 +762,11 @@ class Adapter(object):
                      age=-1, sensitive=False, helpers=None):
         """Retrieve an existing resource where URI path is already known."""
 
-        @locku.synchronized(path)
-        def _locked_refresh(refresh_time, _cached_resp, _etag,
-                            _etag_from_cache):
-            # If the request time is after the last time we started this,
-            # then for all intents and purposes the data is current
-            _refresh_time = self._refreshtime4path.get(path)
-            if _refresh_time is not None and _refresh_time >= refresh_time:
-                # The callers request was queued behind the lock before
-                # we started updating, so we know any operations they
-                # were expecting should be reflected in the latest data.
-                # Re-retrieve from cache
-                if _etag_from_cache:
-                    # this optimization won't work in this case because the
-                    # cache has already been refreshed since getting this etag
-                    # value from the cache
-                    _etag = None
-                    _etag_from_cache = False
-                # don't need to check age because we know we just refreshed
-                rsp = self._get_resp_from_cache(path, etag=_etag)
-                if rsp:
-                    if _etag and _etag == rsp.etag:
-                        # ETag matches what caller specified, so return an
-                        # HTTP 304 (Not Modified) response
-                        rsp.status = c.HTTPStatus.NO_CHANGE
-                        rsp.body = ''
-                    elif 'atom' in rsp.reqheaders['Accept']:
-                        rsp._unmarshal_atom()
-                    return rsp
-
-            # Either first to get the lock or found the cache to be empty
-            # First, note the time so it can be checked by the next guy
-            self._refreshtime4path[path] = dt.datetime.now()
-            # Now read from PowerVM
-            rsp = self._read_by_path(path, _etag, timeout, auditmemento,
-                                     sensitive, helpers=helpers)
-            resp_to_cache = None
-            if is_cacheable:
-                if rsp.status == c.HTTPStatus.NO_CHANGE:
-                    # don't want to cache the 304, which has no body
-                    # instead, just update the cache ordering
-                    self._cache.touch(path)
-                    if _etag_from_cache:
-                        # the caller didn't specify that ETag, so they won't
-                        # be expecting a 304 response... return from the cache
-                        rsp = _cached_resp
-                else:
-                    # cache unmarshalled to reduce cache overhead
-                    # But we need to unmarshall to determine all paths, so
-                    # save this off (unmarshalled) to cache a little later
-                    resp_to_cache = copy.deepcopy(rsp)
-            if 'atom' in rsp.reqheaders['Accept']:
-                rsp._unmarshal_atom()
-            if resp_to_cache:
-                self._cache.set(path, util.determine_paths(rsp),
-                                resp_to_cache)
-            return rsp
-
-        # end _locked_refresh
-
         path = util.dice_href(path)
-        # First, test whether we should be pulling from cache, determined
-        # by asking a) is there a cache? and b) is this path cacheable?
-        is_cacheable = self._cache and not any(p in path for p in
-                                               c.UNCACHEABLE)
-        resp = None
-        cached_resp = None
-        etag_from_cache = False
-
-        if is_cacheable:
-            # Attempt to retrieve from cache
-            max_age = util.get_max_age(path, self._cache_handler is not None,
-                                       self.session.schema_version)
-            if age == -1 or age > max_age:
-                age = max_age
-
-            # If requested entry is not in cache, check for feed in
-            # cache and build entry response from that.
-            resp = self._get_resp_from_cache(path, age, etag)
-            if resp:
-                if etag and etag == resp.etag:
-                    # ETag matches what caller specified, so return an
-                    # HTTP 304 (Not Modified) response
-                    resp.status = c.HTTPStatus.NO_CHANGE
-                    resp.body = ''
-                elif 'atom' in resp.reqheaders['Accept']:
-                    resp._unmarshal_atom()
-            elif not etag:
-                # we'll bypass the cache, but if there is a cache entry that
-                # doesn't meet the age requirement, we can still optimize
-                # our GET request by using its ETag to see if it has changed
-                cached_resp = self._get_resp_from_cache(path)
-                if cached_resp:
-                    etag = cached_resp.etag
-                    etag_from_cache = True
-        if not resp:
-            # If the path is cacheable but it's not currently in our cache,
-            # then do the request in series and use the cached results
-            # if possible
-            if is_cacheable:
-                resp = _locked_refresh(dt.datetime.now(), cached_resp, etag,
-                                       etag_from_cache)
-            else:
-                resp = self._read_by_path(path, etag, timeout, auditmemento,
-                                          sensitive, helpers=helpers)
-                if 'atom' in resp.reqheaders['Accept']:
-                    resp._unmarshal_atom()
+        resp = self._read_by_path(path, etag, timeout, auditmemento,
+                                  sensitive, helpers=helpers)
+        if 'atom' in resp.reqheaders['Accept']:
+            resp._unmarshal_atom()
 
         return resp
 
@@ -894,7 +780,9 @@ class Adapter(object):
         json_search_str = (c.UUID_REGEX + '/quick$' + '|/quick/' + r'|\.json$')
         if re.search(json_search_str, util.dice_href(path, include_query=False,
                                                      include_fragment=False)):
-            headers['Accept'] = 'application/json'
+            # Successful request will return application/json; errors (like 400
+            # or 404) will return application/atom+xml.
+            headers['Accept'] = '*/*'
         else:
             headers['Accept'] = 'application/atom+xml'
         if etag:
@@ -919,78 +807,31 @@ class Adapter(object):
                                    auditmemento=auditmemento,
                                    sensitive=sensitive, helpers=helpers)
 
-    def _check_cache_etag_mismatch(self, path, etag):
-        """ETag didn't match - see if we need to invalidate entry in cache.
-
-        :param path: The path (not URI) of the request that failed 304.
-        :param etag: The etag of the payload sent with the request
-        """
-        resp = self._cache.get(path)
-        if resp and etag == resp.etag:
-            # need to invalidate this in the cache
-            self._cache.remove(path)
-        # see if we need to invalidate feed in cache
-        # extract entry uuid
-        uuid = util.get_req_path_uuid(path)
-        # extract feed paths pertaining to the entry
-        feed_paths = self._cache.get_feed_paths(path)
-        for feed_path in feed_paths:
-            resp = self._build_entry_resp(feed_path, uuid)
-            if not resp or etag == resp.etag:
-                # need to invalidate this in the cache
-                self._cache.remove(feed_path)
-                LOG.debug('Invalidate feed %s for uuid %s', feed_path, uuid)
-
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
                        sensitive=False, helpers=None):
         """Update an existing resource where the URI path is already known."""
         path = util.dice_href(path)
-        try:
-            m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
-            if not m:
-                raise ValueError(_('path=%s is not a PowerVM API reference') %
-                                 path)
-            headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
-            if m.group(1) == 'pcm':
-                headers['Content-Type'] = 'application/xml'
-            else:
-                t = path.rsplit('/', 2)[1]
-                headers['Content-Type'] = c.TYPE_TEMPLATE % (m.group(1), t)
-            if etag:
-                headers['If-Match'] = etag
-            if hasattr(data, 'toxmlstring'):
-                body = data.toxmlstring()
-            else:
-                body = data
-            resp = self._request(
-                'POST', path, helpers=helpers, headers=headers, body=body,
-                timeout=timeout, auditmemento=auditmemento,
-                sensitive=sensitive)
-        except pvmex.HttpError as e:
-            if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
-                self._check_cache_etag_mismatch(path, etag)
-            raise
-        resp_to_cache = None
-        is_cacheable = self._cache and not any(p in path for p in
-                                               c.UNCACHEABLE)
-        if is_cacheable:
-            # TODO(IBM): are there cases where POST response differs from GET?
-            # TODO(IBM): only cache this when we don't have event support?
-            # If events are supported for this element, they should quickly
-            # invalidate this cache entry. But if events aren't available, or
-            # could be missed, caching the response may be useful.
-            # We will cache unmarshalled to reduce cache overhead, but we do
-            # need to unmarshall to determine all paths to use as cache key, so
-            # save this off (unmarshalled) to cache a little later.
-            resp_to_cache = copy.deepcopy(resp)
+        m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
+        if not m:
+            raise ValueError(_('path=%s is not a PowerVM API reference') %
+                             path)
+        headers = {'Accept': 'application/atom+xml; charset=UTF-8'}
+        if m.group(1) == 'pcm':
+            headers['Content-Type'] = 'application/xml'
+        else:
+            t = path.rsplit('/', 2)[1]
+            headers['Content-Type'] = c.TYPE_TEMPLATE % (m.group(1), t)
+        if etag:
+            headers['If-Match'] = etag
+        if hasattr(data, 'toxmlstring'):
+            body = data.toxmlstring()
+        else:
+            body = data
+        resp = self._request(
+            'POST', path, helpers=helpers, headers=headers, body=body,
+            timeout=timeout, auditmemento=auditmemento, sensitive=sensitive)
+
         resp._unmarshal_atom()
-        if resp_to_cache:
-            paths = util.determine_paths(resp)
-            self._cache.set(path, paths, resp_to_cache)
-            # need to invalidate the feeds containing this entry
-            feed_paths = self._cache.get_feed_paths(path)
-            for feed_path in feed_paths:
-                self._cache.remove(feed_path)
         return resp
 
     def delete(self, root_type, root_id=None, child_type=None, child_id=None,
@@ -1023,23 +864,8 @@ class Adapter(object):
         """Delete an existing resource where the URI path is already known."""
         path = util.dice_href(path, include_query=False,
                               include_fragment=False)
-        try:
-            resp = self._delete_by_path(path, etag, timeout, auditmemento,
-                                        helpers=helpers)
-        except pvmex.HttpError as e:
-            if self._cache and e.response.status == c.HTTPStatus.ETAG_MISMATCH:
-                self._check_cache_etag_mismatch(path, etag)
-            raise
-        if self._cache is not None:
-            # get feed_paths before removing the entry (won't work after)
-            feed_paths = self._cache.get_feed_paths(path)
-            # need to invalidate this in the cache
-            self._cache.remove(path, delete=True)
-            # also need to invalidate the feeds containing this entry
-            for feed_path in feed_paths:
-                self._cache.remove(feed_path)
-
-        return resp
+        return self._delete_by_path(path, etag, timeout, auditmemento,
+                                    helpers=helpers)
 
     def _delete_by_path(self, path, etag, timeout, auditmemento, helpers=None):
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
@@ -1094,60 +920,10 @@ class Adapter(object):
             suffix_parm, detail, xag=xag)
         return self.session.dest + p
 
-    def _build_entry_resp(self, feed_path, uuid, etag=None, age=-1):
-        """Build Response based on entry within a cached feed."""
-        feed_resp = self._cache.get(feed_path, age)
-        if not feed_resp or not feed_resp.body:
-            return
-
-        resp = None
-        root = etree.fromstring(feed_resp.body)
-        entry_body, entry_etag = get_entry_from_feed(root, uuid)
-        if entry_body:
-            # generate reqpath based on the feed and including uuid
-            reqpath = feed_resp.reqpath
-            parms_str = ''
-            if '?' in feed_resp.reqpath:
-                reqpath, parms_str = feed_resp.reqpath.rsplit('?', 1)
-
-            reqpath = reqpath + '/' + uuid
-            if parms_str:
-                reqpath = reqpath + '?' + parms_str
-            if entry_etag and etag == entry_etag:
-                resp = Response(feed_resp.reqmethod,
-                                reqpath,
-                                c.HTTPStatus.NO_CHANGE,
-                                feed_resp.reason,
-                                feed_resp.headers,
-                                body='',
-                                orig_reqpath=feed_resp.reqpath)
-                LOG.debug('Built HTTP 304 resp from cached feed')
-            else:
-                # should we upate the parameters?
-                resp = Response(feed_resp.reqmethod,
-                                reqpath,
-                                feed_resp.status,
-                                feed_resp.reason,
-                                feed_resp.headers,
-                                feed_resp.reqheaders,
-                                body=entry_body,
-                                orig_reqpath=feed_resp.reqpath)
-                # override the etag in the header
-                if entry_etag:
-                    resp.headers['etag'] = entry_etag
-                elif etag:
-                    # if there is no entry etag and etag is specified,
-                    # just return
-                    return
-                LOG.debug('Built entry from cached feed etag=%s body=%s',
-                          entry_etag, entry_body)
-
-        return resp
-
     @classmethod
     def build_path(cls, service, root_type, root_id=None, child_type=None,
                    child_id=None, suffix_type=None, suffix_parm=None,
-                   detail=None, xag=None):
+                   detail=None, xag=None, add_qp=None):
         path = c.API_BASE_PATH + service + '/' + root_type
         if root_id:
             path += '/' + root_id
@@ -1155,11 +931,13 @@ class Adapter(object):
                 path += '/' + child_type
                 if child_id:
                     path += '/' + child_id
-        return cls.extend_path(path, suffix_type, suffix_parm, detail, xag)
+        return cls.extend_path(path, suffix_type=suffix_type,
+                               suffix_parm=suffix_parm, detail=detail,
+                               xag=xag, add_qp=add_qp)
 
     @staticmethod
     def extend_path(basepath, suffix_type=None, suffix_parm=None, detail=None,
-                    xag=None):
+                    xag=None, add_qp=None):
         """Extend a base path with zero or more of suffix, detail, and xag.
 
         :param basepath: The path string to be extended.
@@ -1172,7 +950,9 @@ class Adapter(object):
                     list (xag=[]), no extended attribute query parameter will
                     be added, resulting in the server's default extended
                     attribute group behavior.
-        :return:
+        :param add_qp: Optional list of (key, value) tuples to add to the query
+                       string of the request.
+        :return: String base path (without protocol://server:port part).
         """
         path = basepath
         if suffix_type:
@@ -1192,6 +972,14 @@ class Adapter(object):
             if suffix_type in xagless_suffixes:
                 xag = []
         path = util.check_and_apply_xag(path, xag)
+
+        if add_qp:
+            parsed = urlparse.urlsplit(path)
+            qparms = urlparse.parse_qsl(parsed.query) if parsed.query else []
+            qparms.extend(add_qp)
+            qstr = urllib.urlencode(qparms)
+            path = urlparse.urlunsplit((parsed.scheme, parsed.netloc,
+                                        parsed.path, qstr, parsed.fragment))
 
         return path
 
@@ -1251,53 +1039,6 @@ class Adapter(object):
             raise ValueError(_('Unexpected req_method=%s') %
                              req_method)
 
-    def _get_resp_from_cache(self, path, age=-1, etag=None):
-        """Extract Response from cached data (either entry or feed)."""
-        cached_resp = self._cache.get(path, age=age)
-        if cached_resp is None:
-            # check the feed
-            uuid, xag_str = util.get_uuid_xag_from_path(path)
-            if uuid:
-                feed_paths = self._cache.get_feed_paths(path)
-                LOG.debug('Checking cached feeds %s for uuid %s %s',
-                          feed_paths, uuid, xag_str)
-                for f_path in feed_paths:
-                    cached_resp = self._build_entry_resp(f_path, uuid, etag,
-                                                         age)
-                    if cached_resp is not None:
-                        break
-        else:
-            LOG.debug('Found cached entry for path %s', path)
-
-        return cached_resp
-
-    def invalidate_cache_elem_by_path(self, path, invalidate_feeds=False):
-        """Invalidates a cache entry where the URI path is already known."""
-        path = util.dice_href(path)
-
-        if self._cache is not None:
-            # need to invalidate this path in the cache
-            self._cache.remove(path)
-            # if user wants to invalidate feeds as well,
-            # invalidate_feeds will equal True
-            if invalidate_feeds:
-                feed_paths = self._cache.get_feed_paths(path)
-                for feed_path in feed_paths:
-                    self._cache.remove(feed_path)
-
-    # Invalidates the cache entry apart from CRUD operations
-    def invalidate_cache_elem(self, root_type, root_id=None, child_type=None,
-                              child_id=None, service='uom',
-                              invalidate_feeds=False):
-        """Invalidates a cache entry.
-
-        Will build the URI path using the provided arguments.
-        """
-        self._validate('read', root_type, root_id, child_type, child_id)
-        path = self.build_path(service, root_type, root_id,
-                               child_type, child_id)
-        self.invalidate_cache_elem_by_path(path, invalidate_feeds)
-
 
 class Response(object):
     """Response to PowerVM API Adapter method invocation."""
@@ -1315,8 +1056,7 @@ class Response(object):
         :param reqheaders: Dict of headers from the HTTP request.
         :param reqbody: String payload of the HTTP request.
         :param body: String payload of the HTTP response.
-        :param orig_reqpath: The original reqpath if the Response is built from
-                             a cached feed.
+        :param orig_reqpath: Not used.
         """
         self.reqmethod = reqmethod
         self.reqpath = reqpath
@@ -1328,7 +1068,6 @@ class Response(object):
         self.body = body
         self.feed = None
         self.entry = None
-        self.orig_reqpath = orig_reqpath
         # Set by _request()
         self.adapter = None
 
@@ -1338,8 +1077,7 @@ class Response(object):
             self.reqmethod, self.reqpath, self.status, self.reason,
             copy.deepcopy(self.headers, memo=memo),
             reqheaders=copy.deepcopy(self.reqheaders, memo=memo),
-            reqbody=self.reqbody, body=self.body,
-            orig_reqpath=self.orig_reqpath)
+            reqbody=self.reqbody, body=self.body)
         if self.feed is not None:
             ret.feed = copy.deepcopy(self.feed, memo=memo)
         if self.entry is not None:
@@ -1440,7 +1178,7 @@ class EventListener(object):
 
 
 class _EventListener(EventListener):
-    def __init__(self, session, timeout=-1, interval=15):
+    def __init__(self, session, timeout=-1):
         """The event listener associated with a Session.
 
         This class should not be instantiated directly.  Instead construct
@@ -1448,8 +1186,7 @@ class _EventListener(EventListener):
 
         :param session: The Session this listener is to use.
         :param timeout: How long to wait for any events to be returned.
-            -1 = wait indefinitely
-        :param interval: How often to query for events.
+                        -1 = wait indefinitely.
         """
         if session is None:
             raise ValueError(_('Session must not be None'))
@@ -1458,17 +1195,20 @@ class _EventListener(EventListener):
                                'session.'))
         self.appid = hashlib.md5(session._sessToken).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
-        self.interval = interval
         self._lock = threading.RLock()
         self.handlers = []
         self._pthread = None
         self.host = session.host
+        self.adp = None
+        self._prime(session)
+
+    def _prime(self, session):
         try:
             # Establish a weak reference proxy to the session.  This is needed
             # because we don't want a circular reference to the session.
-            self.adp = Adapter(weakref.proxy(session), use_cache=False)
+            self.adp = Adapter(weakref.proxy(session))
             # initialize
-            events, raw_events = self._get_events()
+            events, raw_events, evtwraps = self._get_events()
         except pvmex.Error as e:
             raise pvmex.Error(_('Failed to initialize event feed listener: '
                                 '%s') % e)
@@ -1477,7 +1217,7 @@ class _EventListener(EventListener):
             raise ValueError(_('Application id "%s" is not unique') %
                              self.appid)
         # No errors initializing, so dispatch what we recieved.
-        self._dispatch_events(events, raw_events)
+        self._dispatch_events(events, raw_events, evtwraps)
 
     def subscribe(self, handler):
         if not isinstance(handler, _EventHandler):
@@ -1489,7 +1229,7 @@ class _EventListener(EventListener):
                 raise ValueError(_('This handler is already subscribed'))
             self.handlers.append(handler)
             if not self._pthread:
-                self._pthread = _EventPollThread(self, self.interval)
+                self._pthread = _EventPollThread(self)
                 self._pthread.start()
 
     def unsubscribe(self, handler):
@@ -1520,6 +1260,7 @@ class _EventListener(EventListener):
         """Gets the events and formats them into 'events' and 'raw_events'."""
         events = {}
         raw_events = []
+        event_wraps = []
         resp = None
 
         # Read event feed
@@ -1527,16 +1268,21 @@ class _EventListener(EventListener):
             resp = self.adp.read('Event?QUEUE_CLIENTKEY_METHOD='
                                  'USE_APPLICATIONID&QUEUE_APPLICATIONID=%s'
                                  % self.appid, timeout=self.timeout)
-        except pvmex.Error:
-            # TODO(IBM): improve error handling
-            LOG.exception(_('Error while getting PowerVM events'))
+        except Exception as e:
+            LOG.warning(_('Error while getting PowerVM events: %s.  (Is the '
+                          'pvm-rest service down?)'), e)
+            # Don't die.  The handler will retry.  But sleep so we don't thrash
+            time.sleep(5)
 
         if resp:
             # Parse event feed
             for entry in resp.feed.entries:
                 self._format_events(entry, events, raw_events)
+            # Do this here to avoid circular imports
+            import pypowervm.wrappers.event as event_wrap
+            event_wraps = event_wrap.Event.wrap(resp)
 
-        return events, raw_events
+        return events, raw_events, event_wraps
 
     def _format_events(self, entry, events, raw_events):
         """Formats an event Entry into events and raw events.
@@ -1565,7 +1311,7 @@ class _EventListener(EventListener):
         elif etype in ['MODIFY_URI', 'INVALID_URI', 'HIDDEN_URI']:
             if href not in events:
                 events[href] = 'invalidate'
-        elif etype not in ['VISIBLE_URI']:
+        elif etype not in ['VISIBLE_URI', 'CUSTOM_CLIENT_EVENT']:
             LOG.error(_('Unexpected EventType=%s'), etype)
 
         # Now format the event for the raw handlers
@@ -1574,21 +1320,32 @@ class _EventListener(EventListener):
         raw_events.append({'EventType': etype, 'EventData': href,
                            'EventID': eid, 'EventDetail': edetail})
 
-    def _dispatch_events(self, events, raw_events):
+    def _dispatch_events(self, events, raw_events, wrap_events):
+        """Invoke appropriate EventHandler 'process' callback.
 
-        def call_handlers():
+        :param events: Events dict of the format {<uri>: <action>} - see
+                       docstring for EventHandler.process.
+        :param raw_events: List of event dicts of the format
+                           {'EventType': <type>, 'EventData': <uri>,
+                            'EventID': <id>, 'EventDetail': <detail>}
+        :param wrap_events: List of pypowervm.wrappers.event.Event wrappers.
+        """
+
+        def call_handler(handler):
             try:
-                if isinstance(h, RawEventHandler):
-                    h.process(raw_events)
+                if isinstance(handler, WrapperEventHandler):
+                    handler.process(wrap_events)
+                elif isinstance(handler, RawEventHandler):
+                    handler.process(raw_events)
                 else:
-                    h.process(events)
+                    handler.process(events)
             except Exception:
                 LOG.exception(_('Error while processing PowerVM events'))
 
         # Notify subscribers
         with self._lock:
-            for h in self.handlers:
-                call_handlers()
+            for hndlr in self.handlers:
+                call_handler(hndlr)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -1671,72 +1428,39 @@ class RawEventHandler(_EventHandler):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
+class WrapperEventHandler(_EventHandler):
+    """Used to handle wrapped events from the API.
+
+    With this handler, no processing is done on the events. The events
+    will be passed as a list of pypowervm.wrappers.event.Event.
+
+    Implement this class and add it to the Session's event listener to process
+    events back from the API.
+    """
+
+    @abc.abstractmethod
+    def process(self, events):
+        """Process the event that comes back from the API.
+
+        :param events: A list of pypowervm.wrappers.event.Event that has come
+                       back from the system.  See that wrapper class for
+                       details.
+        """
+        pass
+
+
 class _EventPollThread(threading.Thread):
-    def __init__(self, eventlistener, interval):
+    def __init__(self, eventlistener):
         threading.Thread.__init__(self)
         self.eventlistener = eventlistener
-        self.interval = interval
         self.done = False
         # self.daemon = True
 
     def run(self):
         while not self.done:
-            events, raw_events = self.eventlistener._get_events()
-            self.eventlistener._dispatch_events(events, raw_events)
-            interval = self.interval
-            while interval > 0 and not self.done:
-                time.sleep(1)
-                interval -= 1
+            events, raw_events, evtwraps = self.eventlistener._get_events()
+            self.eventlistener._dispatch_events(events, raw_events, evtwraps)
 
     def stop(self):
         self.done = True
-
-
-class _CacheEventHandler(EventHandler):
-    def __init__(self, the_cache):
-        self.cache = the_cache
-
-    def process(self, events):
-        for k, v in six.iteritems(events):
-            if k == 'general' and v == 'invalidate':
-                self.cache.clear()
-            elif v in ['delete', 'invalidate']:
-                path = util.dice_href(k)
-                # remove from cache
-                self.cache.remove(path)
-                # if entry, remove corresponding feeds from cache
-                feed_paths = self.cache.get_feed_paths(path)
-                for feed_path in feed_paths:
-                    self.cache.remove(feed_path)
-
-
-def get_entry_from_feed(feedelem, uuid):
-    """Parse atom feed to extract the entry matching to the uuid."""
-    if not feedelem:
-        return None, None
-    uuid = uuid.lower()
-    entry = None
-    etag = None
-    for f_elem in list(feedelem):
-        if f_elem.tag == str(etree.QName(c.ATOM_NS, 'entry')):
-            etag = None
-            for e_elem in list(f_elem):
-                if not list(e_elem):
-                    pat = '{%s}' % c.ATOM_NS
-                    if re.match(pat, e_elem.tag):
-                        # Strip off atom namespace qualification for easier
-                        # access
-                        param_name = (e_elem.tag[e_elem.tag.index('}')
-                                                 + 1:len(e_elem.tag)])
-                    else:
-                        # Leave qualified anything that is not in the atom
-                        # namespace
-                        param_name = e_elem.tag
-                    if param_name == '{%s}etag' % c.UOM_NS:
-                        etag = e_elem.text
-                    elif param_name == 'id' and e_elem.text.lower() == uuid:
-                        entry = etree.tostring(f_elem)
-
-        if entry is not None:
-            return entry, etag
-    return None, None

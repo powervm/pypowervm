@@ -34,79 +34,6 @@ dummyuuid2 = "67890abc-5432-5432-5432-def0abcdef01"
 class TestUtil(unittest.TestCase):
     """Unit tests for pypowervm.util."""
 
-    def test_get_max_age(self):
-        """Clear-box unit test coverage for pypowervm.util.get_max_age().
-
-        Explicitly cover all conditions and defaults.
-        """
-
-        # >>> Cover first branch: max age for Cluster and SharedStoragePool,
-        #     for which there are no Events as yet
-        i = util.get_max_age("/rest/api/uom/Cluster", False, "V1_0")
-        self.assertEqual(i, 15, "Bad max age for Cluster")
-
-        i = util.get_max_age(
-            "/rest/api/uom/Cluster/" + dummyuuid1, False, "V1_0")
-        self.assertEqual(i, 15, "Bad max age for Cluster with UUID")
-
-        i = util.get_max_age("/rest/api/uom/SharedStoragePool", False, "V1_0")
-        self.assertEqual(i, 15, "Bad max age for SharedStoragePool")
-        # <<<
-
-        # >>> Cover the second branch: when [not using events] or [schema
-        #     version V1_0]
-        # LogicalPartition feed, trigger on [not using events]
-        i = util.get_max_age("/rest/api/uom/LogicalPartition", False, "V2_0")
-        self.assertEqual(
-            i, 30, "Bad max age for LogicalPartition (no events, V2_0)")
-        # LogicalPartitionFeed, trigger on [schema version V1_0]
-        i = util.get_max_age("/rest/api/uom/LogicalPartition", True, "V1_0")
-        self.assertEqual(
-            i, 30, "Bad max age for LogicalPartition (with events, V1_0)")
-        # VIOS feed
-        i = util.get_max_age("/rest/api/uom/VirtualIOServer", False, "V2_0")
-        self.assertEqual(
-            i, 90, "Bad max age for VirtualIOServer (no events, V2_0)")
-        # ManagedSystem entry
-        i = util.get_max_age(
-            "/rest/api/uom/ManagedSystem/" + dummyuuid1, False, "V2_0")
-        self.assertEqual(
-            i, 30, "Bad max age for ManagedSystem/{uuid} (no events, V2_0)")
-        # LogicalPartition, but not feed, hits the default
-        i = util.get_max_age(
-            "/rest/api/uom/LogicalPartition/" + dummyuuid1, False, "V2_0")
-        self.assertEqual(
-            i, 0, "Bad max age for LogicalPartition/{uuid} (no events, V2_0)")
-        # VIOS, but not feed, hits the default
-        i = util.get_max_age(
-            "/rest/api/uom/VirtualIOServer/" + dummyuuid1, False, "V2_0")
-        self.assertEqual(
-            i, 0, "Bad max age for VirtualIOServer/{uuid} (no events, V2_0)")
-        # SPP, but not feed, hits the default
-        i = util.get_max_age(
-            "/rest/api/uom/SharedProcessorPool/" + dummyuuid1, False, "V2_0")
-        self.assertEqual(
-            i, 0,
-            "Bad max age for SharedProcessorPool/{uuid} (no events, V2_0)")
-        # ManagedSystem, but not entry, hits the default
-        i = util.get_max_age(
-            "/rest/api/uom/ManagedSystem", False, "V2_0")
-        self.assertEqual(
-            i, 0, "Bad max age for ManagedSystem (no events, V2_0)")
-        # <<<
-
-        # >>> Cover the third branch: overall defaults when using events
-        # and/or later schema versions
-        i = util.get_max_age("/rest/api/uom/LogicalPartition", True, "V2_0")
-        self.assertEqual(
-            i, 600, "Bad max age for LogicalPartition (with events, V2_0)")
-
-        i = util.get_max_age("/rest/api/uom/SharedProcessorPool",
-                             False, "V2_0")
-        self.assertEqual(
-            i, 600, "Bad max age for SharedProcessorPool (no events, V2_0)")
-        # <<<
-
     def test_convert_bytes_to_gb(self):
         # A round 1 GB
         test = util.convert_bytes_to_gb(1024 * 1024 * 1024)
@@ -372,13 +299,51 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(('schema_type2', 'uuid2'), util.parent_spec(
             None, 'schema_type2', 'uuid2'))
 
+    def test_retry_io_command(self):
+        class MyOSError(OSError):
+            def __init__(self, errno):
+                super(MyOSError, self).__init__()
+                self.errno = errno
+
+        class MyIOError(IOError):
+            def __init__(self, errno):
+                super(MyIOError, self).__init__()
+                self.errno = errno
+
+        class MyValError(ValueError):
+            def __init__(self, errno):
+                super(MyValError, self).__init__()
+                self.errno = errno
+
+        func = mock.Mock()
+        mock_os_intr = MyOSError(4)
+        mock_io_intr = MyIOError(4)
+        mock_val_intr = MyValError(4)
+        mock_os_hup = MyOSError(1)
+        mock_io_hup = MyIOError(1)
+        func.side_effect = [mock_os_intr, mock_io_intr, mock_val_intr]
+        self.assertRaises(MyValError, util.retry_io_command, func)
+        self.assertEqual(3, func.call_count)
+        func.reset_mock()
+        func.side_effect = mock_os_hup
+        self.assertRaises(MyOSError, util.retry_io_command, func, 1, 'a')
+        func.assert_called_once_with(1, 'a')
+        func.reset_mock()
+        func.side_effect = mock_io_hup
+        self.assertRaises(MyIOError, util.retry_io_command, func)
+        func.assert_called_once_with()
+
 
 class TestAllowedList(unittest.TestCase):
     def test_all_none(self):
-        for val in ('ALL', 'NONE'):
-            for cls in (util.VLANList, util.MACList):
+        for cls in (util.VLANList, util.MACList):
+            for val in ('ALL', 'NONE'):
                 self.assertEqual(val, cls.unmarshal(val))
-                self.assertEqual(val, cls.marshal(val))
+            for val in ('ALL', 'NONE', 'all', 'none', 'aLl', 'nOnE'):
+                self.assertEqual(val.upper(), cls.marshal(val))
+                self.assertEqual(val.upper(), cls.const_or_list(val))
+                self.assertEqual(val.upper(), cls.marshal([val]))
+                self.assertEqual(val.upper(), cls.const_or_list([val]))
 
     def test_unmarshal(self):
         # Test VLAN lists
@@ -398,7 +363,7 @@ class TestAllowedList(unittest.TestCase):
         self.assertEqual('1 2', util.VLANList.marshal([1, 2]))
         self.assertEqual('0', util.VLANList.marshal([0]))
         self.assertEqual('5 6 2230 3340',
-                         util.VLANList.marshal([5, 6, 2230, 3340]))
+                         util.VLANList.marshal([5, 6, '2230', 3340]))
 
         # Test MAC lists
         self.assertEqual('AB12CD34EF56 12AB34CD56EF', util.MACList.marshal(
@@ -412,4 +377,26 @@ class TestAllowedList(unittest.TestCase):
             self.assertRaises(ValueError, cls.marshal, '')
             self.assertRaises(ValueError, cls.marshal, ' ')
             self.assertRaises(ValueError, cls.marshal, 'bogus')
-        self.assertRaises(ValueError, util.VLANList.marshal, ['1', 2])
+
+    def test_const_or_list(self):
+        # Test VLAN lists
+        for l2t in ([1, 2], [0], [5, 6, 2230, 3340]):
+            self.assertEqual(l2t, util.VLANList.const_or_list(l2t))
+
+        # Test MAC lists
+        self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'],
+                         util.MACList.const_or_list(
+                             ['aB:12:Cd:34:eF:56', '12Ab34cD56Ef']))
+        self.assertEqual(['AB12CD34EF56'], util.MACList.const_or_list(
+            ['Ab:12:cD:34:Ef:56']))
+
+        # Test error cases
+        for cls in (util.VLANList, util.MACList):
+            for meth in (cls.marshal, cls.const_or_list):
+                self.assertRaises(ValueError, meth, None)
+                self.assertRaises(ValueError, meth, '')
+                self.assertRaises(ValueError, meth, ' ')
+                self.assertRaises(ValueError, meth, 'bogus')
+        self.assertRaises(ValueError, util.VLANList.marshal, ['1', 'NaN', 2])
+        self.assertRaises(ValueError, util.VLANList.const_or_list, ['1', 'NaN',
+                                                                    2])

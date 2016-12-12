@@ -15,7 +15,6 @@
 #    under the License.
 
 """Base classes, enums, and constants shared by LPAR and VIOS EntryWrappers."""
-
 from pypowervm import const
 from pypowervm.i18n import _
 import pypowervm.util as u
@@ -30,6 +29,7 @@ _BP_CURR_BSR_ARRAYS = 'CurrentAllocatedBarrierSynchronizationRegisterArrays'
 _BP_CURRENT_PROC_MODE = 'CurrentProcessorCompatibilityMode'
 _BP_PROFILE_SYNC = 'CurrentProfileSync'
 _BP_HOSTNAME = 'Hostname'
+_BP_BOOTABLE = 'IsBootable'
 _BP_CALL_HOME = 'IsCallHomeEnabled'
 _BP_CONN_MONITORING = 'IsConnectionMonitoringEnabled'
 _BP_OP_IN_PROGRESS = 'IsOperationInProgress'
@@ -60,34 +60,39 @@ _BP_RMC_IP = 'ResourceMonitoringIPAddress'
 _BP_VAL_INT_PERF = 'ValidInteractivePerformance'
 _BP_ASSOC_SYSTEM = 'AssociatedManagedSystem'
 _BP_SRIOV_ETH = 'SRIOVEthernetLogicalPorts'
+_BP_SRIOV_ROCE = 'SRIOVRoCELogicalPorts'
 _BP_SRIOV_FC_ETH = 'SRIOVFibreChannelOverEthernetLogicalPorts'
 _BP_CNAS = 'ClientNetworkAdapters'
 _BP_HOST_ETH = 'HostEthernetAdapterLogicalPorts'
 _BP_MAC_PREF = 'MACAddressPrefix'
 _BP_SVC_PARTITION = 'IsServicePartition'
+_BP_MGMT_CAP = 'PowerVMManagementCapable'
 _BP_REF_CODE = 'ReferenceCode'
+_BP_REF_CODE_FULL = 'ReferenceCodeFull'
 _BP_MGT_PARTITION = 'IsManagementPartition'
 _BP_AUTO_START = 'AutoStart'
 _BP_BOOT_MODE = 'BootMode'
+_BP_NVRAM = 'PartitionNVRAM'
+_BP_UPTIME = 'Uptime'
 _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
-_BP_NVRAM = 'PartitionNVRAM'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
     _BP_CURR_BSR_ARRAYS, _BP_CURRENT_PROC_MODE, _BP_PROFILE_SYNC, _BP_HOSTNAME,
-    _BP_CALL_HOME, _BP_CONN_MONITORING, _BP_OP_IN_PROGRESS,
+    _BP_BOOTABLE, _BP_CALL_HOME, _BP_CONN_MONITORING, _BP_OP_IN_PROGRESS,
     _BP_REDUNDANT_ERR_PATH_REP, _BP_TIME_REF, _BP_ATTN_LED,
     _BP_TRUSTED_PLATFORM, _BP_KEYLOCK_POS, _BP_LOGICAL_SERIAL_NUM, _BP_OS_VER,
     _BP_CAPABILITIES, _BP_ID, _BP_IO_CFG, _BP_MEM_CFG, _BP_NAME, _BP_PROC_CFG,
     _BP_PROFS, _BP_STATE, _BP_TYPE, _BP_UUID, _BP_PENDING_PROC_MODE,
     _BP_PROC_POOL, _BP_PROG_DATA_REMAIN, _BP_PROG_DATA_TOTAL, _BP_PROG_STATE,
     _BP_RMC_STATE, _BP_RMC_IP, _BP_VAL_INT_PERF, _BP_ASSOC_SYSTEM,
-    _BP_SRIOV_ETH, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH, _BP_MAC_PREF,
-    _BP_SVC_PARTITION, _BP_REF_CODE, _BP_MGT_PARTITION, _BP_AUTO_START,
-    _BP_BOOT_MODE, _BP_NVRAM, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_SRIOV_ETH, _BP_SRIOV_ROCE, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH,
+    _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
+    _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
+    _BP_NVRAM, _BP_UPTIME, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
     _BP_ASSOC_TASKS, _BP_DESC
 )
 
@@ -153,15 +158,64 @@ _DPC_MAX_PROCS = 'MaximumProcessors'
 _DPC_MIN_PROCS = 'MinimumProcessors'
 
 # Partition Memory Configuration (_MEM)
+_MEM_PROF_AME_ENABLED = 'ActiveMemoryExpansionEnabled'
+_MEM_AMS_ENABLED = 'ActiveMemorySharingEnabled'
+_MEM_BSR_ARRAY_CT = 'BarrierSynchronizationRegisterArrayCount'
+_MEM_DES_ENT = 'DesiredEntitledMemory'
+_MEM_DES_HUGE_PAGE_CT = 'DesiredHugePageCount'
 _MEM_DES = 'DesiredMemory'
 _MEM_EXP_FACTOR = 'ExpansionFactor'
+_MEM_HW_PG_TBL_RATIO = 'HardwarePageTableRatio'
+_MEM_MAN_ENT_MODE_ENABLED = 'ManualEntitledModeEnabled'
+_MEM_MAX_HUGE_PG_CT = 'MaximumHugePageCount'
 _MEM_MAX = 'MaximumMemory'
+_MEM_WT = 'MemoryWeight'
+_MEM_MIN_HUGE_PG_CT = 'MinimumHugePageCount'
 _MEM_MIN = 'MinimumMemory'
+_MEM_PRI_PGING_SVC_PART = 'PrimaryPagingServicePartition'
+_MEM_SEC_PGING_SVC_PART = 'SecondaryPagingServicePartition'
+_MEM_AUTO_ENT_MEM_ENABLED = 'AutoEntitledMemoryEnabled'
+_MEM_CURR_BSR_ARRAYS = 'CurrentBarrierSynchronizationRegisterArrays'
+_MEM_CURR_ENT = 'CurrentEntitledMemory'
+_MEM_CURR_EXP_FACT = 'CurrentExpansionFactor'
+_MEM_CURR_HW_PG_TBL_RATIO = 'CurrentHardwarePageTableRatio'
+_MEM_CURR_HUGE_PG_CT = 'CurrentHugePageCount'
+_MEM_CURR_MAX_HUGE_PG_CT = 'CurrentMaximumHugePageCount'
+_MEM_CURR_MAX = 'CurrentMaximumMemory'
 _MEM_CUR = 'CurrentMemory'
+_MEM_CURR_MEM_WT = 'CurrentMemoryWeight'
+_MEM_CURR_MIN_HUGE_PG_CT = 'CurrentMinimumHugePageCount'
+_MEM_CURR_MIN = 'CurrentMinimumMemory'
+_MEM_CURR_PGING_SVC_PART = 'CurrentPagingServicePartition'
+_MEM_EXP_HW_ACC_ENABLED = 'MemoryExpansionHardwareAccessEnabled'
+_MEM_ENC_HW_ACC_ENABLED = 'MemoryEncryptionHardwareAccessEnabled'
 _MEM_AME_ENABLED = 'MemoryExpansionEnabled'
+_MEM_RELEASABLE = 'MemoryReleaseable'
+_MEM_TO_RELEASE = 'MemoryToRelease'
+_MEM_RED_ERR_PATH_REP_ENABLED = 'RedundantErrorPathReportingEnabled'
+_MEM_REQ_MIN_FOR_MAX = 'RequiredMinimumForMaximum'
+_MEM_RUNT_ENT = 'RuntimeEntitledMemory'
+_MEM_RUNT_EXP_FACT = 'RuntimeExpansionFactor'
+_MEM_RUNT_HUGE_PG_CT = 'RuntimeHugePageCount'
+_MEM_RUNT = 'RuntimeMemory'
+_MEM_RUNT_WT = 'RuntimeMemoryWeight'
+_MEM_RUNT_MIN = 'RuntimeMinimumMemory'
 _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
-_MEM_EL_ORDER = (_MEM_DES, _MEM_EXP_FACTOR, _MEM_MAX, _MEM_MIN,
-                 _MEM_CUR, _MEM_AME_ENABLED, _MEM_SHARED_MEM_ENABLED)
+
+_MEM_EL_ORDER = (
+    _MEM_PROF_AME_ENABLED, _MEM_AMS_ENABLED, _MEM_BSR_ARRAY_CT, _MEM_DES_ENT,
+    _MEM_DES_HUGE_PAGE_CT, _MEM_DES, _MEM_EXP_FACTOR, _MEM_HW_PG_TBL_RATIO,
+    _MEM_MAN_ENT_MODE_ENABLED, _MEM_MAX_HUGE_PG_CT, _MEM_MAX, _MEM_WT,
+    _MEM_MIN_HUGE_PG_CT, _MEM_MIN, _MEM_PRI_PGING_SVC_PART,
+    _MEM_SEC_PGING_SVC_PART, _MEM_AUTO_ENT_MEM_ENABLED, _MEM_CURR_BSR_ARRAYS,
+    _MEM_CURR_ENT, _MEM_CURR_EXP_FACT, _MEM_CURR_HW_PG_TBL_RATIO,
+    _MEM_CURR_HUGE_PG_CT, _MEM_CURR_MAX_HUGE_PG_CT, _MEM_CURR_MAX, _MEM_CUR,
+    _MEM_CURR_MEM_WT, _MEM_CURR_MIN_HUGE_PG_CT, _MEM_CURR_MIN,
+    _MEM_CURR_PGING_SVC_PART, _MEM_EXP_HW_ACC_ENABLED, _MEM_ENC_HW_ACC_ENABLED,
+    _MEM_AME_ENABLED, _MEM_RELEASABLE, _MEM_TO_RELEASE,
+    _MEM_RED_ERR_PATH_REP_ENABLED, _MEM_REQ_MIN_FOR_MAX, _MEM_RUNT_ENT,
+    _MEM_RUNT_EXP_FACT, _MEM_RUNT_HUGE_PG_CT, _MEM_RUNT, _MEM_RUNT_WT,
+    _MEM_RUNT_MIN, _MEM_SHARED_MEM_ENABLED)
 
 # Partition I/O Configuration (_IO)
 IO_CFG_ROOT = _BP_IO_CFG
@@ -349,8 +403,62 @@ class KeylockPos(object):
     ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
 
 
+class _DlparCapable(object):
+    def _can_modify(self, dlpar_cap, cap_desc):
+        """Checks to determine if the partition can be modified.
+
+        :param dlpar_cap: The appropriate DLPAR attribute to validate.  Only
+                          used if system is active.
+        :param cap_desc: A translated string indicating the DLPAR capability.
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        # First check is the not activated state
+        if self.state == LPARState.NOT_ACTIVATED:
+            return True, None
+        if self.rmc_state != RMCState.ACTIVE and not self.is_mgmt_partition:
+            return False, _('Partition does not have an active RMC '
+                            'connection.')
+        if not dlpar_cap:
+            return False, _('Partition does not have an active DLPAR '
+                            'capability for %s.') % cap_desc
+        return True, None
+
+    def can_modify_io(self):
+        """Determines if a partition is capable of adding/removing I/O HW.
+
+        :return capable: True if HW can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.io_dlpar, _('I/O'))
+
+    def can_modify_mem(self):
+        """Determines if a partition is capable of adding/removing Memory.
+
+        :return capable: True if memory can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'))
+
+    def can_modify_proc(self):
+        """Determines if a partition is capable of adding/removing processors.
+
+        :return capable: True if procs can be added/removed.  False otherwise.
+        :return reason: A translated message that will indicate why it was not
+                        capable of modification.  If capable is True, the
+                        reason will be None.
+        """
+        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
+
+
 @ewrap.Wrapper.base_pvm_type
-class BasePartition(ewrap.EntryWrapper):
+class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     """Base class for Logical Partition (LPAR) & Virtual I/O Server (VIOS).
 
     This corresponds to the abstract BasePartition object in the PowerVM
@@ -588,6 +696,11 @@ class BasePartition(ewrap.EntryWrapper):
         self.set_parm_value(_BP_NVRAM, nvram,
                             attrib=u.xag_attrs(const.XAG.NVRAM,
                                                base=const.ATTR_KSV130))
+
+    @property
+    def uptime(self):
+        """Integer time since partition boot, in seconds."""
+        return self._get_val_int(_BP_UPTIME)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,

@@ -40,6 +40,8 @@ LOG = logging.getLogger(__name__)
 
 # VIO Constants
 _VIO_API_CAP = 'APICapable'
+_VIO_VNIC_CAP = 'IsVNICCapable'
+_VIO_VNIC_FAILOVER_CAP = 'VNICFailOverCapable'
 _VIO_SVR_INST_CFG = 'ServerInstallConfiguration'
 _VIO_LNAGGS = 'LinkAggregations'
 _VIO_MGR_PASSTHRU_CAP = 'ManagerPassthroughCapable'
@@ -61,6 +63,8 @@ _VIO_FREE_IO_ADPTS_FOR_LNAGG = 'FreeIOAdaptersForLinkAggregation'
 # "FreeEthernetBackingDevicesForSEA" is really misspelled in the schema.
 _VIO_FREE_ETH_BACKDEVS_FOR_SEA = 'FreeEthenetBackingDevicesForSEA'
 _VIO_VNIC_BACKDEVS = 'VirtualNICBackingDevices'
+_VIO_CAPS = 'VirtualIOServerCapabilities'
+_VIO_VSCSI_BUS = 'VirtualSCSIBus'
 
 _VOL_UID = 'VolumeUniqueID'
 _VOL_NAME = 'VolumeName'
@@ -93,18 +97,28 @@ _MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
 _VFC_MAP_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, _MAP_PORT,
                   stor.SERVER_ADPT, _MAP_STORAGE)
 
+# VSCSI Bus Constants
+_BUS_ASSOC_MAPS = 'AssociatedMappings'
+
+_BUS_EL_ORDER = (_MAP_CLIENT_LPAR, stor.CLIENT_ADPT, stor.SERVER_ADPT,
+                 _BUS_ASSOC_MAPS)
+
+# VSCSI Storage/Target Device Constants
+_STDEV_EL_ORDER = (_MAP_STORAGE, _MAP_TARGET_DEV)
+
 _WWPNS_PATH = u.xpath(_VIO_VFC_MAPPINGS, 'VirtualFibreChannelMapping',
                       stor.CLIENT_ADPT, 'WWPNs')
 _PVS_PATH = u.xpath(stor.PVS, stor.PHYS_VOL)
 
 _VIOS_EL_ORDER = bp.BP_EL_ORDER + (
-    _VIO_API_CAP, _VIO_SVR_INST_CFG, _VIO_LNAGGS, _VIO_MGR_PASSTHRU_CAP,
-    _VIO_MEDIA_REPOS, _VIO_MVR_SVC_PARTITION, _VIO_NET_BOOT_DEVS,
-    _VIO_PAGING_SVC_PARTITION, _VIO_PVS, _VIO_SEAS, _VIO_SSP_CAP,
-    _VIO_SSP_VER, _VIO_STOR_POOLS, _VIO_TRUNK_ADPTS, _VIO_LICENSE,
-    _VIO_LICENSE_ACCEPTED, _VIO_VFC_MAPPINGS, _VIO_VSCSI_MAPPINGS,
-    _VIO_FREE_IO_ADPTS_FOR_LNAGG, _VIO_FREE_ETH_BACKDEVS_FOR_SEA,
-    _VIO_VNIC_BACKDEVS)
+    _VIO_API_CAP, _VIO_VNIC_CAP, _VIO_VNIC_FAILOVER_CAP, _VIO_SVR_INST_CFG,
+    _VIO_LNAGGS, _VIO_MGR_PASSTHRU_CAP, _VIO_MEDIA_REPOS,
+    _VIO_MVR_SVC_PARTITION, _VIO_NET_BOOT_DEVS, _VIO_PAGING_SVC_PARTITION,
+    _VIO_PVS, _VIO_SEAS, _VIO_SSP_CAP, _VIO_SSP_VER, _VIO_STOR_POOLS,
+    _VIO_TRUNK_ADPTS, _VIO_LICENSE, _VIO_LICENSE_ACCEPTED, _VIO_VFC_MAPPINGS,
+    _VIO_VSCSI_MAPPINGS, _VIO_FREE_IO_ADPTS_FOR_LNAGG,
+    _VIO_FREE_ETH_BACKDEVS_FOR_SEA, _VIO_VNIC_BACKDEVS, _VIO_CAPS,
+    _VIO_VSCSI_BUS)
 
 LinkAggrIOAdapterChoice = card.LinkAggrIOAdapterChoice
 
@@ -376,6 +390,23 @@ class VIOS(bp.BasePartition):
             LinkAggrIOAdapterChoice)
         return es
 
+    def can_lpm(self, host_w, migr_data=None):
+        """Determines if a partition is ready for Live Partition Migration.
+
+        :return capable: False, VIOS types are not LPM capable
+        :return reason: A message that will indicate why it was not
+                        capable of LPM.
+        """
+        return False, _('Partition of VIOS type is not LPM capable')
+
+    @property
+    def vnic_capable(self):
+        return self._get_val_bool(_VIO_VNIC_CAP)
+
+    @property
+    def vnic_failover_capable(self):
+        return self._get_val_bool(_VIO_VNIC_FAILOVER_CAP)
+
 
 @six.add_metaclass(abc.ABCMeta)
 @ewrap.Wrapper.base_pvm_type
@@ -402,7 +433,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def client_adapter(self):
-        """Returns the Client side VSCSIClientAdapterElement.
+        """Returns the Client side V*ClientAdapterElement.
 
         If None - then no client is connected.
         """
@@ -417,7 +448,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @property
     def server_adapter(self):
-        """Returns the Virtual I/O Server side VSCSIServerAdapterElement."""
+        """Returns the Virtual I/O Server side V*ServerAdapterElement."""
         return self._server_adapter_cls.wrap(
             self.element.find(stor.SERVER_ADPT))
 
@@ -426,100 +457,15 @@ class VStorageMapping(ewrap.ElementWrapper):
         self.element.replace(elem, sa.element)
 
 
-@ewrap.ElementWrapper.pvm_type('VirtualSCSIMapping', has_metadata=True,
-                               child_order=_MAP_ORDER)
-class VSCSIMapping(VStorageMapping):
-    """The mapping of a VIOS SCSI adapter to the Client LPAR SCSI adapter.
-
-    PowerVM provides a mechanism for Server/Client adapters to provide storage
-    connectivity (for LPARs that do not have dedicated hardware).  This mapping
-    describes the Virtual I/O Server's Server SCSI Adapter and the Client
-    LPAR's Client SCSI Adapter.
-
-    To create a new Client SCSI Adapter, create a new mapping and update the
-    Virtual I/O Server.  This will be an atomic operation that creates the
-    adapters on the Virtual I/O Server and Client LPAR, and then maps them
-    properly.  There is no need to pre-create the adapters before creating a
-    new mapping.
-    """
-
-    _client_adapter_cls = stor.VSCSIClientAdapterElement
-    _server_adapter_cls = stor.VSCSIServerAdapterElement
-
-    @classmethod
-    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
-            lpar_slot_num=None, lua=None):
-        """Creates a new VSCSIMapping
-
-        :param adapter: The pypowervm Adapter that will be used to create the
-                        mapping.
-        :param host_uuid: The host system's UUID.
-        :param client_lpar_uuid: The client LPAR's UUID.
-        :param stg_ref: The backing storage element (PV, LU, VDisk, or
-                        VOptMedia) to use in the new mapping.
-        :param lpar_slot_num: (Optional, Default: None) The client slot number
-                              to use in the new mapping. If None then we let
-                              REST choose the slot number.
-        :param lua: (Optional.  Default: None) Logical Unit Address to set on
-                    the TargetDevice.  If None, the LUA will be assigned by the
-                    server.  Should be specified for all of the VSCSIMappings
-                    for a particular bus, or none of them.
-        :return: The newly-created VSCSIMapping.
-        """
-        s_map = super(VSCSIMapping, cls)._bld(adapter)
-        # Create the 'Associated Logical Partition' element of the mapping.
-        s_map._client_lpar_href(
-            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
-        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
-            adapter, slot_num=lpar_slot_num))
-        s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
-        s_map._backing_storage(stg_ref)
-        if lua is not None:
+@ewrap.Wrapper.base_pvm_type
+class _STDevMethods(ewrap.ElementWrapper):
+    """Methods for storage and target common to STDev and VSCSIMapping."""
+    def _set_stg_and_tgt(self, adapter, stg_ref, lua=None, target_name=None):
+        self._backing_storage(stg_ref)
+        if lua is not None or target_name is not None:
             # Build a *TargetDev of the appropriate type for this stg_ref
-            s_map._target_dev(stg_ref.target_dev_type.bld(adapter, lua))
-        return s_map
-
-    @classmethod
-    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None,
-                          lua=None):
-        """Clones the existing mapping, but swaps in the new storage elem.
-
-        :param existing_map: The existing VSCSIMapping to clone.
-        :param stg_ref: The backing storage element (PV, LU, VDisk, or
-                        VOptMedia) to use in the new mapping.  If explicitly
-                        None, the new mapping is created with no storage.
-        :param lpar_slot_num: (Optional, Default: None) The client slot number
-                              to use in the mapping. If None then the
-                              existing slot number is used.
-        :param lua: (Optional.  Default: None) Logical Unit Address to set on
-                    the TargetDevice.  If None, the LUA will be assigned by the
-                    server.  Should be specified for all of the VSCSIMappings
-                    for a particular bus, or none of them.
-        :return: The newly-created VSCSIMapping.
-        """
-        # We do NOT want the source's TargetDevice element, so we explicitly
-        # copy the pieces we want from the original mapping.
-        new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
-        if existing_map.client_lpar_href is not None:
-            new_map._client_lpar_href(existing_map.client_lpar_href)
-        if existing_map.client_adapter is not None:
-            new_map._client_adapter(copy.deepcopy(existing_map.client_adapter))
-        if existing_map.server_adapter is not None:
-            new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
-        if stg_ref is not None:
-            new_map._backing_storage(copy.deepcopy(stg_ref))
-        if lpar_slot_num is not None:
-            # Set the slot number and remove the 'UseNextAvailableSlot' tag.
-            new_map.client_adapter._lpar_slot_num(lpar_slot_num)
-            new_map.client_adapter._use_next_slot(False)
-        if lua is not None:
-            if stg_ref is None:
-                raise ValueError(_("Can't specify target device LUA without a "
-                                   "backing storage device!"))
-            # Build a *TargetDev of the appropriate type for this stg_ref
-            new_map._target_dev(stg_ref.target_dev_type.bld(
-                existing_map.adapter, lua))
-        return new_map
+            self._target_dev(stg_ref.target_dev_type.bld(adapter, lua,
+                                                         target_name))
 
     @property
     def backing_storage(self):
@@ -586,6 +532,201 @@ class VSCSIMapping(VStorageMapping):
                                children=[])
         vtd_elem.inject(vtd.element)
         self.inject(vtd_elem)
+
+
+@ewrap.ElementWrapper.pvm_type('VirtualSCSIStorageAndTargetDevice',
+                               has_metadata=True, child_order=_STDEV_EL_ORDER)
+class STDev(_STDevMethods):
+    """Mapping backing storage and target device.
+
+    Used as a mixin for VSCSIMapping, and first-class internal Element for
+    VSCSIBus.
+    """
+    @classmethod
+    def bld(cls, adapter, stg_ref, lua=None):
+        """Build a new STDev - only to be used with VSCSIBus.
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        mapping.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
+        :return: The newly-created STDev.
+        """
+        stdev = super(STDev, cls)._bld(adapter)
+        stdev._set_stg_and_tgt(adapter, stg_ref, lua=lua)
+        return stdev
+
+
+@ewrap.ElementWrapper.pvm_type('VirtualSCSIMapping', has_metadata=True,
+                               child_order=_MAP_ORDER)
+class VSCSIMapping(VStorageMapping, _STDevMethods):
+    """The mapping of a VIOS SCSI adapter to the Client LPAR SCSI adapter.
+
+    PowerVM provides a mechanism for Server/Client adapters to provide storage
+    connectivity (for LPARs that do not have dedicated hardware).  This mapping
+    describes the Virtual I/O Server's Server SCSI Adapter and the Client
+    LPAR's Client SCSI Adapter.
+
+    To create a new Client SCSI Adapter, create a new mapping and update the
+    Virtual I/O Server.  This will be an atomic operation that creates the
+    adapters on the Virtual I/O Server and Client LPAR, and then maps them
+    properly.  There is no need to pre-create the adapters before creating a
+    new mapping.
+    """
+    _client_adapter_cls = stor.VSCSIClientAdapterElement
+    _server_adapter_cls = stor.VSCSIServerAdapterElement
+
+    @classmethod
+    def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
+            lpar_slot_num=None, lua=None, target_name=None):
+        """Creates a new VSCSIMapping
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        mapping.
+        :param host_uuid: The host system's UUID.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the new mapping. If None then we let
+                              REST choose the slot number.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
+        :param target_name: (Optional, Default: None) Name of the TargetDevice
+                            If None, the target_name will be assigned by the
+                            server.
+        :return: The newly-created VSCSIMapping.
+        """
+        s_map = super(VSCSIMapping, cls)._bld(adapter)
+        # Create the 'Associated Logical Partition' element of the mapping.
+        s_map._client_lpar_href(
+            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
+        s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
+        s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
+        s_map._set_stg_and_tgt(adapter, stg_ref, lua=lua,
+                               target_name=target_name)
+        return s_map
+
+    @classmethod
+    def bld_from_existing(cls, existing_map, stg_ref, lpar_slot_num=None,
+                          lua=None, target_name=None):
+        """Clones the existing mapping, but swaps in the new storage elem.
+
+        :param existing_map: The existing VSCSIMapping to clone.
+        :param stg_ref: The backing storage element (PV, LU, VDisk, or
+                        VOptMedia) to use in the new mapping.  If explicitly
+                        None, the new mapping is created with no storage.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the mapping. If None then the
+                              existing slot number is used.
+        :param lua: (Optional.  Default: None) Logical Unit Address to set on
+                    the TargetDevice.  If None, the LUA will be assigned by the
+                    server.  Should be specified for all of the VSCSIMappings
+                    for a particular bus, or none of them.
+        :param target_name: (Optional, Default: None) Name of the TargetDevice
+                            If None, the target_name will be assigned by the
+                            server.
+        :return: The newly-created VSCSIMapping.
+        """
+        # We do NOT want the source's TargetDevice element, so we explicitly
+        # copy the pieces we want from the original mapping.
+        new_map = super(VSCSIMapping, cls)._bld(existing_map.adapter)
+        if existing_map.client_lpar_href is not None:
+            new_map._client_lpar_href(existing_map.client_lpar_href)
+        if existing_map.client_adapter is not None:
+            new_map._client_adapter(copy.deepcopy(existing_map.client_adapter))
+        if existing_map.server_adapter is not None:
+            new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
+        if stg_ref is not None:
+            new_map._backing_storage(copy.deepcopy(stg_ref))
+        if lpar_slot_num is not None:
+            # Set the slot number and remove the 'UseNextAvailableSlot' tag.
+            new_map.client_adapter._lpar_slot_num(lpar_slot_num)
+            new_map.client_adapter._use_next_slot(False)
+        if any((lua, target_name)):
+            if stg_ref is None:
+                raise ValueError(_("Can't specify target device LUA without a "
+                                   "backing storage device!"))
+            # Build a *TargetDev of the appropriate type for this stg_ref
+            new_map._target_dev(stg_ref.target_dev_type.bld(
+                existing_map.adapter, lua, target_name))
+        return new_map
+
+
+@ewrap.EntryWrapper.pvm_type('VirtualSCSIBus', child_order=_BUS_EL_ORDER)
+class VSCSIBus(ewrap.EntryWrapper, VStorageMapping):
+    """Virtual SCSI Bus, first-class CHILD of VirtualIOServer.
+
+    PowerVM provides a mechanism for Server/Client adapters to provide storage
+    connectivity (for LPARs that do not have dedicated hardware).  This mapping
+    describes the Virtual I/O Server's Server SCSI Adapter and the Client
+    LPAR's Client SCSI Adapter.
+
+    To create a new Client SCSI Adapter, create a new mapping and update the
+    Virtual I/O Server.  This will be an atomic operation that creates the
+    adapters on the Virtual I/O Server and Client LPAR, and then maps them
+    properly.  There is no need to pre-create the adapters before creating a
+    new mapping.
+    """
+    _client_adapter_cls = stor.VSCSIClientAdapterElement
+    _server_adapter_cls = stor.VSCSIServerAdapterElement
+
+    @classmethod
+    def bld(cls, adapter, client_lpar_uuid, lpar_slot_num=None):
+        """Creates a new VSCSIBus with no storage.
+
+        Storage should be added afterwards by modifying stg_targets.
+
+        :param adapter: The pypowervm Adapter that will be used to create the
+                        bus.
+        :param client_lpar_uuid: The client LPAR's UUID.
+        :param lpar_slot_num: (Optional, Default: None) The client slot number
+                              to use in the new mapping. If None then we let
+                              REST choose the slot number.
+        :return: The newly-created VSCSIBus.
+        """
+        s_bus = super(VSCSIBus, cls)._bld(adapter)
+        # Create the 'Associated Logical Partition' element of the mapping.
+        s_bus._client_lpar_href(adapter.build_href(lpar.LPAR.schema_type,
+                                                   client_lpar_uuid, xag=[]))
+        s_bus._client_adapter(stor.VClientStorageAdapterElement.bld(
+            adapter, slot_num=lpar_slot_num))
+        s_bus._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
+        return s_bus
+
+    @classmethod
+    def bld_from_existing(cls, existing_bus):
+        """Clones a bus's LPAR and client/server adapters, but not storage.
+
+        :param existing_bus: The existing VSCSIBus to clone.
+        :return: The newly-created VSCSIBus.
+        """
+        # We do NOT want the source's storage, so we explicitly copy the pieces
+        # we want from the original bus.
+        new_bus = super(VSCSIBus, cls)._bld(existing_bus.adapter)
+        if existing_bus.client_lpar_href is not None:
+            new_bus._client_lpar_href(existing_bus.client_lpar_href)
+        if existing_bus.client_adapter is not None:
+            new_bus._client_adapter(copy.deepcopy(existing_bus.client_adapter))
+        if existing_bus.server_adapter is not None:
+            new_bus._server_adapter(copy.deepcopy(existing_bus.server_adapter))
+        return new_bus
+
+    @property
+    def mappings(self):
+        return ewrap.WrapperElemList(self._find_or_seed(
+            _BUS_ASSOC_MAPS), STDev)
+
+    @mappings.setter
+    def mappings(self, stdevs):
+        self.replace_list(_BUS_ASSOC_MAPS, stdevs)
 
 
 @ewrap.ElementWrapper.pvm_type('VirtualFibreChannelMapping', has_metadata=True,

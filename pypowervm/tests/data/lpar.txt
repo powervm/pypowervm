@@ -3188,6 +3188,7 @@ BODY{
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">TheNVRAMis20KofBASE64encodedDATA</PartitionNVRAM>
+    <Uptime ksv="V1_5_0" kxe="true" kb="ROO">1185681</Uptime>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>

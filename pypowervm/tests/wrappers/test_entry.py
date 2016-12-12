@@ -15,6 +15,7 @@
 #    under the License.
 
 import copy
+import re
 import unittest
 import uuid
 
@@ -33,6 +34,7 @@ import pypowervm.wrappers.cluster as clust
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
 import pypowervm.wrappers.logical_partition as lpar
+import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
@@ -43,6 +45,7 @@ LPAR_FILE = 'lpar.txt'
 VIOS_FILE = 'fake_vios_feed.txt'
 VNETS_FILE = 'nbbr_virtual_network.txt'
 SYS_VNIC_FILE = 'vnic_feed.txt'
+SYS_SRIOV_FILE = 'sys_with_sriov.txt'
 
 
 def _assert_clusters_equal(tc, cl1, cl2):
@@ -93,6 +96,103 @@ class TestElement(twrap.TestWrapper):
         newel.append(self.dwrap.load_grps[1].element)
         # TODO(IBM): ...but it doesn't.  See comment in that method.
         # self.assertEqual(num_lg, len(self.dwrap.load_grps))
+
+    @mock.patch('lxml.etree.tostring')
+    def test_toxmlstring(self, mock_tostring):
+        newel = ent.Element('foo', None)
+        # No args
+        self.assertEqual(mock_tostring.return_value, newel.toxmlstring())
+        mock_tostring.assert_called_once_with(newel.element)
+        # With kwargs
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value, newel.toxmlstring(
+            pretty=False))
+        mock_tostring.assert_called_once_with(newel.element)
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value,
+                         newel.toxmlstring(pretty=True))
+        mock_tostring.assert_called_once_with(newel.element, pretty_print=True)
+
+
+class TestElementList(twrap.TestWrapper):
+    file = SYS_SRIOV_FILE
+    wrapper_class_to_test = ms.System
+
+    def setUp(self):
+        super(TestElementList, self).setUp()
+        self.pport = self.dwrap.asio_config.sriov_adapters[0].phys_ports[0]
+        self.tag = 'ConfiguredOptions'
+
+    def _validate_xml(self, val_list):
+        outer_tag = self.pport.schema_type
+        tag_before = 'ConfiguredMTU'
+        tag_after = 'ConfiguredPortSwitchMode'
+        # Opening
+        tag_pat_fmt = r'<%s(\s[^>]*)?>'
+        elem_pat_fmt = tag_pat_fmt + r'%s</%s>\s*'
+        pattern = '.*'
+        pattern += tag_pat_fmt % outer_tag
+        pattern += '.*'
+        pattern += elem_pat_fmt % (tag_before, '[^<]*', tag_before)
+        for val in val_list:
+            pattern += elem_pat_fmt % (self.tag, val, self.tag)
+        pattern += elem_pat_fmt % (tag_after, '[^<]*', tag_after)
+        pattern += '.*'
+        pattern += tag_pat_fmt % ('/' + outer_tag)
+        pattern += '.*'
+        self.assertTrue(re.match(pattern.encode('utf-8'),
+                                 self.pport.toxmlstring(), flags=re.DOTALL))
+
+    def test_everything(self):
+        """Ensure ElementList behaves like a list where implemented."""
+        # Wrapper._get_elem_list, ElementList.__init__
+        coel = self.pport._get_elem_list(self.tag)
+        # index
+        self.assertEqual(0, coel.index('autoDuplex'))
+        self.assertEqual(1, coel.index('Veb'))
+        self.assertRaises(ValueError, coel.index, 'foo')
+        # __len__
+        self.assertEqual(2, len(coel))
+        # __repr__
+        self.assertEqual("['autoDuplex', 'Veb']", repr(coel))
+        # __contains__
+        self.assertIn('autoDuplex', coel)
+        self.assertIn('Veb', coel)
+        self.assertNotIn('foo', coel)
+        # __str__
+        self.assertEqual("['autoDuplex', 'Veb']", str(coel))
+        # __getitem__
+        self.assertEqual('autoDuplex', coel[0])
+        self.assertEqual('Veb', coel[1])
+        self.assertRaises(IndexError, coel.__getitem__, 2)
+        # __setitem__
+        coel[0] = 'fullDuplex'
+        self.assertEqual('fullDuplex', coel[0])
+        self.assertRaises(IndexError, coel.__setitem__, 2, 'foo')
+        # append
+        coel.append('foo')
+        self._validate_xml(['fullDuplex', 'Veb', 'foo'])
+        # extend
+        coel.extend(['bar', 'baz'])
+        self._validate_xml(['fullDuplex', 'Veb', 'foo', 'bar', 'baz'])
+        # __delitem__
+        del coel[3]
+        self._validate_xml(['fullDuplex', 'Veb', 'foo', 'baz'])
+        # remove
+        coel.remove('foo')
+        self._validate_xml(['fullDuplex', 'Veb', 'baz'])
+        # __iter__
+        self.assertEqual(['fullDuplex', 'Veb', 'baz'], [val for val in coel])
+        # clear
+        coel.clear()
+        self.assertEqual(0, len(coel))
+        self._validate_xml([])
+        # Inserting stuff back in puts it in the right place
+        coel.extend(['one', 'two', 'three'])
+        self._validate_xml(['one', 'two', 'three'])
+        # Wrapper._set_elem_list
+        self.pport._set_elem_list(self.tag, ['four', 'five', 'six'])
+        self._validate_xml(['four', 'five', 'six'])
 
 
 class TestWrapper(unittest.TestCase):
@@ -237,6 +337,24 @@ class TestEntryWrapper(testtools.TestCase):
         self.assertEqual('1', ew[0].etag)
         self.assertEqual(e2, ew[1].entry)
         self.assertEqual('2', ew[1].etag)
+
+    @mock.patch('lxml.etree.tostring')
+    def test_toxmlstring(self, mock_tostring):
+        wrp = ewrap.EntryWrapper.wrap(ent.Entry(
+            {}, ent.Element('fake_entry', None), None))
+        # No args
+        self.assertEqual(mock_tostring.return_value, wrp.toxmlstring())
+        mock_tostring.assert_called_once_with(wrp.entry.element)
+        # With kwargs
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value, wrp.toxmlstring(
+            pretty=False))
+        mock_tostring.assert_called_once_with(wrp.entry.element)
+        mock_tostring.reset_mock()
+        self.assertEqual(mock_tostring.return_value, wrp.toxmlstring(
+            pretty=True))
+        mock_tostring.assert_called_once_with(
+            wrp.entry.element, pretty_print=True)
 
 
 class TestElementWrapper(testtools.TestCase):
@@ -430,7 +548,7 @@ class TestElementWrapper(testtools.TestCase):
 
     def _verify_response_clone(self, resp1, resp2):
         for attr in ('reqmethod', 'reqpath', 'reqheaders', 'reqbody', 'status',
-                     'reason', 'headers', 'body', 'orig_reqpath', 'adapter'):
+                     'reason', 'headers', 'body', 'adapter'):
             self.assertEqual(getattr(resp1, attr), getattr(resp2, attr))
         self.assertIsNot(resp1.headers, resp2.headers)
         self.assertIs(resp1.adapter, resp2.adapter)
@@ -490,11 +608,11 @@ class TestWrapperElemList(testtools.TestCase):
         self.assertRaises(IndexError, lambda a, i: a[i], self.seas_wel, 2)
         # Works with indirect
         self.assertIsInstance(self.backdev_wel[0], card.VNICBackDev)
-        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 1)
+        self.assertRaises(IndexError, lambda a, i: a[i], self.backdev_wel, 2)
 
     def test_length(self):
         self.assertEqual(2, len(self.seas_wel))
-        self.assertEqual(1, len(self.backdev_wel))
+        self.assertEqual(2, len(self.backdev_wel))
 
     def test_append(self):
         sea_add = ewrap.ElementWrapper.wrap(
@@ -507,14 +625,14 @@ class TestWrapperElemList(testtools.TestCase):
         # Appending to indirect
         backdev = copy.deepcopy(self.backdev_wel[0])
         self.backdev_wel.append(backdev)
-        self.assertEqual(2, len(self.backdev_wel))
+        self.assertEqual(3, len(self.backdev_wel))
 
         # Make sure we can also remove what was just added.
         self.seas_wel.remove(sea_add)
         self.assertEqual(2, len(self.seas_wel))
         # Removing from indirect
         self.backdev_wel.remove(backdev)
-        self.assertEqual(1, len(self.backdev_wel))
+        self.assertEqual(2, len(self.backdev_wel))
 
     def test_extend(self):
         seas = [
@@ -531,7 +649,7 @@ class TestWrapperElemList(testtools.TestCase):
         backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 2),
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4)]
         self.backdev_wel.extend(backdevs)
-        self.assertEqual(3, len(self.backdev_wel))
+        self.assertEqual(4, len(self.backdev_wel))
 
         # Make sure that we can also remove what we added.  We remove a
         # logically identical element to test the equivalence function
@@ -543,7 +661,7 @@ class TestWrapperElemList(testtools.TestCase):
         # With indirect
         self.backdev_wel.remove(card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1,
                                                      2))
-        self.assertEqual(2, len(self.backdev_wel))
+        self.assertEqual(3, len(self.backdev_wel))
         # Non-equivalent one doesn't work
         self.assertRaises(ValueError, self.backdev_wel.remove,
                           card.VNICBackDev.bld(self.adpt, 'vios_uuid', 1, 3))
@@ -561,10 +679,27 @@ class TestWrapperElemList(testtools.TestCase):
 
     def test_str(self):
         strout = str(self.seas_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
         for chunk in strout.split(','):
             self.assertIn('SEA', chunk)
         # And for indirect
         strout = str(self.backdev_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
+        for chunk in strout.split(','):
+            self.assertIn('VNIC', chunk)
+
+    def test_repr(self):
+        strout = repr(self.seas_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
+        for chunk in strout.split(','):
+            self.assertIn('SEA', chunk)
+        # And for indirect
+        strout = repr(self.backdev_wel)
+        self.assertEqual('[', strout[0])
+        self.assertEqual(']', strout[-1])
         for chunk in strout.split(','):
             self.assertIn('VNIC', chunk)
 
@@ -740,6 +875,13 @@ class TestGet(testtools.TestCase):
                           lpar.LPAR.get, self.adpt, uuid='12', root_id='34')
         # Nothing was ever wrapped
         mock_wrap.assert_not_called()
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.wrap')
+    def test_get_by_href(self, mock_wrap):
+        self.assertEqual(
+            mock_wrap.return_value,
+            ewrap.EntryWrapper.get_by_href(self.adpt, 'href', one=2, three=4))
+        self.adpt.read_by_href.assert_called_once_with('href', one=2, three=4)
 
 
 class TestSearch(testtools.TestCase):
@@ -919,6 +1061,7 @@ class TestSearch(testtools.TestCase):
         # Do the search (with class as parent_type)
         wraps = net.VNet.search(self.adp, parent_type=vios.VIOS, tagged=True)
         # Make sure we got the right networks
+        self.assertEqual(4, len(wraps))
         for wrap, expected_vlanid in zip(wraps, (1234, 2, 1001, 1000)):
             self.assertIsInstance(wrap, net.VNet)
             self.assertTrue(wrap.tagged)
@@ -946,7 +1089,7 @@ class TestRefresh(testtools.TestCase):
 
     def setUp(self):
         super(TestRefresh, self).setUp()
-        self.adp = apt.Adapter(mock.patch('requests.Session'), use_cache=False)
+        self.adp = apt.Adapter(mock.patch('requests.Session'))
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.old_etag = '123'
         self.clust_old = clust.Cluster.bld(
@@ -1020,8 +1163,7 @@ class TestUpdate(testtools.TestCase):
 
     def setUp(self):
         super(TestUpdate, self).setUp()
-        mock_session = self.useFixture(fx.SessionFx()).sess
-        self.adp = apt.Adapter(mock_session, use_cache=False)
+        self.adp = apt.Adapter(self.useFixture(fx.SessionFx()).sess)
 
         props = {'id': self.clust_uuid, 'links': {'SELF': [self.clust_href]}}
         self.cl = clust.Cluster.bld(

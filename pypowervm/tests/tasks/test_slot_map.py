@@ -23,6 +23,7 @@ from pypowervm import exceptions as pv_e
 from pypowervm.tasks import slot_map
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.utils import lpar_builder as lb
+from pypowervm.wrappers import iocard as ioc
 from pypowervm.wrappers import network as net
 from pypowervm.wrappers import storage as stor
 from pypowervm.wrappers import virtual_io_server as vios
@@ -36,6 +37,7 @@ vio1 = loadf(vios.VIOS, 'fake_vios_ssp_npiv.txt')
 vio2 = loadf(vios.VIOS, 'fake_vios_mappings.txt')
 cnafeed1 = loadf(net.CNA, 'cna_feed1.txt')
 vswitchfeed = loadf(net.VSwitch, 'vswitch_feed.txt')
+vnicfeed = loadf(ioc.VNIC, 'vnic_feed.txt')
 
 
 class SlotMapTestImplLegacy(slot_map.SlotMapStore):
@@ -146,8 +148,9 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
 
     @mock.patch('pypowervm.wrappers.managed_system.System.get')
     @mock.patch('pypowervm.wrappers.network.VSwitch.get')
-    def test_register_cna(self, mock_vsw_get, mock_sys_get):
-        """Test register_cna."""
+    @mock.patch('warnings.warn')
+    def test_register_cna(self, mock_warn, mock_vsw_get, mock_sys_get):
+        """Test deprecated register_cna."""
         mock_vsw_get.return_value = vswitchfeed
         mock_sys_get.return_value = ['sys']
         smt = self.smt_impl('foo')
@@ -157,9 +160,16 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
                           6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}},
                          smt.topology)
+        # The vswitch_map is cached in the slot_map, so these only get
+        # called once
+        self.assertEqual(mock_vsw_get.call_count, 1)
+        self.assertEqual(mock_sys_get.call_count, 1)
 
-    def test_drop_cna(self):
-        """Test drop_cna."""
+        self.assertEqual(mock_warn.call_count, 3)
+
+    @mock.patch('warnings.warn')
+    def test_drop_cna(self, mock_warn):
+        """Test deprecated drop_cna."""
         smt = self.smt_impl('foo')
         smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
                           4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
@@ -174,6 +184,69 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         for cna in cnafeed1:
             smt.drop_cna(cna)
         self.assertEqual({}, smt.topology)
+        self.assertEqual(mock_warn.call_count, 4)
+
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    @mock.patch('pypowervm.wrappers.network.VSwitch.get')
+    def test_register_vnet(self, mock_vsw_get, mock_sys_get):
+        """Test register_vnet."""
+        mock_vsw_get.return_value = vswitchfeed
+        mock_sys_get.return_value = ['sys']
+        smt = self.smt_impl('foo')
+        for vnic in vnicfeed:
+            smt.register_vnet(vnic)
+        for cna in cnafeed1:
+            smt.register_vnet(cna)
+        self.assertEqual({3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          7: {'VNIC': {'AE7A25E59A07': None}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}},
+                         smt.topology)
+        # The vswitch_map is cached in the slot_map, so these only get
+        # called once
+        self.assertEqual(mock_vsw_get.call_count, 1)
+        self.assertEqual(mock_sys_get.call_count, 1)
+
+    def test_register_vnet_exception(self):
+        """Test register_vnet raises exception without CNA or VNIC."""
+        smt = self.smt_impl('foo')
+        self.assertRaises(pv_e.InvalidVirtualNetworkDeviceType,
+                          smt.register_vnet, None)
+
+    def test_drop_vnet(self):
+        """Test drop_vnet."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {3: {'CNA': {'5E372CFD9E6D': 'ETHERNET0'}},
+                          4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          7: {'VNIC': {'AE7A25E59A07': None}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}}
+
+        # Drop the first CNA and VNIC and verify it was removed
+        smt.drop_vnet(cnafeed1[0])
+        smt.drop_vnet(vnicfeed[0])
+        self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}},
+                          8: {'VNIC': {'AE7A25E59A08': None}}},
+                         smt.topology)
+
+        # Drop all remaining VNICs
+        for vnic in vnicfeed:
+            smt.drop_vnet(vnic)
+        self.assertEqual({4: {'CNA': {'2A2E57A4DE9C': 'ETHERNET0'}},
+                          6: {'CNA': {'3AEAC528A7E3': 'MGMTSWITCH'}}},
+                         smt.topology)
+        # Drop all remaining CNAs
+        for cna in cnafeed1:
+            smt.drop_vnet(cna)
+        self.assertEqual({}, smt.topology)
+
+    def test_drop_vnet_exception(self):
+        """Test drop_vnet raises exception without CNA or VNIC."""
+        smt = self.smt_impl('foo')
+        self.assertRaises(pv_e.InvalidVirtualNetworkDeviceType,
+                          smt.drop_vnet, None)
 
     def test_register_vfc_mapping(self):
         """Test register_vfc_mapping."""
@@ -359,7 +432,9 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         # Set up a nice, big, complicated source slot map
         smt1 = self.smt_impl('foo')
         for cna in cnafeed1:
-            smt1.register_cna(cna)
+            smt1.register_vnet(cna)
+        for vnic in vnicfeed:
+            smt1.register_vnet(vnic)
         i = 1
         for vio in (vio1, vio2):
             for vscsimap in vio.scsi_mappings:
@@ -540,6 +615,25 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertEqual(None, rsm.get_vea_slot('3AEAC528A7E3'))
         self.assertEqual(('3AEAC528A7E3', 6), rsm.get_mgmt_vea_slot())
 
+    def test_vnic_build_out(self):
+        """Test _vnic_build_out."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = {5: {'VNIC': {'72AB8C392CD6': None}},
+                          6: {'VNIC': {'111111111111': None}},
+                          7: {'VNIC': {'45F16A97BC7E': None}}}
+
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2], None, {})
+
+        self.assertEqual(
+            {'VNIC': {'72AB8C392CD6': 5,
+                      '111111111111': 6,
+                      '45F16A97BC7E': 7}},
+            rsm._build_map)
+
+        self.assertEqual(5, rsm.get_vnet_slot('72AB8C392CD6'))
+        self.assertEqual(6, rsm.get_vnet_slot('111111111111'))
+        self.assertEqual(7, rsm.get_vnet_slot('45F16A97BC7E'))
+
     def test_max_vslots(self):
         """Ensure max_vslots returns the set value, or 10 + highest slot."""
         # With max_vslots unset and nothing in the topology...
@@ -570,15 +664,6 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         # ...max_vslots returns the exact value
         self.assertEqual(23, rsm.get_max_vslots())
 
-    def test_rebuild_fails_w_lu(self):
-        """Test RebuildSlotMap fails when LUs exist in topology."""
-        smt = self.smt_impl('foo')
-        smt._slot_topo = SCSI_W_LU
-        self.assertRaises(
-            pv_e.InvalidHostForRebuildInvalidIOType,
-            slot_map.RebuildSlotMap, smt,
-            [self.vio1, self.vio2], VOL_TO_VIO1, {})
-
     def test_rebuild_fails_w_vopt(self):
         """Test RebuildSlotMap fails when a Vopt exists in topology."""
         smt = self.smt_impl('foo')
@@ -597,12 +682,40 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             slot_map.RebuildSlotMap, smt,
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
+    def test_lu_vscsi_build_out_1(self):
+        """Test RebuildSlotMap deterministic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = SCSI_LU_1
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+                                      VOL_TO_VIO1, {})
+
+        # Deterministic. vios1 gets slot 1
+        for udid in rsm._build_map['LU']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_LU_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # Deterministic. vios2 gets slot 2
+        for udid in rsm._build_map['LU']['vios2']:
+            slot, lua = rsm.get_vscsi_slot(self.vio2, udid)
+            self.assertEqual(2, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_LU_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio1, 'lu_udid4')
+        self.assertIsNone(slot)
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'lu_udid2')
+        self.assertIsNone(slot)
+
     def test_pv_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_1
         rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
-                                      VOL_TO_VIO2, {})
+                                      VOL_TO_VIO1, {})
 
         # Deterministic. vios1 gets slot 1
         for udid in rsm._build_map['PV']['vios1']:
@@ -629,46 +742,75 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         self.assertIsNone(
             rsm.get_pv_vscsi_slot(self.vio2, 'pv_udid2'))
 
-    def test_pv_vscsi_build_out_arbitrary_dest_vioses(self):
+    def test_mix_vscsi_build_out_1(self):
+        """Test RebuildSlotMap deterministic."""
+        smt = self.smt_impl('foo')
+        smt._slot_topo = SCSI_MIX_1
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+                                      VOL_TO_VIO1, {})
+
+        # Deterministic. vios1 gets slot 1
+        for udid in rsm._build_map['PV']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_MIX_1[slot][slot_map.IOCLASS.PV][udid], lua)
+
+        for udid in rsm._build_map['LU']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_MIX_1[slot][slot_map.IOCLASS.LU][udid], lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'lu_udid2')
+        self.assertIsNone(slot)
+        slot, lua = rsm.get_vscsi_slot(self.vio2, 'pv_udid2')
+        self.assertIsNone(slot)
+
+    def test_vscsi_build_out_arbitrary_dest_vioses(self):
         """Test RebuildSlotMap with multiple candidate dest VIOSes."""
         smt = self.smt_impl('foo')
-        smt._slot_topo = SCSI_PV_ARB_MAP
+        smt._slot_topo = SCSI_ARB_MAP
 
         rsm = slot_map.RebuildSlotMap(
             smt, [self.vio1, self.vio2], VTV_2V_ARB, {})
 
         # Since this isn't deterministic we want to make sure each UDID
         # got their slot assigned to one VIOS and not the other.
-        expected_map = {'pv_udid1': 47, 'pv_udid2': 9, 'pv_udid3': 23,
+        expected_map = {'lu_udid1': 47, 'pv_udid2': 9, 'lu_udid3': 23,
                         'pv_udid4': 56}
         for udid, eslot in six.iteritems(expected_map):
-            if not rsm.get_pv_vscsi_slot(self.vio1, udid):
-                self.assertEqual(
-                    eslot, rsm.get_pv_vscsi_slot(self.vio2, udid))
-            else:
-                self.assertEqual(
-                    eslot, rsm.get_pv_vscsi_slot(self.vio1, udid))
-                self.assertIsNone(rsm.get_pv_vscsi_slot(self.vio2, udid))
             aslot1, lua1 = rsm.get_vscsi_slot(self.vio1, udid)
             aslot2, lua2 = rsm.get_vscsi_slot(self.vio2, udid)
             if aslot1 is None:
                 self.assertEqual(eslot, aslot2)
-                self.assertEqual(
-                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua2)
+                if SCSI_ARB_MAP[eslot].get(slot_map.IOCLASS.LU):
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.LU][udid], lua2)
+                else:
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua2)
             else:
                 self.assertEqual(eslot, aslot1)
-                self.assertEqual(
-                    SCSI_PV_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua1)
+                self.assertIsNone(aslot2)
+                if SCSI_ARB_MAP[eslot].get(slot_map.IOCLASS.LU):
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.LU][udid], lua1)
+                else:
+                    self.assertEqual(
+                        SCSI_ARB_MAP[eslot][slot_map.IOCLASS.PV][udid], lua1)
 
-    def test_pv_vscsi_build_out_full_coverage(self):
+    def test_vscsi_build_out_full_coverage(self):
         """Test rebuild with 2 slots per udid and 2 candidate VIOSes."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_PV_2S_2V_MAP
 
         rsm = slot_map.RebuildSlotMap(
             smt, [self.vio1, self.vio2], VTV_2V_ARB, {})
-        expected_map = {'pv_udid1': [5, 23], 'pv_udid2': [6, 24],
-                        'pv_udid3': [7, 25], 'pv_udid4': [8, 26]}
+        expected_map = {'lu_udid1': [5, 23], 'pv_udid2': [6, 24],
+                        'lu_udid3': [7, 25], 'pv_udid4': [8, 26]}
 
         # We know what slots the UDIDs should get but not what VIOSes they'll
         # belong to. So we'll assert that one VIOS gets 1 slot and the other
@@ -778,19 +920,6 @@ class TestRebuildSlotMap(TestRebuildSlotMapLegacy):
         super(TestRebuildSlotMap, self).__init__(*args, **kwargs)
         self.smt_impl = SlotMapTestImpl
 
-SCSI_W_LU = {
-    1: {
-        slot_map.IOCLASS.LU: {
-            'lu_udid1': 'lu_lua_1',
-            'lu_udid2': 'lu_lua_2'
-        },
-        slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1',
-            'pv_udid2': 'pv_lua_2'
-        }
-    }
-}
-
 SCSI_W_VOPT = {
     1: {
         slot_map.IOCLASS.VOPT: {
@@ -816,6 +945,23 @@ SCSI_W_VDISK = {
     }
 }
 
+SCSI_LU_1 = {
+    1: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid2': 'lu_lua_2',
+            'lu_udid3': 'lu_lua_3'
+        }
+    },
+    2: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid3': 'lu_lua_3',
+            'lu_udid4': 'lu_lua_4'
+        }
+    }
+}
+
 SCSI_PV_1 = {
     1: {
         slot_map.IOCLASS.PV: {
@@ -833,10 +979,23 @@ SCSI_PV_1 = {
     }
 }
 
-SCSI_PV_ARB_MAP = {
-    47: {
+SCSI_MIX_1 = {
+    1: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1',
+            'lu_udid2': 'lu_lua_2'
+        },
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'pv_udid1': 'pv_lua_1',
+            'pv_udid2': 'pv_lua_2'
+        }
+    }
+}
+
+SCSI_ARB_MAP = {
+    47: {
+        slot_map.IOCLASS.LU: {
+            'lu_udid1': 'lu_lua_1'
         }
     },
     9: {
@@ -845,8 +1004,8 @@ SCSI_PV_ARB_MAP = {
         }
     },
     23: {
-        slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+        slot_map.IOCLASS.LU: {
+            'lu_udid3': 'lu_lua_3'
         }
     },
     56: {
@@ -859,7 +1018,7 @@ SCSI_PV_ARB_MAP = {
 SCSI_PV_2S_2V_MAP = {
     5: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'lu_udid1': 'pv_lua_1'
         }
     },
     6: {
@@ -869,7 +1028,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     7: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+            'lu_udid3': 'pv_lua_3'
         }
     },
     8: {
@@ -879,7 +1038,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     23: {
         slot_map.IOCLASS.PV: {
-            'pv_udid1': 'pv_lua_1'
+            'lu_udid1': 'pv_lua_1'
         }
     },
     24: {
@@ -889,7 +1048,7 @@ SCSI_PV_2S_2V_MAP = {
     },
     25: {
         slot_map.IOCLASS.PV: {
-            'pv_udid3': 'pv_lua_3'
+            'lu_udid3': 'pv_lua_3'
         }
     },
     26: {
@@ -934,7 +1093,13 @@ VOL_TO_VIO1 = {
         'vios2'
     ],
     'lu_udid2': [
+        'vios1'
+    ],
+    'lu_udid3': [
         'vios1',
+        'vios2'
+    ],
+    'lu_udid4': [
         'vios2'
     ],
     'pv_udid1': [
@@ -942,7 +1107,13 @@ VOL_TO_VIO1 = {
         'vios2'
     ],
     'pv_udid2': [
+        'vios1'
+    ],
+    'pv_udid3': [
         'vios1',
+        'vios2'
+    ],
+    'pv_udid4': [
         'vios2'
     ]
 }
@@ -980,7 +1151,7 @@ VOL_TO_VIO_1_VIOS_PV1 = {
 }
 
 VTV_2V_ARB = {
-    'pv_udid1': [
+    'lu_udid1': [
         'vios1',
         'vios2'
     ],
@@ -988,7 +1159,7 @@ VTV_2V_ARB = {
         'vios1',
         'vios2'
     ],
-    'pv_udid3': [
+    'lu_udid3': [
         'vios1',
         'vios2'
     ],

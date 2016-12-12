@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015,2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -66,6 +66,35 @@ class TestUploadLV(testtools.TestCase):
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
         self.vg_uuid = 'b6bdbf1f-eddf-3c81-8801-9859eb6fedcb'
 
+    @mock.patch('tempfile.mkdtemp')
+    @mock.patch('pypowervm.tasks.storage.os')
+    @mock.patch('pypowervm.util.retry_io_command')
+    @mock.patch('pypowervm.tasks.storage.open')
+    def test_rest_api_pipe(self, mock_open, mock_retry, mock_os, mock_mkdtemp):
+        mock_writer = mock.Mock()
+        with ts._rest_api_pipe(mock_writer) as read_stream:
+            self.assertEqual(mock_retry.return_value, read_stream)
+        mock_mkdtemp.assert_called_once_with()
+        mock_os.path.join.assert_called_once_with(mock_mkdtemp.return_value,
+                                                  'REST_API_Pipe')
+        mock_os.mkfifo.assert_called_once_with(mock_os.path.join.return_value)
+        mock_writer.assert_called_once_with(mock_os.path.join.return_value)
+        mock_os.remove.assert_called_once_with(mock_os.path.join.return_value)
+        mock_os.rmdir.assert_called_once_with(mock_mkdtemp.return_value)
+        # _eintr_retry_call was invoked once with open and once with close
+        mock_retry.assert_has_calls(
+            [mock.call(mock_open, mock_os.path.join.return_value, 'r')],
+            [mock.call(mock_retry.return_value.close)])
+
+    @mock.patch('pypowervm.tasks.storage._rest_api_pipe')
+    def test_upload_stream_api_func(self, mock_rap):
+        """With FUNC, _upload_stream_api uses _rest_api_pipe properly."""
+        vio_file = mock.Mock()
+        ts._upload_stream_api(vio_file, 'io_handle', ts.UploadType.FUNC)
+        mock_rap.assert_called_once_with('io_handle')
+        vio_file.adapter.upload_file.assert_called_once_with(
+            vio_file.element, mock_rap.return_value.__enter__.return_value)
+
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vopt(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
@@ -75,6 +104,8 @@ class TestUploadLV(testtools.TestCase):
         v_opt, f_wrap = ts.upload_vopt(self.adpt, self.v_uuid, None, 'test2',
                                        f_size=50)
 
+        mock_create_file.assert_called_once_with(
+            self.adpt, 'test2', vf.FileType.MEDIA_ISO, self.v_uuid, None, 50)
         # Test that vopt was 'uploaded'
         self.adpt.upload_file.assert_called_with(mock.ANY, None)
         self.assertIsNone(f_wrap)
@@ -101,6 +132,73 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(vopt)
         self.assertIsInstance(vopt, stor.VOptMedia)
         self.assertEqual('test2', v_opt.media_name)
+
+    @mock.patch.object(ts.LOG, 'warning')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vopt_w_retry(self, mock_create_file, mock_log_warn):
+        """Tests the uploads of the virtual disks with an upload retry."""
+
+        mock_create_file.return_value = self._fake_meta()
+        self.adpt.upload_file.side_effect = [exc.Error("error"),
+                                             object()]
+
+        v_opt, f_wrap = ts.upload_vopt(self.adpt, self.v_uuid, None, 'test2',
+                                       f_size=50)
+
+        # Test that vopt was 'uploaded'
+        self.adpt.upload_file.assert_called_with(mock.ANY, None)
+        self.assertIsNone(f_wrap)
+        self.assertIsNotNone(v_opt)
+        self.assertIsInstance(v_opt, stor.VOptMedia)
+        self.assertEqual('test2', v_opt.media_name)
+
+        # Validate that there was a warning log call and multiple executions
+        # of the upload
+        mock_log_warn.assert_called_once()
+        self.assertEqual(2, self.adpt.upload_file.call_count)
+
+        # Ensure cleanup was called
+        self.adpt.delete.assert_called_once_with(
+            'File', service='web',
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+
+    @mock.patch.object(ts.LOG, 'warning')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vopt_w_fail(self, mock_create_file, mock_log_warn):
+        """Tests the uploads of the virtual disks with an upload fail."""
+        mock_create_file.return_value = self._fake_meta()
+        self.adpt.upload_file.side_effect = exc.Error("error")
+
+        self.assertRaises(exc.Error, ts.upload_vopt, self.adpt, self.v_uuid,
+                          None, 'test2', f_size=50)
+
+        # Three loops (so three logging calls) before the failure bubbles up
+        self.assertEqual(3, mock_log_warn.call_count)
+
+    @mock.patch('pypowervm.tasks.storage.rm_vg_storage')
+    @mock.patch('pypowervm.wrappers.storage.VG.get')
+    @mock.patch('pypowervm.tasks.storage._upload_stream')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage.crt_vdisk')
+    def test_upload_new_vdisk_failed(
+            self, mock_create_vdisk, mock_create_file, mock_upload_stream,
+            mock_vg_get, mock_rm):
+        """Tests the uploads of the virtual disks."""
+        # First need to load in the various test responses.
+        mock_vdisk = mock.Mock()
+        mock_create_vdisk.return_value = mock_vdisk
+        mock_create_file.return_value = self._fake_meta()
+
+        fake_vg = mock.Mock()
+        mock_vg_get.return_value = fake_vg
+
+        mock_upload_stream.side_effect = exc.ConnectionError('fake error')
+
+        self.assertRaises(
+            exc.ConnectionError, ts.upload_new_vdisk, self.adpt, self.v_uuid,
+            self.vg_uuid, None, 'test2', 50, d_size=25, sha_chksum='abc123')
+        self.adpt.delete.assert_called_once()
+        mock_rm.assert_called_once_with(fake_vg, vdisks=[mock_vdisk])
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk(self, mock_create_file):
@@ -134,8 +232,34 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
+    @mock.patch('pypowervm.tasks.storage.crt_vdisk')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_new_vdisk_coordinated(self, mock_create_file):
+    @mock.patch('pypowervm.tasks.storage._upload_stream_api')
+    def test_upload_new_vdisk_func_remote(self, mock_usa, mock_crt_file,
+                                          mock_crt_vdisk):
+        """With FUNC and non-local, upload_new_vdisk uses REST API upload."""
+        mock_crt_file.return_value = mock.Mock(schema_type='File')
+
+        n_vdisk, maybe_file = ts.upload_new_vdisk(
+            self.adpt, 'v_uuid', 'vg_uuid', 'io_handle', 'd_name', 10,
+            upload_type=ts.UploadType.FUNC)
+        mock_crt_vdisk.assert_called_once_with(self.adpt, 'v_uuid', 'vg_uuid',
+                                               'd_name', 1.0)
+        mock_crt_file.assert_called_once_with(
+            self.adpt, 'd_name', vf.FileType.DISK_IMAGE, 'v_uuid', f_size=10,
+            tdev_udid=mock_crt_vdisk.return_value.udid, sha_chksum=None)
+        mock_usa.assert_called_once_with(
+            mock_crt_file.return_value, 'io_handle', ts.UploadType.FUNC)
+        mock_crt_file.return_value.adapter.delete.assert_called_once_with(
+            vf.File.schema_type, root_id=mock_crt_file.return_value.uuid,
+            service='web')
+        self.assertEqual(mock_crt_vdisk.return_value, n_vdisk)
+        self.assertIsNone(maybe_file)
+
+    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_new_vdisk_coordinated(self, mock_create_file,
+                                          mock_stream_func):
         """Tests the uploads of a virtual disk using the coordinated path."""
 
         # Override adapter's traits to use the coordinated local API
@@ -147,11 +271,13 @@ class TestUploadLV(testtools.TestCase):
 
         self.adpt.read.return_value = vg_orig
         self.adpt.update_by_path.return_value = vg_post_crt
-        mock_create_file.return_value = self._fake_meta()
+        mock_create_file.return_value = mock.Mock(
+            enum_type=vf.FileType.DISK_IMAGE_COORDINATED, adapter=self.adpt,
+            uuid='6233b070-31cc-4b57-99bd-37f80e845de9', schema_type='File')
 
         n_vdisk, f_wrap = ts.upload_new_vdisk(
             self.adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
-            d_size=25, sha_chksum='abc123')
+            d_size=25, sha_chksum='abc123', upload_type=ts.UploadType.FUNC)
 
         # Ensure the create file was called
         mock_create_file.assert_called_once_with(
@@ -167,6 +293,108 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsNone(f_wrap)
         self.assertIsNotNone(n_vdisk)
         self.assertIsInstance(n_vdisk, stor.VDisk)
+        mock_stream_func.assert_called_once_with(mock.ANY, None,
+                                                 ts.UploadType.FUNC)
+
+    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_stream_via_stream_bld(self, mock_create_file,
+                                          mock_upload_st_coordinated):
+        """Tests the uploads of a vDisk - via UploadType.IO_STREAM_BUILDER."""
+        mock_file = self._fake_meta()
+        mock_file._enum_type(vf.FileType.DISK_IMAGE_COORDINATED)
+        mock_create_file.return_value = mock_file
+
+        mock_io_stream = mock.MagicMock()
+        mock_io_handle = mock.MagicMock()
+        mock_io_handle.return_value = mock_io_stream
+
+        # Run the code
+        ts._upload_stream(mock_file, mock_io_handle,
+                          ts.UploadType.IO_STREAM_BUILDER)
+
+        # Make sure the function was called.
+        mock_io_handle.assert_called_once_with()
+        mock_upload_st_coordinated.assert_called_once_with(
+            mock_file, mock_io_stream, ts.UploadType.IO_STREAM)
+
+    @mock.patch('pypowervm.util.retry_io_command')
+    @mock.patch('pypowervm.tasks.storage.open')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_stream_local_with_fail(self, mock_create_file, mock_open,
+                                           mock_retry):
+        """Tests the uploads of a virtual disk with a failure."""
+        mock_file = self._fake_meta()
+        mock_create_file.return_value = mock_file
+        # Use the retry mock to make sure it was called; its side-effect is to
+        # pass through.
+        mock_retry.side_effect = lambda func, *a, **k: func(*a, **k)
+
+        class DownStream(object):
+            def __init__(self):
+                self.i = 0
+
+            def read(self, *kargs, **kwargs):
+                self.i += 1
+                if self.i == 1000:
+                    raise IOError()
+                return self.i
+
+        mock_out_str_cm = mock.MagicMock()
+        mock_open.return_value = mock_out_str_cm
+        read_handle = DownStream()
+
+        # Run the code.  Make sure the original error type gets raised.
+        self.assertRaises(IOError, ts._upload_stream_local,
+                          mock_file, read_handle, ts.UploadType.IO_STREAM)
+
+        # 'with open' invocation:
+        self.assertEqual(1, mock_out_str_cm.__enter__.call_count)
+        self.assertEqual(1, mock_out_str_cm.__exit__.call_count)
+        # _eintr_retry_call first opens, then reads/writes in the loop
+        open_call = mock.call(mock_open, mock_file.asset_file, 'a+b', 0)
+        read_call = mock.call(read_handle.read, 65536)
+        write_call = mock.call(mock_out_str_cm.__enter__.return_value.write,
+                               mock.ANY)
+        mock_retry.assert_has_calls(
+            [open_call] + ([read_call, write_call] * 999))
+
+    @mock.patch('pypowervm.tasks.storage._ensure_pipe_close')
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    def test_upload_stream_local_func(self, mock_create_file, mock_epc):
+        """Tests the uploads of a virtual disk with UploadType.FUNC."""
+        mock_file = self._fake_meta()
+        mock_create_file.return_value = mock_file
+
+        mock_io_handle = mock.MagicMock()
+
+        # Run the code
+        ts._upload_stream_local(mock_file, mock_io_handle,
+                                ts.UploadType.FUNC)
+
+        # Make sure the function was called.
+        mock_io_handle.assert_called_once_with(mock_file.asset_file)
+        mock_epc.assert_called_once_with(mock_file.asset_file, mock.ANY)
+
+    @mock.patch('time.sleep')
+    @mock.patch('pypowervm.tasks.storage.os')
+    @mock.patch('pypowervm.tasks.storage.open')
+    def test_ensure_pipe_close(self, mock_open, mock_os, mock_sleep):
+        # Check to make sure it returns if done immediately.
+        mock_future = mock.MagicMock()
+        mock_future.done.return_value = False
+        mock_os.path.exists.return_value = False
+        ts._ensure_pipe_close('path', mock_future)
+        mock_open.assert_not_called()
+
+        # Check for multiple loops when the future is not done first pass
+        mock_future.done.side_effect = [False, False, True]
+        mock_os.path.exists.return_value = True
+        ts._ensure_pipe_close('path', mock_future)
+
+        mock_open.assert_called_with('path', 'a+b', 0)
+        self.assertEqual(2, mock_open.call_count)
+        self.assertEqual(2, mock_open.return_value.close.call_count)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
@@ -198,7 +426,7 @@ class TestUploadLV(testtools.TestCase):
     def test_upload_new_lu(self, mock_crt_lu, mock_create_file):
         """Tests create/upload of SSP LU."""
         # traits are already set to use the REST API upload
-        ssp = mock.Mock()
+        ssp = mock.Mock(adapter=mock.Mock(traits=mock.Mock(local_api=True)))
         interim_lu = mock.Mock(adapter=self.adpt)
         mock_create_file.return_value = self._fake_meta()
         mock_crt_lu.return_value = ssp, interim_lu
@@ -240,7 +468,8 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum=None)
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.IO_STREAM)
         mock_b2g.reset_mock()
         mock_crt.reset_mock()
         mock_upl.reset_mock()
@@ -253,7 +482,8 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum='sha_chksum')
+                                    sha_chksum='sha_chksum',
+                                    upload_type=ts.UploadType.IO_STREAM)
         mock_b2g.reset_mock()
         mock_crt.reset_mock()
         mock_upl.reset_mock()
@@ -267,7 +497,41 @@ class TestUploadLV(testtools.TestCase):
         mock_crt.assert_called_with('ssp_in', 'lu_name', mock_b2g.return_value,
                                     typ=stor.LUType.IMAGE)
         mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
-                                    sha_chksum=None)
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.IO_STREAM)
+
+    @mock.patch('pypowervm.tasks.storage._create_file')
+    @mock.patch('pypowervm.tasks.storage._upload_stream_api')
+    def test_upload_lu_func_remote(self, mock_usa, mock_crt_file):
+        """With FUNC and non-local, upload_lu uses REST API upload."""
+        lu = mock.Mock(adapter=self.adpt)
+        self.assertIsNone(ts.upload_lu('v_uuid', lu, 'io_handle', 'f_size',
+                                       upload_type=ts.UploadType.FUNC))
+        mock_crt_file.assert_called_once_with(
+            lu.adapter, lu.name, vf.FileType.DISK_IMAGE, 'v_uuid',
+            f_size='f_size', tdev_udid=lu.udid, sha_chksum=None)
+        mock_usa.assert_called_once_with(mock_crt_file.return_value,
+                                         'io_handle', ts.UploadType.FUNC)
+
+    @mock.patch('pypowervm.util.convert_bytes_to_gb')
+    @mock.patch('pypowervm.tasks.storage.crt_lu')
+    @mock.patch('pypowervm.tasks.storage.upload_lu')
+    def test_upload_new_lu_calls_via_func(self, mock_upl, mock_crt, mock_b2g):
+        """Various permutations of how to call upload_new_lu."""
+        mock_crt.return_value = 'ssp_out', 'new_lu'
+        f_size = 10
+
+        # Successful call
+        ssp_in = mock.Mock(adapter=mock.Mock(traits=mock.Mock(local_api=True)))
+        self.assertEqual(('new_lu', mock_upl.return_value), ts.upload_new_lu(
+            'v_uuid', ssp_in, 'd_stream', 'lu_name', f_size,
+            upload_type=ts.UploadType.FUNC))
+        mock_b2g.assert_called_with(f_size, dp=2)
+        mock_crt.assert_called_with(ssp_in, 'lu_name', mock_b2g.return_value,
+                                    typ=stor.LUType.IMAGE)
+        mock_upl.assert_called_with('v_uuid', 'new_lu', 'd_stream', f_size,
+                                    sha_chksum=None,
+                                    upload_type=ts.UploadType.FUNC)
 
     def test_create_file(self):
         """Validates that the _create_file builds the Element properly."""
@@ -326,9 +590,9 @@ class TestVDisk(testtools.TestCase):
         self.assertEqual(10, ret.capacity)
 
 
-class TestRMSTorage(testtools.TestCase):
+class TestRMStorage(testtools.TestCase):
     def setUp(self):
-        super(TestRMSTorage, self).setUp()
+        super(TestRMStorage, self).setUp()
         self.adptfx = self.useFixture(fx.AdapterFx(traits=fx.RemotePVMTraits))
         self.adpt = self.adptfx.adpt
         self.v_uuid = '14B854F7-42CE-4FF0-BD57-1D117054E701'
@@ -340,7 +604,7 @@ class TestRMSTorage(testtools.TestCase):
         # dev doesn't have a UDID
         with self.assertLogs(ts.__name__, 'WARNING'):
             self.assertIsNone(ts._rm_dev_by_udid(dev1, None))
-            dev1.toxmlstring.assert_called_with()
+            dev1.toxmlstring.assert_called_with(pretty=True)
         # Remove from empty list returns None, and warns (like not-found)
         dev1.udid = 123
         with self.assertLogs(ts.__name__, 'WARNING'):
@@ -837,8 +1101,21 @@ class TestScrub2(testtools.TestCase):
         # in the same FeedTask (no duplicate 'provides' names).
         ts.add_lpar_storage_scrub_tasks([45], self.ftsk, lpars_exist=True)
         self.ftsk.execute()
+        self.assertEqual(2, mock_rm_vopt.call_count)
+        self.assertEqual(2, mock_rm_vd.call_count)
         self.logfx.patchers['warning'].mock.assert_has_calls(
             warns, any_order=True)
+
+    @mock.patch('pypowervm.tasks.storage._rm_vdisks')
+    @mock.patch('pypowervm.tasks.storage._rm_vopts')
+    @mock.patch('pypowervm.tasks.storage._rm_lus')
+    def test_no_remove_storage(self, mock_rm_lu, mock_rm_vopt, mock_rm_vd):
+        ts.add_lpar_storage_scrub_tasks([3], self.ftsk, lpars_exist=True,
+                                        remove_storage=False)
+        self.ftsk.execute()
+        mock_rm_lu.assert_not_called()
+        mock_rm_vopt.assert_not_called()
+        mock_rm_vd.assert_not_called()
 
     def test_find_stale_lpars(self):
         self.adpt.read.return_value = tju.load_file(LPAR_FEED,

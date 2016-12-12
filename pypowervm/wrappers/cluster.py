@@ -40,11 +40,19 @@ _CL_EL_ORDER = (_CL_NAME, _CL_ID, _CL_REPOPVS, _CL_SSP_LINK, _CL_NODE,
 _N_HOSTNAME = 'HostName'
 _N_LPARID = 'PartitionID'
 _N_NAME = 'PartitionName'
-_N_VIOS_LINK = 'VirtualIOServer'
 _N_VIOS_LEVEL = 'VirtualIOServerLevel'
+_N_VIOS_LINK = 'VirtualIOServer'
 _N_IPADDR = 'IPAddress'
+_N_STATE = 'State'
 _N_EL_ORDER = (_N_HOSTNAME, _N_LPARID, _N_NAME, mtmwrap.MTMS_ROOT,
-               _N_VIOS_LEVEL, _N_VIOS_LINK, _N_IPADDR)
+               _N_VIOS_LEVEL, _N_VIOS_LINK, _N_IPADDR, _N_STATE)
+
+
+class NodeState(object):
+    """Cluster node state, from NodeState.Enum."""
+    UP = 'Up'
+    DOWN = 'Down'
+    UNKNOWN = 'Unknown'
 
 
 @ewrap.EntryWrapper.pvm_type('Cluster', child_order=_CL_EL_ORDER)
@@ -223,3 +231,7 @@ class Node(ewrap.ElementWrapper):
         uri = self.vios_uri
         if uri is not None:
             return u.get_req_path_uuid(uri, preserve_case=True)
+
+    @property
+    def state(self):
+        return self._get_val_str(_N_STATE)

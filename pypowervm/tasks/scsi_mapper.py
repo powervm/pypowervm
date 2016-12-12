@@ -125,7 +125,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
 
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
-                        fuse_limit=32, lpar_slot_num=None, lua=None):
+                        fuse_limit=32, lpar_slot_num=None, lua=None,
+                        target_name=None):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -153,6 +154,9 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                 TargetDevice.  If None, the LUA will be assigned by the server.
                 Should be specified for all of the VSCSIMappings for a
                 particular bus, or none of them.
+    :param target_name: (Optional, Default: None) The name of the Target
+                        mapping. If None, the target_name will be assigned by
+                        the server.
     :return: The SCSI mapping that can be added to the vios_w.  This does not
              do any updates to the wrapper itself.
     """
@@ -183,11 +187,12 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     # to build from scratch.
     if clonable_map is not None:
         scsi_map = pvm_vios.VSCSIMapping.bld_from_existing(
-            clonable_map, storage_elem, lpar_slot_num=lpar_slot_num, lua=lua)
+            clonable_map, storage_elem, lpar_slot_num=lpar_slot_num, lua=lua,
+            target_name=target_name)
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(
             adapter, host_uuid, lpar_uuid, storage_elem,
-            lpar_slot_num=lpar_slot_num, lua=lua)
+            lpar_slot_num=lpar_slot_num, lua=lua, target_name=target_name)
     return scsi_map
 
 
@@ -342,7 +347,8 @@ def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
                   if rmap.backing_storage is not None]
 
 
-def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
+def gen_match_func(wcls, name_prop='name', names=None, prefixes=None,
+                   udids=None):
     """Generate a matching function for find_maps' match_func param.
 
     :param wcls: The Wrapper class of the object being matched.
@@ -355,6 +361,10 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
                      if names is specified.  If names and prefixes are both
                      None or empty, all inputs of the specified wcls will be
                      matched.
+    :param udids: (Optional) A list of UDIDs that can be specified to serve as
+                  identifiers for potential matches.  Ignored if names or
+                  prefixes are specified.  If all three are None or empty, all
+                  inputs of the specified wcls will be matched.
     :return: A callable matching function suitable for passing to the
              match_func parameter of the find_maps method.
     """
@@ -369,7 +379,9 @@ def gen_match_func(wcls, name_prop='name', names=None, prefixes=None):
                     return True
             # prefixes specified, but none matched
             return False
-        # Neither names nor prefixes specified - hit everything
+        if udids:
+            return existing_elem.udid in udids
+        # No names, prefixes, or UDIDs specified - hit everything
         return True
     return match_func
 
@@ -510,7 +522,8 @@ def index_mappings(maps):
     return ret
 
 
-def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
+def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None,
+                        udid=None):
     """Will remove the mapping for VOpt media.
 
     This method will remove the mapping between the virtual optical media
@@ -524,20 +537,27 @@ def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None):
                  using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param media_name: (Optional) The name of the virtual optical media to
-                       remove from the SCSI bus.  If None, will remove all
-                       virtual optical media from this client lpar.
+                       remove from the SCSI bus.  If both media_name and udid
+                       are None, will remove all virtual optical media mappings
+                       associated with the specified client_lpar_id
+    :param udid: (Optional) The UDID of the virtual optical media to remove
+                 from the SCSI bus.  Ignored if media_name is specified.  If
+                 both media_name and udid are None, will remove all virtual
+                 optical media mappings associated with the client_lpar_id.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     :return: A list of the backing VOpt media that was removed.
     """
     names = [media_name] if media_name else None
+    udids = [udid] if udid else None
     return _remove_storage_elem(
         adapter, vios, client_lpar_id, gen_match_func(
-            pvm_stor.VOptMedia, name_prop='media_name', names=names))
+            pvm_stor.VOptMedia, name_prop='media_name', names=names,
+            udids=udids))
 
 
 def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
-                         disk_prefixes=None):
+                         disk_prefixes=None, udids=None):
     """Will remove the mapping for VDisk media.
 
     This method will remove the mapping between the virtual disk and the
@@ -551,11 +571,20 @@ def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
                  using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the virtual disk to remove
-                       from the SCSI bus.  If None, all virtual disks will be
-                       removed from the LPAR.
+                       from the SCSI bus.  If disk_names, disk_prefixes, and
+                       udids are all None/empty, will remove all virtual disk
+                       mappings associated with the specified client_lpar_id.
     :param disk_prefixes: (Optional) A list of prefixes that can be specified
                           to serve as identifiers for potential disks.  Ignored
-                          if the disk_name is specified.
+                          if disk_names is specified.  If disk_names,
+                          disk_prefixes, and udids are all None/empty, will
+                          remove all virtual disk mappings associated with the
+                          specified client_lpar_id.
+    :param udids: (Optional) A list of UDIDs of the virtual disks to remove
+                  from the SCSI bus.  Ignored if disk_names or disk_prefixes
+                  are specified.  If all three are None/empty, will remove all
+                  virtual disk mappings associated with the specified
+                  client_lpar_id.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     :return: A list of the backing VDisk objects that were removed.
@@ -563,11 +592,12 @@ def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
 
     return _remove_storage_elem(
         adapter, vios, client_lpar_id, gen_match_func(
-            pvm_stor.VDisk, names=disk_names, prefixes=disk_prefixes))
+            pvm_stor.VDisk, names=disk_names, prefixes=disk_prefixes,
+            udids=udids))
 
 
 def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
-                      disk_prefixes=None):
+                      disk_prefixes=None, udids=None):
     """Remove mappings for one or more SSP LUs associated with an LPAR.
 
     This method will remove the mapping between the Logical Unit and the
@@ -581,11 +611,20 @@ def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
                  using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param disk_names: (Optional) A list of names of the LUs to remove from
-                       the SCSI bus.  If None, all LUs asssociated with the
-                       LPAR will be removed.
+                       the SCSI bus.  If disk_names, disk_prefixes, and
+                       udids are all None/empty, will remove all logical unit
+                       mappings associated with the specified client_lpar_id.
     :param disk_prefixes: (Optional) A list of prefixes that can be specified
                           to serve as identifiers for potential disks.  Ignored
-                          if the disk_name is specified.
+                          if disk_names is specified.  If disk_names,
+                          disk_prefixes, and udids are all None/empty, will
+                          remove all logical unit mappings associated with the
+                          specified client_lpar_id.
+    :param udids: (Optional) A list of UDIDs of the logical units to remove
+                  from the SCSI bus.  Ignored if disk_names or disk_prefixes
+                  are specified.  If all three are None/empty, will remove all
+                  logical unit mappings associated with the specified
+                  client_lpar_id.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     :return: A list of LU EntryWrappers representing the mappings that were
@@ -594,10 +633,11 @@ def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
 
     return _remove_storage_elem(
         adapter, vios, client_lpar_id, gen_match_func(
-            pvm_stor.LU, names=disk_names, prefixes=disk_prefixes))
+            pvm_stor.LU, names=disk_names, prefixes=disk_prefixes,
+            udids=udids))
 
 
-def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev):
+def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev, udid=None):
     """Will remove the PV mapping.
 
     This method will remove the pv mapping. It does not delete the device.
@@ -609,12 +649,20 @@ def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev):
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the VIO_SMAP extended attribute group.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
-    :param backing_dev: The physical volume name to be removed.
+    :param backing_dev: The physical volume name to be removed.  If both
+                        backing_dev and udid are None, will remove all physical
+                        volume mappings associated with the specfied
+                        client_lpar_id.
+    :param udid: (Optional) UDID of the physical volume to remove from the SCSI
+                  bus.  Ignored if backing_dev is not None.  If backing_dev and
+                  udid are both None, will remove all physical volume mappings
+                  associated with the specified client_lpar_id.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     :return: A list of the backing physical device objects that were removed.
     """
-
+    names = [backing_dev] if backing_dev else None
+    udids = [udid] if udid else None
     return _remove_storage_elem(
         adapter, vios, client_lpar_id, gen_match_func(
-            pvm_stor.PV, names=[backing_dev]))
+            pvm_stor.PV, names=names, udids=udids))

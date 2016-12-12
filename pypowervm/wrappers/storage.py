@@ -22,6 +22,7 @@ import binascii
 from oslo_log import log as logging
 import six
 
+import pypowervm.const as c
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 import pypowervm.util as u
@@ -40,9 +41,16 @@ _DISK_MAX_LOGICAL_VOLS = 'MaxLogicalVolumes'
 _DISK_PART_SIZE = 'PartitionSize'
 _DISK_VG = 'VolumeGroup'
 _DISK_UDID = UDID
+_DISK_TYPE = 'VirtualDiskType'
 _VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
                    _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_UDID]
+                   _DISK_UDID, _DISK_TYPE]
+
+
+class VDiskType(object):
+    """From VirtualDiskType.Enum."""
+    FILE = 'File'
+    LV = 'LogicalVolume'
 
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
@@ -237,6 +245,7 @@ _TD_PV_TD = 'PhysicalVolumeVirtualTargetDevice'
 _TD_VOPT_TD = 'VirtualOpticalTargetDevice'
 _TD_VDISK_TD = 'LogicalVolumeVirtualTargetDevice'
 _TD_LUA = 'LogicalUnitAddress'
+_TD_NAME = 'TargetName'
 
 
 @ewrap.EntryWrapper.pvm_type('VolumeGroup', child_order=_VG_EL_ORDER)
@@ -392,16 +401,22 @@ class _VTargetDevMethods(ewrap.Wrapper):
     """Base class for {storage_type}TargetDevice of an active VSCSIMapping."""
 
     @classmethod
-    def bld(cls, adapter, lua):
+    def bld(cls, adapter, lua=None, name=None):
         """Build a new Virtual Target Device.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
-        :param lua: Logical Unit Address string to assign to the new VTD.
+        :param lua: (Optional, Default None) Logical Unit Address string to
+                    assign to the new VTD.
+        :param name: (Optional, Default None) Name of the TargetDev. If None
+                     name will be assigned by the server
         :return: A new {storage_type}TargetDev, where {storage_type} is
                  appropriate to the subclass.
         """
         vtd = super(_VTargetDevMethods, cls)._bld(adapter)
-        vtd._lua(lua)
+        if lua is not None:
+            vtd._lua(lua)
+        if name is not None:
+            vtd._name(name)
         return vtd
 
     @property
@@ -412,6 +427,15 @@ class _VTargetDevMethods(ewrap.Wrapper):
     def _lua(self, val):
         """Set the Logical Unit Address of this target device."""
         self.set_parm_value(_TD_LUA, val)
+
+    @property
+    def name(self):
+        """Target Name of the device"""
+        return self._get_val_str(_TD_NAME)
+
+    def _name(self, val):
+        """Set the Target Name of the device"""
+        self.set_parm_value(_TD_NAME, val)
 
 
 @ewrap.ElementWrapper.pvm_type(_TD_LU_TD, has_metadata=True)
@@ -620,9 +644,79 @@ class PV(ewrap.ElementWrapper):
         return None
 
 
+@ewrap.Wrapper.base_pvm_type
+class _VDisk(ewrap.ElementWrapper):
+    """Methods common to VDisk and FileIO."""
+
+    @property
+    def name(self):
+        return self._get_val_str(DISK_NAME)
+
+    @name.setter
+    def name(self, name):
+        self.set_parm_value(DISK_NAME, name)
+
+    @property
+    def label(self):
+        return self._get_val_str(_DISK_LABEL)
+
+    def _label(self, new_label):
+        self.set_parm_value(_DISK_LABEL, new_label)
+
+    @property
+    def capacity(self):
+        """Returns the capacity in GB (float)."""
+        return self._get_val_float(_DISK_CAPACITY)
+
+    @capacity.setter
+    def capacity(self, capacity):
+        self.set_float_gb_value(_DISK_CAPACITY, capacity)
+
+    @property
+    def udid(self):
+        return self._get_val_str(_DISK_UDID)
+
+    @property
+    def vdtype(self):
+        return self._get_val_str(_DISK_TYPE)
+
+    def _vdtype(self, val):
+        self.set_parm_value(_DISK_TYPE, val, attrib=c.ATTR_KSV150)
+
+
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
-class VDisk(ewrap.ElementWrapper):
+class FileIO(_VDisk):
+    """A special case of VirtualDisk representing a File I/O object.
+
+    Do not PUT (.create) this wrapper directly.  Attach it to a VSCSIMapping
+    and PUT that instead.
+    """
+    target_dev_type = VDiskTargetDev
+
+    @classmethod
+    def bld(cls, adapter, path):
+        """Creates a FileIO wrapper for inclusion in a VSCSIMapping.
+
+        :param adapter: A pypowervm.adapter.Adapter for the REST API.
+        :param path: The file system path of the File I/O object.
+        :return: An Element that can be attached to a VSCSIMapping to create a
+                 File I/O on the server.
+        """
+        fio = super(FileIO, cls)._bld(adapter)
+        fio._label(path)
+        fio._vdtype(VDiskType.FILE)
+        return fio
+
+    @property
+    def path(self):
+        """Alias for 'label'."""
+        return self.label
+
+
+@ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
+                               child_order=_VDISK_EL_ORDER)
+class VDisk(_VDisk):
     """A virtual disk that can be attached to a VM."""
     target_dev_type = VDiskTargetDev
 
@@ -655,34 +749,6 @@ class VDisk(ewrap.ElementWrapper):
         vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
         return vd
-
-    @property
-    def name(self):
-        return self._get_val_str(DISK_NAME)
-
-    @name.setter
-    def name(self, name):
-        self.set_parm_value(DISK_NAME, name)
-
-    @property
-    def label(self):
-        return self._get_val_str(_DISK_LABEL)
-
-    def _label(self, new_label):
-        self.set_parm_value(_DISK_LABEL, new_label)
-
-    @property
-    def capacity(self):
-        """Returns the capacity in GB (float)."""
-        return self._get_val_float(_DISK_CAPACITY)
-
-    @capacity.setter
-    def capacity(self, capacity):
-        self.set_float_gb_value(_DISK_CAPACITY, capacity)
-
-    @property
-    def udid(self):
-        return self._get_val_str(_DISK_UDID)
 
     @property
     def vg_uri(self):

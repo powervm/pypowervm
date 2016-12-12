@@ -18,6 +18,7 @@
 
 import abc
 import datetime as dt
+import errno
 import hashlib
 import math
 import re
@@ -172,46 +173,6 @@ def is_instance_path(href):
                      include_fragment=False)
 
     return re.match(const.UUID_REGEX_WORD, path.rsplit('/', 1)[1])
-
-
-def determine_paths(resp):
-    paths = []
-    for lnk in resp.atom.links.get('SELF', []):
-        paths.append(urlparse.urlparse(lnk).path)
-    if not paths:
-        if resp.reqmethod == 'PUT':
-            # a PUT's reqpath will be the feed, to which we need to add
-            # the new entry id (which didn't exist before the PUT)
-            paths = [extend_basepath(resp.reqpath, '/' + resp.entry.uuid)]
-        else:
-            paths = [resp.reqpath]
-    return paths
-
-
-def get_max_age(path, use_events, schema_version):
-    if any(p in path for p in ['Cluster', 'SharedStoragePool']):
-        # no event support
-        # TODO(IBM): update when event support is added
-        return 15
-    if not use_events or schema_version.startswith('V1_0'):
-        # bad event support
-        # attempt to return the same values used by PowerVC 1.2.0 feed caches
-        # TODO(IBM): make these config options
-        if re.search('/LogicalPartition$', path):
-            return 30
-        if re.search('/VirtualIOServer$', path):
-            return 90
-        if re.search('/SharedProcessorPool$', path):
-            return 600
-        if re.search('/ManagedSystem/%s$' % const.UUID_REGEX, path):
-            return 30
-        else:
-            # TODO(IBM): can we trust the cache longer than 0
-            # for anything else?
-            return 0
-    else:
-        # TODO(IBM): consider extending as we grow more confident in events
-        return 600
 
 
 # TODO(IBM): fix (for MITM attacks) or remove (if using loopback only)
@@ -546,6 +507,28 @@ def parent_spec(parent, parent_type, parent_uuid):
     return parent_type, parent_uuid
 
 
+def retry_io_command(base_cmd, *argv):
+    """PEP475: Retry syscalls if EINTR signal received.
+
+    https://www.python.org/dev/peps/pep-0475/
+
+    Certain system calls can be interrupted by signal 4 (EINTR) for no good
+    reason.  Per PEP475, these signals should be ignored.  This is implemented
+    by default at the lowest level in py3, but we have to account for it in
+    py2.
+
+    :param base_cmd: The syscall to wrap.
+    :param argv: Arguments to the syscall.
+    :return: The return value from invoking the syscall.
+    """
+    while True:
+        try:
+            return base_cmd(*argv)
+        except EnvironmentError as enve:
+            if enve.errno != errno.EINTR:
+                raise
+
+
 @six.add_metaclass(abc.ABCMeta)
 class _AllowedList(object):
     """For REST fields taking 'ALL', 'NONE', or [list of values].
@@ -586,16 +569,46 @@ class _AllowedList(object):
         return [cls.parse_val(val) for val in rest_val.split()]
 
     @classmethod
-    def marshal(cls, val):
-        """Produce a string suitable for the REST API."""
-        if val in cls._GOOD_STRINGS:
-            return val
-        if isinstance(val, list):
-            return ' '.join([cls.sanitize_for_api(ival) for ival in val])
+    def const_or_list(cls, val):
+        """Return one of the _GOOD_STRINGS, or the (sanitized) original list.
+
+        :param val: One of:
+                    - A string representing one of the _GOOD_STRINGS (case-
+                      insensitive.
+                    - A list containing a single value as above.
+                    - A list containing values appropriate to the subclass.
+        :return: One of:
+                 - A string representing one of the _GOOD_STRINGS (in the
+                   appropriate case).
+                 - A list of the original values, validated and sanitized for
+                   the REST API.
+                 The objective is to be able to pass the return value directly
+                 into a setter or bld method expecting the relevant type.
+        :raise ValueError: If the input could not be interpreted/sanitized as
+                           appropriate to the subclass.
+        """
+        ret = None
+        if isinstance(val, str) and val.upper() in cls._GOOD_STRINGS:
+            ret = val.upper()
+        elif isinstance(val, list):
+            if (len(val) == 1 and isinstance(val[0], str)
+                    and val[0].upper() in cls._GOOD_STRINGS):
+                ret = val[0].upper()
+            else:
+                ret = [cls.sanitize_for_api(ival) for ival in val]
+        if ret is not None:
+            return ret
         # Not a list, not a good value
         raise ValueError(_("Invalid value '%(bad_val)s'.  Expected one of "
                            "%(good_vals)s, or a list.") %
                          {'bad_val': val, 'good_vals': str(cls._GOOD_STRINGS)})
+
+    @classmethod
+    def marshal(cls, val):
+        """Produce a string suitable for the REST API."""
+        val = cls.const_or_list(val)
+        return (' '.join([str(ival) for ival in val]) if isinstance(val, list)
+                else val)
 
 
 class VLANList(_AllowedList):
@@ -606,10 +619,12 @@ class VLANList(_AllowedList):
 
     @staticmethod
     def sanitize_for_api(val):
-        if type(val) is not int:
-            raise ValueError("Specify a list of VLAN integers, or 'ALL' for "
-                             "all VLANS or 'NONE' for no VLANS.")
-        return str(val)
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            raise ValueError("Specify a list of VLAN integers or integer "
+                             "strings; or 'ALL' for all VLANS or 'NONE' for "
+                             "no VLANS.")
 
 
 class MACList(_AllowedList):

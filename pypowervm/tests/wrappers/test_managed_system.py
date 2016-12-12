@@ -192,24 +192,27 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_ioslot_pci_class(self):
         self.assertEqual(self.test_ioslot.pci_class, 512)
 
-    def test_ioslot_pci_sub_dev_id(self):
-        self.assertEqual(self.test_ioslot.pci_sub_dev_id, 1202)
+    def test_ioslot_pci_dev_id(self):
+        self.assertEqual(self.test_ioslot.pci_dev_id, 4660)
 
-    def test_ioslot_pci_revision_id(self):
-        self.assertEqual(self.test_ioslot.pci_revision_id, 0)
+    def test_ioslot_pci_subsys_dev_id(self):
+        self.assertEqual(self.test_ioslot.pci_subsys_dev_id, 1202)
+
+    def test_ioslot_pci_rev_id(self):
+        self.assertEqual(self.test_ioslot.pci_rev_id, 0)
 
     def test_ioslot_pci_vendor_id(self):
         self.assertEqual(self.test_ioslot.pci_vendor_id, 4116)
 
-    def test_ioslot_pci_sub_vendor_id(self):
-        self.assertEqual(self.test_ioslot.pci_sub_vendor_id, 4116)
+    def test_ioslot_pci_subsys_vendor_id(self):
+        self.assertEqual(self.test_ioslot.pci_subsys_vendor_id, 4116)
 
-    def test_ioslot_dyn_reconfig_conn_index(self):
-        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_index,
+    def test_ioslot_drc_index(self):
+        self.assertEqual(self.test_ioslot.drc_index,
                          553713681)
 
-    def test_ioslot_dyn_reconfig_conn_name(self):
-        self.assertEqual(self.test_ioslot.dyn_reconfig_conn_name,
+    def test_ioslot_drc_name(self):
+        self.assertEqual(self.test_ioslot.drc_name,
                          'U5294.001.CEC1234-P01-C011')
 
     def test_get_aix_capable(self):
@@ -226,8 +229,10 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'ibmi_capable': True,
                     'linux_capable': False,
                     'shared_processor_pool_capable': True,
-                    'active_memory_expansion_capable': True
-                    }
+                    'active_memory_expansion_capable': True,
+                    'dynamic_srr_capable': True,
+                    'vnic_capable': True,
+                    'vnic_failover_capable': True}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -238,8 +243,10 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'ibmi_capable': False,
                    'linux_capable': True,
                    'shared_processor_pool_capable': False,
-                   'active_memory_expansion_capable': False
-                   }
+                   'active_memory_expansion_capable': False,
+                   'dynamic_srr_capable': False,
+                   'vnic_capable': False,
+                   'vnic_failover_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -265,9 +272,11 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'preferred_inactive_migrations_supported': 5,
                          'active_migrations_in_progress': 0,
                          'inactive_migrations_in_progress': 0,
-                         'proc_compat': 'default,POWER5,POWER6,'
-                         'POWER6_Enhanced,POWER6_Plus_Enhanced,POWER7'
-                         }
+                         'proc_compat': 'default,POWER5,POWER6,POWER6_Enhanced'
+                                        ',POWER6_Plus_Enhanced,POWER7',
+                         'dynamic_srr_capable': True,
+                         'vnic_capable': True,
+                         'vnic_failover_capable': True}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          'The returned data did not match expected values')

@@ -16,10 +16,12 @@
 
 """Wrappers, constants, and helpers around ManagedSystem and its children."""
 import re
+import warnings
 
 from oslo_log import log as logging
 
 import pypowervm.const as c
+from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.iocard as card
@@ -53,6 +55,10 @@ _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
 _SHR_PROC_POOL_CAP = u.xpath(
     _SYS_CAPABILITIES, 'SharedProcessorPoolCapable')
+_VNIC_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICDedicatedSRIOVCapable')
+_VNIC_FAILOVER_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICFailOverCapable')
+_DYN_SRR_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'DynamicSimplifiedRemoteRestartToggleCapable')
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -114,6 +120,7 @@ _IOSLOT_BUS_GRP_REQ = 'BusGroupingRequired'
 _IOSLOT_DESC = 'Description'
 _IOSLOT_FEAT_CODES = 'FeatureCodes'
 _IOSLOT_PCI_CLASS = 'PCIClass'
+_IOSLOT_PCI_DEV_ID = 'PCIDeviceID'
 _IOSLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
 _IOSLOT_PCI_REV_ID = 'PCIRevisionID'
 _IOSLOT_PCI_VEND_ID = 'PCIVendorID'
@@ -262,7 +269,12 @@ class System(ewrap.EntryWrapper):
                     'linux_capable':
                     self._get_val_bool(_LINUX_CAP, True),
                     'shared_processor_pool_capable':
-                    self._get_val_bool(_SHR_PROC_POOL_CAP, False)}
+                    self._get_val_bool(_SHR_PROC_POOL_CAP, False),
+                    'dynamic_srr_capable':
+                    self._get_val_bool(_DYN_SRR_CAP, False),
+                    'vnic_capable': self._get_val_bool(_VNIC_CAP, False),
+                    'vnic_failover_capable':
+                    self._get_val_bool(_VNIC_FAILOVER_CAP, False)}
         return cap_data
 
     @property
@@ -390,25 +402,69 @@ class IOSlot(ewrap.ElementWrapper):
         return self._get_val_int(_IOSLOT_PCI_CLASS)
 
     @property
-    def pci_sub_dev_id(self):
+    def pci_dev_id(self):
+        return self._get_val_int(_IOSLOT_PCI_DEV_ID)
+
+    @property
+    def pci_subsys_dev_id(self):
         return self._get_val_int(_IOSLOT_PCI_SUB_DEV_ID)
 
     @property
-    def pci_revision_id(self):
+    def pci_sub_dev_id(self):
+        """Deprecated - use pci_subsys_dev_id instead."""
+        warnings.warn(_(
+            "This property is deprecated!. "
+            "Use pci_subsys_dev_id instead."), DeprecationWarning)
+        return self.pci_subsys_dev_id
+
+    @property
+    def pci_rev_id(self):
         return self._get_val_int(_IOSLOT_PCI_REV_ID)
+
+    @property
+    def pci_revision_id(self):
+        """Deprecated - use pci_rev_id instead."""
+        warnings.warn(_(
+            "This property is deprecated!. "
+            "Use pci_rev_id instead."), DeprecationWarning)
+        return self.pci_rev_id
 
     @property
     def pci_vendor_id(self):
         return self._get_val_int(_IOSLOT_PCI_VEND_ID)
 
     @property
-    def pci_sub_vendor_id(self):
+    def pci_subsys_vendor_id(self):
         return self._get_val_int(_IOSLOT_PCI_SUB_VEND_ID)
 
     @property
-    def dyn_reconfig_conn_index(self):
+    def pci_sub_vendor_id(self):
+        """Deprecated - use pci_subsys_vendor_id instead."""
+        warnings.warn(_(
+            "This property is deprecated!. "
+            "Use pci_subsys_vendor_id instead."), DeprecationWarning)
+        return self.pci_subsys_vendor_id
+
+    @property
+    def drc_index(self):
         return self._get_val_int(_IOSLOT_DYN_REC_CON_INDEX)
 
     @property
-    def dyn_reconfig_conn_name(self):
+    def dyn_reconfig_conn_index(self):
+        """Deprecated - use drc_index instead."""
+        warnings.warn(_(
+            "This property is deprecated!. "
+            "Use drc_index instead."), DeprecationWarning)
+        return self.drc_index
+
+    @property
+    def drc_name(self):
         return self._get_val_str(_IOSLOT_DYN_REC_CON_NAME)
+
+    @property
+    def dyn_reconfig_conn_name(self):
+        """Deprecated - use drc_name instead."""
+        warnings.warn(_(
+            "This property is deprecated!. "
+            "Use drc_name instead."), DeprecationWarning)
+        return self.drc_name

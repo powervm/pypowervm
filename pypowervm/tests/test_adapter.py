@@ -108,25 +108,30 @@ class TestAdapter(testtools.TestCase):
         self.sess = None
         super(TestAdapter, self).tearDown()
 
-    def test_event_listener(self):
+    @mock.patch('pypowervm.wrappers.event.Event.wrap')
+    @mock.patch('time.sleep')
+    def test_event_listener(self, mock_sleep, mock_evt_wrap):
 
         with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
                 mock.patch.object(adp, '_EventPollThread') as mock_poll:
             # With some fake events, event listener can be initialized
             self.sess._sessToken = 'token'.encode('utf-8')
-            m_events.return_value = {'general': 'init'}, []
+            m_events.return_value = {'general': 'init'}, 'raw_evt', 'wrap_evt'
             event_listen = self.sess.get_event_listener()
             self.assertIsNotNone(event_listen)
 
             # Register the fake handlers and ensure they are called
             evh = mock.Mock(spec=adp.EventHandler, autospec=True)
             raw_evh = mock.Mock(spec=adp.RawEventHandler, autospec=True)
+            wrap_evh = mock.Mock(spec=adp.WrapperEventHandler, autospec=True)
             event_listen.subscribe(evh)
             event_listen.subscribe(raw_evh)
-            events, raw_events = event_listen._get_events()
-            event_listen._dispatch_events(events, raw_events)
-            self.assertTrue(evh.process.called)
-            self.assertTrue(raw_evh.process.called)
+            event_listen.subscribe(wrap_evh)
+            events, raw_events, evtwraps = event_listen._get_events()
+            event_listen._dispatch_events(events, raw_events, evtwraps)
+            evh.process.assert_called_once_with({'general': 'init'})
+            raw_evh.process.assert_called_once_with('raw_evt')
+            wrap_evh.process.assert_called_once_with('wrap_evt')
             self.assertTrue(mock_poll.return_value.start.called)
 
             # Ensure getevents() gets legacy events
@@ -136,12 +141,27 @@ class TestAdapter(testtools.TestCase):
         with mock.patch.object(event_listen, '_format_events') as mock_format,\
                 mock.patch.object(event_listen.adp, 'read') as mock_read:
 
-            # Fabricate some mock entries, so format gets called.
-            mock_read.return_value.feed.entries = (['entry'])
+            # Ensure exception path doesn't kill the thread
+            mock_read.side_effect = Exception()
+            self.assertEqual(({}, [], []), event_listen._get_events())
+            self.assertEqual(1, mock_read.call_count)
+            mock_format.assert_not_called()
+            mock_evt_wrap.assert_not_called()
+            mock_sleep.assert_called_once_with(5)
 
-            self.assertEqual(({}, []), event_listen._get_events())
-            self.assertTrue(mock_read.called)
-            self.assertTrue(mock_format.called)
+            mock_read.reset_mock()
+            # side_effect takes precedence over return_value; so kill it.
+            mock_read.side_effect = None
+
+            # Fabricate some mock entries, so format gets called.
+            mock_read.return_value.feed.entries = (['entry1', 'entry2'])
+
+            self.assertEqual(({}, [], mock_evt_wrap.return_value),
+                             event_listen._get_events())
+            self.assertEqual(1, mock_read.call_count)
+            mock_format.assert_has_calls([mock.call('entry1', {}, []),
+                                          mock.call('entry2', {}, [])])
+            mock_evt_wrap.assert_called_once_with(mock_read.return_value)
 
         # Test _format_events
         event_data = [
@@ -206,6 +226,10 @@ class TestAdapter(testtools.TestCase):
         adp.Adapter()
         mock_sess.assert_called_with()
 
+    def test_no_cache(self):
+        self.assertRaises(pvmex.CacheNotSupportedException,
+                          adp.Adapter, use_cache=True)
+
     @mock.patch('requests.Session')
     def test_read(self, mock_session):
         """Test read() method found in the Adapter class."""
@@ -215,7 +239,7 @@ class TestAdapter(testtools.TestCase):
         child_type = 'child'
         child_id = 'child'
         suffix_type = 'quick'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         # Create a Response object, that will serve as a mock return value
         read_response = self._mk_response(200, response_text)
@@ -237,6 +261,81 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(200, ret_read_value.status)
         self.assertEqual(reqpath, ret_read_value.reqpath)
 
+    @mock.patch('pypowervm.adapter.Adapter._validate')
+    @mock.patch('pypowervm.adapter.Adapter.build_path')
+    @mock.patch('pypowervm.adapter.Adapter.read_by_path')
+    def test_read2(self, mock_rbp, mock_bld, mock_val):
+        """Validate shallow flow & arg passing."""
+        adap = adp.Adapter(session=self.sess)
+        # Defaults
+        self.assertEqual(mock_rbp.return_value, adap.read('root_type'))
+        mock_val.assert_called_once_with(
+            'read', 'root_type', None, None, None, None, None, None)
+        mock_bld.assert_called_once_with(
+            'uom', 'root_type', None, None, None, None, None, None, xag=None,
+            add_qp=None)
+        mock_rbp.assert_called_once_with(
+            mock_bld.return_value, None, timeout=-1, auditmemento=None, age=-1,
+            sensitive=False, helpers=None)
+        # Specified kwargs
+        mock_val.reset_mock()
+        mock_bld.reset_mock()
+        mock_rbp.reset_mock()
+        self.assertEqual(mock_rbp.return_value, adap.read(
+            'root_type', root_id='root_id', child_type='child_type',
+            child_id='child_id', suffix_type='suffix_type',
+            suffix_parm='suffix_parm', detail='detail', service='service',
+            etag='etag', timeout='timeout', auditmemento='auditmemento',
+            age='age', xag='xag', sensitive='sensitive', helpers='helpers',
+            add_qp='add_qp'))
+        mock_val.assert_called_once_with(
+            'read', 'root_type', 'root_id', 'child_type', 'child_id',
+            'suffix_type', 'suffix_parm', 'detail')
+        mock_bld.assert_called_once_with(
+            'service', 'root_type', 'root_id', 'child_type', 'child_id',
+            'suffix_type', 'suffix_parm', 'detail', xag='xag', add_qp='add_qp')
+        mock_rbp.assert_called_once_with(
+            mock_bld.return_value, 'etag', timeout='timeout',
+            auditmemento='auditmemento', age='age', sensitive='sensitive',
+            helpers='helpers')
+
+    @mock.patch('pypowervm.adapter.Adapter.extend_path')
+    def test_build_path(self, mock_exp):
+        """Validate build_path."""
+        adap = adp.Adapter(session=self.sess)
+        # Defaults
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
+            detail=None, xag=None, add_qp=None)
+        # child specs ignored if no root ID
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', child_type='child_type',
+            child_id='child_id'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
+            detail=None, xag=None, add_qp=None)
+        # child ID ignored if no child type
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', root_id='root_id', child_id='child_id'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type/root_id', suffix_type=None,
+            suffix_parm=None, detail=None, xag=None, add_qp=None)
+        # Specified kwargs (including full child spec
+        mock_exp.reset_mock()
+        self.assertEqual(mock_exp.return_value, adap.build_path(
+            'service', 'root_type', root_id='root_id', child_type='child_type',
+            child_id='child_id', suffix_type='suffix_type',
+            suffix_parm='suffix_parm', detail='detail', xag='xag',
+            add_qp='add_qp'))
+        mock_exp.assert_called_once_with(
+            '/rest/api/service/root_type/root_id/child_type/child_id',
+            suffix_type='suffix_type', suffix_parm='suffix_parm',
+            detail='detail', xag='xag', add_qp='add_qp')
+
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_headers(self, mock_request):
         def validate_hdrs_func(acc=None, inm=None):
@@ -255,7 +354,7 @@ class TestAdapter(testtools.TestCase):
         basepath = c.API_BASE_PATH + 'uom/SomeRootObject'
         uuid = "abcdef01-2345-2345-2345-67890abcdef0"
         hdr_xml = 'application/atom+xml'
-        hdr_json = 'application/json'
+        hdr_json = '*/*'
         etag = 'abc123'
 
         # Root feed
@@ -299,7 +398,7 @@ class TestAdapter(testtools.TestCase):
     def test_create(self, mock_session):
         """Test create() method found in the Adapter class."""
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
         new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
@@ -335,7 +434,7 @@ class TestAdapter(testtools.TestCase):
         etag = 'etag'
         root_type = 'root type'
         root_id = 'root id'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         update_response = self._mk_response(200, response_text)
 
@@ -358,7 +457,7 @@ class TestAdapter(testtools.TestCase):
     @mock.patch('requests.Session')
     def test_upload(self, mock_session):
         # Build the adapter
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         # Mock data
         filedesc_mock = mock.MagicMock()
@@ -405,7 +504,7 @@ class TestAdapter(testtools.TestCase):
     @mock.patch('requests.Session')
     def test_extend_path(self, mock_session):
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         path = adapter.extend_path('basepath', suffix_type='suffix',
                                    suffix_parm='suffix_parm',
@@ -505,6 +604,30 @@ class TestAdapter(testtools.TestCase):
             adapter.extend_path('basepath?foo=4,5,6&group=None&foo=1,2,3',
                                 xag=['a', 'b', 'c']))
 
+        # Additional queryparams (add_qp)
+        # Explicit None
+        self._assert_paths_equivalent(
+            'basepath', adapter.extend_path('basepath', xag=[], add_qp=None))
+        # Proper escaping
+        self._assert_paths_equivalent(
+            'basepath?one=%23%24%25%5E%26',
+            adapter.extend_path('basepath', xag=[], add_qp=[('one', '#$%^&')]))
+        # Duplicated keys (order preserved) and proper handling of non-strings
+        self._assert_paths_equivalent(
+            'basepath?1=3&1=2',
+            adapter.extend_path('basepath', xag=[], add_qp=[(1, 3), (1, 2)]))
+        # Proper behavior combined with implicit xag
+        self._assert_paths_equivalent(
+            'basepath?group=None&key=value&something=else',
+            adapter.extend_path(
+                'basepath', add_qp=[('key', 'value'), ('something', 'else')]))
+        # Combined with xags and an existing querystring
+        self._assert_paths_equivalent(
+            'basepath?already=here&group=a,b,c&key=value&something=else',
+            adapter.extend_path(
+                'basepath?already=here', xag=['a', 'b', 'c'],
+                add_qp=[('key', 'value'), ('something', 'else')]))
+
     @mock.patch('pypowervm.adapter.LOG')
     @mock.patch('pypowervm.adapter.Adapter.read_by_path')
     def test_read_by_href(self, mock_read_by_path, mock_log):
@@ -545,7 +668,7 @@ class TestAdapter(testtools.TestCase):
         # Init test data
         root_type = 'ManagedSystem'
         root_id = 'id'
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
 
         delete_response = self._mk_response(204)
 
@@ -583,7 +706,7 @@ class TestAdapter(testtools.TestCase):
         """401 (unauthorized) calling Adapter.create()."""
 
         # Init test data
-        adapter = adp.Adapter(self.sess, use_cache=False)
+        adapter = adp.Adapter(self.sess)
         new_scsi = pvm_stor.VSCSIClientAdapterElement.bld(adapter)
 
         element = new_scsi
@@ -745,7 +868,7 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         self.mock_events = self.useFixture(
             fixtures.MockPatchObject(adp._EventListener, '_get_events')).mock
         # Mock the initial events coming in on start
-        self.mock_events.return_value = {'general': 'init'}, []
+        self.mock_events.return_value = {'general': 'init'}, [], []
 
     def test_instantiation(self):
         """Direct instantiation of EventListener is not allowed."""
@@ -794,30 +917,6 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         adapter.session._sessToken = 'token'.encode('utf-8')
         # Get construct and event listener
         adapter.session.get_event_listener()
-
-        # Turn off the event listener
-        adapter.session.get_event_listener().shutdown()
-        # Session is still active
-        self.assertFalse(self.mock_logoff.called)
-
-        # The only thing that refers the adapter is our reference
-        self.assertEqual(1, len(gc.get_referrers(adapter)))
-
-    def test_shutdown_cache_adapter(self):
-        """Test garbage collection of the session, event listener.
-
-        Ensures the proper shutdown of the session and event listener when
-        we start with constructing an Adapter w/caching, and EventListener.
-        """
-
-        # Get a session, we need to patch the session
-        sess = adp.Session()
-        sess._sessToken = 'token'.encode('utf-8')
-
-        # Get Adapter
-        adapter = adp.Adapter(sess, use_cache=True)
-        # Done with the session
-        sess = None
 
         # Turn off the event listener
         adapter.session.get_event_listener().shutdown()

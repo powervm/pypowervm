@@ -282,12 +282,18 @@ class TestLogicalPartition(testtools.TestCase):
 
         # By default, it will return True because it is a non-activated LPAR
         self.assertTrue(wrap._can_modify(mock.Mock(), '')[0])
-
         # Turn on the LPAR.  Should fail due to RMC
+        wrap.set_parm_value(bp._BP_MGT_PARTITION, False)
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
         val, reason = wrap._can_modify(mock.Mock(), '')
         self.assertFalse(val)
         self.assertTrue('RMC' in reason)
+
+        # Turn on Management Partition
+        wrap.set_parm_value(bp._BP_MGT_PARTITION, True)
+        val, reason = wrap._can_modify(mock.Mock(), '')
+        self.assertTrue(val)
+        self.assertIsNone(reason)
 
         # Turn on RMC, but have the DLPAR return false.
         wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.ACTIVE)
@@ -318,6 +324,7 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertTrue('active' in reason)
 
         # Turn on the LPAR, but make it RMC inactive
+        wrap.set_parm_value(bp._BP_MGT_PARTITION, False)
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
         wrap.set_parm_value(bp._BP_RMC_STATE, bp.RMCState.INACTIVE)
         val, reason = wrap.can_lpm(mock.ANY)
@@ -337,11 +344,18 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertTrue(val)
         self.assertIsNone(reason)
 
+        # Turn on Management Partition
+        wrap.set_parm_value(bp._BP_MGT_PARTITION, True)
+        val, reason = wrap.can_lpm(mock.ANY)
+        self.assertFalse(val)
+        self.assertTrue('management' in reason)
+
     def test_can_lpm_ibmi(self):
         """Tests for the can_lpm method for IBM i branches."""
         wrap = TestLogicalPartition._shared_wrapper
 
         # Set that it is IBM i
+        wrap.set_parm_value(bp._BP_MGT_PARTITION, False)
         wrap.set_parm_value(bp._BP_TYPE, bp.LPARType.OS400)
         wrap.set_parm_value(bp._BP_STATE, bp.LPARState.RUNNING)
         host_w = mock.MagicMock()
@@ -500,6 +514,9 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertIsNone(self._shared_wrapper.nvram)
         self._shared_wrapper.nvram = 'SomeOtherValue'
         self.assertEqual('SomeOtherValue', self._shared_wrapper.nvram)
+
+    def test_uptime(self):
+        self.assertEqual(1185681, self._dedicated_wrapper.uptime)
 
 
 class TestIBMiSpecific(twrap.TestWrapper):

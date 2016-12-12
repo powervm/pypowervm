@@ -19,7 +19,6 @@
 from oslo_log import log as logging
 
 import pypowervm.const as c
-import pypowervm.util as u
 import pypowervm.wrappers.entry_wrapper as ewrap
 import pypowervm.wrappers.mtms as mtmwrap
 
@@ -29,14 +28,14 @@ _MGD_FRAMES = 'ManagedFrames'
 _MGD_SYS = 'ManagedSystems'
 _MGMT_CON_NAME = 'ManagementConsoleName'
 
-_MGND_SYS_LINK = u.xpath("ManagedSystems", c.LINK)
-
 # NETI XPath constants
 _NETI_ROOT = 'NetworkInterfaces'
 
-_MGMT_NETI_ROOT = 'ManagementConsoleNetworkInterface'
-_MGMT_NETI_NAME = 'InterfaceName'
-_MGMT_NETI_ADDRESS = 'NetworkAddress'
+_MGMT_TPLT_OBJ_MOD_VERS = 'TemplateObjectModelVersion'
+_MGMT_USR_OBJ_MOD_VERS = 'UserObjectModelVersion'
+_MGMT_VERS_INFO = 'VersionInfo'
+_MGMT_LOC_VIOS_IMG_NAMES = 'LocalVirtualIOServerImageNames'
+_MGMT_WEB_OBJ_MOD_VERS = 'WebObjectModelVersion'
 
 _PWR_ENT_POOLS = 'PowerEnterprisePools'
 
@@ -44,11 +43,16 @@ _PWR_ENT_POOLS = 'PowerEnterprisePools'
 _PUB_KEY = 'PublicSSHKey'
 _AUTH_KEYS = 'AuthorizedKeys'
 _AUTH_KEY = 'AuthorizedKey'
-_KEY = 'Key'
 
+_MGMT_NETI_ROOT = 'ManagementConsoleNetworkInterface'
+_MGMT_NETI_NAME = 'InterfaceName'
+_MGMT_NETI_ADDRESS = 'NetworkAddress'
 
-_CONS_EL_ORDER = (mtmwrap.MTMS_ROOT, _MGD_FRAMES, _MGD_SYS, _MGMT_CON_NAME,
-                  _NETI_ROOT, _PWR_ENT_POOLS, _PUB_KEY, _AUTH_KEYS)
+_CONS_EL_ORDER = (
+    mtmwrap.MTMS_ROOT, _MGD_FRAMES, _MGD_SYS, _MGMT_CON_NAME, _NETI_ROOT,
+    _MGMT_TPLT_OBJ_MOD_VERS, _MGMT_USR_OBJ_MOD_VERS, _MGMT_VERS_INFO,
+    _MGMT_LOC_VIOS_IMG_NAMES, _MGMT_WEB_OBJ_MOD_VERS, _PWR_ENT_POOLS, _PUB_KEY,
+    _AUTH_KEYS)
 
 
 @ewrap.EntryWrapper.pvm_type('ManagementConsole', child_order=_CONS_EL_ORDER)

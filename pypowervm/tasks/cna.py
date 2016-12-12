@@ -17,12 +17,12 @@
 """Tasks around ClientNetworkAdapter."""
 from oslo_concurrency import lockutils
 
-import pypowervm.exceptions as exc
+from pypowervm import exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.tasks import partition
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
-from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VLAN_LOCK = "reserve_vlan"
 
@@ -169,6 +169,62 @@ def assign_free_vlan(adapter, host_uuid, vswitch_w, cna, ensure_enabled=False):
     return cna
 
 
+@lockutils.synchronized(VLAN_LOCK)
+def crt_trunk_with_free_vlan(
+        adapter, host_uuid, src_io_host_uuids, vs_name,
+        crt_vswitch=True, dev_name=None):
+    """Creates a trunk adapter(s) with a free VLAN on the system.
+
+    :param adapter: The pypowervm adapter to perform the update through.
+    :param host_uuid: The host UUID that the CNA will be put on.
+    :param src_io_host_uuids: The list of UUIDs of the LPARs that will host the
+                              Trunk Adapters.  At least one UUID is required.
+                              Multiple will be supported, and the Trunk
+                              Priority will increment per adapter (in the order
+                              that the I/O hosts are specified).
+    :param pvid: The port VLAN ID.
+    :param vs_name: The name of the PowerVM Hypervisor Virtual Switch to create
+                    the p2p connection on.  This is required because it is not
+                    recommended to create it on the default (ETHERNET0) virtual
+                    switch.
+    :param crt_vswitch: (Optional, Default: True) A boolean to indicate that
+                        if the vSwitch can not be found, the system should
+                        attempt to create one (with the default parameters -
+                        ex: Veb mode).
+    :param dev_name: (Optional, Default: None) The device name.  Only valid
+                     if the src_io_host_uuids is a single entity and the
+                     uuid matches the mgmt lpar UUID.  Otherwise leave as
+                     None.  If set, the name of the trunk adapter created on
+                     the mgmt lpar will be set to this value.
+    :return: The CNA Wrapper that was created.
+    :return: The TrunkAdapters that were created.  Match the order that the
+             src_io_host_uuids were passed in.
+    """
+    # Make sure we have the appropriate vSwitch
+    vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
+                                        crt_vswitch)
+
+    # Find the free VLAN
+    vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+
+    # Need to get the VIOS uuids to determine if the src_io_host_uuid is a VIOS
+    iohost_wraps = partition.get_partitions(
+        adapter, lpars=False, vioses=True, mgmt=True)
+    io_uuid_to_wrap = {w.uuid: w for w in iohost_wraps
+                       if w.uuid in src_io_host_uuids}
+
+    # Now create the corresponding Trunk
+    trunk_adpts = []
+    trunk_pri = 1
+    for io_uuid in src_io_host_uuids:
+        trunk_adpt = pvm_net.CNA.bld(
+            adapter, vlan, vswitch_w.related_href, trunk_pri=trunk_pri,
+            dev_name=dev_name)
+        trunk_adpts.append(trunk_adpt.create(parent=io_uuid_to_wrap[io_uuid]))
+        trunk_pri += 1
+    return trunk_adpts
+
+
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                 crt_vswitch=True, mac_addr=None, slot_num=None, dev_name=None):
     """Creates a 'point-to-point' Client Network Adapter.
@@ -222,37 +278,21 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
     :return: The TrunkAdapters that were created.  Match the order that the
              src_io_host_uuids were passed in.
     """
-    # Make sure we have the appropriate vSwitch
-    vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
-                                        crt_vswitch)
 
+    trunk_adpts = crt_trunk_with_free_vlan(
+        adapter, host_uuid, src_io_host_uuids, vs_name,
+        crt_vswitch=crt_vswitch, dev_name=dev_name)
+
+    # Darn lack of re-entrant locks
     with lockutils.lock(VLAN_LOCK):
-        # Find the free VLAN
-        vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
-
-        # Build and create the CNA
+        vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
+                                            crt_vswitch)
         client_adpt = pvm_net.CNA.bld(
-            adapter, vlan, vswitch_w.related_href, slot_num=slot_num,
-            mac_addr=mac_addr)
+            adapter, trunk_adpts[0].pvid, vswitch_w.related_href,
+            slot_num=slot_num, mac_addr=mac_addr)
         client_adpt = client_adpt.create(parent_type=lpar.LPAR,
                                          parent_uuid=lpar_uuid)
 
-    # Need to get the VIOS uuids to determine if the src_io_host_uuid is a VIOS
-    vios_wraps = pvm_vios.VIOS.get(adapter)
-    vios_uuids = [x.uuid for x in vios_wraps]
-
-    # Now create the corresponding Trunk
-    trunk_adpts = []
-    trunk_pri = 1
-    for src_io_host_uuid in src_io_host_uuids:
-        lpar_type = (pvm_vios.VIOS if src_io_host_uuid in vios_uuids
-                     else lpar.LPAR)
-        trunk_adpt = pvm_net.CNA.bld(
-            adapter, vlan, vswitch_w.related_href, trunk_pri=trunk_pri,
-            dev_name=dev_name)
-        trunk_adpts.append(trunk_adpt.create(parent_type=lpar_type,
-                                             parent_uuid=src_io_host_uuid))
-        trunk_pri += 1
     return client_adpt, trunk_adpts
 
 
@@ -265,7 +305,8 @@ def find_trunks(adapter, cna_w):
              the Client Network Adapter.
     """
     # VIOS and Management Partitions can host Trunk Adapters.
-    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
+    host_wraps = partition.get_partitions(
+        adapter, lpars=False, vioses=True, mgmt=True)
 
     # Find the corresponding trunk adapters.
     trunk_list = []
@@ -317,7 +358,7 @@ def _find_cna_wraps(adapter, vswitch_id=None):
              vswitch_id.
     """
     # All lpars should be searched, including VIOSes
-    lpar_wraps = get_all_lpars(adapter)
+    lpar_wraps = partition.get_partitions(adapter)
 
     cna_wraps = []
     filtered_cna_wraps = []
@@ -359,28 +400,6 @@ def find_cnas_on_trunk(trunk_w, cna_wraps=None):
     return cna_list
 
 
-def get_all_lpars(adapter, mgmt_partitions=False):
-    """Gets all lpars and VIOSes.
-
-    :param adapter: The pypowervm adapter to perform the search with.
-    :param mgmt_partitions: This is optional. If True, will search for
-                            mgmt_partitions only, otherwise it will return all
-                            lpars and VIOSes.
-    :return: A list of all the lpars.
-    """
-    vios_wraps = pvm_vios.VIOS.get(adapter)
-    if mgmt_partitions:
-        mgmt_wraps = lpar.LPAR.search(adapter, is_mgmt_partition=True)
-        if mgmt_wraps[0].uuid in [x.uuid for x in vios_wraps]:
-            host_wraps = vios_wraps
-        else:
-            host_wraps = vios_wraps + mgmt_wraps
-    else:
-        lpar_wraps = lpar.LPAR.get(adapter)
-        host_wraps = vios_wraps + lpar_wraps
-    return host_wraps
-
-
 def find_orphaned_trunks(adapter, vswitch_name):
     """Returns all orphaned trunk adapters on a given vswitch.
 
@@ -392,13 +411,18 @@ def find_orphaned_trunks(adapter, vswitch_name):
                          on.
     :return: A list of trunk adapters that do not have any associated CNAs
     """
+    vswitch = pvm_net.VSwitch.search(
+        adapter, parent_type=pvm_ms.System, one_result=True,
+        name=vswitch_name)
+
+    # May occur if the system does not host the vswitch passed in.
+    if vswitch is None:
+        return []
+    vswitch_id = vswitch.switch_id
 
     # VIOS and Management Partitions can host Trunk Adapters.
-    host_wraps = get_all_lpars(adapter, mgmt_partitions=True)
-
-    vswitch_id = pvm_net.VSwitch.search(
-        adapter, parent_type=pvm_ms.System, one_result=True,
-        name=vswitch_name).switch_id
+    host_wraps = partition.get_partitions(
+        adapter, lpars=False, vioses=True, mgmt=True)
 
     # Get all the CNA wraps on the vswitch
     cna_wraps = _find_cna_wraps(adapter, vswitch_id=vswitch_id)

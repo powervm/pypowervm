@@ -18,19 +18,18 @@
 
 import six
 
-# TODO(IBM): is anything else not cacheable?
-UNCACHEABLE = ('/rest/api/web/', '/rest/api/pcm/',
-               '/quick', '/search/', '?detail', '/jobs')
-# TODO(IBM): invalidate SSP cache based on ClusterLULinkedClone jobs
-
 _DEFAULT_SCHEMA_VERSION = 'V1_0'
 _SCHEMA_VER120 = 'V1_2_0'
 _SCHEMA_VER130 = 'V1_3_0'
+_SCHEMA_VER140 = 'V1_4_0'
+_SCHEMA_VER150 = 'V1_5_0'
 _ATTR_SCHEMA_VER = 'schemaVersion'
 _ATTR_KSV = 'ksv'
 DEFAULT_SCHEMA_ATTR = {_ATTR_SCHEMA_VER: _DEFAULT_SCHEMA_VERSION}
 ATTR_KSV120 = {_ATTR_KSV: _SCHEMA_VER120}
 ATTR_KSV130 = {_ATTR_KSV: _SCHEMA_VER130}
+ATTR_KSV140 = {_ATTR_KSV: _SCHEMA_VER140}
+ATTR_KSV150 = {_ATTR_KSV: _SCHEMA_VER150}
 ATTR_SCHEMA_KSV130 = {_ATTR_KSV: _SCHEMA_VER130,
                       _ATTR_SCHEMA_VER: _SCHEMA_VER130}
 
@@ -92,6 +91,7 @@ class HTTPStatus(object):
     OK_NO_CONTENT = 204
     NO_CHANGE = 304
     UNAUTHORIZED = 401
+    NOT_FOUND = 404
     ETAG_MISMATCH = 412
     INTERNAL_ERROR = 500
     SERVICE_UNAVAILABLE = 503

@@ -55,7 +55,6 @@ class TestPower(testtools.TestCase):
         power._power_on_off(mock_lpar, 'PowerOn', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(0, mock_job_p.call_count)
-        self.assertEqual(1, self.adpt.invalidate_cache_elem.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
         self.adpt.reset_mock()
@@ -265,7 +264,6 @@ class TestPower(testtools.TestCase):
         power._power_on_off(mock_vios, 'PowerOn', '1111')
         self.assertEqual(1, mock_run_job.call_count)
         self.assertEqual(0, mock_job_p.call_count)
-        self.assertEqual(1, self.adpt.invalidate_cache_elem.call_count)
         mock_run_job.reset_mock()
         mock_job_p.reset_mock()
         self.adpt.reset_mock()
@@ -346,6 +344,23 @@ class TestPower(testtools.TestCase):
         # one for vsp normal power off,
         # and another for the immediate power off
         self.assertEqual(3, mock_run_job.call_count)
+
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter',
+                new=mock.Mock())
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
+    def test_force_immed_no_retry(self, mock_vios, mock_run_job):
+        """With force_immediate=NO_RETRY, errors don't retry."""
+        mock_vios.adapter = self.adpt
+        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
+        for exc in (pexc.JobRequestFailed(error='e', operation_name='op'),
+                    pexc.JobRequestTimedOut(operation_name='op', seconds=60)):
+            mock_run_job.side_effect = exc
+            self.assertRaises(
+                pexc.VMPowerOffFailure, power.power_off, mock_vios, 'huuid',
+                force_immediate=power.Force.NO_RETRY)
+            self.assertEqual(1, mock_run_job.call_count)
+            mock_run_job.reset_mock()
 
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')

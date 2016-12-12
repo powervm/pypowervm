@@ -297,6 +297,25 @@ class Wrapper(object):
             self.inject(new_elem)
             return new_elem
 
+    def _get_elem_list(self, tag):
+        """An entities.ElementList for a given tag from within this wrapper.
+
+        :param tag: The string XML tag of the values to find.
+        :return: An entities.ElementList for the specified tag.
+        """
+        return ent.ElementList(
+            self.element, tag, ordering_list=self.child_order)
+
+    def _set_elem_list(self, tag, val_iter):
+        """Set (or replace) the contents of an entities.ElementList.
+
+        :param tag: The string XML tag of the ElementList to assign.
+        :param val_iter: Iterable of raw (string) values to set.
+        """
+        ellist = self._get_elem_list(tag)
+        ellist.clear()
+        ellist.extend(val_iter)
+
     def replace_list(self, prop_name, prop_children,
                      attrib=pc.DEFAULT_SCHEMA_ATTR, indirect=None):
         """Replaces a property on this Entry that contains a children list.
@@ -517,7 +536,7 @@ class Wrapper(object):
                               converter=str2percent)
 
     def log_missing_value(self, param):
-        LOG.debug('The expected parameter of %(param)s was not found in '
+        LOG.trace('The expected parameter of %(param)s was not found in '
                   '%(identifier)s' % {"param": param,
                                       "identifier": self._type_and_uuid})
 
@@ -588,8 +607,13 @@ class Wrapper(object):
         link.attrib['href'] = href
         link.attrib['rel'] = 'related'
 
-    def toxmlstring(self):
-        return self.element.toxmlstring()
+    def toxmlstring(self, pretty=False):
+        """Produce an XML dump of this Wrapper's Element.
+
+        :param pretty: If True, format the XML in a visually-pleasing manner.
+        :return: An XML string representing this Element.
+        """
+        return self.element.toxmlstring(pretty=pretty)
 
     @classmethod
     def _bld_element(cls, adapter, tag=None, has_metadata=has_metadata,
@@ -869,6 +893,27 @@ class EntryWrapper(Wrapper):
                             child_type=cls.schema_type, **read_kwargs)
 
     @classmethod
+    def get_by_href(cls, adapter, href, **rbh_kwargs):
+        """Get a wrapper or feed given a URI.
+
+        This can be useful for retrieving wrappers "associated" with other
+        wrappers, where the association is provided via an atom link.  Some
+        examples are TrunkAdapter.associated_vswitch_uri and
+        VNICBackDev.vios_href.
+
+        :param adapter: A pypowervm.adapter.Adapter instance for REST API
+                        communication.
+        :param href: The string URI (including scheme://host:port/) of the
+                     entry or feed to retrieve.
+        :param rbh_kwargs: Keyword arguments to be passed directly to Adapter's
+                           read_by_href method.
+        :return: EntryWrapper subclass of the appropriate type, or a list
+                 thereof, representing the entry/feed associated with the href
+                 parameter.
+        """
+        return cls.wrap(adapter.read_by_href(href, **rbh_kwargs))
+
+    @classmethod
     def search(cls, adapter, negate=False, xag=None, parent_type=None,
                parent_uuid=None, one_result=False, parent=None, **kwargs):
         """Performs a REST API search.
@@ -1030,7 +1075,7 @@ class EntryWrapper(Wrapper):
                 ret = resp
             else:
                 ret.feed.entries.extend(resp.feed.entries)
-            return ret
+        return ret
 
     def create(self, parent_type=None, parent_uuid=None, timeout=-1,
                parent=None):
@@ -1322,6 +1367,10 @@ class WrapperElemList(list):
 
     def __str__(self):
         return '[' + ', '.join([str(self.child_class.wrap(
+            elem, **self.injects)) for elem in self.__find_elems()]) + ']'
+
+    def __repr__(self):
+        return '[' + ', '.join([repr(self.child_class.wrap(
             elem, **self.injects)) for elem in self.__find_elems()]) + ']'
 
     def __contains__(self, item):

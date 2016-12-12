@@ -5,37 +5,37 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.0.1.dev127\n"
+"Project-Id-Version: pypowervm 1.0.1.dev116\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-14 02:55-0400\n"
-"PO-Revision-Date: 2016-04-14 02:55-0400\n"
+"POT-Creation-Date: 2016-10-07 01:34-0400\n"
+"PO-Revision-Date: 2016-10-07 01:34-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.2\n"
+"Generated-By: Babel 2.3.4\n"
 
-#: pypowervm/utils/lpar_builder.py:182
+#: pypowervm/utils/lpar_builder.py:191
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr "处理器单元因子必须介于 0.05 到 1.0 之间。值：%s"
 
-#: pypowervm/utils/lpar_builder.py:208
+#: pypowervm/utils/lpar_builder.py:217
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "逻辑分区名称的长度无效。名称：%s"
 
-#: pypowervm/utils/lpar_builder.py:379
+#: pypowervm/utils/lpar_builder.py:388
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "字段“%(field)s”的值无效：“%(value)s”"
 
-#: pypowervm/utils/lpar_builder.py:434
+#: pypowervm/utils/lpar_builder.py:443
 msgid "None value is not valid."
 msgstr "值 None 无效。"
 
-#: pypowervm/utils/lpar_builder.py:441
+#: pypowervm/utils/lpar_builder.py:450
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -44,25 +44,25 @@ msgstr ""
 "对于字段“%(field)s”，值“%(value)s”无效，可接受的"
 "选项为：%(choices)s"
 
-#: pypowervm/utils/lpar_builder.py:467
-#, python-format
-msgid ""
-"Field '%(field)s' has a value below the minimum. Value: %(value)s "
-"Minimum: %(minimum)s"
-msgstr ""
-"字段“%(field)s”的值小于最小值。值：%(value)s "
-"最小值：%(minimum)s"
-
 #: pypowervm/utils/lpar_builder.py:476
 #, python-format
 msgid ""
-"Field '%(field)s' has a value above the maximum. Value: %(value)s "
-"Maximum: %(maximum)s"
+"Field '%(field)s' has a value below the minimum. Value: %(value)s Minimum: "
+"%(minimum)s"
 msgstr ""
-"字段“%(field)s”的值大于最大值。值：%(value)s "
-"最大值：%(maximum)s"
+"字段“%(field)s”的值低于最小值。值：%(value)s 最小值："
+"%(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:530
+#: pypowervm/utils/lpar_builder.py:485
+#, python-format
+msgid ""
+"Field '%(field)s' has a value above the maximum. Value: %(value)s Maximum: "
+"%(maximum)s"
+msgstr ""
+"字段“%(field)s”的值高于最大值。值：%(value)s 最大值："
+"%(maximum)s"
+
+#: pypowervm/utils/lpar_builder.py:539
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
@@ -71,7 +71,7 @@ msgstr ""
 "“%(desired_field)s”的值大于“%(max_field)s”值。"
 "期望值：%(desired)s 最大值：%(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:543
+#: pypowervm/utils/lpar_builder.py:552
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
@@ -80,7 +80,7 @@ msgstr ""
 "“%(desired_field)s”的值小于“%(min_field)s”值。"
 "期望值：%(desired)s 最小值：%(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:587
+#: pypowervm/utils/lpar_builder.py:596
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
@@ -89,27 +89,26 @@ msgstr ""
 "内存值不是主机的逻辑内存块大小"
 "(%(lmb_size)s) 的倍数。值：%(value)s"
 
-#: pypowervm/utils/lpar_builder.py:598
+#: pypowervm/utils/lpar_builder.py:607
 #, python-format
 msgid ""
-"The managed system does not support active memory expansion. The "
-"expansion factor value '%(value)s' is not valid."
+"The managed system does not support active memory expansion. The expansion "
+"factor value '%(value)s' is not valid."
 msgstr ""
-"受管系统不支持活动内存扩展。"
-"扩展因子值“%(value)s”无效。"
+"受管系统不支持活动内存扩展。扩展"
+"因子值“%(value)s”无效。"
 
-#: pypowervm/utils/lpar_builder.py:604
+#: pypowervm/utils/lpar_builder.py:613
 #, python-format
 msgid ""
-"Active memory expansion value must be greater than or equal to 1.0 and "
-"less than or equal to 10.0. A value of 0 is also valid and indicates that"
-" AME is off. '%(value)s' is not valid."
+"Active memory expansion value must be greater than or equal to 1.0 and less "
+"than or equal to 10.0. A value of 0 is also valid and indicates that AME is "
+"off. '%(value)s' is not valid."
 msgstr ""
 "活动内存扩展值必须大于或等于 1.0 且"
 "小于或等于 10.0。值 0 也有效，用来指示"
-"AME 已关闭。“%(value)s”无效。"
+"AME 关闭。“%(value)s”无效。"
 
-
-# ENGL1SH_VERS10N 41954_4 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 51899_4 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 45
-# T9N_SH1P_STR1NG PV131AAP001 3
+# T9N_SH1P_STR1NG PV132AAP001 2

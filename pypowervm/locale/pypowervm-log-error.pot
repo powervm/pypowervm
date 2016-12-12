@@ -1,80 +1,95 @@
 # Translations template for pypowervm.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the pypowervm project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 0.0.3.dev211\n"
+"Project-Id-Version: pypowervm 1.0.0.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-16 04:38-0400\n"
+"POT-Creation-Date: 2016-09-30 07:19-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.3.4\n"
 
-#: pypowervm/utils/lpar_builder.py:180
+#: pypowervm/utils/lpar_builder.py:191
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:206
+#: pypowervm/utils/lpar_builder.py:217
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:372
+#: pypowervm/utils/lpar_builder.py:388
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:427
+#: pypowervm/utils/lpar_builder.py:443
 msgid "None value is not valid."
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:434
+#: pypowervm/utils/lpar_builder.py:450
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
 "choices: %(choices)s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:460
+#: pypowervm/utils/lpar_builder.py:476
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s "
 "Minimum: %(minimum)s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:469
+#: pypowervm/utils/lpar_builder.py:485
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s "
 "Maximum: %(maximum)s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:523
+#: pypowervm/utils/lpar_builder.py:539
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
 "Desired: %(desired)s Maximum: %(maximum)s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:536
+#: pypowervm/utils/lpar_builder.py:552
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
 "Desired: %(desired)s Minimum: %(minimum)s"
 msgstr ""
 
-#: pypowervm/utils/lpar_builder.py:574
+#: pypowervm/utils/lpar_builder.py:596
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
 "(%(lmb_size)s) of  the host.  Value: %(value)s"
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:607
+#, python-format
+msgid ""
+"The managed system does not support active memory expansion. The "
+"expansion factor value '%(value)s' is not valid."
+msgstr ""
+
+#: pypowervm/utils/lpar_builder.py:613
+#, python-format
+msgid ""
+"Active memory expansion value must be greater than or equal to 1.0 and "
+"less than or equal to 10.0. A value of 0 is also valid and indicates that"
+" AME is off. '%(value)s' is not valid."
 msgstr ""
 

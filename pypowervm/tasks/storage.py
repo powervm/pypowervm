@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2016 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -16,30 +16,34 @@
 
 """Create, remove, map, unmap, and populate virtual storage objects."""
 
+import contextlib
 import math
+import os
+import tempfile
 import threading
 import time
 
 from concurrent import futures
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
-import taskflow.engines as tf_eng
+from taskflow import engines as tf_eng
 from taskflow.patterns import unordered_flow as tf_uf
-import taskflow.task as tf_tsk
+from taskflow import task as tf_tsk
 
-import pypowervm.const as c
-import pypowervm.exceptions as exc
+from pypowervm import const as c
+from pypowervm import exceptions as exc
 from pypowervm.i18n import _
+from pypowervm.internal_utils import thread_utils as pvm_th
 from pypowervm.tasks import scsi_mapper as sm
 from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
-import pypowervm.wrappers.logical_partition as lpar
-import pypowervm.wrappers.managed_system as sys
-import pypowervm.wrappers.storage as stor
-import pypowervm.wrappers.vios_file as vf
-import pypowervm.wrappers.virtual_io_server as vios
+from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import managed_system as sys
+from pypowervm.wrappers import storage as stor
+from pypowervm.wrappers import vios_file as vf
+from pypowervm.wrappers import virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
 
@@ -52,25 +56,86 @@ _LOCK_VOL_GRP = 'vol_grp_lock'
 _UPLOAD_SEM = threading.Semaphore(3)
 
 
-def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
-                     d_size=None, sha_chksum=None):
-    """Creates a new Virtual Disk and uploads a data stream to it.
+class UploadType(object):
+    """Used in conjunction with the upload_xx methods.
+
+    Indicates how the invoker will pass in the handle to the data.
+    """
+
+    # The data stream (either a file handle or stream) to upload.  Must have
+    # the 'read' method that returns a chunk of bytes.
+    IO_STREAM = 'stream'
+
+    # A parameter-less function that builds an IO_STREAM.
+    IO_STREAM_BUILDER = 'stream_builder'
+
+    # A method function that will be invoked to stream the data into the
+    # virtual disk. Only one parameter is passed in, and that is the path to
+    # the file to stream the data into.
+    #
+    # This upload_xx method will not return until an EOF is sent to the file
+    # path passed in to the delegate function.  It is the responsibility of the
+    # invoker to ensure that the EOF is sent.
+    #
+    # Note: This upload mechanism only works when using the pypowervm API
+    # locally.
+    FUNC = 'delegate_function'
+
+
+def _delete_vio_file(vio_file):
+    """Try to delete a File artifact.
+
+    :param vio_file: pypowervm.wrappers.vios_file.File object, retrieved from
+                     the server, representing the File object to delete.
+    :return: If the deletion is successful (or the File was already gone), the
+             method returns None.  Otherwise, the vio_file parameter is
+             returned.
+    """
+    # Try to delete the file.
+    try:
+        vio_file.adapter.delete(vio_file.schema_type, root_id=vio_file.uuid,
+                                service='web')
+    except Exception as e:
+        if not (isinstance(e, exc.HttpError) and
+                e.her_wrap.status == c.HTTPStatus.NOT_FOUND):
+            LOG.error(_("Failed to delete vio_file with UUID %s.  It must be "
+                        "manually deleted."), vio_file.uuid)
+            LOG.exception(e)
+            return vio_file
+    return None
+
+
+def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
+    """Cleans out a bad vDisk after a failed upload."""
+    # Keeps sonar happy.
+    vol_grp = stor.VG.get(adapter, vol_grp_uuid, parent_type=vios.VIOS,
+                          parent_uuid=v_uuid)
+    rm_vg_storage(vol_grp, vdisks=[n_vdisk])
+
+    _delete_vio_file(vio_file)
+
+
+def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
+                     d_size=None, sha_chksum=None,
+                     upload_type=UploadType.IO_STREAM):
+    """Uploads a new virtual disk.
 
     :param adapter: The adapter to talk over the API.
     :param v_uuid: The Virtual I/O Server UUID that will host the disk.
     :param vol_grp_uuid: The volume group that will host the Virtual Disk's
                          UUID.
-    :param d_stream: The data stream (either a file handle or stream) to
-                     upload.  Must have the 'read' method that returns a chunk
-                     of bytes.
+    :param io_handle: The I/O handle (as defined by the upload_type)
     :param d_name: The name that should be given to the disk on the Virtual
                    I/O Server that will contain the file.
     :param f_size: The size (in bytes) of the stream to be uploaded.
-    :param d_size: (OPTIONAL) The desired size of the new VDisk in bytes.  If
-                     omitted or smaller than f_size, it will be set to match
-                     f_size.
-    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+    :param d_size: (Optional) The desired size of the new VDisk in bytes.  If
+                   omitted or smaller than f_size, it will be set to match
+                   f_size.
+    :param sha_chksum: (Optional) The SHA256 checksum for the file.  Useful for
                        integrity checks.
+    :param upload_type: (Optional, Default: IO_STREAM) Defines the way in
+                        which the vdisk should be uploaded.  Refer to the
+                        UploadType enumeration for valid upload mechanisms.
     :return: The first return value is the virtual disk that the file is
              uploaded into.
     :return: Normally the second return value will be None, indicating that the
@@ -79,22 +144,17 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
              value is the File EntryWrapper.  This is simply a metadata marker
              to be later used to retry the cleanup.
     """
-
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
     # precision on the create call.  What the VIOS will then do is determine
     # the appropriate segment size (pp) and will provide a virtual disk that
     # is 'at least' that big.  Depends on the segment size set up on the
     # volume group how much over it could go.
-    #
-    # See note below...temporary workaround needed.
     if d_size is None or d_size < f_size:
         d_size = f_size
     gb_size = util.convert_bytes_to_gb(d_size)
 
-    # TODO(IBM) Temporary - need to round up to the highest GB.  This should
-    # be done by the platform in the future.
+    # The REST API requires that we round up to the highest GB.
     gb_size = math.ceil(gb_size)
-
     n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
     # The file type.  If local API server, then we can use the coordinated
@@ -104,11 +164,17 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, d_stream, d_name, f_size,
 
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
-    vio_file = _create_file(
-        adapter, d_name, file_type, v_uuid, f_size=f_size,
-        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+    vio_file = _create_file(adapter, d_name, file_type, v_uuid, f_size=f_size,
+                            tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
-    maybe_file = _upload_stream(vio_file, d_stream)
+    try:
+        # Run the upload
+        maybe_file = _upload_stream(vio_file, io_handle, upload_type)
+    except Exception:
+        _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file)
+
+        # Re-raise the original exception
+        raise
     return n_vdisk, maybe_file
 
 
@@ -137,7 +203,7 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
-    f_uuid = _upload_stream(vio_file, d_stream)
+    f_uuid = _upload_stream(vio_file, d_stream, UploadType.IO_STREAM)
 
     # Simply return a reference to this.
     reference = stor.VOptMedia.bld_ref(adapter, f_name)
@@ -145,9 +211,10 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     return reference, f_uuid
 
 
-def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
-                  sha_chksum=None, return_ssp=False):
-    """Creates a new SSP Logical Unit and uploads a data stream to it.
+def upload_new_lu(v_uuid, ssp, io_handle, lu_name, f_size, d_size=None,
+                  sha_chksum=None, return_ssp=False,
+                  upload_type=UploadType.IO_STREAM):
+    """Creates a new SSP Logical Unit and uploads an image to it.
 
     Note: return spec varies based on the return_ssp parameter:
 
@@ -162,20 +229,21 @@ def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
                    VIOS in the Shared Storage Pool's Cluster.)
     :param ssp: SSP EntryWrapper representing the Shared Storage Pool on which
                 to create the new Logical Unit.
-    :param d_stream: The data stream (either a file handle or stream) to
-                     upload.  Must have the 'read' method that returns a chunk
-                     of bytes.
+    :param io_handle: The I/O handle (as defined by the upload_type)
     :param lu_name: The name that should be given to the new LU.
     :param f_size: The size (in bytes) of the stream to be uploaded.
     :param d_size: (OPTIONAL) The size of the LU (in bytes).  Not required if
                    it should match the file.  Must be at least as large as the
                    file.
-    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+    :param sha_chksum: (Optional) The SHA256 checksum for the file.  Useful for
                        integrity checks.
-    :param return_ssp: (OPTIONAL) If True, the return value of the method is a
+    :param return_ssp: (Optional) If True, the return value of the method is a
                        three-member tuple whose third value is the updated SSP
                        EntryWrapper.  If False (the default), the method
                        returns a two-member tuple.
+    :param upload_type: (Optional, Default: IO_STREAM) Defines the way in
+                        which the LU should be uploaded.  Refer to the
+                        UploadType enumeration for valid upload mechanisms.
     :return: If the return_ssp parameter is True, the first return value is the
              updated SSP EntryWrapper, containing the newly-created and
              -uploaded LU.  If return_ssp is False, this return value is absent
@@ -195,24 +263,27 @@ def upload_new_lu(v_uuid, ssp, d_stream, lu_name, f_size, d_size=None,
 
     ssp, new_lu = crt_lu(ssp, lu_name, gb_size, typ=stor.LUType.IMAGE)
 
-    maybe_file = upload_lu(v_uuid, new_lu, d_stream, f_size,
-                           sha_chksum=sha_chksum)
+    maybe_file = upload_lu(v_uuid, new_lu, io_handle, f_size,
+                           sha_chksum=sha_chksum, upload_type=upload_type)
+
     return (ssp, new_lu, maybe_file) if return_ssp else (new_lu, maybe_file)
 
 
-def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
+def upload_lu(v_uuid, lu, io_handle, f_size, sha_chksum=None,
+              upload_type=UploadType.IO_STREAM):
     """Uploads a data stream to an existing SSP Logical Unit.
 
     :param v_uuid: The UUID of the Virtual I/O Server through which to perform
                    the upload.
     :param lu: LU Wrapper representing the Logical Unit to which to upload the
                data.  The LU must already exist in the SSP.
-    :param d_stream: The data stream (either a file handle or stream) to
-                     upload.  Must have the 'read' method that returns a chunk
-                     of bytes.
+    :param io_handle: The I/O handle (as defined by the upload_type)
     :param f_size: The size (in bytes) of the stream to be uploaded.
-    :param sha_chksum: (OPTIONAL) The SHA256 checksum for the file.  Useful for
+    :param sha_chksum: (Optional) The SHA256 checksum for the file.  Useful for
                        integrity checks.
+    :param upload_type: (Optional, Default: IO_STREAM) Defines the way in
+                        which the LU should be uploaded.  Refer to the
+                        UploadType enumeration for valid upload mechanisms.
     :return: Normally the return value will be None, indicating that the image
              was uploaded without issue.  If for some reason the File metadata
              for the VIOS was not cleaned up, the return value is the LU
@@ -231,10 +302,10 @@ def upload_lu(v_uuid, lu, d_stream, f_size, sha_chksum=None):
         lu.adapter, lu.name, file_type, v_uuid, f_size=f_size,
         tdev_udid=lu.udid, sha_chksum=sha_chksum)
 
-    return _upload_stream(vio_file, d_stream)
+    return _upload_stream(vio_file, io_handle, upload_type)
 
 
-def _upload_stream(vio_file, d_stream):
+def _upload_stream(vio_file, io_handle, upload_type):
     """Upload a file stream and clean up the metadata afterward.
 
     When files are uploaded to either VIOS or the PowerVM management
@@ -253,79 +324,178 @@ def _upload_stream(vio_file, d_stream):
 
     :param vio_file: The File EntryWrapper representing the metadata for the
                      file.
+    :param io_handle: The I/O handle (as defined by the upload_type)
+    :param upload_type: Defines the way in which the element should be
+                        uploaded.  Refer to the UploadType enumeration for
+                        valid upload mechanisms.
     :return: Normally this method will return None, indicating that the disk
              and image were uploaded without issue.  If for some reason the
              File metadata for the VIOS was not cleaned up, the return value
              is the File EntryWrapper.  This is simply a marker to be later
              used to retry the cleanup.
     """
+    # If the io_handle is a function that opens a stream we are to read from,
+    # open that stream.
+    if upload_type == UploadType.IO_STREAM_BUILDER:
+        io_handle, upload_type = io_handle(), UploadType.IO_STREAM
+
     try:
         # Acquire the upload semaphore
         _UPLOAD_SEM.acquire()
 
+        start = time.time()
         if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
             # This path offers low CPU overhead and higher throughput, but
             # can only be executed if running on the same system as the API.
-            # It works by writing to a file 'pipe'.  This is harder to
-            # coordinate.  But the vio_file's 'asset_file' tells us where
-            # to write the stream to.
-
-            # A reader to tell the API we have nothing to upload
-            class EmptyReader(object):
-                def read(self, size):
-                    return None
-
-            with futures.ThreadPoolExecutor(max_workers=2) as th:
-                # The upload file is a blocking call (won't return until pipe
-                # is fully written to), which is why we put it in another
-                # thread.
-                upload_f = th.submit(vio_file.adapter.upload_file,
-                                     vio_file.element, EmptyReader())
-
-                # Create a function that streams to the FIFO pipe
-                out_stream = open(vio_file.asset_file, 'a+b', 0)
-
-                def copy_func(in_stream, out_stream):
-                    while True:
-                        chunk = d_stream.read(65536)
-                        if not chunk:
-                            break
-                        out_stream.write(chunk)
-
-                        # Yield to other threads
-                        time.sleep(0)
-
-                    # The close indicates to the other side we are done.  Will
-                    # force the upload_file to return.
-                    out_stream.close()
-                copy_f = th.submit(copy_func, d_stream, out_stream)
-
-            try:
-                # Make sure we call the results.  This is just to make sure it
-                # doesn't have exceptions
-                for io_future in futures.as_completed([upload_f, copy_f]):
-                    io_future.result()
-            finally:
-                # If the upload failed, then make sure we close the stream.
-                # This will ensure that if one of the threads fail, both fail.
-                # Note that if it is already closed, this no-ops.
-                out_stream.close()
+            # It works by writing directly to the file represented by the
+            # vio_file's 'asset_file'.
+            _upload_stream_local(vio_file, io_handle, upload_type)
         else:
             # Upload the file directly to the REST API server.
-            vio_file.adapter.upload_file(vio_file.element, d_stream)
+            _upload_stream_api(vio_file, io_handle, upload_type)
+        LOG.debug("Upload took %.2fs", time.time() - start)
     finally:
         # Must release the semaphore
         _UPLOAD_SEM.release()
 
-        try:
-            # Cleanup after the upload
-            vio_file.adapter.delete(vf.File.schema_type, root_id=vio_file.uuid,
-                                    service='web')
-        except Exception:
-            LOG.exception(_('Unable to cleanup after file upload. '
-                            'File uuid: %s') % vio_file.uuid)
-            return vio_file
-    return None
+        # Allow the exception to be raised up...if there was one.
+        ret_vio = _delete_vio_file(vio_file)
+    return ret_vio
+
+
+@contextlib.contextmanager
+def _rest_api_pipe(file_writer):
+    """A piping context manager to allow "local" uploads from a remote user.
+
+    Usage:
+        with _rest_api_pipe(file_writer) as read_stream:
+            upload(read_stream)
+
+    :param file_writer: A method in the spirit of:
+                        def file_writer(file_path):
+                            with open(file_path, 'w') as out_stream:
+                                while ...:
+                                    out_stream.write(...)
+    """
+    fifo_reader, file_path, temp_dir = None, None, None
+    try:
+        # Make the file path
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, 'REST_API_Pipe')
+        os.mkfifo(file_path)
+        # Spawn the writer thread
+        with futures.ThreadPoolExecutor(1) as th_pool:
+            writer_f = th_pool.submit(file_writer, file_path)
+            # Create a readable stream on the FIFO pipe.
+            fifo_reader = util.retry_io_command(open, file_path, 'r')
+
+            # Let the caller consume the pipe contents
+            yield fifo_reader
+
+            # Make sure the writer is finished.  This will also raise any
+            # exception the writer caused.
+            writer_f.result()
+    finally:
+        # Close and clean up the FIFO, carefully.  Any step could have raised.
+        if fifo_reader:
+            util.retry_io_command(fifo_reader.close)
+        if file_path:
+            os.remove(file_path)
+        if temp_dir:
+            os.rmdir(temp_dir)
+
+
+def _upload_stream_api(vio_file, io_handle, upload_type):
+    def _copy_retry(d_stream):
+        i = 0
+        while True:
+            try:
+                # Very rarely (think one in a thousand) there appears to be a
+                # hiccup in the upload processing.  A simple retry mechanism
+                # should be enough to push it through
+                vio_file.adapter.upload_file(vio_file.element, d_stream)
+                break
+            except exc.Error:
+                if i < 3:
+                    LOG.warning(_("Encountered an issue while uploading. "
+                                  "Will retry."))
+                else:
+                    raise
+                i += 1
+
+    # If using a FUNCtion-based upload remotely, we have to make that function
+    # (which is passed in as io_handle) think it's writing to a local file.  We
+    # spoof this with _RestApiPipe, which uses a fifo (named pipe) that it
+    # populates from d_stream in a separate thread.
+    if upload_type == UploadType.FUNC:
+        with _rest_api_pipe(io_handle) as in_stream:
+            _copy_retry(in_stream)
+    else:
+        # io_handle is already an open, readable stream
+        _copy_retry(io_handle)
+
+
+def _copy_func(out_file, io_handle):
+    LOG.info(_("Starting to read from stream for image upload to %s."),
+             out_file)
+    i = 0
+    with util.retry_io_command(open, out_file, 'a+b', 0) as out_str:
+        while True:
+            chunk = util.retry_io_command(io_handle.read, 65536)
+            if not chunk:
+                LOG.debug("Reached EOF at chunk %d", i)
+                break
+            util.retry_io_command(out_str.write, chunk)
+
+            if i % 1000 == 0:
+                LOG.debug("Uploaded chunk %d to the server for file %s",
+                          i, out_file)
+            i += 1
+
+            # Yield to other threads
+            time.sleep(0)
+
+
+def _upload_stream_local(vio_file, io_handle, upload_type):
+    # A reader to tell the API we have nothing to upload
+    class EmptyReader(object):
+        def read(self, size):
+            return None
+
+    argv = []
+    if upload_type is UploadType.IO_STREAM:
+        # io_handle is a readable stream supplying the image data.  Use our
+        # local copying function to pipe from it to the vio_file.
+        func = _copy_func
+        argv = [io_handle]
+    else:
+        # The io_handle is a function.  Just pass it the asset file path
+        # and that function will do the copying.
+        func = io_handle
+
+    with futures.ThreadPoolExecutor(max_workers=2) as th:
+        # The upload file is a blocking call (won't return until pipe
+        # is fully written to), which is why we put it in another
+        # thread.
+        upload_f = pvm_th.submit_thread(th, vio_file.adapter.upload_file,
+                                        vio_file.element, EmptyReader())
+
+        # The real upload thread.
+        copy_f = pvm_th.submit_thread(th, func, vio_file.asset_file, *argv)
+
+        # Log any exceptions on the subthreads.
+        # We specifically log the exceptions here.  The reason being that this
+        # runs in a separate thread.  If the other thread has an exception this
+        # may just be hidden.  Force a log, even though it may be redundant.
+        for fut in futures.as_completed([upload_f, copy_f]):
+            if fut is copy_f:
+                _ensure_pipe_close(vio_file.asset_file, upload_f)
+
+        # Even if upload_f also raised, this one is more important/relevant.
+        # Use result() to raise the original exception with its original trace.
+        copy_f.result()
+        # If we get here, copy_f succeeded.  If upload_f raised, reraise that.
+        upload_f.result()
 
 
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
@@ -346,6 +516,53 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     """
     return vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
                        f_size=f_size, tdev_udid=tdev_udid).create()
+
+
+def _ensure_pipe_close(file_path, upload_future):
+    """Will ensure that a 'close file' is sent to a FIFO Pipe.
+
+    This is needed in case there is an exception in client code that was going
+    to write to a FIFO pipe, but hit an exception before it could.  This stops
+    us from blocking the write indefinitely, and never returning from the
+    method.
+
+    The upload future is also passed in.  There are scenarios where the clients
+    I/O stream will fail immediately.  When this happens, the EOF can be sent
+    before the REST API starts reading from it.  The upload_future is passed
+    in so that we can retry the EOF send until the REST API closes the upload
+    pipe.  This avoids a nasty race condition.
+
+    :param file_path: The path to the pipe.
+    :param upload_future: The future to wait for completion of before
+                          returning.
+    """
+    first_loop = True
+    while True:
+        # If the future is marked done, that means that the pipe must have
+        # closed properly and the EOF was received.
+        if upload_future.done():
+            return
+        elif not first_loop:
+            LOG.debug(("The upload thread has not completed yet. This may "
+                       "occur if the EOF was sent before the REST API started "
+                       "reading the I/O pipe. Trying again shortly."))
+        else:
+            first_loop = False
+
+        # If the path is already gone, just leave.  It was closed.
+        if not os.path.exists(file_path):
+            return
+
+        try:
+            LOG.warning(_('Manually closing FIFO pipe at path %s'), file_path)
+            open(file_path, 'a+b', 0).close()
+
+            # Give the future a short period to return control.
+            time.sleep(.5)
+        except Exception as e:
+            LOG.warning(_("An error occurred while closing FIFO pipe at path "
+                          "%s.  Ignoring."), file_path)
+            LOG.exception(e)
 
 
 def default_tier_for_ssp(ssp):
@@ -526,7 +743,7 @@ def _rm_dev_by_udid(dev, devlist):
     """
     if not dev.udid:
         LOG.warning(_("Ignoring device because it lacks a UDID:\n%s"),
-                    dev.toxmlstring())
+                    dev.toxmlstring(pretty=True))
         return None
 
     matches = [realdev for realdev in devlist if realdev.udid == dev.udid]
@@ -935,7 +1152,8 @@ class _RemoveStorage(tf_tsk.Task):
                 executor=tx.ContextThreadPoolExecutor(max(8, len(rmtasks))))
 
 
-def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
+def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False,
+                                 remove_storage=True):
     """Delete storage mappings and elements associated with an LPAR ID.
 
     This should typically be used to clean leftovers from an LPAR that has been
@@ -946,7 +1164,7 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     associate a mapping-less storage element with an LPAR ID.
 
     Storage elements are deleted if their only mappings are to the LPAR ID
-    being scrubbed.
+    being scrubbed (and remove_storage=True).
 
     This method only adds subtasks/post-execs to the passed-in FeedTask.  The
     caller is responsible for executing that FeedTask in an appropriate Flow or
@@ -964,6 +1182,10 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
                         whether the LPAR exists or not. Thus, set to True only
                         if intentionally removing mappings associated with
                         extant LPARs.
+    :param remove_storage: If True (the default), storage elements associated
+                           with stale mappings are removed, assuming it can be
+                           verified that they were only in use by this LPAR.
+                           If False, no storage removal is attempted.
     """
     tag = '_'.join((str(lpar_id) for lpar_id in lpar_ids))
 
@@ -993,7 +1215,8 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False):
     ftsk.add_functor_subtask(remove_chain, 'VSCSI',
                              provides='vscsi_removals_' + tag)
     ftsk.add_functor_subtask(remove_chain, 'VFC')
-    ftsk.add_post_execute(_RemoveStorage(tag))
+    if remove_storage:
+        ftsk.add_post_execute(_RemoveStorage(tag))
 
 
 def add_orphan_storage_scrub_tasks(ftsk, lpar_id=None):

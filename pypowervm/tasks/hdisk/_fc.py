@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Tasks around VIOS-backed 'physical' disks."""
+"""Tasks around VIOS-backed 'physical' fibre channel disks."""
 
 import itertools
 
@@ -454,6 +454,16 @@ def get_pg83_via_job(adapter, vios_uuid, udid):
     xml_resp = result.get('OutputXML', result.get('StdOut'))
     LOG.debug('QUERY_INVENTORY result: %s' % xml_resp)
 
+    return _parse_pg83_xml(xml_resp)
+
+
+def _parse_pg83_xml(xml_resp):
+    """Parse LUARecovery XML response, looking for pg83 descriptor.
+
+    :param xml_resp: Tuple containing OutputXML and StdOut results of the
+                     LUARecovery Job
+    :return: pg83 descriptor text, or None if not found.
+    """
     # QUERY_INVENTORY response may contain more than one element.  Each will be
     # delimited by its own <?xml?> tag.  etree will only parse one at a time.
     for chunk in xml_resp.split('<?xml version="1.0"?>'):

@@ -215,15 +215,23 @@ class FoundDevMultipleTimes(AbstractMsgFmtError):
                 "it at most once.")
 
 
-class MultipleExceptionsInFeedTask(Exception):
-    """Exception containing tracebacks in WrappedFailure exceptions.
+class MultipleExceptionsInFeedTask(AbstractMsgFmtError):
+    """Exception concatenating messages in WrappedFailure exceptions.
 
     Exception raised when a pypowervm.utils.transaction.FeedTask run raises a
     tasflow.exceptions.WrappedFailure containing more than one exception.  The
-    message string is a concatenation of the tracebacks of the wrapped
+    message string is a concatenation of the message strings of the wrapped
     exceptions.
     """
-    pass
+    def __init__(self, ft_name, wrapped_failure):
+        # In case the caller wants to trap this and get at the WrappedFailure
+        self.wrapped_failure = wrapped_failure
+        self.msg_fmt = _("FeedTask %(ft_name)s experienced multiple "
+                         "exceptions:\n\t%(concat_msgs)s")
+        concat_msgs = '\n\t'.join([fail.exception_str
+                                   for fail in wrapped_failure])
+        super(MultipleExceptionsInFeedTask, self).__init__(
+            response=None, ft_name=ft_name, concat_msgs=concat_msgs)
 
 
 class ManagementPartitionNotFoundException(AbstractMsgFmtError):
@@ -275,6 +283,12 @@ class InvalidHostForRebuildSlotMismatch(InvalidHostForRebuild):
                 "this virtual machine on this system.")
 
 
+class InvalidVirtualNetworkDeviceType(AbstractMsgFmtError):
+    msg_fmt = _("To register the slot information of the network device a "
+                "CNA or VNIC adapter is needed. Instead the following "
+                "was given: %(wrapper)s.")
+
+
 class NotEnoughActiveVioses(AbstractMsgFmtError):
     msg_fmt = _("There are not enough active Virtual I/O Servers available. "
                 "Expected %(exp)d; found %(act)d.")
@@ -296,11 +310,43 @@ class NoRunningSharedSriovAdapters(AbstractMsgFmtError):
 
 
 class InsufficientSRIOVCapacity(AbstractMsgFmtError):
-    msg_fmt = _("Unable to fulfill minimum redundancy requirement of "
-                "%(min_vfs)d.  Found %(found_vfs)d viable backing device(s).")
+    msg_fmt = _("Unable to fulfill redundancy requirement of %(red)d.  Found "
+                "%(found_vfs)d viable backing device(s).")
+
+
+class SystemNotVNICCapable(AbstractMsgFmtError):
+    msg_fmt = _("The Managed System is not vNIC capable.")
+
+
+class NoVNICCapableVIOSes(AbstractMsgFmtError):
+    msg_fmt = _("There are no active vNIC-capable VIOSes.")
+
+
+class VNICFailoverNotSupportedSys(AbstractMsgFmtError):
+    msg_fmt = _("A redundancy of %(red)d was specified, but the Managed "
+                "System is not vNIC failover capable.")
+
+
+class VNICFailoverNotSupportedVIOS(AbstractMsgFmtError):
+    msg_fmt = _("A redundancy of %(red)d was specified, but there are no "
+                "active vNIC failover-capable VIOSes.")
 
 
 class NoMediaRepoVolumeGroupFound(AbstractMsgFmtError):
     msg_fmt = _("Unable to locate the volume group %(vol_grp)s to store the "
                 "virtual optical media within.  Unable to create the "
                 "media repository.")
+
+
+class CantUpdatePPortsInUse(AbstractMsgFmtError):
+    msg_fmt = _("The ManagedSystem update was not attempted because changes "
+                "were requested to one or more SR-IOV physical ports which "
+                "are in use by vNICs.\n%(warnings)s")
+
+
+class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
+    msg_fmt = _("Unable to create VNC based virtual terminal: %(err)s")
+
+
+class CacheNotSupportedException(AbstractMsgFmtError):
+    msg_fmt = _("The Adapter cache is not supported.")

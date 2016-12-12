@@ -26,7 +26,6 @@ from pypowervm.i18n import _
 import pypowervm.log as lgc
 import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
-import pypowervm.wrappers.managed_system as ms
 
 LOG = logging.getLogger(__name__)
 
@@ -74,6 +73,19 @@ class KeylockPos(object):
     ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
 
 
+class Force(object):
+    """Enumeration indicating the strategy for forcing power-off."""
+    # The force-immediate option is included on the first pass.
+    TRUE = True
+    # The force-immediate option is not included on the first pass; but if the
+    # power-off fails, it is retried with the force-immediate option included.
+    # This value is False for backward compatibility.
+    ON_FAILURE = False
+    # The force-immediate option is not included.  If the power-off fails, it
+    # is not retried.
+    NO_RETRY = 'no retry'
+
+
 @lgc.logcall
 def power_on(part, host_uuid, add_parms=None, synchronous=True):
     """Will Power On a Logical Partition or Virtual I/O Server.
@@ -94,14 +106,24 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
 
 
 @lgc.logcall
-def power_off(part, host_uuid, force_immediate=False, restart=False,
+def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
               timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
     :param host_uuid: TEMPORARY - The host system UUID that the instance
                       resides on.
-    :param force_immediate: Boolean.  Perform an immediate power off.
+    :param force_immediate: One of the Force enum values, defaulting to
+                            Force.ON_FAILURE, which behave as follows:
+            - Force.TRUE: The force-immediate option is included on the first
+                          pass.
+            - Force.NO_RETRY: The force-immediate option is not included.  If
+                              the power-off fails or times out,
+                              VMPowerOffFailure is raised immediately.
+            - Force.ON_FAILURE: The force-immediate option is not included on
+                                the first pass; but if the power-off fails
+                                (including timeout), it is retried with the
+                                force-immediate option added.
     :param restart: Boolean.  Perform a restart after the power off.
     :param timeout: value in seconds for specifying how long to wait for the
                     instance to stop.
@@ -112,7 +134,7 @@ def power_off(part, host_uuid, force_immediate=False, restart=False,
                          timeout=timeout, add_parms=add_parms)
 
 
-def _power_on_off(part, suffix, host_uuid, force_immediate=False,
+def _power_on_off(part, suffix, host_uuid, force_immediate=Force.ON_FAILURE,
                   restart=False, timeout=CONF.pypowervm_job_request_timeout,
                   add_parms=None, synchronous=True):
     """Internal function to power on or off an instance.
@@ -121,8 +143,18 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     :param suffix: power option - 'PowerOn' or 'PowerOff'.
     :param host_uuid: TEMPORARY - The host system UUID that the LPAR/VIOS
                       resides on
-    :param force_immediate: Boolean.  Do immediate shutdown (for PowerOff
-                            suffix only)
+    :param force_immediate: (For PowerOff suffix only) One of the Force enum
+                            values (defaulting to Force.ON_FAILURE), which
+                            behave as follows:
+            - Force.TRUE: The force-immediate option is included on the first
+                          pass.
+            - Force.NO_RETRY: The force-immediate option is not included.  If
+                              the power-off fails or times out,
+                              VMPowerOffFailure is raised immediately.
+            - Force.ON_FAILURE: The force-immediate option is not included on
+                                the first pass; but if the power-off fails
+                                (including timeout), it is retried with the
+                                force-immediate option added.
     :param restart: Boolean.  Do a restart after power off (for PowerOff suffix
                     only)
     :param timeout: Value in seconds for specifying how long to wait for the
@@ -140,127 +172,108 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=False,
     adapter = part.adapter
     normal_vsp_power_off = False
     add_immediate = part.env != bp.LPARType.OS400
-    try:
-        while not complete:
-            resp = adapter.read(part.schema_type, uuid,
-                                suffix_type=c.SUFFIX_TYPE_DO,
-                                suffix_parm=suffix)
-            job_wrapper = job.Job.wrap(resp.entry)
-            job_parms = []
-            if suffix == _SUFFIX_PARM_POWER_OFF:
-                operation = 'osshutdown'
-                if force_immediate:
-                    operation = 'shutdown'
-                    add_immediate = True
-                # Do normal vsp shutdown if flag on or
-                # if RMC not active (for non-IBMi)
-                elif (normal_vsp_power_off or
-                      (part.env != bp.LPARType.OS400 and
-                       part.rmc_state != bp.RMCState.ACTIVE)):
-                    operation = 'shutdown'
-                    add_immediate = False
+    while not complete:
+        resp = adapter.read(part.schema_type, uuid,
+                            suffix_type=c.SUFFIX_TYPE_DO,
+                            suffix_parm=suffix)
+        job_wrapper = job.Job.wrap(resp.entry)
+        job_parms = []
+        if suffix == _SUFFIX_PARM_POWER_OFF:
+            operation = 'osshutdown'
+            if force_immediate == Force.TRUE:
+                operation = 'shutdown'
+                add_immediate = True
+            # Do normal vsp shutdown if flag on or
+            # if RMC not active (for non-IBMi)
+            elif (normal_vsp_power_off or
+                  (part.env != bp.LPARType.OS400 and
+                   part.rmc_state != bp.RMCState.ACTIVE)):
+                operation = 'shutdown'
+                add_immediate = False
+            job_parms.append(
+                job_wrapper.create_job_parameter('operation', operation))
+            if add_immediate:
                 job_parms.append(
-                    job_wrapper.create_job_parameter('operation', operation))
-                if add_immediate:
-                    job_parms.append(
-                        job_wrapper.create_job_parameter('immediate', 'true'))
-                if restart:
-                    job_parms.append(
-                        job_wrapper.create_job_parameter('restart', 'true'))
+                    job_wrapper.create_job_parameter('immediate', 'true'))
+            if restart:
+                job_parms.append(
+                    job_wrapper.create_job_parameter('restart', 'true'))
 
-            # Add add_parms to the job
-            if add_parms is not None:
-                for kw in add_parms.keys():
-                    # Skip any parameters already set.
-                    if kw not in ['operation', 'immediate', 'restart']:
-                        job_parms.append(
-                            job_wrapper.create_job_parameter(
-                                kw, str(add_parms[kw])))
-            try:
-                job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout,
-                                    synchronous=synchronous)
-                complete = True
-            except pexc.JobRequestTimedOut as error:
-                if suffix == _SUFFIX_PARM_POWER_OFF:
-                    if operation == 'osshutdown':
-                        # This has timed out, we loop again and attempt to
-                        # force immediate vsp. Unless IBMi, in which case we
-                        # will try an immediate osshutdown and then
-                        # a vsp normal before then jumping to immediate vsp.
-                        timeout = CONF.pypowervm_job_request_timeout
-                        if part.env == bp.LPARType.OS400:
-                            if not add_immediate:
-                                add_immediate = True
-                            else:
-                                normal_vsp_power_off = True
-                        else:
-                            force_immediate = True
-                    # normal vsp power off did not work, try hard vsp power off
-                    elif normal_vsp_power_off:
-                        timeout = CONF.pypowervm_job_request_timeout
-                        force_immediate = True
-                        normal_vsp_power_off = False
-                    else:
-                        LOG.exception(error)
-                        emsg = six.text_type(error)
-                        raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=part.name)
-                else:
-                    # Power On timed out
-                    LOG.exception(error)
-                    emsg = six.text_type(error)
-                    raise pexc.VMPowerOnFailure(reason=emsg,
-                                                lpar_nm=part.name)
-            except pexc.JobRequestFailed as error:
-                emsg = six.text_type(error)
-                LOG.exception(_('Error: %s') % emsg)
-                if suffix == _SUFFIX_PARM_POWER_OFF:
-                    # If already powered off and not a reboot,
-                    # don't send exception
-                    if (any(err_prefix in emsg
-                            for err_prefix in _ALREADY_POWERED_OFF_ERRS)
-                            and not restart):
-                        complete = True
-                    # If failed for other reasons,
-                    # retry with normal vsp power off except for IBM i
-                    # where we try immediate osshutdown first
-                    elif operation == 'osshutdown':
-                        timeout = CONF.pypowervm_job_request_timeout
-                        if (part.env == bp.LPARType.OS400 and
-                                not add_immediate):
+        # Add add_parms to the job
+        if add_parms is not None:
+            for kw in add_parms.keys():
+                # Skip any parameters already set.
+                if kw not in ['operation', 'immediate', 'restart']:
+                    job_parms.append(job_wrapper.create_job_parameter(
+                        kw, str(add_parms[kw])))
+        try:
+            job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout,
+                                synchronous=synchronous)
+            complete = True
+        except pexc.JobRequestTimedOut as error:
+            if suffix == _SUFFIX_PARM_POWER_OFF:
+                if operation == 'osshutdown' and (force_immediate ==
+                                                  Force.ON_FAILURE):
+                    # This has timed out, we loop again and attempt to
+                    # force immediate vsp. Unless IBMi, in which case we
+                    # will try an immediate osshutdown and then
+                    # a vsp normal before then jumping to immediate vsp.
+                    timeout = CONF.pypowervm_job_request_timeout
+                    if part.env == bp.LPARType.OS400:
+                        if not add_immediate:
                             add_immediate = True
                         else:
-                            force_immediate = False
                             normal_vsp_power_off = True
-                    # normal vsp power off did not work, try hard vsp power off
-                    elif normal_vsp_power_off:
-                        timeout = CONF.pypowervm_job_request_timeout
-                        force_immediate = True
-                        normal_vsp_power_off = False
                     else:
-                        raise pexc.VMPowerOffFailure(reason=emsg,
-                                                     lpar_nm=part.name)
+                        force_immediate = Force.TRUE
+                # normal vsp power off did not work, try hard vsp power off
+                elif normal_vsp_power_off:
+                    timeout = CONF.pypowervm_job_request_timeout
+                    force_immediate = Force.TRUE
+                    normal_vsp_power_off = False
                 else:
-                    # If already powered on, don't send exception
-                    if (any(err_prefix in emsg
-                            for err_prefix in _ALREADY_POWERED_ON_ERRS)):
-                        complete = True
+                    LOG.exception(error)
+                    emsg = six.text_type(error)
+                    raise pexc.VMPowerOffFailure(reason=emsg,
+                                                 lpar_nm=part.name)
+            else:
+                # Power On timed out
+                LOG.exception(error)
+                emsg = six.text_type(error)
+                raise pexc.VMPowerOnFailure(reason=emsg, lpar_nm=part.name)
+        except pexc.JobRequestFailed as error:
+            emsg = six.text_type(error)
+            LOG.exception(_('Error: %s') % emsg)
+            if suffix == _SUFFIX_PARM_POWER_OFF:
+                # If already powered off and not a reboot,
+                # don't send exception
+                if (any(err_prefix in emsg
+                        for err_prefix in _ALREADY_POWERED_OFF_ERRS) and
+                        not restart):
+                    complete = True
+                # If failed for other reasons,
+                # retry with normal vsp power off except for IBM i
+                # where we try immediate osshutdown first
+                elif operation == 'osshutdown' and (force_immediate ==
+                                                    Force.ON_FAILURE):
+                    timeout = CONF.pypowervm_job_request_timeout
+                    if (part.env == bp.LPARType.OS400 and not add_immediate):
+                        add_immediate = True
                     else:
-                        raise pexc.VMPowerOnFailure(reason=emsg,
-                                                    lpar_nm=part.name)
-
-    # Invalidate the LPARentry in the adapter cache so the consumers get
-    # the current LPAR state by forcing a subsequent read. Feeds must be
-    # invalidated too, since the adapter will use them if an entry is not in
-    # the cache.
-    finally:
-        try:
-            adapter.invalidate_cache_elem(
-                ms.System.schema_type, root_id=host_uuid,
-                child_type=part.schema_type, child_id=uuid,
-                invalidate_feeds=True)
-        except Exception as e:
-            LOG.exception(_('Error invalidating adapter cache for LPAR '
-                            ' %(lpar_name) with UUID %(lpar_uuid)s: %(exc)s') %
-                          {'lpar_name': part.name, 'lpar_uuid': uuid,
-                           'exc': six.text_type(e)})
+                        force_immediate = Force.NO_RETRY
+                        normal_vsp_power_off = True
+                # normal vsp power off did not work, try hard vsp power off
+                elif normal_vsp_power_off:
+                    timeout = CONF.pypowervm_job_request_timeout
+                    force_immediate = Force.TRUE
+                    normal_vsp_power_off = False
+                else:
+                    raise pexc.VMPowerOffFailure(reason=emsg,
+                                                 lpar_nm=part.name)
+            else:
+                # If already powered on, don't send exception
+                if (any(err_prefix in emsg
+                        for err_prefix in _ALREADY_POWERED_ON_ERRS)):
+                    complete = True
+                else:
+                    raise pexc.VMPowerOnFailure(reason=emsg, lpar_nm=part.name)

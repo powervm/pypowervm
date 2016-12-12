@@ -44,7 +44,7 @@ class TestVIOSBusyHelper(unittest.TestCase):
                                 max_retries=1)
         error = pvmex.Error('yo', response=self.http_error.response)
         mock_sess.request.side_effect = error
-        adpt = adp.Adapter(mock_sess, use_cache=False, helpers=hlp)
+        adpt = adp.Adapter(mock_sess, helpers=hlp)
         self.assertRaises(
             pvmex.Error, adpt._request, 'method', 'path', body='the body')
         # Test that the request method was called twice and sleep was called
@@ -78,7 +78,7 @@ class TestVIOSBusyHelper(unittest.TestCase):
                                 max_retries=1)
         error = pvmex.Error('yo', response=self.http_error_sa.response)
         mock_sess.request.side_effect = error
-        adpt = adp.Adapter(mock_sess, use_cache=False, helpers=hlp)
+        adpt = adp.Adapter(mock_sess, helpers=hlp)
         self.assertRaises(
             pvmex.Error, adpt._request, 'method', 'path', body='the body')
         self.assertEqual(mock_sess.request.call_count, 2)
