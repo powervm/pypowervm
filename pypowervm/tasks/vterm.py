@@ -328,20 +328,6 @@ class _VNCSocketListener(threading.Thread):
         self.x509_certs = dict(
             ca_certs=ca_certs, server_cert=server_cert, server_key=server_key)
 
-    def set_x509_certificates(self, ca_certs=None,
-                              server_cert=None, server_key=None):
-        """Set the x509 Certificates to use for TLS authentication.
-
-        :param ca_certs: (Optional, Default: None) Path to CA certificate to
-                         use for verifying VNC X509 Authentication.
-        :param server_cert: (Optional, Default: None) Path to Server cert
-                            to use for verifying VNC X509 Authentication.
-        :param server_key: (Optional, Default: None) Path to Server private key
-                           to use for verifying VNC X509 Authentication.
-        """
-        self.x509_certs = dict(
-            ca_certs=ca_certs, server_cert=server_cert, server_key=server_key)
-
     def stop(self):
         """Stops the listener from running."""
         # This will stop listening for all clients
