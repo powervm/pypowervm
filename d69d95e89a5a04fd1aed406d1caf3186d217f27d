@@ -1,0 +1,8 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+2: Clain, Dominique  (DOMINIQUE) <dclain@us.ibm.com>
+Code-Review+1: Tang, Brent G. <btang@us.ibm.com>
+Submitted-by: FRIED, ERIC P. <efried@us.ibm.com>
+Submitted-at: Wed, 04 Jan 2017 07:42:34 -0600
+Reviewed-on: http://morpheus.pok.stglabs.ibm.com/4705
+Project: pypowervm
+Branch: refs/heads/develop
