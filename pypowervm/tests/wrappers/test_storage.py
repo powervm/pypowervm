@@ -93,6 +93,10 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(2, vdisk.capacity)
         vdisk.name = 'new_name'
         self.assertEqual('new_name', vdisk.name)
+        vdisk._baseImage('base_image')
+        self.assertEqual('base_image', vdisk._get_val_str(stor._DISK_BASE))
+        vdisk._baseVG('base_vg')
+        self.assertEqual('base_vg', vdisk._get_val_str(stor._DISK_BASE_VG))
 
     def test_add_vdisk(self):
         """Performs a test flow that adds a virtual disk."""
@@ -100,7 +104,8 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(vdisks))
 
-        disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, 'label')
+        disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, label='label',
+                              baseImage='cache', baseVG='vg')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -114,6 +119,8 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(10.987654, vdisk.capacity)
         self.assertEqual('label', vdisk.label)
         self.assertEqual(None, vdisk.udid)
+        self.assertEqual('cache', vdisk._get_val_str(stor._DISK_BASE))
+        self.assertEqual('vg', vdisk._get_val_str(stor._DISK_BASE_VG))
 
         # Try a remove
         self.dwrap.virtual_disks.remove(vdisk)

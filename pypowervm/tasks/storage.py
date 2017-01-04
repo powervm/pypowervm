@@ -105,6 +105,41 @@ def _delete_vio_file(vio_file):
     return None
 
 
+def crt_copy_vdisk(adapter, v_uuid, vol_grp_uuid, src, src_vg, f_size, d_name,
+                   d_size=None):
+    """Create a new virtual disk that contains all the data of the src given.
+
+    :param adapter: The adapter to talk over the API.
+    :param v_uuid: The UUID of the Virtual I/O Server that will host the new
+                   VDisk.
+    :param vol_grp_uuid: The UUID of the volume group that will host the new
+                         VDisk.
+    :param src: Name of virtual disk to copy data from
+    :param src_vg: Name of volume group hosting src.
+    :param f_size: The size (in bytes) of the src disk.
+    :param d_name: The name that should be given to the disk on the Virtual
+                   I/O Server that will contain the file.
+    :param d_size: (Optional) The desired size of the new VDisk in bytes.  If
+                   omitted or smaller than f_size, it will be set to match
+                   f_size.
+    :return: The first return value is the virtual disk that the file is
+             uploaded into.
+    """
+    # Create the new virtual disk.  The size here is in GB.  We can use decimal
+    # precision on the create call.  What the VIOS will then do is determine
+    # the appropriate segment size (pp) and will provide a virtual disk that
+    # is 'at least' that big.  Depends on the segment size set up on the
+    # volume group how much over it could go.
+    if d_size is None or d_size < f_size:
+        d_size = f_size
+    gb_size = util.convert_bytes_to_gb(d_size)
+
+    # The REST API requires that we round up to the highest GB.
+    gb_size = math.ceil(gb_size)
+    return crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size,
+                     baseImage=src, baseVG=src_vg)
+
+
 def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
     """Cleans out a bad vDisk after a failed upload."""
     # Keeps sonar happy.
@@ -658,7 +693,8 @@ def _image_lu_in_use(lus, image_lu):
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
-def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
+def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
+              baseImage=None, baseVG=None):
     """Creates a new Virtual Disk in the specified volume group.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
@@ -668,6 +704,9 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
     :param d_name: The name that should be given to the disk on the Virtual
                    I/O Server that will contain the file.
     :param d_size_gb: The size of the disk in GB.
+    :param baseImage: (Optional) The name of a VDisk to copy data from.
+    :param baseVG: The name of the volume group hosting baseImage.
+                   (Required if baseImage is given)
     :return: VDisk ElementWrapper representing the new VirtualDisk from the
              server response (i.e. UDID will be populated).
     :raise exc.Error: If the server response from attempting to add the VDisk
@@ -678,7 +717,8 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
                                 stor.VG.schema_type, vol_grp_uuid)
     vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
-    new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb)
+    new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb, baseImage=baseImage,
+                               baseVG=baseVG)
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)
