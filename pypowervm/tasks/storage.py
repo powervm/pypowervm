@@ -80,6 +80,7 @@ class UploadType(object):
     # Note: This upload mechanism only works when using the pypowervm API
     # locally.
     FUNC = 'delegate_function'
+    CACHED = 'image_cache'
 
 
 def _delete_vio_file(vio_file):
@@ -155,6 +156,9 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
 
     # The REST API requires that we round up to the highest GB.
     gb_size = math.ceil(gb_size)
+    if upload_type == UploadType.CACHED:
+        return crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size,
+                         io_handle), None
     n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
     # The file type.  If local API server, then we can use the coordinated
@@ -658,7 +662,7 @@ def _image_lu_in_use(lus, image_lu):
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
-def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
+def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb, base=None):
     """Creates a new Virtual Disk in the specified volume group.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
@@ -678,7 +682,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb):
                                 stor.VG.schema_type, vol_grp_uuid)
     vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
-    new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb)
+    new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb, base=base)
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)

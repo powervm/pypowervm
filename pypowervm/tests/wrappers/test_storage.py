@@ -87,12 +87,15 @@ class TestVolumeGroup(twrap.TestWrapper):
             "https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/14B854F7-42CE-"
             "4FF0-BD57-1D117054E701/VolumeGroup/b6bdbf1f-eddf-3c81-8801-9859eb"
             "6fedcb", vdisk.vg_uri)
+        self.assertEqual("cache", vdisk.base)
 
         # Test setters
         vdisk.capacity = 2
         self.assertEqual(2, vdisk.capacity)
         vdisk.name = 'new_name'
         self.assertEqual('new_name', vdisk.name)
+        vdisk.base = 'base_image'
+        self.assertEqual('base_image', vdisk.base)
 
     def test_add_vdisk(self):
         """Performs a test flow that adds a virtual disk."""
@@ -100,7 +103,7 @@ class TestVolumeGroup(twrap.TestWrapper):
 
         self.assertEqual(1, len(vdisks))
 
-        disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, 'label')
+        disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, 'label', 'cache')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -114,6 +117,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(10.987654, vdisk.capacity)
         self.assertEqual('label', vdisk.label)
         self.assertEqual(None, vdisk.udid)
+        self.assertEqual('cache', vdisk.base)
 
         # Try a remove
         self.dwrap.virtual_disks.remove(vdisk)

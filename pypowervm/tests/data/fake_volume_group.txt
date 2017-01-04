@@ -123,6 +123,7 @@ BODY{
             <DiskName kb="CUR" kxe="false">asdf</DiskName>
             <VolumeGroup kb="ROR" kxe="false" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/14B854F7-42CE-4FF0-BD57-1D117054E701/VolumeGroup/b6bdbf1f-eddf-3c81-8801-9859eb6fedcb" rel="related"/>
             <UniqueDeviceID kb="ROR" kxe="false">0300f8d6de00004b000000014a54555cd9.1</UniqueDeviceID>
+            <BaseImage kb="CUR" kxe="false">cache</BaseImage>
         </VirtualDisk>
     </VirtualDisks>
 </VolumeGroup:VolumeGroup>
