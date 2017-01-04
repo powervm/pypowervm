@@ -40,11 +40,12 @@ DISK_NAME = 'DiskName'
 _DISK_MAX_LOGICAL_VOLS = 'MaxLogicalVolumes'
 _DISK_PART_SIZE = 'PartitionSize'
 _DISK_VG = 'VolumeGroup'
+_DISK_BASE = 'BaseImage'
 _DISK_UDID = UDID
 _DISK_TYPE = 'VirtualDiskType'
 _VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
                    _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_UDID, _DISK_TYPE]
+                   _DISK_BASE, _DISK_UDID, _DISK_TYPE]
 
 
 class VDiskType(object):
@@ -683,6 +684,9 @@ class _VDisk(ewrap.ElementWrapper):
     def _vdtype(self, val):
         self.set_parm_value(_DISK_TYPE, val, attrib=c.ATTR_KSV150)
 
+    def _base_image(self, base_image):
+        self.set_parm_value(_DISK_BASE, base_image)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -721,7 +725,7 @@ class VDisk(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, capacity, label=None):
+    def bld(cls, adapter, name, capacity, label=None, base_image=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -734,6 +738,8 @@ class VDisk(_VDisk):
         :param name: The name of the virtual disk
         :param capacity: A float number that defines the GB of the disk.
         :param label: The generic label for the disk.  Not required.
+        :param base_image: UDID of virtual disk that contains source data
+                          Not required.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -741,6 +747,8 @@ class VDisk(_VDisk):
         # Label must be specified; str will make None 'None'.
         vd._label(str(label))
         vd.name = name
+        if base_image:
+            vd._base_image(base_image)
         return vd
 
     @classmethod
