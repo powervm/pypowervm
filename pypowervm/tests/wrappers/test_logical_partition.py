@@ -165,6 +165,15 @@ class TestLogicalPartition(testtools.TestCase):
     def test_get_id(self):
         self.call_simple_getter("id", 9, None)
 
+    def test_get_ref_code(self):
+        self.call_simple_getter("ref_code", "00000000", None)
+
+    def test_get_ref_code_full(self):
+        self.call_simple_getter(
+            "ref_code_full", ("time_stamp=08/13/2016 23:52:08,refcode=00000000"
+                              ",word2=03D00000,fru_call_out_loc_codes=#47-"
+                              "Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016"), None)
+
     def test_uuid(self):
         wrapper = self._dedicated_wrapper
         self.assertEqual('42DF39A2-3A4A-4748-998F-25B15352E8A7', wrapper.uuid)

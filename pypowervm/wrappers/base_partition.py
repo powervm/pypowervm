@@ -562,6 +562,10 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         return self._get_val_str(_BP_REF_CODE)
 
     @property
+    def ref_code_full(self):
+        return self._get_val_str(_BP_REF_CODE_FULL)
+
+    @property
     def avail_priority(self):
         return self._get_val_int(_BP_AVAIL_PRIORITY, 0)
 
