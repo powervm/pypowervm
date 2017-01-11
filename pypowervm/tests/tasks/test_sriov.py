@@ -289,6 +289,22 @@ class TestSriov(testtools.TestCase):
 
         self.assertEqual(5, mock_shuffle.call_count)
 
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    def test_find_pports_for_portlabel(self, mock_sys_get):
+        physnet = 'default'
+        sriov_adaps = [
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port1', label='default'),
+                mock.Mock(loc_code='port3', label='data1')]),
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port4', label='data2'),
+                mock.Mock(loc_code='port2', label='default')])]
+        sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=sriov_adaps))
+        mock_sys_get.return_value = [sys]
+        pports = tsriov.find_pports_for_portlabel(physnet, sriov_adaps)
+        self.assertEqual(pports[0].loc_code, 'port1')
+        self.assertEqual(pports[1].loc_code, 'port2')
+
 
 class TestSafeUpdatePPort(testtools.TestCase):
 
@@ -301,10 +317,6 @@ class TestSafeUpdatePPort(testtools.TestCase):
         self.assertEqual({'lpar%d' % i: 'list%d' % i for i in (1, 2, 3)},
                          tsriov.get_lpar_vnics('adap'))
         mock_get_pars.assert_called_once_with('adap', lpars=True, vioses=False)
-        for lpar in lpars:
-            mock_vnics.assert_any_call('adap', parent=lpar)
-
-    def test_vnics_using_pport(self):
         lpar1 = mock.Mock()
         lpar1.configure_mock(name='lpar1', uuid='lpar_uuid1')
         lpar2 = mock.Mock()
@@ -453,3 +465,7 @@ class TestMisc(twrap.TestWrapper):
         self.assertIsInstance(pport, card.SRIOVEthPPort)
         self.assertEqual('U78C7.001.RCH0004-P1-C8-T2', pport.loc_code)
         self.assertEqual(1, pport.port_id)
+# Copyright 2016 IBM Corp.
+# Copyright 2016 IBM Corp.
+#
+# All Rights Reserved.
