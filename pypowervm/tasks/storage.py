@@ -1197,6 +1197,9 @@ def add_lpar_storage_scrub_tasks(lpar_ids, ftsk, lpars_exist=False,
             ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.get(
                 vwrap.adapter, parent_type=sys.System,
                 parent_uuid=vwrap.assoc_sys_uuid)}
+            ex_lpar_ids.update(vioswrap.id for vioswrap in vios.VIOS.get(
+                vwrap.adapter, parent_type=sys.System,
+                parent_uuid=vwrap.assoc_sys_uuid))
             # The list of IDs of the LPARs whose mappings (and storage) are to
             # be preserved (not scrubbed) is the intersection of
             # {the IDs we we were asked to scrub}
@@ -1253,6 +1256,10 @@ def find_stale_lpars(vios_w):
     ex_lpar_ids = {lwrap.id for lwrap in lpar.LPAR.get(
         vios_w.adapter, parent_type=sys.System,
         parent_uuid=vios_w.assoc_sys_uuid)}
+    vios_ids = {vioswrap.id for vioswrap in vios.VIOS.get(
+        vios_w.adapter, parent_type=sys.System,
+        parent_uuid=vios_w.assoc_sys_uuid)}
+    ex_lpar_ids.update(vios_ids)
     map_lpar_ids = {smp.server_adapter.lpar_id for smp in
                     (list(vios_w.scsi_mappings) + list(vios_w.vfc_mappings))}
     return list(map_lpar_ids - ex_lpar_ids)
