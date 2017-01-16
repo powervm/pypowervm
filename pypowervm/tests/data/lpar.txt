@@ -166,6 +166,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
     <BootMode kxe="false" kb="ROR">Normal</BootMode>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
@@ -324,6 +326,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -481,6 +485,8 @@ BODY{
     </HostEthernetAdapterLogicalPort>
     <MACAddressPrefix kb="ROR" kxe="false">209915397421568</MACAddressPrefix>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">Linux ppc64</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=Linux ppc64,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
@@ -636,6 +642,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -2003,6 +2011,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -2114,6 +2124,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -2270,6 +2282,8 @@ BODY{
     </HostEthernetAdapterLogicalPort>
     <MACAddressPrefix kb="ROR" kxe="false">152185856462592</MACAddressPrefix>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">Linux ppc64</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=Linux ppc64,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
@@ -2425,6 +2439,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -2582,6 +2598,8 @@ BODY{
     </HostEthernetAdapterLogicalPort>
     <MACAddressPrefix kb="ROR" kxe="false">209915443973376</MACAddressPrefix>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
@@ -2737,6 +2755,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
 </LogicalPartition:LogicalPartition>
@@ -2877,6 +2897,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <VirtualFibreChannelClientAdapters kb="CUR" kxe="false">
@@ -3042,6 +3064,8 @@ BODY{
     </HostEthernetAdapterLogicalPort>
     <MACAddressPrefix kb="ROR" kxe="false">209915398340864</MACAddressPrefix>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">Linux ppc64</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=Linux ppc64,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
@@ -3185,6 +3209,8 @@ BODY{
         </Metadata>
     </HostEthernetAdapterLogicalPort>
     <IsServicePartition kxe="false" kb="CUD">false</IsServicePartition>
+    <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
+    <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
     <PartitionNVRAM group="NVRAM" kxe="true" kb="CUD" schemaVersion="V1_1_0">TheNVRAMis20KofBASE64encodedDATA</PartitionNVRAM>
