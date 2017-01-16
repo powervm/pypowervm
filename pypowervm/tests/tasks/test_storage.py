@@ -26,6 +26,7 @@ import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.entry_wrapper as ewrap
+import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.storage as stor
 import pypowervm.wrappers.vios_file as vf
 import pypowervm.wrappers.virtual_io_server as vios
@@ -36,6 +37,7 @@ UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
 UPLOADED_FILE = 'upload_file.txt'
 VIOS_FEED = 'fake_vios_feed.txt'
+VIOS_FEED2 = 'fake_vios_msp_feed.txt'
 VIOS_ENTRY = 'fake_vios_ssp_npiv.txt'
 VIOS_ENTRY2 = 'fake_vios_mappings.txt'
 LPAR_FEED = 'lpar.txt'
@@ -1117,11 +1119,13 @@ class TestScrub2(testtools.TestCase):
         mock_rm_vopt.assert_not_called()
         mock_rm_vd.assert_not_called()
 
-    def test_find_stale_lpars(self):
-        self.adpt.read.return_value = tju.load_file(LPAR_FEED,
-                                                    adapter=self.adpt)
-        vwrap = vios.VIOS.wrap(tju.load_file(VIOS_ENTRY, adapter=self.adpt))
-        self.assertEqual({55, 21}, set(ts.find_stale_lpars(vwrap)))
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    def test_find_stale_lpars(self, mock_vios, mock_lpar):
+        mock_vios.return_value = self.vio_feed
+        mock_lpar.return_value = lpar.LPAR.wrap(
+            tju.load_file(LPAR_FEED, adapter=self.adpt))
+        self.assertEqual({55, 21}, set(ts.find_stale_lpars(self.vio_feed[0])))
 
 
 class TestScrub3(testtools.TestCase):
@@ -1261,3 +1265,50 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(vfc_len - 1, len(vwrap.vfc_mappings))
         self.assertEqual(1, self.txfx.patchers['update'].mock.call_count)
         self.assertEqual(1, mock_rm_vopts.call_count)
+
+
+class TestScrub4(testtools.TestCase):
+    """Novalink partition hosting storage for another VIOS partition"""
+    def setUp(self):
+        super(TestScrub4, self).setUp()
+        self.adpt = self.useFixture(fx.AdapterFx()).adpt
+        self.vio_feed = vios.VIOS.wrap(tju.load_file(VIOS_FEED2, self.adpt))
+        self.txfx = self.useFixture(fx.FeedTaskFx(self.vio_feed))
+        self.logfx = self.useFixture(fx.LoggingFx())
+
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    def test_find_stale_lpars(self, mock_vios, mock_lpar):
+        mock_vios.return_value = self.vio_feed
+        mock_lpar.return_value = []
+        self.assertEqual([102], ts.find_stale_lpars(self.vio_feed[0]))
+
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    @mock.patch('pypowervm.tasks.storage._remove_lpar_maps')
+    def test_orphan_scrub(self, mock_rm_lpar, mock_vios, mock_lpar):
+        mock_vios.return_value = self.vio_feed
+        mock_lpar.return_value = []
+
+        def client_adapter_data(mappings):
+            return {(smap.server_adapter.lpar_id,
+                     smap.server_adapter.lpar_slot_num) for smap in mappings}
+
+        scsi_maps = client_adapter_data(self.vio_feed[0].scsi_mappings)
+        vfc_maps = client_adapter_data(self.vio_feed[0].vfc_mappings)
+        ts.ComprehensiveScrub(self.adpt).execute()
+        # Assert that stale lpar detection works correctly
+        # (LPAR 102 does not exist)
+        mock_rm_lpar.assert_has_calls([
+            mock.call(self.vio_feed[0], [102], mock.ANY),
+            mock.call(self.vio_feed[1], [], mock.ANY),
+            mock.call(self.vio_feed[2], [], mock.ANY)
+        ], any_order=True)
+        # Assert that orphan detection removed the correct SCSI mapping
+        # (VSCSI Mapping for VIOS 101, slot 17 has no client adapter)
+        scsi_maps -= client_adapter_data(self.vio_feed[0].scsi_mappings)
+        self.assertEqual({(101, 17)}, scsi_maps)
+        # Assert that orphan detection removed the correct VFC mapping
+        # (VFC Mapping for LP 100 slot 50 has no client adapter)
+        vfc_maps -= client_adapter_data(self.vio_feed[0].vfc_mappings)
+        self.assertEqual({(100, 50)}, vfc_maps)
