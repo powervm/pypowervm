@@ -500,6 +500,27 @@ def safe_update_pports(sys_w, callback_func, force=False):
         return sys_w.update()
 
 
+def find_pports_for_portlabel(portlabel, adapter, msys=None):
+    """Find SR-IOV physical ports based on the port label.
+
+    :param portlabel: portlabel of the SR-IOV physical ports to find.
+    :param adapter: The pypowervm adapter API interface.
+    :param msys: pypowervm.wrappers.managed_system.System wrapper.If not
+                 specified, it will be retrieved from the server.
+    :return: List of SRIOVEthPPort or SRIOVConvPPort wrappers for the specified
+             port label, or the empty list if no such port exists.
+    """
+    # Physical ports for the given physical network
+    if msys is None:
+        msys = ms.System.get(adapter)[0]
+    pports = []
+    for sriov in msys.asio_config.sriov_adapters:
+        for pport_w in sriov.phys_ports:
+            if (pport_w.label or 'default') == portlabel:
+                pports.append(pport_w)
+    return pports
+
+
 def find_pport(sys_w, physloc):
     """Find an SR-IOV physical port based on its location code.
 

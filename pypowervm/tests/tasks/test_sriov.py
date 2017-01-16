@@ -289,6 +289,38 @@ class TestSriov(testtools.TestCase):
 
         self.assertEqual(5, mock_shuffle.call_count)
 
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    def test_find_pports_for_portlabel(self, mock_sys_get):
+        physnet = 'default'
+        sriov_adaps = [
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port1', label='default'),
+                mock.Mock(loc_code='port3', label='data1')]),
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port4', label='data2'),
+                mock.Mock(loc_code='port2', label='default')])]
+        sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=sriov_adaps))
+        mock_sys_get.return_value = [sys]
+        pports = tsriov.find_pports_for_portlabel(physnet, sriov_adaps)
+        self.assertEqual({'port1', 'port2'},
+                         {pport.loc_code for pport in pports})
+
+    @mock.patch('pypowervm.wrappers.managed_system.System.get')
+    def test_find_pports_for_portlabel_blank(self, mock_sys_get):
+        physnet = 'default'
+        sriov_adaps = [
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port1', label=''),
+                mock.Mock(loc_code='port3', label='data1')]),
+            mock.Mock(phys_ports=[
+                mock.Mock(loc_code='port4', label='data2'),
+                mock.Mock(loc_code='port2', label='')])]
+        sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=sriov_adaps))
+        mock_sys_get.return_value = [sys]
+        pports = tsriov.find_pports_for_portlabel(physnet, sriov_adaps)
+        self.assertEqual({'port1', 'port2'},
+                         {pport.loc_code for pport in pports})
+
 
 class TestSafeUpdatePPort(testtools.TestCase):
 
