@@ -245,6 +245,7 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=Force.ON_FAILURE,
                         else:
                             normal_vsp_power_off = True
                     else:
+                        timeout = CONF.pypowervm_job_request_timeout
                         force_immediate = Force.TRUE
                 # normal vsp power off did not work, try hard vsp power off
                 elif normal_vsp_power_off:
