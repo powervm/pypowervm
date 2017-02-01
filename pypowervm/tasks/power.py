@@ -278,13 +278,14 @@ def _power_on_off(part, suffix, host_uuid, force_immediate=Force.ON_FAILURE,
                 elif operation == 'osshutdown' and (force_immediate ==
                                                     Force.ON_FAILURE):
                     timeout = CONF.pypowervm_job_request_timeout
-                    if (part.env == bp.LPARType.OS400 and not add_immediate):
+                    if part.env == bp.LPARType.OS400 and not add_immediate:
                         add_immediate = True
                     else:
                         force_immediate = Force.NO_RETRY
                         normal_vsp_power_off = True
                 # normal vsp power off did not work, try hard vsp power off
-                elif normal_vsp_power_off:
+                elif normal_vsp_power_off or (force_immediate ==
+                                              Force.ON_FAILURE):
                     timeout = CONF.pypowervm_job_request_timeout
                     force_immediate = Force.TRUE
                     normal_vsp_power_off = False
