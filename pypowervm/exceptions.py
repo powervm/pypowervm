@@ -136,12 +136,27 @@ class JobRequestTimedOut(JobRequestFailed):
                 "Failed to complete the task in %(seconds)d seconds.")
 
 
+class OSShutdownNoRMC(AbstractMsgFmtError):
+    msg_fmt = _("Can not perform OS shutdown on Virtual Machine %(lpar_nm)s "
+                "because its RMC connection is not active.")
+
+
 class VMPowerOffFailure(AbstractMsgFmtError):
     msg_fmt = _("Failed to power off Virtual Machine %(lpar_nm)s: %(reason)s")
 
 
+class VMPowerOffTimeout(VMPowerOffFailure):
+    msg_fmt = _("Power off of Virtual Machine %(lpar_nm)s timed out after "
+                "%(timeout)d seconds.")
+
+
 class VMPowerOnFailure(AbstractMsgFmtError):
     msg_fmt = _("Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s")
+
+
+class VMPowerOnTimeout(VMPowerOnFailure):
+    msg_fmt = _("Power on of Virtual Machine %(lpar_nm)s timed out after "
+                "%(timeout)d seconds.")
 
 
 class PvidOfNetworkBridgeError(AbstractMsgFmtError):

@@ -14,10 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fixtures
 import mock
 import testtools
 
-import pypowervm.entities as ent
 from pypowervm import exceptions as pexc
 from pypowervm.tasks import power
 import pypowervm.tests.test_fixtures as fx
@@ -26,417 +26,439 @@ from pypowervm.wrappers import logical_partition as pvm_lpar
 
 
 class TestPower(testtools.TestCase):
-    """Unit Tests for Instance Power On/Off."""
-
     def setUp(self):
         super(TestPower, self).setUp()
-        mock_resp = mock.MagicMock()
-        mock_resp.entry = ent.Entry({}, ent.Element('Dummy', None), None)
+
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
-        self.adpt.read.return_value = mock_resp
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
-    def test_power_on_off(self, mock_lpar, mock_job_p, mock_run_job):
-        """Performs a simple set of Power On/Off Tests."""
-        def run_job_mock(**kwargs1):
-            """Produce a run_job method that validates the given kwarg values.
+        # Mock a Job wrapper
+        mock_job = mock.Mock()
 
-            E.g. run_job_mock(foo='bar') will produce a mock run_job that
-            asserts its foo argument is 'bar'.
-            """
-            def run_job(*args, **kwargs2):
-                for key, val in kwargs1.items():
-                    self.assertEqual(val, kwargs2[key])
-            return run_job
+        # Make it easier to validate job params: create_job_parameter returns a
+        # simple 'name=value' string.
+        mock_job.create_job_parameter.side_effect = (
+            lambda name, value, cdata=False: '%s=%s' % (name, value))
 
-        mock_lpar.adapter = self.adpt
-        power._power_on_off(mock_lpar, 'PowerOn', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(0, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-        self.adpt.reset_mock()
+        # Patch Job.wrap to return our mocked Job wrapper
+        self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.job.Job.wrap')).mock.return_value = mock_job
+        self.run_job = mock_job.run_job
 
-        # Try a power off
-        power._power_on_off(mock_lpar, 'PowerOff', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        # Only the operation parameter is appended
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+    def validate_run(self, part, ex_suff="PowerOff", ex_parms=None,
+                     ex_timeout=1800, ex_synch=True, result=None, nxt=None):
+        """Return side effect method to validate Adapter.read and Job.run_job.
 
-        # Try a power off when the RMC state is active
-        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        power._power_on_off(mock_lpar, 'PowerOff', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        # The operation and immediate(no-delay) parameters are appended
-        self.assertEqual(2, mock_job_p.call_count)
-        mock_lpar.reset_mock()
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        :param part: (Mock) partition wrapper.
+        :param ex_suff: Expected Job suffix - "PowerOn" or "PowerOff"
+        :param ex_parms: Set of expected JobParameter 'name=value' strings.
+        :param ex_timeout: Expected timeout (int, seconds).
+        :param ex_synch: Expected value of the 'synchronous' flag.
+        :param result: The desired result of the run_job call.  May be None
+                       (the run_job call "succeeded") or an instance of an
+                       exception to be raised (either JobRequestTimedOut or
+                       JobRequestFailed).
+        :param nxt: When chaining side effects, pass the method to be assigned
+                    to the run_job side effect after this side effect runs.
+                    Typically the return from another validate_run() call.
+        :return: A method suitable for assigning to self.run_job.side_effect.
+        """
+        def run_job_seff(uuid, job_parms=None, timeout=None, synchronous=None):
+            # We fetched the Job template with the correct bits of the
+            # partition wrapper and the correct suffix
+            self.adpt.read.assert_called_once_with(
+                part.schema_type, part.uuid, suffix_type='do',
+                suffix_parm=ex_suff)
+            # Reset for subsequent runs
+            self.adpt.reset_mock()
+            self.assertEqual(part.uuid, uuid)
+            # JobParameter order doesn't matter
+            self.assertEqual(ex_parms or set(), set(job_parms))
+            self.assertEqual(ex_timeout, timeout)
+            self.assertEqual(ex_synch, synchronous)
+            if nxt:
+                self.run_job.side_effect = nxt
+            if result is not None:
+                raise result
+        return run_job_seff
 
-        # Try a power off of IBMi
-        mock_lpar.rmc_state = pvm_bp.RMCState.INACTIVE
-        mock_lpar.env = pvm_bp.LPARType.OS400
-        mock_lpar.ref_code = '00000000'
-        power._power_on_off(mock_lpar, 'PowerOff', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        # Only the operation parameter is appended
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with('operation', 'osshutdown')
-        mock_lpar.reset_mock()
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+    @staticmethod
+    def etimeout():
+        """Returns a JobRequestTimedOut exception."""
+        return pexc.JobRequestTimedOut(operation_name='foo', seconds=1800)
 
-        # Try a more complex power off
-        power._power_on_off(mock_lpar, 'PowerOff', '1111',
-                            force_immediate=True, restart=True, timeout=100)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(3, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+    @staticmethod
+    def efail(error='error'):
+        """Returns a JobRequestFailed exception."""
+        return pexc.JobRequestFailed(operation_name='foo', error=error)
 
-        mock_run_job.side_effect = run_job_mock(synchronous=True)
-        # Try optional parameters
-        power.power_on(mock_lpar, '1111',
-                       add_parms={power.BootMode.KEY: power.BootMode.SMS})
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(power.BootMode.KEY, power.BootMode.SMS)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+    def mock_partition(self, env=pvm_bp.LPARType.AIXLINUX,
+                       rmc_state=pvm_bp.RMCState.ACTIVE, mgmt=False):
+        """Returns a mocked partition with the specified properties."""
+        return mock.Mock(adapter=self.adpt, env=env, rmc_state=rmc_state,
+                         is_mgmt_partition=mgmt)
 
-        power.power_on(mock_lpar, '1111', add_parms={
-            pvm_lpar.IPLSrc.KEY: pvm_lpar.IPLSrc.A}, synchronous=True)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(pvm_lpar.IPLSrc.KEY, pvm_lpar.IPLSrc.A)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+    def test_pwrop_start(self):
+        """Test PowerOp.start."""
+        part = self.mock_partition()
 
-        mock_run_job.side_effect = run_job_mock(synchronous=False)
-        power.power_on(mock_lpar, '1111', add_parms={
-            power.KeylockPos.KEY: power.KeylockPos.MANUAL}, synchronous=False)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(power.KeylockPos.KEY,
-                                      power.KeylockPos.MANUAL)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        # Default params, success
+        self.run_job.side_effect = self.validate_run(part, ex_suff="PowerOn")
+        power.PowerOp.start(part)
+        self.assertEqual(1, self.run_job.call_count)
 
-        power.power_on(mock_lpar, '1111',
-                       add_parms={power.RemoveOptical.KEY_TIME: 30,
-                                  power.RemoveOptical.KEY_NAME: 'testVopt'},
-                       synchronous=False)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
-        mock_job_p.assert_any_call('remove_optical_time', '30')
-        mock_job_p.assert_any_call('remove_optical_name', 'testVopt')
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        self.run_job.reset_mock()
 
-        power.power_on(mock_lpar, '1111',
-                       add_parms=power.RemoveOptical.bld_map(name="test"),
-                       synchronous=False)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
-        mock_job_p.assert_any_call('remove_optical_time', '0')
-        mock_job_p.assert_any_call('remove_optical_name', 'test')
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        # Additional params, timeout
+        self.run_job.side_effect = self.validate_run(
+            part, ex_suff="PowerOn", ex_parms={'foo=bar', 'one=two'},
+            result=self.etimeout())
+        self.assertRaises(pexc.VMPowerOnTimeout, power.PowerOp.start, part,
+                          add_parms={'foo': 'bar', 'one': 'two'})
+        self.assertEqual(1, self.run_job.call_count)
 
-        power.power_on(mock_lpar, '1111',
-                       add_parms=power.RemoveOptical.bld_map(name="test2",
-                                                             time=25),
-                       synchronous=False)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(2, mock_job_p.call_count)
-        mock_job_p.assert_any_call('remove_optical_time', '25')
-        mock_job_p.assert_any_call('remove_optical_name', 'test2')
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-        power.power_on(mock_lpar, '1111',
-                       add_parms={power.RemoveOptical.KEY_NAME: 'testVopt'},
-                       synchronous=False)
-        mock_job_p.assert_called_with(power.RemoveOptical.KEY_NAME, 'testVopt')
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_any_call('remove_optical_name', 'testVopt')
+        self.run_job.reset_mock()
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
-    def test_power_off_timeout_retry(self, mock_lpar, mock_job_p,
-                                     mock_run_job):
-        """Validate that when first power off times out, re-run."""
-        mock_lpar.adapter = self.adpt
-        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestTimedOut(
-            operation_name='PowerOff', seconds=60)
+        # Asynchronous, failure
+        self.run_job.side_effect = self.validate_run(
+            part, ex_suff="PowerOn", ex_synch=False, result=self.efail())
+        self.assertRaises(pexc.VMPowerOnFailure, power.PowerOp.start, part,
+                          synchronous=False)
+        self.assertEqual(1, self.run_job.call_count)
 
-        # Invoke the run, should power off graceful, fail, then force off
-        # and fail again.
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+        self.run_job.reset_mock()
 
-        # It should have been called twice, once for the elegant power
-        # off, and another for the immediate power off
-        self.assertEqual(2, mock_run_job.call_count)
-        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
-                                     mock.call('immediate', 'true'),
-                                     mock.call('operation', 'shutdown'),
-                                     mock.call('immediate', 'true')])
+        # Specified timeout, already on
+        self.run_job.side_effect = self.validate_run(
+            part, ex_suff="PowerOn", ex_timeout=10,
+            result=self.efail('HSCL3681'))
+        power.PowerOp.start(part, timeout=10)
+        self.assertEqual(1, self.run_job.call_count)
 
-        # Try a timedout only for the 2nd and 3rd job
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-        rmc_error = power._OSSHUTDOWN_RMC_ERRS[0]
-        mock_run_job.side_effect = [
-            pexc.JobRequestFailed(error='PowerOff',
-                                  operation_name=rmc_error),
-            pexc.JobRequestTimedOut(operation_name='PowerOff', seconds=60),
-            pexc.JobRequestTimedOut(operation_name='PowerOff', seconds=60)]
+        self.run_job.reset_mock()
 
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+    def test_pwrop_stop(self):
+        """Test PowerOp.stop."""
+        # If RMC is down, VSP normal - make sure the 'immediate' flag goes away
+        part = self.mock_partition(rmc_state=pvm_bp.RMCState.INACTIVE)
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown'})
+        power.PowerOp.stop(part, add_parms={'immediate': 'true'})
+        self.assertEqual(1, self.run_job.call_count)
 
-        # It should have been called three times,
-        # once for the immediate os shutdown, once for vsp normal,
-        # and another time for vsp hard
-        self.assertEqual(3, mock_run_job.call_count)
-        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
-                                     mock.call('immediate', 'true'),
-                                     mock.call('operation', 'shutdown'),
-                                     mock.call('operation', 'shutdown'),
-                                     mock.call('immediate', 'true')])
-        # Try IBMi
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-        mock_lpar.rmc_state = pvm_bp.RMCState.INACTIVE
-        mock_lpar.env = pvm_bp.LPARType.OS400
-        mock_lpar.ref_code = '00000000'
-        mock_run_job.side_effect = pexc.JobRequestTimedOut(
-            operation_name='PowerOff', seconds=60)
+        self.run_job.reset_mock()
 
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_lpar, 'PowerOff', '1111')
+        # Default parameters - the method figures out whether to do OS shutdown
+        part = self.mock_partition()
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown', 'immediate=true'})
+        power.PowerOp.stop(part, add_parms={'immediate': 'true'})
+        self.assertEqual(1, self.run_job.call_count)
 
-        # It should have been called four times,
-        # once for the normal os shutdown,
-        # once for the immediate os shutdown, once for vsp normal,
-        # and another time for vsp hard
-        self.assertEqual(4, mock_run_job.call_count)
-        mock_job_p.assert_has_calls([mock.call('operation', 'osshutdown'),
-                                     mock.call('operation', 'osshutdown'),
-                                     mock.call('immediate', 'true'),
-                                     mock.call('operation', 'shutdown'),
-                                     mock.call('operation', 'shutdown'),
-                                     mock.call('immediate', 'true')])
+        self.run_job.reset_mock()
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
-    def test_power_off_job_failure(self, mock_lpar, mock_job_p, mock_run_job):
-        """Validates a power off job request failure."""
-        mock_lpar.adapter = self.adpt
-        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        for rmc_err_prefix in power._OSSHUTDOWN_RMC_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOff', operation_name=rmc_err_prefix)
+        # Non-default optional params, timeout
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown', 'immediate=true',
+                            'restart=true', 'foo=bar', 'one=1'},
+            ex_timeout=100, ex_synch=False, result=self.etimeout())
+        self.assertRaises(
+            pexc.VMPowerOffTimeout, power.PowerOp.stop, part,
+            oper=power.PowerOp.OP_PWROFF_OS, hard=True, restart=True,
+            add_parms={'one': 1, 'foo': 'bar'}, timeout=100, synchronous=False)
+        self.assertEqual(1, self.run_job.call_count)
 
-            # Invoke the run, should power off graceful, fail, then force off
-            # and fail again.
-            self.assertRaises(pexc.VMPowerOffFailure,
-                              power._power_on_off, mock_lpar, 'PowerOff',
-                              '1111')
+        self.run_job.reset_mock()
 
-        # It should have been called three times: one for the os shutdown,
-        # one for vsp normal power off,
-        # and another for the immediate power off
-        self.assertEqual(3, mock_run_job.call_count)
+        # VSP normal, fail
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown', 'foo=bar'},
+            result=self.efail())
+        self.assertRaises(
+            pexc.VMPowerOffFailure, power.PowerOp.stop, part,
+            oper=power.PowerOp.OP_PWROFF_VSP, add_parms={'foo': 'bar'})
+        self.assertEqual(1, self.run_job.call_count)
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
-    def test_power_off_sysoff(self, mock_lpar, mock_job_p, mock_run_job):
-        """Validates a power off job when system is already off."""
-        mock_lpar.adapter = self.adpt
-        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        for err_prefix in power._ALREADY_POWERED_OFF_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOff', operation_name=err_prefix)
+    def test_pwrop_stop_no_rmc(self):
+        """Test PowerOp.stop with bad RMC state."""
+        part = self.mock_partition(rmc_state=pvm_bp.RMCState.INACTIVE)
+        self.assertRaises(pexc.OSShutdownNoRMC, power.PowerOp.stop,
+                          part, oper=power.PowerOp.OP_PWROFF_OS)
+        self.run_job.assert_not_called()
 
-            # Invoke the run the job, but succeed because it is already
-            # powered off
-            power._power_on_off(mock_lpar, 'PowerOff', '1111')
+    def test_pwron(self):
+        """Test the power_on method."""
+        lpar = self.mock_partition()
+        self.run_job.side_effect = self.validate_run(lpar, "PowerOn")
+        power.power_on(lpar, None)
+        self.assertEqual(1, self.run_job.call_count)
 
-            # This specific error should cause a retry.
-            self.assertEqual(1, mock_run_job.call_count)
-
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.logical_partition.LPAR')
-    def test_power_on_syson(self, mock_lpar, mock_job_p, mock_run_job):
-        """Validates a power on job when system is already on."""
-        mock_lpar.adapter = self.adpt
-        mock_lpar.rmc_state = pvm_bp.RMCState.ACTIVE
-        for err_prefix in power._ALREADY_POWERED_ON_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOn', operation_name=err_prefix)
-
-            # Invoke the run the job, but succeed because it is already
-            # powered on
-            power._power_on_off(mock_lpar, 'PowerOn', '1111')
-
-            # This specific error should cause a retry.
-            self.assertEqual(1, mock_run_job.call_count)
-
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_power_on_off_vios(self, mock_vios, mock_job_p, mock_run_job):
-        """Performs a simple set of Power On/Off Tests."""
-        mock_vios.adapter = self.adpt
-        power._power_on_off(mock_vios, 'PowerOn', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(0, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-        self.adpt.reset_mock()
-
-        # Try a power off
-        power._power_on_off(mock_vios, 'PowerOff', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        # Only the operation parameter is appended
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-
-        # Try a power off when the RMC state is active
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        power._power_on_off(mock_vios, 'PowerOff', '1111')
-        self.assertEqual(1, mock_run_job.call_count)
-        # The operation and immediate(no-delay) parameters are appended
-        self.assertEqual(2, mock_job_p.call_count)
-        mock_vios.reset_mock()
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
-
-        # Try a more complex power off
-        power._power_on_off(mock_vios, 'PowerOff', '1111',
-                            force_immediate=True, restart=True, timeout=100)
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(3, mock_job_p.call_count)
-        mock_run_job.reset_mock()
-        mock_job_p.reset_mock()
+        self.run_job.reset_mock()
 
         # Try optional parameters
-        power.power_on(mock_vios, '1111',
-                       add_parms={power.BootMode.KEY: power.BootMode.SMS})
-        self.assertEqual(1, mock_run_job.call_count)
-        self.assertEqual(1, mock_job_p.call_count)
-        mock_job_p.assert_called_with(power.BootMode.KEY, power.BootMode.SMS)
+        self.run_job.side_effect = self.validate_run(
+            lpar, "PowerOn", ex_parms={
+                'bootmode=sms', 'iIPLsource=a', 'remove_optical_name=testVopt',
+                'remove_optical_time=30'}, ex_synch=False)
+        power.power_on(
+            lpar, None, add_parms={
+                power.BootMode.KEY: power.BootMode.SMS,
+                pvm_lpar.IPLSrc.KEY: pvm_lpar.IPLSrc.A,
+                power.RemoveOptical.KEY_TIME: 30,
+                power.RemoveOptical.KEY_NAME: 'testVopt'},
+            synchronous=False)
+        self.assertEqual(1, self.run_job.call_count)
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_power_off_timeout_retry_vios(self, mock_vios, mock_job_p,
-                                          mock_run_job):
-        """Validate that when first power off times out, re-run."""
-        mock_vios.adapter = self.adpt
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        mock_run_job.side_effect = pexc.JobRequestTimedOut(
-            operation_name='PowerOff', seconds=60)
+        self.run_job.reset_mock()
 
-        # Invoke the run, should power off graceful, fail, then force off
-        # and fail again.
-        self.assertRaises(pexc.VMPowerOffFailure,
-                          power._power_on_off, mock_vios, 'PowerOff', '1111')
+        # Job timeout, IBMi, implicit remove_optical_time
+        ibmi = self.mock_partition(env=pvm_bp.LPARType.OS400)
+        self.run_job.side_effect = self.validate_run(
+            ibmi, "PowerOn", ex_parms={'remove_optical_name=test',
+                                       'remove_optical_time=0'},
+            result=self.etimeout())
+        self.assertRaises(pexc.VMPowerOnTimeout, power.power_on, ibmi, None,
+                          add_parms=power.RemoveOptical.bld_map(name="test"))
 
-        # It should have been called twice, once for the elegant power
-        # off, and another for the immediate power off
-        self.assertEqual(2, mock_run_job.call_count)
+        self.assertEqual(1, self.run_job.call_count)
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_power_off_job_failure_vios(self, mock_vios,
-                                        mock_job_p, mock_run_job):
-        """Validates a power off job request failure."""
-        mock_vios.adapter = self.adpt
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        for rmc_err_prefix in power._OSSHUTDOWN_RMC_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOff', operation_name=rmc_err_prefix)
+        self.run_job.reset_mock()
 
-            # Invoke the run, should power off graceful, fail, then force off
-            # and fail again.
-            self.assertRaises(pexc.VMPowerOffFailure,
-                              power._power_on_off, mock_vios, 'PowerOff',
-                              '1111')
+        # Job failure, VIOS partition, explicit remove_optical_time
+        vios = self.mock_partition(env=pvm_bp.LPARType.VIOS)
+        self.run_job.side_effect = self.validate_run(
+            vios, "PowerOn", ex_parms={'remove_optical_name=test2',
+                                       'remove_optical_time=25'},
+            result=self.efail())
+        self.assertRaises(
+            pexc.VMPowerOnFailure, power.power_on, vios, None,
+            add_parms=power.RemoveOptical.bld_map(name="test2", time=25))
 
-        # It should have been called three times: one for the os shutdown,
-        # one for vsp normal power off,
-        # and another for the immediate power off
-        self.assertEqual(3, mock_run_job.call_count)
+        self.assertEqual(1, self.run_job.call_count)
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter',
-                new=mock.Mock())
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_force_immed_no_retry(self, mock_vios, mock_run_job):
-        """With force_immediate=NO_RETRY, errors don't retry."""
-        mock_vios.adapter = self.adpt
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        for exc in (pexc.JobRequestFailed(error='e', operation_name='op'),
-                    pexc.JobRequestTimedOut(operation_name='op', seconds=60)):
-            mock_run_job.side_effect = exc
+    def test_pwron_already_on(self):
+        """PowerOn when the system is already powered on."""
+        part = self.mock_partition()
+        for prefix in power._ALREADY_POWERED_ON_ERRS:
+            self.run_job.side_effect = self.validate_run(
+                part, ex_suff="PowerOn", result=self.efail(
+                    error="Something %s Something else" % prefix))
+            power.power_on(part, None)
+            self.assertEqual(1, self.run_job.call_count)
+            self.run_job.reset_mock()
+
+    def test_pwroff_force_immed(self):
+        """Test power_off with force_immediate=Force.TRUE."""
+        # PowerOff with force-immediate works the same regardless of partition
+        # type, RMC state, or management partition status.
+        for env in (pvm_bp.LPARType.OS400, pvm_bp.LPARType.AIXLINUX,
+                    pvm_bp.LPARType.VIOS):
+            for rmc in (pvm_bp.RMCState.ACTIVE, pvm_bp.RMCState.BUSY,
+                        pvm_bp.RMCState.INACTIVE):
+                for mgmt in (True, False):
+                    part = self.mock_partition(env=env, rmc_state=rmc,
+                                               mgmt=mgmt)
+                    self.run_job.side_effect = self.validate_run(
+                        part, ex_parms={'operation=shutdown',
+                                        'immediate=true'})
+                    power.power_off(part, None,
+                                    force_immediate=power.Force.TRUE)
+                    self.assertEqual(1, self.run_job.call_count)
+                    self.run_job.reset_mock()
+
+        # Restart, timeout, additional params
+        part = self.mock_partition()
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown', 'immediate=true',
+                            'restart=true', 'one=1'},
+            ex_timeout=10, result=self.etimeout())
+        self.assertRaises(pexc.VMPowerOffTimeout, power.power_off, part, None,
+                          force_immediate=power.Force.TRUE, restart=True,
+                          timeout=10, add_parms=dict(one=1))
+        self.assertEqual(1, self.run_job.call_count)
+
+        self.run_job.reset_mock()
+
+        # Failure
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown', 'immediate=true'},
+            result=self.efail())
+        self.assertRaises(pexc.VMPowerOffFailure, power.power_off, part, None,
+                          force_immediate=power.Force.TRUE)
+        self.assertEqual(1, self.run_job.call_count)
+
+    def test_pwroff_soft_ibmi_norm(self):
+        """Soft PowerOff flow, IBMi, normal (no immediate)."""
+        part = self.mock_partition(env=pvm_bp.LPARType.OS400)
+        # This works the same whether intervening Job exceptions are Timeout or
+        # Failure.
+        for exc in (self.etimeout(), self.efail()):
+            self.run_job.side_effect = (
+                # OS normal
+                self.validate_run(
+                    part, ex_parms={'operation=osshutdown'}, ex_timeout=100,
+                    result=exc,
+                    # OS immediate (timeout is defaulted from this point)
+                    nxt=self.validate_run(
+                        part, ex_parms={'operation=osshutdown',
+                                        'immediate=true'}, result=exc,
+                        # VSP normal
+                        nxt=self.validate_run(
+                            part, ex_parms={'operation=shutdown'}, result=exc,
+                            # VSP hard (default timeout)
+                            nxt=self.validate_run(
+                                part, ex_parms={
+                                    'operation=shutdown', 'immediate=true'}))))
+            )
+            # Run it
+            power.power_off(part, None, timeout=100)
+            self.assertEqual(4, self.run_job.call_count)
+            self.run_job.reset_mock()
+
+        # If one of the interim calls succeeds, the operation succeeds.
+        self.run_job.side_effect = (
+            # OS normal
+            self.validate_run(
+                part, ex_parms={'operation=osshutdown'}, result=self.efail(),
+                # OS immediate (timeout is defaulted from this point)
+                nxt=self.validate_run(
+                    part, ex_parms={'operation=osshutdown', 'immediate=true'},
+                    result=self.etimeout(),
+                    # VSP normal - succeeds
+                    nxt=self.validate_run(
+                        part, ex_parms={'operation=shutdown'},
+                        # Not reached
+                        nxt=self.fail))))
+        power.power_off(part, None)
+        self.assertEqual(3, self.run_job.call_count)
+
+    def test_pwroff_soft_standard_timeout(self):
+        """Soft PowerOff flow, non-IBMi, with timeout."""
+        # When OS shutdown times out, go straight to VSP hard.
+        part = self.mock_partition()
+        self.run_job.side_effect = (
+            # OS normal.  Non-IBMi always adds immediate.
+            self.validate_run(
+                part, ex_parms={'operation=osshutdown', 'immediate=true'},
+                ex_timeout=100, result=self.etimeout(),
+                # VSP hard
+                nxt=self.validate_run(
+                    part, ex_parms={'operation=shutdown', 'immediate=true'}))
+        )
+        # Run it
+        power.power_off(part, None, timeout=100)
+        self.assertEqual(2, self.run_job.call_count)
+
+        self.run_job.reset_mock()
+
+        # Same if invoked with immediate.  But since we're running again, add
+        # restart and another param to make sure they come through.
+        self.run_job.side_effect = (
+            # OS immediate (non-IBMi always adds immediate).
+            self.validate_run(
+                part, ex_parms={'operation=osshutdown', 'immediate=true',
+                                'restart=true', 'foo=bar'},
+                ex_timeout=200, result=self.etimeout(),
+                # VSP hard
+                nxt=self.validate_run(
+                    part, ex_parms={'operation=shutdown', 'immediate=true',
+                                    'restart=true', 'foo=bar'}))
+        )
+        # Run it
+        power.power_off(part, None, timeout=200, restart=True,
+                        add_parms={'foo': 'bar'})
+        self.assertEqual(2, self.run_job.call_count)
+
+    def test_pwroff_soft_no_retry(self):
+        """Soft PowerOff, no retry."""
+        # When OS shutdown fails with NO_RETRY, fail (no soft flow)
+        # IBMi
+        part = self.mock_partition(env=pvm_bp.LPARType.OS400)
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown'}, result=self.efail())
+        self.assertRaises(pexc.VMPowerOffFailure, power.power_off, part, None,
+                          force_immediate=power.Force.NO_RETRY)
+        self.assertEqual(1, self.run_job.call_count)
+
+        self.run_job.reset_mock()
+
+        # non-IBMi
+        part = self.mock_partition()
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown', 'immediate=true'},
+            result=self.efail())
+        self.assertRaises(pexc.VMPowerOffFailure, power.power_off, part, None,
+                          force_immediate=power.Force.NO_RETRY)
+        self.assertEqual(1, self.run_job.call_count)
+
+    def test_pwroff_soft_standard_fail(self):
+        """Soft PowerOff flow, non-IBMi, with Job failure."""
+        # When OS shutdown fails (non-timeout), we try VSP normal first.
+        part = self.mock_partition()
+        self.run_job.side_effect = (
+            # OS immediate (non-IBMi always adds immediate).
+            # Make sure restart and other params always percolate through.
+            self.validate_run(
+                part, ex_parms={'operation=osshutdown', 'immediate=true',
+                                'restart=true', 'foo=bar'},
+                ex_timeout=300, result=self.efail(),
+                # VSP normal, timeout reset to default
+                nxt=self.validate_run(
+                    part, ex_parms={
+                        'operation=shutdown', 'restart=true', 'foo=bar'},
+                    result=self.efail(),
+                    # VSP hard
+                    nxt=self.validate_run(
+                        part, ex_parms={'operation=shutdown', 'immediate=true',
+                                        'restart=true', 'foo=bar'})))
+        )
+        power.power_off(part, None, timeout=300, restart=True,
+                        add_parms={'foo': 'bar'})
+        self.assertEqual(3, self.run_job.call_count)
+
+    def test_pwroff_soft_standard_no_rmc_no_retry(self):
+        """Non-IBMi soft PowerOff does VSP normal if RMC is down; no retry."""
+        # Behavior is the same for INACTIVE or BUSY
+        for rmc in (pvm_bp.RMCState.INACTIVE, pvm_bp.RMCState.BUSY):
+            part = self.mock_partition(rmc_state=rmc)
+            self.run_job.side_effect = self.validate_run(
+                part, ex_parms={'operation=shutdown'}, result=self.efail())
             self.assertRaises(
-                pexc.VMPowerOffFailure, power.power_off, mock_vios, 'huuid',
+                pexc.VMPowerOffFailure, power.power_off, part, None,
                 force_immediate=power.Force.NO_RETRY)
-            self.assertEqual(1, mock_run_job.call_count)
-            mock_run_job.reset_mock()
+            self.assertEqual(1, self.run_job.call_count)
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_power_off_sysoff_vios(self, mock_vios, mock_job_p, mock_run_job):
-        """Validates a power off job when system is already off."""
-        mock_vios.adapter = self.adpt
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        for err_prefix in power._ALREADY_POWERED_OFF_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOff', operation_name=err_prefix)
+            self.run_job.reset_mock()
 
-            # Invoke the run the job, but succeed because it is already
-            # powered off
-            power._power_on_off(mock_vios, 'PowerOff', '1111')
+            # Job timeout & failure do the same (except for final exception).
+            self.run_job.side_effect = self.validate_run(
+                part, ex_parms={'operation=shutdown'}, result=self.etimeout())
+            self.assertRaises(
+                pexc.VMPowerOffTimeout, power.power_off, part, None,
+                force_immediate=power.Force.NO_RETRY)
+            self.assertEqual(1, self.run_job.call_count)
 
-            # This specific error should cause a retry.
-            self.assertEqual(1, mock_run_job.call_count)
+            self.run_job.reset_mock()
 
-    @mock.patch('pypowervm.wrappers.job.Job.run_job')
-    @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS')
-    def test_power_on_syson_vios(self, mock_vios, mock_job_p, mock_run_job):
-        """Validates a power on job when system is already on."""
-        mock_vios.adapter = self.adpt
-        mock_vios.rmc_state = pvm_bp.RMCState.ACTIVE
-        for err_prefix in power._ALREADY_POWERED_ON_ERRS:
-            mock_run_job.reset_mock()
-            mock_run_job.side_effect = pexc.JobRequestFailed(
-                error='PowerOn', operation_name=err_prefix)
+    def test_pwroff_already_off(self):
+        """PowerOff when the system is already powered off."""
+        part = self.mock_partition()
+        for prefix in power._ALREADY_POWERED_OFF_ERRS:
+            self.run_job.side_effect = self.validate_run(
+                part, ex_parms={'operation=osshutdown', 'immediate=true'},
+                result=self.efail(error="Foo %s bar" % prefix))
+            power.power_off(part, None)
+            self.assertEqual(1, self.run_job.call_count)
 
-            # Invoke the run the job, but succeed because it is already
-            # powered on
-            power._power_on_off(mock_vios, 'PowerOn', '1111')
+            self.run_job.reset_mock()
 
-            # This specific error should cause a retry.
-            self.assertEqual(1, mock_run_job.call_count)
+            # If restart was specified, this is a failure.  (Force, to KISS)
+            self.run_job.side_effect = self.validate_run(
+                part, ex_parms={'operation=shutdown', 'immediate=true',
+                                'restart=true'},
+                result=self.efail(error="Foo %s bar" % prefix))
+            self.assertRaises(pexc.VMPowerOffFailure, power.power_off, part,
+                              None, restart=True,
+                              force_immediate=power.Force.TRUE)
+            self.assertEqual(1, self.run_job.call_count)
+
+            self.run_job.reset_mock()
