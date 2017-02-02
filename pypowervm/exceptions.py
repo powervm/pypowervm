@@ -1,4 +1,4 @@
-# Copyright 2014, 2016 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -136,12 +136,27 @@ class JobRequestTimedOut(JobRequestFailed):
                 "Failed to complete the task in %(seconds)d seconds.")
 
 
+class OSShutdownNoRMC(AbstractMsgFmtError):
+    msg_fmt = _("Can not perform OS shutdown on Virtual Machine %(lpar_nm)s "
+                "because its RMC connection is not active.")
+
+
 class VMPowerOffFailure(AbstractMsgFmtError):
     msg_fmt = _("Failed to power off Virtual Machine %(lpar_nm)s: %(reason)s")
 
 
+class VMPowerOffTimeout(VMPowerOffFailure):
+    msg_fmt = _("Power off of Virtual Machine %(lpar_nm)s timed out after "
+                "%(timeout)d seconds.")
+
+
 class VMPowerOnFailure(AbstractMsgFmtError):
     msg_fmt = _("Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s")
+
+
+class VMPowerOnTimeout(VMPowerOnFailure):
+    msg_fmt = _("Power on of Virtual Machine %(lpar_nm)s timed out after "
+                "%(timeout)d seconds.")
 
 
 class PvidOfNetworkBridgeError(AbstractMsgFmtError):
@@ -350,3 +365,8 @@ class VNCBasedTerminalFailedToOpen(AbstractMsgFmtError):
 
 class CacheNotSupportedException(AbstractMsgFmtError):
     msg_fmt = _("The Adapter cache is not supported.")
+
+
+class InvalidEnumValue(AbstractMsgFmtError):
+    msg_fmt = _("Invalid value '%(value)s' for '%(enum)s'.  Valid values are: "
+                "%(valid_values)s")

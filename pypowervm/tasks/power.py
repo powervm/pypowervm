@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -24,6 +24,7 @@ import pypowervm.const as c
 import pypowervm.exceptions as pexc
 from pypowervm.i18n import _
 import pypowervm.log as lgc
+import pypowervm.tasks.power_opts as popts
 import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
 
@@ -31,8 +32,6 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
-_SUFFIX_PARM_POWER_ON = 'PowerOn'
-_SUFFIX_PARM_POWER_OFF = 'PowerOff'
 # Error codes indicate osshutdown is not supported
 _OSSHUTDOWN_RMC_ERRS = ['HSCL0DB4', 'PVME01050905', 'PVME01050402']
 # Error codes indicate partition is already powered off
@@ -40,99 +39,346 @@ _ALREADY_POWERED_OFF_ERRS = ['HSCL1558', 'PVME04000005']
 # Error codes indicate partition is already powered on
 _ALREADY_POWERED_ON_ERRS = ['HSCL3681', 'PVME01042026']
 
+BootMode = popts.BootMode
+KeylockPos = popts.KeylockPos
+RemoveOptical = popts.RemoveOptical
+Force = popts.Force
 
-class BootMode(object):
-    """Valid values for the 'bootmode' parameter in power_on.
 
-    Not to be confused with pypowervm.wrappers.base_partition.BootMode.
+class PowerOp(object):
+    """Provides granular control over a partition PowerOn/Off Job.
 
-    Example usage:
-        power_on(..., add_parms={BootMode.KEY: BootMode.SMS, ...})
+    Use the start or stop @classmethod to invoke the appropriate Job.  Jobs
+    invoked through these methods are never retried.  If they fail or time out,
+    they raise relevant exceptions - see the methods' docstrings for details.
     """
-    KEY = 'bootmode'
-    NORM = 'norm'
-    SMS = 'sms'
-    DD = 'dd'
-    DS = 'ds'
-    OF = 'of'
-    ALL_VALUES = (NORM, SMS, DD, DS, OF)
+    @classmethod
+    def start(cls, part, opts=None, timeout=CONF.pypowervm_job_request_timeout,
+              synchronous=True):
+        """Power on a partition.
 
-
-class KeylockPos(object):
-    """Valid values for the 'keylock' parameter in power_on.
-
-    Not to be confused with pypowervm.wrappers.base_partition.KeylockPos.
-
-    Example usage:
-        power_on(..., add_parms={KeylockPos.KEY: KeylockPos.MANUAL, ...})
-    """
-    KEY = 'keylock'
-    MANUAL = 'manual'
-    NORMAL = 'norm'
-    UNKNOWN = 'unknown'
-    ALL_VALUES = (MANUAL, NORMAL, UNKNOWN)
-
-
-class Force(object):
-    """Enumeration indicating the strategy for forcing power-off."""
-    # The force-immediate option is included on the first pass.
-    TRUE = True
-    # The force-immediate option is not included on the first pass; but if the
-    # power-off fails, it is retried with the force-immediate option included.
-    # This value is False for backward compatibility.
-    ON_FAILURE = False
-    # The force-immediate option is not included.  If the power-off fails, it
-    # is not retried.
-    NO_RETRY = 'no retry'
-
-
-class RemoveOptical(object):
-    """Valid values for the 'remove_optical_*' parameters in power_on.
-
-    This is primarily used to remove the config drive after install. KEY_NAME
-    is required and maps to a VirtualOpticalMedia name to remove. KEY_TIME is
-    optional and maps to the time, in minutes, to wait before deleting the
-    media.
-
-    Example usage:
-        power_on(..., add_parms={RemoveOptical.KEY_TIME: <Integer>,
-                                 RemoveOptical.KEY_NAME: <String>}, ...)
-    """
-    KEY_NAME = 'remove_optical_name'
-    KEY_TIME = 'remove_optical_time'
+        :param part: Partition (LPAR or VIOS) wrapper indicating the partition
+                     to power on.
+        :param opts: An instance of power_opts.PowerOnOpts indicating
+                     additional options to specify to the PowerOn operation.
+                     By default, no additional options are used.
+        :param timeout: value in seconds for specifying how long to wait for
+                        the Job to complete.
+        :param synchronous: If True, this method will not return until the Job
+                            completes (whether success or failure) or times
+                            out.  If False, this method will return as soon as
+                            the Job has started on the server (that is,
+                            achieved any state beyond NOT_ACTIVE).  Note that
+                            timeout is still possible in this case.
+        :raise VMPowerOnTimeout: If the Job timed out.
+        :raise VMPowerOnFailure: If the Job failed for some reason other than
+                                 that the partition was already powered on.
+        """
+        try:
+            cls._run(part, opts or popts.PowerOnOpts(), timeout,
+                     synchronous=synchronous)
+        except pexc.JobRequestTimedOut as error:
+            LOG.exception(error)
+            raise pexc.VMPowerOnTimeout(lpar_nm=part.name, timeout=timeout)
+        except pexc.JobRequestFailed as error:
+            emsg = six.text_type(error)
+            # If already powered on, don't send exception
+            if (any(err_prefix in emsg
+                    for err_prefix in _ALREADY_POWERED_ON_ERRS)):
+                LOG.warning(_("Partition %s already powered on."), part.name)
+                return
+            LOG.exception(error)
+            raise pexc.VMPowerOnFailure(lpar_nm=part.name, reason=emsg)
 
     @classmethod
-    def bld_map(cls, name, time=0):
-        return {cls.KEY_NAME: name, cls.KEY_TIME: time}
+    def stop(cls, part, opts=None, timeout=CONF.pypowervm_job_request_timeout,
+             synchronous=True):
+        """Power off a partition.
+
+        :param part: LPAR/VIOS wrapper indicating the partition to power off.
+        :param opts: An instance of power_opts.PowerOffOpts indicating the type
+                     of shutdown to perform, and any additional options.  If
+                     not specified, PowerOffOpts.soft_detect is used, with no
+                     restart.
+        :param timeout: value in seconds for specifying how long to wait for
+                        the Job to complete.
+        :param synchronous: If True, this method will not return until the Job
+                            completes (whether success or failure) or times
+                            out.  If False, this method will return as soon as
+                            the Job has started on the server (that is,
+                            achieved any state beyond NOT_ACTIVE).  Note that
+                            timeout is still possible in this case.
+        :raise VMPowerOffTimeout: If the Job timed out.
+        :raise VMPowerOffFailure: If the Job failed for some reason other than
+                                  that the partition was already powered off,
+                                  and restart was not requested.
+        :return: A PowerOp instance which can be invoked via the run method.
+        :raise OSShutdownNoRMC: OP_PWROFF_OS was requested on a non-IBMi
+                                partition with no RMC connection.
+        """
+        if opts is None:
+            opts = popts.PowerOffOpts().soft_detect(part)
+
+        if opts.is_os and not opts.can_os_shutdown(part):
+            raise pexc.OSShutdownNoRMC(lpar_nm=part.name)
+
+        try:
+            cls._run(part, opts, timeout, synchronous=synchronous)
+        except pexc.JobRequestTimedOut as error:
+            LOG.exception(error)
+            raise pexc.VMPowerOffTimeout(lpar_nm=part.name, timeout=timeout)
+        except pexc.JobRequestFailed as error:
+            emsg = six.text_type(error)
+            # If already powered off and not a reboot, don't send exception
+            if (any(err_prefix in emsg
+                    for err_prefix in _ALREADY_POWERED_OFF_ERRS) and
+                    not opts.is_restart):
+                LOG.warning(_("Partition %s already powered off."), part.name)
+                return
+            LOG.exception(error)
+            raise pexc.VMPowerOffFailure(lpar_nm=part.name, reason=emsg)
+
+    @classmethod
+    def _run(cls, part, opts, timeout, synchronous=True):
+        """Fetch, fill out, and run a Power* Job for this PowerOp.
+
+        Do not invoke this method directly; it is used by the start and stop
+        class methods.
+
+        :param part: LPAR/VIOS wrapper of the partition to power on/off.
+        :param opts: Instance of power_opts.PowerOnOpts or PowerOffOpts
+                     indicating the type of operation to perform, and any
+                     additional options.
+        :param timeout: value in seconds for specifying how long to wait for
+                        the Job to complete.
+        :param synchronous: If True, this method will not return until the Job
+                            completes (whether success or failure) or times
+                            out.  If False, this method will return as soon as
+                            the Job has started on the server (that is,
+                            achieved any state beyond NOT_ACTIVE).  Note that
+                            timeout is still possible in this case.
+        :raise VMPowerOffTimeout: If the Job timed out.
+        :raise VMPowerOffFailure: If the Job failed.
+        """
+        # Fetch the Job template wrapper
+        jwrap = job.Job.wrap(part.adapter.read(
+            part.schema_type, part.uuid, suffix_type=c.SUFFIX_TYPE_DO,
+            suffix_parm=opts.JOB_SUFFIX))
+
+        LOG.debug("Executing power operation for partition %(lpar_nm)s with "
+                  "timeout=%(timeout)d and synchronous=%(synchronous)s: "
+                  "%(opts)s",
+                  dict(lpar_nm=part.name, timeout=timeout,
+                       synchronous=synchronous, opts=str(opts)))
+        # Run the Job, letting exceptions raise up.
+        jwrap.run_job(part.uuid, job_parms=opts.bld_jparms(), timeout=timeout,
+                      synchronous=synchronous)
 
 
-@lgc.logcall
+def _legacy_power_opts(klass, add_parms):
+    """Detect (and warn) if add_parms is a legacy dict vs. a Power*Opts.
+
+    Usage:
+        opts, legacy = _legacy_power_opts(PowerOnOpts, add_parms)
+        if legacy:
+            # Do other stuff based on legacy behavior
+        else:
+            # Do other stuff based on new behavior
+
+    :param klass: The class we expect, either PowerOnOpts or PowerOffOpts.
+    :param add_parms: The add_parms argument to check.
+    :return: An instance of klass, which is either add_parms, constructed by
+             passing it to the klass __init__'s legacy_add_parms.
+    :return: True if add_parms was a legacy dict; False otherwise.
+    """
+    if isinstance(add_parms, klass):
+        return add_parms, False
+    else:
+        if add_parms is not None:
+            import warnings
+            warnings.warn(_("Specifying add_parms as a dict is deprecated. "
+                            "Please specify a %s instance instead.") %
+                          klass.__name__, DeprecationWarning)
+        return klass(legacy_add_parms=add_parms), True
+
+
+@lgc.logcall_args
 def power_on(part, host_uuid, add_parms=None, synchronous=True):
     """Will Power On a Logical Partition or Virtual I/O Server.
 
     :param part: The LPAR/VIOS wrapper of the partition to power on.
-    :param host_uuid: TEMPORARY - The host system UUID that the instance
-                      resides on.
-    :param add_parms: dict of parameters to pass directly to the job template
+    :param host_uuid: Not used.  Retained for backward compatibility.
+    :param add_parms: A power_opts.PowerOnOpts instance; or (deprecated) a dict
+                      of parameters to pass directly to the job template.  If
+                      unspecified, a default PowerOnOpts instance is used, with
+                      no additional parameters.
     :param synchronous: If True (the default), this method will not return
                         until the PowerOn Job completes (whether success or
                         failure) or times out.  If False, this method will
                         return as soon as the Job has started on the server
                         (that is, achieved any state beyond NOT_ACTIVE).  Note
                         that timeout is still possible in this case.
+    :raise VMPowerOnFailure: If the operation failed.
+    :raise VMPowerOnTimeout: If the operation timed out.
     """
-    return _power_on_off(part, _SUFFIX_PARM_POWER_ON, host_uuid,
-                         add_parms=add_parms, synchronous=synchronous)
+    PowerOp.start(
+        part, opts=_legacy_power_opts(popts.PowerOnOpts, add_parms)[0],
+        synchronous=synchronous)
 
 
-@lgc.logcall
+def _pwroff_soft_ibmi_flow(part, timeout, opts):
+    """Normal (non-hard) power-off retry flow for IBMi partitions.
+
+    ===================================
+    add_params includes immediate=true? <--START
+    ===================================
+        |                  |
+        NO                YES
+        V                  V
+    =========          ============          ==========          ============
+    OS normal -FAIL*-> OS immediate -FAIL*-> VSP normal -FAIL*-> return False
+    =========          ============          ==========          ============
+        |_________________ | ___________________|
+                          |||
+                        SUCCESS
+                           V         *VMPowerOffTimeout OR
+                      ===========     VMPowerOffFailure
+                      return True
+                      ===========
+
+    :param part timeout: See power_off.
+    :param opts: A PowerOffOpts instance.  The operation and immediate params
+                 are overwritten at each stage of this method.  Any other
+                 options (such as restart) remain unaffected.
+    :return: True if the power-off succeeded; False otherwise.  The caller
+             (power_off) should perform VSP hard shutdown if False is returned.
+    :raise VMPowerOffTimeout: If the last power-off attempt timed out.
+    :raise VMPowerOffFailure: If the last power-off attempt failed.
+    """
+    # If immediate was already specified, skip OS-normal.
+    if not opts.is_immediate:
+        # ==> OS normal
+        try:
+            PowerOp.stop(part, opts=opts.os_normal(), timeout=timeout)
+            return True
+        except pexc.VMPowerOffFailure:
+            LOG.warning(_("IBMi OS normal shutdown failed.  Trying OS "
+                          "immediate shutdown.  Partition: %s"), part.name)
+            # Fall through to OS immediate, with default timeout
+            timeout = CONF.pypowervm_job_request_timeout
+
+    # ==> OS immediate
+    try:
+        PowerOp.stop(part, opts=opts.os_immediate(), timeout=timeout)
+        return True
+    except pexc.VMPowerOffFailure:
+        LOG.warning(_("IBMi OS immediate shutdown failed.  Trying VSP normal "
+                      "shutdown.  Partition: %s"), part.name)
+        # Fall through to VSP normal
+
+    # ==> VSP normal
+    try:
+        PowerOp.stop(part, opts=opts.vsp_normal(), timeout=timeout)
+        return True
+    except pexc.VMPowerOffFailure:
+        LOG.warning(_("IBMi VSP normal shutdown failed.  Trying VSP hard "
+                      "shutdown.  Partition: %s"), part.name)
+
+    return False
+
+
+def _pwroff_soft_standard_flow(part, timeout, opts):
+    """Normal (non-hard) power-off retry flow for non-IBMi partitions.
+
+    START
+    |     +---VMPowerOffTimeout-------------------------------------+
+    V     |                                                         V
+    ========  VMPowerOffFailure  ==========  VMPowerOffFailure  ============
+    OS immed ----   or      ---> VSP normal ----   or      ---> return False
+    ========   OSShutdownNoRMC   ==========  VMPowerOffTimeout  ============
+          | _________________________/
+          |/
+       SUCCESS
+          V
+     ===========
+     return True
+     ===========
+
+    :param part timeout: See power_off.
+    :param opts: A PowerOffOpts instance.  The operation and immediate params
+                 are overwritten at each stage of this method.  Any other
+                 options (such as restart) remain unaffected.
+    :return: True if the power-off succeeded; False otherwise.  The caller
+             should perform VSP hard shutdown if False is returned.
+    :raise VMPowerOffTimeout: If the last power-off attempt timed out.
+    :raise VMPowerOffFailure: If the last power-off attempt failed.
+    """
+    # For backward compatibility, OS shutdown is always immediate.  We don't
+    # let PowerOn decide whether to use OS or VSP; instead we trap
+    # OSShutdownNoRMC (which is very quick) so we can keep this progression
+    # linear.
+
+    # ==> OS immediate
+    try:
+        PowerOp.stop(part, opts=opts.os_immediate(), timeout=timeout)
+        return True
+    except pexc.VMPowerOffTimeout:
+        LOG.warning(_("Non-IBMi OS immediate shutdown timed out.  Trying VSP "
+                      "hard shutdown.  Partition: %s"), part.name)
+        return False
+    except pexc.VMPowerOffFailure:
+        LOG.warning(_("Non-IBMi OS immediate shutdown failed.  Trying VSP "
+                      "normal shutdown.  Partition: %s"), part.name)
+        # Fall through to VSP normal, but with default timeout
+        timeout = CONF.pypowervm_job_request_timeout
+    except pexc.OSShutdownNoRMC as error:
+        LOG.warning(error.args[0])
+        # Fall through to VSP normal
+
+    # ==> VSP normal
+    try:
+        PowerOp.stop(part, opts.vsp_normal(), timeout=timeout)
+        return True
+    except pexc.VMPowerOffFailure:
+        LOG.warning(_("Non-IBMi VSP normal shutdown failed.  Trying VSP hard "
+                      "shutdown.  Partition: %s"), part.name)
+
+    return False
+
+
+def _power_off_single(part, force_immediate, opts, timeout):
+    """No-retry single power-off operation.
+
+    :param part force_immediate timeout: See power_off.
+                                    force_immediate is either TRUE or NO_RETRY.
+    :param opts: A PowerOffOpts instance.  The operation and immediate params
+                 are overwritten by this method.  Any other options (such as
+                 restart) remain unaffected.
+    :raise VMPowerOffFailure: If the operation failed.
+    :raise VMPowerOffTimeout: If the operation timed out.
+    """
+    # If force_immediate=TRUE, always VSP hard shutdown.
+    if force_immediate == Force.TRUE:
+        PowerOp.stop(part, opts=opts.vsp_hard(), timeout=timeout)
+    # If no retries, just do the single "soft" power-off requested
+    elif force_immediate == Force.NO_RETRY:
+        # opts is already set up for soft_detect
+        PowerOp.stop(part, opts=opts, timeout=timeout)
+
+    return
+
+
+@lgc.logcall_args
 def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
               timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
 
+    Depending on the force_immediate flag and the partition's type and RMC
+    state, this method may attempt increasingly aggressive mechanisms for
+    shutting down the OS if initial attempts fail or time out.
+
     :param part: The LPAR/VIOS wrapper of the instance to power off.
-    :param host_uuid: TEMPORARY - The host system UUID that the instance
-                      resides on.
+    :param host_uuid: Not used.  Retained for backward compatibility.
     :param force_immediate: One of the Force enum values, defaulting to
                             Force.ON_FAILURE, which behave as follows:
             - Force.TRUE: The force-immediate option is included on the first
@@ -144,158 +390,50 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
                                 the first pass; but if the power-off fails
                                 (including timeout), it is retried with the
                                 force-immediate option added.
-    :param restart: Boolean.  Perform a restart after the power off.
-    :param timeout: value in seconds for specifying how long to wait for the
-                    instance to stop.
-    :param add_parms: dict of parameters to pass directly to the job template
+    :param restart: DEPRECATED: Use a PowerOffOpts instance for add_parms, with
+                    restart specified therein.
+                    Boolean.  Perform a restart after the power off.  If
+                    add_parms is a PowerOffOpts instance, this parameter is
+                    ignored.
+    :param timeout: Time in seconds to wait for the instance to stop.
+    :param add_parms: A power_opts.PowerOffOpts instance; or (deprecated) a
+                      dict of parameters to pass directly to the job template.
+                      If unspecified, a default PowerOffOpts instance is used,
+                      with operation/immediate/restart depending on the
+                      force_immediate and restart parameters, and no additional
+                      options.
+    :raise VMPowerOffFailure: If the operation failed (possibly after retrying)
+    :raise VMPowerOffTimeout: If the operation timed out (possibly after
+                              retrying).
     """
-    return _power_on_off(part, _SUFFIX_PARM_POWER_OFF, host_uuid,
-                         force_immediate=force_immediate, restart=restart,
-                         timeout=timeout, add_parms=add_parms)
+    opts, legacy = _legacy_power_opts(popts.PowerOffOpts, add_parms)
+    if legacy:
+        # Decide whether to insist on 'immediate' for OS shutdown.  Do that
+        # only if add_parms explicitly included immediate=true.  Otherwise, let
+        # soft_detect decide.
+        opts.soft_detect(part, immed_if_os=opts.is_immediate or None)
+        # Add the restart option if necessary.
+        opts.restart(value=restart)
 
+    if force_immediate != Force.ON_FAILURE:
+        return _power_off_single(part, force_immediate, opts, timeout)
 
-def _power_on_off(part, suffix, host_uuid, force_immediate=Force.ON_FAILURE,
-                  restart=False, timeout=CONF.pypowervm_job_request_timeout,
-                  add_parms=None, synchronous=True):
-    """Internal function to power on or off an instance.
+    # Do the progressive-retry sequence appropriate to the partition type and
+    # the force_immediate flag.
+    if part.env == bp.LPARType.OS400:
+        # The IBMi progression.
+        if _pwroff_soft_ibmi_flow(part, timeout, opts):
+            return
+            # Fall through to VSP hard
+    else:
+        # The non-IBMi progression.
+        if _pwroff_soft_standard_flow(part, timeout, opts):
+            return
+            # Fall through to VSP hard
 
-    :param part: The LPAR/VIOS wrapper of the instance to act on.
-    :param suffix: power option - 'PowerOn' or 'PowerOff'.
-    :param host_uuid: TEMPORARY - The host system UUID that the LPAR/VIOS
-                      resides on
-    :param force_immediate: (For PowerOff suffix only) One of the Force enum
-                            values (defaulting to Force.ON_FAILURE), which
-                            behave as follows:
-            - Force.TRUE: The force-immediate option is included on the first
-                          pass.
-            - Force.NO_RETRY: The force-immediate option is not included.  If
-                              the power-off fails or times out,
-                              VMPowerOffFailure is raised immediately.
-            - Force.ON_FAILURE: The force-immediate option is not included on
-                                the first pass; but if the power-off fails
-                                (including timeout), it is retried with the
-                                force-immediate option added.
-    :param restart: Boolean.  Do a restart after power off (for PowerOff suffix
-                    only)
-    :param timeout: Value in seconds for specifying how long to wait for the
-                    LPAR/VIOS to stop (for PowerOff suffix only)
-    :param add_parms: dict of parameters to pass directly to the job template
-    :param synchronous: If True (the default), this method will not return
-                        until the Job completes (whether success or failure) or
-                        times out.  If False, this method will return as soon
-                        as the Job has started on the server (that is, achieved
-                        any state beyond NOT_ACTIVE).  Note that timeout is
-                        still possible in this case.
-    """
-    complete = False
-    uuid = part.uuid
-    adapter = part.adapter
-    normal_vsp_power_off = False
-    add_immediate = part.env != bp.LPARType.OS400
-    while not complete:
-        resp = adapter.read(part.schema_type, uuid,
-                            suffix_type=c.SUFFIX_TYPE_DO,
-                            suffix_parm=suffix)
-        job_wrapper = job.Job.wrap(resp.entry)
-        job_parms = []
-        if suffix == _SUFFIX_PARM_POWER_OFF:
-            operation = 'osshutdown'
-            if force_immediate == Force.TRUE:
-                operation = 'shutdown'
-                add_immediate = True
-            # Do normal vsp shutdown if flag on or
-            # if RMC not active (for non-IBMi)
-            elif (normal_vsp_power_off or
-                  (part.env != bp.LPARType.OS400 and
-                   part.rmc_state != bp.RMCState.ACTIVE)):
-                operation = 'shutdown'
-                add_immediate = False
-            job_parms.append(
-                job_wrapper.create_job_parameter('operation', operation))
-            if add_immediate:
-                job_parms.append(
-                    job_wrapper.create_job_parameter('immediate', 'true'))
-            if restart:
-                job_parms.append(
-                    job_wrapper.create_job_parameter('restart', 'true'))
-
-        # Add add_parms to the job
-        if add_parms is not None:
-            for kw in add_parms.keys():
-                # Skip any parameters already set.
-                if kw not in ['operation', 'immediate', 'restart']:
-                    job_parms.append(job_wrapper.create_job_parameter(
-                        kw, str(add_parms[kw])))
-        try:
-            job_wrapper.run_job(uuid, job_parms=job_parms, timeout=timeout,
-                                synchronous=synchronous)
-            complete = True
-        except pexc.JobRequestTimedOut as error:
-            if suffix == _SUFFIX_PARM_POWER_OFF:
-                if operation == 'osshutdown' and (force_immediate ==
-                                                  Force.ON_FAILURE):
-                    # This has timed out, we loop again and attempt to
-                    # force immediate vsp. Unless IBMi, in which case we
-                    # will try an immediate osshutdown and then
-                    # a vsp normal before then jumping to immediate vsp.
-                    timeout = CONF.pypowervm_job_request_timeout
-                    if part.env == bp.LPARType.OS400:
-                        if not add_immediate:
-                            add_immediate = True
-                        else:
-                            normal_vsp_power_off = True
-                    else:
-                        timeout = CONF.pypowervm_job_request_timeout
-                        force_immediate = Force.TRUE
-                # normal vsp power off did not work, try hard vsp power off
-                elif normal_vsp_power_off:
-                    timeout = CONF.pypowervm_job_request_timeout
-                    force_immediate = Force.TRUE
-                    normal_vsp_power_off = False
-                else:
-                    LOG.exception(error)
-                    emsg = six.text_type(error)
-                    raise pexc.VMPowerOffFailure(reason=emsg,
-                                                 lpar_nm=part.name)
-            else:
-                # Power On timed out
-                LOG.exception(error)
-                emsg = six.text_type(error)
-                raise pexc.VMPowerOnFailure(reason=emsg, lpar_nm=part.name)
-        except pexc.JobRequestFailed as error:
-            emsg = six.text_type(error)
-            LOG.exception(_('Error: %s') % emsg)
-            if suffix == _SUFFIX_PARM_POWER_OFF:
-                # If already powered off and not a reboot,
-                # don't send exception
-                if (any(err_prefix in emsg
-                        for err_prefix in _ALREADY_POWERED_OFF_ERRS) and
-                        not restart):
-                    complete = True
-                # If failed for other reasons,
-                # retry with normal vsp power off except for IBM i
-                # where we try immediate osshutdown first
-                elif operation == 'osshutdown' and (force_immediate ==
-                                                    Force.ON_FAILURE):
-                    timeout = CONF.pypowervm_job_request_timeout
-                    if part.env == bp.LPARType.OS400 and not add_immediate:
-                        add_immediate = True
-                    else:
-                        force_immediate = Force.NO_RETRY
-                        normal_vsp_power_off = True
-                # normal vsp power off did not work, try hard vsp power off
-                elif normal_vsp_power_off or (force_immediate ==
-                                              Force.ON_FAILURE):
-                    timeout = CONF.pypowervm_job_request_timeout
-                    force_immediate = Force.TRUE
-                    normal_vsp_power_off = False
-                else:
-                    raise pexc.VMPowerOffFailure(reason=emsg,
-                                                 lpar_nm=part.name)
-            else:
-                # If already powered on, don't send exception
-                if (any(err_prefix in emsg
-                        for err_prefix in _ALREADY_POWERED_ON_ERRS)):
-                    complete = True
-                else:
-                    raise pexc.VMPowerOnFailure(reason=emsg, lpar_nm=part.name)
+    # If we got here, force_immediate == ON_FAILURE, so fall back to VSP hard.
+    # Let this one finish or raise.
+    # ==> VSP hard
+    LOG.warning(_("VSP hard shutdown with default timeout.  Partition: %s"),
+                part.name)
+    PowerOp.stop(part, opts.vsp_hard())
