@@ -52,3 +52,4 @@ def _logcall(filter_=None, dump_parms=False):
     return func_parms
 
 logcall = _logcall()
+logcall_args = _logcall(dump_parms=True)
