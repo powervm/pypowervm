@@ -45,6 +45,7 @@ class IOCLASS(object):
     CNA = net.CNA.__name__
     MGMT_CNA = 'MGMT' + net.CNA.__name__
     VNIC = ioc.VNIC.__name__
+    FILEIO = stor.FileIO.__name__
 
 
 class SlotMapStore(object):
@@ -267,9 +268,9 @@ class SlotMapStore(object):
             # VOpts we should pick up.
             extra_spec = bstor.name
         else:
-            # For shared storage (PV/LU), we need to make sure the LUA (Logical
-            # Unit Address) of the device is preserved on the target.  This
-            # informs things like boot order.
+            # For shared storage (PV/LU/FileIO), we need to make sure the LUA
+            # (Logical Unit Address) of the device is preserved on the target.
+            # This informs things like boot order.
             extra_spec = vscsimap.target_dev.lua
 
         return bstor, stg_key, cslot, extra_spec
@@ -324,6 +325,7 @@ class SlotMapStore(object):
         LU          LU.udid                     LUA
         VFC         fabric name                 None
         VNIC        VNIC.mac                    None
+        FILE_IO     FileIO.udid                 FileIO.path
         """
         ret = copy.deepcopy(self._slot_topo)
         ret.pop('_max_vslots', None)
