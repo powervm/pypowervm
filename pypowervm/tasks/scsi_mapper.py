@@ -47,7 +47,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
-                      lpar_slot_num=None, lua=None):
+                      lpar_slot_num=None, lua=None, client_is_vios=False):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -107,7 +107,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
     # Build the mapping.
     scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                                    fuse_limit=fuse_limit,
-                                   lpar_slot_num=lpar_slot_num, lua=lua)
+                                   lpar_slot_num=lpar_slot_num, lua=lua,
+                                   client_is_vios=client_is_vios)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
@@ -126,7 +127,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                         fuse_limit=32, lpar_slot_num=None, lua=None,
-                        target_name=None):
+                        target_name=None, client_is_vios=False):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -163,8 +164,8 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     adapter = storage_elem.adapter
 
     # Get the client lpar href
-    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
-                                                       lpar_uuid)
+    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(
+        adapter, host_uuid, lpar_uuid, client_is_vios=client_is_vios)
 
     # Separate out the mappings into the applicable ones for this client.
     separated_mappings = _separate_mappings(vios_w, lpar_href)

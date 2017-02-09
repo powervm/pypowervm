@@ -35,6 +35,7 @@ import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.storage as stor
+import pypowervm.wrappers.virtual_io_server as vios_w
 
 LOG = logging.getLogger(__name__)
 
@@ -414,11 +415,13 @@ class VStorageMapping(ewrap.ElementWrapper):
     """Base class for VSCSIMapping and VFCMapping."""
 
     @staticmethod
-    def crt_related_href(adapter, host_uuid, client_lpar_uuid):
+    def crt_related_href(adapter, host_uuid, client_lpar_uuid,
+                         client_is_vios=False):
         """Creates the Element for the 'AssociatedLogicalPartition'."""
-        return adapter.build_href(ms.System.schema_type, host_uuid,
-                                  lpar.LPAR.schema_type, client_lpar_uuid,
-                                  xag=[])
+        sch_type = vios_w.VIOS.schema_type if (
+            client_is_vios) else lpar.LPAR.schema_type
+        return adapter.build_href(ms.System.schema_type, host_uuid, sch_type,
+                                  client_lpar_uuid, xag=[])
 
     @property
     def client_lpar_href(self):
