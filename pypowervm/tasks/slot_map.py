@@ -45,6 +45,7 @@ class IOCLASS(object):
     CNA = net.CNA.__name__
     MGMT_CNA = 'MGMT' + net.CNA.__name__
     VNIC = ioc.VNIC.__name__
+    FILEIO = stor.FileIO.__name__
 
 
 class SlotMapStore(object):
@@ -266,6 +267,9 @@ class SlotMapStore(object):
             # naming, we can use the extra_spec to identify which of multiple
             # VOpts we should pick up.
             extra_spec = bstor.name
+        elif isinstance(bstor, stor.FileIO):
+            # Files should be mapped by name.  They do not have a LUA.
+            extra_spec = bstor.path
         else:
             # For shared storage (PV/LU), we need to make sure the LUA (Logical
             # Unit Address) of the device is preserved on the target.  This
@@ -324,6 +328,7 @@ class SlotMapStore(object):
         LU          LU.udid                     LUA
         VFC         fabric name                 None
         VNIC        VNIC.mac                    None
+        FILE_IO     FileIO.udid                 FileIO.path
         """
         ret = copy.deepcopy(self._slot_topo)
         ret.pop('_max_vslots', None)
@@ -442,6 +447,28 @@ class BuildSlotMap(object):
         for by_vuuid in six.itervalues(self._build_map):
             if vios_w.uuid in by_vuuid and udid in by_vuuid[vios_w.uuid]:
                 return by_vuuid[vios_w.uuid][udid]
+        return None, None
+
+    def get_vscsi_slot_by_extra_spec(self, vios_w, extra_spec):
+        """Gets the vSCSI client slot and extra spec for the VSCSI device.
+
+        :param vios_w: VIOS wrapper.
+        :param udid: UDID of the VSCSI device.
+        :return: Integer client slot number on which to create the VSCSIMapping
+                 from the specified VIOS for the storage with the specified
+                 udid.
+        :return: udid of the element
+        """
+        # Pull from the build map.  Will default to None (indicating to
+        # fuse an existing vscsi mapping or use next available slot for the
+        # mapping).
+        # Since the UDID should be universally unique, search all storage types
+        for by_vuuid in six.itervalues(self._build_map):
+            if vios_w.uuid in by_vuuid:
+                for udid, slot_set in six.iteritems(by_vuuid):
+                    slot, ex_spec = slot_set[0], slot_set[1]
+                    if ex_spec == extra_spec:
+                        return slot, udid
         return None, None
 
     def get_pv_vscsi_slot(self, vios_w, udid):
