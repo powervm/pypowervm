@@ -47,7 +47,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
-                      lpar_slot_num=None, lua=None):
+                      lpar_slot_num=None, lua=None, client_is_vios=False):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -79,6 +79,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
                 TargetDevice.  If None, the LUA will be assigned by the server.
                 Should be specified for all of the VSCSIMappings for a
                 particular bus, or none of them.
+    :param client_is_vios: Boolean to indicate if the lpar specified by
+                           lpar_uuid represents a VIOS or a LPAR wrapper.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     """
@@ -107,7 +109,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
     # Build the mapping.
     scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                                    fuse_limit=fuse_limit,
-                                   lpar_slot_num=lpar_slot_num, lua=lua)
+                                   lpar_slot_num=lpar_slot_num, lua=lua,
+                                   client_is_vios=client_is_vios)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
@@ -126,7 +129,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                         fuse_limit=32, lpar_slot_num=None, lua=None,
-                        target_name=None):
+                        target_name=None, client_is_vios=False):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -157,14 +160,16 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     :param target_name: (Optional, Default: None) The name of the Target
                         mapping. If None, the target_name will be assigned by
                         the server.
+    :param client_is_vios: Boolean to indicate if the lpar specified by
+                           lpar_uuid represents a VIOS or a LPAR wrapper.
     :return: The SCSI mapping that can be added to the vios_w.  This does not
              do any updates to the wrapper itself.
     """
     adapter = storage_elem.adapter
 
     # Get the client lpar href
-    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
-                                                       lpar_uuid)
+    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(
+        adapter, host_uuid, lpar_uuid, client_is_vios=client_is_vios)
 
     # Separate out the mappings into the applicable ones for this client.
     separated_mappings = _separate_mappings(vios_w, lpar_href)
@@ -192,7 +197,8 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(
             adapter, host_uuid, lpar_uuid, storage_elem,
-            lpar_slot_num=lpar_slot_num, lua=lua, target_name=target_name)
+            lpar_slot_num=lpar_slot_num, lua=lua, target_name=target_name,
+            client_is_vios=client_is_vios)
     return scsi_map
 
 
