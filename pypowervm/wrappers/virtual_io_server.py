@@ -414,11 +414,13 @@ class VStorageMapping(ewrap.ElementWrapper):
     """Base class for VSCSIMapping and VFCMapping."""
 
     @staticmethod
-    def crt_related_href(adapter, host_uuid, client_lpar_uuid):
+    def crt_related_href(adapter, host_uuid, client_lpar_uuid,
+                         client_is_vios=False):
         """Creates the Element for the 'AssociatedLogicalPartition'."""
-        return adapter.build_href(ms.System.schema_type, host_uuid,
-                                  lpar.LPAR.schema_type, client_lpar_uuid,
-                                  xag=[])
+        sch_type = VIOS.schema_type if (
+            client_is_vios) else lpar.LPAR.schema_type
+        return adapter.build_href(ms.System.schema_type, host_uuid, sch_type,
+                                  client_lpar_uuid, xag=[])
 
     @property
     def client_lpar_href(self):
@@ -582,7 +584,8 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
 
     @classmethod
     def bld(cls, adapter, host_uuid, client_lpar_uuid, stg_ref,
-            lpar_slot_num=None, lua=None, target_name=None):
+            lpar_slot_num=None, lua=None, target_name=None,
+            client_is_vios=False):
         """Creates a new VSCSIMapping
 
         :param adapter: The pypowervm Adapter that will be used to create the
@@ -606,7 +609,8 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
-            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
+            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid,
+                                 client_is_vios=client_is_vios))
         s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
             adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
