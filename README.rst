@@ -159,3 +159,8 @@ Developer Notes
   is deprecated and will be removed no sooner than January 1st, 2019. It has been
   replaced by the ``pypowervm.wrappers.managed_system.IOSlot.drc_name``
   property.
+
+- Passing an arbitrary dictionary into the add_parms argument of
+  ``pypowervm.tasks.power.power_on`` and ``power_off`` is deprecated.  Consumers
+  should migrate to using ``pypowervm.tasks.power_opts.PowerOnOpts`` and
+  ``PowerOffOpts`` instead.
