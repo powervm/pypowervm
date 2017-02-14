@@ -649,6 +649,15 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         self.set_parm_value(_BP_BOOT_MODE, val)
 
     @property
+    def allow_perf_data_collection(self):
+        return self._get_val_bool(_BP_ALLOW_PERF_DATA_COLL)
+
+    @allow_perf_data_collection.setter
+    def allow_perf_data_collection(self, value):
+        self.set_parm_value(_BP_ALLOW_PERF_DATA_COLL,
+                            u.sanitize_bool_for_api(value))
+
+    @property
     def capabilities(self):
         elem = self._find(_BP_CAPABILITIES)
         return PartitionCapabilities.wrap(elem)

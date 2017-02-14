@@ -264,6 +264,11 @@ class TestLogicalPartition(testtools.TestCase):
         with testtools.ExpectedException(ValueError):
             self._shared_wrapper.bootmode = 'frobnicated'
 
+    def test_allow_perf_data_collection(self):
+        self.call_simple_getter("allow_perf_data_collection", False, False)
+        self._shared_wrapper.allow_perf_data_collection = True
+        self.call_simple_getter("allow_perf_data_collection", True, False)
+
     def test_subwrapper_getters(self):
         wrap = self._shared_wrapper
         self.assertIsInstance(wrap.capabilities, bp.PartitionCapabilities)
