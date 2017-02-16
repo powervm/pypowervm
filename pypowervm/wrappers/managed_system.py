@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -72,6 +72,8 @@ _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
 _PROC_COMPAT_MODES = u.xpath(
     _SYS_PROC_CONFIG, 'SupportedPartitionProcessorCompatibilityModes')
+_MIN_PROC_UNITS_PER_CPU = u.xpath(
+    _SYS_PROC_CONFIG, 'MinimumProcessorUnitsPerVirtualProcessor')
 _MIGR_INFO = 'SystemMigrationInformation'
 _MAX_ACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumActiveMigrations')
 _MAX_INACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumInactiveMigrations')
@@ -152,6 +154,10 @@ class System(ewrap.EntryWrapper):
     @property
     def proc_units(self):
         return self._get_val_float(_PROC_UNITS_INSTALLED, 0)
+
+    @property
+    def min_proc_units(self):
+        return self._get_val_float(_MIN_PROC_UNITS_PER_CPU, 0)
 
     @property
     def proc_units_configurable(self):
