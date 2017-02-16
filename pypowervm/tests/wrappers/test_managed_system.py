@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -116,6 +116,9 @@ class TestMSEntryWrapper(unittest.TestCase):
 
     def test_get_proc_units(self):
         self.call_simple_getter("proc_units", 500.0, 0)
+
+    def test_get_min_proc_units(self):
+        self.call_simple_getter("min_proc_units", 0.05, 0)
 
     def test_get_proc_units_configurable(self):
         self.call_simple_getter("proc_units_configurable", 500.0, 0)
