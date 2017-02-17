@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -43,15 +43,24 @@ _DISK_VG = 'VolumeGroup'
 _DISK_BASE = 'BaseImage'
 _DISK_UDID = UDID
 _DISK_TYPE = 'VirtualDiskType'
+_DISK_BACKSTORE_TYPE = 'BackStoreType'
 _VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
                    _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE]
+                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE]
 
 
 class VDiskType(object):
     """From VirtualDiskType.Enum."""
     FILE = 'File'
     LV = 'LogicalVolume'
+
+
+class BackStoreType(object):
+    """From BackStoreType.Enum."""
+    # A kernel-space handler that supports raw files.
+    FILE_IO = 'fileio'
+    # A user-space handler that supports RAW, QCOW or QCOW2 files.
+    USER_QCOW = 'user:qcow'
 
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
@@ -687,6 +696,18 @@ class _VDisk(ewrap.ElementWrapper):
     def _base_image(self, base_image):
         self.set_parm_value(_DISK_BASE, base_image)
 
+    @property
+    def backstore_type(self):
+        """The backing store type, one of the BackStoreType enum values."""
+        return self._get_val_str(_DISK_BACKSTORE_TYPE)
+
+    def _backstore_type(self, val):
+        """Set the backing store type.
+
+        :param val: One of the BackStoreType enum values.
+        """
+        self.set_parm_value(_DISK_BACKSTORE_TYPE, val, attrib=c.ATTR_KSV150)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -699,7 +720,7 @@ class FileIO(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld(cls, adapter, path):
+    def bld(cls, adapter, path, backstore_type=None):
         """Creates a FileIO wrapper for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
@@ -710,6 +731,8 @@ class FileIO(_VDisk):
         fio = super(FileIO, cls)._bld(adapter)
         fio._label(path)
         fio._vdtype(VDiskType.FILE)
+        if backstore_type is not None:
+            fio._backstore_type(backstore_type)
         return fio
 
     @property
