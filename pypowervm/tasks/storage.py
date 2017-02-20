@@ -690,6 +690,40 @@ def _image_lu_in_use(lus, image_lu):
     return False
 
 
+def find_vg(adapter, vg_name, vios_name=None):
+    """Returns the VIOS and VG wrappers for the volume group.
+
+    :param adapter: pypowervm.adapter.Adapter for REST communication.
+    :param vg_name: Name of the volume group to find.
+    :param vios_name: The name of the VIOS on which to search for the volume
+                      group.  If not specified, all VIOSes are searched.
+    :return vios_wrap: The VIOS wrapper representing the Virtual I/O Server on
+                       which the volume group was found.
+    :return vg_wrap: The VG wrapper representing the volume group.
+    :raise VIOSNotFound: If vios_name was specified and no such VIOS exists.
+    :raise VGNotFound: If no volume group of the specified vg_name could be
+                       found.
+    """
+    if vios_name:
+        # Search for the VIOS by name if specified.
+        vios_wraps = vios.VIOS.search(adapter, name=vios_name)
+        if not vios_wraps:
+            raise exc.VIOSNotFound(vios_name=vios_name)
+    else:
+        # Get all VIOSes.
+        vios_wraps = vios.VIOS.get(adapter)
+
+    # Loop through each VIOS's VGs to find the one with the appropriate name.
+    for vios_wrap in vios_wraps:
+        # Search the feed for the volume group
+        for vg_wrap in stor.VG.get(adapter, parent=vios_wrap):
+            LOG.debug('Volume group: %s', vg_wrap.name)
+            if vg_name == vg_wrap.name:
+                return vios_wrap, vg_wrap
+
+    raise exc.VGNotFound(vg_name=vg_name)
+
+
 @lock.synchronized(_LOCK_VOL_GRP)
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
               base_image=None):

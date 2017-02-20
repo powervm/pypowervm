@@ -35,6 +35,7 @@ CLUSTER = "cluster.txt"
 LU_LINKED_CLONE_JOB = 'cluster_LULinkedClone_job_template.txt'
 UPLOAD_VOL_GRP_ORIG = 'upload_volgrp.txt'
 UPLOAD_VOL_GRP_NEW_VDISK = 'upload_volgrp2.txt'
+VG_FEED = 'fake_volume_group2.txt'
 UPLOADED_FILE = 'upload_file.txt'
 VIOS_FEED = 'fake_vios_feed.txt'
 VIOS_FEED2 = 'fake_vios_hosting_vios_feed.txt'
@@ -562,6 +563,65 @@ class TestUploadLV(testtools.TestCase):
         """Returns a fake meta class for the _create_file mock."""
         resp = tju.load_file(UPLOADED_FILE, self.adpt)
         return vf.File.wrap(resp)
+
+
+class TestVG(twrap.TestWrapper):
+    file = VG_FEED
+    wrapper_class_to_test = stor.VG
+
+    def setUp(self):
+        super(TestVG, self).setUp()
+
+        # TestWrapper sets up the VG feed.
+        self.mock_vg_get = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.storage.VG.get')).mock
+        self.mock_vg_get.return_value = self.entries
+
+        # Need a VIOS feed too.
+        self.vios_feed = vios.VIOS.wrap(tju.load_file(VIOS_FEED))
+        self.mock_vio_get = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.virtual_io_server.VIOS.get')).mock
+        self.mock_vio_get.return_value = self.vios_feed
+        self.mock_vio_search = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.virtual_io_server.VIOS.search')).mock
+
+    def test_find_vg_all_vioses(self):
+        ret_vio, ret_vg = ts.find_vg('adap', 'image_pool')
+        self.assertEqual(self.vios_feed[0], ret_vio)
+        self.assertEqual(self.entries[1], ret_vg)
+        self.mock_vio_get.assert_called_once_with('adap')
+        self.mock_vio_search.assert_not_called()
+        self.mock_vg_get.assert_called_once_with(
+            'adap', parent=self.vios_feed[0])
+
+    def test_find_vg_specified_vios(self):
+        self.mock_vio_search.return_value = self.vios_feed[1:]
+        ret_vio, ret_vg = ts.find_vg(
+            'adap', 'image_pool', vios_name='nimbus-ch03-p2-vios1')
+        self.assertEqual(self.vios_feed[1], ret_vio)
+        self.assertEqual(self.entries[1], ret_vg)
+        self.mock_vio_get.assert_not_called()
+        self.mock_vio_search.assert_called_once_with(
+            'adap', name='nimbus-ch03-p2-vios1')
+        self.mock_vg_get.assert_called_once_with(
+            'adap', parent=self.vios_feed[1])
+
+    def test_find_vg_no_vios(self):
+        self.mock_vio_search.return_value = []
+        self.assertRaises(exc.VIOSNotFound,
+                          ts.find_vg, 'adap', 'n/a', vios_name='no_such_vios')
+        self.mock_vio_get.assert_not_called()
+        self.mock_vio_search.assert_called_once_with(
+            'adap', name='no_such_vios')
+        self.mock_vg_get.assert_not_called()
+
+    def test_find_vg_not_found(self):
+        self.assertRaises(exc.VGNotFound, ts.find_vg, 'adap', 'n/a')
+        self.mock_vio_get.assert_called_once_with('adap')
+        self.mock_vio_search.assert_not_called()
+        self.mock_vg_get.assert_has_calls([
+            mock.call('adap', parent=self.vios_feed[0]),
+            mock.call('adap', parent=self.vios_feed[1])])
 
 
 class TestVDisk(testtools.TestCase):
