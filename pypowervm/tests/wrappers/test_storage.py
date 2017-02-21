@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -644,3 +644,14 @@ class TestStorageTypes(testtools.TestCase):
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
         self.assertEqual('File', fio.vdtype)
+        self.assertIsNone(fio.backstore_type)
+        # Explicit backstore
+        fio = stor.FileIO.bld('adap', 'path',
+                              backstore_type=stor.BackStoreType.FILE_IO)
+        self.assertEqual('path', fio.label)
+        self.assertEqual('path', fio.path)
+        self.assertIsNone(fio.name)
+        self.assertIsNone(fio.capacity)
+        self.assertIsNone(fio.udid)
+        self.assertEqual('File', fio.vdtype)
+        self.assertEqual('fileio', fio.backstore_type)
