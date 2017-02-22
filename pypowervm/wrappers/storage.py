@@ -730,6 +730,7 @@ class FileIO(_VDisk):
         """
         fio = super(FileIO, cls)._bld(adapter)
         fio._label(path)
+        fio.name = path
         fio._vdtype(VDiskType.FILE)
         if backstore_type is not None:
             fio._backstore_type(backstore_type)
