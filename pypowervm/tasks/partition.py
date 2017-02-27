@@ -318,3 +318,40 @@ def validate_vios_ready(adapter, max_wait_time=None):
     # If we didn't get a single active VIOS then raise an exception
     if not get_active_vioses(adapter, vios_wraps=vwraps):
         raise ex.ViosNotAvailable(wait_time=waited)
+
+
+def has_physical_io(part_w):
+    """Determine whether a partition has any physical I/O adapters attached.
+
+    This method looks over all of the slots on the partition and return True if
+    any of the slots have something in it, except for the following:
+        - USB Device
+        - Graphics
+        - Empty Slot
+    All other devices are considered I/O.
+    :param part_w: Wrapper (LPAR or VIOS) of the partition to check.
+    :return: True if any physical I/O adapter was found attached to the
+             partition; False otherwise.
+    """
+    try:
+        io_slots = part_w.io_config.io_slots
+    except AttributeError:
+        # If the wrapper has no io_slots, it has no physical I/O
+        return False
+
+    # Doesn't count as physical I/O if description contains any of these
+    non_ios = ("USB", "Universal Serial Bus", "Graphics", "Empty slot")
+    for io_slot in io_slots:
+        try:
+            # If the description *isn't* one of the non-I/O ones, it's a hit.
+            if not any([non_io in io_slot.description for non_io in non_ios]):
+                return True
+        except AttributeError:
+            # The slot didn't have a description.  That shouldn't happen.  But
+            # we have to assume it's physical I/O in that case.
+            LOG.warning(
+                _("Assuming description-less slot is physical I/O: %s"),
+                io_slot.toxmlstring())
+            return True
+    # We got through all the I/O slots without finding a physical I/O adapter
+    return False
