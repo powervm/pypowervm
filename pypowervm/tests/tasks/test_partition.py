@@ -29,6 +29,7 @@ import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
 
+
 LPAR_FEED_WITH_MGMT = 'lpar.txt'
 VIO_FEED_WITH_MGMT = 'fake_vios_feed.txt'
 LPAR_FEED_NO_MGMT = 'lpar_ibmi.txt'
@@ -111,6 +112,23 @@ class TestPartition(testtools.TestCase):
         mock_vio_search.return_value = []
         self.assertRaises(ex.ThisPartitionNotFoundException,
                           tpar.get_this_partition, self.adpt)
+
+    def test_has_physical_io(self):
+        """test partition has physical io."""
+        part_w = mock.Mock(io_config=mock.Mock(
+            io_slots=[mock.Mock(description='1 Gigabit Ethernet (UTP) 4 '
+                           'Port Adapter PCIE  Short')]))
+        self.assertTrue(tpar.has_physical_io(part_w))
+
+        part_w = mock.Mock(io_config=mock.Mock(
+            io_slots=[mock.Mock(description='test Graphics 3.0 test')]))
+        self.assertFalse(tpar.has_physical_io(part_w))
+
+        part_w = mock.Mock(io_config=mock.Mock(io_slots=[]))
+        self.assertFalse(tpar.has_physical_io(part_w))
+
+        part_w = mock.Mock(io_config=mock.Mock(io_slots=None))
+        self.assertFalse(tpar.has_physical_io(part_w))
 
 
 class TestVios(twrap.TestWrapper):
