@@ -370,3 +370,11 @@ class CacheNotSupportedException(AbstractMsgFmtError):
 class InvalidEnumValue(AbstractMsgFmtError):
     msg_fmt = _("Invalid value '%(value)s' for '%(enum)s'.  Valid values are: "
                 "%(valid_values)s")
+
+
+class VIOSNotFound(AbstractMsgFmtError):
+    msg_fmt = _("No VIOS found with name %(vios_name)s.")
+
+
+class VGNotFound(AbstractMsgFmtError):
+    msg_fmt = _("No volume group found with name %(vg_name)s.")
