@@ -17,6 +17,7 @@
 """Create, remove, map, unmap, and populate virtual storage objects."""
 
 import contextlib
+import copy
 import math
 import os
 import tempfile
@@ -32,6 +33,7 @@ from taskflow import task as tf_tsk
 
 from pypowervm import const as c
 from pypowervm import exceptions as exc
+from pypowervm.helpers import vios_busy
 from pypowervm.i18n import _
 from pypowervm.internal_utils import thread_utils as pvm_th
 from pypowervm.tasks import scsi_mapper as sm
@@ -211,15 +213,14 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
     return n_vdisk, maybe_file
 
 
-def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
+def upload_vopt(adapter, v_uuid, path_or_stream, f_name, f_size=None,
                 sha_chksum=None):
     """Upload a file/stream into a virtual media repository on the VIOS.
 
     :param adapter: The adapter to talk over the API.
     :param v_uuid: The Virtual I/O Server UUID that will host the file.
-    :param d_stream: The data stream (either a file handle or stream) to
-                     upload.  Must have the 'read' method that returns a chunk
-                     of bytes.
+    :param path_or_stream: A file path or data stream (must have 'read'
+                           method) to upload.
     :param f_name: The name that should be given to the file.
     :param f_size: (OPTIONAL) The size in bytes of the file to upload.  Useful
                    for integrity checks.
@@ -236,12 +237,30 @@ def upload_vopt(adapter, v_uuid, d_stream, f_name, f_size=None,
     # First step is to create the 'file' on the system.
     vio_file = _create_file(
         adapter, f_name, vf.FileType.MEDIA_ISO, v_uuid, sha_chksum, f_size)
-    f_uuid = _upload_stream(vio_file, d_stream, UploadType.IO_STREAM)
+
+    f_wrap = None
+    if isinstance(path_or_stream, str):
+        i = 0
+        while True:
+            try:
+                with open(path_or_stream, 'rb') as d_stream:
+                    f_wrap = _upload_stream(vio_file, d_stream,
+                                            UploadType.IO_STREAM)
+                break
+            except Exception:
+                if i < 3:
+                    LOG.warning(_("Encountered an issue while uploading. "
+                                  "Will retry."))
+                else:
+                    raise
+                i += 1
+    else:
+        f_wrap = _upload_stream(vio_file, path_or_stream, UploadType.IO_STREAM)
 
     # Simply return a reference to this.
     reference = stor.VOptMedia.bld_ref(adapter, f_name)
 
-    return reference, f_uuid
+    return reference, f_wrap
 
 
 def upload_new_lu(v_uuid, ssp, io_handle, lu_name, f_size, d_size=None,
@@ -439,22 +458,16 @@ def _rest_api_pipe(file_writer):
 
 
 def _upload_stream_api(vio_file, io_handle, upload_type):
-    def _copy_retry(d_stream):
-        i = 0
-        while True:
-            try:
-                # Very rarely (think one in a thousand) there appears to be a
-                # hiccup in the upload processing.  A simple retry mechanism
-                # should be enough to push it through
-                vio_file.adapter.upload_file(vio_file.element, d_stream)
-                break
-            except exc.Error:
-                if i < 3:
-                    LOG.warning(_("Encountered an issue while uploading. "
-                                  "Will retry."))
-                else:
-                    raise
-                i += 1
+    def _copy(d_stream):
+        # We don't want to use the VIOS retry mechanism here.
+        helpers = copy.deepcopy(vio_file.adapter.helpers)
+        try:
+            helpers.remove(vios_busy.vios_busy_retry_helper)
+        except ValueError:
+            pass
+
+        vio_file.adapter.upload_file(vio_file.element, d_stream,
+                                     helpers=helpers)
 
     # If using a FUNCtion-based upload remotely, we have to make that function
     # (which is passed in as io_handle) think it's writing to a local file.  We
@@ -462,10 +475,10 @@ def _upload_stream_api(vio_file, io_handle, upload_type):
     # populates from d_stream in a separate thread.
     if upload_type == UploadType.FUNC:
         with _rest_api_pipe(io_handle) as in_stream:
-            _copy_retry(in_stream)
+            _copy(in_stream)
     else:
         # io_handle is already an open, readable stream
-        _copy_retry(io_handle)
+        _copy(io_handle)
 
 
 def _copy_func(out_file, io_handle):
