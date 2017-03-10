@@ -14,12 +14,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from six.moves import builtins
+
 import fixtures
 import mock
 import testtools
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as exc
+import pypowervm.helpers.vios_busy as vb
 import pypowervm.tasks.storage as ts
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as fx
@@ -93,16 +96,20 @@ class TestUploadLV(testtools.TestCase):
     def test_upload_stream_api_func(self, mock_rap):
         """With FUNC, _upload_stream_api uses _rest_api_pipe properly."""
         vio_file = mock.Mock()
+        vio_file.adapter.helpers = [vb.vios_busy_retry_helper]
         ts._upload_stream_api(vio_file, 'io_handle', ts.UploadType.FUNC)
         mock_rap.assert_called_once_with('io_handle')
         vio_file.adapter.upload_file.assert_called_once_with(
             vio_file.element, mock_rap.return_value.__enter__.return_value)
+        self.assertEqual(vio_file.adapter.helpers, [vb.vios_busy_retry_helper])
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vopt(self, mock_create_file):
         """Tests the uploads of the virtual disks."""
 
-        mock_create_file.return_value = self._fake_meta()
+        fake_file = self._fake_meta()
+        fake_file.adapter.helpers = [vb.vios_busy_retry_helper]
+        mock_create_file.return_value = fake_file
 
         v_opt, f_wrap = ts.upload_vopt(self.adpt, self.v_uuid, None, 'test2',
                                        f_size=50)
@@ -110,7 +117,7 @@ class TestUploadLV(testtools.TestCase):
         mock_create_file.assert_called_once_with(
             self.adpt, 'test2', vf.FileType.MEDIA_ISO, self.v_uuid, None, 50)
         # Test that vopt was 'uploaded'
-        self.adpt.upload_file.assert_called_with(mock.ANY, None)
+        self.adpt.upload_file.assert_called_with(mock.ANY, None, helpers=[])
         self.assertIsNone(f_wrap)
         self.assertIsNotNone(v_opt)
         self.assertIsInstance(v_opt, stor.VOptMedia)
@@ -138,18 +145,22 @@ class TestUploadLV(testtools.TestCase):
 
     @mock.patch.object(ts.LOG, 'warning')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_new_vopt_w_retry(self, mock_create_file, mock_log_warn):
+    def test_upload_vopt_by_filepath(self, mock_create_file, mock_log_warn):
         """Tests the uploads of the virtual disks with an upload retry."""
 
-        mock_create_file.return_value = self._fake_meta()
+        fake_file = self._fake_meta()
+        fake_file.adapter.helpers = [vb.vios_busy_retry_helper]
+
+        mock_create_file.return_value = fake_file
         self.adpt.upload_file.side_effect = [exc.Error("error"),
                                              object()]
-
-        v_opt, f_wrap = ts.upload_vopt(self.adpt, self.v_uuid, None, 'test2',
-                                       f_size=50)
+        m = mock.mock_open()
+        with mock.patch.object(builtins, 'open', m):
+            v_opt, f_wrap = ts.upload_vopt(
+                self.adpt, self.v_uuid, 'fake-path', 'test2', f_size=50)
 
         # Test that vopt was 'uploaded'
-        self.adpt.upload_file.assert_called_with(mock.ANY, None)
+        self.adpt.upload_file.assert_called_with(mock.ANY, m(), helpers=[])
         self.assertIsNone(f_wrap)
         self.assertIsNotNone(v_opt)
         self.assertIsInstance(v_opt, stor.VOptMedia)
@@ -160,23 +171,19 @@ class TestUploadLV(testtools.TestCase):
         mock_log_warn.assert_called_once()
         self.assertEqual(2, self.adpt.upload_file.call_count)
 
-        # Ensure cleanup was called
-        self.adpt.delete.assert_called_once_with(
+        # Ensure cleanup was called twice since the first uploads fails.
+        self.adpt.delete.assert_has_calls([mock.call(
             'File', service='web',
-            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')]*2)
 
-    @mock.patch.object(ts.LOG, 'warning')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_new_vopt_w_fail(self, mock_create_file, mock_log_warn):
+    def test_upload_new_vopt_w_fail(self, mock_create_file):
         """Tests the uploads of the virtual disks with an upload fail."""
         mock_create_file.return_value = self._fake_meta()
         self.adpt.upload_file.side_effect = exc.Error("error")
 
         self.assertRaises(exc.Error, ts.upload_vopt, self.adpt, self.v_uuid,
                           None, 'test2', f_size=50)
-
-        # Three loops (so three logging calls) before the failure bubbles up
-        self.assertEqual(3, mock_log_warn.call_count)
 
     @mock.patch('pypowervm.tasks.storage.rm_vg_storage')
     @mock.patch('pypowervm.wrappers.storage.VG.get')
