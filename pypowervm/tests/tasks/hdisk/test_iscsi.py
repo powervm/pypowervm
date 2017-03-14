@@ -43,19 +43,33 @@ class TestIscsi(testtools.TestCase):
         mock_pass = 'password'
         mock_iqn = 'fake_iqn'
         mock_uuid = 'uuid'
+        mock_trans_type = 'trans_type'
         args = ['VirtualIOServer', mock_uuid]
         kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSIDiscovery')}
         mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]'}
         device_name, udid = iscsi.discover_iscsi(
-            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid)
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            transport_type=mock_trans_type)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
-        mock_job_p.assert_any_call('hostIP', mock_host_ip)
-        mock_job_p.assert_any_call('user', mock_user)
-        mock_job_p.assert_any_call('password', mock_pass)
         self.assertEqual('devName', device_name)
         self.assertEqual('udid', udid)
         self.assertEqual(1, mock_run_job.call_count)
+        mock_job_p.assert_has_calls([
+            mock.call('hostIP', mock_host_ip), mock.call('user', mock_user),
+            mock.call('password', mock_pass), mock.call('targetIQN', mock_iqn),
+            mock.call('transportType', mock_trans_type)], any_order=True)
+        self.assertEqual(5, mock_job_p.call_count)
+
+        mock_trans_type = None
+        mock_job_p.reset_mock()
+        iscsi.discover_iscsi(
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            transport_type=mock_trans_type)
+        mock_job_p.assert_has_calls([
+            mock.call('hostIP', mock_host_ip), mock.call('user', mock_user),
+            mock.call('password', mock_pass),
+            mock.call('targetIQN', mock_iqn)], any_order=True)
         self.assertEqual(4, mock_job_p.call_count)
 
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
