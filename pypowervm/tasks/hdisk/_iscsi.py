@@ -25,9 +25,11 @@ from pypowervm.wrappers.virtual_io_server import VIOS
 LOG = logging.getLogger(__name__)
 _JOB_NAME = "ISCSIDiscovery"
 _ISCSI_LOGOUT = "ISCSILogout"
+_DEFAULT_VOL_TYPE = "iscsi"
 
 
-def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
+def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
+                   vol_type=_DEFAULT_VOL_TYPE):
     """Runs iscsi discovery and login job
 
     :param adapter: pypowervm adapter
@@ -37,6 +39,7 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
     :param iqn: The IQN (iSCSI Qualified Name) of the created volume on the
                 target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :param vol_type: The type of the volume to be connected.
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
     """
@@ -50,7 +53,7 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
     job_parms.append(job_wrapper.create_job_parameter('password', password))
     job_parms.append(job_wrapper.create_job_parameter('user', user))
     job_parms.append(job_wrapper.create_job_parameter('targetIQN', iqn))
-
+    job_parms.append(job_wrapper.create_job_parameter('volType', vol_type))
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
 
