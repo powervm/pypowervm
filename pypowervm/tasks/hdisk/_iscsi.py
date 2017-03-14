@@ -27,7 +27,14 @@ _JOB_NAME = "ISCSIDiscovery"
 _ISCSI_LOGOUT = "ISCSILogout"
 
 
-def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
+class TransportType(object):
+    """Valid values for iSCSI transport types."""
+    ISCSI = 'iscsi'
+    ISER = 'iser'
+
+
+def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
+                   transport_type=None):
     """Runs iscsi discovery and login job
 
     :param adapter: pypowervm adapter
@@ -37,6 +44,8 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
     :param iqn: The IQN (iSCSI Qualified Name) of the created volume on the
                 target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :param transport_type: The type of the volume to be connected. Must be a
+                           valid TransportType.
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
     """
@@ -50,7 +59,9 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid):
     job_parms.append(job_wrapper.create_job_parameter('password', password))
     job_parms.append(job_wrapper.create_job_parameter('user', user))
     job_parms.append(job_wrapper.create_job_parameter('targetIQN', iqn))
-
+    if transport_type is not None:
+        job_parms.append(
+            job_wrapper.create_job_parameter('transportType', transport_type))
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
 
