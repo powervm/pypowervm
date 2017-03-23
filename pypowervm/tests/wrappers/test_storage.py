@@ -637,7 +637,7 @@ class TestTargetDevs(twrap.TestWrapper):
 
 class TestStorageTypes(testtools.TestCase):
     def test_fileio(self):
-        fio = stor.FileIO.bld('adap', 'path')
+        fio = stor.FileIO.bld_ref('adap', 'path')
         self.assertEqual('path', fio.label)
         self.assertEqual('path', fio.path)
         self.assertEqual('path', fio.name)
@@ -645,7 +645,7 @@ class TestStorageTypes(testtools.TestCase):
         self.assertIsNone(fio.udid)
         self.assertEqual('File', fio.vdtype)
         self.assertIsNone(fio.backstore_type)
-        # Explicit backstore
+        # Explicit backstore, legacy bld method
         fio = stor.FileIO.bld('adap', 'path',
                               backstore_type=stor.BackStoreType.FILE_IO)
         self.assertEqual('path', fio.label)
