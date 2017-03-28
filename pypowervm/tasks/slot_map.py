@@ -616,10 +616,7 @@ class RebuildSlotMap(BuildSlotMap):
             io_dict = self._slot_store.topology[slot]
             # There are multiple types of things that can go into the vSCSI
             # map.  Some are not supported for rebuild.
-            if io_dict.get(IOCLASS.VDISK):
-                raise pvm_ex.InvalidHostForRebuildInvalidIOType(
-                    io_type='Virtual Disk')
-            elif io_dict.get(IOCLASS.VOPT):
+            if io_dict.get(IOCLASS.VOPT):
                 raise pvm_ex.InvalidHostForRebuildInvalidIOType(
                     io_type='Virtual Optical Media')
 
@@ -663,6 +660,8 @@ class RebuildSlotMap(BuildSlotMap):
                          six.iteritems(slot_topo.get(IOCLASS.PV, {}))]
             slot_info.extend([(udid, lua, IOCLASS.LU) for udid, lua in
                               six.iteritems(slot_topo.get(IOCLASS.LU, {}))])
+            slot_info.extend([(udid, lua, IOCLASS.VDISK) for udid, lua in
+                              six.iteritems(slot_topo.get(IOCLASS.VDISK, {}))])
 
             for udid, lua, stg_class in slot_info:
 

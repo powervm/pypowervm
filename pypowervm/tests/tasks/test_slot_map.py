@@ -673,14 +673,19 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             slot_map.RebuildSlotMap, smt,
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
-    def test_rebuild_fails_w_vdisk(self):
+    def test_rebuild_w_vdisk(self):
         """Test RebuildSlotMap fails when VDisks exist in topology."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_VDISK
-        self.assertRaises(
-            pv_e.InvalidHostForRebuildInvalidIOType,
-            slot_map.RebuildSlotMap, smt,
-            [self.vio1, self.vio2], VOL_TO_VIO1, {})
+        rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
+                                      VOL_TO_VIO1, {})
+        # Deterministic. vios1 gets slot 1
+        for udid in rsm._build_map['VDisk']['vios1']:
+            slot, lua = rsm.get_vscsi_slot(self.vio1, udid)
+            self.assertEqual(1, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_W_VDISK[slot][slot_map.IOCLASS.VDISK][udid],
+                             lua)
 
     def test_lu_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
@@ -1114,6 +1119,14 @@ VOL_TO_VIO1 = {
         'vios2'
     ],
     'pv_udid4': [
+        'vios2'
+    ],
+    'vd_udid1': [
+        'vios1',
+        'vios2'
+    ],
+    'vd_udid2': [
+        'vios1',
         'vios2'
     ]
 }
