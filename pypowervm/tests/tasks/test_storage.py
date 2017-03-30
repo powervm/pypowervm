@@ -261,46 +261,6 @@ class TestUploadLV(testtools.TestCase):
 
     @mock.patch('pypowervm.tasks.storage._upload_stream_local')
     @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_new_vdisk_coordinated(self, mock_create_file,
-                                          mock_stream_func):
-        """Tests the uploads of a virtual disk using the coordinated path."""
-
-        # Override adapter's traits to use the coordinated local API
-        self.adptfx.set_traits(fx.LocalPVMTraits)
-
-        # First need to load in the various test responses.
-        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG, self.adpt)
-        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
-
-        self.adpt.read.return_value = vg_orig
-        self.adpt.update_by_path.return_value = vg_post_crt
-        mock_create_file.return_value = mock.Mock(
-            enum_type=vf.FileType.DISK_IMAGE_COORDINATED, adapter=self.adpt,
-            uuid='6233b070-31cc-4b57-99bd-37f80e845de9', schema_type='File')
-
-        n_vdisk, f_wrap = ts.upload_new_vdisk(
-            self.adpt, self.v_uuid, self.vg_uuid, None, 'test2', 50,
-            d_size=25, sha_chksum='abc123', upload_type=ts.UploadType.FUNC)
-
-        # Ensure the create file was called
-        mock_create_file.assert_called_once_with(
-            self.adpt, 'test2', vf.FileType.DISK_IMAGE_COORDINATED,
-            self.v_uuid, f_size=50,
-            tdev_udid='0300f8d6de00004b000000014a54555cd9.3',
-            sha_chksum='abc123')
-
-        # Ensure cleanup was called after the upload
-        self.adpt.delete.assert_called_once_with(
-            'File', service='web',
-            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')
-        self.assertIsNone(f_wrap)
-        self.assertIsNotNone(n_vdisk)
-        self.assertIsInstance(n_vdisk, stor.VDisk)
-        mock_stream_func.assert_called_once_with(mock.ANY, None,
-                                                 ts.UploadType.FUNC)
-
-    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
-    @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_stream_via_stream_bld(self, mock_create_file,
                                           mock_upload_st_coordinated):
         """Tests the uploads of a vDisk - via UploadType.IO_STREAM_BUILDER."""

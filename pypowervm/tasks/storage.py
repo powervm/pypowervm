@@ -190,15 +190,11 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
     gb_size = math.ceil(gb_size)
     n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
 
-    # The file type.  If local API server, then we can use the coordinated
-    # file path.  Otherwise standard upload.
-    file_type = (vf.FileType.DISK_IMAGE_COORDINATED if adapter.traits.local_api
-                 else vf.FileType.DISK_IMAGE)
-
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
-    vio_file = _create_file(adapter, d_name, file_type, v_uuid, f_size=f_size,
-                            tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
+    vio_file = _create_file(
+        adapter, d_name, vf.FileType.DISK_IMAGE, v_uuid, f_size=f_size,
+        tdev_udid=n_vdisk.udid, sha_chksum=sha_chksum)
 
     try:
         # Run the upload
@@ -323,16 +319,10 @@ def upload_lu(v_uuid, lu, io_handle, f_size, sha_chksum=None,
              EntryWrapper.  This is simply a marker to be later used to retry
              the cleanup.
     """
-    # The file type.  If local API server, then we can use the coordinated
-    # file path.  Otherwise standard upload.
-    file_type = (vf.FileType.DISK_IMAGE_COORDINATED
-                 if lu.adapter.traits.local_api
-                 else vf.FileType.DISK_IMAGE)
-
     # Create the file, specifying the UDID from the new Logical Unit.
     # The File name matches the LU name.
     vio_file = _create_file(
-        lu.adapter, lu.name, file_type, v_uuid, f_size=f_size,
+        lu.adapter, lu.name, vf.FileType.DISK_IMAGE, v_uuid, f_size=f_size,
         tdev_udid=lu.udid, sha_chksum=sha_chksum)
 
     return _upload_stream(vio_file, io_handle, upload_type)
