@@ -266,11 +266,15 @@ class Session(object):
             if isupload:
 
                 def chunkreader():
-                    while True:
-                        d = filehandle.read(chunksize)
-                        if not d:
-                            break
-                        yield d
+                    if hasattr(filehandle, 'read'):
+                        while True:
+                            d = filehandle.read(chunksize)
+                            if not d:
+                                break
+                            yield d
+                    else:
+                        for d in filehandle:
+                            yield d
 
                 response = session.request(method, url, data=chunkreader(),
                                            headers=headers, timeout=timeout)

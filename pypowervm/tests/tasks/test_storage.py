@@ -259,12 +259,13 @@ class TestUploadLV(testtools.TestCase):
         self.assertEqual(mock_crt_vdisk.return_value, n_vdisk)
         self.assertIsNone(maybe_file)
 
-    @mock.patch('pypowervm.tasks.storage._upload_stream_local')
+    @mock.patch('pypowervm.tasks.storage._upload_stream_api')
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_stream_via_stream_bld(self, mock_create_file,
-                                          mock_upload_st_coordinated):
+                                          mock_upload_st):
         """Tests the uploads of a vDisk - via UploadType.IO_STREAM_BUILDER."""
         mock_file = self._fake_meta()
+        # Prove that COORDINATED is gone (uses API upload now)
         mock_file._enum_type(vf.FileType.DISK_IMAGE_COORDINATED)
         mock_create_file.return_value = mock_file
 
@@ -278,86 +279,8 @@ class TestUploadLV(testtools.TestCase):
 
         # Make sure the function was called.
         mock_io_handle.assert_called_once_with()
-        mock_upload_st_coordinated.assert_called_once_with(
+        mock_upload_st.assert_called_once_with(
             mock_file, mock_io_stream, ts.UploadType.IO_STREAM)
-
-    @mock.patch('pypowervm.util.retry_io_command')
-    @mock.patch('pypowervm.tasks.storage.open')
-    @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_stream_local_with_fail(self, mock_create_file, mock_open,
-                                           mock_retry):
-        """Tests the uploads of a virtual disk with a failure."""
-        mock_file = self._fake_meta()
-        mock_create_file.return_value = mock_file
-        # Use the retry mock to make sure it was called; its side-effect is to
-        # pass through.
-        mock_retry.side_effect = lambda func, *a, **k: func(*a, **k)
-
-        class DownStream(object):
-            def __init__(self):
-                self.i = 0
-
-            def read(self, *kargs, **kwargs):
-                self.i += 1
-                if self.i == 1000:
-                    raise IOError()
-                return self.i
-
-        mock_out_str_cm = mock.MagicMock()
-        mock_open.return_value = mock_out_str_cm
-        read_handle = DownStream()
-
-        # Run the code.  Make sure the original error type gets raised.
-        self.assertRaises(IOError, ts._upload_stream_local,
-                          mock_file, read_handle, ts.UploadType.IO_STREAM)
-
-        # 'with open' invocation:
-        self.assertEqual(1, mock_out_str_cm.__enter__.call_count)
-        self.assertEqual(1, mock_out_str_cm.__exit__.call_count)
-        # _eintr_retry_call first opens, then reads/writes in the loop
-        open_call = mock.call(mock_open, mock_file.asset_file, 'a+b', 0)
-        read_call = mock.call(read_handle.read, 65536)
-        write_call = mock.call(mock_out_str_cm.__enter__.return_value.write,
-                               mock.ANY)
-        mock_retry.assert_has_calls(
-            [open_call] + ([read_call, write_call] * 999))
-
-    @mock.patch('pypowervm.tasks.storage._ensure_pipe_close')
-    @mock.patch('pypowervm.tasks.storage._create_file')
-    def test_upload_stream_local_func(self, mock_create_file, mock_epc):
-        """Tests the uploads of a virtual disk with UploadType.FUNC."""
-        mock_file = self._fake_meta()
-        mock_create_file.return_value = mock_file
-
-        mock_io_handle = mock.MagicMock()
-
-        # Run the code
-        ts._upload_stream_local(mock_file, mock_io_handle,
-                                ts.UploadType.FUNC)
-
-        # Make sure the function was called.
-        mock_io_handle.assert_called_once_with(mock_file.asset_file)
-        mock_epc.assert_called_once_with(mock_file.asset_file, mock.ANY)
-
-    @mock.patch('time.sleep')
-    @mock.patch('pypowervm.tasks.storage.os')
-    @mock.patch('pypowervm.tasks.storage.open')
-    def test_ensure_pipe_close(self, mock_open, mock_os, mock_sleep):
-        # Check to make sure it returns if done immediately.
-        mock_future = mock.MagicMock()
-        mock_future.done.return_value = False
-        mock_os.path.exists.return_value = False
-        ts._ensure_pipe_close('path', mock_future)
-        mock_open.assert_not_called()
-
-        # Check for multiple loops when the future is not done first pass
-        mock_future.done.side_effect = [False, False, True]
-        mock_os.path.exists.return_value = True
-        ts._ensure_pipe_close('path', mock_future)
-
-        mock_open.assert_called_with('path', 'a+b', 0)
-        self.assertEqual(2, mock_open.call_count)
-        self.assertEqual(2, mock_open.return_value.close.call_count)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vdisk_failure(self, mock_create_file):
