@@ -265,14 +265,17 @@ class Session(object):
         try:
             if isupload:
 
-                def chunkreader():
+                def fh2iter():
                     while True:
                         d = filehandle.read(chunksize)
                         if not d:
                             break
                         yield d
 
-                response = session.request(method, url, data=chunkreader(),
+                # If we got an iterable, use it; if a file handle, "convert" it
+                data = fh2iter() if hasattr(filehandle, 'read') else filehandle
+
+                response = session.request(method, url, data=data,
                                            headers=headers, timeout=timeout)
             elif isdownload:
                 response = session.request(method, url, stream=True,
