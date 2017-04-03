@@ -463,20 +463,49 @@ class TestAdapter(testtools.TestCase):
         filedesc_mock = mock.MagicMock()
         filedesc_mock.findtext.side_effect = ['uuid', 'mime']
 
-        mock_request = mock.MagicMock()
-        adapter._request = mock_request
-
-        # Invoke
-        adapter.upload_file(filedesc_mock, None)
+        with mock.patch.object(adapter, '_request') as mock_request:
+            adapter.upload_file(filedesc_mock, None)
 
         # Validate
         expected_headers = {'Accept': 'application/vnd.ibm.powervm.web+xml',
                             'Content-Type': 'mime'}
         expected_path = '/rest/api/web/File/contents/uuid'
-        mock_request.assert_called_with('PUT', expected_path, helpers=None,
-                                        headers=expected_headers,
-                                        timeout=-1, auditmemento=None,
-                                        filehandle=None, chunksize=65536)
+        mock_request.assert_called_once_with(
+            'PUT', expected_path, helpers=None, headers=expected_headers,
+            timeout=-1, auditmemento=None, filehandle=None, chunksize=65536)
+
+    def _test_upload_request(self, mock_rq, mock_fh, fhdata):
+        """Test an upload requests with different kinds of "filehandle"."""
+        adapter = adp.Adapter(self.sess)
+        mock_fd = mock.Mock(findtext=mock.Mock(side_effect=['uuid', 'mime']))
+
+        def check_request(method, url, data=None, headers=None, timeout=None):
+            """Validate the session.request call."""
+            self.assertEqual('PUT', method)
+            self.assertEqual(
+                self.sess.dest + '/rest/api/web/File/contents/uuid', url)
+            # Verify that data is iterable
+            self.assertEqual(fhdata, [chunk for chunk in data])
+            return mock.Mock(status_code=c.HTTPStatus.OK_NO_CONTENT)
+        mock_rq.side_effect = check_request
+
+        adapter.upload_file(mock_fd, mock_fh)
+
+    @mock.patch('requests.sessions.Session.request')
+    def test_upload_request_iter(self, mock_rq):
+        """Test an upload request with an iterable."""
+        fhdata = ['one', 'two']
+        self._test_upload_request(mock_rq, fhdata, fhdata)
+
+    @mock.patch('requests.sessions.Session.request')
+    def test_upload_request_fh(self, mock_rq):
+        """Test an upload request with a filehandle."""
+        # filehandle is a read()able
+        fhdata = ['one', 'two']
+        mock_fh = mock.Mock(read=mock.Mock(side_effect=fhdata))
+        self._test_upload_request(mock_rq, mock_fh, fhdata)
+        # Make sure the file handle's read method was invoked
+        mock_fh.read.assert_has_calls([mock.call(65536)] * len(fhdata))
 
     def _assert_paths_equivalent(self, exp, act):
         """Ensures two paths or hrefs are "the same".
