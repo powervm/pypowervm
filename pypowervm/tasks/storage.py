@@ -33,7 +33,6 @@ from taskflow import task as tf_tsk
 from pypowervm import const as c
 from pypowervm import exceptions as exc
 from pypowervm.i18n import _
-from pypowervm.internal_utils import thread_utils as pvm_th
 from pypowervm.tasks import scsi_mapper as sm
 from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
@@ -72,13 +71,6 @@ class UploadType(object):
     # A method function that will be invoked to stream the data into the
     # virtual disk. Only one parameter is passed in, and that is the path to
     # the file to stream the data into.
-    #
-    # This upload_xx method will not return until an EOF is sent to the file
-    # path passed in to the delegate function.  It is the responsibility of the
-    # invoker to ensure that the EOF is sent.
-    #
-    # Note: This upload mechanism only works when using the pypowervm API
-    # locally.
     FUNC = 'delegate_function'
 
 
@@ -367,15 +359,8 @@ def _upload_stream(vio_file, io_handle, upload_type):
         _UPLOAD_SEM.acquire()
 
         start = time.time()
-        if vio_file.enum_type == vf.FileType.DISK_IMAGE_COORDINATED:
-            # This path offers low CPU overhead and higher throughput, but
-            # can only be executed if running on the same system as the API.
-            # It works by writing directly to the file represented by the
-            # vio_file's 'asset_file'.
-            _upload_stream_local(vio_file, io_handle, upload_type)
-        else:
-            # Upload the file directly to the REST API server.
-            _upload_stream_api(vio_file, io_handle, upload_type)
+        # Upload the file directly to the REST API server.
+        _upload_stream_api(vio_file, io_handle, upload_type)
         LOG.debug("Upload took %.2fs", time.time() - start)
     finally:
         # Must release the semaphore
@@ -458,69 +443,6 @@ def _upload_stream_api(vio_file, io_handle, upload_type):
         _copy_retry(io_handle)
 
 
-def _copy_func(out_file, io_handle):
-    LOG.info(_("Starting to read from stream for image upload to %s."),
-             out_file)
-    i = 0
-    with util.retry_io_command(open, out_file, 'a+b', 0) as out_str:
-        while True:
-            chunk = util.retry_io_command(io_handle.read, 65536)
-            if not chunk:
-                LOG.debug("Reached EOF at chunk %d", i)
-                break
-            util.retry_io_command(out_str.write, chunk)
-
-            if i % 1000 == 0:
-                LOG.debug("Uploaded chunk %d to the server for file %s",
-                          i, out_file)
-            i += 1
-
-            # Yield to other threads
-            time.sleep(0)
-
-
-def _upload_stream_local(vio_file, io_handle, upload_type):
-    # A reader to tell the API we have nothing to upload
-    class EmptyReader(object):
-        def read(self, size):
-            return None
-
-    argv = []
-    if upload_type is UploadType.IO_STREAM:
-        # io_handle is a readable stream supplying the image data.  Use our
-        # local copying function to pipe from it to the vio_file.
-        func = _copy_func
-        argv = [io_handle]
-    else:
-        # The io_handle is a function.  Just pass it the asset file path
-        # and that function will do the copying.
-        func = io_handle
-
-    with futures.ThreadPoolExecutor(max_workers=2) as th:
-        # The upload file is a blocking call (won't return until pipe
-        # is fully written to), which is why we put it in another
-        # thread.
-        upload_f = pvm_th.submit_thread(th, vio_file.adapter.upload_file,
-                                        vio_file.element, EmptyReader())
-
-        # The real upload thread.
-        copy_f = pvm_th.submit_thread(th, func, vio_file.asset_file, *argv)
-
-        # Log any exceptions on the subthreads.
-        # We specifically log the exceptions here.  The reason being that this
-        # runs in a separate thread.  If the other thread has an exception this
-        # may just be hidden.  Force a log, even though it may be redundant.
-        for fut in futures.as_completed([upload_f, copy_f]):
-            if fut is copy_f:
-                _ensure_pipe_close(vio_file.asset_file, upload_f)
-
-        # Even if upload_f also raised, this one is more important/relevant.
-        # Use result() to raise the original exception with its original trace.
-        copy_f.result()
-        # If we get here, copy_f succeeded.  If upload_f raised, reraise that.
-        upload_f.result()
-
-
 def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
                  tdev_udid=None):
     """Creates a file on the VIOS, which is needed before the POST.
@@ -539,53 +461,6 @@ def _create_file(adapter, f_name, f_type, v_uuid, sha_chksum=None, f_size=None,
     """
     return vf.File.bld(adapter, f_name, f_type, v_uuid, sha_chksum=sha_chksum,
                        f_size=f_size, tdev_udid=tdev_udid).create()
-
-
-def _ensure_pipe_close(file_path, upload_future):
-    """Will ensure that a 'close file' is sent to a FIFO Pipe.
-
-    This is needed in case there is an exception in client code that was going
-    to write to a FIFO pipe, but hit an exception before it could.  This stops
-    us from blocking the write indefinitely, and never returning from the
-    method.
-
-    The upload future is also passed in.  There are scenarios where the clients
-    I/O stream will fail immediately.  When this happens, the EOF can be sent
-    before the REST API starts reading from it.  The upload_future is passed
-    in so that we can retry the EOF send until the REST API closes the upload
-    pipe.  This avoids a nasty race condition.
-
-    :param file_path: The path to the pipe.
-    :param upload_future: The future to wait for completion of before
-                          returning.
-    """
-    first_loop = True
-    while True:
-        # If the future is marked done, that means that the pipe must have
-        # closed properly and the EOF was received.
-        if upload_future.done():
-            return
-        elif not first_loop:
-            LOG.debug(("The upload thread has not completed yet. This may "
-                       "occur if the EOF was sent before the REST API started "
-                       "reading the I/O pipe. Trying again shortly."))
-        else:
-            first_loop = False
-
-        # If the path is already gone, just leave.  It was closed.
-        if not os.path.exists(file_path):
-            return
-
-        try:
-            LOG.warning(_('Manually closing FIFO pipe at path %s'), file_path)
-            open(file_path, 'a+b', 0).close()
-
-            # Give the future a short period to return control.
-            time.sleep(.5)
-        except Exception as e:
-            LOG.warning(_("An error occurred while closing FIFO pipe at path "
-                          "%s.  Ignoring."), file_path)
-            LOG.exception(e)
 
 
 def default_tier_for_ssp(ssp):
