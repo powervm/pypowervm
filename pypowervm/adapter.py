@@ -210,6 +210,18 @@ class Session(object):
     def has_event_listener(self):
         return self._eventlistener is not None
 
+    @staticmethod
+    def _chunkreader(filehandle, chunksize):
+        if hasattr(filehandle, 'read'):
+            while True:
+                d = filehandle.read(chunksize)
+                if not d:
+                    break
+                yield d
+        else:
+            for d in filehandle:
+                yield d
+
     def request(self, method, path, headers=None, body='', sensitive=False,
                 verify=False, timeout=-1, auditmemento=None, relogin=True,
                 login=False, filehandle=None, chunksize=65536):
@@ -264,16 +276,9 @@ class Session(object):
 
         try:
             if isupload:
-
-                def chunkreader():
-                    while True:
-                        d = filehandle.read(chunksize)
-                        if not d:
-                            break
-                        yield d
-
-                response = session.request(method, url, data=chunkreader(),
-                                           headers=headers, timeout=timeout)
+                response = session.request(
+                    method, url, data=self._chunkreader(filehandle, chunksize),
+                    headers=headers, timeout=timeout)
             elif isdownload:
                 response = session.request(method, url, stream=True,
                                            headers=headers, timeout=timeout)
