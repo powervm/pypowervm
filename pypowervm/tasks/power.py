@@ -35,7 +35,7 @@ CONF = cfg.CONF
 # Error codes indicate osshutdown is not supported
 _OSSHUTDOWN_RMC_ERRS = ['HSCL0DB4', 'PVME01050905', 'PVME01050402']
 # Error codes indicate partition is already powered off
-_ALREADY_POWERED_OFF_ERRS = ['HSCL1558', 'PVME04000005']
+_ALREADY_POWERED_OFF_ERRS = ['HSCL1558', 'PVME04000005', 'PVME01050901']
 # Error codes indicate partition is already powered on
 _ALREADY_POWERED_ON_ERRS = ['HSCL3681', 'PVME01042026']
 
