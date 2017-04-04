@@ -210,11 +210,42 @@ class Session(object):
     def has_event_listener(self):
         return self._eventlistener is not None
 
+    @staticmethod
+    def _chunkreader(filehandle, chunksize):
+        if hasattr(filehandle, 'read'):
+            while True:
+                d = filehandle.read(chunksize)
+                if not d:
+                    break
+                yield d
+        else:
+            for d in filehandle:
+                yield d
+
     def request(self, method, path, headers=None, body='', sensitive=False,
                 verify=False, timeout=-1, auditmemento=None, relogin=True,
                 login=False, filehandle=None, chunksize=65536):
-        """Send an HTTP/HTTPS request to a PowerVM interface."""
+        """Send an HTTP/HTTPS request to a PowerVM interface.
 
+        :param filehandle: For downloads (with method == 'GET'), a writable
+                           file-like (anything with a write() method) to which
+                           the download content should be written.
+                           For uploads (with method == 'PUT' or 'POST'), this
+                           may be a readable file-like (anything with a read()
+                           method) or an iterable from which the upload content
+                           should be retrieved.
+                           When None (the default), response text goes to the
+                           body of the returned Response.
+        :param chunksize: For downloads, the content is written to filehandle
+                          in increments of (at most) chunksize bytes.
+                          For uploads when filehandle is a file-like, the
+                          content is sent through the request in increments of
+                          (at most) chunksize bytes.
+                          For uploads when filehandle is an iterable, this arg
+                          is ignored - content chunks are sent through the
+                          request in whatever size the iterable yields them.
+                          For other request types, this arg is ignored.
+        """
         # Don't use mutable default args
         if headers is None:
             headers = {}
@@ -264,16 +295,9 @@ class Session(object):
 
         try:
             if isupload:
-
-                def chunkreader():
-                    while True:
-                        d = filehandle.read(chunksize)
-                        if not d:
-                            break
-                        yield d
-
-                response = session.request(method, url, data=chunkreader(),
-                                           headers=headers, timeout=timeout)
+                response = session.request(
+                    method, url, data=self._chunkreader(filehandle, chunksize),
+                    headers=headers, timeout=timeout)
             elif isdownload:
                 response = session.request(method, url, stream=True,
                                            headers=headers, timeout=timeout)

@@ -39,7 +39,8 @@ class FileType(object):
     """Supported file types."""
     MEDIA_ISO = 'BROKERED_MEDIA_ISO'
     DISK_IMAGE = 'BROKERED_DISK_IMAGE'
-    DISK_IMAGE_COORDINATED = 'BROKERED_DISK_IMAGE_COORDINATED'
+    # Obsolete.  Behaves the same as DISK_IMAGE.
+    DISK_IMAGE_COORDINATED = 'BROKERED_DISK_IMAGE'
 
 
 @ewrap.EntryWrapper.pvm_type('File', ns=pc.WEB_NS)
