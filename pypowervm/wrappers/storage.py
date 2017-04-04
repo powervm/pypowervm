@@ -720,13 +720,13 @@ class FileIO(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld(cls, adapter, path, backstore_type=None):
-        """Creates a FileIO wrapper for inclusion in a VSCSIMapping.
+    def bld_ref(cls, adapter, path, backstore_type=None):
+        """Creates a FileIO reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
         :param path: The file system path of the File I/O object.
         :return: An Element that can be attached to a VSCSIMapping to create a
-                 File I/O on the server.
+                 File I/O mapping on the server.
         """
         fio = super(FileIO, cls)._bld(adapter)
         fio._label(path)
@@ -735,6 +735,9 @@ class FileIO(_VDisk):
         if backstore_type is not None:
             fio._backstore_type(backstore_type)
         return fio
+
+    # Maintained for backward compatibility.  FileIOs aren't created by REST.
+    bld = bld_ref
 
     @property
     def path(self):
