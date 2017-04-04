@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -17,6 +17,7 @@
 """Construction and basic validation of an LPAR or VIOS EntryWrapper."""
 
 import abc
+import locale
 import six
 
 from oslo_log import log as logging
@@ -84,6 +85,9 @@ LOG = logging.getLogger(__name__)
 
 # TODO(IBM) translation
 _LE = i18n._
+
+# Use the system current locale
+locale.setlocale(locale.LC_ALL, '')
 
 
 class LPARBuilderException(Exception):
@@ -471,8 +475,9 @@ class BoundField(Field):
             return
         if (self._min_bound is not None and
                 self.typed_value < self._convert_value(self._min_bound)):
-            values = dict(field=self.name, value=self.typed_value,
-                          minimum=self._min_bound)
+            values = dict(field=self.name,
+                          value=locale.format('%g', self.typed_value),
+                          minimum=locale.format('%g', self._min_bound))
             msg = _LE("Field '%(field)s' has a value below the minimum. "
                       "Value: %(value)s Minimum: %(minimum)s") % values
             LOG.error(msg)
@@ -480,8 +485,9 @@ class BoundField(Field):
 
         if (self._max_bound is not None and
                 self.typed_value > self._convert_value(self._max_bound)):
-            values = dict(field=self.name, value=self.typed_value,
-                          maximum=self._max_bound)
+            values = dict(field=self.name,
+                          value=locale.format('%g', self.typed_value),
+                          maximum=locale.format('%g', self._max_bound))
             msg = _LE("Field '%(field)s' has a value above the maximum. "
                       "Value: %(value)s Maximum: %(maximum)s") % values
 
@@ -534,8 +540,10 @@ class MinDesiredMaxField(object):
                 self.des_field.typed_value > self.max_field.typed_value):
             values = dict(desired_field=self.des_field.name,
                           max_field=self.max_field.name,
-                          desired=self.des_field.typed_value,
-                          maximum=self.max_field.typed_value)
+                          desired=locale.
+                          format('%g', self.des_field.typed_value),
+                          maximum=locale.
+                          format('%g', self.max_field.typed_value))
             msg = _LE("The '%(desired_field)s' has a value above the "
                       "'%(max_field)s' value. "
                       "Desired: %(desired)s Maximum: %(maximum)s") % values
@@ -547,8 +555,10 @@ class MinDesiredMaxField(object):
                 self.des_field.typed_value < self.min_field.typed_value):
             values = dict(desired_field=self.des_field.name,
                           min_field=self.min_field.name,
-                          desired=self.des_field.typed_value,
-                          minimum=self.min_field.typed_value)
+                          desired=locale.
+                          format('%g', self.des_field.typed_value),
+                          minimum=locale.
+                          format('%g', self.min_field.typed_value))
             msg = _LE("The '%(desired_field)s' has a value below the "
                       "'%(min_field)s' value. "
                       "Desired: %(desired)s Minimum: %(minimum)s") % values
