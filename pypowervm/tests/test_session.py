@@ -17,6 +17,7 @@
 import copy
 import gc
 import mock
+import os
 import requests.models as req_mod
 import requests.structures as req_struct
 import six
@@ -100,6 +101,17 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         self.assertEqual('.crt', sess.certext)
         # non-localhost + (implied) https is okay
         self.assertEqual(0, logfx.patchers['warning'].mock.call_count)
+
+    @mock.patch('pypowervm.adapter.Session._logon', new=mock.Mock())
+    @mock.patch('pypowervm.adapter._EventListener._get_events')
+    @mock.patch('imp.load_source')
+    def test_session_ext_cfg(self, mock_load, mock_get_evts):
+        """Test Session init with external config from env var."""
+        mock_get_evts.return_value = {'general': 'init'}, [], []
+        with mock.patch.dict(os.environ, {'PYPOWERVM_SESSION_CONFIG': 'path'}):
+            sess = adp.Session()
+        mock_load.assert_called_once_with('sesscfg', 'path')
+        mock_load.return_value.session_config.assert_called_once_with(sess)
 
     @mock.patch('pypowervm.adapter.Session._logon')
     def test_session_init_remote_http(self, mock_logon):

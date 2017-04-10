@@ -177,6 +177,9 @@ class Session(object):
         # against clones created by deepcopy or other methods.
         self._init_by = id(self)
 
+        # Set up local-to-remote connectivity
+        self._external_session_config()
+
         self._logon(conn_tries=conn_tries)
 
         # HMC should never use file auth.  This should never happen - if it
@@ -187,6 +190,13 @@ class Session(object):
 
         # Set the API traits after logon.
         self.traits = pvm_traits.APITraits(self)
+
+    def _external_session_config(self):
+        cfg_module_path = os.environ.get('PYPOWERVM_SESSION_CONFIG', None)
+        if cfg_module_path:
+            import imp
+            cfgmod = imp.load_source('sesscfg', cfg_module_path)
+            cfgmod.session_config(self)
 
     def __del__(self):
         # Refuse to clean up clones.
