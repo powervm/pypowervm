@@ -177,6 +177,12 @@ class Session(object):
         # against clones created by deepcopy or other methods.
         self._init_by = id(self)
 
+        # External session config
+        cfg_module_path = os.environ.get('PYPOWERVM_SESSION_CONFIG', None)
+        if cfg_module_path:
+            import imp
+            imp.load_source('sesscfg', cfg_module_path).session_config(self)
+
         self._logon(conn_tries=conn_tries)
 
         # HMC should never use file auth.  This should never happen - if it
