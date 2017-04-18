@@ -59,6 +59,9 @@ _VNIC_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICDedicatedSRIOVCapable')
 _VNIC_FAILOVER_CAP = u.xpath(_SYS_CAPABILITIES, 'VirtualNICFailOverCapable')
 _DYN_SRR_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DynamicSimplifiedRemoteRestartToggleCapable')
+_IBMi_NATIVE_IO_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiNativeIOCapable')
+_DISABLE_SECURE_BOOT_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'DisableSecureBootCapable')
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -267,6 +270,8 @@ class System(ewrap.EntryWrapper):
                     self._get_val_bool(_VETH_MAC_ADDR_CAP, True),
                     'ibmi_restrictedio_capable':
                     self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False),
+                    'ibmi_nativeio_capable':
+                    self._get_val_bool(_IBMi_NATIVE_IO_CAP, False),
                     'simplified_remote_restart_capable':
                     self._get_val_bool(_SIMP_REMOTE_RESTART_CAP, False),
                     'aix_capable': self._aix_capable(),
@@ -280,7 +285,9 @@ class System(ewrap.EntryWrapper):
                     self._get_val_bool(_DYN_SRR_CAP, False),
                     'vnic_capable': self._get_val_bool(_VNIC_CAP, False),
                     'vnic_failover_capable':
-                    self._get_val_bool(_VNIC_FAILOVER_CAP, False)}
+                    self._get_val_bool(_VNIC_FAILOVER_CAP, False),
+                    'disable_secure_boot_capable':
+                    self._get_val_bool(_DISABLE_SECURE_BOOT_CAP, False)}
         return cap_data
 
     @property

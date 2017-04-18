@@ -227,6 +227,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'ibmi_lpar_mobility_capable': True,
                     'custom_mac_addr_capable': True,
                     'ibmi_restrictedio_capable': True,
+                    'ibmi_nativeio_capable': False,
                     'simplified_remote_restart_capable': False,
                     'aix_capable': False,
                     'ibmi_capable': True,
@@ -235,12 +236,14 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'active_memory_expansion_capable': True,
                     'dynamic_srr_capable': True,
                     'vnic_capable': True,
-                    'vnic_failover_capable': True}
+                    'vnic_failover_capable': True,
+                    'disable_secure_boot_capable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
                    'custom_mac_addr_capable': True,
                    'ibmi_restrictedio_capable': False,
+                   'ibmi_nativeio_capable': False,
                    'simplified_remote_restart_capable': False,
                    'aix_capable': True,
                    'ibmi_capable': False,
@@ -249,7 +252,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'active_memory_expansion_capable': False,
                    'dynamic_srr_capable': False,
                    'vnic_capable': False,
-                   'vnic_failover_capable': False}
+                   'vnic_failover_capable': False,
+                   'disable_secure_boot_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -262,6 +266,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'ibmi_lpar_mobility_capable': True,
                          'custom_mac_addr_capable': True,
                          'ibmi_restrictedio_capable': True,
+                         'ibmi_nativeio_capable': False,
                          'simplified_remote_restart_capable': False,
                          'aix_capable': False,
                          'ibmi_capable': True,
@@ -279,7 +284,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                                         ',POWER6_Plus_Enhanced,POWER7',
                          'dynamic_srr_capable': True,
                          'vnic_capable': True,
-                         'vnic_failover_capable': True}
+                         'vnic_failover_capable': True,
+                         'disable_secure_boot_capable': False}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          'The returned data did not match expected values')
