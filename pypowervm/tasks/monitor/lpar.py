@@ -76,6 +76,9 @@ class LparMemory(object):
       - logical_mem: The amount of memory on the LPAR.
       - backed_physical_mem: The amount of backing physical memory used by
                              the LPAR.
+      - pct_real_mem_avbl: Percentage of memory that is currently available
+                           for use. This metric is only reported by Ubuntu
+                           currently and counts cached memory as availble.
       - pct_real_mem_free: Percentage of real page frames that are currently
                            available on the VMM (Virtual Memory Manager)
                            free list. VMM manages the allocation of real
@@ -99,6 +102,11 @@ class LparMemory(object):
                            VMM is writing working pages to paging-space
                            disk storage. A -1 value indicates that system
                            could not determine this metric.
+      - total_pg_size_count: Page Count size is 4K pages
+      - total_pg_sp_free_count: Page Count size is 4K pages
+      - vm_active_pg_count: Page Count size is 4K pages
+      - real_mem_size_bytes:
+      - up_time_secs:
     """
 
     def __init__(self, lpar_mem_phyp, lpar_mem_pcm):
@@ -108,11 +116,17 @@ class LparMemory(object):
         # collected. If the metric is not available,
         # then assume 0 i.e. all memory is being utilized.
         if lpar_mem_pcm:
+            self.pct_real_mem_avbl = lpar_mem_pcm.memory.pct_real_mem_avbl
             self.pct_real_mem_free = lpar_mem_pcm.memory.pct_real_mem_free
             self.vm_pg_in_rate = lpar_mem_pcm.memory.vm_pg_in_rate
             self.vm_pg_out_rate = lpar_mem_pcm.memory.vm_pg_out_rate
             self.vm_pg_swap_in_rate = lpar_mem_pcm.memory.vm_pg_swap_in_rate
             self.vm_pg_swap_out_rate = lpar_mem_pcm.memory.vm_pg_swap_out_rate
+            self.total_pg_sp_size_count = lpar_mem_pcm.memory.total_pg_sp_size_count
+            self.total_pg_sp_free_count = lpar_mem_pcm.memory.total_pg_sp_free_count
+            self.vm_active_pg_count = lpar_mem_pcm.memory.vm_active_pg_count
+            self.real_mem_size_bytes = lpar_mem_pcm.memory.real_mem_size_bytes
+            self.up_time_secs = lpar_mem_pcm.memory.up_time_secs
         else:
             self.pct_real_mem_free = 0
             self.vm_pg_in_rate = -1

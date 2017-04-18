@@ -103,11 +103,21 @@ class LparUtil(object):
 class LparMemory(object):
     """Represents information on Lpar memory utilization """
     def __init__(self, memory):
+        self._pct_real_mem_avbl = memory.get('pctRealMemAvail')
         self._pct_real_mem_free = memory.get('pctRealMemFree')
         self._vm_pg_in_rate = memory.get('vmPgInRate')
         self._vm_pg_out_rate = memory.get('vmPgOutRate')
         self._vm_pg_swap_in_rate = memory.get('vmPgSpInRate')
         self._vm_pg_swap_out_rate = memory.get('vmPgSpOutRate')
+        self._total_pg_sp_size = memory.get('totalPgSpSizeCount')
+        self._total_pg_sp_free = memory.get('totalPgSpFreeCount')
+        self._vm_active_pg_count = memory.get('vmActivePageCount')
+        self._real_mem_size = memory.get('realMemSizeBytes')
+        self._up_time_secs = memory.get('upTimeSecs')
+
+    @property
+    def pct_real_mem_avbl(self):
+        return self._pct_real_mem_avbl
 
     @property
     def pct_real_mem_free(self):
@@ -128,3 +138,23 @@ class LparMemory(object):
     @property
     def vm_pg_swap_out_rate(self):
         return self._vm_pg_swap_out_rate
+
+    @property
+    def total_pg_sp_size_count(self):
+        return self._total_pg_sp_size_count
+
+    @property
+    def total_pg_sp_free_count(self):
+        return self._total_pg_sp_free_count
+
+    @property
+    def vm_active_pg_count(self):
+        return self._vm_active_pg_count
+
+    @property
+    def real_mem_size_bytes(self):
+        return self._real_mem_size_bytes
+
+    @property
+    def up_time_secs(self):
+        return self._up_time_secs
