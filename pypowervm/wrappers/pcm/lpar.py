@@ -103,11 +103,36 @@ class LparUtil(object):
 class LparMemory(object):
     """Represents information on Lpar memory utilization """
     def __init__(self, memory):
+        self._pct_real_mem_avbl = memory.get('pctRealMemAvbl')
+        self._total_pg_count = memory.get('totalPgSpSizeCount')
+        self._free_pg_count = memory.get('totalPgSpFreeCount')
+        self._active_pg_count = memory.get('vmActivePgCount')
+        self._real_mem_size_bytes = memory.get('realMemSizeBytes')
         self._pct_real_mem_free = memory.get('pctRealMemFree')
         self._vm_pg_in_rate = memory.get('vmPgInRate')
         self._vm_pg_out_rate = memory.get('vmPgOutRate')
         self._vm_pg_swap_in_rate = memory.get('vmPgSpInRate')
         self._vm_pg_swap_out_rate = memory.get('vmPgSpOutRate')
+
+    @property
+    def pct_real_mem_avbl(self):
+        return self._pct_real_mem_avbl
+
+    @property
+    def total_pg_count(self):
+        return self._total_pg_count
+
+    @property
+    def free_pg_count(self):
+        return self._free_pg_count
+
+    @property
+    def active_pg_count(self):
+        return self._active_pg_count
+
+    @property
+    def real_mem_size_bytes(self):
+        return self._real_mem_size_bytes
 
     @property
     def pct_real_mem_free(self):
