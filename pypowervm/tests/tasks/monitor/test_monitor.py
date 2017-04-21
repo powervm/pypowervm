@@ -152,6 +152,10 @@ class TestMonitors(testtools.TestCase):
         # Memory validation
         self.assertEqual(20480, metric.memory.logical_mem)
         self.assertEqual(20480, metric.memory.backed_physical_mem)
+        self.assertEqual(80, metric.memory.pct_real_mem_avbl)
+        self.assertEqual(1024, metric.memory.total_pg_sp_size_count)
+        self.assertEqual(512, metric.memory.total_pg_sp_free_count)
+        self.assertEqual(1048576, metric.memory.real_mem_size_bytes)
         self.assertEqual(61, metric.memory.pct_real_mem_free)
         self.assertEqual(25, metric.memory.vm_pg_out_rate)
 
@@ -192,6 +196,12 @@ class TestMonitors(testtools.TestCase):
 
         self.assertIsNotNone(metric.processor)
         self.assertIsNotNone(metric.memory)
+        # For powered off VM, OS specific memory metrics are None
+        self.assertIsNone(metric.memory.pct_real_mem_avbl)
+        self.assertIsNone(metric.memory.total_pg_sp_size_count)
+        self.assertIsNone(metric.memory.total_pg_sp_free_count)
+        self.assertIsNone(metric.memory.vm_active_pg_count)
+        self.assertIsNone(metric.memory.real_mem_size_bytes)
         # For powered off VM, the free memory is 100 percent.
         self.assertEqual(100, metric.memory.pct_real_mem_free)
         # For powered off VM, the page in/out rate is 0.
