@@ -76,6 +76,14 @@ class LparMemory(object):
       - logical_mem: The amount of memory on the LPAR.
       - backed_physical_mem: The amount of backing physical memory used by
                              the LPAR.
+      - pct_real_mem_avbl: Percentage of available memory on VMs. It is
+                           only available for newer RSCT packages.
+                           This statistic does not count cached memory as
+                           in use.
+      - total_pg_sp_size_count: Page count size is 4k pages
+      - total_pg_sp_free_count: Page count size is 4k pages
+      - vm_active_pg_count: Page count size is 4k pages
+      - real_mem_size_bytes: Page count size in bytes
       - pct_real_mem_free: Percentage of real page frames that are currently
                            available on the VMM (Virtual Memory Manager)
                            free list. VMM manages the allocation of real
@@ -108,6 +116,13 @@ class LparMemory(object):
         # collected. If the metric is not available,
         # then assume 0 i.e. all memory is being utilized.
         if lpar_mem_pcm:
+            self.pct_real_mem_avbl = lpar_mem_pcm.memory.pct_real_mem_avbl
+            self.total_pg_sp_size_count =\
+                lpar_mem_pcm.memory.total_pg_sp_size_count
+            self.total_pg_sp_free_count =\
+                lpar_mem_pcm.memory.total_pg_sp_free_count
+            self.vm_active_pg_count = lpar_mem_pcm.memory.vm_active_pg_count
+            self.real_mem_size_bytes = lpar_mem_pcm.memory.real_mem_size_bytes
             self.pct_real_mem_free = lpar_mem_pcm.memory.pct_real_mem_free
             self.vm_pg_in_rate = lpar_mem_pcm.memory.vm_pg_in_rate
             self.vm_pg_out_rate = lpar_mem_pcm.memory.vm_pg_out_rate
