@@ -21,6 +21,7 @@ BODY{
             "name": "Ubuntu1410",
             "memory":
             {
+                "pctRealMemAvbl": null,
                 "pctRealMemFree": 61,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 25,
@@ -35,6 +36,7 @@ BODY{
             "name": "test_vm2",
             "memory":
             {
+                "pctRealMemAvbl": null,
                 "pctRealMemFree": 62,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 94,
@@ -49,6 +51,7 @@ BODY{
             "name": "test_vm3",
             "memory":
             {
+                "pctRealMemAvbl": null,
                 "pctRealMemFree": 60,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 0,
@@ -63,6 +66,7 @@ BODY{
             "name": "test_vm4",
             "memory":
             {
+                "pctRealMemAvbl": null,
                 "pctRealMemFree": 62,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 80,

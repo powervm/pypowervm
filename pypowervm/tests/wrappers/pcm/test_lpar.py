@@ -41,12 +41,14 @@ class TestLparLTM(testtools.TestCase):
         lpar = info.lpars_util[0]
         self.assertEqual("Ubuntu1410", lpar.name)
         self.assertIsNotNone(lpar.memory)
+        self.assertIsNone(lpar.memory.pct_real_mem_avbl)
         self.assertEqual(61, lpar.memory.pct_real_mem_free)
         self.assertEqual(25, lpar.memory.vm_pg_out_rate)
         # Get 3rd(random) VM and assert its metrics
         lpar = info.lpars_util[2]
         self.assertEqual("test_vm3", lpar.name)
         self.assertIsNotNone(lpar.memory)
+        self.assertIsNone(lpar.memory.pct_real_mem_avbl)
         self.assertEqual(60, lpar.memory.pct_real_mem_free)
         self.assertEqual(0, lpar.memory.vm_pg_out_rate)
         # Assert that we have entries in JSON for VMs which were in error
@@ -59,9 +61,11 @@ class TestLparLTM(testtools.TestCase):
         lpar = info.lpars_util[4]
         self.assertEqual("3B0237F9-26F1-41C7-BE57-A08C9452AD9D", lpar.name)
         self.assertIsNotNone(lpar.memory)
+        self.assertIsNone(lpar.memory.pct_real_mem_avbl)
         self.assertEqual(100, lpar.memory.pct_real_mem_free)
         # Assert that LPAR with inactive RMC has no free memory.
         lpar = info.lpars_util[5]
         self.assertEqual("vm_inactive_rmc", lpar.name)
         self.assertIsNotNone(lpar.memory)
+        self.assertIsNone(lpar.memory.pct_real_mem_avbl)
         self.assertEqual(0, lpar.memory.pct_real_mem_free)
