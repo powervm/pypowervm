@@ -21,6 +21,11 @@ BODY{
             "name": "Ubuntu1410",
             "memory":
             {
+                "pctRealMemAvbl": 80,
+                "totalPgSpSizeCount": 1024,
+                "totalPgSpFreeCount": 512,
+                "vmActivePgCount": 64,
+                "realMemSizeBytes": 1048576,
                 "pctRealMemFree": 61,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 25,
@@ -35,6 +40,11 @@ BODY{
             "name": "test_vm2",
             "memory":
             {
+                "pctRealMemAvbl": 81,
+                "totalPgSpSizeCount": 2048,
+                "totalPgSpFreeCount": 1024,
+                "vmActivePgCount": 128,
+                "realMemSizeBytes": 1048576,
                 "pctRealMemFree": 62,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 94,
@@ -49,6 +59,11 @@ BODY{
             "name": "test_vm3",
             "memory":
             {
+                "pctRealMemAvbl": 82,
+                "totalPgSpSizeCount": 4096,
+                "totalPgSpFreeCount": 2048,
+                "vmActivePgCount": 256,
+                "realMemSizeBytes": 1048576,
                 "pctRealMemFree": 60,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 0,
@@ -63,6 +78,11 @@ BODY{
             "name": "test_vm4",
             "memory":
             {
+                "pctRealMemAvbl": 83,
+                "totalPgSpSizeCount": 8192,
+                "totalPgSpFreeCount": 4096,
+                "vmActivePgCount": 512,
+                "realMemSizeBytes": 1048576,
                 "pctRealMemFree": 62,
                 "vmPgInRate": 0,
                 "vmPgOutRate": 80,
