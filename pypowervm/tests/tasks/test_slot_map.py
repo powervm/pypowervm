@@ -674,7 +674,7 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
     def test_rebuild_w_vdisk(self):
-        """Test RebuildSlotMap fails when VDisks exist in topology."""
+        """Test RebuildSlotMap deterministic."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_VDISK
         rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
@@ -686,6 +686,19 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             # Make sure we got the right LUA for this UDID
             self.assertEqual(SCSI_W_VDISK[slot][slot_map.IOCLASS.VDISK][udid],
                              lua)
+
+        # Deterministic. vios2 gets slot 2
+        for udid in rsm._build_map['VDisk']['vios2']:
+            slot, lua = rsm.get_vscsi_slot(self.vio2, udid)
+            self.assertEqual(2, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_W_VDISK[slot][slot_map.IOCLASS.VDISK][udid],
+                             lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio1, 'vd_udid3')
+        self.assertIsNone(slot)
 
     def test_lu_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
@@ -946,6 +959,12 @@ SCSI_W_VDISK = {
         slot_map.IOCLASS.PV: {
             'pv_udid1': 'pv_lua_1',
             'pv_udid2': 'pv_lua_2'
+        }
+    },
+    2: {
+        slot_map.IOCLASS.VDISK: {
+            'vd_udid1': 1024.0,
+            'vd_udid2': 2048.0
         }
     }
 }
