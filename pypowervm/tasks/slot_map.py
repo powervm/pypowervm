@@ -623,7 +623,8 @@ class RebuildSlotMap(BuildSlotMap):
             # Create a dictionary of slots to the number of mappings per
             # slot. This will determine which slots we assign first.
             slots_order[slot] = (len(io_dict.get(IOCLASS.PV, {})) +
-                                 len(io_dict.get(IOCLASS.LU, {})))
+                                 len(io_dict.get(IOCLASS.LU, {})) +
+                                 len(io_dict.get(IOCLASS.VDISK, {})))
 
         # For VSCSI we need to figure out which slot numbers have the most
         # mappings and assign these ones to VIOSes first in descending order.
@@ -649,7 +650,8 @@ class RebuildSlotMap(BuildSlotMap):
 
         for slot in slots_order:
             slot_topo = self._slot_store.topology[slot]
-            if not slot_topo.get(IOCLASS.PV) and not slot_topo.get(IOCLASS.LU):
+            if not any(slot_topo.get(x) for x in
+                       (IOCLASS.PV, IOCLASS.LU, IOCLASS.VDISK)):
                 continue
             # Initialize the set of candidate VIOSes to all available VIOSes.
             # We'll filter out and remove any VIOSes that can't host any PV or
@@ -662,7 +664,6 @@ class RebuildSlotMap(BuildSlotMap):
                               six.iteritems(slot_topo.get(IOCLASS.LU, {}))])
             slot_info.extend([(udid, lua, IOCLASS.VDISK) for udid, lua in
                               six.iteritems(slot_topo.get(IOCLASS.VDISK, {}))])
-
             for udid, lua, stg_class in slot_info:
 
                 # If the UDID isn't anywhere to be found on the destination
