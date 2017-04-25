@@ -318,7 +318,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                         '88c37165c0485': '0x8200000000000000'},
                  'PV': {'01M0lCTTIxNDUzMTI2MDA1MDc2ODAyODIwQTlEQTgwMDAwMDAwMDA'
                         'wNTJBOQ==': '0x8600000000000000'},
-                 'VDisk': {'0300004c7a00007a00000001466c54110f.16': 0.125},
+                 'VDisk': {'0300004c7a00007a00000001466c54110f.16':
+                           '0x8100000000000000'},
                  'VOptMedia': {
                      '0evopt_19bbb46ad15747d79fe08f8464466144':
                          'vopt_19bbb46ad15747d79fe08f8464466144',
@@ -330,7 +331,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                          'vopt_84d7bfcf44964f398e60254776b94d41',
                      '0evopt_de86c46e07004993b412c948bd5047c2':
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
-             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}},
+             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1':
+                           '0x8700000000000000'}}},
             smt.topology)
 
     def test_drop_vscsi_mappings(self):
@@ -354,7 +356,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                        '88c37165c0485': None},
                 'PV': {'01M0lCTTIxNDUzMTI2MDA1MDc2ODAyODIwQTlEQTgwMDAwMDAwMDA'
                        'wNTJBOQ==': None},
-                'VDisk': {'0300004c7a00007a00000001466c54110f.16': 0.125},
+                'VDisk': {'0300004c7a00007a00000001466c54110f.16':
+                          '0x8100000000000000'},
                 'VOptMedia': {
                     '0evopt_19bbb46ad15747d79fe08f8464466144':
                         'vopt_19bbb46ad15747d79fe08f8464466144',
@@ -366,7 +369,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                         'vopt_84d7bfcf44964f398e60254776b94d41',
                     '0evopt_de86c46e07004993b412c948bd5047c2':
                         'vopt_de86c46e07004993b412c948bd5047c2'}},
-            3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}
+            3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1':
+                          '0x8700000000000000'}}
         }
 
         # Remove a single LU entry and verify it was removed
@@ -380,7 +384,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                         '56e9713a93f90': None},
                  'PV': {'01M0lCTTIxNDUzMTI2MDA1MDc2ODAyODIwQTlEQTgwMDAwMDAwMDA'
                         'wNTJBOQ==': None},
-                 'VDisk': {'0300004c7a00007a00000001466c54110f.16': 0.125},
+                 'VDisk': {'0300004c7a00007a00000001466c54110f.16':
+                           '0x8100000000000000'},
                  'VOptMedia': {
                      '0evopt_19bbb46ad15747d79fe08f8464466144':
                          'vopt_19bbb46ad15747d79fe08f8464466144',
@@ -392,7 +397,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                          'vopt_84d7bfcf44964f398e60254776b94d41',
                      '0evopt_de86c46e07004993b412c948bd5047c2':
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
-             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}},
+             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1':
+                           '0x8700000000000000'}}},
             smt.topology)
 
         # Remove all other LPAR 2 LU entries and verify they are removed
@@ -408,7 +414,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         self.assertEqual(
             {2: {'PV': {'01M0lCTTIxNDUzMTI2MDA1MDc2ODAyODIwQTlEQTgwMDAwMDAwMDA'
                         'wNTJBOQ==': None},
-                 'VDisk': {'0300004c7a00007a00000001466c54110f.16': 0.125},
+                 'VDisk': {'0300004c7a00007a00000001466c54110f.16':
+                           '0x8100000000000000'},
                  'VOptMedia': {
                      '0evopt_19bbb46ad15747d79fe08f8464466144':
                          'vopt_19bbb46ad15747d79fe08f8464466144',
@@ -420,7 +427,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                          'vopt_84d7bfcf44964f398e60254776b94d41',
                      '0evopt_de86c46e07004993b412c948bd5047c2':
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
-             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1': 60.0}}},
+             3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1':
+                           '0x8700000000000000'}}},
             smt.topology)
 
     @mock.patch('pypowervm.wrappers.managed_system.System.get')
@@ -674,7 +682,7 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             [self.vio1, self.vio2], VOL_TO_VIO1, {})
 
     def test_rebuild_w_vdisk(self):
-        """Test RebuildSlotMap fails when VDisks exist in topology."""
+        """Test RebuildSlotMap deterministic."""
         smt = self.smt_impl('foo')
         smt._slot_topo = SCSI_W_VDISK
         rsm = slot_map.RebuildSlotMap(smt, [self.vio1, self.vio2],
@@ -686,6 +694,19 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
             # Make sure we got the right LUA for this UDID
             self.assertEqual(SCSI_W_VDISK[slot][slot_map.IOCLASS.VDISK][udid],
                              lua)
+
+        # Deterministic. vios2 gets slot 2
+        for udid in rsm._build_map['VDisk']['vios2']:
+            slot, lua = rsm.get_vscsi_slot(self.vio2, udid)
+            self.assertEqual(2, slot)
+            # Make sure we got the right LUA for this UDID
+            self.assertEqual(SCSI_W_VDISK[slot][slot_map.IOCLASS.VDISK][udid],
+                             lua)
+
+        # The build map won't actually have these as keys but
+        # the get should return None nicely.
+        slot, lua = rsm.get_vscsi_slot(self.vio1, 'vd_udid3')
+        self.assertIsNone(slot)
 
     def test_lu_vscsi_build_out_1(self):
         """Test RebuildSlotMap deterministic."""
@@ -940,12 +961,18 @@ SCSI_W_VOPT = {
 SCSI_W_VDISK = {
     1: {
         slot_map.IOCLASS.VDISK: {
-            'vd_udid1': 1024.0,
-            'vd_udid2': 2048.0
+            'vd_udid1': 'vd_lua_1',
+            'vd_udid2': 'vd_lua_2'
         },
         slot_map.IOCLASS.PV: {
             'pv_udid1': 'pv_lua_1',
             'pv_udid2': 'pv_lua_2'
+        }
+    },
+    2: {
+        slot_map.IOCLASS.VDISK: {
+            'vd_udid1': 'vd_lua_1',
+            'vd_udid2': 'vd_lua_2'
         }
     }
 }
