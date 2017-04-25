@@ -251,15 +251,8 @@ class SlotMapStore(object):
         bstor = vscsimap.backing_storage
         cslot = vscsimap.server_adapter.lpar_slot_num
         stg_key = bstor.udid
-        if isinstance(bstor, stor.VDisk):
-            # Local disk - the IDs will be different on the target (because
-            # it's different storage) and the data will be gone (likewise).
-            # Key on the UDID (above) in case it's a local rebuild.
-            # For remote, the only thing we need to make sure of is that disks
-            # of (at least) the right *size* end up in the right slots.
-            extra_spec = bstor.capacity
-        elif isinstance(bstor, stor.VOptMedia):
-            # Virtual Optical Media - Again, the IDs will be different on the
+        if isinstance(bstor, stor.VOptMedia):
+            # Virtual Optical Media - The IDs will be different on the
             # target.  Using the UDID as a key (above) will at least allow us
             # to determine how many VIOSes should have VOptMedia devices.  For
             # remote rebuild, assuming the consumer uses consistent image
@@ -267,9 +260,9 @@ class SlotMapStore(object):
             # VOpts we should pick up.
             extra_spec = bstor.name
         else:
-            # For shared storage (PV/LU), we need to make sure the LUA (Logical
-            # Unit Address) of the device is preserved on the target.  This
-            # informs things like boot order.
+            # For shared storage (PV/LU) and for local (VDISK), we need to
+            # make sure the LUA (Logical Unit Address) of the device is
+            # preserved on the target.  This informs things like boot order.
             extra_spec = vscsimap.target_dev.lua
 
         return bstor, stg_key, cslot, extra_spec
@@ -623,7 +616,8 @@ class RebuildSlotMap(BuildSlotMap):
             # Create a dictionary of slots to the number of mappings per
             # slot. This will determine which slots we assign first.
             slots_order[slot] = (len(io_dict.get(IOCLASS.PV, {})) +
-                                 len(io_dict.get(IOCLASS.LU, {})))
+                                 len(io_dict.get(IOCLASS.LU, {})) +
+                                 len(io_dict.get(IOCLASS.VDISK, {})))
 
         # For VSCSI we need to figure out which slot numbers have the most
         # mappings and assign these ones to VIOSes first in descending order.
@@ -649,7 +643,8 @@ class RebuildSlotMap(BuildSlotMap):
 
         for slot in slots_order:
             slot_topo = self._slot_store.topology[slot]
-            if not slot_topo.get(IOCLASS.PV) and not slot_topo.get(IOCLASS.LU):
+            if not any(slot_topo.get(x) for x in
+                       (IOCLASS.PV, IOCLASS.LU, IOCLASS.VDISK)):
                 continue
             # Initialize the set of candidate VIOSes to all available VIOSes.
             # We'll filter out and remove any VIOSes that can't host any PV or
@@ -662,7 +657,6 @@ class RebuildSlotMap(BuildSlotMap):
                               six.iteritems(slot_topo.get(IOCLASS.LU, {}))])
             slot_info.extend([(udid, lua, IOCLASS.VDISK) for udid, lua in
                               six.iteritems(slot_topo.get(IOCLASS.VDISK, {}))])
-
             for udid, lua, stg_class in slot_info:
 
                 # If the UDID isn't anywhere to be found on the destination
