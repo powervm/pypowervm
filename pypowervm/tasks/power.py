@@ -262,10 +262,9 @@ def _pwroff_soft_ibmi_flow(part, opts, timeout):
             PowerOp.stop(part, opts=opts.os_normal(), timeout=timeout)
             return True
         except pexc.VMPowerOffFailure:
+            # Fall through to OS immediate
             LOG.warning(_("IBMi OS normal shutdown failed.  Trying OS "
                           "immediate shutdown.  Partition: %s"), part.name)
-            # Fall through to OS immediate, with default timeout
-            timeout = CONF.pypowervm_job_request_timeout
 
     # ==> OS immediate
     try:
@@ -422,6 +421,9 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
     # the force_immediate flag.
     if part.env == bp.LPARType.OS400:
         # The IBMi progression.
+        # Use the default timeout, as the timeout value passed
+        # is too low for IBMi partitions
+        timeout = CONF.pypowervm_job_request_timeout
         if _pwroff_soft_ibmi_flow(part, opts, timeout):
             return
             # Fall through to VSP hard

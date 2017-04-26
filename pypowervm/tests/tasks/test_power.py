@@ -301,7 +301,7 @@ class TestPower(testtools.TestCase):
             self.run_job.side_effect = (
                 # OS normal
                 self.validate_run(
-                    part, ex_parms={'operation=osshutdown'}, ex_timeout=100,
+                    part, ex_parms={'operation=osshutdown'}, ex_timeout=1800,
                     result=exc,
                     # OS immediate (timeout is defaulted from this point)
                     nxt=self.validate_run(
@@ -316,7 +316,7 @@ class TestPower(testtools.TestCase):
                                     'operation=shutdown', 'immediate=true'}))))
             )
             # Run it
-            power.power_off(part, None, timeout=100)
+            power.power_off(part, None, timeout=1800)
             self.assertEqual(4, self.run_job.call_count)
             self.run_job.reset_mock()
 
