@@ -90,13 +90,13 @@ def _delete_vio_file(vio_file):
     try:
         vio_file.adapter.delete(vio_file.schema_type, root_id=vio_file.uuid,
                                 service='web')
-    except Exception as e:
-        if not (isinstance(e, exc.HttpError) and
-                e.her_wrap.status == c.HTTPStatus.NOT_FOUND):
-            LOG.error(_("Failed to delete vio_file with UUID %s.  It must be "
+    except exc.HttpNotFound:
+        # Already gone - ignore
+        pass
+    except exc.Error:
+        LOG.exception(_("Failed to delete vio_file with UUID %s.  It must be "
                         "manually deleted."), vio_file.uuid)
-            LOG.exception(e)
-            return vio_file
+        return vio_file
     return None
 
 

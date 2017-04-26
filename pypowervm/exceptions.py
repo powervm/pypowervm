@@ -93,6 +93,16 @@ class HttpError(Error):
         super(HttpError, self).__init__(msg, response=resp)
 
 
+class HttpNotFound(HttpError):
+    """HttpError subclass where response.status == c.HTTPStatus.NOT_FOUND."""
+    pass
+
+
+class HttpUnauth(HttpError):
+    """HttpError where response.status == c.HTTPStatus.UNAUTHORIZED."""
+    pass
+
+
 class AtomError(Error):
     """Atom Error on PowerVM API Adapter method invocation."""
 

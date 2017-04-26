@@ -1,6 +1,4 @@
-# Copyright 2014, 2016 IBM Corp.
-#
-# All Rights Reserved.
+# Copyright 2014, 2017 IBM Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,9 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 """Low-level communication with the PowerVM REST API."""
-
 import abc
 import copy
 import errno
@@ -44,7 +40,6 @@ import six
 import six.moves.urllib.parse as urllib
 import weakref
 
-
 from pypowervm import const as c
 import pypowervm.entities as ent
 import pypowervm.exceptions as pvmex
@@ -53,26 +48,22 @@ from pypowervm import traits as pvm_traits
 from pypowervm import util
 from pypowervm.utils import retry
 
-# Preserve CDATA on the way in (also ensures it is not mucked with on the way
-# out)
-etree.set_default_parser(etree.XMLParser(strip_cdata=False, encoding='utf-8'))
 
+# Preserve CDATA on the way in (also ensures it is not altered on the way out)
+etree.set_default_parser(etree.XMLParser(strip_cdata=False, encoding='utf-8'))
 
 # Setup logging
 LOG = logging.getLogger(__name__)
 
-register_namespace = etree.register_namespace
-
 # Register the namespaces we'll use
-register_namespace('atom', c.ATOM_NS)
-register_namespace('xsi', c.XSI_NS)
-register_namespace('web', c.WEB_NS)
-register_namespace('uom', c.UOM_NS)
+etree.register_namespace('atom', c.ATOM_NS)
+etree.register_namespace('xsi', c.XSI_NS)
+etree.register_namespace('web', c.WEB_NS)
+etree.register_namespace('uom', c.UOM_NS)
 
 
 class Session(object):
     """Responsible for PowerVM API session management."""
-
     def __init__(self, host='localhost', username=None, password=None,
                  auditmemento=None, protocol=None, port=None, timeout=1200,
                  certpath='/etc/ssl/certs/', certext='.crt', conn_tries=1):
@@ -283,11 +274,9 @@ class Session(object):
 
         if isupload:
             LOG.trace('sending %s %s headers=%s body=<file contents>',
-                      method, url,
-                      headers if not sensitive else "<sensitive>")
+                      method, url, headers if not sensitive else "<sensitive>")
         else:
-            LOG.trace('sending %s %s headers=%s body=%s',
-                      method, url,
+            LOG.trace('sending %s %s headers=%s body=%s', method, url,
                       headers if not sensitive else "<sensitive>",
                       body if not sensitive else "<sensitive>")
 
@@ -359,7 +348,6 @@ class Session(object):
         # re-login processing
         if response.status_code == c.HTTPStatus.UNAUTHORIZED:
             LOG.debug('Processing HTTP Unauthorized')
-
             with self._lock:
                 if not relogin:
                     LOG.debug('Requester specified no re-login')
@@ -369,11 +357,9 @@ class Session(object):
                                   'used.'))
                 else:
                     if self._sessToken != sess_token_try:
-                        LOG.debug('Someone else handled re-login for %s',
-                                  self.host)
+                        LOG.debug('Re-login done elsewhere for %s', self.host)
                     else:
                         self._logged_in = False
-
                         LOG.info(_('Attempting re-login %s'), self.host)
                         try:
                             self._logon()
@@ -400,26 +386,24 @@ class Session(object):
                                 response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=response.text)
-                            raise e
+                            raise
 
                     # Retry the original request
                     try:
                         return self.request(method, path, headers, body,
                                             sensitive=sensitive, verify=verify,
                                             timeout=timeout, relogin=False)
-                    except pvmex.HttpError as e:
-                        if e.response.status == c.HTTPStatus.UNAUTHORIZED:
-                            # This is a special case... normally on a 401 we
-                            # would retry login, but we won't here because
-                            # we just did that... Handle it specially.
-                            LOG.warning(
-                                _('Re-attempt failed with another 401, '
-                                  'response body:\n%s'), e.response.body)
-                            raise pvmex.Error(
-                                _('suspicious HTTP 401 response for '
-                                  '%(method)s %(path)s: token is brand new') %
-                                {'method': method, 'path': path})
-                        raise
+                    except pvmex.HttpUnauth as e:
+                        # This is a special case... normally on a 401 we
+                        # would retry login, but we won't here because
+                        # we just did that... Handle it specially.
+                        LOG.warning(
+                            _('Re-attempt failed with another 401, response '
+                              'body:\n%s'), e.response.body)
+                        raise pvmex.Error(
+                            _('suspicious HTTP 401 response for %(method)s '
+                              '%(path)s: token is brand new') %
+                            {'method': method, 'path': path})
 
         resp = None
         if not isdownload:
@@ -445,7 +429,18 @@ class Session(object):
                                 response.reason, response.headers,
                                 reqheaders=headers, reqbody=body,
                                 body=errtext)
-            raise pvmex.HttpError(resp)
+            raise self._get_httperror(resp)
+
+    @staticmethod
+    def _get_httperror(resp):
+        """Return (don't raise) an HttpError subclass appropriate to resp."""
+        status = resp.status
+        if status == c.HTTPStatus.NOT_FOUND:
+            return pvmex.HttpNotFound(resp)
+        if status == c.HTTPStatus.UNAUTHORIZED:
+            return pvmex.HttpUnauth(resp)
+        # Default general HttpError
+        return pvmex.HttpError(resp)
 
     def _logon(self, conn_tries=1):
         """Create an authentication token on the REST server for this Session.
@@ -486,8 +481,7 @@ class Session(object):
             verify = False
         elif util.validate_certificate(self.host, self.port, self.certpath,
                                        self.certext):
-            # Attempt to validate ourselves based on certificates stored in
-            # self.certpath
+            # Attempt to validate based on certificates stored in self.certpath
             verify = False
         else:
             # Have the requests module validate the certificate
@@ -586,7 +580,6 @@ class Session(object):
 
 class Adapter(object):
     """REST API Adapter for PowerVM remote management."""
-
     def __init__(self, session=None, use_cache=False, helpers=None):
         """Create a new Adapter instance, connected to a Session.
 
@@ -725,9 +718,9 @@ class Adapter(object):
         :param suffix_type: Suffix type added to the path (with '/').  For
                             special URIs, like Job requests (e.g. 'do' in
                             .../do/Something).
-        :param suffix_param: Suffix parameter added to the path (with '/'). For
-                             special URIs, like Job requests (e.g. 'Something'
-                             in .../do/Something).
+        :param suffix_parm: Suffix parameter added to the path (with '/'). For
+                            special URIs, like Job requests (e.g. 'Something'
+                            in .../do/Something).
         :param detail: Requested detail level of the response.  Obsolete.
         :param service: REST service type, one of pypowervm.const.SERVICE_BY_NS
         :param etag: Not used (caching disabled).
@@ -804,8 +797,7 @@ class Adapter(object):
                       helpers=None):
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
-            raise ValueError(_('path=%s is not a PowerVM API reference') %
-                             path)
+            raise ValueError(_('path=%s not a PowerVM API reference') % path)
         headers = {}
         json_search_str = (c.UUID_REGEX + '/quick$' + '|/quick/' + r'|\.json$')
         if re.search(json_search_str, util.dice_href(path, include_query=False,
@@ -894,10 +886,6 @@ class Adapter(object):
         """Delete an existing resource where the URI path is already known."""
         path = util.dice_href(path, include_query=False,
                               include_fragment=False)
-        return self._delete_by_path(path, etag, timeout, auditmemento,
-                                    helpers=helpers)
-
-    def _delete_by_path(self, path, etag, timeout, auditmemento, helpers=None):
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError(_('path=%s is not a PowerVM API reference') %
@@ -991,8 +979,7 @@ class Adapter(object):
             if suffix_parm:
                 path = util.extend_basepath(path, '/' + suffix_parm)
         if detail:
-            sep = '&' if '?' in path else '?'
-            path += sep + 'detail=' + detail
+            path += ('&' if '?' in path else '?') + 'detail=' + detail
 
         # Explicit xag is always honored as-is.  If unspecified, we usually
         # want to include group=None.  However, there are certain classes of
@@ -1066,8 +1053,7 @@ class Adapter(object):
                 if child_type and not child_id:
                     raise ValueError(_('Expected child_id'))
         else:
-            raise ValueError(_('Unexpected req_method=%s') %
-                             req_method)
+            raise ValueError(_('Unexpected req_method=%s') % req_method)
 
 
 class Response(object):
@@ -1244,8 +1230,7 @@ class _EventListener(EventListener):
                                 '%s') % e)
         if not events.get('general') == 'init':
             # Something else is sharing this feed!
-            raise ValueError(_('Application id "%s" is not unique') %
-                             self.appid)
+            raise ValueError(_('Application id "%s" not unique') % self.appid)
         # No errors initializing, so dispatch what we recieved.
         self._dispatch_events(events, raw_events, evtwraps)
 
@@ -1267,8 +1252,7 @@ class _EventListener(EventListener):
             raise ValueError(_('Handler must be an EventHandler'))
         with self._lock:
             if handler not in self.handlers:
-                raise ValueError(_('This handler not found in subscriber '
-                                   'list'))
+                raise ValueError(_('Handler not found in subscriber list'))
             self.handlers.remove(handler)
             if not self.handlers:
                 self._pthread.stop()
@@ -1360,7 +1344,6 @@ class _EventListener(EventListener):
                             'EventID': <id>, 'EventDetail': <detail>}
         :param wrap_events: List of pypowervm.wrappers.event.Event wrappers.
         """
-
         def call_handler(handler):
             try:
                 if isinstance(handler, WrapperEventHandler):
@@ -1405,7 +1388,6 @@ class EventHandler(_EventHandler):
     Implement this class and add it to the Session's event listener to process
     events back from the API.
     """
-
     @abc.abstractmethod
     def process(self, events):
         """Process the event that comes back from the API.
@@ -1437,7 +1419,6 @@ class RawEventHandler(_EventHandler):
     Implement this class and add it to the Session's event listener to process
     events back from the API.
     """
-
     @abc.abstractmethod
     def process(self, events):
         """Process the event that comes back from the API.
@@ -1468,7 +1449,6 @@ class WrapperEventHandler(_EventHandler):
     Implement this class and add it to the Session's event listener to process
     events back from the API.
     """
-
     @abc.abstractmethod
     def process(self, events):
         """Process the event that comes back from the API.
@@ -1485,7 +1465,6 @@ class _EventPollThread(threading.Thread):
         threading.Thread.__init__(self)
         self.eventlistener = eventlistener
         self.done = False
-        # self.daemon = True
 
     def run(self):
         while not self.done:
