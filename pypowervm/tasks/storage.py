@@ -101,7 +101,7 @@ def _delete_vio_file(vio_file):
 
 
 def crt_copy_vdisk(adapter, v_uuid, vol_grp_uuid, src, f_size, d_name,
-                   d_size=None):
+                   d_size=None, file_format=None):
     """Create a new virtual disk that contains all the data of the src given.
 
     :param adapter: The adapter to talk over the API.
@@ -116,6 +116,8 @@ def crt_copy_vdisk(adapter, v_uuid, vol_grp_uuid, src, f_size, d_name,
     :param d_size: (Optional) The desired size of the new VDisk in bytes.  If
                    omitted or smaller than f_size, it will be set to match
                    f_size.
+    :param file_format: (Optional) File format of src VDisk.  See
+                        stor.FileFormatType enumeration for valid formats.
     :return: The virtual disk that the file is uploaded into.
     """
     # Create the new virtual disk.  The size here is in GB.  We can use decimal
@@ -130,7 +132,7 @@ def crt_copy_vdisk(adapter, v_uuid, vol_grp_uuid, src, f_size, d_name,
     # The REST API requires that we round up to the highest GB.
     gb_size = math.ceil(gb_size)
     return crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size,
-                     base_image=src)
+                     base_image=src, file_format=file_format)
 
 
 def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
@@ -145,7 +147,7 @@ def _clean_out_bad_upload(adapter, vol_grp_uuid, v_uuid, n_vdisk, vio_file):
 
 def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
                      d_size=None, sha_chksum=None,
-                     upload_type=UploadType.IO_STREAM):
+                     upload_type=UploadType.IO_STREAM, file_format=None):
     """Uploads a new virtual disk.
 
     :param adapter: The adapter to talk over the API.
@@ -164,6 +166,8 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
     :param upload_type: (Optional, Default: IO_STREAM) Defines the way in
                         which the vdisk should be uploaded.  Refer to the
                         UploadType enumeration for valid upload mechanisms.
+    :param file_format: (Optional) Format of file coming from io_handle.  See
+                        stor.FileFormatType enumeration for valid formats.
     :return: The first return value is the virtual disk that the file is
              uploaded into.
     :return: Normally the second return value will be None, indicating that the
@@ -183,7 +187,8 @@ def upload_new_vdisk(adapter, v_uuid, vol_grp_uuid, io_handle, d_name, f_size,
 
     # The REST API requires that we round up to the highest GB.
     gb_size = math.ceil(gb_size)
-    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size)
+    n_vdisk = crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, gb_size,
+                        file_format=file_format)
 
     # Next, create the file, but specify the appropriate disk udid from the
     # Virtual Disk
@@ -614,7 +619,7 @@ def find_vg(adapter, vg_name, vios_name=None):
 
 @lock.synchronized(_LOCK_VOL_GRP)
 def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
-              base_image=None):
+              base_image=None, file_format=None):
     """Creates a new Virtual Disk in the specified volume group.
 
     :param adapter: The pypowervm.adapter.Adapter through which to request the
@@ -625,6 +630,8 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
                    I/O Server that will contain the file.
     :param d_size_gb: The size of the disk in GB.
     :param base_image: (Optional) The UDID of a VDisk to copy data from.
+    :param file_format: (Optional) File format of the new VirtualDisk.  See
+                        stor.FileFormatType enumeration for valid formats.
     :return: VDisk ElementWrapper representing the new VirtualDisk from the
              server response (i.e. UDID will be populated).
     :raise exc.Error: If the server response from attempting to add the VDisk
@@ -636,7 +643,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
     vol_grp = stor.VG.wrap(vol_grp_data.entry)
 
     new_vdisk = stor.VDisk.bld(adapter, d_name, d_size_gb,
-                               base_image=base_image)
+                               base_image=base_image, file_format=file_format)
 
     # Append it to the list.
     vol_grp.virtual_disks.append(new_vdisk)
@@ -646,7 +653,7 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
 
     # The new Virtual Disk should be created.  Find the one we created.
     for vdisk in vol_grp.virtual_disks:
-        if vdisk.name == d_name:
+        if vdisk.name.endswith(d_name):
             return vdisk
     # This should never occur since the update went through without error,
     # but adding just in case as we don't want to create the file meta

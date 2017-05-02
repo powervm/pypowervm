@@ -44,9 +44,12 @@ _DISK_BASE = 'BaseImage'
 _DISK_UDID = UDID
 _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
+_DISK_FILEFORMAT = 'FileFormat'
+_DISK_OPTIONAL_PARMS = 'OptionalParameters'
 _VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
                    _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE]
+                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
+                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
 
 
 class VDiskType(object):
@@ -61,6 +64,11 @@ class BackStoreType(object):
     FILE_IO = 'fileio'
     # A user-space handler that supports RAW, QCOW or QCOW2 files.
     USER_QCOW = 'user:qcow'
+
+
+class FileFormatType(object):
+    RAW = 'raw'
+    QCOW2 = 'qcow2'
 
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
@@ -708,6 +716,20 @@ class _VDisk(ewrap.ElementWrapper):
         """
         self.set_parm_value(_DISK_BACKSTORE_TYPE, val, attrib=c.ATTR_KSV150)
 
+    @property
+    def file_format(self):
+        return self._get_val_str(_DISK_FILEFORMAT)
+
+    def _file_format(self, val):
+        self.set_parm_value(_DISK_FILEFORMAT, val, attrib=c.ATTR_KSV150)
+
+    @property
+    def optional_parms(self):
+        return self._get_val_str(_DISK_OPTIONAL_PARMS)
+
+    def _optional_parms(self, val):
+        self.set_parm_value(_DISK_OPTIONAL_PARMS, val, attrib=c.ATTR_KSV150)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -752,7 +774,8 @@ class VDisk(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, capacity, label=None, base_image=None):
+    def bld(cls, adapter, name, capacity, label=None, base_image=None,
+            file_format=None, optional_parms=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -776,6 +799,10 @@ class VDisk(_VDisk):
         vd.name = name
         if base_image:
             vd._base_image(base_image)
+        if file_format:
+            vd._file_format(file_format)
+        if optional_parms:
+            vd._optional_parms(optional_parms)
         return vd
 
     @classmethod
