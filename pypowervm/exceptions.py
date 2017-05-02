@@ -388,3 +388,15 @@ class VIOSNotFound(AbstractMsgFmtError):
 
 class VGNotFound(AbstractMsgFmtError):
     msg_fmt = _("No volume group found with name %(vg_name)s.")
+
+
+class PartitionIsNotIBMi(AbstractMsgFmtError):
+    msg_fmt = _("Partition with name %(part_name)s is not an IBMi partition.")
+
+
+class PanelFunctionRequiresPartition(AbstractMsgFmtError):
+    msg_fmt = _("PanelJob function partition argument is empty.")
+
+
+class InvalidIBMiPanelFunctionOperation(AbstractMsgFmtError):
+    msg_fmt = _("Panel function operation %(op_name)s is invalid. One of %(valid_ops)s expected.")
