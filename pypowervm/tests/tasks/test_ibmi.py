@@ -15,6 +15,7 @@
 #    under the License.
 
 
+import fixtures
 import mock
 import testtools
 
@@ -22,6 +23,7 @@ from pypowervm import exceptions as pvm_exc
 from pypowervm.tasks import ibmi
 import pypowervm.tests.tasks.util as tju
 import pypowervm.tests.test_fixtures as pvm_fx
+import pypowervm.wrappers.base_partition as pvm_bp
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FEED = 'fake_vios_feed.txt'
@@ -111,3 +113,110 @@ class TestIBMiWithPVM(TestIBMi):
         self.assertRaises(pvm_exc.IBMiLoadSourceNotFound,
                           ibmi.update_ibmi_settings, self.apt,
                           mock_lparw, 'vscsi')
+
+
+class TestPanelFunction(testtools.TestCase):
+    def setUp(self):
+        super(TestPanelFunction, self).setUp()
+
+        self.adpt = self.useFixture(pvm_fx.AdapterFx()).adpt
+
+        # Make it easier to validate job params: create_job_parameter returns a
+        # simple 'name=value' string.
+        mock_crt_jparm = self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.job.Job.create_job_parameter')).mock
+        mock_crt_jparm.side_effect = (
+            lambda name, value, cdata=False: '%s=%s' % (name, value))
+
+        # Patch Job.wrap to return a mocked Job wrapper
+        mock_job = mock.Mock()
+        self.useFixture(fixtures.MockPatch(
+            'pypowervm.wrappers.job.Job.wrap')).mock.return_value = mock_job
+        self.run_job = mock_job.run_job
+
+    def mock_partition(self, env=pvm_bp.LPARType.OS400,
+                       rmc_state=pvm_bp.RMCState.ACTIVE, mgmt=False):
+        """Returns a mocked partition with the specified properties."""
+        return mock.Mock(adapter=self.adpt, env=env, rmc_state=rmc_state,
+                         is_mgmt_partition=mgmt)
+
+    def test_ops(self):
+        mock_part = self.mock_partition()
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.CONSOLESERVICE)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=consoleservice'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.IOPDUMP)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=iopdump'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.IOPRESET)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=iopreset'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.REMOTEDSTON)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=remotedston'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.REMOTEDSTOFF)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=remotedstoff'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.RETRYDUMP)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=retrydump'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.DSTON)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=dston'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.DUMPRESTART)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=dumprestart'],
+            synchronous=True, timeout=1800)
+        self.run_job.reset_mock()
+
+        ibmi.PanelJob.start(mock_part,
+                            ibmi.IBMiPanelOperations.DUMPRESTART,
+                            synchronous=False, timeout=100)
+        self.run_job.assert_called_once_with(
+            mock_part.uuid, job_parms=['operation=dumprestart'],
+            synchronous=False, timeout=100)
+        self.run_job.reset_mock()
+
+        self.assertRaises(pvm_exc.InvalidIBMiPanelFunctionOperation,
+                          ibmi.PanelJob.start, mock_part, 'NotRight')
+
+        self.assertRaises(pvm_exc.InvalidIBMiPanelFunctionOperation,
+                          ibmi.PanelJob.start, mock_part, None)
+
+    def test_invalid_partition(self):
+        mock_part = self.mock_partition(env=pvm_bp.LPARType.AIXLINUX)
+        self.assertRaises(pvm_exc.PartitionIsNotIBMi, ibmi.PanelJob.start,
+                          mock_part, ibmi.IBMiPanelOperations.REMOTEDSTON)
+
+        self.assertRaises(pvm_exc.PanelFunctionRequiresPartition,
+                          ibmi.PanelJob.start, None,
+                          ibmi.IBMiPanelOperations.REMOTEDSTON)
