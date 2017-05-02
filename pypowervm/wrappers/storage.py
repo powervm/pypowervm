@@ -44,9 +44,12 @@ _DISK_BASE = 'BaseImage'
 _DISK_UDID = UDID
 _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
+_DISK_FILEFORMAT = 'FileFormat'
+_DISK_OPTIONAL_PARMS = 'OptionalParameters'
 _VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
                    _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE]
+                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
+                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
 
 
 class VDiskType(object):
@@ -61,6 +64,12 @@ class BackStoreType(object):
     FILE_IO = 'fileio'
     # A user-space handler that supports RAW, QCOW or QCOW2 files.
     USER_QCOW = 'user:qcow'
+
+
+class FileFormatType(object):
+    """From FileFormatType.Enum"""
+    RAW = 'raw'
+    QCOW2 = 'qcow2'
 
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
@@ -708,6 +717,18 @@ class _VDisk(ewrap.ElementWrapper):
         """
         self.set_parm_value(_DISK_BACKSTORE_TYPE, val, attrib=c.ATTR_KSV150)
 
+    @property
+    def file_format(self):
+        """File format to be used, one of the FileFormatType enum values."""
+        return self._get_val_str(_DISK_FILEFORMAT)
+
+    def _file_format(self, val):
+        """Set the file format.
+
+        :param val: One of the FileFormatType enum values.
+        """
+        self.set_parm_value(_DISK_FILEFORMAT, val, attrib=c.ATTR_KSV150)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -752,7 +773,8 @@ class VDisk(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, capacity, label=None, base_image=None):
+    def bld(cls, adapter, name, capacity, label=None, base_image=None,
+            file_format=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -767,6 +789,8 @@ class VDisk(_VDisk):
         :param label: The generic label for the disk.  Not required.
         :param base_image: UDID of virtual disk that contains source data
                            Not required.
+        :param file_format: (Optional) File format of VDisk.  See
+                            FileFormatType enumeration for valid formats.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -776,6 +800,8 @@ class VDisk(_VDisk):
         vd.name = name
         if base_image:
             vd._base_image(base_image)
+        if file_format:
+            vd._file_format(file_format)
         return vd
 
     @classmethod
