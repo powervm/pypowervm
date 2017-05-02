@@ -243,6 +243,26 @@ class TestUploadLV(testtools.TestCase):
         self.assertIsInstance(n_vdisk, stor.VDisk)
 
     @mock.patch('pypowervm.tasks.storage.crt_vdisk')
+    def test_crt_copy_vdisk(self, mock_crt_vdisk):
+        """Tests the uploads of the virtual disks."""
+        # traits are already set to use the REST API upload
+
+        # First need to load in the various test responses.
+        vg_orig = tju.load_file(UPLOAD_VOL_GRP_ORIG, self.adpt)
+        vg_post_crt = tju.load_file(UPLOAD_VOL_GRP_NEW_VDISK, self.adpt)
+
+        self.adpt.read.return_value = vg_orig
+        self.adpt.update_by_path.return_value = vg_post_crt
+        n_vdisk = ts.crt_copy_vdisk(
+            self.adpt, self.v_uuid, self.vg_uuid, 'src', 1073741824, 'test2',
+            d_size=2147483648, file_format=stor.FileFormatType.RAW)
+
+        self.assertIsNotNone(n_vdisk)
+        mock_crt_vdisk.assert_called_once_with(
+            self.adpt, self.v_uuid, self.vg_uuid, 'test2', 2,
+            base_image='src', file_format=stor.FileFormatType.RAW)
+
+    @mock.patch('pypowervm.tasks.storage.crt_vdisk')
     @mock.patch('pypowervm.tasks.storage._create_file')
     @mock.patch('pypowervm.tasks.storage._upload_stream_api')
     def test_upload_new_vdisk_func_remote(self, mock_usa, mock_crt_file,
@@ -252,9 +272,11 @@ class TestUploadLV(testtools.TestCase):
 
         n_vdisk, maybe_file = ts.upload_new_vdisk(
             self.adpt, 'v_uuid', 'vg_uuid', 'io_handle', 'd_name', 10,
-            upload_type=ts.UploadType.FUNC)
-        mock_crt_vdisk.assert_called_once_with(self.adpt, 'v_uuid', 'vg_uuid',
-                                               'd_name', 1.0)
+            upload_type=ts.UploadType.FUNC,
+            file_format=stor.FileFormatType.RAW)
+        mock_crt_vdisk.assert_called_once_with(
+            self.adpt, 'v_uuid', 'vg_uuid', 'd_name', 1.0,
+            file_format=stor.FileFormatType.RAW)
         mock_crt_file.assert_called_once_with(
             self.adpt, 'd_name', vf.FileType.DISK_IMAGE, 'v_uuid', f_size=10,
             tdev_udid=mock_crt_vdisk.return_value.udid, sha_chksum=None)
@@ -537,9 +559,28 @@ class TestVDisk(testtools.TestCase):
 
         mock_update.side_effect = _mock_update
         ret = ts.crt_vdisk(
-            self.adpt, self.v_uuid, self.vg_uuid, 'vdisk_name', 10)
+            self.adpt, self.v_uuid, self.vg_uuid, 'vdisk_name', 10,
+            file_format=stor.FileFormatType.RAW)
         self.assertEqual('vdisk_name', ret.name)
         self.assertEqual(10, ret.capacity)
+        self.assertEqual(stor.FileFormatType.RAW, ret.file_format)
+
+        def _mock_update_path(*a, **kwa):
+            vg_wrap = a[0]
+            vg_wrap.virtual_disks[-1].name = '/path/to/' + \
+                                             vg_wrap.virtual_disks[-1].name
+            new_vdisk = vg_wrap.virtual_disks[-1]
+            self.assertEqual('/path/to/vdisk_name2', new_vdisk.name)
+            self.assertEqual(10, new_vdisk.capacity)
+            return vg_wrap.entry
+
+        mock_update.side_effect = _mock_update_path
+        ret = ts.crt_vdisk(
+            self.adpt, self.v_uuid, self.vg_uuid, 'vdisk_name2', 10,
+            file_format=stor.FileFormatType.RAW)
+        self.assertEqual('/path/to/vdisk_name2', ret.name)
+        self.assertEqual(10, ret.capacity)
+        self.assertEqual(stor.FileFormatType.RAW, ret.file_format)
 
 
 class TestRMStorage(testtools.TestCase):
