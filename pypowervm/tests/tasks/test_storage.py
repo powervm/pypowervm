@@ -252,9 +252,9 @@ class TestUploadLV(testtools.TestCase):
 
         n_vdisk, maybe_file = ts.upload_new_vdisk(
             self.adpt, 'v_uuid', 'vg_uuid', 'io_handle', 'd_name', 10,
-            upload_type=ts.UploadType.FUNC)
-        mock_crt_vdisk.assert_called_once_with(self.adpt, 'v_uuid', 'vg_uuid',
-                                               'd_name', 1.0)
+            upload_type=ts.UploadType.FUNC, file_format='raw')
+        mock_crt_vdisk.assert_called_once_with(
+            self.adpt, 'v_uuid', 'vg_uuid', 'd_name', 1.0, file_format='raw')
         mock_crt_file.assert_called_once_with(
             self.adpt, 'd_name', vf.FileType.DISK_IMAGE, 'v_uuid', f_size=10,
             tdev_udid=mock_crt_vdisk.return_value.udid, sha_chksum=None)

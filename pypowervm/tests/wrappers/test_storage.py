@@ -103,7 +103,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(1, len(vdisks))
 
         disk = stor.VDisk.bld(None, 'disk_name', 10.9876543, label='label',
-                              base_image='cache')
+                              base_image='cache', file_format='raw')
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -118,6 +118,7 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual('label', vdisk.label)
         self.assertEqual(None, vdisk.udid)
         self.assertEqual('cache', vdisk._get_val_str(stor._DISK_BASE))
+        self.assertEqual('raw', vdisk.file_format)
 
         # Try a remove
         self.dwrap.virtual_disks.remove(vdisk)
