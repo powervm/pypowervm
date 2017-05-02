@@ -23,6 +23,8 @@ import pypowervm.const as pc
 import pypowervm.tests.test_fixtures as fx
 import pypowervm.tests.test_utils.pvmhttp as pvmhttp
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
+import pypowervm.wrappers.base_partition as bp
+import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.network as net
 import pypowervm.wrappers.virtual_io_server as vios
 
@@ -593,7 +595,7 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertIsNone(test.trunk_pri)
 
     def test_unasi_field(self):
-        """UseNextAvailable(High)SlotID field is used, as appropriate."""
+        """UseNextAvailable(High)SlotID field is (not) used, as appropriate."""
         mock_vswitch = mock.Mock()
         mock_vswitch.related_href = 'href'
         # Do TrunkAdapter as well as CNA here
@@ -601,20 +603,137 @@ class TestCNAWrapper(twrap.TestWrapper):
         cna = net.CNA.bld(self.adpt, 1, "fake_vs")
         self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
         self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertTrue(cna._use_next_avail_slot_id)
         ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
         self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
         self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertTrue(ta._use_next_avail_slot_id)
         self.assertEqual('Unknown', ta.dev_name)
+
+        # When slot specified, no UseNextAvailable(High)SlotID
+        cna = net.CNA.bld(self.adpt, 1, "fake_vs", slot_num=1)
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertFalse(cna._use_next_avail_slot_id)
 
         # Swap to HMC - should *not* use High
         self.adptfx.set_traits(fx.RemoteHMCTraits)
         cna = net.CNA.bld(self.adpt, 1, "fake_vs")
         self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
         self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertTrue(cna._use_next_avail_slot_id)
         ta = net.TrunkAdapter.bld(self.adpt, 1, [], mock_vswitch)
         self.assertIsNone(ta._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
         self.assertIsNotNone(ta._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertTrue(ta._use_next_avail_slot_id)
         self.assertEqual('Unknown', cna.dev_name)
+
+        # When slot specified, no UseNextAvailable(High)SlotID
+        cna = net.CNA.bld(self.adpt, 1, "fake_vs", slot_num=1)
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertFalse(cna._use_next_avail_slot_id)
+
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.create')
+    @mock.patch('pypowervm.wrappers.logical_partition.LPAR.get')
+    @mock.patch('pypowervm.wrappers.virtual_io_server.VIOS.get')
+    def test_cna_create(self, mock_vget, mock_lget, mock_ewrap_create):
+        """CNA.create hack that mucks with UseNextAvailable(High)SlotID."""
+        lpar_parent = mock.Mock(env=bp.LPARType.AIXLINUX,
+                                is_mgmt_partition=False)
+        vios_parent = mock.Mock(env=bp.LPARType.VIOS, is_mgmt_partition=False)
+        mgmt_parent = mock.Mock(env=bp.LPARType.AIXLINUX,
+                                is_mgmt_partition=True)
+        sde_parent = mock.Mock(env=bp.LPARType.VIOS, is_mgmt_partition=True)
+
+        # Exception paths for invalid parent spec
+        cna = net.CNA.bld(self.adpt, 1, 'href')
+        self.assertRaises(ValueError, cna.create)
+        self.assertRaises(ValueError, cna.create, parent_type='foo')
+        self.assertRaises(ValueError, cna.create, parent_uuid='foo')
+        mock_ewrap_create.assert_not_called()
+        mock_vget.assert_not_called()
+        mock_lget.assert_not_called()
+
+        # No parent, string parent_type gets converted.  Validate element
+        # twiddling for VIOS and mgmt
+        mock_lget.return_value = mgmt_parent
+        mock_vget.return_value = vios_parent
+        for ptyp, mck in ((lpar.LPAR, mock_lget), (vios.VIOS, mock_vget)):
+            cna = net.CNA.bld(self.adpt, 1, 'href')
+            self.assertEqual(
+                mock_ewrap_create.return_value,
+                cna.create(parent_type=ptyp.schema_type, parent_uuid='puuid'))
+            mock_ewrap_create.assert_called_once_with(
+                parent_type=ptyp, parent_uuid='puuid', timeout=-1,
+                parent=mck.return_value)
+            # One mck should get called in each loop
+            mck.assert_called_once_with(self.adpt, uuid='puuid')
+            # Element should get twiddled each time
+            self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+            self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+            self.assertTrue(cna._use_next_avail_slot_id)
+
+            mock_ewrap_create.reset_mock()
+
+        mock_lget.reset_mock()
+        mock_vget.reset_mock()
+
+        # No parent, wrapper parent_type, element twiddling for SDE (VIOS+mgmt)
+        mock_vget.return_value = sde_parent
+        cna = net.CNA.bld(self.adpt, 1, 'href')
+        self.assertEqual(
+            mock_ewrap_create.return_value,
+            cna.create(parent_type=vios.VIOS, parent_uuid='puuid'))
+        mock_ewrap_create.assert_called_once_with(
+            parent_type=vios.VIOS, parent_uuid='puuid', timeout=-1,
+            parent=mock_vget.return_value)
+        mock_vget.assert_called_once_with(self.adpt, uuid='puuid')
+        mock_lget.assert_not_called()
+        # Element should get twiddled.
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertTrue(cna._use_next_avail_slot_id)
+
+        mock_ewrap_create.reset_mock()
+        mock_vget.reset_mock()
+
+        # Parent specified, no element twiddling for plain LPAR
+        cna = net.CNA.bld(self.adpt, 1, 'href')
+        self.assertEqual(mock_ewrap_create.return_value,
+                         cna.create(parent=lpar_parent))
+        mock_ewrap_create.assert_called_once_with(
+            parent_type=None, parent_uuid=None, timeout=-1, parent=lpar_parent)
+        mock_vget.assert_not_called()
+        mock_lget.assert_not_called()
+        # Element should not get twiddled.
+        self.assertIsNotNone(cna._find(net._USE_NEXT_AVAIL_HIGH_SLOT))
+        self.assertIsNone(cna._find(net._USE_NEXT_AVAIL_SLOT))
+        self.assertTrue(cna._use_next_avail_slot_id)
+
+        mock_ewrap_create.reset_mock()
+
+        # If slot specified, we skip the whole hack
+        self.adptfx.set_traits(fx.RemoteHMCTraits)
+        cna = net.CNA.bld(self.adpt, 1, 'href', slot_num=1)
+        self.assertEqual(mock_ewrap_create.return_value,
+                         cna.create(parent_type='ptyp', parent_uuid='puuid'))
+        mock_ewrap_create.assert_called_once_with(
+            parent_type='ptyp', parent_uuid='puuid', timeout=-1, parent=None)
+        mock_vget.assert_not_called()
+        mock_lget.assert_not_called()
+
+        mock_ewrap_create.reset_mock()
+
+        # For HMC, we skip the whole hack
+        self.adptfx.set_traits(fx.RemoteHMCTraits)
+        cna = net.CNA.bld(self.adpt, 1, 'href')
+        self.assertEqual(mock_ewrap_create.return_value,
+                         cna.create(parent_type='ptyp', parent_uuid='puuid'))
+        mock_ewrap_create.assert_called_once_with(
+            parent_type='ptyp', parent_uuid='puuid', timeout=-1, parent=None)
+        mock_vget.assert_not_called()
+        mock_lget.assert_not_called()
 
     def test_attrs(self):
         """Test getting the attributes."""
