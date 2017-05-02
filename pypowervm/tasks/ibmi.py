@@ -16,6 +16,7 @@
 
 """Tasks around IBMi VM changes."""
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 import pypowervm.const as c
@@ -24,6 +25,7 @@ from pypowervm import i18n
 import pypowervm.tasks.scsi_mapper as pvm_smap
 import pypowervm.tasks.vfc_mapper as pvm_vfcmap
 import pypowervm.wrappers.base_partition as pvm_bp
+from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as pvm_lpar
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -91,3 +93,58 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
     lpar_w.desig_ipl_src = pvm_lpar.IPLSrc.B
     lpar_w.keylock_pos = pvm_bp.KeylockPos.NORMAL
     return lpar_w
+
+
+class IBMiPanelOperations(object):
+    DUMPRESTART = 'dumprestart'
+    DSTON = 'dston'
+    RETRYDUMP = 'retrydump'
+    REMOTEDSTOFF = 'remotedstoff'
+    REMOTEDSTON = 'remotedston'
+    IOPRESET = 'iopreset'
+    IOPDUMP = 'iopdump'
+    CONSOLESERVICE = 'consoleservice'
+
+    ALL_VALUES = (DUMPRESTART, DSTON, RETRYDUMP, REMOTEDSTOFF, REMOTEDSTON,
+                  IOPRESET, IOPDUMP, CONSOLESERVICE)
+
+CONF = cfg.CONF
+IBMI_PANEL_JOB_SUFFIX = 'PanelFunction'
+IBMI_PARAM_KEY = 'operation'
+
+
+def start_panel_job(part, opt=None, timeout=CONF.pypowervm_job_request_timeout,
+                    synchronous=True):
+    """Run an IBMi Panel job operation.
+
+    :param part: Partition (LPAR or VIOS) wrapper indicating the partition
+                 to run the panel function against.
+    :param opt: One of the IBMiPanelOperations enum values to run.
+    :param timeout: value in seconds for specifying how long to wait for
+                    the Job to complete.
+    :param synchronous: If True, this method will not return until the Job
+                        completes (whether success or failure) or times
+                        out.  If False, this method will return as soon as
+                        the Job has started on the server (that is,
+                        achieved any state beyond NOT_ACTIVE).  Note that
+                        timeout is still possible in this case.
+    """
+    if not part:
+        raise pvmex.PanelFunctionRequiresPartition()
+    if opt not in IBMiPanelOperations.ALL_VALUES:
+        raise pvmex.InvalidIBMiPanelFunctionOperation(
+            op_name=opt,
+            valid_ops=', '.join(IBMiPanelOperations.ALL_VALUES))
+    if part.env != pvm_bp.LPARType.OS400:
+        raise pvmex.PartitionIsNotIBMi(part_name=part.name)
+
+    # Fetch the Job template wrapper
+    jwrap = job.Job.wrap(part.adapter.read(
+        part.schema_type, part.uuid, suffix_type=c.SUFFIX_TYPE_DO,
+        suffix_parm=IBMI_PANEL_JOB_SUFFIX))
+
+    # Run the Job, letting exceptions raise up.
+    jwrap.run_job(
+        part.uuid,
+        job_parms=[job.Job.create_job_parameter(IBMI_PARAM_KEY, opt)],
+        timeout=timeout, synchronous=synchronous)
