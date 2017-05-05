@@ -31,10 +31,13 @@ LOG = logging.getLogger(__name__)
 
 _PVID = 'PortVLANID'
 
+_VNETS = 'VirtualNetworks'
+_DRC_NAME = 'DynamicReconfigurationConnectorName'
+
 _VSW_NAME = 'SwitchName'
 _VSW_ID = 'SwitchID'
 _VSW_MODE = 'SwitchMode'
-_VSW_VIRT_NETS = 'VirtualNetworks'
+_VSW_VIRT_NETS = _VNETS
 VSW_DEFAULT_VSWITCH = 'ETHERNET0'
 VSW_DEFAULT_VSWITCH_ID = 0
 _VSW_DEFAULT_VSWITCH_API = 'ETHERNET0(Default)'
@@ -49,7 +52,7 @@ _NB_LGS = 'LoadGroups'
 _NB_PVID = _PVID
 NB_SEAS = 'SharedEthernetAdapters'
 _NB_DEV_ID = 'UniqueDeviceID'
-_NB_VNETS = 'VirtualNetworks'
+_NB_VNETS = _VNETS
 _NB_LG = 'LoadGroup'
 _NB_EL_ORDER = (_NB_CONTROL_CHANNEL_ID, _NB_FAILOVER, _NB_LOADBALANCE, _NB_LGS,
                 _NB_PVID, NB_SEAS, _NB_DEV_ID, _NB_VNETS)
@@ -86,7 +89,7 @@ _SEA_EBD_ADAPTER_ID = 'AdapterID'
 _SEA_EBD_DESCRIPTION = 'Description'
 _SEA_EBD_DEV_NAME = 'DeviceName'
 _SEA_EBD_DEV_TYPE = 'DeviceType'
-_SEA_EBD_DYN_CONN_NAME = 'DynamicReconfigurationConnectorName'
+_SEA_EBD_DYN_CONN_NAME = _DRC_NAME
 _SEA_EBD_PHYS_LOC = 'PhysicalLocation'
 _SEA_EBD_UDID = 'UniqueDeviceID'
 _SEA_EBD_ORDER = (_SEA_EBD_ADAPTER_ID, _SEA_EBD_DESCRIPTION,
@@ -98,7 +101,7 @@ _USE_NEXT_AVAIL_SLOT = 'UseNextAvailableSlotID'
 _USE_NEXT_AVAIL_HIGH_SLOT = 'UseNextAvailableHighSlotID'
 
 TA_ROOT = 'TrunkAdapter'
-_TA_CONN_NAME = 'DynamicReconfigurationConnectorName'
+_TA_CONN_NAME = _DRC_NAME
 _TA_LOC_CODE = 'LocationCode'
 _TA_REQUIRED = 'RequiredAdapter'
 _TA_VARIED_ON = 'VariedOn'
@@ -123,7 +126,7 @@ _TA_EL_ORDER = (_TA_CONN_NAME, _TA_LOC_CODE, _TA_REQUIRED, _TA_VARIED_ON,
 
 _LG_PVID = _PVID
 _LG_TRUNKS = 'TrunkAdapters'
-_LG_VNETS = 'VirtualNetworks'
+_LG_VNETS = _VNETS
 
 _VNET_ASSOC_SW = 'AssociatedSwitch'
 _VNET_NET_NAME = 'NetworkName'
@@ -131,22 +134,40 @@ _VNET_VLAN_ID = 'NetworkVLANID'
 _VNET_SW_ID = 'VswitchID'
 _VNET_TAG = 'TaggedNetwork'
 
-_VADPT_DEV_NAME = 'DeviceName'
+_VADPT_TYPE = 'AdapterType'
+_VADPT_DRC_NAME = _DRC_NAME
 _VADPT_LOCATION_CODE = 'LocationCode'
-_VADPT_MAC_ADDR = 'MACAddress'
-_VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
-_VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
-_VADPT_VSWITCH = 'AssociatedVirtualSwitch'
-_VADPT_VSWITCH_ID = _TA_VS_ID
-_VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeId'
-_VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
-_VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
-_VADPT_PVID = _PVID
-_VADPT_ENABLED = 'Enabled'
 _VADPT_LOC_PART_ID = 'LocalPartitionID'
-_VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_REQUIRED = _TA_REQUIRED
+_VADPT_VARIED_ON = _TA_VARIED_ON
 _VADPT_USE_NEXT_AVAIL_SLOT = _USE_NEXT_AVAIL_SLOT
 _VADPT_USE_NEXT_AVAIL_HIGH_SLOT = _USE_NEXT_AVAIL_HIGH_SLOT
+_VADPT_SLOT_NUM = 'VirtualSlotNumber'
+_VADPT_ENABLED = 'Enabled'
+_VADPT_ALLOWED_MAC = _TA_ALLOWED_MAC
+_VADPT_MAC_ADDR = _TA_MAC
+_VADPT_PVID = _PVID
+_VADPT_QOS_PRI = 'QualityOfServicePriority'
+_VADPT_QOS_PRI_ENABLED = _TA_QOS_PRI
+_VADPT_TAGGED_VLANS = 'TaggedVLANIDs'
+_VADPT_TAGGED_VLAN_SUPPORT = 'TaggedVLANSupported'
+_VADPT_VSI_MANAGER_ID = 'VirtualStationInterfaceManagerID'
+_VADPT_VSI_TYPE_ID = 'VirtualStationInterfaceTypeID'
+_VADPT_VSWITCH = 'AssociatedVirtualSwitch'
+_VADPT_VSWITCH_ID = _TA_VS_ID
+_VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
+_VADPT_DEV_NAME = 'DeviceName'
+_VADPT_TRUNK_PRI = _TA_TRUNK_PRI
+_VADPT_VNETS = _VNETS
+_VADPT_EL_ORDER = (
+    _VADPT_TYPE, _VADPT_DRC_NAME, _VADPT_LOCATION_CODE, _VADPT_LOC_PART_ID,
+    _VADPT_REQUIRED, _VADPT_VARIED_ON, _VADPT_USE_NEXT_AVAIL_SLOT,
+    _VADPT_USE_NEXT_AVAIL_HIGH_SLOT, _VADPT_SLOT_NUM, _VADPT_ENABLED,
+    _VADPT_ALLOWED_MAC, _VADPT_MAC_ADDR, _VADPT_PVID, _VADPT_QOS_PRI,
+    _VADPT_QOS_PRI_ENABLED, _VADPT_TAGGED_VLANS, _VADPT_TAGGED_VLAN_SUPPORT,
+    _VADPT_VSI_MANAGER_ID, _VADPT_VSI_TYPE_ID, _VADPT_VSWITCH,
+    _VADPT_VSWITCH_ID, _VADPT_VSI_TYPE_VERSION, _VADPT_DEV_NAME,
+    _VADPT_TRUNK_PRI, _VADPT_VNETS)
 
 
 class VSwitchMode(object):
@@ -1002,7 +1023,8 @@ class VNet(ewrap.EntryWrapper):
         self.set_parm_value(_VNET_TAG, u.sanitize_bool_for_api(is_tagged))
 
 
-@ewrap.EntryWrapper.pvm_type('ClientNetworkAdapter')
+@ewrap.EntryWrapper.pvm_type('ClientNetworkAdapter',
+                             child_order=_VADPT_EL_ORDER)
 class CNA(ewrap.EntryWrapper):
     """Wrapper object for ClientNetworkAdapter schema."""
 

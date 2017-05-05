@@ -45,7 +45,7 @@ BODY{
     <QualityOfServicePriorityEnabled kb="CUD" kxe="false">true</QualityOfServicePriorityEnabled>
     <TaggedVLANIDs kxe="false" kb="CUA">53 54 55</TaggedVLANIDs>
     <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
-    <VirtualStationInterfaceTypeId kb="ROR" kxe="false">VSITID</VirtualStationInterfaceTypeId>
+    <VirtualStationInterfaceTypeID kb="ROR" kxe="false">VSITID</VirtualStationInterfaceTypeID>
     <VirtualStationInterfaceTypeVersion kb="ROR" kxe="false">77.99</VirtualStationInterfaceTypeVersion>
     <VirtualStationInterfaceManagerID kb="ROR" kxe="false">VSIMID</VirtualStationInterfaceManagerID>
     <AssociatedVirtualSwitch kb="CUD" kxe="false">
