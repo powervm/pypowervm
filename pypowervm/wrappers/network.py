@@ -22,9 +22,7 @@ from oslo_log import log as logging
 
 import pypowervm.const as c
 import pypowervm.entities as ent
-from pypowervm.i18n import _
 import pypowervm.util as u
-import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.entry_wrapper as ewrap
 
 LOG = logging.getLogger(__name__)
@@ -1078,49 +1076,6 @@ class CNA(ewrap.EntryWrapper):
 
         return cna
 
-    def create(self, parent_type=None, parent_uuid=None, timeout=-1,
-               parent=None, **kwargs):
-        """Override to ensure default slot setting is correct.
-
-        Create the CNA as specified *except*:
-
-        If UseNextAvailableHighSlot is True (i.e. slot number was not given);
-        and the parent is a VIOS or the management partition;
-        then change to UseNextAvailableSlot (not High).
-
-        This is because VIOS and the management partition don't care about slot
-        ordering, and their longevity increases the probability of running out
-        of slot space if we use 'High'.
-
-        See superclass impl for param specs.
-        """
-        # These checks are quick, so do them first.
-        el2d = self._find(_TA_USE_NEXT_AVAIL_HIGH_SLOT)
-        # If UseNextAvailableHighSlot is present *and* True.
-        if el2d is not None and self._use_next_avail_slot_id:
-            # If we have the parent wrapper, we don't have to GET. Otherwise...
-            if parent is None:
-                if any(val is None for val in (parent_type, parent_uuid)):
-                    raise ValueError(_("Invalid parent spec for CNA.create."))
-                # If the parent_type isn't a wrapper class, get it
-                if type(parent_type) is str:
-                    parent_type = ewrap.Wrapper._pvm_object_registry[
-                        parent_type]['entry']
-                # Aaaand get the parent
-                parent = parent_type.get(self.adapter, uuid=parent_uuid)
-            # Now we can find out whether the parent is VIOS or mgmt.
-            if parent.env == bp.LPARType.VIOS or parent.is_mgmt_partition:
-                # Delete the existing UNAHSI field
-                self.element.remove(el2d)
-                # Aaaand add the UNASI field
-                self.set_parm_value(_TA_USE_NEXT_AVAIL_SLOT,
-                                    u.sanitize_bool_for_api(True))
-
-        # Superclass does the real work.
-        return super(CNA, self).create(
-            parent_type=parent_type, parent_uuid=parent_uuid, timeout=timeout,
-            parent=parent, **kwargs)
-
     @property
     def slot(self):
         return self._get_val_int(_VADPT_SLOT_NUM)
@@ -1136,11 +1091,10 @@ class CNA(ewrap.EntryWrapper):
     @property
     def _use_next_avail_slot_id(self):
         """Use next available (high) slot ID, true or false."""
-        # We could be using either next-available-slot field. If either is set,
-        # it counts.
-        return any(self._get_val_bool(unasi_field)
-                   for unasi_field in
-                   (_TA_USE_NEXT_AVAIL_HIGH_SLOT, _TA_USE_NEXT_AVAIL_SLOT))
+        unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
+                       if self.traits.has_high_slot
+                       else _TA_USE_NEXT_AVAIL_SLOT)
+        return self._get_val_bool(unasi_field)
 
     @_use_next_avail_slot_id.setter
     def _use_next_avail_slot_id(self, unasi):
@@ -1148,8 +1102,6 @@ class CNA(ewrap.EntryWrapper):
 
         :param unasi: Boolean value to set (True or False)
         """
-        # NOTE(efried): We'd like to set this to not-HIGH for VIOS/mgmt, but in
-        # bld(), we don't know what kind of parent we have.
         unasi_field = (_TA_USE_NEXT_AVAIL_HIGH_SLOT
                        if self.traits.has_high_slot
                        else _TA_USE_NEXT_AVAIL_SLOT)

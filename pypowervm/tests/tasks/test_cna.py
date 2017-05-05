@@ -76,7 +76,7 @@ class TestCNA(twrap.TestWrapper):
             return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
         self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5, slot_num=1)
+        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
         self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(0, mock_vnet_find.call_count)
