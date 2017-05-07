@@ -1,59 +1,59 @@
 # Translations template for pypowervm.
-# Copyright (C) 2016 IBM Corp.
+# Copyright 2015, 2017 IBM Corp.
 # This file is distributed under the same license as the pypowervm project.
-# Automatically generated, 2016.
+# Automatically generated, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.0.1.dev116\n"
+"Project-Id-Version: pypowervm 1.1.3.dev1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-10-07 01:34-0400\n"
-"PO-Revision-Date: 2016-10-07 01:34-0400\n"
+"POT-Creation-Date: 2017-04-20 10:36-0400\n"
+"PO-Revision-Date: 2017-04-20 10:36-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
+"Generated-By: Babel 2.4.0\n"
 
-#: pypowervm/adapter.py:134
+#: pypowervm/adapter.py:131
 #, python-format
 msgid "Invalid protocol \"%s\""
 msgstr "無效的通訊協定 \"%s\""
 
-#: pypowervm/adapter.py:140
+#: pypowervm/adapter.py:137
 msgid "Unencrypted communication with PowerVM! Revert configuration to https."
 msgstr "與 PowerVM 的通訊未加密！請將配置回復為 HTTPS。"
 
-#: pypowervm/adapter.py:154
+#: pypowervm/adapter.py:151
 msgid "Calculating default audit memento failed, using 'default'."
 msgstr "計算預設審核備忘錄失敗，將使用 'default'。"
 
-#: pypowervm/adapter.py:189
+#: pypowervm/adapter.py:192
 msgid "Local authentication not supported on HMC."
 msgstr "本端鑑別在 HMC 上不受支援。"
 
-#: pypowervm/adapter.py:208
+#: pypowervm/adapter.py:211
 #, python-format
 msgid "Setting up event listener for %s"
 msgstr "正在設定 %s 的事件接聽器"
 
-#: pypowervm/adapter.py:247
+#: pypowervm/adapter.py:281
 #, python-format
 msgid "Unexpected filehandle on %s request"
 msgstr "在 %s 要求上發現非預期的檔案控點"
 
-#: pypowervm/adapter.py:300
+#: pypowervm/adapter.py:327
 #, python-format
 msgid "Unexpected error for %(meth)s %(url)s"
 msgstr "%(meth)s %(url)s 的非預期錯誤"
 
-#: pypowervm/adapter.py:302
+#: pypowervm/adapter.py:329
 #, python-format
 msgid "Unexpected error: %(class)s for %(method)s %(url)s: %(excp)s"
 msgstr "非預期的錯誤：%(method)s %(url)s 的 %(class)s：%(excp)s"
 
-#: pypowervm/adapter.py:340
+#: pypowervm/adapter.py:367
 msgid ""
 "Re-login has been deemed unsafe. This Session instance should no longer be "
 "used."
@@ -61,12 +61,12 @@ msgstr ""
 "重新登入被視作不安全。應該不再使用此階段作業"
 "實例。"
 
-#: pypowervm/adapter.py:350
+#: pypowervm/adapter.py:377
 #, python-format
 msgid "Attempting re-login %s"
 msgstr "正在嘗試重新登入 %s"
 
-#: pypowervm/adapter.py:361
+#: pypowervm/adapter.py:388
 #, python-format
 msgid ""
 "Re-login 401, response body:\n"
@@ -75,7 +75,7 @@ msgstr ""
 "重新登入 401，回應主體：\n"
 "%s"
 
-#: pypowervm/adapter.py:366
+#: pypowervm/adapter.py:393
 #, python-format
 msgid ""
 "Re-login failed, resp body:\n"
@@ -84,7 +84,7 @@ msgstr ""
 "重新登入失敗，回應主體：\n"
 "%s"
 
-#: pypowervm/adapter.py:370
+#: pypowervm/adapter.py:397
 #, python-format
 msgid ""
 "Re-login failed:\n"
@@ -93,7 +93,7 @@ msgstr ""
 "重新登入失敗：\n"
 "%s"
 
-#: pypowervm/adapter.py:389
+#: pypowervm/adapter.py:416
 #, python-format
 msgid ""
 "Re-attempt failed with another 401, response body:\n"
@@ -102,14 +102,14 @@ msgstr ""
 "重新嘗試失敗，發生另一個 401，回應主體：\n"
 "%s"
 
-#: pypowervm/adapter.py:392
+#: pypowervm/adapter.py:419
 #, python-format
 msgid ""
 "suspicious HTTP 401 response for %(method)s %(path)s: token is brand new"
 msgstr ""
 "%(method)s %(path)s 的可疑 HTTP 401 回應：記號是全新的"
 
-#: pypowervm/adapter.py:434
+#: pypowervm/adapter.py:461
 #, python-format
 msgid ""
 "Failed to connect to REST server - is the pvm-rest service started?  "
@@ -118,115 +118,111 @@ msgstr ""
 "無法連接 REST 伺服器 - pvm-rest 服務是否已啟動？"
 "在 %(delay)d 秒之後，正在重試第 %(try_num)d 次（共重試 %(max_tries)d 次）。"
 
-#: pypowervm/adapter.py:441
+#: pypowervm/adapter.py:468
 #, python-format
 msgid "Session logging on %s"
 msgstr "階段作業正在登入 %s"
 
-#: pypowervm/adapter.py:505
+#: pypowervm/adapter.py:532
 msgid "Failed to parse a session token from the PowerVM response."
 msgstr "無法剖析來自 PowerVM 回應的階段作業記號。"
 
-#: pypowervm/adapter.py:507 pypowervm/adapter.py:523
+#: pypowervm/adapter.py:534 pypowervm/adapter.py:550
 #, python-format
 msgid " Body= %s"
 msgstr " 主體 = %s"
 
-#: pypowervm/adapter.py:521
+#: pypowervm/adapter.py:548
 msgid "Failed to parse a session file path from the PowerVM response."
 msgstr "無法剖析來自 PowerVM 回應的階段作業檔案路徑。"
 
-#: pypowervm/adapter.py:535
+#: pypowervm/adapter.py:562
 #, python-format
 msgid "Token file %s didn't contain a readable session token."
 msgstr "記號檔案 %s 不包含可讀的階段作業記號。"
 
-#: pypowervm/adapter.py:545
+#: pypowervm/adapter.py:572
 #, python-format
 msgid "Session logging off %s"
 msgstr "階段作業正在從 %s 登出"
 
-#: pypowervm/adapter.py:550
+#: pypowervm/adapter.py:577
 msgid "Problem logging off.  Ignoring."
-msgstr "登出時遇到問題。將忽略。"
+msgstr "登出時發生問題。將忽略。"
 
-#: pypowervm/adapter.py:588
-msgid "Failed to register for events.  Events will not be used."
-msgstr "無法登錄事件。將不使用事件。"
-
-#: pypowervm/adapter.py:669
+#: pypowervm/adapter.py:671
 msgid "job must be a JobRequest element"
 msgstr "工作必須是 JobRequest 元素"
 
-#: pypowervm/adapter.py:673
+#: pypowervm/adapter.py:675
 msgid "JobRequest is missing OperationName"
 msgstr "JobRequest 遺漏了 OperationName"
 
-#: pypowervm/adapter.py:687 pypowervm/adapter.py:928 pypowervm/adapter.py:988
-#: pypowervm/adapter.py:1084
+#: pypowervm/adapter.py:689 pypowervm/adapter.py:807 pypowervm/adapter.py:846
+#: pypowervm/adapter.py:903
 #, python-format
 msgid "path=%s is not a PowerVM API reference"
 msgstr "路徑 = %s 不是 PowerVM API 參照"
 
-#: pypowervm/adapter.py:1099 pypowervm/adapter.py:1116
+#: pypowervm/adapter.py:918 pypowervm/adapter.py:935
 msgid "Invalid file descriptor"
 msgstr "檔案描述子無效"
 
-#: pypowervm/adapter.py:1253 pypowervm/adapter.py:1281
-#: pypowervm/adapter.py:1296
+#: pypowervm/adapter.py:1022 pypowervm/adapter.py:1050
+#: pypowervm/adapter.py:1065
 msgid "Expected root_id"
 msgstr "預期的 root_id"
 
-#: pypowervm/adapter.py:1255
+#: pypowervm/adapter.py:1024
 msgid "Expected child_type"
 msgstr "預期的 child_type"
 
-#: pypowervm/adapter.py:1259 pypowervm/adapter.py:1285
-#: pypowervm/adapter.py:1290
+#: pypowervm/adapter.py:1028 pypowervm/adapter.py:1054
+#: pypowervm/adapter.py:1059
 #, python-format
 msgid "Unexpected suffix_type=%s"
 msgstr "非預期的 suffix_type=%s"
 
-#: pypowervm/adapter.py:1262 pypowervm/adapter.py:1293
+#: pypowervm/adapter.py:1031 pypowervm/adapter.py:1062
 msgid "Expected suffix_parm"
 msgstr "預期的 suffix_parm"
 
-#: pypowervm/adapter.py:1264 pypowervm/adapter.py:1283
-#: pypowervm/adapter.py:1298
+#: pypowervm/adapter.py:1033 pypowervm/adapter.py:1052
+#: pypowervm/adapter.py:1067
 msgid "Expected child_id"
 msgstr "預期的 child_id"
 
-#: pypowervm/adapter.py:1267 pypowervm/adapter.py:1276
+#: pypowervm/adapter.py:1036 pypowervm/adapter.py:1045
 msgid "Unexpected child_id"
 msgstr "非預期的 child_id"
 
-#: pypowervm/adapter.py:1269 pypowervm/adapter.py:1278
+#: pypowervm/adapter.py:1038 pypowervm/adapter.py:1047
 msgid "Unexpected root_id"
 msgstr "非預期的 root_id"
 
-#: pypowervm/adapter.py:1300
+#: pypowervm/adapter.py:1069
 #, python-format
 msgid "Unexpected req_method=%s"
 msgstr "非預期的 req_method=%s"
 
-#: pypowervm/adapter.py:1419
+#: pypowervm/adapter.py:1138
 #, python-format
 msgid "Error parsing XML response from PowerVM: %s"
 msgstr "剖析來自 PowerVM 的 XML 回應時發生錯誤：%s"
 
-#: pypowervm/adapter.py:1432
+#: pypowervm/adapter.py:1151
 msgid "Response is not an Atom feed/entry"
 msgstr "回應不是 Atom 資訊來源/項目"
 
-#: pypowervm/adapter.py:1443
+#: pypowervm/adapter.py:1162
 msgid "Unexpected HTTP 204 for request"
 msgstr "要求的非預期 HTTP 204"
 
-#: pypowervm/adapter.py:1451
+#: pypowervm/adapter.py:1170
 msgid "Unexpectedly empty response body"
 msgstr "非預期的空白回應主體"
 
-#: pypowervm/adapter.py:1454
+#: pypowervm/adapter.py:1173
 #, python-format
 msgid ""
 "%(err_reason)s:\n"
@@ -247,68 +243,68 @@ msgstr ""
 "\n"
 "回應主體：%(respbody)s"
 
-#: pypowervm/adapter.py:1462
+#: pypowervm/adapter.py:1181
 #, python-format
 msgid "Atom error for %(method)s %(path)s: %(reason)s"
 msgstr "%(method)s %(path)s 的 Atom 錯誤：%(reason)s"
 
-#: pypowervm/adapter.py:1503
+#: pypowervm/adapter.py:1222
 msgid "Session must not be None"
 msgstr "階段作業不得為「無」"
 
-#: pypowervm/adapter.py:1505
+#: pypowervm/adapter.py:1224
 msgid "An event listener is already active on the session."
 msgstr "階段作業上，某個事件接聽器已經在作用中。"
 
-#: pypowervm/adapter.py:1524
+#: pypowervm/adapter.py:1243
 #, python-format
 msgid "Failed to initialize event feed listener: %s"
 msgstr "無法起始設定事件資訊來源接聽器：%s"
 
-#: pypowervm/adapter.py:1528
+#: pypowervm/adapter.py:1247
 #, python-format
 msgid "Application id \"%s\" is not unique"
 msgstr "應用程式 ID \"%s\" 不唯一"
 
-#: pypowervm/adapter.py:1537
+#: pypowervm/adapter.py:1256
 msgid "Shutting down"
 msgstr "關機中"
 
-#: pypowervm/adapter.py:1540
+#: pypowervm/adapter.py:1259
 msgid "This handler is already subscribed"
 msgstr "已經訂閱此處理程式"
 
-#: pypowervm/adapter.py:1548
+#: pypowervm/adapter.py:1267
 msgid "Handler must be an EventHandler"
 msgstr "處理程式必須是 EventHandler"
 
-#: pypowervm/adapter.py:1551
+#: pypowervm/adapter.py:1270
 msgid "This handler not found in subscriber list"
 msgstr "在訂閱者清單中找不到此處理程式"
 
-#: pypowervm/adapter.py:1559
+#: pypowervm/adapter.py:1278
 #, python-format
 msgid "Shutting down EventListener for %s"
 msgstr "正在關閉 %s 的 EventListener"
 
-#: pypowervm/adapter.py:1563
+#: pypowervm/adapter.py:1282
 #, python-format
 msgid "EventListener shutdown complete for %s"
 msgstr "%s 的 EventListener 關閉已完成"
 
-#: pypowervm/adapter.py:1583
+#: pypowervm/adapter.py:1302
 #, python-format
 msgid ""
 "Error while getting PowerVM events: %s.  (Is the pvm-rest service down?)"
 msgstr ""
 "取得 PowerVM 事件時發生錯誤：%s。（pvm-rest 服務是否已關閉？）"
 
-#: pypowervm/adapter.py:1626
+#: pypowervm/adapter.py:1345
 #, python-format
 msgid "Unexpected EventType=%s"
 msgstr "非預期的 EventType=%s"
 
-#: pypowervm/adapter.py:1654
+#: pypowervm/adapter.py:1373
 msgid "Error while processing PowerVM events"
 msgstr "處理 PowerVM 事件時發生錯誤"
 
@@ -349,15 +345,38 @@ msgstr ""
 
 #: pypowervm/exceptions.py:140
 #, python-format
+msgid ""
+"Can not perform OS shutdown on Virtual Machine %(lpar_nm)s because its RMC "
+"connection is not active."
+msgstr ""
+"無法在虛擬機器 %(lpar_nm)s 上執行作業系統關閉，因為其 RMC "
+"連線處於非作用中。"
+
+#: pypowervm/exceptions.py:145
+#, python-format
 msgid "Failed to power off Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "無法關閉虛擬機器 %(lpar_nm)s 的電源：%(reason)s"
 
-#: pypowervm/exceptions.py:144
+#: pypowervm/exceptions.py:149
+#, python-format
+msgid ""
+"Power off of Virtual Machine %(lpar_nm)s timed out after %(timeout)d seconds."
+msgstr ""
+"關閉虛擬機器 %(lpar_nm)s 的電源在 %(timeout)d 秒後逾時。"
+
+#: pypowervm/exceptions.py:154
 #, python-format
 msgid "Failed to power on Virtual Machine %(lpar_nm)s: %(reason)s"
 msgstr "無法開啟虛擬機器 %(lpar_nm)s 的電源：%(reason)s"
 
-#: pypowervm/exceptions.py:148
+#: pypowervm/exceptions.py:158
+#, python-format
+msgid ""
+"Power on of Virtual Machine %(lpar_nm)s timed out after %(timeout)d seconds."
+msgstr ""
+"開啟虛擬機器 %(lpar_nm)s 的電源在 %(timeout)d 秒後逾時。"
+
+#: pypowervm/exceptions.py:163
 #, python-format
 msgid ""
 "Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN Identifier on a "
@@ -366,7 +385,7 @@ msgstr ""
 "無法移除 VLAN %(vlan_id)d，因為它是另一個網路橋接器上的"
 "主要 VLAN ID。"
 
-#: pypowervm/exceptions.py:153
+#: pypowervm/exceptions.py:168
 #, python-format
 msgid ""
 "Unable to provision VLAN %(vlan_id)d.  It appears to be contained on device "
@@ -379,7 +398,7 @@ msgstr ""
 "至任何網路橋接器（共用乙太網路配接卡）。請手動移除該"
 "裝置，或者先將其新增至網路橋接器，然後再繼續。"
 
-#: pypowervm/exceptions.py:162
+#: pypowervm/exceptions.py:177
 #, python-format
 msgid ""
 "A Logical Unit with name %(lu_name)s already exists on Shared Storage Pool "
@@ -388,7 +407,7 @@ msgstr ""
 "名為 %(lu_name)s 的邏輯單元已經存在於下列共用儲存區上："
 "%(ssp_name)s."
 
-#: pypowervm/exceptions.py:167
+#: pypowervm/exceptions.py:182
 msgid ""
 "Unable to find a physical port to map a virtual Fibre Channel port to.  This "
 "is due to either a Virtual I/O Server being unavailable, or improper port "
@@ -398,7 +417,7 @@ msgstr ""
 "是由於無法使用 Virtual I/O Server，或者"
 "實體光纖通道埠的埠規格不適當。"
 
-#: pypowervm/exceptions.py:174
+#: pypowervm/exceptions.py:189
 msgid ""
 "Unable to start the console to the Virtual Machine.  The pypowervm API is "
 "running in a non-local mode.  The console can only be deployed when "
@@ -408,21 +427,21 @@ msgstr ""
 "正在以非本端模式執行。僅當 "
 "pypowervm 與 PowerVM API 存在於相同位置時，才能部署主控台。"
 
-#: pypowervm/exceptions.py:181
+#: pypowervm/exceptions.py:196
 #, python-format
 msgid "WrapperTask %(name)s has no subtasks!"
 msgstr "WrapperTask %(name)s 沒有子作業！"
 
-#: pypowervm/exceptions.py:185
+#: pypowervm/exceptions.py:200
 msgid "FeedTask can't have an empty feed."
 msgstr "FeedTask 不能有空的資訊來源。"
 
-#: pypowervm/exceptions.py:189
+#: pypowervm/exceptions.py:204
 #, python-format
 msgid "OS denied access to file %(access_file)s."
 msgstr "作業系統拒絕存取檔案 %(access_file)s。"
 
-#: pypowervm/exceptions.py:193
+#: pypowervm/exceptions.py:208
 #, python-format
 msgid ""
 "OS encountered an I/O error attempting to read file %(access_file)s: "
@@ -431,17 +450,17 @@ msgstr ""
 "作業系統在嘗試讀取檔案 %(access_file)s 時遇到 I/O 錯誤："
 "%(error)s"
 
-#: pypowervm/exceptions.py:198
+#: pypowervm/exceptions.py:213
 #, python-format
 msgid "The migration task failed. %(error)s"
 msgstr "移轉作業失敗。%(error)s"
 
-#: pypowervm/exceptions.py:202
+#: pypowervm/exceptions.py:217
 #, python-format
 msgid "No load source found for VM %(vm_name)s"
 msgstr "找不到 VM %(vm_name)s 的載入來源"
 
-#: pypowervm/exceptions.py:206
+#: pypowervm/exceptions.py:221
 #, python-format
 msgid ""
 "Unable to derive the pg83 encoding for hdisk %(dev_name)s.  The parent_entry "
@@ -454,31 +473,40 @@ msgstr ""
 "所取得的 PV。必須透過 VIOS.phys_vols、"
 "VG.phys_vols 或 VIOS.scsi_mappings[n].backing_storage 來存取 PV。"
 
-#: pypowervm/exceptions.py:214
+#: pypowervm/exceptions.py:229
 #, python-format
 msgid ""
 "Found device %(devname)s %(count)d times; expected to find it at most once."
 msgstr ""
 "找到裝置 %(devname)s %(count)d 次；預期最多找到該裝置一次。"
 
-#: pypowervm/exceptions.py:231
+#: pypowervm/exceptions.py:244
+#, python-format
+msgid ""
+"FeedTask %(ft_name)s experienced multiple exceptions:\n"
+"\t%(concat_msgs)s"
+msgstr ""
+"FeedTask %(ft_name)s 遇到多個異常狀況：\n"
+"\t%(concat_msgs)s"
+
+#: pypowervm/exceptions.py:254
 #, python-format
 msgid "Expected to find exactly one management partition; found %(count)d."
 msgstr "預期只找到一個管理分割區；但找到 %(count)d 個。"
 
-#: pypowervm/exceptions.py:237
+#: pypowervm/exceptions.py:260
 #, python-format
 msgid ""
 "Expected to find exactly one partition with ID %(lpar_id)d; found %(count)d."
 msgstr ""
 "預期只找到一個 ID 為 %(lpar_id)d 的分割區；但卻找到 %(count)d 個。"
 
-#: pypowervm/exceptions.py:243
+#: pypowervm/exceptions.py:266
 #, python-format
 msgid "Couldn't find the default Tier on Shared Storage Pool %(ssp_name)s."
 msgstr "在共用儲存區 %(ssp_name)s 上找不到預設層級。"
 
-#: pypowervm/exceptions.py:252
+#: pypowervm/exceptions.py:275
 #, python-format
 msgid ""
 "The device with UDID %(udid)s was not found on any of the Virtual I/O "
@@ -487,7 +515,7 @@ msgstr ""
 "在任何 Virtual I/O Server 上，都找不到 UDID 為 %(udid)s 的"
 "裝置。"
 
-#: pypowervm/exceptions.py:257
+#: pypowervm/exceptions.py:280
 #, python-format
 msgid ""
 "There are not enough Virtual I/O Servers to support the virtual machine's "
@@ -496,7 +524,7 @@ msgstr ""
 "Virtual I/O Server 不足，無法支援虛擬機器的"
 "裝置（UDID 為 %(udid)s）。"
 
-#: pypowervm/exceptions.py:262
+#: pypowervm/exceptions.py:285
 #, python-format
 msgid ""
 "The expected fabrics (%(fabrics)s) were not found on any of the Virtual I/O "
@@ -505,7 +533,7 @@ msgstr ""
 "在任何 Virtual I/O Server 上，都找不到預期的"
 "光纖 (%(fabrics)s)。"
 
-#: pypowervm/exceptions.py:267
+#: pypowervm/exceptions.py:290
 #, python-format
 msgid ""
 "Can not rebuild the virtual machine.  It is using an I/O type of %(io_type)s "
@@ -514,7 +542,7 @@ msgstr ""
 "無法重建虛擬機器。它正在使用的 I/O 類型為 %(io_type)s，"
 "虛擬機器重建不支援這種 I/O 類型。"
 
-#: pypowervm/exceptions.py:272
+#: pypowervm/exceptions.py:295
 #, python-format
 msgid ""
 "The number of VFC slots on the target system (%(rebuild_slots)d) does not "
@@ -525,7 +553,7 @@ msgstr ""
 "用戶端系統上的插槽數目 (%(original_slots)d) 不符。無法"
 "在這個系統上重建此虛擬機器。"
 
-#: pypowervm/exceptions.py:279
+#: pypowervm/exceptions.py:302
 #, python-format
 msgid ""
 "To register the slot information of the network device a CNA or VNIC adapter "
@@ -534,7 +562,7 @@ msgstr ""
 "如果要登錄網路裝置的插槽資訊，則需要 CNA 或"
 "VNIC 配接卡。但卻提供了以下項目：%(wrapper)s。"
 
-#: pypowervm/exceptions.py:285
+#: pypowervm/exceptions.py:308
 #, python-format
 msgid ""
 "There are not enough active Virtual I/O Servers available. Expected %(exp)d; "
@@ -543,7 +571,7 @@ msgstr ""
 "沒有足夠的作用中 Virtual I/O Server 可用。預期為 %(exp)d；"
 "但卻找到 %(act)d。"
 
-#: pypowervm/exceptions.py:290
+#: pypowervm/exceptions.py:313
 #, python-format
 msgid ""
 "No Virtual I/O Servers are available.  Attempted to wait for a VIOS to "
@@ -554,7 +582,7 @@ msgstr ""
 "作用中狀態達 %(wait_time)d 秒。請檢查 PowerVM NovaLink 與"
 "Virtual I/O Server 之間的 RMC 連線。"
 
-#: pypowervm/exceptions.py:300
+#: pypowervm/exceptions.py:323
 #, python-format
 msgid ""
 "Could not find any SR-IOV adapters in Sriov mode and Running state.\n"
@@ -565,42 +593,42 @@ msgstr ""
 "位置 | 模式 | 狀態\n"
 "%(sriov_loc_mode_state)s"
 
-#: pypowervm/exceptions.py:305
+#: pypowervm/exceptions.py:328
 #, python-format
 msgid ""
-"Unable to fulfill minimum redundancy requirement of %(min_vfs)d.  Found "
-"%(found_vfs)d viable backing device(s)."
+"Unable to fulfill redundancy requirement of %(red)d.  Found %(found_vfs)d "
+"viable backing device(s)."
 msgstr ""
-"無法滿足備援需求下限 %(min_vfs)d。找到"
-"%(found_vfs)d 個可用的支援裝置。"
+"無法滿足備援需求（%(red)d 個）。找到 %(found_vfs)d "
+"個可行的支持裝置。"
 
-#: pypowervm/exceptions.py:310
+#: pypowervm/exceptions.py:333
 msgid "The Managed System is not vNIC capable."
 msgstr "受管理系統不支援 vNIC。"
 
-#: pypowervm/exceptions.py:314
+#: pypowervm/exceptions.py:337
 msgid "There are no active vNIC-capable VIOSes."
 msgstr "沒有處於作用中狀態且支援 vNIC 的 VIOS。"
 
-#: pypowervm/exceptions.py:318
+#: pypowervm/exceptions.py:341
 #, python-format
 msgid ""
-"A minimum redundancy of %(minred)d was specified, but the Managed System is "
-"not vNIC failover capable."
+"A redundancy of %(red)d was specified, but the Managed System is not vNIC "
+"failover capable."
 msgstr ""
-"已指定備用性下限 %(minred)d，但受管理系統"
-"不支援 vNIC 失效接手。"
+"指定了 %(red)d 個備援，但受管理系統不具備 vNIC "
+"失效接手功能。"
 
-#: pypowervm/exceptions.py:323
+#: pypowervm/exceptions.py:346
 #, python-format
 msgid ""
-"A minimum redundancy of %(minred)d was specified, but there are no active "
-"vNIC failover-capable VIOSes."
+"A redundancy of %(red)d was specified, but there are no active vNIC failover-"
+"capable VIOSes."
 msgstr ""
-"已指定備用性下限 %(minred)d，但沒有處於作用中狀態且"
-"支援 vNIC 失效接手的 VIOS。"
+"指定了 %(red)d 個備援，但沒有作用中的具備 vNIC 失效接手功能的 "
+"VIOS。"
 
-#: pypowervm/exceptions.py:328
+#: pypowervm/exceptions.py:351
 #, python-format
 msgid ""
 "Unable to locate the volume group %(vol_grp)s to store the virtual optical "
@@ -609,7 +637,7 @@ msgstr ""
 "找不到在其中儲存虛擬光學媒體的磁區群組"
 "%(vol_grp)s。無法建立媒體儲存庫。"
 
-#: pypowervm/exceptions.py:334
+#: pypowervm/exceptions.py:357
 #, python-format
 msgid ""
 "The ManagedSystem update was not attempted because changes were requested to "
@@ -620,12 +648,33 @@ msgstr ""
 "一個以上 SR-IOV 實體埠正在由 vNIC 使用。\n"
 "%(warnings)s"
 
-#: pypowervm/exceptions.py:340
+#: pypowervm/exceptions.py:363
 #, python-format
 msgid "Unable to create VNC based virtual terminal: %(err)s"
 msgstr "無法建立 VNC 型虛擬終端機：%(err)s"
 
-#: pypowervm/util.py:124
+#: pypowervm/exceptions.py:367
+msgid "The Adapter cache is not supported."
+msgstr "不支援配接卡快取。"
+
+#: pypowervm/exceptions.py:371
+#, python-format
+msgid ""
+"Invalid value '%(value)s' for '%(enum)s'.  Valid values are: %(valid_values)s"
+msgstr ""
+"'%(enum)s' 的值 '%(value)s' 無效。有效值為：%(valid_values)s"
+
+#: pypowervm/exceptions.py:376
+#, python-format
+msgid "No VIOS found with name %(vios_name)s."
+msgstr "找不到名稱為 %(vios_name)s 的 VIOS。"
+
+#: pypowervm/exceptions.py:380
+#, python-format
+msgid "No volume group found with name %(vg_name)s."
+msgstr "找不到名稱為 %(vg_name)s 的磁區群組。"
+
+#: pypowervm/util.py:125
 #, python-format
 msgid ""
 "Proposed extended attribute group '%(arg_xag)s' doesn't match existing "
@@ -634,35 +683,35 @@ msgstr ""
 "所提出的延伸屬性群組 '%(arg_xag)s' 與下列現有延伸屬性群組不符："
 "'%(path_xag)s'"
 
-#: pypowervm/util.py:260
+#: pypowervm/util.py:221
 msgid "Certificate has expired."
 msgstr "憑證已過期。"
 
-#: pypowervm/util.py:410
+#: pypowervm/util.py:371
 #, python-format
 msgid "Prefix and suffix together may not be more than %d characters."
 msgstr "字首及字尾總共不能超過 %d 個字元。"
 
-#: pypowervm/util.py:415
+#: pypowervm/util.py:376
 msgid "Total length must be at least 1 character."
 msgstr "總長度必須至少是 1 個字元。"
 
-#: pypowervm/util.py:438
+#: pypowervm/util.py:399
 msgid "The name parameter must be at least one character long."
 msgstr "名稱參數的長度必須至少是一個字元。"
 
-#: pypowervm/util.py:441
+#: pypowervm/util.py:402
 #, python-format
 msgid ""
 "The name parameter must not exceed %d characters when trunk_ok is False."
 msgstr ""
 "當 trunk_ok 為 False 時，名稱參數不得超過 %d 個字元。"
 
-#: pypowervm/util.py:539
+#: pypowervm/util.py:500
 msgid "Developer error: partial parent specification."
 msgstr "開發者錯誤：局部母項規範。"
 
-#: pypowervm/util.py:544
+#: pypowervm/util.py:505
 msgid ""
 "Developer error: parent_type must be either a string schema type or a "
 "Wrapper subclass."
@@ -670,7 +719,7 @@ msgstr ""
 "開發者錯誤：parent_type 必須為字串綱目類型或 "
 "封套子類別。"
 
-#: pypowervm/util.py:599
+#: pypowervm/util.py:602
 #, python-format
 msgid "Invalid value '%(bad_val)s'.  Expected one of %(good_vals)s, or a list."
 msgstr ""
@@ -700,22 +749,22 @@ msgstr "正在放棄支援進行中的上傳。"
 msgid "Abdicating upload in favor of marker %s."
 msgstr "正在放棄上傳，轉為支援標記 %s。"
 
-#: pypowervm/tasks/cluster_ssp.py:200
+#: pypowervm/tasks/cluster_ssp.py:202
 #, python-format
 msgid "Using already-uploaded image LU %s."
 msgstr "正在使用已經上傳的映像檔 LU %s。"
 
-#: pypowervm/tasks/cluster_ssp.py:210
+#: pypowervm/tasks/cluster_ssp.py:212
 #, python-format
 msgid "Creating marker LU %s"
 msgstr "正在建立標記 LU %s"
 
-#: pypowervm/tasks/cluster_ssp.py:226
+#: pypowervm/tasks/cluster_ssp.py:228
 #, python-format
 msgid "Uploading to image LU %(lu)s (marker %(mkr)s)."
 msgstr "正在上傳至映像檔 LU %(lu)s（標記 %(mkr)s）。"
 
-#: pypowervm/tasks/cluster_ssp.py:237
+#: pypowervm/tasks/cluster_ssp.py:240
 #, python-format
 msgid "Removing failed LU %s."
 msgstr "正在移除失敗的 LU %s。"
@@ -739,7 +788,7 @@ msgstr ""
 "取得主機（UUID 為 '%(host)s'）的主機記憶體額外負擔時發生錯誤："
 "%(error)s."
 
-#: pypowervm/tasks/partition.py:273
+#: pypowervm/tasks/partition.py:312
 #, python-format
 msgid ""
 "Timed out waiting for the RMC state of all the powered on Virtual I/O "
@@ -750,19 +799,84 @@ msgstr ""
 "變成作用中時逾時。等待時間為 %(time)d 秒。未變成"
 "作用中的 VIOS 為：%(vioses)s。"
 
-#: pypowervm/tasks/power.py:216
+#: pypowervm/tasks/partition.py:354
 #, python-format
-msgid "Error: %s"
-msgstr "錯誤：%s"
+msgid "Assuming description-less slot is physical I/O: %s"
+msgstr "假定無說明的插槽是實體 I/O：%s"
 
-#: pypowervm/tasks/power.py:263
+#: pypowervm/tasks/power.py:88
+#, python-format
+msgid "Partition %s already powered on."
+msgstr "分割區 %s 已開啟。"
+
+#: pypowervm/tasks/power.py:136
+#, python-format
+msgid "Partition %s already powered off."
+msgstr "分割區 %s 已關閉。"
+
+#: pypowervm/tasks/power.py:199
 #, python-format
 msgid ""
-"Error invalidating adapter cache for LPAR  %(lpar_name) with UUID "
-"%(lpar_uuid)s: %(exc)s"
+"Specifying add_parms as a dict is deprecated. Please specify a %s instance "
+"instead."
 msgstr ""
-"讓具有下列 UUID 的 LPAR  %(lpar_name) 的配接卡快取失效時發生錯誤："
-"%(lpar_uuid)s: %(exc)s"
+"已淘汰將 add_parms 指定為 dict 這一做法。請指定 %s 實例 "
+"lxml。"
+
+#: pypowervm/tasks/power.py:265
+#, python-format
+msgid ""
+"IBMi OS normal shutdown failed.  Trying OS immediate shutdown.  Partition: %s"
+msgstr ""
+"IBMi 作業系統正常關閉失敗。正在嘗試立即關閉作業系統。分割區：%s"
+
+#: pypowervm/tasks/power.py:275
+#, python-format
+msgid ""
+"IBMi OS immediate shutdown failed.  Trying VSP normal shutdown.  Partition: "
+"%s"
+msgstr ""
+"IBMi 作業系統立即關閉失敗。正在嘗試正常關閉 VSP。分割區："
+"%s"
+
+#: pypowervm/tasks/power.py:284
+#, python-format
+msgid ""
+"IBMi VSP normal shutdown failed.  Trying VSP hard shutdown.  Partition: %s"
+msgstr ""
+"IBMi VSP 正常關閉失敗。正在嘗試強迫關閉 VSP。分割區：%s"
+
+#: pypowervm/tasks/power.py:326
+#, python-format
+msgid ""
+"Non-IBMi OS immediate shutdown timed out.  Trying VSP hard shutdown.  "
+"Partition: %s"
+msgstr ""
+"非 IBMi 作業系統立即關閉已逾時。正在嘗試強迫關閉 VSP。"
+"分割區：%s"
+
+#: pypowervm/tasks/power.py:330
+#, python-format
+msgid ""
+"Non-IBMi OS immediate shutdown failed.  Trying VSP normal shutdown.  "
+"Partition: %s"
+msgstr ""
+"非 IBMi 作業系統立即關閉失敗。正在嘗試正常關閉 VSP。"
+"分割區：%s"
+
+#: pypowervm/tasks/power.py:343
+#, python-format
+msgid ""
+"Non-IBMi VSP normal shutdown failed.  Trying VSP hard shutdown.  Partition: "
+"%s"
+msgstr ""
+"非 IBMi VSP 正常關閉失敗。正在嘗試強迫關閉 VSP。分割區："
+"%s"
+
+#: pypowervm/tasks/power.py:437
+#, python-format
+msgid "VSP hard shutdown with default timeout.  Partition: %s"
+msgstr "強迫關閉 VSP，發生預設逾時。分割區：%s"
 
 #: pypowervm/tasks/scsi_mapper.py:38
 msgid "Retrying modification of SCSI Mapping."
@@ -786,7 +900,7 @@ msgstr ""
 "正在建立下列 %(stg_type)s 儲存體元素 %(stg_name)s 對映：從 Virtual I/O Server"
 "%(vios_name)s 到用戶端 LPAR %(lpar_uuid)s。"
 
-#: pypowervm/tasks/scsi_mapper.py:426
+#: pypowervm/tasks/scsi_mapper.py:433
 msgid "Must not specify both match_func and stg_elem."
 msgstr "不得同時指定 match_func 和 stg_elem。"
 
@@ -800,7 +914,7 @@ msgstr ""
 msgid "The drop_cna method is deprecated! Please use the drop_vnet method."
 msgstr "drop_cna 方法已遭到淘汰。請使用 drop_vnet 方法。"
 
-#: pypowervm/tasks/sriov.py:385
+#: pypowervm/tasks/sriov.py:379
 #, python-format
 msgid ""
 "SR-IOV Physical Port at location %(loc_code)s is backing a vNIC belonging to "
@@ -809,7 +923,7 @@ msgstr ""
 "位置 %(loc_code)s 處的 SR-IOV 實體埠支援屬於下列 LPAR 的 vNIC："
 "%(lpar_name)s（LPAR UUID：%(lpar_uuid)s；vNIC UUID：%(vnic_uuid)s）。"
 
-#: pypowervm/tasks/sriov.py:502
+#: pypowervm/tasks/sriov.py:496
 msgid ""
 "Making changes to the following SR-IOV physical port labels even though they "
 "are in use by vNICs:"
@@ -817,16 +931,16 @@ msgstr ""
 "正在變更下列 SR-IOV 實體埠標籤，即使它們正在由"
 "vNIC 使用，亦是如此："
 
-#: pypowervm/tasks/storage.py:285
+#: pypowervm/tasks/storage.py:96
 #, python-format
-msgid "Unable to cleanup after file upload. File uuid: %s"
-msgstr "上傳檔案之後無法清除。檔案 UUID：%s"
+msgid "Failed to delete vio_file with UUID %s.  It must be manually deleted."
+msgstr "無法刪除 UUID 為 %s 的 vio_file。必須將其手動刪除。"
 
-#: pypowervm/tasks/storage.py:302
+#: pypowervm/tasks/storage.py:348
 msgid "Encountered an issue while uploading. Will retry."
 msgstr "上傳時遇到問題。將重試。"
 
-#: pypowervm/tasks/storage.py:405
+#: pypowervm/tasks/storage.py:522
 msgid ""
 "The crt_lu_linked_clone method is deprecated!  Please use the crt_lu method "
 "(clone=src_lu, size=lu_size_gb)."
@@ -834,18 +948,18 @@ msgstr ""
 "crt_lu_linked_clone 方法已遭到淘汰！請使用 crt_lu 方法"
 "（clone=src_lu，size=lu_size_gb）。"
 
-#: pypowervm/tasks/storage.py:456
+#: pypowervm/tasks/storage.py:573
 #, python-format
 msgid ""
 "Disk Logical Unit %(luname)s has no backing image LU.  (UDID: %(udid)s) "
 msgstr ""
 "磁碟邏輯單元 %(luname)s 沒有支援的映像檔 LU。（UDID：%(udid)s）"
 
-#: pypowervm/tasks/storage.py:500
+#: pypowervm/tasks/storage.py:654
 msgid "Unable to locate new vDisk on file upload."
 msgstr "在檔案上傳時，找不到新的 vDisk。"
 
-#: pypowervm/tasks/storage.py:549
+#: pypowervm/tasks/storage.py:703
 #, python-format
 msgid ""
 "Ignoring device because it lacks a UDID:\n"
@@ -854,27 +968,27 @@ msgstr ""
 "忽略裝置，因為該裝置缺少 UDID：\n"
 "%s"
 
-#: pypowervm/tasks/storage.py:555
+#: pypowervm/tasks/storage.py:709
 #, python-format
 msgid "Device %s not found in list."
 msgstr "在清單中找不到裝置 %s。"
 
-#: pypowervm/tasks/storage.py:584
+#: pypowervm/tasks/storage.py:738
 #, python-format
 msgid "Deleting virtual disk %(vdisk)s from volume group %(vg)s"
 msgstr "正在從磁區群組 %(vg)s 刪除虛擬磁碟 %(vdisk)s"
 
-#: pypowervm/tasks/storage.py:607
+#: pypowervm/tasks/storage.py:761
 #, python-format
 msgid "Deleting virtual optical device %(vopt)s from volume group %(vg)s"
 msgstr "正在從磁區群組 %(vg)s 刪除虛擬光學裝置 %(vopt)s"
 
-#: pypowervm/tasks/storage.py:663
+#: pypowervm/tasks/storage.py:817
 #, python-format
 msgid "Removing LU %(lu_name)s (UDID %(lu_udid)s)"
 msgstr "正在移除 LU %(lu_name)s (UDID %(lu_udid)s)"
 
-#: pypowervm/tasks/storage.py:667
+#: pypowervm/tasks/storage.py:821
 #, python-format
 msgid ""
 "LU %(lu_name)s was not found - it may have been deleted out of band.  (UDID: "
@@ -883,57 +997,57 @@ msgstr ""
 "找不到 LU %(lu_name)s - 可能已在頻帶外將其刪除。（UDID："
 "%(lu_udid)s)"
 
-#: pypowervm/tasks/storage.py:685
+#: pypowervm/tasks/storage.py:839
 #, python-format
 msgid ""
 "Removing Image LU %(lu_name)s because it is no longer in use.  (UDID: "
 "%(lu_udid)s)"
 msgstr ""
-"正在移除映像檔 LU %(lu_name)s，因為它不再處於使用中狀態。（UDID："
+"正在移除映像檔 LU %(lu_name)s，因為不再使用它。（UDID："
 "%(lu_udid)s)"
 
-#: pypowervm/tasks/storage.py:690
+#: pypowervm/tasks/storage.py:844
 #, python-format
 msgid "Backing LU %(lu_name)s was not found.  (UDID: %(lu_udid)s)"
 msgstr "找不到支援的 LU %(lu_name)s。（UDID：%(lu_udid)s）"
 
-#: pypowervm/tasks/storage.py:716
+#: pypowervm/tasks/storage.py:870
 msgid "Developer error: Either tier or lufeed is required."
 msgstr "開發者錯誤：需要層級或 lufeed。"
 
-#: pypowervm/tasks/storage.py:721
+#: pypowervm/tasks/storage.py:875
 msgid ""
 "Developer error: The lufeed parameter must comprise LUEnt EntryWrappers."
 msgstr ""
 "開發者錯誤：lufeed 參數必須包含 LUEnt EntryWrappers。"
 
-#: pypowervm/tasks/storage.py:728
+#: pypowervm/tasks/storage.py:882
 #, python-format
 msgid "Deleting LU %(lu_name)s (UDID: %(lu_udid)s)"
 msgstr "正在刪除 LU %(lu_name)s（UDID：%(lu_udid)s）"
 
-#: pypowervm/tasks/storage.py:733
+#: pypowervm/tasks/storage.py:887
 #, python-format
 msgid ""
 "Ignoring HttpError for LU %(lu_name)s may have been deleted out of band.  "
 "(UDID: %(lu_udid)s)"
 msgstr ""
-"正在忽略 HttpError，可能已在頻帶外刪除 LU %(lu_name)s。"
+"忽略 HttpError，可能已在頻帶外刪除 LU %(lu_name)s。"
 "（UDID：%(lu_udid)s）"
 
-#: pypowervm/tasks/storage.py:786
+#: pypowervm/tasks/storage.py:940
 #, python-format
 msgid ""
 "Removing %(num_maps)d orphan %(stg_type)s mappings from VIOS %(vios_name)s."
 msgstr ""
 "正在從 VIOS %(vios_name)s 移除 %(num_maps)d 個段落遺留字串 %(stg_type)s 對映。"
 
-#: pypowervm/tasks/storage.py:812
+#: pypowervm/tasks/storage.py:966
 #, python-format
 msgid "Removing %(num_maps)d port-less VFC mappings from VIOS %(vios_name)s."
 msgstr "正在從 VIOS %(vios_name)s 中移除 %(num_maps)d 個缺少埠的 VFC 對映。"
 
-#: pypowervm/tasks/storage.py:839
+#: pypowervm/tasks/storage.py:993
 #, python-format
 msgid ""
 "Removing %(num_maps)d %(stg_type)s mappings associated with LPAR ID "
@@ -942,7 +1056,7 @@ msgstr ""
 "正在將 %(num_maps)d 個與 LPAR ID "
 "%(lpar_id)d 相關聯的 %(stg_type)s 對映從 VIOS %(vios_name)s 中移除。"
 
-#: pypowervm/tasks/storage.py:906
+#: pypowervm/tasks/storage.py:1060
 #, python-format
 msgid ""
 "Not removing storage %(stg_name)s of type %(stg_type)s because it cannot be "
@@ -953,16 +1067,16 @@ msgstr ""
 "判定它是否仍在使用中。可能需要手動驗證和"
 "清除。"
 
-#: pypowervm/tasks/storage.py:917
+#: pypowervm/tasks/storage.py:1071
 #, python-format
 msgid ""
 "Storage scrub ignoring storage element %(stg_name)s because it is of "
 "unexpected type %(stg_type)s."
 msgstr ""
-"儲存體清除正在忽略儲存體元素 %(stg_name)s，因為它是"
+"儲存體清除忽略儲存體元素 %(stg_name)s，因為它是"
 "非預期的類型 %(stg_type)s。"
 
-#: pypowervm/tasks/storage.py:935
+#: pypowervm/tasks/storage.py:1089
 #, python-format
 msgid ""
 "Scrubbing the following %(vdcount)d Virtual Disks from VIOS %(vios)s: "
@@ -971,7 +1085,7 @@ msgstr ""
 "正在從 VIOS %(vios)s 清除以下 %(vdcount)d 個虛擬磁碟："
 "%(vdlist)s"
 
-#: pypowervm/tasks/storage.py:943
+#: pypowervm/tasks/storage.py:1097
 #, python-format
 msgid ""
 "Scrubbing the following %(vocount)d Virtual Opticals from VIOS %(vios)s: "
@@ -980,7 +1094,7 @@ msgstr ""
 "正在從 VIOS %(vios)s 清除以下 %(vocount)d 個虛擬光學裝置："
 "%(volist)s"
 
-#: pypowervm/tasks/storage.py:1011
+#: pypowervm/tasks/storage.py:1168
 #, python-format
 msgid ""
 "Skipping scrub of %(stg_type)s mappings from VIOS %(vios_name)s for the "
@@ -1098,7 +1212,12 @@ msgstr ""
 "在 XML 輸出中找不到 pg83 描述子：\n"
 "%s"
 
-#: pypowervm/tasks/hdisk/_iscsi.py:63
+#: pypowervm/tasks/hdisk/_iscsi.py:73
+#, python-format
+msgid "Invalid device output: %(dev)s"
+msgstr "裝置輸出無效：%(dev)s"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:78
 #, python-format
 msgid "Expected IQN: %(IQN)s not found on iscsi target %(host_ip)s"
 msgstr "在 iSCSI 目標 %(host_ip)s 上找不到預期的 IQN：%(IQN)s"
@@ -1134,7 +1253,7 @@ msgid ""
 "Attempt %(retry)d of %(total)d failed.  Will retry. The exception was:\n"
 " %(except)s."
 msgstr ""
-"第 %(retry)d 次嘗試（共 %(total)d 次）失敗。將重試。異常狀況為：\n"
+"第 %(retry)d 次（總共 %(total)d 次）嘗試失敗。將重試。異常狀況為：\n"
 " %(except)s."
 
 #: pypowervm/utils/transaction.py:348
@@ -1164,6 +1283,15 @@ msgstr "必須提供 EntryWrapper 的清單，或者提供 FeedGetter。"
 msgid "FeedTask %s has no Subtasks; no-op execution."
 msgstr "FeedTask %s 沒有子作業；沒有作業執行。"
 
+#: pypowervm/utils/transaction.py:789
+#, python-format
+msgid ""
+"FeedTask %s experienced multiple exceptions. They are logged individually "
+"below."
+msgstr ""
+"FeedTask %s 遇到多個異常狀況。下面逐個記載了"
+"這些異常狀況。"
+
 #: pypowervm/utils/validation.py:161
 #, python-format
 msgid ""
@@ -1184,7 +1312,7 @@ msgid ""
 "maximum memory. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後才能變更"
-"記憶體下限或上限。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"記憶體下限或上限。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
 #: pypowervm/utils/validation.py:215
 #, python-format
@@ -1193,7 +1321,7 @@ msgid ""
 "factor. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後再變更"
-"擴充因數。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"擴充因數。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
 #: pypowervm/utils/validation.py:302
 msgid "CPUs"
@@ -1210,7 +1338,7 @@ msgid ""
 "maximum processors. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後才能變更"
-"處理器數目下限或上限。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"處理器數目下限或上限。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
 #: pypowervm/utils/validation.py:369
 #, python-format
@@ -1219,7 +1347,7 @@ msgid ""
 "maximum processor units. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後才能變更"
-"處理器裝置數目下限或上限。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"處理器裝置數目下限或上限。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
 #: pypowervm/utils/validation.py:385
 #, python-format
@@ -1228,7 +1356,7 @@ msgid ""
 "compatibility mode. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後才能變更"
-"處理器相容模式。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"處理器相容模式。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
 #: pypowervm/utils/validation.py:393
 #, python-format
@@ -1268,40 +1396,40 @@ msgid ""
 "remote restart capability. Power off virtual machine %s and try again."
 msgstr ""
 "必須先關閉虛擬機器電源，然後才能變更"
-"簡化的遠端重新啟動功能。請先關閉虛擬機器 %s 的電源，然後再試一次。"
+"已簡化的遠端重新啟動功能。請關閉虛擬機器 %s 的電源，然後再試一次。"
 
-#: pypowervm/wrappers/base_partition.py:421
+#: pypowervm/wrappers/base_partition.py:424
 msgid "Partition does not have an active RMC connection."
 msgstr "分割區沒有作用中的 RMC 連線。"
 
-#: pypowervm/wrappers/base_partition.py:424
+#: pypowervm/wrappers/base_partition.py:427
 #, python-format
 msgid "Partition does not have an active DLPAR capability for %s."
 msgstr "分割區沒有作用中的 DLPAR 功能適用於 %s。"
 
-#: pypowervm/wrappers/base_partition.py:436
+#: pypowervm/wrappers/base_partition.py:439
 msgid "I/O"
 msgstr "I/O"
 
-#: pypowervm/wrappers/base_partition.py:446
+#: pypowervm/wrappers/base_partition.py:449
 msgid "Memory"
 msgstr "記憶體"
 
-#: pypowervm/wrappers/base_partition.py:456
+#: pypowervm/wrappers/base_partition.py:459
 msgid "Processors"
 msgstr "處理器"
 
-#: pypowervm/wrappers/base_partition.py:632
+#: pypowervm/wrappers/base_partition.py:639
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "KeylockPos '%s' 無效。"
 
-#: pypowervm/wrappers/base_partition.py:643
+#: pypowervm/wrappers/base_partition.py:650
 #, python-format
 msgid "Invalid BootMode '%s'."
 msgstr "無效的 BootMode '%s'。"
 
-#: pypowervm/wrappers/base_partition.py:1405
+#: pypowervm/wrappers/base_partition.py:1436
 msgid "IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."
 msgstr "IOSlot.adapter 已遭到淘汰！請改用 IOSlot.io_adapter。"
 
@@ -1376,20 +1504,20 @@ msgstr "透過 parent_uuid 參數指定母項的 UUID。"
 msgid "Specify either 'uuid' or 'child_id' when requesting a CHILD object."
 msgstr "在要求子物件時，指定 'uuid' 或 'child_id'。"
 
-#: pypowervm/wrappers/entry_wrapper.py:980
+#: pypowervm/wrappers/entry_wrapper.py:1001
 msgid "Parent UUID specified without parent type."
 msgstr "指定的母項 UUID 不含親項類型。"
 
-#: pypowervm/wrappers/entry_wrapper.py:983
+#: pypowervm/wrappers/entry_wrapper.py:1004
 msgid "The search() method requires exactly one key=value argument."
 msgstr "search() 方法只需要一個 key=value 引數。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1014
+#: pypowervm/wrappers/entry_wrapper.py:1035
 #, python-format
 msgid "Wrapper class %(class)s does not support search key '%(key)s'."
 msgstr "封套類別 %(class)s 不支援搜尋關鍵字 '%(key)s'。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1114
+#: pypowervm/wrappers/entry_wrapper.py:1135
 msgid ""
 "The 'xag' parameter to EntryWrapper.update is deprecated!  At best, using it "
 "will result in a no-op.  At worst, it will give you incurable etag mismatch "
@@ -1399,24 +1527,24 @@ msgstr ""
 "導致空作業。使用它的最差結果是將導致無法更正的 etag 不符"
 "錯誤。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1382
+#: pypowervm/wrappers/entry_wrapper.py:1403
 msgid "No such child element."
 msgstr "沒有此類子元素。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1443
+#: pypowervm/wrappers/entry_wrapper.py:1464
 msgid "Cannot set UUID on Wrapper with no Metadata."
 msgstr "無法在沒有 meta 資料的封套上設定 UUID。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1448
+#: pypowervm/wrappers/entry_wrapper.py:1469
 #, python-format
 msgid "uuid value not valid: %s"
 msgstr "UUID 值無效：%s"
 
-#: pypowervm/wrappers/entry_wrapper.py:1503
+#: pypowervm/wrappers/entry_wrapper.py:1524
 msgid "Must specify a Wrapper subclass."
 msgstr "必須指定封套子類別。"
 
-#: pypowervm/wrappers/entry_wrapper.py:1512
+#: pypowervm/wrappers/entry_wrapper.py:1533
 msgid "Must specify both parent class and parent UUID, or neither."
 msgstr "必須同時指定母類別及母項 UUID，或者兩者皆不指定。"
 
@@ -1439,37 +1567,37 @@ msgstr ""
 msgid "Job %s not deleted. Job is in running state."
 msgstr "未刪除工作 %s。工作處於執行中狀態。"
 
-#: pypowervm/wrappers/logical_partition.py:168
+#: pypowervm/wrappers/logical_partition.py:169
 msgid "LPAR is not in an active state."
 msgstr "LPAR 未處於作用中狀態。"
 
-#: pypowervm/wrappers/logical_partition.py:178
+#: pypowervm/wrappers/logical_partition.py:179
 msgid "Target system does not have the IBM i LPAR Mobility Capability."
 msgstr "目標系統沒有 IBM i LPAR 行動性功能。"
 
-#: pypowervm/wrappers/logical_partition.py:182
+#: pypowervm/wrappers/logical_partition.py:183
 msgid "IBM i LPAR does not have restricted I/O."
 msgstr "IBM i LPAR 沒有受限的 I/O。"
 
-#: pypowervm/wrappers/logical_partition.py:186
+#: pypowervm/wrappers/logical_partition.py:187
 msgid "Source system does not have the IBM i LPAR Mobility Capability."
 msgstr "來源系統沒有 IBM i LPAR 行動性功能。"
 
-#: pypowervm/wrappers/logical_partition.py:190
+#: pypowervm/wrappers/logical_partition.py:191
 msgid "LPAR does not have an active RMC connection."
 msgstr "LPAR 沒有作用中的 RMC 連線。"
 
-#: pypowervm/wrappers/logical_partition.py:193
+#: pypowervm/wrappers/logical_partition.py:194
 msgid "LPAR is the management partition"
 msgstr "LPAR 是管理分割區"
 
-#: pypowervm/wrappers/logical_partition.py:197
+#: pypowervm/wrappers/logical_partition.py:198
 msgid "LPAR is not available for LPM due to missing DLPAR capabilities."
 msgstr "由於遺漏 DLPAR 功能，LPM 無法使用 LPAR。"
 
-#: pypowervm/wrappers/logical_partition.py:214
-#: pypowervm/wrappers/logical_partition.py:223
-#: pypowervm/wrappers/logical_partition.py:231
+#: pypowervm/wrappers/logical_partition.py:215
+#: pypowervm/wrappers/logical_partition.py:224
+#: pypowervm/wrappers/logical_partition.py:232
 msgid ""
 "This is not the property you are looking for.  Use srr_enabled in a NovaLink "
 "environment."
@@ -1477,12 +1605,32 @@ msgstr ""
 "這不是您要尋找的內容。請在 NovaLink 環境中使用"
 "srr_enabled。"
 
-#: pypowervm/wrappers/logical_partition.py:267
+#: pypowervm/wrappers/logical_partition.py:268
 #, python-format
 msgid "Invalid IPLSrc '%s'."
 msgstr "IPLSrc '%s' 無效。"
 
-#: pypowervm/wrappers/storage.py:633
+#: pypowervm/wrappers/managed_system.py:428
+msgid "This property is deprecated!. Use pci_subsys_dev_id instead."
+msgstr "此內容已淘汰！請改為使用 pci_subsys_dev_id。"
+
+#: pypowervm/wrappers/managed_system.py:440
+msgid "This property is deprecated!. Use pci_rev_id instead."
+msgstr "此內容已淘汰！請改為使用 pci_rev_id。"
+
+#: pypowervm/wrappers/managed_system.py:456
+msgid "This property is deprecated!. Use pci_subsys_vendor_id instead."
+msgstr "此內容已淘汰！請改為使用 pci_subsys_vendor_id。"
+
+#: pypowervm/wrappers/managed_system.py:468
+msgid "This property is deprecated!. Use drc_index instead."
+msgstr "此內容已淘汰！請改為使用 drc_index。"
+
+#: pypowervm/wrappers/managed_system.py:480
+msgid "This property is deprecated!. Use drc_name instead."
+msgstr "此內容已淘汰！請改為使用 drc_name。"
+
+#: pypowervm/wrappers/storage.py:651
 #, python-format
 msgid ""
 "PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
@@ -1507,6 +1655,6 @@ msgstr "VIOS 類型的分割區不支援 LPM"
 msgid "Can't specify target device LUA without a backing storage device!"
 msgstr "在沒有支援儲存裝置的情況下，無法指定目標裝置 LUA！"
 
-# ENGL1SH_VERS10N 26336_49 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 13712_53 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 23
-# T9N_SH1P_STR1NG PV132AAP001 2
+# T9N_SH1P_STR1NG PV133AAP001 2
