@@ -33,6 +33,23 @@ class TransportType(object):
     ISER = 'iser'
 
 
+class ISCSIStatus(object):
+    """ISCSI status codes."""
+    ISCSI_SUCCESS = '0'
+    ISCSI_ERR = '1'
+    ISCSI_ERR_SESS_NOT_FOUND = '3'
+    ISCSI_ERR_LOGIN = '5'
+    ISCSI_ERR_INVAL = '7'
+    ISCSI_ERR_TRANS_TIMEOUT = '8'
+    ISCSI_ERR_INTERNAL = '9'
+    ISCSI_ERR_LOGOUT = '10'
+    ISCSI_ERR_SESS_EXISTS = '15'
+    ISCSI_ERR_NO_OBJS_FOUND = '21'
+    ISCSI_ERR_HOST_NOT_FOUND = '23'
+    ISCSI_ERR_LOGIN_AUTH_FAILED = '24'
+    ISCSI_COMMAND_NOT_FOUND = '127'
+
+
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
                    transport_type=None):
     """Runs iscsi discovery and login job
@@ -62,22 +79,38 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     if transport_type is not None:
         job_parms.append(
             job_wrapper.create_job_parameter('transportType', transport_type))
-    job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
-    results = job_wrapper.get_job_results_as_dict()
 
-    # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
-    output = ast.literal_eval(results.get('DEV_OUTPUT'))
-    # Find dev corresponding to given IQN
-    for dev in output:
-        if len(dev.split()) != 3:
-            LOG.warning(_("Invalid device output: %(dev)s"), {'dev': dev})
-            continue
-        outiqn, outname, udid = dev.split()
-        if outiqn == iqn:
-            return outname, udid
-    LOG.error(_("Expected IQN: %(IQN)s not found on iscsi target %(host_ip)s"),
-              {'IQN': iqn, 'host_ip': host_ip})
-    return None, None
+    try:
+        job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
+        results = job_wrapper.get_job_results_as_dict()
+
+        # RETURN_CODE: for iscsiadm status
+        status = results.get('RETURN_CODE')
+        if status == ISCSI_COMMAND_NOT_FOUND:
+            LOG.warning(_("ISCSIDiscovery Failed on vios %s, "
+                          "Command not found. Retry on next."), vios_uuid)
+            return None, None
+        if status not in [ISCSIStatus.ISCSI_SUCCESS,
+                          ISCSIStatus.ISCSI_ERR_SESS_EXISTS]:
+            raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=status)
+
+        # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
+        output = ast.literal_eval(results.get('DEV_OUTPUT'))
+        # Find dev corresponding to given IQN
+        for dev in output:
+            if len(dev.split()) != 3:
+                LOG.warning(_("Invalid device output: %(dev)s"), {'dev': dev})
+                continue
+            outiqn, outname, udid = dev.split()
+            if outiqn == iqn:
+                return outname, udid
+        LOG.error(_("Expected IQN: %(IQN)s not found on iscsi target "
+                    "%(host_ip)s"), {'IQN': iqn, 'host_ip': host_ip})
+        return None, None
+    except pexc.JobRequestFailed as error:
+        emsg = six.text_type(error)
+        LOG.exception(error)
+        raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, msg=emsg)
 
 
 def discover_iscsi_initiator(adapter, vios_uuid):
@@ -91,11 +124,24 @@ def discover_iscsi_initiator(adapter, vios_uuid):
                         suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=(_JOB_NAME))
     job_wrapper = job.Job.wrap(resp)
 
-    job_wrapper.run_job(vios_uuid, timeout=120)
-    results = job_wrapper.get_job_results_as_dict()
+    try:
+        job_wrapper.run_job(vios_uuid, timeout=120)
+        results = job_wrapper.get_job_results_as_dict()
+        status = results.get('RETURN_CODE')
+        if status == ISCSI_COMMAND_NOT_FOUND:
+            LOG.warning(_("ISCSIDiscovery Failed on vios %s\n, iscsiadm "
+                          "command not found. Retry on next"), vios_uuid)
+            return None
+        if status != ISCSIStatus.ISCSI_SUCCESS:
+            LOG.error(_("ISCSIDiscovery Login Failed: status=%d"), status)
+            raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=status)
 
-    # InitiatorName: iqn.2010-10.org.openstack:volume-4a75e9f7-dfa3
-    return results.get('InitiatorName')
+        # InitiatorName: iqn.2010-10.org.openstack:volume-4a75e9f7-dfa3
+        return results.get('InitiatorName')
+    except pexc.JobRequestFailed as error:
+        emsg = six.text_type(error)
+        LOG.exception(error)
+        raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=1)
 
 
 def remove_iscsi(adapter, targetIQN, vios_uuid):
@@ -108,6 +154,7 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     :param targetIQN: The IQN (iSCSI Qualified Name) of the created volume on
                       the target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :return: True on Success and False on Failure
     """
     resp = adapter.read(VIOS.schema_type, vios_uuid,
                         suffix_type=c.SUFFIX_TYPE_DO,
@@ -115,4 +162,22 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     job_wrapper = job.Job.wrap(resp)
 
     job_parms = [job_wrapper.create_job_parameter('targetIQN', targetIQN)]
-    job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
+    try:
+        job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
+        results = job_wrapper.get_job_results_as_dict()
+        # RETURN_CODE: for iscsiadm status
+        status = results.get('RETURN_CODE')
+        if status == ISCSI_COMMAND_NOT_FOUND:
+            LOG.warning(_("ISCSIDiscovery Failed on vios %s\n, iscsiadm "
+                          "command not found. Retry on next"), vios_uuid)
+            return False
+
+        if status not in [ISCSIStatus.ISCSI_SUCCESS,
+                          ISCSIStatus.ISCSI_ERR_SESS_EXISTS]:
+            LOG.error(_("ISCSIDiscovery Logout Failed status: %s"), status)
+            raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=status)
+        return True
+    except pexc.JobRequestFailed as error:
+        emsg = six.text_type(error)
+        LOG.exception(error)
+        raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=1)
