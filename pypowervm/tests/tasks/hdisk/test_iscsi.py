@@ -43,13 +43,15 @@ class TestIscsi(testtools.TestCase):
         mock_pass = 'password'
         mock_iqn = 'fake_iqn'
         mock_uuid = 'uuid'
+        mock_lun = '2'
         mock_trans_type = 'trans_type'
         args = ['VirtualIOServer', mock_uuid]
         kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSIDiscovery')}
-        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]'}
+        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
+                                     'RETURN_CODE': '0'}
         device_name, udid = iscsi.discover_iscsi(
             self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
-            transport_type=mock_trans_type)
+            mock_lun, transport_type=mock_trans_type)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
         self.assertEqual('devName', device_name)
@@ -80,7 +82,8 @@ class TestIscsi(testtools.TestCase):
         mock_uuid = 'uuid'
         args = ['VirtualIOServer', mock_uuid]
         kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSIDiscovery')}
-        mock_job_res.return_value = {'InitiatorName': 'fake_iqn'}
+        mock_job_res.return_value = {'InitiatorName': 'fake_iqn',
+                                     'RETURN_CODE': '0'}
         initiator = iscsi.discover_iscsi_initiator(self.adpt, mock_uuid)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
