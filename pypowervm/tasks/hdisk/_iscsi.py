@@ -33,6 +33,23 @@ class TransportType(object):
     ISER = 'iser'
 
 
+class ISCSIStatus(object):
+    """ISCSI status codes."""
+    ISCSI_SUCCESS = '0'
+    ISCSI_ERR = '1'
+    ISCSI_ERR_SESS_NOT_FOUND = '3'
+    ISCSI_ERR_LOGIN = '5'
+    ISCSI_ERR_INVAL = '7'
+    ISCSI_ERR_TRANS_TIMEOUT = '8'
+    ISCSI_ERR_INTERNAL = '9'
+    ISCSI_ERR_LOGOUT = '10'
+    ISCSI_ERR_SESS_EXISTS = '15'
+    ISCSI_ERR_NO_OBJS_FOUND = '21'
+    ISCSI_ERR_HOST_NOT_FOUND = '23'
+    ISCSI_ERR_LOGIN_AUTH_FAILED = '24'
+    ISCSI_COMMAND_NOT_FOUND = '127'
+
+
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
                    transport_type=None):
     """Runs iscsi discovery and login job
@@ -65,6 +82,13 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
 
+    # RETURN_CODE: for iscsiadm status
+    status = results.get('RETURN_CODE')
+    if status not in [ISCSIStatus.ISCSI_SUCCESS,
+                      ISCSIStatus.ISCSI_ERR_SESS_EXISTS]:
+        LOG.error("ISCSIDiscovery Login Failed with status: %s" % status)
+        return None, None
+
     # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
     output = ast.literal_eval(results.get('DEV_OUTPUT'))
     # Find dev corresponding to given IQN
@@ -93,7 +117,10 @@ def discover_iscsi_initiator(adapter, vios_uuid):
 
     job_wrapper.run_job(vios_uuid, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
-
+    status = results.get('RETURN_CODE')
+    if status != ISCSIStatus.ISCSI_SUCCESS:
+        LOG.error("ISCSIDiscovery Failed with status code %s" % status)
+        return None
     # InitiatorName: iqn.2010-10.org.openstack:volume-4a75e9f7-dfa3
     return results.get('InitiatorName')
 
@@ -108,6 +135,7 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     :param targetIQN: The IQN (iSCSI Qualified Name) of the created volume on
                       the target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :return: True on Success and False on Failure
     """
     resp = adapter.read(VIOS.schema_type, vios_uuid,
                         suffix_type=c.SUFFIX_TYPE_DO,
@@ -116,3 +144,11 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
 
     job_parms = [job_wrapper.create_job_parameter('targetIQN', targetIQN)]
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
+    results = job_wrapper.get_job_results_as_dict()
+    # RETURN_CODE: for iscsiadm status
+    status = results.get('RETURN_CODE')
+    if status not in [ISCSIStatus.ISCSI_SUCCESS,
+                      ISCSIStatus.ISCSI_ERR_SESS_EXISTS]:
+        LOG.error("ISCSIDiscovery Logout Failed with status: %s" % status)
+        return False
+    return True
