@@ -401,3 +401,13 @@ class PanelFunctionRequiresPartition(AbstractMsgFmtError):
 class InvalidIBMiPanelFunctionOperation(AbstractMsgFmtError):
     msg_fmt = _("Panel function operation %(op_name)s is invalid. "
                 "One of %(valid_ops)s expected.")
+
+
+class ISCSIDiscoveryFailed(AbstractMsgFmtError):
+    msg_fmt = _("ISCSI discovery failed for vios %(vios_uuid)s"
+                " with: %(msg)s.")
+
+
+class ISCSILogoutFailed(AbstractMsgFmtError):
+    msg_fmt = _("ISCSI Logout failed for vios %(vios_uuid)s"
+                " with: %(msg)s.")
