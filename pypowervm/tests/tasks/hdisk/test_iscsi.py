@@ -18,6 +18,7 @@ import mock
 import testtools
 
 import pypowervm.entities as ent
+from pypowervm import exceptions as pexc
 from pypowervm.tasks.hdisk import _iscsi as iscsi
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.wrappers import job
@@ -45,8 +46,9 @@ class TestIscsi(testtools.TestCase):
         mock_uuid = 'uuid'
         mock_trans_type = 'trans_type'
         args = ['VirtualIOServer', mock_uuid]
-        kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSIDiscovery')}
-        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]'}
+        kwargs = {'suffix_type': 'do', 'suffix_parm': 'ISCSIDiscovery'}
+        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
+                                     'RETURN_CODE': '0'}
         device_name, udid = iscsi.discover_iscsi(
             self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
             transport_type=mock_trans_type)
@@ -62,15 +64,12 @@ class TestIscsi(testtools.TestCase):
         self.assertEqual(5, mock_job_p.call_count)
 
         mock_trans_type = None
-        mock_job_p.reset_mock()
-        iscsi.discover_iscsi(
-            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
-            transport_type=mock_trans_type)
-        mock_job_p.assert_has_calls([
-            mock.call('hostIP', mock_host_ip), mock.call('user', mock_user),
-            mock.call('password', mock_pass),
-            mock.call('targetIQN', mock_iqn)], any_order=True)
-        self.assertEqual(4, mock_job_p.call_count)
+
+        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
+                                     'RETURN_CODE': '8'}
+        self.assertRaises(pexc.ISCSIDiscoveryFailed, iscsi.discover_iscsi,
+                          self.adpt, mock_host_ip, mock_user, mock_pass,
+                          mock_iqn, mock_uuid, transport_type=mock_trans_type)
 
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
@@ -80,12 +79,17 @@ class TestIscsi(testtools.TestCase):
         mock_uuid = 'uuid'
         args = ['VirtualIOServer', mock_uuid]
         kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSIDiscovery')}
-        mock_job_res.return_value = {'InitiatorName': 'fake_iqn'}
+        mock_job_res.return_value = {'InitiatorName': 'fake_iqn',
+                                     'RETURN_CODE': '0'}
         initiator = iscsi.discover_iscsi_initiator(self.adpt, mock_uuid)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
         self.assertEqual('fake_iqn', initiator)
         self.assertEqual(1, mock_run_job.call_count)
+        mock_job_res.return_value = {'InitiatorName': '',
+                                     'RETURN_CODE': '8'}
+        self.assertRaises(pexc.ISCSIDiscoveryFailed,
+                          iscsi.discover_iscsi_initiator, self.adpt, mock_uuid)
 
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
@@ -100,6 +104,7 @@ class TestIscsi(testtools.TestCase):
         mock_job_p.return_value = mock_parm
         args = ['VirtualIOServer', mock_uuid]
         kwargs = {'suffix_type': 'do', 'suffix_parm': ('ISCSILogout')}
+        mock_job_res.return_value = {'RETURN_CODE': '0'}
         iscsi.remove_iscsi(self.adpt, mock_iqn, mock_uuid)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
@@ -107,3 +112,16 @@ class TestIscsi(testtools.TestCase):
                                              timeout=120)
         mock_job_p.assert_any_call('targetIQN', mock_iqn)
         self.assertEqual(1, mock_run_job.call_count)
+
+        # Test to check the ISCSILogoutFailed
+        mock_run_job.reset_mock()
+        mock_job_res.return_value = {'RETURN_CODE': '2'}
+        self.assertRaises(pexc.ISCSILogoutFailed,
+                          iscsi.remove_iscsi, self.adpt, mock_iqn, mock_uuid)
+
+        # Test the Return Code 21
+        mock_run_job.reset_mock()
+        mock_job_res.return_value = {'RETURN_CODE': '21'}
+        iscsi.remove_iscsi(self.adpt, mock_iqn, mock_uuid)
+        mock_run_job.assert_called_once_with(mock_uuid, job_parms=[mock_parm],
+                                             timeout=120)
