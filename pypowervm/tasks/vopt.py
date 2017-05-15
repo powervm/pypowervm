@@ -72,7 +72,7 @@ def validate_vopt_repo_exists(
 
         LOG.warning(_("An error occurred querying the virtual optical "
                       "media repository.  Attempting to re-establish "
-                      "connection with a virtual optical media repository"))
+                      "connection with a virtual optical media repository."))
 
     # Did not find the media repository.  Need a deeper query
     return _find_or_rebuild_vopt_repo(adapter, vopt_media_volume_group,
