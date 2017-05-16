@@ -81,6 +81,18 @@ class TestVterm(testtools.TestCase):
                                                '--local'])
         self.assertEqual(5903, resp)
 
+    @mock.patch('subprocess.Popen')
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    def test_open_vnc_vterm_nonascii(self, mock_get_lpar_id, mock_popen):
+        """Validates errors in non-ascii encodings are handled properly"""
+        proc_mock = mock.Mock(returncode=3)
+        mock_get_lpar_id.return_value = '4'
+        mock_popen.return_value = proc_mock
+        proc_mock.communicate.return_value = ('', '\xd0\x92')
+        # Make sure we don't get some sort of encoding error on a failure case
+        self.assertRaises(pexc.VNCBasedTerminalFailedToOpen,
+                          vterm.open_localhost_vnc_vterm, self.adpt, '1', True)
+
     @mock.patch('pypowervm.tasks.vterm.close_vterm')
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
     @mock.patch('pypowervm.tasks.vterm._run_proc')
