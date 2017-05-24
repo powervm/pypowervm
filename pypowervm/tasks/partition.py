@@ -341,7 +341,8 @@ def has_physical_io(part_w):
         return False
 
     # Doesn't count as physical I/O if description contains any of these
-    non_ios = ("USB", "Universal Serial Bus", "Graphics", "Empty slot")
+    non_ios = ("USB", "Universal Serial Bus", "Graphics", "Empty slot",
+               "3D Controller")
     for io_slot in io_slots:
         try:
             # If the description *isn't* one of the non-I/O ones, it's a hit.
