@@ -28,6 +28,7 @@ import time
 
 from oslo_concurrency import lockutils as lock
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 
 import pypowervm.const as c
 from pypowervm import exceptions as pvm_exc
@@ -253,6 +254,10 @@ def _run_proc(cmd):
                                close_fds=True, env=None)
     process.wait()
     stdout, stderr = process.communicate()
+    # Convert the stdout/stderr output from a byte-string to a unicode-string
+    # so it doesn't blow up later on anything doing an implicit conversion
+    stdout = encodeutils.safe_decode(stdout)
+    stderr = encodeutils.safe_decode(stderr)
     return process.returncode, stdout, stderr
 
 

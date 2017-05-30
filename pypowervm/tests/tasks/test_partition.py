@@ -124,6 +124,10 @@ class TestPartition(testtools.TestCase):
             io_slots=[mock.Mock(description='test Graphics 3.0 test')]))
         self.assertFalse(tpar.has_physical_io(part_w))
 
+        part_w = mock.Mock(io_config=mock.Mock(
+            io_slots=[mock.Mock(description='My 3D Controller test')]))
+        self.assertFalse(tpar.has_physical_io(part_w))
+
         part_w = mock.Mock(io_config=mock.Mock(io_slots=[]))
         self.assertFalse(tpar.has_physical_io(part_w))
 

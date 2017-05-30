@@ -474,7 +474,7 @@ class BoundField(Field):
             values = dict(field=self.name, value=self.typed_value,
                           minimum=self._min_bound)
             msg = _LE("Field '%(field)s' has a value below the minimum. "
-                      "Value: %(value)s Minimum: %(minimum)s") % values
+                      "Value: %(value)s; Minimum: %(minimum)s") % values
             LOG.error(msg)
             raise ValueError(msg)
 
@@ -483,7 +483,7 @@ class BoundField(Field):
             values = dict(field=self.name, value=self.typed_value,
                           maximum=self._max_bound)
             msg = _LE("Field '%(field)s' has a value above the maximum. "
-                      "Value: %(value)s Maximum: %(maximum)s") % values
+                      "Value: %(value)s; Maximum: %(maximum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)

@@ -426,7 +426,7 @@ class IOSlot(ewrap.ElementWrapper):
     def pci_sub_dev_id(self):
         """Deprecated - use pci_subsys_dev_id instead."""
         warnings.warn(_(
-            "This property is deprecated!. "
+            "This property is deprecated! "
             "Use pci_subsys_dev_id instead."), DeprecationWarning)
         return self.pci_subsys_dev_id
 
@@ -438,7 +438,7 @@ class IOSlot(ewrap.ElementWrapper):
     def pci_revision_id(self):
         """Deprecated - use pci_rev_id instead."""
         warnings.warn(_(
-            "This property is deprecated!. "
+            "This property is deprecated! "
             "Use pci_rev_id instead."), DeprecationWarning)
         return self.pci_rev_id
 
@@ -454,7 +454,7 @@ class IOSlot(ewrap.ElementWrapper):
     def pci_sub_vendor_id(self):
         """Deprecated - use pci_subsys_vendor_id instead."""
         warnings.warn(_(
-            "This property is deprecated!. "
+            "This property is deprecated! "
             "Use pci_subsys_vendor_id instead."), DeprecationWarning)
         return self.pci_subsys_vendor_id
 
@@ -466,7 +466,7 @@ class IOSlot(ewrap.ElementWrapper):
     def dyn_reconfig_conn_index(self):
         """Deprecated - use drc_index instead."""
         warnings.warn(_(
-            "This property is deprecated!. "
+            "This property is deprecated! "
             "Use drc_index instead."), DeprecationWarning)
         return self.drc_index
 
@@ -478,6 +478,6 @@ class IOSlot(ewrap.ElementWrapper):
     def dyn_reconfig_conn_name(self):
         """Deprecated - use drc_name instead."""
         warnings.warn(_(
-            "This property is deprecated!. "
+            "This property is deprecated! "
             "Use drc_name instead."), DeprecationWarning)
         return self.drc_name
