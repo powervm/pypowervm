@@ -74,7 +74,7 @@ def _find_dev_by_iqn(cmd_output, iqn, host_ip):
 
 
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
-                   transport_type=None):
+                   transport_type=None, lunid=None):
     """Runs iscsi discovery and login job
 
     :param adapter: pypowervm adapter
@@ -86,6 +86,7 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
     :param transport_type: The type of the volume to be connected. Must be a
                            valid TransportType.
+    :param lunid: Target LUN ID of the volume.
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
     :raise: ISCSIDiscoveryFailed in case of Failure.
@@ -108,6 +109,10 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
         job_parms.append(
             job_wrapper.create_job_parameter('transportType',
                                              transport_type))
+    if lunid is not None:
+        job_parms.append(
+            job_wrapper.create_job_parameter('targetLUN',
+                                             str(lunid)))
     try:
         job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     except pexc.JobRequestFailed:

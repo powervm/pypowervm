@@ -63,7 +63,17 @@ class TestIscsi(testtools.TestCase):
             mock.call('transportType', mock_trans_type)], any_order=True)
         self.assertEqual(5, mock_job_p.call_count)
 
-        mock_trans_type = None
+        # Test for lunid
+        mock_trans_type = 'trans_type'
+        mock_job_p.reset_mock()
+        mock_lunid = 2
+        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
+                                     'RETURN_CODE': '15'}
+        device_name, udid = iscsi.discover_iscsi(
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            transport_type=mock_trans_type, lunid=mock_lunid)
+        self.assertEqual(6, mock_job_p.call_count)
+        mock_job_p.assert_any_call('targetLUN', str(mock_lunid))
 
         mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
                                      'RETURN_CODE': '8'}
