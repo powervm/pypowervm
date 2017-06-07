@@ -282,6 +282,13 @@ class TestVios(twrap.TestWrapper):
         mock_warn.assert_not_called()
 
     @mock.patch('pypowervm.tasks.partition.LOG.warning')
+    def test_max_wait_on_exception(self, mock_warn):
+        """VIOS.get raises repeatedly until max_wait_time is exceeded."""
+        self.mock_vios_get.side_effect = ValueError('foo')
+        self.assertRaises(ex.ViosNotAvailable, tpar.validate_vios_ready, 'adp', 10)
+        self.assertEqual(mock_warn.call_count, 3)
+
+    @mock.patch('pypowervm.tasks.partition.LOG.warning')
     def test_exception_and_good_path(self, mock_warn):
         """VIOS.get raises, then succeeds with some halfsies, then succeeds."""
         vios1_good = mock_vios('vios1', bp.LPARState.RUNNING,
