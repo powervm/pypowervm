@@ -414,6 +414,13 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
         opts.soft_detect(part, immed_if_os=opts.is_immediate or None)
         # Add the restart option if necessary.
         opts.restart(value=restart)
+    elif opts.is_param_set(popts.PowerOffOperation.KEY):
+        # If a PowerOffOpt was provided with no operation, it's just being used
+        # to specify e.g. restart, and we should fall through to the soft
+        # flows.  But if an operation was specified, we just want to do that
+        # single operation.  Setting NO_RETRY results in using whatever hard/
+        # immediate setting is in the PowerOffOpt.
+        force_immediate = Force.NO_RETRY
 
     if force_immediate != Force.ON_FAILURE:
         return _power_off_single(part, opts, force_immediate, timeout)
