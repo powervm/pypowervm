@@ -379,8 +379,16 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
 
     :param part: The LPAR/VIOS wrapper of the instance to power off.
     :param host_uuid: Not used.  Retained for backward compatibility.
-    :param force_immediate: One of the Force enum values, defaulting to
-                            Force.ON_FAILURE, which behave as follows:
+    :param force_immediate: DEPRECATED.
+        - If you want Force.NO_RETRY behavior, use PowerOp.stop() with the
+          specific operation/immediate settings desired.
+        - If you want Force.TRUE behavior, use
+          PowerOp.stop(..., opts=PowerOffOpts().vsp_hard())
+        - If add_parms is a PowerOffOpts with an operation set, force_immediate
+          (and restart) is ignored - the method call is equivalent to:
+          PowerOp.stop(part, opts=add_parms, timeout=timeout)
+        - This flag retains its legacy behavior only if add_parms is either a
+          legacy dict or a PowerOffOpts with no operation set:
             - Force.TRUE: The force-immediate option is included on the first
                           pass.
             - Force.NO_RETRY: The force-immediate option is not included.  If
@@ -414,6 +422,13 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
         opts.soft_detect(part, immed_if_os=opts.is_immediate or None)
         # Add the restart option if necessary.
         opts.restart(value=restart)
+    elif opts.is_param_set(popts.PowerOffOperation.KEY):
+        # If a PowerOffOpt was provided with no operation, it's just being used
+        # to specify e.g. restart, and we should fall through to the soft
+        # flows.  But if an operation was specified, we just want to do that
+        # single operation.  Setting NO_RETRY results in using whatever hard/
+        # immediate setting is in the PowerOffOpt.
+        force_immediate = Force.NO_RETRY
 
     if force_immediate != Force.ON_FAILURE:
         return _power_off_single(part, opts, force_immediate, timeout)

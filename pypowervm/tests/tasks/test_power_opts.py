@@ -153,12 +153,14 @@ class TestPowerOpts(testtools.TestCase):
         poo = popts.PowerOffOpts()
         self.assertEqual('PowerOff()', str(poo))
         self.assertEqual('PowerOff', poo.JOB_SUFFIX)
+        self.assertFalse(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Legacy add_parms init
         poo = popts.PowerOffOpts(legacy_add_parms=dict(foo=1, bar=2))
         self.assertEqual('PowerOff(bar=2, foo=1)', str(poo))
         self.assertFalse(poo.is_immediate)
         self.assertFalse(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertFalse(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Carry those additional params forward to make sure they don't vanish
         # Immediate
         self.assertIs(poo, poo.immediate())
@@ -166,6 +168,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertFalse(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertFalse(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Restart
         self.assertIs(poo, poo.restart())
         self.assertEqual(
@@ -173,6 +176,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertFalse(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Operation
         self.assertIs(poo, poo.operation(popts.PowerOffOperation.DUMPRESTART))
         self.assertEqual(
@@ -181,6 +185,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # OS shutdown
         self.assertIs(poo, poo.operation(popts.PowerOffOperation.OS))
         self.assertEqual(
@@ -189,6 +194,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertTrue(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Booleans can be shut off
         self.assertIs(poo, poo.immediate(value=False))
         self.assertEqual('PowerOff(bar=2, foo=1, operation=osshutdown, '
@@ -211,6 +217,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertTrue(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # OS normal (wipes out immediate)
         self.assertIs(poo, poo.os_normal())
         self.assertEqual('PowerOff(bar=2, foo=1, operation=osshutdown, '
@@ -218,6 +225,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertFalse(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertTrue(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # VSP hard
         self.assertIs(poo, poo.vsp_hard())
         self.assertEqual('PowerOff(bar=2, foo=1, immediate=true, '
@@ -225,6 +233,7 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # VSP normal (wipes out immediate)
         self.assertIs(poo, poo.vsp_normal())
         self.assertEqual('PowerOff(bar=2, foo=1, operation=shutdown, '
@@ -232,28 +241,33 @@ class TestPowerOpts(testtools.TestCase):
         self.assertFalse(poo.is_immediate)
         self.assertTrue(poo.is_restart)
         self.assertFalse(poo.is_os)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Soft detect
         part = mock.Mock(env=ltyp.AIXLINUX, rmc_state=rmcs.ACTIVE)
         self.assertIs(poo, poo.soft_detect(part))
         self.assertTrue(poo.is_os)
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Explicit normal shutdown
         self.assertIs(poo, poo.soft_detect(part, immed_if_os=False))
         self.assertTrue(poo.is_os)
         self.assertFalse(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Explicit immediate OS shutdown
         self.assertIs(poo, poo.soft_detect(part, immed_if_os=True))
         self.assertTrue(poo.is_os)
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Can't OS shutdown
         part = mock.Mock(env=ltyp.VIOS, rmc_state=rmcs.BUSY)
         self.assertIs(poo, poo.soft_detect(part))
         self.assertFalse(poo.is_os)
         self.assertFalse(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # immed_if_os ignored
         self.assertIs(poo, poo.soft_detect(part, immed_if_os=True))
         self.assertFalse(poo.is_os)
@@ -265,14 +279,17 @@ class TestPowerOpts(testtools.TestCase):
         self.assertTrue(poo.is_restart)
         self.assertEqual('PowerOff(bar=2, foo=1, operation=shutdown, '
                          'restart=true)', str(poo))
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # IBMi defaults to OS normal
         part = mock.Mock(env=ltyp.OS400, rmc_state=rmcs.INACTIVE)
         self.assertIs(poo, poo.soft_detect(part))
         self.assertTrue(poo.is_os)
         self.assertFalse(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))
         # Explicit immediate
         self.assertIs(poo, poo.soft_detect(part, immed_if_os=True))
         self.assertTrue(poo.is_os)
         self.assertTrue(poo.is_immediate)
         self.assertTrue(poo.is_restart)
+        self.assertTrue(poo.is_param_set(popts.PowerOffOperation.KEY))

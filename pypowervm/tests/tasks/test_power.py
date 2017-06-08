@@ -468,3 +468,36 @@ class TestPower(testtools.TestCase):
             self.assertEqual(1, self.run_job.call_count)
 
             self.run_job.reset_mock()
+
+    def test_pwroff_new_opts(self):
+        """Test power_off where add_parms is PowerOffOpts (not legacy)."""
+        part = self.mock_partition()
+
+        # VSP hard
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown', 'immediate=true'})
+        power.power_off(part, None, add_parms=popts.PowerOffOpts().vsp_hard())
+        self.assertEqual(1, self.run_job.call_count)
+
+        self.run_job.reset_mock()
+
+        # VSP normal
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=shutdown'})
+        power.power_off(part, None,
+                        add_parms=popts.PowerOffOpts().vsp_normal())
+
+        self.run_job.reset_mock()
+
+        # OS immediate
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown', 'immediate=true'})
+        power.power_off(part, None,
+                        add_parms=popts.PowerOffOpts().os_immediate())
+
+        self.run_job.reset_mock()
+
+        # OS normal
+        self.run_job.side_effect = self.validate_run(
+            part, ex_parms={'operation=osshutdown'})
+        power.power_off(part, None, add_parms=popts.PowerOffOpts().os_normal())

@@ -154,6 +154,22 @@ class _PowerOpts(object):
             self._parm_map[key] = 'true'
         return self
 
+    def is_param_set(self, key):
+        """Detect whether a parameter is set.
+
+        For some parameters, the absence of the key assumes a default behavior.
+        For example, is_immediate == False could mean the 'immediate' key is
+        entirely absent; or that it is present with a value of 'false'.  This
+        method allows the consumer to distinguish between these two scenarios,
+        typically for the purpose of deciding whether to enact some default
+        behavior.
+
+        :param key: The key of the parameter in question.
+        :return: True if any value is set for the supplied key; False if that
+                 key is absent from the parameter list.
+        """
+        return key in self._parm_map
+
     def bld_jparms(self):
         return [job.Job.create_job_parameter(key, str(val)) for key, val in
                 six.iteritems(self._parm_map)]
