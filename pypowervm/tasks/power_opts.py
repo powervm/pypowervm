@@ -17,6 +17,7 @@
 """Helper classes for PowerOn/PowerOff options (additional Job parameters)."""
 
 import abc
+from oslo_log import log as logging
 import six
 
 import pypowervm.exceptions as exc
@@ -24,6 +25,8 @@ import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as lpar
 
+
+LOG = logging.getLogger(__name__)
 
 IPLSrc = lpar.IPLSrc
 
@@ -113,6 +116,13 @@ class Force(object):
 
 @six.add_metaclass(abc.ABCMeta)
 class _PowerOpts(object):
+    # Specify a set of string keys that are legal Job parameters for the
+    # operation.  Illegal keys found in legacy_add_parms will be dropped with a
+    # warning.
+    # Leaving as None will skip validation and send all legacy_add_parms to the
+    # Job.
+    valid_param_keys = None
+
     def __init__(self, legacy_add_parms=None):
         """Initialize a PowerOpts instance.
 
@@ -121,8 +131,15 @@ class _PowerOpts(object):
                                  Job parameter name/value pairs.
         """
         self._parm_map = {}
-        if legacy_add_parms is not None:
-            self._parm_map.update(legacy_add_parms)
+        if self.valid_param_keys is None:
+            self._parm_map.update(legacy_add_parms or {})
+        else:
+            for key in legacy_add_parms or {}:
+                if key in self.valid_param_keys:
+                    self._parm_map[key] = legacy_add_parms[key]
+                else:
+                    LOG.warning("Ignoring unknown Job parameter %s specified "
+                                "via legacy add_parms.", key)
 
     def __str__(self):
         """String representation of this instance, for log/test purposes."""
@@ -282,6 +299,7 @@ class PowerOffOpts(_PowerOpts):
     Optionally specify restart.
     """
     JOB_SUFFIX = 'PowerOff'
+    valid_param_keys = {'operation', 'immediate', 'restart'}
 
     def immediate(self, value=True):
         """Whether to include immediate=true.

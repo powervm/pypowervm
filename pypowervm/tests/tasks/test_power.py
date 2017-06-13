@@ -161,10 +161,10 @@ class TestPower(testtools.TestCase):
 
         self.run_job.reset_mock()
 
-        # Non-default optional params, timeout
+        # Non-default optional params ignored, timeout
         self.run_job.side_effect = self.validate_run(
             part, ex_parms={'operation=osshutdown', 'immediate=true',
-                            'restart=true', 'foo=bar', 'one=1'},
+                            'restart=true'},
             ex_timeout=100, ex_synch=False, result=self.etimeout())
         self.assertRaises(
             pexc.VMPowerOffTimeout, power.PowerOp.stop, part,
@@ -271,11 +271,11 @@ class TestPower(testtools.TestCase):
                     self.assertEqual(1, self.run_job.call_count)
                     self.run_job.reset_mock()
 
-        # Restart, timeout, additional params
+        # Restart, timeout, additional params ignored
         part = self.mock_partition()
         self.run_job.side_effect = self.validate_run(
             part, ex_parms={'operation=shutdown', 'immediate=true',
-                            'restart=true', 'one=1'},
+                            'restart=true'},
             ex_timeout=10, result=self.etimeout())
         self.assertRaises(pexc.VMPowerOffTimeout, power.power_off, part, None,
                           force_immediate=power.Force.TRUE, restart=True,
@@ -357,17 +357,18 @@ class TestPower(testtools.TestCase):
         self.run_job.reset_mock()
 
         # Same if invoked with immediate.  But since we're running again, add
-        # restart and another param to make sure they come through.
+        # restart and another param; make sure restart comes through but the
+        # bogus one is ignored.
         self.run_job.side_effect = (
             # OS immediate (non-IBMi always adds immediate).
             self.validate_run(
                 part, ex_parms={'operation=osshutdown', 'immediate=true',
-                                'restart=true', 'foo=bar'},
+                                'restart=true'},
                 ex_timeout=200, result=self.etimeout(),
                 # VSP hard
                 nxt=self.validate_run(
                     part, ex_parms={'operation=shutdown', 'immediate=true',
-                                    'restart=true', 'foo=bar'}))
+                                    'restart=true'}))
         )
         # Run it
         power.power_off(part, None, timeout=200, restart=True,
@@ -402,20 +403,20 @@ class TestPower(testtools.TestCase):
         part = self.mock_partition()
         self.run_job.side_effect = (
             # OS immediate (non-IBMi always adds immediate).
-            # Make sure restart and other params always percolate through.
+            # Make sure restart percolates through, bogus params ignored.
             self.validate_run(
                 part, ex_parms={'operation=osshutdown', 'immediate=true',
-                                'restart=true', 'foo=bar'},
+                                'restart=true'},
                 ex_timeout=300, result=self.efail(),
                 # VSP normal, timeout reset to default
                 nxt=self.validate_run(
                     part, ex_parms={
-                        'operation=shutdown', 'restart=true', 'foo=bar'},
+                        'operation=shutdown', 'restart=true'},
                     result=self.efail(),
                     # VSP hard
                     nxt=self.validate_run(
                         part, ex_parms={'operation=shutdown', 'immediate=true',
-                                        'restart=true', 'foo=bar'})))
+                                        'restart=true'})))
         )
         power.power_off(part, None, timeout=300, restart=True,
                         add_parms={'foo': 'bar'})
@@ -501,3 +502,22 @@ class TestPower(testtools.TestCase):
         self.run_job.side_effect = self.validate_run(
             part, ex_parms={'operation=osshutdown'})
         power.power_off(part, None, add_parms=popts.PowerOffOpts().os_normal())
+
+    @mock.patch('pypowervm.tasks.power._power_off_progressive')
+    def test_pwroff_progressive(self, mock_prog_internal):
+        # The internal _power_off_progressive is exercised via the existing
+        # tests for power_off. This test just ensures the public
+        # power_off_progressive calls it appropriately.
+
+        # Default kwargs
+        power.power_off_progressive('part')
+        mock_prog_internal.assert_called_once_with(
+            'part', 1800, False, ibmi_immed=False)
+
+        mock_prog_internal.reset_mock()
+
+        # Non-default kwargs
+        power.power_off_progressive('part', restart=True, ibmi_immed=True,
+                                    timeout=10)
+        mock_prog_internal.assert_called_once_with(
+            'part', 10, True, ibmi_immed=True)
