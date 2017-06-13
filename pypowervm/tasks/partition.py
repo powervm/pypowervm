@@ -28,6 +28,7 @@ import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
 
+
 LOG = logging.getLogger(__name__)
 
 # RMC must be either active or busy.  Busy is allowed because that simply
@@ -43,6 +44,10 @@ _DOWN_VM_STATES = (bp.LPARState.NOT_ACTIVATED, bp.LPARState.ERROR,
                    bp.LPARState.NOT_AVAILBLE, bp.LPARState.SHUTTING_DOWN,
                    bp.LPARState.SUSPENDED, bp.LPARState.SUSPENDING,
                    bp.LPARState.UNKNOWN)
+
+_LOW_WAIT_TIME = 120
+_HIGH_WAIT_TIME = 600
+_UPTIME_CUTOFF = 3600
 
 
 def get_mgmt_partition(adapter):
@@ -231,18 +236,19 @@ def _vios_waits_timed_out(no_rmc_vwraps, time_waited, max_wait_time=None):
                           before declaring we've waited long enough.  If None,
                           a suitable value will be determined based on the
                           VIOS's uptime.
-    :return: True if we've waited long enough for this VIOS to come up.  False
-             if we should wait some more.
+    :return: True if we've waited long enough for these VIOSes to come up.
+             False if we should wait some more.
     """
-    for vwrap in no_rmc_vwraps:
-        if max_wait_time is None:
-            wait_time = 120 if vwrap.uptime > 3600 else 600
-        else:
-            wait_time = max_wait_time
-        if time_waited < wait_time:
-            # If we haven't waited long enough for *any* VIOS, keep waiting.
-            return False
-    return True
+    wait_time = max_wait_time
+    if wait_time is None:
+        wait_time = _LOW_WAIT_TIME
+        # if any VIOS is still early in its startup, wait longer to give RMC
+        # time to come up
+        for vwrap in no_rmc_vwraps:
+            if vwrap.uptime <= _UPTIME_CUTOFF:
+                wait_time = _HIGH_WAIT_TIME
+                break
+    return time_waited >= wait_time
 
 
 def _wait_for_vioses(adapter, max_wait_time=None):
@@ -278,9 +284,9 @@ def _wait_for_vioses(adapter, max_wait_time=None):
         # If we get here, we're only waiting for VIOSes that are
         # state-active/RMC-down.  On each iteration, if a new VIOS comes up, it
         # will be considered here until its RMC comes up.
-        if rmc_down_vioses and _vios_waits_timed_out(rmc_down_vioses,
-                                                     time_waited,
-                                                     max_wait_time):
+        if _vios_waits_timed_out(rmc_down_vioses,
+                                 time_waited,
+                                 max_wait_time):
             break
         time.sleep(sleep_step)
         time_waited += sleep_step
