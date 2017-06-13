@@ -14,21 +14,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import os
 import unittest
 
 from pypowervm.i18n import _
 
-# Ensure we're using our test message catalog
-os.environ['PYPOWERVM_LOCALEDIR'] = (
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'locale'))
-# Ensure we're using the expected language
-os.environ['LANG'] = 'en_US'
-
 
 class TranslationTests(unittest.TestCase):
     """Test internationalization library."""
 
+    @mock.patch.dict(os.environ, {
+        # Ensure we're using our test message catalog
+        'PYPOWERVM_LOCALEDIR': os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 'locale'),
+        # Ensure we're using the expected language
+        'LANG': 'en_US'})
     def test_translate(self):
         self.assertEqual(_("This is a test"), "This is an English test")
 
