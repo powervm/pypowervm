@@ -226,7 +226,7 @@ def power_on(part, host_uuid, add_parms=None, synchronous=True):
         synchronous=synchronous)
 
 
-def _pwroff_soft_ibmi_flow(part, opts, timeout):
+def _pwroff_soft_ibmi_flow(part, restart, immediate, timeout):
     """Normal (non-hard) power-off retry flow for IBMi partitions.
 
           ==================
@@ -246,17 +246,18 @@ def _pwroff_soft_ibmi_flow(part, opts, timeout):
                       return True
                       ===========
 
-    :param part timeout: See power_off.
-    :param opts: A PowerOffOpts instance.  The operation and immediate params
-                 are overwritten at each stage of this method.  Any other
-                 options (such as restart) remain unaffected.
+    :param part restart timeout: See power_off.
+    :param immediate: Boolean.  Indicates whether to try os-normal first
+                      (False, the default) before progressing to os-immediate.
+                      If True, skip trying os-normal shutdown.
     :return: True if the power-off succeeded; False otherwise.  The caller
              (power_off) should perform VSP hard shutdown if False is returned.
     :raise VMPowerOffTimeout: If the last power-off attempt timed out.
     :raise VMPowerOffFailure: If the last power-off attempt failed.
     """
+    opts = popts.PowerOffOpts().restart(value=restart)
     # If immediate was already specified, skip OS-normal.
-    if not opts.is_immediate:
+    if not immediate:
         # ==> OS normal
         try:
             PowerOp.stop(part, opts=opts.os_normal(), timeout=timeout)
@@ -281,13 +282,13 @@ def _pwroff_soft_ibmi_flow(part, opts, timeout):
         PowerOp.stop(part, opts=opts.vsp_normal(), timeout=timeout)
         return True
     except pexc.VMPowerOffFailure:
-        LOG.warning(_("IBMi VSP normal shutdown failed.  Trying VSP hard "
-                      "shutdown.  Partition: %s"), part.name)
+        LOG.warning("IBMi VSP normal shutdown failed.  Partition: %s",
+                    part.name)
 
     return False
 
 
-def _pwroff_soft_standard_flow(part, opts, timeout):
+def _pwroff_soft_standard_flow(part, restart, timeout):
     """Normal (non-hard) power-off retry flow for non-IBMi partitions.
 
     START
@@ -304,10 +305,7 @@ def _pwroff_soft_standard_flow(part, opts, timeout):
      return True
      ===========
 
-    :param part timeout: See power_off.
-    :param opts: A PowerOffOpts instance.  The operation and immediate params
-                 are overwritten at each stage of this method.  Any other
-                 options (such as restart) remain unaffected.
+    :param part restart timeout: See power_off.
     :return: True if the power-off succeeded; False otherwise.  The caller
              should perform VSP hard shutdown if False is returned.
     :raise VMPowerOffTimeout: If the last power-off attempt timed out.
@@ -318,6 +316,7 @@ def _pwroff_soft_standard_flow(part, opts, timeout):
     # OSShutdownNoRMC (which is very quick) so we can keep this progression
     # linear.
 
+    opts = popts.PowerOffOpts().restart(value=restart)
     # ==> OS immediate
     try:
         PowerOp.stop(part, opts=opts.os_immediate(), timeout=timeout)
@@ -340,10 +339,32 @@ def _pwroff_soft_standard_flow(part, opts, timeout):
         PowerOp.stop(part, opts.vsp_normal(), timeout=timeout)
         return True
     except pexc.VMPowerOffFailure:
-        LOG.warning(_("Non-IBMi VSP normal shutdown failed.  Trying VSP hard "
-                      "shutdown.  Partition: %s"), part.name)
+        LOG.warning("Non-IBMi VSP normal shutdown failed.  Partition: %s",
+                    part.name)
 
     return False
+
+
+def _power_off_progressive(part, timeout, restart, ibmi_immed=False):
+
+    # Do the progressive-retry sequence appropriate to the partition type.
+    if part.env == bp.LPARType.OS400:
+        # The IBMi progression.
+        if _pwroff_soft_ibmi_flow(part, restart, ibmi_immed, timeout):
+            return
+            # Fall through to VSP hard
+    else:
+        # The non-IBMi progression.
+        if _pwroff_soft_standard_flow(part, restart, timeout):
+            return
+            # Fall through to VSP hard
+
+    # If we got here, force_immediate == ON_FAILURE, so fall back to VSP hard.
+    # Let this one finish or raise.
+    # ==> VSP hard
+    LOG.warning(_("VSP hard shutdown with default timeout.  Partition: %s"),
+                part.name)
+    PowerOp.stop(part, popts.PowerOffOpts().vsp_hard().restart(value=restart))
 
 
 def _power_off_single(part, opts, force_immediate, timeout):
@@ -372,6 +393,9 @@ def _power_off_single(part, opts, force_immediate, timeout):
 def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
               timeout=CONF.pypowervm_job_request_timeout, add_parms=None):
     """Will Power Off a Logical Partition or Virtual I/O Server.
+
+    DEPRECATED.  Use PowerOp.stop() for single power-off.
+                 Use power_off_progressive for soft-retry flows.
 
     Depending on the force_immediate flag and the partition's type and RMC
     state, this method may attempt increasingly aggressive mechanisms for
@@ -414,6 +438,10 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
     :raise VMPowerOffTimeout: If the operation timed out (possibly after
                               retrying).
     """
+    import warnings
+    warnings.warn("The power_off method is deprecated.  Please use either "
+                  "PowerOp.stop or power_off_progressive.", DeprecationWarning)
+
     opts, legacy = _legacy_power_opts(popts.PowerOffOpts, add_parms)
     if legacy:
         # Decide whether to insist on 'immediate' for OS shutdown.  Do that
@@ -435,20 +463,33 @@ def power_off(part, host_uuid, force_immediate=Force.ON_FAILURE, restart=False,
 
     # Do the progressive-retry sequence appropriate to the partition type and
     # the force_immediate flag.
-    if part.env == bp.LPARType.OS400:
-        # The IBMi progression.
-        if _pwroff_soft_ibmi_flow(part, opts, timeout):
-            return
-            # Fall through to VSP hard
-    else:
-        # The non-IBMi progression.
-        if _pwroff_soft_standard_flow(part, opts, timeout):
-            return
-            # Fall through to VSP hard
+    _power_off_progressive(part, timeout, restart,
+                           ibmi_immed=opts.is_immediate)
 
-    # If we got here, force_immediate == ON_FAILURE, so fall back to VSP hard.
-    # Let this one finish or raise.
-    # ==> VSP hard
-    LOG.warning(_("VSP hard shutdown with default timeout.  Partition: %s"),
-                part.name)
-    PowerOp.stop(part, opts.vsp_hard())
+
+def power_off_progressive(part, restart=False, ibmi_immed=False,
+                          timeout=CONF.pypowervm_job_request_timeout):
+    """Attempt soft power-off, retrying with increasing aggression on failure.
+
+    IBMi partitions always start with OS shutdown.  If ibmi_immed == False,
+    os-normal shutdown is tried first; then os-immediate; then vsp-normal; then
+    vsp-hard.  If ibmi_immed == True, os-normal is skipped, but the rest of the
+    progression is the same.
+
+    For non-IBMi partitions:
+    If RMC is up, os-immediate is tried first.  If this times out, vsp hard is
+    performed next; otherwise, vsp-normal is attempted before vsp-hard.
+    If RMC is down, vsp-normal is tried first, then vsp-hard.
+
+    :param part: The LPAR/VIOS wrapper of the instance to power off.
+    :param restart: Boolean.  Perform a restart after the power off.
+    :param ibmi_immed: Boolean.  Indicates whether to try os-normal first
+                        (False, the default) before progressing to
+                        os-immediate.  If True, skip trying os-normal shutdown.
+                        Only applies to IBMi partitions.
+    :param timeout: Time in seconds to wait for the instance to stop.  This is
+                    only applied to the first attempt in the progression.
+    :raise VMPowerOffFailure: If the last attempt in the progression failed.
+    :raise VMPowerOffTimeout: If the last attempt in the progression timed out.
+    """
+    _power_off_progressive(part, timeout, restart, ibmi_immed=ibmi_immed)

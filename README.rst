@@ -164,3 +164,8 @@ Developer Notes
   ``pypowervm.tasks.power.power_on`` and ``power_off`` is deprecated.  Consumers
   should migrate to using ``pypowervm.tasks.power_opts.PowerOnOpts`` and
   ``PowerOffOpts`` instead.
+
+- The ``pypowervm.tasks.power.power_off`` method is deprecated and will be
+  removed no sooner than January 1st, 2019.  Consumers should migrate to using
+  ``pypowervm.tasks.power.PowerOp.stop`` for single power-off; or
+  ``pypowervm.tasks.power.power_off_progressive`` for soft-retry flows.
