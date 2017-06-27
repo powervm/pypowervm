@@ -34,22 +34,22 @@ class TestValidator(testtools.TestCase):
                          max_procs_per_aix_linux_lpar=10,
                          max_sys_procs_limit=15,
                          max_vcpus_per_aix_linux_lpar=10,
-                         max_sys_vcpus_limit=15):
+                         max_sys_vcpus_limit=15,
+                         dynamic_srr_capable=True):
             # Build a fake managed system wrapper
-            mngd_sys = mock.MagicMock()
+            mngd_sys = mock.MagicMock(spec=mgd_sys.System)
             mngd_sys.system_name = system_name
             mngd_sys.proc_units_avail = proc_units_avail
             mngd_sys.memory_free = mem_free
             mngd_sys.max_procs_per_aix_linux_lpar = (
                 max_procs_per_aix_linux_lpar)
-            mngd_sys.max_sys_procs_limit = (
-                max_sys_procs_limit)
+            mngd_sys.max_sys_procs_limit = max_sys_procs_limit
             mngd_sys.max_vcpus_per_aix_linux_lpar = (
                 max_vcpus_per_aix_linux_lpar)
-            mngd_sys.max_sys_vcpus_limit = (
-                max_sys_vcpus_limit)
-            mocked = mock.MagicMock(spec=mgd_sys.System, return_value=mngd_sys)
-            return mocked()
+            mngd_sys.max_sys_vcpus_limit = max_sys_vcpus_limit
+            mngd_sys.get_capabilities.return_value = {
+                'dynamic_srr_capable': dynamic_srr_capable}
+            return mngd_sys
 
         def _bld_lpar(proc_units=1.0, min_mem=512, des_mem=2048, max_mem=4096,
                       has_dedicated=False, name='default', rmc_state='active',
@@ -102,6 +102,7 @@ class TestValidator(testtools.TestCase):
             return mocked()
 
         self.mngd_sys = _bld_mgd_sys()
+        self.mngd_sys_no_dyn_srr = _bld_mgd_sys(dynamic_srr_capable=False)
         self.lpar_21_procs = _bld_lpar(proc_units=21.0, name='lpar_21_procs')
         self.lpar_1_proc = _bld_lpar()
         self.lpar_11_vcpus = _bld_lpar(des_vcpus=11, name='11_vcpus')
@@ -280,9 +281,14 @@ class TestValidator(testtools.TestCase):
         self.assertRaises(vldn.ValidatorException, vldr.validate_all)
         # Test changing SRR capabilty fails for active resize
         vldr = vldn.LPARWrapperValidator(self.lpar_srr_disabled,
-                                         self.mngd_sys,
+                                         self.mngd_sys_no_dyn_srr,
                                          cur_lpar_w=self.lpar_1_proc)
         self.assertRaises(vldn.ValidatorException, vldr.validate_all)
+        # ...unless dynamic_srr_capable
+        vldr = vldn.LPARWrapperValidator(self.lpar_srr_disabled,
+                                         self.mngd_sys,
+                                         cur_lpar_w=self.lpar_1_proc)
+        vldr.validate_all()
         # Test desired delta proc units > host avail proc units fails
         # during resize (shared -> shared)
         vldr = vldn.LPARWrapperValidator(self.lpar_22_procs, self.mngd_sys,
