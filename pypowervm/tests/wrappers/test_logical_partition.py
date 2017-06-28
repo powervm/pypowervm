@@ -396,16 +396,14 @@ class TestLogicalPartition(testtools.TestCase):
         # Turn restricted I/O on, but get a host without the mobility cap
         wrap.set_parm_value(lpar._LPAR_RESTRICTED_IO, 'True')
         host_w = mock.MagicMock()
-        host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
-                                                False}
+        host_w.get_capability.return_value = False
         val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
         self.assertFalse(val)
-        self.assertEqual(reason, 'Source system does not have the IBM i LPAR '
-                         'Mobility Capability.')
+        self.assertEqual('Source system does not have the IBM i LPAR '
+                         'Mobility Capability.', reason)
 
         # Turn all required capabilities on
-        host_w.get_capabilities.return_value = {'ibmi_lpar_mobility_capable':
-                                                True}
+        host_w.get_capability.return_value = True
         wrap.capabilities.set_parm_value(bp._CAP_DLPAR_MEM_CAPABLE, True)
         val, reason = wrap.can_lpm(host_w, migr_data=migr_data)
         self.assertTrue(val)

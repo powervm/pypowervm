@@ -235,8 +235,8 @@ class DefaultStandardize(Standardize):
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
             attrs = self.attr
-        host_ame_cap = self.mngd_sys.get_capabilities()[
-            'active_memory_expansion_capable']
+        host_ame_cap = self.mngd_sys.get_capability(
+            'active_memory_expansion_capable')
         mem = Memory(attrs.get(MIN_MEM), attrs.get(MEM), attrs.get(MAX_MEM),
                      attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
@@ -277,8 +277,9 @@ class DefaultStandardize(Standardize):
         self._set_val(bld_attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(bld_attr, AVAIL_PRIORITY, self.avail_priority)
         # See if the host is capable of SRR before setting it.
-        host_cap = self.mngd_sys.get_capabilities()
-        if host_cap['simplified_remote_restart_capable']:
+        srr_cap = self.mngd_sys.get_capability(
+            'simplified_remote_restart_capable')
+        if srr_cap:
             self._set_val(bld_attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
@@ -289,7 +290,7 @@ class DefaultStandardize(Standardize):
             self._set_val(bld_attr, CONSOLE, value='HMC')
             self._set_val(bld_attr, LOAD_SRC, value='0')
             self._set_val(bld_attr, ALT_LOAD_SRC, value='NONE')
-            if host_cap['ibmi_restrictedio_capable']:
+            if self.mngd_sys.get_capability('ibmi_restrictedio_capable'):
                 self._set_val(bld_attr, RESTRICTED_IO, value=True,
                               convert_func=RestrictedIO.convert_value)
 
