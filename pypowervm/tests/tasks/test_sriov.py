@@ -54,9 +54,14 @@ down_sriov = fake_sriov(card.SRIOVAdapterMode.SRIOV,
 
 def sys_wrapper(sriovs, vnic_capable=True, vnic_failover_capable=True):
     mock_sys = mock.Mock(asio_config=mock.Mock(sriov_adapters=sriovs))
-    mock_sys.get_capabilities.return_value = {
-        'vnic_capable': vnic_capable,
-        'vnic_failover_capable': vnic_failover_capable}
+
+    def get_cap(cap):
+        capabilities = {
+            'vnic_capable': vnic_capable,
+            'vnic_failover_capable': vnic_failover_capable}
+        return capabilities[cap]
+    mock_sys.get_capability.side_effect = get_cap
+
     return mock_sys
 
 

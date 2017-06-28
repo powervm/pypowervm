@@ -218,9 +218,6 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.assertEqual(self.test_ioslot.drc_name,
                          'U5294.001.CEC1234-P01-C011')
 
-    def test_get_aix_capable(self):
-        self.call_simple_getter("_aix_capable", False, True)
-
     def test_get_capabilities(self):
         good_cap = {'active_lpar_mobility_capable': True,
                     'inactive_lpar_mobility_capable': True,

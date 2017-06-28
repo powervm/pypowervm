@@ -182,8 +182,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
             if not self.restrictedio:
                 return False, _('IBM i LPAR does not have restricted I/O.')
 
-            c = host_w.get_capabilities().get('ibmi_lpar_mobility_capable')
-            if not c:
+            if not host_w.get_capability('ibmi_lpar_mobility_capable'):
                 return False, _('Source system does not have the IBM i'
                                 ' LPAR Mobility Capability.')
 

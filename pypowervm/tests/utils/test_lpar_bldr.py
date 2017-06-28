@@ -45,12 +45,16 @@ class TestLPARBuilder(testtools.TestCase):
                 mock.PropertyMock(return_value=proc_units))
             type(mngd_sys).memory_region_size = (
                 mock.PropertyMock(return_value=mem_reg))
-            capabilities = {
-                'simplified_remote_restart_capable': srr,
-                'ibmi_restrictedio_capable': True,
-                'active_memory_expansion_capable': ame
-            }
-            mngd_sys.get_capabilities.return_value = capabilities
+
+            def get_cap(cap):
+                capabilities = {
+                    'simplified_remote_restart_capable': srr,
+                    'ibmi_restrictedio_capable': True,
+                    'active_memory_expansion_capable': ame
+                }
+                return capabilities[cap]
+            mngd_sys.get_capability.side_effect = get_cap
+
             type(mngd_sys).proc_compat_modes = (
                 mock.PropertyMock(return_value=pcm))
             return mngd_sys
