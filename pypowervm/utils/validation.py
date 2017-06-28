@@ -501,14 +501,14 @@ class CapabilitiesValidator(BaseValidator):
         """Enforce validation rules specific to active resize."""
         # If not dynamic SRR toggle capable, Simplified Remote Restart
         # capability cannot be changed unless lpar is powered off.
-        srr_toggled = self.cur_lpar_w.srr_enabled != self.srr_enabled
-        can_toggle = self.host_w.get_capabilities()['dynamic_srr_capable']
-        if srr_toggled and not can_toggle:
-            msg = (_("The virtual machine must be powered off before changing "
-                     "the simplified remote restart capability. Power off "
-                     "virtual machine %s and try again.") %
-                   self.cur_lpar_w.name)
-            raise ValidatorException(msg)
+        if self.cur_lpar_w.srr_enabled != self.srr_enabled:
+            dyn_srr_cap = self.host_w.get_capability('dynamic_srr_capable')
+            if not dyn_srr_cap:
+                msg = (_("The virtual machine must be powered off before "
+                         "changing the simplified remote restart capability. "
+                         "Power off virtual machine %s and try again.") %
+                       self.cur_lpar_w.name)
+                raise ValidatorException(msg)
 
     def _populate_resize_diffs(self):
         """Calculate lpar_w vs cur_lpar_w diffs and set as attributes."""

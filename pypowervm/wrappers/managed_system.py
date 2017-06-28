@@ -63,6 +63,45 @@ _IBMi_NATIVE_IO_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiNativeIOCapable')
 _DISABLE_SECURE_BOOT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DisableSecureBootCapable')
 
+_CAPABILITY_MAP = {
+    'active_lpar_mobility_capable': _ACTIVE_LPM_CAP,
+    'inactive_lpar_mobility_capable': _INACTIVE_LPM_CAP,
+    'custom_mac_addr_capable': _VETH_MAC_ADDR_CAP,
+    'ibmi_lpar_mobility_capable': _IBMi_LPM_CAP,
+    'ibmi_restrictedio_capable': _IBMi_RESTRICTEDIO_CAP,
+    'simplified_remote_restart_capable': _SIMP_REMOTE_RESTART_CAP,
+    'active_memory_expansion_capable': _AME_CAP,
+    'aix_capable': _AIX_CAP,
+    'ibmi_capable': _IBMi_CAP,
+    'linux_capable': _LINUX_CAP,
+    'shared_processor_pool_capable': _SHR_PROC_POOL_CAP,
+    'vnic_capable': _VNIC_CAP,
+    'vnic_failover_capable': _VNIC_FAILOVER_CAP,
+    'dynamic_srr_capable': _DYN_SRR_CAP,
+    'ibmi_nativeio_capable': _IBMi_NATIVE_IO_CAP,
+    'disable_secure_boot_capable': _DISABLE_SECURE_BOOT_CAP,
+}
+
+_CAPABILITY_DEFAULTS = {
+    # custom_mac_addr_capable True is correct for POWER7
+    'custom_mac_addr_capable': True,
+    'ibmi_lpar_mobility_capable': False,
+    'ibmi_restrictedio_capable': False,
+    'simplified_remote_restart_capable': False,
+    'active_memory_expansion_capable': False,
+    # aix_capable defaults to True for backward compat (that is what we
+    # returned before there was a capability for this in the PowerVM REST API)
+    'aix_capable': True,
+    'ibmi_capable': False,
+    'linux_capable': True,
+    'shared_processor_pool_capable': False,
+    'vnic_capable': False,
+    'vnic_failover_capable': False,
+    'dynamic_srr_capable': False,
+    'ibmi_nativeio_capable': False,
+    'disable_secure_boot_capable': False,
+}
+
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
 _MEMORY_AVAIL = u.xpath(_SYS_MEM_CONFIG, 'CurrentAvailableSystemMemory')
@@ -237,57 +276,26 @@ class System(ewrap.EntryWrapper):
 
         return val
 
-    def _aix_capable(self):
-        """Intepret AIX capability string and return True/False.
-
-        Only expose this capability via externally via
-        get_capabilities method.
-        """
-        cap = self._get_val_str(_AIX_CAP)
-        # we can get 'unavailable' if PHYP interface is running an older
-        # level and doesn't support query of this information
-        if cap is not None and cap.lower() == 'inactive':
-            return False
-        # Default to true since that's what we always
-        # assume prior to this capability
-        return True
+    def get_capability(self, key):
+        """returns: The requested system capability from Power."""
+        if key in _CAPABILITY_MAP:
+            if key == 'aix_capable':
+                str_val = self._get_val_str(_CAPABILITY_MAP[key])
+                # we can get 'unavailable' if PHYP interface is running an
+                # older level and doesn't support query of this information
+                if str_val is not None and str_val.lower() == 'inactive':
+                    return False
+                return _CAPABILITY_DEFAULTS[key]
+            if key in _CAPABILITY_DEFAULTS:
+                return self._get_val_bool(_CAPABILITY_MAP[key],
+                                          default=_CAPABILITY_DEFAULTS[key])
+            return self._get_val_bool(_CAPABILITY_MAP[key])
 
     def get_capabilities(self):
         """returns: The system capabilities from Power."""
-        # VirtualEthernetCustomMACAddressCapable (custom_mac_addr_capable) will
-        # default to True, which is the correct setting for POWER7 servers.
-        # For operating system capabilities, they will be default to True
-        # to match old Power server behaviors.
-        cap_data = {'active_lpar_mobility_capable':
-                    self._get_val_bool(_ACTIVE_LPM_CAP),
-                    'active_memory_expansion_capable':
-                    self._get_val_bool(_AME_CAP, False),
-                    'inactive_lpar_mobility_capable':
-                    self._get_val_bool(_INACTIVE_LPM_CAP),
-                    'ibmi_lpar_mobility_capable':
-                    self._get_val_bool(_IBMi_LPM_CAP, False),
-                    'custom_mac_addr_capable':
-                    self._get_val_bool(_VETH_MAC_ADDR_CAP, True),
-                    'ibmi_restrictedio_capable':
-                    self._get_val_bool(_IBMi_RESTRICTEDIO_CAP, False),
-                    'ibmi_nativeio_capable':
-                    self._get_val_bool(_IBMi_NATIVE_IO_CAP, False),
-                    'simplified_remote_restart_capable':
-                    self._get_val_bool(_SIMP_REMOTE_RESTART_CAP, False),
-                    'aix_capable': self._aix_capable(),
-                    'ibmi_capable':
-                    self._get_val_bool(_IBMi_CAP, False),
-                    'linux_capable':
-                    self._get_val_bool(_LINUX_CAP, True),
-                    'shared_processor_pool_capable':
-                    self._get_val_bool(_SHR_PROC_POOL_CAP, False),
-                    'dynamic_srr_capable':
-                    self._get_val_bool(_DYN_SRR_CAP, False),
-                    'vnic_capable': self._get_val_bool(_VNIC_CAP, False),
-                    'vnic_failover_capable':
-                    self._get_val_bool(_VNIC_FAILOVER_CAP, False),
-                    'disable_secure_boot_capable':
-                    self._get_val_bool(_DISABLE_SECURE_BOOT_CAP, False)}
+        cap_data = {}
+        for key in _CAPABILITY_MAP:
+            cap_data[key] = self.get_capability(key)
         return cap_data
 
     @property

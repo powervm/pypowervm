@@ -205,10 +205,9 @@ def _check_sys_vnic_capabilities(adap, sys_w, redundancy):
     if sys_w is None:
         sys_w = ms.System.get(adap)[0]
 
-    caps = sys_w.get_capabilities()
-    if not caps.get('vnic_capable'):
+    if not sys_w.get_capability('vnic_capable'):
         raise ex.SystemNotVNICCapable()
-    if redundancy > 1 and not caps.get('vnic_failover_capable'):
+    if redundancy > 1 and not sys_w.get_capability('vnic_failover_capable'):
         raise ex.VNICFailoverNotSupportedSys(red=redundancy)
 
     return sys_w

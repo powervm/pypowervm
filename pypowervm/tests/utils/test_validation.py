@@ -47,8 +47,7 @@ class TestValidator(testtools.TestCase):
             mngd_sys.max_vcpus_per_aix_linux_lpar = (
                 max_vcpus_per_aix_linux_lpar)
             mngd_sys.max_sys_vcpus_limit = max_sys_vcpus_limit
-            mngd_sys.get_capabilities.return_value = {
-                'dynamic_srr_capable': dynamic_srr_capable}
+            mngd_sys.get_capability.return_value = dynamic_srr_capable
             return mngd_sys
 
         def _bld_lpar(proc_units=1.0, min_mem=512, des_mem=2048, max_mem=4096,
