@@ -172,7 +172,8 @@ def assign_free_vlan(adapter, host_uuid, vswitch_w, cna, ensure_enabled=False):
 @lockutils.synchronized(VLAN_LOCK)
 def crt_trunk_with_free_vlan(
         adapter, host_uuid, src_io_host_uuids, vs_name,
-        crt_vswitch=True, dev_name=None):
+        crt_vswitch=True, dev_name=None, ovs_bridge=None, ovs_ext_ids=None,
+        configured_mtu=None):
     """Creates a trunk adapter(s) with a free VLAN on the system.
 
     :param adapter: The pypowervm adapter to perform the update through.
@@ -196,6 +197,16 @@ def crt_trunk_with_free_vlan(
                      uuid matches the mgmt lpar UUID.  Otherwise leave as
                      None.  If set, the name of the trunk adapter created on
                      the mgmt lpar will be set to this value.
+    :param ovs_bridge: (Optional, Default: None) If hosting through mgmt
+                       partition, this attribute specifies which Open vSwitch
+                       to connect to.
+    :param ovs_ext_ids: (Optional, Default: None) Comma delimited list of
+                        key=value pairs that get set as external-id metadata
+                        attributes on the OVS port. Only valid if ovs_bridge
+                        is set.
+    :param configured_mtu: (Optional, Default: None) Sets the MTU on the
+                           adapter. May only be valid if adapter is being
+                           created against mgmt partition.
     :return: The CNA Wrapper that was created.
     :return: The TrunkAdapters that were created.  Match the order that the
              src_io_host_uuids were passed in.
@@ -219,14 +230,16 @@ def crt_trunk_with_free_vlan(
     for io_uuid in src_io_host_uuids:
         trunk_adpt = pvm_net.CNA.bld(
             adapter, vlan, vswitch_w.related_href, trunk_pri=trunk_pri,
-            dev_name=dev_name)
+            dev_name=dev_name, ovs_bridge=ovs_bridge,
+            ovs_ext_ids=ovs_ext_ids, configured_mtu=configured_mtu)
         trunk_adpts.append(trunk_adpt.create(parent=io_uuid_to_wrap[io_uuid]))
         trunk_pri += 1
     return trunk_adpts
 
 
 def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
-                crt_vswitch=True, mac_addr=None, slot_num=None, dev_name=None):
+                crt_vswitch=True, mac_addr=None, slot_num=None, dev_name=None,
+                ovs_bridge=None, ovs_ext_ids=None, configured_mtu=None):
     """Creates a 'point-to-point' Client Network Adapter.
 
     A point to point connection is one that has a VLAN that is shared only
@@ -274,6 +287,16 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
                      uuid matches the mgmt lpar UUID.  Otherwise leave as
                      None.  If set, the trunk adapter created on the mgmt lpar
                      will be set to this value.
+    :param ovs_bridge: (Optional, Default: None) If hosting through mgmt
+                       partition, this attribute specifies which Open vSwitch
+                       to connect to.
+    :param ovs_ext_ids: (Optional, Default: None) Comma delimited list of
+                        key=value pairs that get set as external-id metadata
+                        attributes on the OVS port. Only valid if ovs_bridge
+                        is set.
+    :param configured_mtu: (Optional, Default: None) Sets the MTU on the
+                           adapter. May only be valid if adapter is being
+                           created against mgmt partition.
     :return: The CNA Wrapper that was created.
     :return: The TrunkAdapters that were created.  Match the order that the
              src_io_host_uuids were passed in.
@@ -281,7 +304,8 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
 
     trunk_adpts = crt_trunk_with_free_vlan(
         adapter, host_uuid, src_io_host_uuids, vs_name,
-        crt_vswitch=crt_vswitch, dev_name=dev_name)
+        crt_vswitch=crt_vswitch, dev_name=dev_name, ovs_bridge=ovs_bridge,
+        ovs_ext_ids=ovs_ext_ids, configured_mtu=configured_mtu)
 
     # Darn lack of re-entrant locks
     with lockutils.lock(VLAN_LOCK):

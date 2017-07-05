@@ -159,6 +159,9 @@ _VADPT_VSI_TYPE_VERSION = 'VirtualStationInterfaceTypeVersion'
 _VADPT_DEV_NAME = 'DeviceName'
 _VADPT_TRUNK_PRI = _TA_TRUNK_PRI
 _VADPT_VNETS = _VNETS
+_VADPT_MTU = "ConfiguredMTU"
+_VADPT_OVS_BRIDGE = "OvsBridge"
+_VADPT_OVS_EXT_IDS = "OvsPortExternalIds"
 _VADPT_EL_ORDER = (
     _VADPT_TYPE, _VADPT_DRC_NAME, _VADPT_LOCATION_CODE, _VADPT_LOC_PART_ID,
     _VADPT_REQUIRED, _VADPT_VARIED_ON, _VADPT_USE_NEXT_AVAIL_SLOT,
@@ -167,7 +170,8 @@ _VADPT_EL_ORDER = (
     _VADPT_QOS_PRI_ENABLED, _VADPT_TAGGED_VLANS, _VADPT_TAGGED_VLAN_SUPPORT,
     _VADPT_VSI_MANAGER_ID, _VADPT_VSI_TYPE_ID, _VADPT_VSWITCH,
     _VADPT_VSWITCH_ID, _VADPT_VSI_TYPE_VERSION, _VADPT_DEV_NAME,
-    _VADPT_TRUNK_PRI, _VADPT_VNETS)
+    _VADPT_TRUNK_PRI, _VADPT_VNETS, _VADPT_MTU, _VADPT_OVS_BRIDGE,
+    _VADPT_OVS_EXT_IDS)
 
 
 class VSwitchMode(object):
@@ -1101,7 +1105,8 @@ class CNA(ewrap.EntryWrapper):
         return cna
 
     def create(self, parent_type=None, parent_uuid=None, timeout=-1,
-               parent=None, **kwargs):
+               parent=None, ovs_bridge=None, ovs_ext_ids=None,
+               configured_mtu=None, **kwargs):
         """Override to ensure default slot setting is correct.
 
         Create the CNA as specified *except*:
@@ -1114,7 +1119,14 @@ class CNA(ewrap.EntryWrapper):
         ordering, and their longevity increases the probability of running out
         of slot space if we use 'High'.
 
-        See superclass impl for param specs.
+        See superclass impl for param specs, with the exception of the
+        following:
+         - ovs_bridge - if hosting through mgmt partition, this attribute
+                        specifies which Open vSwitch to connect to.
+         - ovs_ext_ids - A comma delimited list of key=value pairs in string
+                         format. Ex. iface-id=abc123,iface-status=active
+         - configured_mtu - Sets the MTU on the adapter. May only be valid if
+                            adapter is being created against mgmt partition.
         """
         # These checks are quick, so do them first.
         el2d = self._find(_TA_USE_NEXT_AVAIL_HIGH_SLOT)
@@ -1137,6 +1149,13 @@ class CNA(ewrap.EntryWrapper):
                 # Aaaand add the UNASI field
                 self.set_parm_value(_TA_USE_NEXT_AVAIL_SLOT,
                                     u.sanitize_bool_for_api(True))
+
+        if ovs_bridge is not None:
+            self._ovs_bridge(ovs_bridge)
+            self._ovs_ext_ids(ovs_ext_ids)
+
+        if configured_mtu is not None:
+            self._configured_mtu(configured_mtu)
 
         # Superclass does the real work.
         return super(CNA, self).create(
@@ -1321,6 +1340,38 @@ class CNA(ewrap.EntryWrapper):
         creation, it is a wrapper for a trunk adapter.
         """
         return self.trunk_pri is not None
+
+    @property
+    def configured_mtu(self):
+        """The MTU of the adapter.
+
+        May only be valid if adapter is being created against mgmt partition.
+        """
+        return self._get_val_int(_VADPT_MTU)
+
+    def _configured_mtu(self, value):
+        self.set_parm_value(_VADPT_MTU, value)
+
+    @property
+    def ovs_bridge(self):
+        """The OVS bridge it is connected to.  Otherwise None."""
+        return self._get_val_str(_VADPT_OVS_BRIDGE)
+
+    def _ovs_bridge(self, value):
+        self.set_parm_value(_VADPT_OVS_BRIDGE, value)
+
+    @property
+    def ovs_ext_ids(self):
+        """If connected to an OVS, returns the external ids.
+
+        This is a comma delimeted list of key=value pairs.
+        Ex:
+          'iface-id=123asdf,iface-status=active'
+        """
+        return self._get_val_str(_VADPT_OVS_EXT_IDS)
+
+    def _ovs_ext_ids(self, value):
+        self.set_parm_value(_VADPT_OVS_EXT_IDS, value)
 
 
 @ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
