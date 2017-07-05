@@ -229,18 +229,22 @@ class TestVNET(twrap.TestWrapper):
         mock_cna_bld.side_effect = [mock_trunk1, mock_trunk2, mock_cna]
 
         # Invoke the create
+        mock_ext_ids = {'test': 'value', 'test2': 'value2'}
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
             self.adpt, 'host_uuid', 'lpar_uuid',
             ['src_io_host_uuid', 'vios_uuid2'], mock_vswitch, crt_vswitch=True,
-            slot_num=1, mac_addr='aabbccddeeff')
+            slot_num=1, mac_addr='aabbccddeeff', ovs_bridge='br-ex',
+            ovs_ext_ids=mock_ext_ids, configured_mtu=1450)
 
         # Make sure the client and trunk were 'built'
         mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
                                      slot_num=1, mac_addr='aabbccddeeff')
-        mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
-                                     trunk_pri=1, dev_name=None)
-        mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
-                                     trunk_pri=2, dev_name=None)
+        mock_cna_bld.assert_any_call(
+            self.adpt, 2050, 'vswitch_href', trunk_pri=1, dev_name=None,
+            ovs_bridge='br-ex', ovs_ext_ids=mock_ext_ids, configured_mtu=1450)
+        mock_cna_bld.assert_any_call(
+            self.adpt, 2050, 'vswitch_href', trunk_pri=2, dev_name=None,
+            ovs_bridge='br-ex', ovs_ext_ids=mock_ext_ids, configured_mtu=1450)
 
         # Make sure they were then created
         self.assertIsNotNone(client_adpt)
@@ -282,8 +286,9 @@ class TestVNET(twrap.TestWrapper):
         # Make sure the client and trunk were 'built'
         mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
                                      mac_addr='aabbccddeeff', slot_num=None)
-        mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
-                                     trunk_pri=1, dev_name='tap-12345')
+        mock_cna_bld.assert_any_call(
+            self.adpt, 2050, 'vswitch_href', trunk_pri=1, dev_name='tap-12345',
+            ovs_bridge=None, ovs_ext_ids=None, configured_mtu=None)
 
         # Make sure they were then created
         self.assertIsNotNone(client_adpt)
@@ -319,8 +324,9 @@ class TestVNET(twrap.TestWrapper):
             mock_vswitch, crt_vswitch=True, dev_name='tap-12345')
 
         # Make sure the client and trunk were 'built'
-        mock_cna_bld.assert_any_call(self.adpt, 2050, 'vswitch_href',
-                                     trunk_pri=1, dev_name='tap-12345')
+        mock_cna_bld.assert_any_call(
+            self.adpt, 2050, 'vswitch_href', trunk_pri=1, dev_name='tap-12345',
+            ovs_bridge=None, ovs_ext_ids=None, configured_mtu=None)
 
         # Make sure that the trunk was created
         self.assertEqual(1, len(trunk_adpts))
