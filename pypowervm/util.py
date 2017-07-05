@@ -21,6 +21,7 @@ import datetime as dt
 import errno
 import hashlib
 import math
+import os
 import re
 import six
 import socket
@@ -468,6 +469,9 @@ def xag_attrs(xagstr, base=const.DEFAULT_SCHEMA_ATTR):
 
 def my_partition_id():
     """Return the short ID (not UUID) of the current partition, as an int."""
+    if not os.path.exists('/proc/ppc64/lparcfg'):
+        return 1
+
     with open('/proc/ppc64/lparcfg') as lparcfg:
         for line in lparcfg:
             if line.startswith('partition_id='):

@@ -268,14 +268,25 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(dict(one=2, group='foo'),
                          util.xag_attrs('foo', base=dict(one=2)))
 
+    @mock.patch('os.path.exists')
     @mock.patch.object(builtins, 'open')
-    def test_my_partition_id(self, m_open):
+    def test_my_partition_id(self, m_open, path_exists):
         """Test my_partition_id."""
+        path_exists.return_value = True
+
         def rit():
             for line in ('foo=bar\n', 'partition_id=1234\n', '\n', 'a=b\n'):
                 yield line
         m_open.return_value.__enter__.return_value.__iter__.side_effect = rit
         self.assertEqual(1234, util.my_partition_id())
+        path_exists.assert_called_once_with('/proc/ppc64/lparcfg')
+
+    @mock.patch('os.path.exists')
+    def test_my_partition_id_no_path(self, path_exists):
+        """Test my_partition_id."""
+        path_exists.return_value = False
+        self.assertEqual(1, util.my_partition_id())
+        path_exists.assert_called_once_with('/proc/ppc64/lparcfg')
 
     def test_parent_spec(self):
         """Test parent_spec."""
