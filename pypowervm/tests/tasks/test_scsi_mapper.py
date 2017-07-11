@@ -201,6 +201,54 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, len(found))
         self.assertEqual(scsi_map, found[0])
 
+    def test_remap_storage_vopt(self):
+        # Mock data
+        self.adpt.read.return_value = self.v1resp
+
+        # Validate that mapping was modified
+        def validate_update(*kargs, **kwargs):
+            vios_w = kargs[0]
+            self.assertEqual(5, len(vios_w.scsi_mappings))
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        # Run modify code
+        media_name = 'bldr1_dfe05349_kyleh_config.iso'
+        new_name = 'new_media_name.iso'
+        vios, mod_list = scsi_mapper.modify_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2, media_name=media_name,
+            new_name=new_name)
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertEqual(1, len(mod_list))
+        self.assertIsInstance(mod_list[0].backing_storage, pvm_stor.VOptMedia)
+        self.assertEqual(
+            mod_list[0].server_adapter.backing_dev_name, new_name)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
+
+        # Now do it again, but passing the vios wrapper and the client UUID.
+        # Match by UDID this time.
+        media_udid = '0ebldr1_dfe05349_kyleh_config.iso'
+        vios_wrap = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
+        self.adpt.update_by_path.reset_mock()
+        self.adpt.read.reset_mock()
+        vios, mod_list = scsi_mapper.modify_vopt_mapping(
+            self.adpt, vios_wrap, LPAR_UUID,
+            udid=media_udid, new_name=new_name)
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertEqual(1, len(mod_list))
+        self.assertIsInstance(mod_list[0].backing_storage, pvm_stor.VOptMedia)
+        self.assertEqual(
+            mod_list[0].server_adapter.backing_dev_name, new_name)
+        # But the VIOS was not "looked up"
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(vios_wrap.entry, vios.entry)
+
     def test_remove_storage_vopt(self):
         # Mock Data
         self.adpt.read.return_value = self.v1resp
