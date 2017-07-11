@@ -1247,6 +1247,11 @@ class VSCSIServerAdapterElement(VServerStorageAdapterElement):
         """The backing device name that this virtual adapter is hooked into."""
         return self._get_val_str(_VSCSI_ADPT_BACK_DEV_NAME)
 
+    @backing_dev_name.setter
+    def backing_dev_name(self, dev_name):
+        """Set the backing device name for the adapter."""
+        self.set_parm_value(_VSCSI_ADPT_BACK_DEV_NAME, dev_name)
+
     @property
     def lpar_id(self):
         """The short ID (not UUID) of the LPAR side of this adapter.

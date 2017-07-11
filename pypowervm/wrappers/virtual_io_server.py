@@ -461,7 +461,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 class _STDevMethods(ewrap.ElementWrapper):
     """Methods for storage and target common to STDev and VSCSIMapping."""
     def _set_stg_and_tgt(self, adapter, stg_ref, lua=None, target_name=None):
-        self._backing_storage(stg_ref)
+        self.backing_storage = stg_ref
         if lua is not None or target_name is not None:
             # Build a *TargetDev of the appropriate type for this stg_ref
             self._target_dev(stg_ref.target_dev_type.bld(adapter, lua,
@@ -489,7 +489,8 @@ class _STDevMethods(ewrap.ElementWrapper):
         return ewrap.ElementWrapper.wrap(stor_elems[0],
                                          parent_entry=parent_entry)
 
-    def _backing_storage(self, stg):
+    @backing_storage.setter
+    def backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
 
         :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
@@ -645,7 +646,7 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
         if existing_map.server_adapter is not None:
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
         if stg_ref is not None:
-            new_map._backing_storage(copy.deepcopy(stg_ref))
+            new_map.backing_storage = copy.deepcopy(stg_ref)
         if lpar_slot_num is not None:
             # Set the slot number and remove the 'UseNextAvailableSlot' tag.
             new_map.client_adapter._lpar_slot_num(lpar_slot_num)

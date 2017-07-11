@@ -310,6 +310,48 @@ def detach_storage(vwrap, client_lpar_id, match_func=None):
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
+def _modify_storage_elem(adapter, vios, client_lpar_id, match_func, new_media):
+    """Replaces the storage element of a vSCSI mapping.
+
+    Will change the vSCSI Mapping backing storage element if the match_func
+    indicates that the mapping is a match. The match_func is only invoked if
+    the client_lpar_id matches. If more than one match exists, the VIOS will
+    not update, and no mapping will be returned.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios: The virtual I/O server where the mapping is being changed.
+                 This may be the VIOS's UUID string OR an existing
+                 VIOS EntryWrapper.  If the latter, it must have been retrieved
+                 using the VIO_SMAP extended attribute group.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param match_func: Matching function suitable for passing to find_maps.
+                       See that method's match_func parameter.
+    :param new_media: The replacement VOptMedia backing storage element.
+    :return: The VIOS wrapper representing the updated Virtual I/O Server.
+             This is current with respect to etag and SCSI mappings.
+    :return: The SCSI mapping that was remapped.
+    """
+
+    # If the 'vios' param is a string UUID, retrieve the VIOS wrapper.
+    if not isinstance(vios, pvm_vios.VIOS):
+        vios = pvm_vios.VIOS.get(adapter, root_id=vios, xag=[c.XAG.VIO_SMAP])
+
+    map_modified = find_maps(
+        vios.scsi_mappings, client_lpar_id=client_lpar_id,
+        match_func=match_func, include_orphans=True)
+
+    # Ensure that exactly one map match is returned
+    if map_modified and len(map_modified) == 1:
+        map_modified[0].backing_storage = new_media
+        vios = vios.update()
+        return vios, map_modified[0]
+    else:
+        return vios, None
+
+
+@lock.synchronized('vscsi_mapping')
+@pvm_retry.retry(tries=60, argmod_func=_argmod,
+                 delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def _remove_storage_elem(adapter, vios, client_lpar_id, match_func):
     """Removes the storage element from a SCSI bus and clears out bus.
 
@@ -520,6 +562,39 @@ def index_mappings(maps):
             add('by-storage-udid', stg.udid, smap)
 
     return ret
+
+
+def modify_vopt_mapping(adapter, vios, client_lpar_id, media_name=None,
+                        udid=None, new_media=None):
+    """Will remap VOpt media mapping with another backing storage element.
+
+    This method will change the VOptMedia storage element associated with
+    a specific SCSI mapping.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios: The virtual I/O server on which the mapping should be
+                 modified.  This may be the VIOS's UUID string OR an existing
+                 VIOS EntryWrapper.  If the latter, it must have been retrieved
+                 using the VIO_SMAP extended attribute group.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param media_name: (Optional) The name of the virtual optical media to
+                       replace on the SCSI bus.
+    :param udid: (Optional) The UDID of the virtual optical media to replace
+                 on the SCSI bus.  Ignored if media_name is specified.
+    :param new_media: The new storage element to be associated with the
+                 specified SCSI mapping.
+    :return: The VIOS wrapper representing the updated Virtual I/O Server.
+             This is current with respect to etag and SCSI mappings.
+    :return: The remapped SCSI mapping with new backing storage.
+    """
+
+    names = [media_name] if media_name else None
+    udids = [udid] if udid else None
+
+    return _modify_storage_elem(
+        adapter, vios, client_lpar_id, gen_match_func(
+            pvm_stor.VOptMedia, name_prop='media_name', names=names,
+            udids=udids), new_media)
 
 
 def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None,
