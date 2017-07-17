@@ -1,4 +1,4 @@
-# Copyright 2016 IBM Corp.
+# Copyright 2016, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 
 from pypowervm.tasks.hdisk import _fc
 from pypowervm.tasks.hdisk import _iscsi
+from pypowervm.tasks.hdisk import _rbd
 
 LUAType = _fc.LUAType
 LUAStatus = _fc.LUAStatus
@@ -32,3 +33,4 @@ get_pg83_via_job = _fc.get_pg83_via_job
 discover_iscsi = _iscsi.discover_iscsi
 discover_iscsi_initiator = _iscsi.discover_iscsi_initiator
 remove_iscsi = _iscsi.remove_iscsi
+rbd_exists = _rbd.rbd_exists
