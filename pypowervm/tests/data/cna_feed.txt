@@ -46,6 +46,9 @@ BODY{
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kxe="false" kb="ROR">0</VirtualSwitchID>
     <TrunkPriority kxe="false" kb="CUD">1</TrunkPriority>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=994580c7-df12-4865-b066-6e5587475b7c,iface-status=active,attached-mac=fa:6c:c2:55:0a:20,vm-uuid=8702dd36-e405-407f-bd75-224babc04da5</OvsPortExternalIds>
     <VirtualNetworks kb="CUR" kxe="false">
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualNetwork/eaf305f9-0fbb-31e3-a51b-44e7c7ff8b3a" rel="related"/>
     </VirtualNetworks>
@@ -81,6 +84,9 @@ BODY{
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualSwitch/e478fb72-2679-3973-8981-66a26af6f7e1" rel="related"/>
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kxe="false" kb="ROR">1</VirtualSwitchID>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=f35362c3-5213-4398-b1d8-c06dce3a50ca,iface-status=active,attached-mac=fa:a7:49:c0:1a:20,vm-uuid=abf12ade-9743-4a5a-af5e-1bc88d505886</OvsPortExternalIds>
     <VirtualNetworks kb="CUR" kxe="false">
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/e7344c5b-79b5-3e73-8f64-94821424bc25/VirtualNetwork/97dcfc86-93a2-30ce-8904-bf8292852bad" rel="related"/>
     </VirtualNetworks>
