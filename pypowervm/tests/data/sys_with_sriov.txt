@@ -347,6 +347,7 @@ BODY{
                     <SRIOVAdapterID kb="COD" kxe="false">1</SRIOVAdapterID>
                     <AdapterState kb="ROR" kxe="false">Running</AdapterState>
                     <AdapterMode kxe="false" kb="CUD">Sriov</AdapterMode>
+                    <Personality kxe="false" kb="COD">MIN_CAPACITY</Personality>
                     <ConvergedEthernetPhysicalPorts kb="ROR" kxe="false" schemaVersion="V1_3_0">
                         <Metadata>
                             <Atom/>
@@ -955,6 +956,7 @@ BODY{
                     <SRIOVAdapterID kb="COD" kxe="false">2</SRIOVAdapterID>
                     <AdapterState kb="ROR" kxe="false">Running</AdapterState>
                     <AdapterMode kxe="false" kb="CUD">Sriov</AdapterMode>
+                    <Personality kxe="false" kb="COD">MAX_MIN_CAPACITY</Personality>
                     <ConvergedEthernetPhysicalPorts kb="ROR" kxe="false" schemaVersion="V1_3_0">
                         <Metadata>
                             <Atom/>
