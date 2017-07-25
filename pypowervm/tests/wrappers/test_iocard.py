@@ -194,6 +194,7 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual('000000000000', lport.cur_mac)
         self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
         self.assertEqual(card.VNICPortUsage.NOT_VNIC, lport.vnic_port_usage)
+        self.assertEqual(1, lport.cfg_max_capacity)
 
         # Verify logical port setters
         lport._sriov_adap_id(2)
@@ -210,6 +211,8 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(0.0, lport.cfg_capacity)
         lport._cfg_capacity(1.0)
         self.assertEqual(1.0, lport.cfg_capacity)
+        lport._cfg_max_capacity(0.42)
+        self.assertEqual(0.42, lport.cfg_max_capacity)
 
         # Verify setter validation
         self.assertRaises(ValueError, lport._cfg_capacity, '5.0%')
@@ -238,7 +241,7 @@ class TestLogicalPort(twrap.TestWrapper):
         lport = card.SRIOVEthLPort.bld(
             self.adpt, 5, 6, pvid=2230, mac='12:ab:34:CD:56:ef',
             allowed_vlans=[1, 2, 3], allowed_macs=u.MACList.NONE,
-            is_promisc=True, cfg_capacity=0.05)
+            is_promisc=True, cfg_capacity=0.05, max_capacity=0.1)
         self.assertEqual(5, lport.sriov_adap_id)
         self.assertTrue(lport.is_promisc)
         self.assertEqual(0.05, lport.cfg_capacity)
@@ -247,6 +250,7 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual([1, 2, 3], lport.allowed_vlans)
         self.assertEqual('12AB34CD56EF', lport.mac)
         self.assertEqual(u.MACList.NONE, lport.allowed_macs)
+        self.assertEqual(0.1, lport.cfg_max_capacity)
 
 
 class TestVNIC(twrap.TestWrapper):
@@ -293,7 +297,8 @@ class TestVNIC(twrap.TestWrapper):
 
         backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4),
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
-                                         capacity=0.3456789, failover_pri=50)]
+                                         capacity=0.3456789, failover_pri=50,
+                                         max_capacity=0.42)]
         vnic = card.VNIC.bld(
             self.adpt, pvid=7, slot_num=8, allowed_vlans=[1, 2],
             mac_addr='m:a:c',
@@ -331,8 +336,10 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(bd2.failover_pri, 50)
         bd1.failover_pri = 42
         bd2.failover_pri = 60
-        self.assertEqual(bd1.failover_pri, 42)
-        self.assertEqual(bd2.failover_pri, 60)
+        self.assertEqual(42, bd1.failover_pri)
+        self.assertEqual(60, bd2.failover_pri)
+        self.assertIsNone(bd1.max_capacity)
+        self.assertEqual(0.42, bd2.max_capacity)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
@@ -386,6 +393,10 @@ class TestVNIC(twrap.TestWrapper):
         self.assertTrue(self.dwrap.back_devs[1].is_active)
         self.assertEqual(self.dwrap.back_devs[1].status,
                          card.VNICBackDevStatus.OPERATIONAL)
+        self.assertEqual(1, backdev.max_capacity)
+        backdev._max_capacity(0.42)
+        self.assertEqual(0.42, backdev.max_capacity)
+        self.assertEqual(1, backdev.desired_max_capacity)
 
 if __name__ == "__main__":
     unittest.main()
