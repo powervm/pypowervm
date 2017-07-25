@@ -33,6 +33,7 @@ _IO_ADPT_CHOICE = 'IOAdapterChoice'
 # SR-IOV Adapter constants
 _SRIOV_ADAPTER_ID = 'SRIOVAdapterID'
 _SRIOV_ADAPTER_MODE = 'AdapterMode'
+_SRIOV_ADAPTER_PERSONALITY = 'Personality'
 _SRIOV_ADAPTER_STATE = 'AdapterState'
 
 _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
@@ -233,6 +234,14 @@ class SRIOVAdapterMode(object):
     UNKNOWN = 'unknown'
 
 
+class SRIOVAdapterPersonality(object):
+    """Enum for SR-IOV adapter personalities (from SRIOVPersonality.Enum). """
+    NO_QOS = "NO_QOS"
+    MIN_CAPACITY = "MIN_CAPACITY"
+    MAX_MIN_CAPACITY = "MAX_MIN_CAPACITY"
+    UNKNOWN = "UNKNOWN"
+
+
 class SRIOVAdapterState(object):
     """Enumeration for SR-IOV adapter states (from SRIOVAdapterState.Enum)."""
     INITIALIZING = 'Initializing'
@@ -410,6 +419,14 @@ class SRIOVAdapter(IOAdapter):
     @mode.setter
     def mode(self, value):
         self.set_parm_value(_SRIOV_ADAPTER_MODE, value)
+
+    @property
+    def personality(self):
+        return self._get_val_str(_SRIOV_ADAPTER_PERSONALITY)
+
+    @personality.setter
+    def personality(self, value):
+        self.set_parm_value(_SRIOV_ADAPTER_PERSONALITY, value)
 
     @property
     def state(self):
