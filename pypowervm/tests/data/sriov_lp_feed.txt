@@ -45,6 +45,7 @@ BODY{
                 <IsHugeDMA kxe="false" kb="CUR">false</IsHugeDMA>
                 <DeviceName kb="ROR" kxe="false">PHB 4098</DeviceName>
                 <ConfiguredCapacity kxe="false" kb="CUR">2.0%</ConfiguredCapacity>
+                <ConfiguredMaxCapacity kb="CUR" kxe="false">100.0%</ConfiguredMaxCapacity>
                 <PhysicalPortID kxe="false" kb="COR">2</PhysicalPortID>
                 <PortVLANID kxe="false" kb="CUR">0</PortVLANID>
                 <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0485-P1-C5-T3-S2</LocationCode>
@@ -86,6 +87,7 @@ BODY{
                 <IsHugeDMA kb="CUR" kxe="false">false</IsHugeDMA>
                 <DeviceName kxe="false" kb="ROR">unavailable</DeviceName>
                 <ConfiguredCapacity kxe="false" kb="CUR">2.0%</ConfiguredCapacity>
+                <ConfiguredMaxCapacity kb="CUR" kxe="false">80.0%</ConfiguredMaxCapacity>
                 <PhysicalPortID kxe="false" kb="COR">0</PhysicalPortID>
                 <PortVLANID kxe="false" kb="CUR">1095</PortVLANID>
                 <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0JYF-P1-C10-T1-S1</LocationCode>
@@ -128,6 +130,7 @@ BODY{
                 <IsHugeDMA kb="CUR" kxe="false">false</IsHugeDMA>
                 <DeviceName kxe="false" kb="ROR">unavailable</DeviceName>
                 <ConfiguredCapacity kxe="false" kb="CUR">18.0%</ConfiguredCapacity>
+                <ConfiguredMaxCapacity kb="CUR" kxe="false">10.0%</ConfiguredMaxCapacity>
                 <PhysicalPortID kxe="false" kb="COR">1</PhysicalPortID>
                 <PortVLANID kxe="false" kb="CUR">42</PortVLANID>
                 <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0JYF-P1-C10-T1-S2</LocationCode>
@@ -170,6 +173,7 @@ BODY{
                 <IsHugeDMA kb="CUR" kxe="false">false</IsHugeDMA>
                 <DeviceName kxe="false" kb="ROR">unavailable</DeviceName>
                 <ConfiguredCapacity kxe="false" kb="CUR">2.0%</ConfiguredCapacity>
+                <ConfiguredMaxCapacity kb="CUR" kxe="false">100.0%</ConfiguredMaxCapacity>
                 <PhysicalPortID kxe="false" kb="COR">1</PhysicalPortID>
                 <PortVLANID kxe="false" kb="CUR">42</PortVLANID>
                 <LocationCode kb="ROR" kxe="false">U78CB.001.WZS0JYF-P1-C10-T1-S3</LocationCode>
