@@ -127,6 +127,7 @@ _SRIOVLP_IS_DEBUG = 'IsDebug'
 _SRIOVLP_IS_HUGE_DMA = 'IsHugeDMA'
 _SRIOVLP_DEV_NAME = 'DeviceName'
 _SRIOVLP_CFG_CAPACITY = 'ConfiguredCapacity'
+_SRIOVLP_CFG_MAX_CAPACITY = 'ConfiguredMaxCapacity'
 _SRIOVLP_PPORT_ID = 'PhysicalPortID'
 _SRIOVLP_PVID = 'PortVLANID'
 _SRIOVLP_LOC_CODE = 'LocationCode'
@@ -146,11 +147,11 @@ _SRIOVLP_EL_ORDER = (
     _SRIOVLP_CFG_ID, _SRIOVLP_ID, _SRIOVLP_ADPT_ID, _SRIOVLP_DRC_NAME,
     _SRIOVLP_IS_FUNC, _SRIOVLP_IS_PROMISC, _SRIOVLP_IS_DIAG, _SRIOVLP_IS_DEBUG,
     _SRIOVLP_IS_HUGE_DMA, _SRIOVLP_DEV_NAME, _SRIOVLP_CFG_CAPACITY,
-    _SRIOVLP_PPORT_ID, _SRIOVLP_PVID, _SRIOVLP_LOC_CODE,
-    _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE, _SRIOVLP_ASSOC_LPARS,
-    _SRIOVLP_ALLOWED_MACS, _SRIOVLP_MAC, _SRIOVLP_CUR_MAC,
-    _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI, _SRIOVLP_MAC_FLAGS,
-    _SRIOVLP_NUM_ALLOWED_VLANS, _SRIOVLP_ALLOWED_VLANS)
+    _SRIOVLP_CFG_MAX_CAPACITY, _SRIOVLP_PPORT_ID, _SRIOVLP_PVID,
+    _SRIOVLP_LOC_CODE, _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE,
+    _SRIOVLP_ASSOC_LPARS, _SRIOVLP_ALLOWED_MACS, _SRIOVLP_MAC,
+    _SRIOVLP_CUR_MAC, _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI,
+    _SRIOVLP_MAC_FLAGS, _SRIOVLP_NUM_ALLOWED_VLANS, _SRIOVLP_ALLOWED_VLANS)
 
 # Top-level VNIC properties
 _VNIC_DED = 'VirtualNICDedicated'
@@ -202,9 +203,11 @@ _VNICBD_FAILOVER_PRI = 'FailOverPriority'
 _VNICBD_ACTION = 'BackingDeviceAction'
 _VNICBD_SRIOV_ADP_ID = 'RelatedSRIOVAdapterID'
 _VNICBD_CUR_CAP_PCT = 'CurrentCapacityPercentage'
+_VNICBD_MAX_CAP_PCT = 'MaxCapacityPercentage'
 _VNICBD_PPORT_ID = 'RelatedSRIOVPhysicalPortID'
 _VNICBD_LPORT = 'RelatedSRIOVLogicalPort'
 _VNICBD_DES_CAP_PCT = 'DesiredCapacityPercentage'
+_VNIC_BD_DES_MAX_CAP_PCT = 'DesiredMaxCapacityPercentage'
 # For building the VIOS HREF.  (Would have liked to use pypowervm.wrappers.
 # virtual_io_server.VIOS.schema_type, but circular import.)
 _VIOS = 'VirtualIOServer'
@@ -212,8 +215,9 @@ _VIOS = 'VirtualIOServer'
 _VNICBD_EL_ORDER = (
     _VNICBD_DEV_TYP, _VNICBD_VIOS, _VNICBD_SWITCH, _VNICBD_VNIC,
     _VNICBD_ACTIVE, _VNICBD_STATUS, _VNICBD_FAILOVER_PRI, _VNICBD_ACTION,
-    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_PPORT_ID, _VNICBD_LPORT,
-    _VNICBD_DES_CAP_PCT)
+    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_MAX_CAP_PCT,
+    _VNICBD_PPORT_ID, _VNICBD_LPORT, _VNICBD_DES_CAP_PCT,
+    _VNIC_BD_DES_MAX_CAP_PCT)
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
@@ -683,10 +687,29 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         """The configured capacity
 
         :param value: The configured capacity value.  The valid values are
-                      0.0 <= x <=1.0 up to 2 decimal places.  This will be
-                      intrepreted as a percentage, where 0.02 == 2%.
+                      0.0 <= x <= 1.0 up to 2 decimal places.  This will be
+                      interpreted as a percentage, where 0.02 == 2%.
         """
         self.set_parm_value(_SRIOVLP_CFG_CAPACITY,
+                            u.sanitize_percent_for_api(value))
+
+    @property
+    def cfg_max_capacity(self):
+        """Gets the configured maximum capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_SRIOVLP_CFG_MAX_CAPACITY)
+
+    def _cfg_max_capacity(self, value):
+        """The configured maximum capacity
+
+        :param value: The configured max capacity value.  The valid values are
+                      0.0 <= x <= 1.0 up to 2 decimal places.  This will be
+                      interpreted as a percentage, where 0.02 == 2%.
+        """
+        self.set_parm_value(_SRIOVLP_CFG_MAX_CAPACITY,
                             u.sanitize_percent_for_api(value))
 
     @property
@@ -1071,6 +1094,28 @@ class VNICBackDev(ewrap.ElementWrapper):
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
                             u.sanitize_percent_for_api(float_val))
+
+    @property
+    def max_capacity(self):
+        """Gets the max capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_VNICBD_MAX_CAP_PCT)
+
+    def _max_capacity(self, float_val):
+        self.set_parm_value(_VNICBD_MAX_CAP_PCT,
+                            u.sanitize_percent_for_api(float_val))
+
+    @property
+    def desired_max_capacity(self):
+        """Gets the desired max capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_VNIC_BD_DES_MAX_CAP_PCT)
 
     @property
     def failover_pri(self):

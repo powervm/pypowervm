@@ -194,6 +194,7 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual('000000000000', lport.cur_mac)
         self.assertEqual('U78CB.001.WZS0485-P1-C5-T3-S2', lport.loc_code)
         self.assertEqual(card.VNICPortUsage.NOT_VNIC, lport.vnic_port_usage)
+        self.assertEqual(1, lport.cfg_max_capacity)
 
         # Verify logical port setters
         lport._sriov_adap_id(2)
@@ -210,6 +211,8 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual(0.0, lport.cfg_capacity)
         lport._cfg_capacity(1.0)
         self.assertEqual(1.0, lport.cfg_capacity)
+        lport._cfg_max_capacity(0.42)
+        self.assertEqual(0.42, lport.cfg_max_capacity)
 
         # Verify setter validation
         self.assertRaises(ValueError, lport._cfg_capacity, '5.0%')
@@ -386,6 +389,10 @@ class TestVNIC(twrap.TestWrapper):
         self.assertTrue(self.dwrap.back_devs[1].is_active)
         self.assertEqual(self.dwrap.back_devs[1].status,
                          card.VNICBackDevStatus.OPERATIONAL)
+        self.assertEqual(1, backdev.max_capacity)
+        backdev._max_capacity(0.42)
+        self.assertEqual(0.42, backdev.max_capacity)
+        self.assertEqual(1, backdev.desired_max_capacity)
 
 if __name__ == "__main__":
     unittest.main()
