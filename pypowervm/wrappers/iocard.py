@@ -424,10 +424,6 @@ class SRIOVAdapter(IOAdapter):
     def personality(self):
         return self._get_val_str(_SRIOV_ADAPTER_PERSONALITY)
 
-    @personality.setter
-    def personality(self, value):
-        self.set_parm_value(_SRIOV_ADAPTER_PERSONALITY, value)
-
     @property
     def state(self):
         return self._get_val_str(_SRIOV_ADAPTER_STATE)

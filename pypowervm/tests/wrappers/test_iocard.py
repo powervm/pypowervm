@@ -65,13 +65,6 @@ class TestSRIOVAdapter(twrap.TestWrapper):
                          self.sriovs[0].personality)
         self.assertEqual(card.SRIOVAdapterPersonality.MAX_MIN_CAPACITY,
                          self.sriovs[1].personality)
-        # Test setter
-        self.sriovs[0].personality = card.SRIOVAdapterPersonality.NO_QOS
-        self.sriovs[1].personality = card.SRIOVAdapterPersonality.UNKNOWN
-        self.assertEqual(card.SRIOVAdapterPersonality.NO_QOS,
-                         self.sriovs[0].personality)
-        self.assertEqual(card.SRIOVAdapterPersonality.UNKNOWN,
-                         self.sriovs[1].personality)
 
     def test_state(self):
         self.assertEqual('Running', self.sriovs[0].state)
