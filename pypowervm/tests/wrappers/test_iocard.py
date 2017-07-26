@@ -391,7 +391,7 @@ class TestVNIC(twrap.TestWrapper):
         """Test that IP can be retrieved after construction."""
         ip_address = "192.168.1.10"
         subnet_mask = "255.255.255.0"
-        gateway="192.168.1.1"
+        gateway = "192.168.1.2"
         vnic = card.VNIC.bld(self.adpt, ip_address=ip_address,
                              subnet_mask=subnet_mask, gateway=gateway)
         self.assertEqual(ip_address, vnic.ip_address)
@@ -434,6 +434,7 @@ class TestVNIC(twrap.TestWrapper):
             self.assertEqual(gateway, self.dwrap.gateway)
 
         details.gateway = orig_gateway
+
 
 if __name__ == "__main__":
     unittest.main()
