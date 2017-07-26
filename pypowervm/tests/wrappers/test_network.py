@@ -755,6 +755,9 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertEqual('VSITID', self.dwrap.vsi_type_id)
         self.assertEqual('77.99', self.dwrap.vsi_type_version)
         self.assertEqual('VSIMID', self.dwrap.vsi_type_manager_id)
+        self.assertEqual("192.168.2.6", self.dwrap.ip_address)
+        self.assertIsNotNone("192.168.2.0", self.dwrap.gateway)
+        self.assertIsNotNone("255.255.255.0", self.dwrap.subnet_mask)
 
     def test_tagged_vlan_modification(self):
         """Tests that the tagged vlans can be modified."""

@@ -184,6 +184,9 @@ _VNICD_OS_DEV_NAME = 'OSDeviceName'
 _VNICD_DES_MODE = 'DesiredMode'
 _VNICD_DES_CAP_PCT = 'DesiredCapacityPercentage'
 _VNICD_AUTO_FB = 'AutoFailBack'
+_VNICD_IP_ADDR = 'IPAddress'
+_VNICD_SUBNET_MASK = 'SubnetMask'
+_VNICD_GATEWAY = 'Gateway'
 
 _VNICD_EL_ORDER = (
     _VNICD_PVID, _VNICD_PVID_PRI, _VNICD_ALLOWED_VLANS, _VNICD_MAC,
@@ -937,6 +940,21 @@ class VNIC(ewrap.EntryWrapper):
     def auto_pri_failover(self, val):
         self._details.auto_pri_failover = val
 
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def ip_address(self):
+        """Returns the IP Address of the network interface."""
+        return self._details.ip_address
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface."""
+        return self._details.subnet_mask
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def gateway(self):
+        """Returns the gateway of the network interface."""
+        return self._details.gateway
+
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
@@ -971,6 +989,7 @@ class _VNICDetails(ewrap.ElementWrapper):
         if mac_addr is not None:
             vnicd._mac(mac_addr)
         vnicd.allowed_macs = allowed_macs
+
         return vnicd
 
     @property
@@ -1020,6 +1039,36 @@ class _VNICDetails(ewrap.ElementWrapper):
     @auto_pri_failover.setter
     def auto_pri_failover(self, val):
         self.set_parm_value(_VNICD_AUTO_FB, u.sanitize_bool_for_api(val))
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def ip_address(self):
+        """Returns the IP Address of the network interface.
+
+        Typical format would be: 255.255.255.255 (IPv4)
+        and ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff (IPv6)
+        or other short forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_IP_ADDR)
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface.
+
+        Typical format would be: 255.255.255.0 (IPv4)
+        and ffff:ffff:ffff:ffff:: (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_SUBNET_MASK)
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def gateway(self):
+        """Returns the gateway of the network interface.
+
+        Typical format would be: 10.0.0.1 (IPv4)
+        and cafe::1 (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_GATEWAY)
 
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,

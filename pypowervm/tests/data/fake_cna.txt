@@ -52,6 +52,9 @@ BODY{
         <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/9e42d4a9-9725-3007-9932-d85374ebf5cf" rel="related"/>
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+    <IPAddress group="Advanced" ksv="V1_6_0" kxe="false" kb="ROR">192.168.2.6</IPAddress>
+    <SubnetMask group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">255.255.255.0</SubnetMask>
+    <Gateway group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">192.168.2.0</Gateway>
     <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
     <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
     <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
