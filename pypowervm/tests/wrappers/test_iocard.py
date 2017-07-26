@@ -254,6 +254,9 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual('U8286.42A.21C1B6V-V10-C3', self.dwrap.drc_name)
         self.assertEqual(10, self.dwrap.lpar_id)
         self.assertEqual(7, self.dwrap.slot)
+        self.assertEqual("192.168.2.7", self.dwrap.ip_address)
+        self.assertIsNotNone("192.168.2.0", self.dwrap.gateway)
+        self.assertIsNotNone("255.255.255.0", self.dwrap.subnet_mask)
 
     def test_vnic_and_backdev_bld(self):
         # Defaults in kwargs

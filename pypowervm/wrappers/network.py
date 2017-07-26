@@ -146,6 +146,9 @@ _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_ENABLED = 'Enabled'
 _VADPT_ALLOWED_MAC = _TA_ALLOWED_MAC
 _VADPT_MAC_ADDR = _TA_MAC
+_VADPT_IP_ADDR = 'IPAddress'
+_VADPT_SUBNET_MASK = 'SubnetMask'
+_VADPT_GATEWAY = 'Gateway'
 _VADPT_PVID = _PVID
 _VADPT_QOS_PRI = 'QualityOfServicePriority'
 _VADPT_QOS_PRI_ENABLED = _TA_QOS_PRI
@@ -1387,6 +1390,36 @@ class CNA(ewrap.EntryWrapper):
 
     def _ovs_ext_ids(self, value):
         self.set_parm_value(_VADPT_OVS_EXT_IDS, value, attrib=c.ATTR_KSV160)
+
+    @ewrap.Wrapper.xag_property(c.XAG.ADV)
+    def ip_address(self):
+        """Returns the IP Address of the network interface.
+
+        Typical format would be: 255.255.255.255 (IPv4)
+        and ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff (IPv6)
+        or other short forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_IP_ADDR)
+
+    @ewrap.Wrapper.xag_property(c.XAG.ADV)
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface.
+
+        Typical format would be: 255.255.255.0 (IPv4)
+        and ffff:ffff:ffff:ffff:: (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_SUBNET_MASK)
+
+    @ewrap.Wrapper.xag_property(c.XAG.ADV)
+    def gateway(self):
+        """Returns the gateway of the network interface.
+
+        Typical format would be: 10.0.0.1 (IPv4)
+        and cafe::1 (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_GATEWAY)
 
 
 @ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
