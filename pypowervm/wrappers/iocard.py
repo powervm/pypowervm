@@ -183,6 +183,9 @@ _VNICD_OS_DEV_NAME = 'OSDeviceName'
 _VNICD_DES_MODE = 'DesiredMode'
 _VNICD_DES_CAP_PCT = 'DesiredCapacityPercentage'
 _VNICD_AUTO_FB = 'AutoFailBack'
+_VNICD_IP_ADDR = 'IPAddress'
+_VNICD_SUBNET_MASK = 'SubnetMask'
+_VNICD_GATEWAY = 'Gateway'
 
 _VNICD_EL_ORDER = (
     _VNICD_PVID, _VNICD_PVID_PRI, _VNICD_ALLOWED_VLANS, _VNICD_MAC,
@@ -764,7 +767,8 @@ class VNIC(ewrap.EntryWrapper):
     @classmethod
     def bld(cls, adapter, pvid=None, slot_num=None,
             allowed_vlans=u.VLANList.ALL, mac_addr=None,
-            allowed_macs=u.MACList.ALL, back_devs=None):
+            allowed_macs=u.MACList.ALL, back_devs=None,
+            ip_address=None, subnet_mask=None, gateway=None):
         """Build a new VNIC wrapper suitable for .create()
 
         A VNIC is a CHILD object on a LogicalPartition.  Usage models:
@@ -795,6 +799,15 @@ class VNIC(ewrap.EntryWrapper):
                           See VNICBackDev.bld.  If not specified to bld, at
                           least one must be added before the VNIC can be
                           created.
+        :param ip_address: (Optional, Default: None) IP Address string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param subnet_mask: (Optional, Default: None) Subnet mask string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param gateway: (Optional, Default: None) Gateway string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
         :return: A new VNIC wrapper.
         """
         vnic = super(VNIC, cls)._bld(adapter)
@@ -805,7 +818,8 @@ class VNIC(ewrap.EntryWrapper):
 
         vnic._details = _VNICDetails._bld_new(
             adapter, pvid=pvid, allowed_vlans=allowed_vlans, mac_addr=mac_addr,
-            allowed_macs=allowed_macs)
+            allowed_macs=allowed_macs, ip_address=ip_address,
+            subnet_mask=subnet_mask, gateway=gateway)
 
         if back_devs:
             vnic.back_devs = back_devs
@@ -910,6 +924,21 @@ class VNIC(ewrap.EntryWrapper):
     def auto_pri_failover(self, val):
         self._details.auto_pri_failover = val
 
+    @property
+    def ip_address(self):
+        """Returns the IP Address of the network interface."""
+        return self._details.ip_address
+
+    @property
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface."""
+        return self._details.subnet_mask
+
+    @property
+    def gateway(self):
+        """Returns the gateway of the network interface."""
+        return self._details.gateway
+
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
@@ -918,7 +947,8 @@ class _VNICDetails(ewrap.ElementWrapper):
 
     @classmethod
     def _bld_new(cls, adapter, pvid=None, allowed_vlans=u.VLANList.ALL,
-                 mac_addr=None, allowed_macs=u.MACList.ALL):
+                 mac_addr=None, allowed_macs=u.MACList.ALL,
+                 ip_address=None, subnet_mask=None, gateway=None):
         """Create a new _VNICDetails wrapper suitable for insertion into a VNIC.
 
         Not to be called outside of VNIC.bld().
@@ -935,6 +965,15 @@ class _VNICDetails(ewrap.ElementWrapper):
                              Specify pypowervm.util.MACList.ALL to allow all
                              MAC addresses, or .NONE to allow no MAC addresses
                              on this vNIC.  Default: ALL.
+        :param ip_address: (Optional, Default: None) IP Address string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param subnet_mask: (Optional, Default: None) Subnet mask string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param gateway: (Optional, Default: None) Gateway string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
         :return: A new _VNICDetails wrapper.
         """
         vnicd = super(_VNICDetails, cls)._bld(adapter)
@@ -944,6 +983,16 @@ class _VNICDetails(ewrap.ElementWrapper):
         if mac_addr is not None:
             vnicd._mac(mac_addr)
         vnicd.allowed_macs = allowed_macs
+
+        if ip_address is not None:
+            vnicd.ip_address = ip_address
+
+        if subnet_mask is not None:
+            vnicd.subnet_mask = subnet_mask
+
+        if gateway is not None:
+            vnicd.gateway = gateway
+
         return vnicd
 
     @property
@@ -993,6 +1042,48 @@ class _VNICDetails(ewrap.ElementWrapper):
     @auto_pri_failover.setter
     def auto_pri_failover(self, val):
         self.set_parm_value(_VNICD_AUTO_FB, u.sanitize_bool_for_api(val))
+
+    @property
+    def ip_address(self):
+        """Returns the IP Address of the network interface.
+
+        Typical format would be: 255.255.255.255 (IPv4)
+        and ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff (IPv6)
+        or other short forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_IP_ADDR)
+
+    @ip_address.setter
+    def ip_address(self, new_val):
+        self.set_parm_value(_VNICD_IP_ADDR, new_val)
+
+    @property
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface.
+
+        Typical format would be: 255.255.255.0 (IPv4)
+        and ffff:ffff:ffff:ffff:: (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_SUBNET_MASK)
+
+    @subnet_mask.setter
+    def subnet_mask(self, new_val):
+        self.set_parm_value(_VNICD_SUBNET_MASK, new_val)
+
+    @property
+    def gateway(self):
+        """Returns the gateway of the network interface.
+
+        Typical format would be: 10.0.0.1 (IPv4)
+        and cafe::1 (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_GATEWAY)
+
+    @gateway.setter
+    def gateway(self, new_val):
+        self.set_parm_value(_VNICD_GATEWAY, new_val)
 
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
