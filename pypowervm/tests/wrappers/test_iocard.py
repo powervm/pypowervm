@@ -391,5 +391,53 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(0.42, backdev.max_capacity)
         self.assertEqual(1, backdev.desired_max_capacity)
 
+    def test_vnic_with_ip(self):
+        """Test that IP can be retrieved after construction."""
+        ip_address = "192.168.1.10"
+        subnet_mask = "255.255.255.0"
+        gateway="192.168.1.1"
+        vnic = card.VNIC.bld(self.adpt, ip_address=ip_address,
+                             subnet_mask=subnet_mask, gateway=gateway)
+        self.assertEqual(ip_address, vnic.ip_address)
+        self.assertEqual(subnet_mask, vnic.subnet_mask)
+        self.assertEqual(gateway, vnic.gateway)
+
+    def test_ip_address_set(self):
+        """Test that IP Address can be set and get"""
+        details = self.dwrap._details
+        orig_ip_address = details.ip_address
+        ip_address_list = ["192.168.1.10", "cafe::10", "10.0.0.21",
+                           "2001:0DB8:ABCD:0012:0000:0000:0000:10"]
+        for ip_address in ip_address_list:
+            details.ip_address = ip_address
+            self.assertEqual(ip_address, details.ip_address)
+        details.ip_address = orig_ip_address
+
+    def test_subnet_mask_set(self):
+        """Test that subnet mask can be set and get"""
+        details = self.dwrap._details
+        orig_subnet_mask = details.subnet_mask
+        subnet_mask_list = ["255.255.0.0", "255.255.255.0",
+                            "2001:DB8:ABCD:12::", "2001:db8:abcd:0012::0/96"]
+
+        for subnet_mask in subnet_mask_list:
+            details.subnet_mask = subnet_mask
+            self.assertEqual(subnet_mask, details.subnet_mask)
+
+        details.subnet_mask = orig_subnet_mask
+
+    def test_gateway_set(self):
+        """Test that gateway can be set and get"""
+        details = self.dwrap._details
+        orig_gateway = details.gateway
+        gateway_list = ["192.168.1.1", "10.0.0.1",
+                        "2001:DB8:ABCD:12::1", "2001:db8:abcd:0012::1"]
+
+        for gateway in gateway_list:
+            details.gateway = gateway
+            self.assertEqual(gateway, self.dwrap.gateway)
+
+        details.gateway = orig_gateway
+
 if __name__ == "__main__":
     unittest.main()

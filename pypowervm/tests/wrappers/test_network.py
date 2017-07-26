@@ -594,6 +594,37 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertFalse(test.is_trunk)
         self.assertIsNone(test.trunk_pri)
 
+    def test_ip_address_crt(self):
+        """Tests the create path with IP Address."""
+
+        # Test data tuples (IP Address, Subnet Mask, Gateway)
+
+        test_data = [("192.168.1.10", "255.255.255.0", "192.168.1.1"),
+                     ("10.0.0.10", "255.255.0.0", "10.0.0.1"),
+                     ("2001::10", "2001::/64", "2001::1"),
+                     ]
+        for ip_address, subnet_mask, gateway in test_data:
+            test = net.CNA.bld(
+                self.adpt, 5, "fake_vs", mac_addr="aa:bb:cc:dd:ee:ff",
+                slot_num=5, ip_address=ip_address,
+                subnet_mask=subnet_mask, gateway=gateway)
+            self.assertEqual('fake_vs', test.vswitch_uri)
+            self.assertEqual(5, test.slot)
+            self.assertFalse(test._use_next_avail_slot_id)
+            self.assertIsNotNone(test.mac)
+            self.assertEqual("AABBCCDDEEFF", test.mac)
+            self.assertEqual(5, test.pvid)
+            self.assertIsNone(test.vsi_type_id)
+            self.assertIsNone(test.vsi_type_version)
+            self.assertIsNone(test.vsi_type_manager_id)
+            self.assertIsNone(test.vswitch_id)
+            self.assertNotIn(net._TA_TRUNK_PRI, str(test.toxmlstring()))
+            self.assertFalse(test.is_trunk)
+            self.assertIsNone(test.trunk_pri)
+            self.assertEqual(ip_address, test.ip_address)
+            self.assertEqual(subnet_mask, test.subnet_mask)
+            self.assertEqual(gateway, test.gateway)
+
     def test_unasi_field(self):
         """UseNextAvailable(High)SlotID field is (not) used, as appropriate."""
         mock_vswitch = mock.Mock()
@@ -844,6 +875,43 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.assertFalse(self.dwrap.enabled)
         self.dwrap.enabled = True
         self.assertTrue(self.dwrap.enabled)
+
+    def test_ip_address_set(self):
+        """Test that IP Address can be set and get."""
+        orig_ip_address = self.dwrap.ip_address
+        ip_address_list = ["192.168.1.10", "cafe::10", "10.0.0.21",
+                           "2001:0DB8:ABCD:0012:0000:0000:0000:10"]
+
+        for ip_address in ip_address_list:
+            self.dwrap.ip_address = ip_address
+            self.assertEqual(ip_address, self.dwrap.ip_address)
+
+        self.dwrap.ip_address = orig_ip_address
+
+    def test_subnet_mask_set(self):
+        """Test that subnet mask can be set and get."""
+        orig_subnet_mask = self.dwrap.subnet_mask
+        subnet_mask_list = ["255.255.0.0", "255.255.255.0",
+                            "2001:DB8:ABCD:12::", "2001:db8:abcd:0012::0/96"]
+
+        for subnet_mask in subnet_mask_list:
+            self.dwrap.subnet_mask = subnet_mask
+            self.assertEqual(subnet_mask, self.dwrap.subnet_mask)
+
+        self.dwrap.subnet_mask = orig_subnet_mask
+
+    def test_gateway_set(self):
+        """Test that gateway can be set and get."""
+        orig_gateway = self.dwrap.gateway
+        gateway_list = ["192.168.1.1", "10.0.0.1",
+                        "2001:DB8:ABCD:12::1", "2001:db8:abcd:0012::1"]
+
+        for gateway in gateway_list:
+            self.dwrap.gateway = gateway
+            self.assertEqual(gateway, self.dwrap.gateway)
+
+        self.dwrap.gateway = orig_gateway
+
 
 if __name__ == "__main__":
     unittest.main()

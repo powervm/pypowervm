@@ -146,6 +146,9 @@ _VADPT_SLOT_NUM = 'VirtualSlotNumber'
 _VADPT_ENABLED = 'Enabled'
 _VADPT_ALLOWED_MAC = _TA_ALLOWED_MAC
 _VADPT_MAC_ADDR = _TA_MAC
+_VADPT_IP_ADDR = 'IPAddress'
+_VADPT_SUBNET_MASK = 'SubnetMask'
+_VADPT_GATEWAY = 'Gateway'
 _VADPT_PVID = _PVID
 _VADPT_QOS_PRI = 'QualityOfServicePriority'
 _VADPT_QOS_PRI_ENABLED = _TA_QOS_PRI
@@ -1035,7 +1038,8 @@ class CNA(ewrap.EntryWrapper):
     @classmethod
     def bld(cls, adapter, pvid, vswitch_href, slot_num=None, mac_addr=None,
             addl_tagged_vlans=None, trunk_pri=None, dev_name=None,
-            ovs_bridge=None, ovs_ext_ids=None, configured_mtu=None):
+            ovs_bridge=None, ovs_ext_ids=None, configured_mtu=None,
+            ip_address=None, subnet_mask=None, gateway=None):
         """Creates a fresh CNA EntryWrapper.
 
         This is used when creating a new CNA for a partition.  This can be PUT
@@ -1082,6 +1086,15 @@ class CNA(ewrap.EntryWrapper):
         :param configured_mtu: (Optional, Default: None) Sets the MTU on the
                                adapter. May only be valid if adapter is being
                                created against mgmt partition.
+        :param ip_address: (Optional, Default: None) IP Address string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param subnet_mask: (Optional, Default: None) Subnet mask string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
+        :param gateway: (Optional, Default: None) Gateway string
+                        retrieved from the LPAR OS (AIX / Linux).
+                        IBMi is not supported.
         :returns: A CNA EntryWrapper that can be used for create.
         """
         cna = super(CNA, cls)._bld(adapter)
@@ -1093,6 +1106,15 @@ class CNA(ewrap.EntryWrapper):
 
         if mac_addr is not None:
             cna.mac = mac_addr
+
+        if ip_address is not None:
+            cna.ip_address = ip_address
+
+        if subnet_mask is not None:
+            cna.subnet_mask = subnet_mask
+
+        if gateway is not None:
+            cna.gateway = gateway
 
         #  The primary VLAN ID
         cna.pvid = pvid
@@ -1387,6 +1409,48 @@ class CNA(ewrap.EntryWrapper):
 
     def _ovs_ext_ids(self, value):
         self.set_parm_value(_VADPT_OVS_EXT_IDS, value, attrib=c.ATTR_KSV160)
+
+    @property
+    def ip_address(self):
+        """Returns the IP Address of the network interface.
+
+        Typical format would be: 255.255.255.255 (IPv4)
+        and ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff (IPv6)
+        or other short forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_IP_ADDR)
+
+    @ip_address.setter
+    def ip_address(self, new_val):
+        self.set_parm_value(_VADPT_IP_ADDR, new_val)
+
+    @property
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface.
+
+        Typical format would be: 255.255.255.0 (IPv4)
+        and ffff:ffff:ffff:ffff:: (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_SUBNET_MASK)
+
+    @subnet_mask.setter
+    def subnet_mask(self, new_val):
+        self.set_parm_value(_VADPT_SUBNET_MASK, new_val)
+
+    @property
+    def gateway(self):
+        """Returns the gateway of the network interface.
+
+        Typical format would be: 10.0.0.1 (IPv4)
+        and cafe::1 (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VADPT_GATEWAY)
+
+    @gateway.setter
+    def gateway(self, new_val):
+        self.set_parm_value(_VADPT_GATEWAY, new_val)
 
 
 @ewrap.ElementWrapper.pvm_type(_SEA_ETH_BACK_DEV, has_metadata=True,
