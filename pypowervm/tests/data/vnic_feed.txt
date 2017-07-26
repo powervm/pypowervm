@@ -47,6 +47,9 @@ BODY{
         <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
         <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
         <MACAddress kb="COD" kxe="false">AE7A25E59A07</MACAddress>
+        <IPAddress group="Advanced" ksv="V1_6_0" kxe="false" kb="ROR">192.168.2.7</IPAddress>
+        <SubnetMask group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">255.255.255.0</SubnetMask>
+        <Gateway group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">192.168.2.0</Gateway>
         <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
         <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
         <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
