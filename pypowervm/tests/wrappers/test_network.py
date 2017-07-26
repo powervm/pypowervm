@@ -845,5 +845,22 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.dwrap.enabled = True
         self.assertTrue(self.dwrap.enabled)
 
+
+class TestCNAWrapperWithIP(twrap.TestWrapper):
+    file = 'fake_cna_with_ip.txt'
+    wrapper_class_to_test = net.CNA
+
+    def setUp(self):
+        super(TestCNAWrapperWithIP, self).setUp()
+
+    def test_standard_crt(self):
+        """Tests a create of the CNA with IP information."""
+        net.CNA.bld(self.adpt, 1, "fake_vswitch")
+
+        self.assertIsNotNone(self.dwrap.ip_address)
+        self.assertIsNotNone(self.dwrap.gateway)
+        self.assertIsNotNone(self.dwrap.subnet_mask)
+
+
 if __name__ == "__main__":
     unittest.main()

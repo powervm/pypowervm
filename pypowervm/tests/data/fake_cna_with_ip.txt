@@ -1,0 +1,69 @@
+####################################################
+# THIS IS AN AUTOMATICALLY GENERATED FILE
+# DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
+#
+# To update file, run: create_httpresp.py -refresh fake_cna.txt
+#
+####################################################
+INFO{
+{'comment': 'Used for testing cna_wrapper.', 'status': 200, 'pw': 'Passw0rd', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'LogicalPartition/0A68CFAB-F62B-46D4-A6A0-F4EBE0264AD5/ClientNetworkAdapter/6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8'}
+END OF SECTION}
+HEADERS{
+{'content-length': '2927', 'x-powered-by': 'Servlet/3.0', 'set-cookie': 'JSESSIONID=0000NDn35hM1wmiEggkwHYt86o5:375f7c5b-d5fc-4d80-91de-1d4d29170e01; Path=/; Secure; HttpOnly', 'x-hmc-schema-version': 'V1_1_0', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Thu, 18 Sep 2014 07:04:42 GMT', 'x-transaction-id': 'XT10023645', 'etag': '249747277', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Thu, 18 Sep 2014 07:04:42 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8</id>
+    <title>ClientNetworkAdapter</title>
+    <published>2014-09-18T07:04:42.910Z</published>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/LogicalPartition/0A68CFAB-F62B-46D4-A6A0-F4EBE0264AD5/ClientNetworkAdapter/6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8"/>
+    <link rel="MANAGEMENT_CONSOLE" href="https://9.1.2.3:12443/rest/api/uom/ManagementConsole/f180cd3a-86a7-306a-95eb-43158bda0f63"/>
+    <author>
+        <name>IBM Power Systems Management Console</name>
+    </author>
+    <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">249747277</etag:etag>
+    <content type="application/vnd.ibm.powervm.uom+xml; type=ClientNetworkAdapter">
+        <ClientNetworkAdapter:ClientNetworkAdapter xmlns:ClientNetworkAdapter="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_1_0">
+    <Metadata>
+        <Atom>
+            <AtomID>6445b54b-b9dc-3bc2-b1d3-f8cc22ba95b8</AtomID>
+            <AtomCreated>1411023882909</AtomCreated>
+        </Atom>
+    </Metadata>
+    <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8246.L2C.0604C7A-V24-C32</DynamicReconfigurationConnectorName>
+    <LocationCode kb="ROR" kxe="false">U8246.L2C.0604C7A-V24-C32</LocationCode>
+    <LocalPartitionID kxe="false" kb="CUR">3</LocalPartitionID>
+    <RequiredAdapter kxe="false" kb="CUD">false</RequiredAdapter>
+    <VariedOn kb="CUD" kxe="true">true</VariedOn>
+    <VirtualSlotNumber kb="COD" kxe="false">32</VirtualSlotNumber>
+    <Enabled ksv="V1_3_0" kxe="false" kb="UOD">true</Enabled>
+    <AllowedOperatingSystemMACAddresses kb="CUD" kxe="false">ALL</AllowedOperatingSystemMACAddresses>
+    <MACAddress kb="CUR" kxe="false">FAD4433ED120</MACAddress>
+    <PortVLANID kb="CUR" kxe="false">100</PortVLANID>
+    <QualityOfServicePriority kb="CUD" kxe="false">0</QualityOfServicePriority>
+    <QualityOfServicePriorityEnabled kb="CUD" kxe="false">true</QualityOfServicePriorityEnabled>
+    <TaggedVLANIDs kxe="false" kb="CUA">53 54 55</TaggedVLANIDs>
+    <TaggedVLANSupported kb="CUA" kxe="false">true</TaggedVLANSupported>
+    <VirtualStationInterfaceTypeID kb="ROR" kxe="false">VSITID</VirtualStationInterfaceTypeID>
+    <VirtualStationInterfaceTypeVersion kb="ROR" kxe="false">77.99</VirtualStationInterfaceTypeVersion>
+    <VirtualStationInterfaceManagerID kb="ROR" kxe="false">VSIMID</VirtualStationInterfaceManagerID>
+    <AssociatedVirtualSwitch kb="CUD" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualSwitch/9e42d4a9-9725-3007-9932-d85374ebf5cf" rel="related"/>
+    </AssociatedVirtualSwitch>
+    <VirtualSwitchID kb="ROR" kxe="false">0</VirtualSwitchID>
+    <IPAddress group="Advanced" ksv="V1_6_0" kxe="false" kb="ROR">192.168.2.6</IPAddress>
+    <SubnetMask group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">255.255.255.0</SubnetMask>
+    <Gateway group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">192.168.2.0</Gateway>
+    <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=ba9d8ec3-64b2-47fe-9f50-e12ba373814c,iface-status=active,attached-mac=fa:e6:c8:3f:80:20,vm-uuid=64443c49-920d-47d7-9b78-1216845c51f5</OvsPortExternalIds>
+    <VirtualNetworks kb="CUR" kxe="false">
+        <link href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/726e9cb3-6576-3df5-ab60-40893d51d074/VirtualNetwork/bf2d24e8-c49b-3fb5-b6b7-736b192d2378" rel="related"/>
+    </VirtualNetworks>
+</ClientNetworkAdapter:ClientNetworkAdapter>
+    </content>
+</entry>
+
+END OF SECTION}

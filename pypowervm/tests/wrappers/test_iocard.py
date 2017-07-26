@@ -391,5 +391,20 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(0.42, backdev.max_capacity)
         self.assertEqual(1, backdev.desired_max_capacity)
 
+
+class TestVNICWithIP(twrap.TestWrapper):
+    file = 'vnic_feed_with_ip.txt'
+    wrapper_class_to_test = card.VNIC
+
+    def setUp(self):
+        super(TestVNICWithIP, self).setUp()
+
+    def test_ip_properties(self):
+        card.VNIC.bld(self.adpt)
+        self.assertIsNotNone(self.dwrap.ip_address)
+        self.assertIsNotNone(self.dwrap.gateway)
+        self.assertIsNotNone(self.dwrap.subnet_mask)
+
+
 if __name__ == "__main__":
     unittest.main()
