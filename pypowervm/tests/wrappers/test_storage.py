@@ -657,3 +657,10 @@ class TestStorageTypes(testtools.TestCase):
         self.assertIsNone(fio.udid)
         self.assertEqual('File', fio.vdtype)
         self.assertEqual('fileio', fio.backstore_type)
+
+    def test_rbd(self):
+        rbd = stor.RBD.bld_ref('adap', 'pool/volume')
+        self.assertEqual('pool/volume', rbd.name)
+        self.assertEqual('pool/volume', rbd.label)
+        self.assertEqual('RBD', rbd.vdtype)
+        self.assertEqual('user:rbd', rbd.backstore_type)
