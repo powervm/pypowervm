@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -56,12 +56,12 @@ class MetricCache(object):
         :param adapter: The pypowervm Adapter.
         :param host_uuid: The UUID of the host CEC to maintain a metrics
                           cache for.
-        :param refresh_delta: (Optional) The interval at which the metrics
-                              should be updated.  Will only update if the
-                              interval has been passed and the user invokes a
-                              cache query.  Will not update in the background,
-                              only if the cache is used.
-        :param include_vio: (Optional) Defaults to True.  If set to false, the
+        :param refresh_delta: (Optional) The interval in seconds at which the
+                              metrics should be updated.  Will only update if
+                              the interval has been passed and the user invokes
+                              a cache query.  Will not update in the
+                              background, only if the cache is used.
+        :param include_vio: (Optional) Defaults to True.  If set to False, the
                             cur_vioses and prev_vioses will always be
                             unavailable.  This increases the speed for refresh.
         """
@@ -74,18 +74,20 @@ class MetricCache(object):
         self.refresh_delta = datetime.timedelta(seconds=refresh_delta)
         self.include_vio = include_vio
 
+        self.is_first_pass = False
+
         # Ensure these elements are defined up front.
         self.cur_date, self.cur_phyp, self.cur_vioses, self.cur_lpars = (
             None, None, None, None)
-        self.prev_date, self.prev_phyp, self.prev_vioses = (
-            None, None, None)
+        self.prev_date, self.prev_phyp, self.prev_vioses, self.prev_lpars = (
+            None, None, None, None)
 
         # Run a refresh up front.
         self._refresh_if_needed()
 
     def _refresh_if_needed(self):
         """Refreshes the cache if needed."""
-        # The refresh is needed is the current date is none, or if the refresh
+        # The refresh is needed if the current date is none, or if the refresh
         # time delta has been crossed.
         refresh_needed = self.cur_date is None
 
@@ -99,10 +101,7 @@ class MetricCache(object):
         if not refresh_needed:
             return
 
-        # Refresh is needed...get the next metric.
-        self.prev_date, self.prev_phyp, self.prev_vioses = (
-            self.cur_date, self.cur_phyp, self.cur_vioses)
-
+        self._set_prev()
         self.cur_date, self.cur_phyp, self.cur_vioses, self.cur_lpars = (
             latest_stats(self.adapter, self.host_uuid,
                          include_vio=self.include_vio))
@@ -110,6 +109,21 @@ class MetricCache(object):
         # Have the class that is implementing the cache update its simplified
         # representation of the data.  Ex. LparMetricCache
         self._update_internal_metric()
+
+    def _set_prev(self):
+        # On first boot, the cur data will be None.  Query to seed it with the
+        # second latest data (which may also still be none if LTM was just
+        # turned on, but just in case).
+        self.is_first_pass = self.cur_date is None
+        if self.is_first_pass:
+            p_date, p_phyp, p_vioses, p_lpars = (
+                latest_stats(self.adapter, self.host_uuid,
+                             include_vio=self.include_vio, second_latest=True))
+            self.prev_date, self.prev_phyp = p_date, p_phyp
+            self.prev_vioses, self.prev_lpars = p_vioses, p_lpars
+        else:
+            self.prev_date, self.prev_phyp = self.cur_date, self.cur_phyp,
+            self.prev_vioses, self.prev_lpars = self.cur_vioses, self.cur_lpars
 
     def _update_internal_metric(self):
         """Save the raw metric to the transformed values.
@@ -238,18 +252,26 @@ class LparMetricCache(MetricCache):
         return self.prev_date, self.prev_metric.get(lpar_uuid)
 
     def _update_internal_metric(self):
-        self.prev_metric = self.cur_metric
+        if self.is_first_pass:
+            self.prev_metric = vm_metrics(self.prev_phyp, self.prev_vioses,
+                                          self.prev_lpars)
+        else:
+            self.prev_metric = self.cur_metric
+
         self.cur_metric = vm_metrics(self.cur_phyp, self.cur_vioses,
                                      self.cur_lpars)
 
 
-def latest_stats(adapter, host_uuid, include_vio=True):
+def latest_stats(adapter, host_uuid, include_vio=True, second_latest=False):
     """Returns the latest PHYP and (optionally) VIOS statistics.
 
     :param adapter: The pypowervm adapter.
     :param host_uuid: The host system's UUID.
     :param include_vio: (Optional) Defaults to True.  If set to false, the
                         VIO metrics will always be returned as an empty list.
+    :param second_latest: (Optional) Defaults to False.  If set to True, it
+                          will pull the second to last metric for the return
+                          data.
     :return: datetime - When the metrics were pulled.
     :return: phyp_data - The PhypInfo object for the raw metrics.  May be None
              if there are issues gathering the metrics.
@@ -264,7 +286,7 @@ def latest_stats(adapter, host_uuid, include_vio=True):
     """
     ltm_metrics = query_ltm_feed(adapter, host_uuid)
 
-    latest_phyp = None
+    latest_phyp, sec_latest_phyp = None, None
 
     # Get the latest PHYP metric
     for metric in ltm_metrics:
@@ -274,6 +296,14 @@ def latest_stats(adapter, host_uuid, include_vio=True):
         if (latest_phyp is None or
                 latest_phyp.updated_datetime < metric.updated_datetime):
             latest_phyp = metric
+        if (metric != latest_phyp and
+                (sec_latest_phyp is None or
+                 sec_latest_phyp.updated_datetime < metric.updated_datetime)):
+            sec_latest_phyp = metric
+
+    if second_latest:
+        # We fake out that we're trying to get the second to latest phyp.
+        latest_phyp = sec_latest_phyp
 
     # If there is no current metric, return None.
     if latest_phyp is None:
@@ -299,20 +329,31 @@ def latest_stats(adapter, host_uuid, include_vio=True):
         vios_metrics = []
 
     # Now find the corresponding LPAR metrics for this.
-    lpar_metrics = get_lpar_metrics(ltm_metrics, adapter)
+    lpar_metrics = get_lpar_metrics(ltm_metrics, adapter,
+                                    second_latest=second_latest)
 
-    return datetime.datetime.now(), phyp_metric, vios_metrics, lpar_metrics
+    # Get the latest date, but if we're getting the second latest we know
+    # it is 30 seconds old.  The 30 seconds is the cadence that the REST API
+    # collects the metric data.
+    ret_date = datetime.datetime.now()
+    if second_latest:
+        ret_date = ret_date - datetime.timedelta(seconds=30)
+
+    return ret_date, phyp_metric, vios_metrics, lpar_metrics
 
 
-def get_lpar_metrics(ltm_metrics, adapter):
+def get_lpar_metrics(ltm_metrics, adapter, second_latest=False):
     """This method returns LPAR metrics of type LparInfo
 
     :param ltm_metrics: The LTM metrics
     :param adapter: The pypowervm adapter.
+    :param second_latest: (Optional) Defaults to False.  If set to True, it
+                          will pull the second to last metric for the return
+                          data.
     :return: LparInfo object representing the LPAR metrics. None is returned
              if there are no LTM metrics collected.
     """
-    latest_lpar = None
+    latest_lpar, sec_latest_lpar = None, None
     for metric in ltm_metrics:
         # The Lpar metrics have category lpar
         if metric.category != 'lpar':
@@ -321,6 +362,14 @@ def get_lpar_metrics(ltm_metrics, adapter):
         if (latest_lpar is None or
                 latest_lpar.updated_datetime < metric.updated_datetime):
             latest_lpar = metric
+        if (metric != latest_lpar and
+                (sec_latest_lpar is None or
+                 sec_latest_lpar.updated_datetime < metric.updated_datetime)):
+            sec_latest_lpar = metric
+
+    if second_latest:
+        # If we want the second latest, change the parameter.
+        latest_lpar = sec_latest_lpar
 
     # If there is no current metric, return None for lpar metrics.
     lpar_metrics = None
