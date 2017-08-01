@@ -584,7 +584,7 @@ class TestSCSIMapper(testtools.TestCase):
             {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
             set(sep.keys()))
         self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
-                         self.v2wrap.scsi_mappings[-1])
+                         self.v2wrap.scsi_mappings[-2])
 
     def test_index_mappings(self):
         idx = scsi_mapper.index_mappings(self.v2wrap.scsi_mappings)
@@ -594,7 +594,9 @@ class TestSCSIMapper(testtools.TestCase):
 
         exp_lpar_ids = ('2', '5', '6', '7', '10', '11', '12', '13', '14', '15',
                         '16', '17', '18', '19', '20', '21', '22', '23', '24',
-                        '27', '28', '29', '33', '35', '36', '39', '40')
+                        '27', '28', '29', '33', '35', '36', '39', '40',
+                        str(pvm_stor.ANY_SLOT))
+
         self.assertEqual(set(exp_lpar_ids), set(idx['by-lpar-id'].keys()))
         # Each mapping has a different LPAR ID, so each LPAR ID only has one
         # mapping
@@ -625,8 +627,8 @@ class TestSCSIMapper(testtools.TestCase):
             else:
                 self.assertEqual(1, len(maplist))
 
-        # Only five mappings have storage, and all are different
-        self.assertEqual(5, len(idx['by-storage-udid'].keys()))
+        # Only six mappings have storage, and all are different
+        self.assertEqual(6, len(idx['by-storage-udid'].keys()))
         for sudid in idx['by-storage-udid']:
             self.assertEqual(1, len(idx['by-storage-udid'][sudid]))
 

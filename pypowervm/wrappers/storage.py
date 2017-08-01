@@ -32,6 +32,12 @@ LOG = logging.getLogger(__name__)
 
 UDID = 'UniqueDeviceID'
 
+# "Any" server adapters are SCSI adapters without client
+# adapters that map to remote LPAR slot number 65535. They
+# can map to any client and are not recommended but are
+# still supported.
+ANY_SLOT = 65535
+
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
 _DISK_CAPACITY = 'DiskCapacity'

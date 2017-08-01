@@ -1153,9 +1153,13 @@ class TestScrub3(testtools.TestCase):
             self.assertIsNone(srm.client_adapter)
         # The right number of maps remain.
         self.assertEqual(vscsi_len - 18, len(vwrap.scsi_mappings))
+        # Assert the "any" adapter still exists in the mappings.
+        self.assertIn(stor.ANY_SLOT, [smp.server_adapter.lpar_slot_num for
+                                      smp in vwrap.scsi_mappings])
         # Remaining maps are not orphans.
         for smp in vwrap.scsi_mappings:
-            self.assertIsNotNone(smp.client_adapter)
+            if smp.server_adapter.lpar_slot_num != stor.ANY_SLOT:
+                self.assertIsNotNone(smp.client_adapter)
         # _RemoveOrphanVfcMaps doesn't "provide", so the following are limited.
         # The right number of maps remain.
         self.assertEqual(vfc_len - 19, len(vwrap.vfc_mappings))
