@@ -3300,6 +3300,57 @@ BODY{
                 </VirtualOpticalTargetDevice>
             </TargetDevice>
         </VirtualSCSIMapping>
+        <VirtualSCSIMapping xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:VirtualIOServer="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" xmlns:ns3="http://www.w3.org/1999/xhtml" schemaVersion="V1_3_0">
+            <Metadata>
+                <Atom/>
+            </Metadata>
+            <ServerAdapter kb="CUR" kxe="false" schemaVersion="V1_3_0">
+                <Metadata>
+                    <Atom/>
+                </Metadata>
+                <AdapterType kb="ROR" kxe="false">Server</AdapterType>
+                <DynamicReconfigurationConnectorName kb="CUD" kxe="false">U8286.42A.103B264-V2-C3</DynamicReconfigurationConnectorName>
+                <LocationCode kxe="false" kb="ROR">U8286.42A.103B264-V2-C3</LocationCode>
+                <LocalPartitionID kb="CUR" kxe="false">2</LocalPartitionID>
+                <VirtualSlotNumber kb="COD" kxe="false">3</VirtualSlotNumber>
+                <AdapterName kb="CUR" kxe="false">vhost1</AdapterName>
+                <BackingDeviceName kxe="false" kb="CUR">hdisk5</BackingDeviceName>
+                <RemoteLogicalPartitionID kxe="false" kb="CUR">65535</RemoteLogicalPartitionID>
+                <RemoteSlotNumber kb="CUA" kxe="false">65535</RemoteSlotNumber>
+                <UniqueDeviceID kb="ROR" kxe="false">1eU8286.42A.103B264-V2-C3</UniqueDeviceID>
+            </ServerAdapter>
+            <Storage kxe="false" kb="CUR">
+                <PhysicalVolume schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Description kb="CUD" kxe="false">N/A</Description>
+                    <LocationCode kb="ROR" kxe="false">U78C9.001.WZS0ATG-P1-C7-T1-W500507605E828362-L1000000000000</LocationCode>
+                    <PersistentReserveKeyValue kb="ROR" kxe="false">none</PersistentReserveKeyValue>
+                    <ReservePolicy kxe="false" kb="CUD">NoReserve</ReservePolicy>
+                    <ReservePolicyAlgorithm kb="CUD" kxe="false">Load_Balance</ReservePolicyAlgorithm>
+                    <UniqueDeviceID kb="ROR" kxe="false">01M0lCTUZsYXNoU3lzdGVtLTk4NDA2MDA1MDc2ODA5OEIxMEI4MDgwMDAwMDAwNTAwMDAzMA==</UniqueDeviceID>
+                    <AvailableForUsage kxe="false" kb="CUD">false</AvailableForUsage>
+                    <VolumeCapacity kb="CUR" kxe="false">40960</VolumeCapacity>
+                    <VolumeName kb="CUR" kxe="false">hdisk5</VolumeName>
+                    <VolumeState kxe="false" kb="ROR">active</VolumeState>
+                    <VolumeUniqueID kb="ROR" kxe="false">54361IBM     FlashSystem-98402e0262c42e02-0000-0005-00003010FlashSystem-984003IBMfcp</VolumeUniqueID>
+                    <IsFibreChannelBacked kb="ROR" kxe="false">false</IsFibreChannelBacked>
+                    <StorageLabel ksv="V1_3_0" kxe="false" kb="ROR">VU5LTk9XTg==</StorageLabel>
+                    <DescriptorPage83 kxe="false" kb="ROR">NjAwNTA3NjgwOThCMTBCODA4MDAwMDAwMDUwMDAwMzA=</DescriptorPage83>
+                </PhysicalVolume>
+            </Storage>
+            <TargetDevice kb="CUR" kxe="false">
+                <PhysicalVolumeVirtualTargetDevice schemaVersion="V1_3_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <LogicalUnitAddress kb="CUR" kxe="false">0x8100000000000000</LogicalUnitAddress>
+                    <TargetName kb="CUR" kxe="false">vhdisk5</TargetName>
+                    <UniqueDeviceID kxe="false" kb="ROR">081e43b8cf2481a047</UniqueDeviceID>
+                </PhysicalVolumeVirtualTargetDevice>
+            </TargetDevice>
+        </VirtualSCSIMapping>
     </VirtualSCSIMappings>
     <FreeIOAdaptersForLinkAggregation group="ViosNetwork" kb="ROR" kxe="false" schemaVersion="V1_2_0">
         <Metadata>

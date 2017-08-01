@@ -332,7 +332,10 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                      '0evopt_de86c46e07004993b412c948bd5047c2':
                          'vopt_de86c46e07004993b412c948bd5047c2'}},
              3: {'VDisk': {'0300025d4a00007a000000014b36d9deaf.1':
-                           '0x8700000000000000'}}},
+                           '0x8700000000000000'}},
+             65535: {'PV': {'01M0lCTUZsYXNoU3lzdGVtLTk4NDA2MDA1MDc2ODA5OEIxMEI'
+                            '4MDgwMDAwMDAwNTAwMDAzMA==': '0x810'
+                            '0000000000000'}}},
             smt.topology)
 
     def test_drop_vscsi_mappings(self):

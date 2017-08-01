@@ -940,8 +940,11 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
     msgargs = dict(vios_name=vwrap.name, stg_type=type_str)
     # Make a list of orphans first (since we can't remove while iterating).
     # If requested, limit candidates to those matching the specified LPAR ID.
+    # Also don't remove "any" type server adapters which are server adapters
+    # without a client adapter that maps to remote LPAR slot number 65535.
     removals = [mp for mp in maps if mp.client_adapter is None and (
-        lpar_id is None or mp.server_adapter.lpar_id == lpar_id)]
+        lpar_id is None or mp.server_adapter.lpar_id == lpar_id) and (
+            mp.server_adapter.lpar_slot_num != 65535)]
     for rm_map in removals:
         maps.remove(rm_map)
     if removals:
