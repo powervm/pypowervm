@@ -1155,7 +1155,8 @@ class TestScrub3(testtools.TestCase):
         self.assertEqual(vscsi_len - 18, len(vwrap.scsi_mappings))
         # Remaining maps are not orphans.
         for smp in vwrap.scsi_mappings:
-            self.assertIsNotNone(smp.client_adapter)
+            if smp.server_adapter.lpar_slot_num != 65535:
+                self.assertIsNotNone(smp.client_adapter)
         # _RemoveOrphanVfcMaps doesn't "provide", so the following are limited.
         # The right number of maps remain.
         self.assertEqual(vfc_len - 19, len(vwrap.vfc_mappings))
