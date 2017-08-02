@@ -137,6 +137,10 @@ class LPARNotFound(AbstractMsgFmtError):
     msg_fmt = _('LPAR not found: %(lpar_name)s')
 
 
+class AdapterNotFound(AbstractMsgFmtError):
+    msg_fmt = _('Adapter not found')
+
+
 class JobRequestFailed(AbstractMsgFmtError):
     msg_fmt = _("The '%(operation_name)s' operation failed. %(error)s")
 
