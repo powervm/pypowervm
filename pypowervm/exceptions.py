@@ -425,7 +425,13 @@ class ISCSIDiscoveryFailed(AbstractMsgFmtError):
 
 
 class ISCSILogoutFailed(AbstractMsgFmtError):
+    """Exception currently unused"""
     msg_fmt = _("ISCSI Logout failed for VIOS %(vios_uuid)s. "
+                "Return code: %(status)s")
+
+
+class ISCSIRemoveFailed(AbstractMsgFmtError):
+    msg_fmt = _("ISCSI Remove failed for VIOS %(vios_uuid)s. "
                 "Return code: %(status)s")
 
 
