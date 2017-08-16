@@ -424,6 +424,6 @@ class ISCSIDiscoveryFailed(AbstractMsgFmtError):
                 "Return code: %(status)s")
 
 
-class ISCSILogoutFailed(AbstractMsgFmtError):
-    msg_fmt = _("ISCSI Logout failed for VIOS %(vios_uuid)s. "
+class ISCSIRemoveFailed(AbstractMsgFmtError):
+    msg_fmt = _("ISCSI Remove failed for VIOS %(vios_uuid)s. "
                 "Return code: %(status)s")
