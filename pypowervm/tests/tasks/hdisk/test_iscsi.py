@@ -33,13 +33,33 @@ class TestIscsi(testtools.TestCase):
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
+    def test_add_parameter(self, mock_job_w):
+        mock_job_w.return_value = self.mock_job
+
+        def create_param(name, value):
+            return (name, value)
+
+        mock_job_w.create_job_parameter = create_param
+        parm_array = []
+        final_array = [("int", "0"), ("int list", "0,1"), ("str", "str"),
+                       ("str list", "str1,str2")]
+        iscsi._add_parameter(mock_job_w, parm_array, "None", None)
+        iscsi._add_parameter(mock_job_w, parm_array, "None", str(None))
+        iscsi._add_parameter(mock_job_w, parm_array, "int", str(0))
+        iscsi._add_parameter(mock_job_w, parm_array, "int list", [0, 1])
+        iscsi._add_parameter(mock_job_w, parm_array, "str", "str")
+        iscsi._add_parameter(mock_job_w, parm_array, "str list",
+                             ["str1", "str2"])
+        self.assertEqual(parm_array, final_array)
+
+    @mock.patch('pypowervm.wrappers.job.Job.wrap')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.create_job_parameter')
     @mock.patch('pypowervm.wrappers.job.Job.get_job_results_as_dict')
     def test_discover_iscsi(self, mock_job_res, mock_job_p, mock_run_job,
                             mock_job_w):
         mock_job_w.return_value = self.mock_job
-        mock_host_ip = '10.0.0.1'
+        mock_host_ip = '10.0.0.1:3290'
         mock_user = 'username'
         mock_pass = 'password'
         mock_iqn = 'fake_iqn'
@@ -60,11 +80,11 @@ class TestIscsi(testtools.TestCase):
         mock_job_p.assert_has_calls([
             mock.call('hostIP', mock_host_ip), mock.call('user', mock_user),
             mock.call('password', mock_pass), mock.call('targetIQN', mock_iqn),
-            mock.call('transportType', mock_trans_type)], any_order=True)
-        self.assertEqual(5, mock_job_p.call_count)
+            mock.call('transportType', mock_trans_type),
+            mock.call('multipath', str(False))], any_order=True)
+        self.assertEqual(6, mock_job_p.call_count)
 
         # Test for lunid
-        mock_trans_type = 'trans_type'
         mock_job_p.reset_mock()
         mock_lunid = 2
         mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
@@ -72,7 +92,7 @@ class TestIscsi(testtools.TestCase):
         device_name, udid = iscsi.discover_iscsi(
             self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
             transport_type=mock_trans_type, lunid=mock_lunid)
-        self.assertEqual(6, mock_job_p.call_count)
+        self.assertEqual(7, mock_job_p.call_count)
         mock_job_p.assert_any_call('targetLUN', str(mock_lunid))
 
         mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
@@ -80,6 +100,18 @@ class TestIscsi(testtools.TestCase):
         self.assertRaises(pexc.ISCSIDiscoveryFailed, iscsi.discover_iscsi,
                           self.adpt, mock_host_ip, mock_user, mock_pass,
                           mock_iqn, mock_uuid, transport_type=mock_trans_type)
+
+        # Check named args
+        mock_job_p.reset_mock()
+        mock_arg = mock.MagicMock()
+        mock_job_res.return_value = {'DEV_OUTPUT': '["fake_iqn devName udid"]',
+                                     'RETURN_CODE': '0'}
+        iscsi.discover_iscsi(
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            transport_type=mock_trans_type, lunid=mock_lunid, auth=mock_arg,
+            discover_auth=mock_arg, discover_user=mock_arg,
+            discover_pass=mock_arg, iqns=mock_arg, portals=mock_arg,
+            luns=mock_arg, multipath=True)
 
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
@@ -118,8 +150,8 @@ class TestIscsi(testtools.TestCase):
         iscsi.remove_iscsi(self.adpt, mock_iqn, mock_uuid)
 
         self.adpt.read.assert_called_once_with(*args, **kwargs)
-        mock_run_job.assert_called_once_with(mock_uuid, job_parms=[mock_parm],
-                                             timeout=120)
+        mock_run_job.assert_called_once_with(
+            mock_uuid, job_parms=[mock_parm] * 2, timeout=120)
         mock_job_p.assert_any_call('targetIQN', mock_iqn)
         self.assertEqual(1, mock_run_job.call_count)
 
@@ -133,5 +165,14 @@ class TestIscsi(testtools.TestCase):
         mock_run_job.reset_mock()
         mock_job_res.return_value = {'RETURN_CODE': '21'}
         iscsi.remove_iscsi(self.adpt, mock_iqn, mock_uuid)
-        mock_run_job.assert_called_once_with(mock_uuid, job_parms=[mock_parm],
-                                             timeout=120)
+        mock_run_job.assert_called_once_with(
+            mock_uuid, job_parms=[mock_parm] * 2, timeout=120)
+
+        # Check named params
+        mock_run_job.reset_mock()
+        mock_arg = mock.MagicMock()
+        iscsi.remove_iscsi(self.adpt, mock_iqn, mock_uuid, transport=mock_arg,
+                           lun=mock_arg, iqns=mock_arg, portal=mock_arg,
+                           portals=mock_arg, luns=mock_arg, multipath=mock_arg)
+        mock_run_job.assert_called_once_with(
+            mock_uuid, job_parms=[mock_parm] * 8, timeout=120)
