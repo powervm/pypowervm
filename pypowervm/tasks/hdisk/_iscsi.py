@@ -74,7 +74,8 @@ def _find_dev_by_iqn(cmd_output, iqn, host_ip):
 
 
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
-                   transport_type=None, lunid=None):
+                   transport_type=None, lunid=None, discovery_auth=None,
+                   discovery_user=None, discovery_password=None):
     """Runs iscsi discovery and login job
 
     :param adapter: pypowervm adapter
@@ -87,6 +88,9 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     :param transport_type: The type of the volume to be connected. Must be a
                            valid TransportType.
     :param lunid: Target LUN ID of the volume.
+    :param discovery_auth: Authentication method need for discovery
+    :param discovery_user: Username needed for discovery authentication
+    :param discovery_password: Password needed for discovery authentication
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
     :raise: ISCSIDiscoveryFailed in case of Failure.
@@ -113,6 +117,14 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
         job_parms.append(
             job_wrapper.create_job_parameter('targetLUN',
                                              str(lunid)))
+    if discovery_auth is not None:
+        job_parms.append(
+            job_wrapper.create_job_parameter('discoverAuth', discovery_auth))
+        job_parms.append(
+            job_wrapper.create_job_parameter('discoverUser', discovery_user))
+        job_parms.append(
+            job_wrapper.create_job_parameter('discoverPassword',
+                                             discovery_password))
     try:
         job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     except pexc.JobRequestFailed:
@@ -160,7 +172,7 @@ def discover_iscsi_initiator(adapter, vios_uuid):
     return results.get('InitiatorName')
 
 
-def remove_iscsi(adapter, targetIQN, vios_uuid):
+def remove_iscsi(adapter, targetIQN, vios_uuid, target_portal=None, uuid=None):
     """Logout of an iSCSI session.
 
     The iSCSI volume with the given targetIQN must not have any mappings from
@@ -170,6 +182,8 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     :param targetIQN: The IQN (iSCSI Qualified Name) of the created volume on
                       the target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :param target_portal: The portal associated with the created volume
+                         (ip:port).
     :raise: ISCSILogoutFailed in case of Failure.
     """
     resp = adapter.read(VIOS.schema_type, vios_uuid,
@@ -178,6 +192,12 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     job_wrapper = job.Job.wrap(resp)
 
     job_parms = [job_wrapper.create_job_parameter('targetIQN', targetIQN)]
+    if target_portal is not None:
+        job_parms.append(
+            job_wrapper.create_job_parameter('targetPortal', target_portal))
+    if uuid is not None:
+        job_parms.append(
+            job_wrapper.create_job_parameter('uuid', uuid))
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
     status = results.get('RETURN_CODE')
