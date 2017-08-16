@@ -32,6 +32,13 @@ class TransportType(object):
     """Valid values for iSCSI transport types."""
     ISCSI = 'iscsi'
     ISER = 'iser'
+    BE2ISCSI = 'be2iscsi'
+    BNX2I = 'bnx2i'
+    CXGB3I = 'cxgb3i'
+    DEFAULT = 'default'
+    CXGB4I = 'cxgb4i'
+    QLA4XXX = 'qla4xxx'
+    OCS = 'ocs'
 
 
 class ISCSIStatus(object):
@@ -73,20 +80,47 @@ def _find_dev_by_iqn(cmd_output, iqn, host_ip):
     return None, None
 
 
+def _add_parameter(job_w, job_parms, name, value):
+    """Adds key/value to job parameter list
+
+    Checks for null value and does any conversion needed for value to be a
+    string
+    :param job_w: Job wrapper
+    :param job_parms: List of parameters for the job
+    :param key: Parameter name
+    :param value: Parameter value
+    """
+    if value:
+        if isinstance(value, list):
+            if not isinstance(value[0], str):
+                value = [str(val) for val in value]
+            value = ",".join(value)
+        job_parms.append(job_w.create_job_parameter(name, value))
+
+
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
-                   transport_type=None, lunid=None):
+                   transport_type=None, lunid=None, auth=None,
+                   discover_auth=None, discover_user=None, discover_pass=None,
+                   iqns=None, portals=None, luns=None, multipath=False):
     """Runs iscsi discovery and login job
 
     :param adapter: pypowervm adapter
-    :param host_ip: The ip address of the iscsi target.
+    :param host_ip: The ip address of the iscsi target (ip:port).
     :param user: The username needed for authentication.
     :param password: The password needed for authentication.
-    :param iqn: The IQN (iSCSI Qualified Name) of the created volume on the
-                target. (e.g. iqn.2016-06.world.srv:target00)
+    :param iqn(s): The IQN (iSCSI Qualified Name) of the created volume on the
+                   target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
     :param transport_type: The type of the volume to be connected. Must be a
                            valid TransportType.
     :param lunid: Target LUN ID of the volume.
+    :param auth: Authentication type
+    :param discover_auth: Disocvery authentication type.
+    :param discover_user: The username needed for discovery authentication.
+    :param discover_pass: The password needed for discovery authentication.
+    :param portals: List of host_ip (ip:port)
+    :param luns: List of lunids.
+    :param multipath: Whether the connection is multipath or not.
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
     :raise: ISCSIDiscoveryFailed in case of Failure.
@@ -97,22 +131,21 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     job_wrapper = job.Job.wrap(resp)
 
     # Create job parameters
-    job_parms = [job_wrapper.create_job_parameter('hostIP',
-                                                  host_ip)]
-    job_parms.append(job_wrapper.create_job_parameter('password',
-                                                      password))
-    job_parms.append(job_wrapper.create_job_parameter('user',
-                                                      user))
-    job_parms.append(job_wrapper.create_job_parameter('targetIQN',
-                                                      iqn))
-    if transport_type is not None:
-        job_parms.append(
-            job_wrapper.create_job_parameter('transportType',
-                                             transport_type))
-    if lunid is not None:
-        job_parms.append(
-            job_wrapper.create_job_parameter('targetLUN',
-                                             str(lunid)))
+    job_parms = []
+    _add_parameter(job_wrapper, job_parms, 'password', password)
+    _add_parameter(job_wrapper, job_parms, 'user', user)
+    _add_parameter(job_wrapper, job_parms, 'auth', auth)
+    _add_parameter(job_wrapper, job_parms, 'discoverAuth', discover_auth)
+    _add_parameter(job_wrapper, job_parms, 'discoverUser', discover_user)
+    _add_parameter(job_wrapper, job_parms, 'discoverPassword', discover_pass)
+    _add_parameter(job_wrapper, job_parms, 'transportType', transport_type)
+    _add_parameter(job_wrapper, job_parms, 'targetIQN', iqn)
+    _add_parameter(job_wrapper, job_parms, 'targetIQNs', iqns)
+    _add_parameter(job_wrapper, job_parms, 'hostIP', host_ip)
+    _add_parameter(job_wrapper, job_parms, 'targetPORTALs', portals)
+    _add_parameter(job_wrapper, job_parms, 'targetLUN', str(lunid))
+    _add_parameter(job_wrapper, job_parms, 'targetLUNs', luns)
+    _add_parameter(job_wrapper, job_parms, 'multipath', str(multipath))
     try:
         job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     except pexc.JobRequestFailed:
@@ -160,7 +193,9 @@ def discover_iscsi_initiator(adapter, vios_uuid):
     return results.get('InitiatorName')
 
 
-def remove_iscsi(adapter, targetIQN, vios_uuid):
+def remove_iscsi(adapter, targetIQN, vios_uuid, transport=None, lun=None,
+                 iqns=None, portal=None, portals=None, luns=None,
+                 multipath=False):
     """Logout of an iSCSI session.
 
     The iSCSI volume with the given targetIQN must not have any mappings from
@@ -170,14 +205,27 @@ def remove_iscsi(adapter, targetIQN, vios_uuid):
     :param targetIQN: The IQN (iSCSI Qualified Name) of the created volume on
                       the target. (e.g. iqn.2016-06.world.srv:target00)
     :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :param iqns: List of targetIQNs.
+    :param portal(s): The portal associated with the created volume (ip:port).
+    :param lun(s): The lun to be removed.
+    :param transport: The type of the volume to be connected. Must be a
+                      valid TransportType.
+    :param multipath: Whether the connection is multipath or not.
     :raise: ISCSILogoutFailed in case of Failure.
     """
     resp = adapter.read(VIOS.schema_type, vios_uuid,
                         suffix_type=c.SUFFIX_TYPE_DO,
                         suffix_parm=(_ISCSI_LOGOUT))
     job_wrapper = job.Job.wrap(resp)
-
-    job_parms = [job_wrapper.create_job_parameter('targetIQN', targetIQN)]
+    job_parms = []
+    _add_parameter(job_wrapper, job_parms, 'transport', transport)
+    _add_parameter(job_wrapper, job_parms, 'targetIQN', targetIQN)
+    _add_parameter(job_wrapper, job_parms, 'targetIQNs', iqns)
+    _add_parameter(job_wrapper, job_parms, 'targetPORTAL', portal)
+    _add_parameter(job_wrapper, job_parms, 'targetPORTALs', portals)
+    _add_parameter(job_wrapper, job_parms, 'targetLUN', str(lun))
+    _add_parameter(job_wrapper, job_parms, 'targetLUNs', luns)
+    _add_parameter(job_wrapper, job_parms, 'multipath', str(multipath))
     job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
     results = job_wrapper.get_job_results_as_dict()
     status = results.get('RETURN_CODE')
