@@ -36,6 +36,7 @@ MEM = 'memory'
 MAX_MEM = 'max_mem'
 MIN_MEM = 'min_mem'
 AME_FACTOR = 'ame_factor'
+PPT_RATIO = 'ppt_ratio'
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -241,6 +242,10 @@ class DefaultStandardize(Standardize):
                      attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
         mem.validate()
+
+        host_ppt_cap = self.mngd_sys.get_capability(
+            'ppt_ratio_capable')
+        PartitionPageTableRatio(attrs.get(PPT_RATIO), host_ppt_cap,
 
     def _validate_shared_proc(self, attrs=None, partial=False):
         if attrs is None:
@@ -696,6 +701,15 @@ class IDBoundField(IntBoundField):
 
 class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
+
+
+class PartitionPageTableRatio(ChoiceField):
+    _name = 'Partition Page Table Ratio'
+
+    def __init__(self, value, host_cap, allowed_vals, allow_none=True):
+        super(PartitionPageTableRatio, self).__init__(
+            value, allow_none=allow_none)
+        self._choices = allowed_vals
 
 
 class RestrictedIO(BoolField):
