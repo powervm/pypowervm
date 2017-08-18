@@ -17,6 +17,7 @@
 """Construction and basic validation of an LPAR or VIOS EntryWrapper."""
 
 import abc
+import math
 import six
 
 from oslo_log import log as logging
@@ -36,6 +37,9 @@ MEM = 'memory'
 MAX_MEM = 'max_mem'
 MIN_MEM = 'min_mem'
 AME_FACTOR = 'ame_factor'
+PPT_RATIO = 'ppt_ratio'
+ALLOWED_PPT_RATIOS = ('1:64', '1:128', '1:256', '1:512',
+                      '1:1024', '1:2048', '1:4096')
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -241,6 +245,13 @@ class DefaultStandardize(Standardize):
                      attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
         mem.validate()
+
+        host_ppt_cap = self.mngd_sys.get_capability(
+            'ppt_ratio_capable')
+        # TODO(mdrabe): Grab allowed values from managed system response when
+        # the support comes through.
+        PartitionPageTableRatio(
+            attrs.get(PPT_RATIO), host_ppt_cap, ALLOWED_PPT_RATIOS).validate()
 
     def _validate_shared_proc(self, attrs=None, partial=False):
         if attrs is None:
@@ -698,6 +709,30 @@ class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
 
 
+class PartitionPageTableRatio(ChoiceField):
+    _name = 'Partition Page Table Ratio'
+
+    def __init__(self, value, host_cap, allowed_vals, allow_none=True):
+        super(PartitionPageTableRatio, self).__init__(
+            value, allow_none=allow_none)
+        self._choices = allowed_vals
+        self.host_cap = host_cap
+
+    @classmethod
+    def convert_value(cls, value):
+        return value
+
+    def validate(self):
+        """Performs validation of the PPT ratio attribute."""
+        super(PartitionPageTableRatio, self).validate()
+
+        # Validate the host capability
+        if not self.host_cap and self.value:
+            msg = ("The managed system does not support setting the partition "
+                   "page table ratio.")
+            raise ValueError(msg)
+
+
 class RestrictedIO(BoolField):
     _name = 'Restricted IO'
 
@@ -746,6 +781,9 @@ class LPARBuilder(object):
         if self.attr.get(AME_FACTOR) is not None:
             exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
             mem_wrap.exp_factor = exp_fact_float
+        if self.attr.get(PPT_RATIO) is not None:
+            ppt_ratio_pow = int(self.attr.get(PPT_RATIO).split(':')[1])
+            mem_wrap.ppt_ratio = int(math.log(ppt_ratio_pow, 2))
         return mem_wrap
 
     def _shared_proc_keys_specified(self):
