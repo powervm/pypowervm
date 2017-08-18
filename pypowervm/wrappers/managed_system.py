@@ -50,6 +50,7 @@ _IBMi_RESTRICTEDIO_CAP = u.xpath(
 _SIMP_REMOTE_RESTART_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
 _AME_CAP = u.xpath(_SYS_CAPABILITIES, 'ActiveMemoryExpansionCapable')
+_PPT_CAP = u.xpath(_SYS_CAPABILITIES, 'CustomPhysicalPageTableRatioCapable')
 _AIX_CAP = u.xpath(_SYS_CAPABILITIES, 'AIXCapable')
 _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
@@ -77,6 +78,8 @@ _CAPABILITY_MAP = {
         'prop': _IBMi_RESTRICTEDIO_CAP, 'default': False},
     'simplified_remote_restart_capable': {
         'prop': _SIMP_REMOTE_RESTART_CAP, 'default': False},
+    'physical_page_table_ratio_capable': {
+        'prop': _PPT_CAP, 'default': False},
     'active_memory_expansion_capable': {
         'prop': _AME_CAP, 'default': False},
     # aix_capable defaults to True for backward compat (that is what we
