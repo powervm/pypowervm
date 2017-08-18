@@ -186,6 +186,7 @@ class MemValidator(BaseValidator):
         self.min_mem = mem_cfg.min
         self.exp_fact = mem_cfg.exp_factor
         self.avail_mem = self.host_w.memory_free
+        self.ppt_ratio = mem_cfg.ppt_ratio
         self.res_name = _('memory')
 
     def _populate_resize_diffs(self):
@@ -194,6 +195,7 @@ class MemValidator(BaseValidator):
         self.delta_des_mem = deltas['delta_mem']
         self.delta_max_mem = deltas['delta_max_mem']
         self.delta_exp_fact = deltas['delta_exp_factor']
+        self.delta_ppt_ratio = deltas['delta_ppt_ratio']
 
     def _validate_deploy(self):
         """Enforce validation rules specific to LPAR deployment."""
@@ -215,6 +217,11 @@ class MemValidator(BaseValidator):
             msg = (_("The virtual machine must be powered off before changing "
                      "the expansion factor. Power off virtual machine %s and "
                      "try again.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+        if self.delta_ppt_ratio != 0:
+            msg = ("The virtual machine must be powered off before changing "
+                   "the partition page table ratio. Power off virtual "
+                   "machine %s and try again.") % self.cur_lpar_w.name
             raise ValidatorException(msg)
         # Common validations for both active & inactive resizes.
         self._validate_resize_common()
@@ -256,11 +263,13 @@ class MemValidator(BaseValidator):
         curr_des_mem = curr_mem_cfg.desired
         curr_max_mem = curr_mem_cfg.max
         curr_exp_fact = curr_mem_cfg.exp_factor
+        curr_ppt_ratio = curr_mem_cfg.ppt_ratio
 
         # Calculate memory deltas
         deltas['delta_mem'] = self.des_mem - curr_des_mem
         deltas['delta_max_mem'] = self.max_mem - curr_max_mem
         deltas['delta_exp_factor'] = self.exp_fact - curr_exp_fact
+        deltas['delta_ppt_ratio'] = self.ppt_ratio - curr_ppt_ratio
         return deltas
 
 
