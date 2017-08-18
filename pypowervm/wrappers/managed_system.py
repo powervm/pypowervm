@@ -50,6 +50,7 @@ _IBMi_RESTRICTEDIO_CAP = u.xpath(
 _SIMP_REMOTE_RESTART_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
 _AME_CAP = u.xpath(_SYS_CAPABILITIES, 'ActiveMemoryExpansionCapable')
+_PPT_CAP = u.xpath(_SYS_CAPABILITIES, 'PartitionPageTableRatioCapable')
 _AIX_CAP = u.xpath(_SYS_CAPABILITIES, 'AIXCapable')
 _IBMi_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiCapable')
 _LINUX_CAP = u.xpath(_SYS_CAPABILITIES, 'LinuxCapable')
@@ -77,6 +78,8 @@ _CAPABILITY_MAP = {
         'prop': _IBMi_RESTRICTEDIO_CAP, 'default': False},
     'simplified_remote_restart_capable': {
         'prop': _SIMP_REMOTE_RESTART_CAP, 'default': False},
+    'partition_page_table_ratio_capable': {
+        'prop': _PPT_CAP, 'default': False},
     'active_memory_expansion_capable': {
         'prop': _AME_CAP, 'default': False},
     # aix_capable defaults to True for backward compat (that is what we
@@ -108,6 +111,7 @@ _MEMORY_CONFIGURABLE = u.xpath(_SYS_MEM_CONFIG, 'ConfigurableSystemMemory')
 _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
 _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
+_DEFAULT_PPT_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultPartitionPageTableRatio')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -267,6 +271,10 @@ class System(ewrap.EntryWrapper):
     @property
     def page_table_ratio(self):
         return self._get_val_int(_PAGE_TABLE_RATIO, 0)
+
+    @property
+    def default_ppt_ratio(self):
+        return self._get_val_int(_DEFAULT_PPT_RATIO, 0)
 
     @property
     def host_ip_address(self):

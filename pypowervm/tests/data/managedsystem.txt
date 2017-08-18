@@ -103,6 +103,7 @@ BODY{
         <LogicalPartitionSuspendCapable kb="ROO" kxe="false">true</LogicalPartitionSuspendCapable>
         <MemoryMirroringCapable kb="ROO" kxe="false">true</MemoryMirroringCapable>
         <MicroLogicalPartitionCapable kb="ROO" kxe="false">true</MicroLogicalPartitionCapable>
+        <PartitionPageTableRatioCapable ksv="V1_6_0" kb="ROO" kxe="false">true</PartitionPageTableRatioCapable>
         <RedundantErrorPathReportingCapable kxe="false" kb="ROO">true</RedundantErrorPathReportingCapable>
         <ServiceProcessorFailoverCapable kb="ROO" kxe="false">true</ServiceProcessorFailoverCapable>
         <SharedEthernetFailoverCapable kb="ROO" kxe="false">true</SharedEthernetFailoverCapable>
