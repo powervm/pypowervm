@@ -234,7 +234,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'dynamic_srr_capable': True,
                     'vnic_capable': True,
                     'vnic_failover_capable': True,
-                    'disable_secure_boot_capable': False}
+                    'disable_secure_boot_capable': False,
+                    'partition_page_table_ratio_capable': True}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -250,7 +251,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'dynamic_srr_capable': False,
                    'vnic_capable': False,
                    'vnic_failover_capable': False,
-                   'disable_secure_boot_capable': False}
+                   'disable_secure_boot_capable': False,
+                   'partition_page_table_ratio_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -270,6 +272,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'linux_capable': False,
                          'shared_processor_pool_capable': True,
                          'active_memory_expansion_capable': True,
+                         'partition_page_table_ratio_capable': True,
                          'max_migration_ops_supported': 9,
                          'active_migrations_supported': 0,
                          'inactive_migrations_supported': 5,
