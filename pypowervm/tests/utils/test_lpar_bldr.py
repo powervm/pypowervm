@@ -38,7 +38,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.sections = xml_sections.load_xml_sections(LPAR_BLDR_DATA)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
-        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame):
+        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame, ppt):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -50,7 +50,8 @@ class TestLPARBuilder(testtools.TestCase):
                 capabilities = {
                     'simplified_remote_restart_capable': srr,
                     'ibmi_restrictedio_capable': True,
-                    'active_memory_expansion_capable': ame
+                    'active_memory_expansion_capable': ame,
+                    'ppt_ratio_capable': ppt
                 }
                 return capabilities[cap]
             mngd_sys.get_capability.side_effect = get_cap
@@ -60,14 +61,17 @@ class TestLPARBuilder(testtools.TestCase):
             return mngd_sys
 
         self.mngd_sys = _bld_mgd_sys(20.0, 128, True,
-                                     bp.LPARCompat.ALL_VALUES, False)
+                                     bp.LPARCompat.ALL_VALUES, False, False)
         self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False, ['POWER6'],
-                                            False)
+                                            False, False)
         self.mngd_sys_ame = _bld_mgd_sys(20.0, 128, True,
-                                         bp.LPARCompat.ALL_VALUES, True)
+                                         bp.LPARCompat.ALL_VALUES, True, False)
+        self.mngd_sys_ppt = _bld_mgd_sys(20.0, 128, True,
+                                         bp.LPARCompat.ALL_VALUES, False, True)
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
         self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
+        self.stdz_sys4 = lpar_bldr.DefaultStandardize(self.mngd_sys_ppt)
 
     def assert_xml(self, entry, string):
         self.assertEqual(entry.element.toxmlstring(),
@@ -266,6 +270,18 @@ class TestLPARBuilder(testtools.TestCase):
         # AME outside valid range
         attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
                     ame_factor='0.5')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
+        self.assertRaises(ValueError, bldr.build)
+
+        # PPT not supported on host
+        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
+                    ppt_ratio='1:64')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
+        self.assertRaises(ValueError, bldr.build)
+
+        # PPT ratio not a valid choice
+        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
+                    ppt_ratio='1:76')
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
         self.assertRaises(ValueError, bldr.build)
 
