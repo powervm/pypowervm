@@ -166,6 +166,7 @@ _MEM_DES_ENT = 'DesiredEntitledMemory'
 _MEM_DES_HUGE_PAGE_CT = 'DesiredHugePageCount'
 _MEM_DES = 'DesiredMemory'
 _MEM_EXP_FACTOR = 'ExpansionFactor'
+_MEM_PPT_RATIO = 'PartitionPageTableRatio'
 _MEM_HW_PG_TBL_RATIO = 'HardwarePageTableRatio'
 _MEM_MAN_ENT_MODE_ENABLED = 'ManualEntitledModeEnabled'
 _MEM_MAX_HUGE_PG_CT = 'MaximumHugePageCount'
@@ -179,6 +180,7 @@ _MEM_AUTO_ENT_MEM_ENABLED = 'AutoEntitledMemoryEnabled'
 _MEM_CURR_BSR_ARRAYS = 'CurrentBarrierSynchronizationRegisterArrays'
 _MEM_CURR_ENT = 'CurrentEntitledMemory'
 _MEM_CURR_EXP_FACT = 'CurrentExpansionFactor'
+_MEM_CURR_PPT_RATIO = 'CurrentPartitionPageTableRatio'
 _MEM_CURR_HW_PG_TBL_RATIO = 'CurrentHardwarePageTableRatio'
 _MEM_CURR_HUGE_PG_CT = 'CurrentHugePageCount'
 _MEM_CURR_MAX_HUGE_PG_CT = 'CurrentMaximumHugePageCount'
@@ -205,18 +207,18 @@ _MEM_SHARED_MEM_ENABLED = 'SharedMemoryEnabled'
 
 _MEM_EL_ORDER = (
     _MEM_PROF_AME_ENABLED, _MEM_AMS_ENABLED, _MEM_BSR_ARRAY_CT, _MEM_DES_ENT,
-    _MEM_DES_HUGE_PAGE_CT, _MEM_DES, _MEM_EXP_FACTOR, _MEM_HW_PG_TBL_RATIO,
-    _MEM_MAN_ENT_MODE_ENABLED, _MEM_MAX_HUGE_PG_CT, _MEM_MAX, _MEM_WT,
-    _MEM_MIN_HUGE_PG_CT, _MEM_MIN, _MEM_PRI_PGING_SVC_PART,
+    _MEM_DES_HUGE_PAGE_CT, _MEM_DES, _MEM_EXP_FACTOR, _MEM_PPT_RATIO,
+    _MEM_HW_PG_TBL_RATIO, _MEM_MAN_ENT_MODE_ENABLED, _MEM_MAX_HUGE_PG_CT,
+    _MEM_MAX, _MEM_WT, _MEM_MIN_HUGE_PG_CT, _MEM_MIN, _MEM_PRI_PGING_SVC_PART,
     _MEM_SEC_PGING_SVC_PART, _MEM_AUTO_ENT_MEM_ENABLED, _MEM_CURR_BSR_ARRAYS,
-    _MEM_CURR_ENT, _MEM_CURR_EXP_FACT, _MEM_CURR_HW_PG_TBL_RATIO,
-    _MEM_CURR_HUGE_PG_CT, _MEM_CURR_MAX_HUGE_PG_CT, _MEM_CURR_MAX, _MEM_CUR,
-    _MEM_CURR_MEM_WT, _MEM_CURR_MIN_HUGE_PG_CT, _MEM_CURR_MIN,
-    _MEM_CURR_PGING_SVC_PART, _MEM_EXP_HW_ACC_ENABLED, _MEM_ENC_HW_ACC_ENABLED,
-    _MEM_AME_ENABLED, _MEM_RELEASABLE, _MEM_TO_RELEASE,
-    _MEM_RED_ERR_PATH_REP_ENABLED, _MEM_REQ_MIN_FOR_MAX, _MEM_RUNT_ENT,
-    _MEM_RUNT_EXP_FACT, _MEM_RUNT_HUGE_PG_CT, _MEM_RUNT, _MEM_RUNT_WT,
-    _MEM_RUNT_MIN, _MEM_SHARED_MEM_ENABLED)
+    _MEM_CURR_ENT, _MEM_CURR_EXP_FACT, _MEM_CURR_PPT_RATIO,
+    _MEM_CURR_HW_PG_TBL_RATIO, _MEM_CURR_HUGE_PG_CT, _MEM_CURR_MAX_HUGE_PG_CT,
+    _MEM_CURR_MAX, _MEM_CUR, _MEM_CURR_MEM_WT, _MEM_CURR_MIN_HUGE_PG_CT,
+    _MEM_CURR_MIN, _MEM_CURR_PGING_SVC_PART, _MEM_EXP_HW_ACC_ENABLED,
+    _MEM_ENC_HW_ACC_ENABLED, _MEM_AME_ENABLED, _MEM_RELEASABLE,
+    _MEM_TO_RELEASE, _MEM_RED_ERR_PATH_REP_ENABLED, _MEM_REQ_MIN_FOR_MAX,
+    _MEM_RUNT_ENT, _MEM_RUNT_EXP_FACT, _MEM_RUNT_HUGE_PG_CT, _MEM_RUNT,
+    _MEM_RUNT_WT, _MEM_RUNT_MIN, _MEM_SHARED_MEM_ENABLED)
 
 # Partition I/O Configuration (_IO)
 IO_CFG_ROOT = _BP_IO_CFG
@@ -935,6 +937,30 @@ class PartitionMemoryConfiguration(ewrap.ElementWrapper):
         """
         self.set_parm_value(_MEM_EXP_FACTOR,
                             u.sanitize_float_for_api(exp_factor))
+
+    @property
+    def ppt_ratio(self):
+        """The Partition Page Table Ratio
+
+        The partition page table ratio represents the ratio of a VM's maximum
+        memory to the size of its partition page table. The PPT is used by the
+        platform to maintain the translation of the VM's physical to virtual
+        memory addresses during mobility operations (i.e. LPM).
+
+        The ppt_ratio is represented as 1:2^N where accepted values for N range
+        from 6 to 12. If the ratio is 1:4096 for a VM with 64 GB of maximum
+        memory, it would have a PPT of 16 MB (64 GB / 4096 = 16 MB).
+        """
+        return self._get_val_int(_MEM_PPT_RATIO)
+
+    @ppt_ratio.setter
+    def ppt_ratio(self, ppt_ratio):
+        """The Partition Page Table Ratio
+
+        :param ppt_ratio: The ppt ratio value. The allowed values are
+                          reported by the system.
+        """
+        self.set_parm_value(_MEM_PPT_RATIO, ppt_ratio)
 
 
 @ewrap.ElementWrapper.pvm_type(_PC_SHR_PROC_CFG, has_metadata=True,
