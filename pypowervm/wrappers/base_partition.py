@@ -382,10 +382,11 @@ class BootMode(object):
     DD = 'Diagnostic_With_Default_Boot_List'
     DS = 'Diagnostic_With_Stored_Boot_List'
     OF = 'Open_Firmware'
+    PBL = 'Petitboot'
     UNAVAILABLE = 'Unavailable'
     DEFAULT = 'Default'
     UNKNOWN = 'Unknown'
-    ALL_VALUES = (NORM, SMS, DD, DS, OF, UNAVAILABLE, DEFAULT, UNKNOWN)
+    ALL_VALUES = (NORM, SMS, DD, DS, OF, PBL, UNAVAILABLE, DEFAULT, UNKNOWN)
 
 
 class KeylockPos(object):
