@@ -649,9 +649,9 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
             lport._mac(mac)
         lport.allowed_macs = allowed_macs
         lport._is_promisc(is_promisc)
-        if cfg_capacity:
+        if cfg_capacity is not None:
             lport._cfg_capacity(cfg_capacity)
-        if max_capacity:
+        if max_capacity is not None:
             lport._cfg_max_capacity(max_capacity)
         return lport
 
@@ -1062,7 +1062,7 @@ class VNICBackDev(ewrap.ElementWrapper):
             bdev._capacity(capacity)
         if failover_pri is not None:
             bdev.failover_pri = failover_pri
-        if max_capacity:
+        if max_capacity is not None:
             bdev._max_capacity(max_capacity)
         return bdev
 

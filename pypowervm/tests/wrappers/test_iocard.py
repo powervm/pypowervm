@@ -244,6 +244,20 @@ class TestLogicalPort(twrap.TestWrapper):
         self.assertEqual('12AB34CD56EF', lport.mac)
         self.assertEqual(u.MACList.NONE, lport.allowed_macs)
         self.assertEqual(0.1, lport.cfg_max_capacity)
+        # 0 capacities
+        lport = card.SRIOVEthLPort.bld(
+            self.adpt, 5, 6, pvid=2230, mac='12:ab:34:CD:56:ef',
+            allowed_vlans=[1, 2, 3], allowed_macs=u.MACList.NONE,
+            is_promisc=True, cfg_capacity=0, max_capacity=0)
+        self.assertEqual(5, lport.sriov_adap_id)
+        self.assertTrue(lport.is_promisc)
+        self.assertEqual(0, lport.cfg_capacity)
+        self.assertEqual(6, lport.pport_id)
+        self.assertEqual(2230, lport.pvid)
+        self.assertEqual([1, 2, 3], lport.allowed_vlans)
+        self.assertEqual('12AB34CD56EF', lport.mac)
+        self.assertEqual(u.MACList.NONE, lport.allowed_macs)
+        self.assertEqual(0, lport.cfg_max_capacity)
 
 
 class TestVNIC(twrap.TestWrapper):
@@ -291,7 +305,10 @@ class TestVNIC(twrap.TestWrapper):
         backdevs = [card.VNICBackDev.bld(self.adpt, 'vios_uuid', 3, 4),
                     card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
                                          capacity=0.3456789, failover_pri=50,
-                                         max_capacity=0.42)]
+                                         max_capacity=0.42),
+                    card.VNICBackDev.bld(self.adpt, 'vios_uuid2', 5, 6,
+                                         capacity=0, failover_pri=50,
+                                         max_capacity=0)]
         vnic = card.VNIC.bld(
             self.adpt, pvid=7, slot_num=8, allowed_vlans=[1, 2],
             mac_addr='m:a:c',
@@ -309,8 +326,8 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(['AB12CD34EF56', '12AB34CD56EF'], vnic.allowed_macs)
         self.assertEqual('MAC', vnic.mac)
         self.assertIsNotNone(backdevs)
-        self.assertEqual(2, len(backdevs))
-        bd1, bd2 = backdevs
+        self.assertEqual(3, len(backdevs))
+        bd1, bd2, bd3 = backdevs
         self.assertEqual(self.adpt, bd1.adapter)
         self.adpt.build_href.assert_any_call('VirtualIOServer', 'vios_uuid',
                                              xag=[])
@@ -333,6 +350,8 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(60, bd2.failover_pri)
         self.assertIsNone(bd1.max_capacity)
         self.assertEqual(0.42, bd2.max_capacity)
+        self.assertEqual(0, bd3.capacity)
+        self.assertEqual(0, bd3.max_capacity)
 
     def test_details_props_inner(self):
         self._test_details_props(self.dwrap._details)
