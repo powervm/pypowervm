@@ -45,7 +45,8 @@ class BootMode(object):
     DD = 'dd'
     DS = 'ds'
     OF = 'of'
-    ALL_VALUES = (NORM, SMS, DD, DS, OF)
+    PBL = 'pbl'
+    ALL_VALUES = (NORM, SMS, DD, DS, OF, PBL)
 
 
 class KeylockPos(object):
