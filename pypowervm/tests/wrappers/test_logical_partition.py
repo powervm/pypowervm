@@ -650,6 +650,36 @@ class TestMemCfg(twrap.TestWrapper):
         self.assertEqual(512, self.mem_config.current)
 
 
+class TestIOCfg(twrap.TestWrapper):
+    """Test the lpar I/O configuration."""
+
+    file = LPAR_HTTPRESP_FILE
+    wrapper_class_to_test = lpar.LPAR
+
+    def setUp(self):
+        super(TestIOCfg, self).setUp()
+        self.io_config = self.entries[0].io_config
+
+    def test_bld(self):
+        # No slots
+        io_wrap = bp.PartitionIOConfiguration.bld(None, 10)
+        self.assertEqual(10, io_wrap.max_virtual_slots)
+        self.assertEqual([], io_wrap.io_slots)
+
+        # With slots
+        slot_wraps = [bp.IOSlot.bld(None, True, 1234),
+                      bp.IOSlot.bld(None, False, 4321)]
+        io_wrap = bp.PartitionIOConfiguration.bld(None, 12, slot_wraps)
+        self.assertEqual(len(slot_wraps), len(io_wrap.io_slots))
+        for exp, act in zip(slot_wraps, io_wrap.io_slots):
+            self.assertEqual(exp.drc_index, act.drc_index)
+            self.assertEqual(exp.bus_grp_required, act.bus_grp_required)
+
+    def test_data(self):
+        self.assertEqual(64, self.io_config.max_virtual_slots)
+        self.assertEqual([], self.io_config.io_slots)
+
+
 class TestPhysFCPort(unittest.TestCase):
 
     def test_bld(self):

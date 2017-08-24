@@ -70,8 +70,8 @@ class TestLPARBuilder(testtools.TestCase):
         self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
 
     def assert_xml(self, entry, string):
-        self.assertEqual(entry.element.toxmlstring(),
-                         six.b(string.rstrip('\n')))
+        self.assertEqual(six.b(string.rstrip('\n')),
+                         entry.element.toxmlstring())
 
     def test_proc_modes(self):
         # Base minimum attrs
@@ -406,9 +406,11 @@ class TestLPARBuilder(testtools.TestCase):
         except Exception as e:
             self.assertEqual(six.text_type(e), exp_msg)
 
-        # Build a VIOS
+        # Build a VIOS with I/O slots
+        slots = [bp.IOSlot.bld(self.adpt, True, 12345),
+                 bp.IOSlot.bld(self.adpt, False, 54321)]
         attr = dict(name='TheName', env=bp.LPARType.VIOS, memory=1024,
-                    vcpu=1, dedicated_proc=True)
+                    vcpu=1, dedicated_proc=True, phys_io_slots=slots)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertIsNotNone(bldr)
 
@@ -442,3 +444,21 @@ class TestLPARBuilder(testtools.TestCase):
         self.assertEqual('CONSOLE', tag_io.console)
         self.assertEqual('9', tag_io.load_src)
         self.assertEqual('9', tag_io.alt_load_src)
+
+    def test_io_slots(self):
+        attr = dict(name='TheName', memory=1024, vcpu=1)
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual([], nlpar.io_config.io_slots)
+
+        attr = dict(name='TheName', memory=1024, vcpu=1, phys_io_slots=[])
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual([], nlpar.io_config.io_slots)
+
+        slots = [bp.IOSlot.bld(self.adpt, True, 12345),
+                 bp.IOSlot.bld(self.adpt, False, 54321)]
+        attr = dict(name='TheName', memory=1024, vcpu=1, phys_io_slots=slots)
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual(len(slots), len(nlpar.io_config.io_slots))
+        for exp, act in zip(slots, nlpar.io_config.io_slots):
+            self.assertEqual(exp.drc_index, act.drc_index)
+            self.assertEqual(exp.bus_grp_required, act.bus_grp_required)

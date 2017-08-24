@@ -21,7 +21,7 @@ import six
 
 from oslo_log import log as logging
 
-from pypowervm import i18n
+from pypowervm.i18n import _
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import virtual_io_server as vios
@@ -51,11 +51,15 @@ PROC_UNITS_KEYS = (PROC_UNITS, MAX_PROC_U, MIN_PROC_U)
 SHARING_MODE = 'sharing_mode'
 UNCAPPED_WEIGHT = 'uncapped_weight'
 SPP = 'proc_pool'
-MAX_IO_SLOTS = 'max_io_slots'
 AVAIL_PRIORITY = 'avail_priority'
 SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
 ENABLE_LPAR_METRIC = 'enable_lpar_metric'
+
+# I/O configuration
+# Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
+MAX_IO_SLOTS = 'max_io_slots'
+PHYS_IO_SLOTS = 'phys_io_slots'
 
 # IBMi specific keys
 ALT_LOAD_SRC = 'alt_load_src'
@@ -81,11 +85,9 @@ DEF_SPP = 0
 DEF_AVAIL_PRI = 127
 DEF_SRR = 'false'
 DEF_LPAR_METRIC = False
+DEF_PHYS_IO_SLOTS = None
 
 LOG = logging.getLogger(__name__)
-
-# TODO(IBM) translation
-_LE = i18n._
 
 
 class LPARBuilderException(Exception):
@@ -149,11 +151,19 @@ class Standardize(object):
         """
         pass
 
+    def io_config(self):
+        """Validates and standardizes the LPAR's I/O configuration.
+
+        :returns: dict of attributes.
+            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+        """
+        pass
+
 
 class DefaultStandardize(Standardize):
     """Default standardizer.
 
-    This class implements the Standardizer interface.  It takes a
+    This class implements the Standardize interface.  It takes a
     simple approach for augmenting missing LPAR settings.  It does
     reasonable validation of the LPAR attributes.
 
@@ -162,7 +172,6 @@ class DefaultStandardize(Standardize):
     it validates what it's sending back to the caller.  If any validation
     rules are missed, the PowerVM management interface will catch them
     and surface an error at that time.
-
     """
     def __init__(self, mngd_sys,
                  proc_units_factor=DEF_PROC_UNIT_FACT, max_slots=DEF_MAX_SLOT,
@@ -191,8 +200,8 @@ class DefaultStandardize(Standardize):
         self.mngd_sys = mngd_sys
         self.proc_units_factor = proc_units_factor
         if proc_units_factor > 1 or proc_units_factor < 0.05:
-            msg = _LE('Processor units factor must be between 0.05 and 1.0. '
-                      'Value: %s') % proc_units_factor
+            msg = _('Processor units factor must be between 0.05 and 1.0. '
+                    'Value: %s') % proc_units_factor
             raise LPARBuilderException(msg)
         self.max_slots = max_slots
         self.uncapped_weight = uncapped_weight
@@ -218,8 +227,8 @@ class DefaultStandardize(Standardize):
         name_len = len(attrs[NAME])
         if name_len < 1 or name_len > MAX_LPAR_NAME_LEN:
 
-            msg = _LE("Logical partition name has invalid length."
-                      " Name: %s") % attrs[NAME]
+            msg = _("Logical partition name has invalid length. "
+                    "Name: %s") % attrs[NAME]
             raise LPARBuilderException(msg)
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
@@ -374,6 +383,17 @@ class DefaultStandardize(Standardize):
         self._validate_lpar_ded_cpu(attrs=bld_attr)
         return bld_attr
 
+    def io_config(self):
+        """Validates and standardizes the LPAR's I/O configuration.
+
+        :returns: dict of attributes.
+            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+        """
+        return {
+            MAX_IO_SLOTS: self.max_slots,
+            PHYS_IO_SLOTS: self.attr.get(PHYS_IO_SLOTS, DEF_PHYS_IO_SLOTS),
+        }
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Field(object):
@@ -393,7 +413,7 @@ class Field(object):
 
     def _type_error(self, value, exc=TypeError):
         values = dict(field=self.name, value=value)
-        msg = _LE("Field '%(field)s' has invalid value: '%(value)s'") % values
+        msg = _("Field '%(field)s' has invalid value: '%(value)s'") % values
         LOG.error(msg)
         raise exc(msg)
 
@@ -448,16 +468,15 @@ class ChoiceField(Field):
     @classmethod
     def _validate_choices(cls, value, choices):
         if value is None:
-            raise ValueError(_LE('None value is not valid.'))
+            raise ValueError(_('None value is not valid.'))
         for choice in choices:
             if value.lower() == choice.lower():
                 return choice
         # If we didn't find it, that's a problem...
         values = dict(value=value, field=cls._name,
                       choices=choices)
-        msg = _LE("Value '%(value)s' is not valid "
-                  "for field '%(field)s' with acceptable "
-                  "choices: %(choices)s") % values
+        msg = _("Value '%(value)s' is not valid for field '%(field)s' with "
+                "acceptable choices: %(choices)s") % values
         raise ValueError(msg)
 
     def validate(self):
@@ -481,8 +500,8 @@ class BoundField(Field):
                 self.typed_value < self._convert_value(self._min_bound)):
             values = dict(field=self.name, value=self.typed_value,
                           minimum=self._min_bound)
-            msg = _LE("Field '%(field)s' has a value below the minimum. "
-                      "Value: %(value)s; Minimum: %(minimum)s") % values
+            msg = _("Field '%(field)s' has a value below the minimum. "
+                    "Value: %(value)s; Minimum: %(minimum)s") % values
             LOG.error(msg)
             raise ValueError(msg)
 
@@ -490,8 +509,8 @@ class BoundField(Field):
                 self.typed_value > self._convert_value(self._max_bound)):
             values = dict(field=self.name, value=self.typed_value,
                           maximum=self._max_bound)
-            msg = _LE("Field '%(field)s' has a value above the maximum. "
-                      "Value: %(value)s; Maximum: %(maximum)s") % values
+            msg = _("Field '%(field)s' has a value above the maximum. "
+                    "Value: %(value)s; Maximum: %(maximum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -544,9 +563,9 @@ class MinDesiredMaxField(object):
                           max_field=self.max_field.name,
                           desired=self.des_field.typed_value,
                           maximum=self.max_field.typed_value)
-            msg = _LE("The '%(desired_field)s' has a value above the "
-                      "'%(max_field)s' value. "
-                      "Desired: %(desired)s Maximum: %(maximum)s") % values
+            msg = _("The '%(desired_field)s' has a value above the "
+                    "'%(max_field)s' value. Desired: %(desired)s Maximum: "
+                    "%(maximum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -557,9 +576,9 @@ class MinDesiredMaxField(object):
                           min_field=self.min_field.name,
                           desired=self.des_field.typed_value,
                           minimum=self.min_field.typed_value)
-            msg = _LE("The '%(desired_field)s' has a value below the "
-                      "'%(min_field)s' value. "
-                      "Desired: %(desired)s Minimum: %(minimum)s") % values
+            msg = _("The '%(desired_field)s' has a value below the "
+                    "'%(min_field)s' value. Desired: %(desired)s Minimum: "
+                    "%(minimum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -601,9 +620,9 @@ class Memory(MinDesiredMaxField):
                       self.max_field.typed_value]:
                 if x is not None and (x % self.lmb_size) != 0:
                     values = dict(lmb_size=self.lmb_size, value=x)
-                    msg = _LE("Memory value is not a multiple of the "
-                              "logical memory block size (%(lmb_size)s) of "
-                              " the host.  Value: %(value)s") % values
+                    msg = _("Memory value is not a multiple of the "
+                            "logical memory block size (%(lmb_size)s) of "
+                            " the host.  Value: %(value)s") % values
                     raise ValueError(msg)
 
     def _validate_ame(self):
@@ -612,17 +631,16 @@ class Memory(MinDesiredMaxField):
             exp_fact_float = round(float(self.ame_ef), 2)
             values = dict(value=self.ame_ef)
             if not self.host_ame_cap and exp_fact_float != 0:
-                msg = _LE("The managed system does not support active memory "
-                          "expansion. The expansion factor value '%(value)s' "
-                          "is not valid.") % values
+                msg = _("The managed system does not support active memory "
+                        "expansion. The expansion factor value '%(value)s' "
+                        "is not valid.") % values
                 raise ValueError(msg)
             if (exp_fact_float != 0 and exp_fact_float < 1 or
                     exp_fact_float > 10):
-                msg = _LE("Active memory expansion value must be greater "
-                          "than or equal to 1.0 and less than or equal to "
-                          "10.0. A value of 0 is also valid and indicates "
-                          "that AME is off. '%(value)s' is not "
-                          "valid.") % values
+                msg = _("Active memory expansion value must be greater than "
+                        "or equal to 1.0 and less than or equal to 10.0. A "
+                        "value of 0 is also valid and indicates that AME is "
+                        "off. '%(value)s' is not valid.") % values
                 raise ValueError(msg)
 
 
@@ -682,9 +700,15 @@ class DedProcShareMode(ChoiceField):
 
 
 class IOSlots(IntBoundField):
+    """Maximum virtual I/O slots.
+
+    This is not to be confused with the actual io_slots (list of IOSlot) in the
+    partition's io_config (PartitionIOConfiguration), which is set in the
+    builder via the 'phys_io_slots' (PHYS_IO_SLOTS) key.
+    """
     _min_bound = 2  # slot 0 & 1 are always in use
     _max_bound = 65534
-    _name = 'I/O Slots'
+    _name = 'Maximum Virtual I/O Slots'
 
     def __init__(self, value, allow_none=False):
         super(IOSlots, self).__init__(value, allow_none=allow_none)
@@ -758,6 +782,12 @@ class LPARBuilder(object):
             exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
             mem_wrap.exp_factor = exp_fact_float
         return mem_wrap
+
+    def build_io_config(self):
+        std = self.stdz.io_config()
+        io_config = bp.PartitionIOConfiguration.bld(
+            self.adapter, std[MAX_IO_SLOTS], io_slots=std[PHYS_IO_SLOTS])
+        return io_config
 
     def _shared_proc_keys_specified(self):
         # Check for any shared proc keys
@@ -855,8 +885,7 @@ class LPARBuilder(object):
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
             lpar_w.srr_enabled = std[SRR_CAPABLE]
-        io_cfg = bp.PartitionIOConfiguration.bld(self.adapter,
-                                                 std[MAX_IO_SLOTS])
+        io_cfg = self.build_io_config()
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg
