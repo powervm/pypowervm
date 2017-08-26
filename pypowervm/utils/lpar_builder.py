@@ -55,6 +55,7 @@ MAX_IO_SLOTS = 'max_io_slots'
 AVAIL_PRIORITY = 'avail_priority'
 SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
+ENABLE_LPAR_METRIC = 'enable_lpar_metric'
 
 # IBMi specific keys
 ALT_LOAD_SRC = 'alt_load_src'
@@ -79,6 +80,7 @@ DEF_UNCAPPED_WT = 64
 DEF_SPP = 0
 DEF_AVAIL_PRI = 127
 DEF_SRR = 'false'
+DEF_LPAR_METRIC = False
 
 LOG = logging.getLogger(__name__)
 
@@ -166,6 +168,7 @@ class DefaultStandardize(Standardize):
                  proc_units_factor=DEF_PROC_UNIT_FACT, max_slots=DEF_MAX_SLOT,
                  uncapped_weight=DEF_UNCAPPED_WT, spp=DEF_SPP,
                  avail_priority=DEF_AVAIL_PRI, srr=DEF_SRR,
+                 enable_lpar_metric=DEF_LPAR_METRIC,
                  proc_compat=bp.LPARCompat.DEFAULT):
         """Initialize the standardizer
 
@@ -196,6 +199,7 @@ class DefaultStandardize(Standardize):
         self.spp = spp
         self.avail_priority = avail_priority
         self.srr = srr
+        self.enable_lpar_metric = enable_lpar_metric
         self.proc_compat = proc_compat
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
@@ -220,6 +224,8 @@ class DefaultStandardize(Standardize):
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
         AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
+        EnableLparMetric(attrs.get(ENABLE_LPAR_METRIC),
+                         allow_none=partial).validate()
         IDBoundField(attrs.get(ID), allow_none=True).validate()
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
@@ -276,6 +282,7 @@ class DefaultStandardize(Standardize):
                       convert_func=LPARType.convert_value)
         self._set_val(bld_attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(bld_attr, AVAIL_PRIORITY, self.avail_priority)
+        self._set_val(bld_attr, ENABLE_LPAR_METRIC, self.enable_lpar_metric)
         # See if the host is capable of SRR before setting it.
         srr_cap = self.mngd_sys.get_capability(
             'simplified_remote_restart_capable')
@@ -694,6 +701,10 @@ class IDBoundField(IntBoundField):
     _name = 'ID'
 
 
+class EnableLparMetric(BoolField):
+    _name = 'ENABLE LPAR METRIC'
+
+
 class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
 
@@ -839,6 +850,7 @@ class LPARBuilder(object):
         lpar_w.name = std[NAME]
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
         lpar_w.proc_compat_mode = std[PROC_COMPAT]
+        lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:

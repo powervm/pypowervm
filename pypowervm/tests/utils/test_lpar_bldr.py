@@ -358,6 +358,26 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assertEqual(new_lpar.avail_priority, 255)
 
+        # Enable Lpar metric with correct value as true
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='true')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.allow_perf_data_collection, True)
+
+        # Enable Lpar metric with correct value as false
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='false')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.allow_perf_data_collection, False)
+
+        # Enable Lpar Metric with bad parm other than true or false
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='BADVALUE')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertRaises(ValueError, bldr.build)
+
         # Proc compat
         for pc in bp.LPARCompat.ALL_VALUES:
             attr = dict(name='name', memory=1024, vcpu=1,
