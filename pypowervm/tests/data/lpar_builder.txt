@@ -18,6 +18,7 @@
 #
 SECTION:dedicated_lpar
 <uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>false</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
@@ -32,6 +33,7 @@ END OF SECTION
 #
 SECTION:shared_lpar
 <uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>false</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
@@ -47,6 +49,7 @@ END OF SECTION
 #
 SECTION:capped_lpar
 <uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>true</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
@@ -61,6 +64,7 @@ END OF SECTION
 #
 SECTION:uncapped_lpar
 <uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>false</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
@@ -74,6 +78,7 @@ END OF SECTION
 #
 SECTION:ded_lpar_sre_idle_procs_always
 <uom:LogicalPartition xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>false</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
@@ -88,6 +93,7 @@ END OF SECTION
 #
 SECTION:vios
 <uom:VirtualIOServer xmlns:uom="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata>
+<uom:AllowPerformanceDataCollection>false</uom:AllowPerformanceDataCollection>
 <uom:AvailabilityPriority>127</uom:AvailabilityPriority>
 <uom:PartitionIOConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:MaximumVirtualIOSlots>64</uom:MaximumVirtualIOSlots></uom:PartitionIOConfiguration>
 <uom:PartitionMemoryConfiguration schemaVersion="V1_0"><uom:Metadata><uom:Atom/></uom:Metadata><uom:DesiredMemory>1024</uom:DesiredMemory><uom:MaximumMemory>1024</uom:MaximumMemory><uom:MinimumMemory>1024</uom:MinimumMemory></uom:PartitionMemoryConfiguration>
