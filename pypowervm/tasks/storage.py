@@ -39,6 +39,7 @@ from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
+from pypowervm.wrappers import job
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import managed_system as sys
 from pypowervm.wrappers import storage as stor
@@ -46,6 +47,7 @@ from pypowervm.wrappers import vios_file as vf
 from pypowervm.wrappers import virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
+_RESCAN_VSTOR = 'RescanVirtualDisk'
 
 # Setup logging
 LOG = logging.getLogger(__name__)
@@ -660,6 +662,30 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
     # but adding just in case as we don't want to create the file meta
     # without a backing disk.
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
+
+
+def rescan_vstor(vio, vstor):
+    """Update the internal metadata for a virtual storage object.
+
+    :param vio: A VIOS wrapper of the VIOS on which to perform the rescan.
+    :param vstor: The VDisk or FileIO wrapper of the storage object to rescan.
+    :raises AdapterNotFound: If no adapter attribute can be found.
+    :raises JobRequestFailed: If the rescan failed.
+    :raises JobRequestTimedOut: If the rescan Job timed out.
+    """
+
+    adapter = getattr(vio, 'adapter', None) or getattr(vstor, 'adapter', None)
+    if not adapter:
+        raise exc.AdapterNotFound()
+
+    job_w = job.Job.wrap(adapter.read(
+        vios.VIOS.schema_type, root_id=vio.uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_RESCAN_VSTOR))
+
+    job_p = [job_w.create_job_parameter('VirtualDiskUDID', vstor.udid)]
+
+    # Exceptions raise up.  Otherwise, no news is good news.
+    job_w.run_job(vio.uuid, job_parms=job_p)
 
 
 @lock.synchronized(_LOCK_VOL_GRP)
