@@ -62,6 +62,8 @@ _DYN_SRR_CAP = u.xpath(
 _IBMi_NATIVE_IO_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiNativeIOCapable')
 _DISABLE_SECURE_BOOT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DisableSecureBootCapable')
+_IOSLOT_OWNER_ASSMT_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
 
 _CAPABILITY_MAP = {
     'active_lpar_mobility_capable': {
@@ -99,6 +101,8 @@ _CAPABILITY_MAP = {
         'prop': _IBMi_NATIVE_IO_CAP, 'default': False},
     'disable_secure_boot_capable': {
         'prop': _DISABLE_SECURE_BOOT_CAP, 'default': False},
+    'ioslot_owner_assignment_capable': {
+        'prop': _IOSLOT_OWNER_ASSMT_CAP, 'default': False},
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
@@ -162,6 +166,10 @@ _IOSLOT_ROOT = 'IOSlot'
 _IOSLOT_BUS_GRP_REQ = 'BusGroupingRequired'
 _IOSLOT_DESC = 'Description'
 _IOSLOT_FEAT_CODES = 'FeatureCodes'
+_IOSLOT_PART_ID = 'PartitionID'
+_IOSLOT_PART_UUID = 'PartitionUUID'
+_IOSLOT_PART_NAME = 'PartitionName'
+_IOSLOT_PART_TYPE = 'PartitionType'
 _IOSLOT_PCI_CLASS = 'PCIClass'
 _IOSLOT_PCI_DEV_ID = 'PCIDeviceID'
 _IOSLOT_PCI_SUB_DEV_ID = 'PCISubsystemDeviceID'
@@ -413,6 +421,40 @@ class IOSlot(ewrap.ElementWrapper):
     @property
     def feat_codes(self):
         return self._get_val_int(_IOSLOT_FEAT_CODES)
+
+    @property
+    def part_id(self):
+        """Short ID of the partition to which the slot is assigned.
+
+        None if the slot is unassigned.
+        """
+        return self._get_val_int(_IOSLOT_PART_ID)
+
+    @property
+    def part_uuid(self):
+        """UUID of the partition to which the slot is assigned.
+
+        None if the slot is unassigned.
+        """
+        return self._get_val_str(_IOSLOT_PART_UUID)
+
+    @property
+    def part_name(self):
+        """String name of the partition to which the slot is assigned.
+
+        None if the slot is unassigned.
+        """
+        return self._get_val_str(_IOSLOT_PART_NAME)
+
+    @property
+    def part_type(self):
+        """String type of the partition to which the slot is assigned.
+
+        May be compared with base_partition.LPARType enum values.
+
+        None if the slot is unassigned.
+        """
+        return self._get_val_str(_IOSLOT_PART_TYPE)
 
     @property
     def pci_class(self):

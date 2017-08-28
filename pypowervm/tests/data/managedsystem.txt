@@ -124,6 +124,7 @@ BODY{
         <VirtualNICDedicatedSRIOVCapable kxe="false" kb="ROO">true</VirtualNICDedicatedSRIOVCapable>
         <VirtualNICFailOverCapable ksv="V1_4_0" kxe="false" kb="ROO">true</VirtualNICFailOverCapable>
         <DynamicSimplifiedRemoteRestartToggleCapable ksv="V1_5_0" kb="ROO" kxe="false">true</DynamicSimplifiedRemoteRestartToggleCapable>
+        <IOSlotOwnerAssignmentCapable ksv="V1_6_0" kxe="false" kb="ROO">true</IOSlotOwnerAssignmentCapable>
     </AssociatedSystemCapabilities>
     <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>
@@ -478,11 +479,15 @@ BODY{
                 <Metadata>
                     <Atom/>
                 </Metadata>
-                <BusGroupingRequired kb="CUD" kxe="false">false</BusGroupingRequired>
+                <BusGroupingRequired kb="CUD" kxe="false">true</BusGroupingRequired>
                 <Description kb="CUD" kxe="false">I/O Processor</Description>
                 <IOUnitPhysicalLocation kb="ROR" kxe="false">U5294.001.CEC1234</IOUnitPhysicalLocation>
                 <ParentSlotDynamicReconfigurationConnectorIndex kb="ROO" kxe="false">553779217</ParentSlotDynamicReconfigurationConnectorIndex>
                 <PCAdapterID kb="ROO" kxe="false">4660</PCAdapterID>
+                <PartitionID ksv="V1_3_0" kb="ROO" kxe="false">2</PartitionID>
+                <PartitionUUID ksv="V1_6_0" kxe="false" kb="ROO">02899D96-9D20-490F-8B1B-4D3DEE1210ED</PartitionUUID>
+                <PartitionName ksv="V1_3_0" kxe="false" kb="ROO">vios1</PartitionName>
+                <PartitionType ksv="V1_3_0" kb="ROO" kxe="false">Virtual IO Server</PartitionType>
                 <PCIClass kb="ROO" kxe="false">512</PCIClass>
                 <PCIDeviceID kb="ROO" kxe="false">4660</PCIDeviceID>
                 <PCIManufacturerID kb="ROO" kxe="false">4116</PCIManufacturerID>

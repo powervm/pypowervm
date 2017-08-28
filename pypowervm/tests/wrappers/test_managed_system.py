@@ -17,6 +17,7 @@
 import unittest
 
 from pypowervm.tests.test_utils import pvmhttp
+import pypowervm.wrappers.base_partition as bp
 import pypowervm.wrappers.managed_system as ms
 import pypowervm.wrappers.mtms as mtmwrap
 
@@ -55,7 +56,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                             "Could not load %s" %
                             _MC_HTTPRESP_FILE)
 
-        self.test_ioslot = self.wrapper.asio_config.io_slots[0]
+        self.test_ioslot_unassigned = self.wrapper.asio_config.io_slots[0]
+        self.test_ioslot_assigned = self.wrapper.asio_config.io_slots[1]
 
         """ Create a bad wrapper to use when
             retrieving properties which don't exist """
@@ -184,39 +186,64 @@ class TestMSEntryWrapper(unittest.TestCase):
                          '12379814471884843981')
 
     def test_ioslot_bus_grp_required(self):
-        self.assertEqual(self.test_ioslot.bus_grp_required, False)
+        self.assertFalse(self.test_ioslot_unassigned.bus_grp_required)
+        self.assertTrue(self.test_ioslot_assigned.bus_grp_required)
 
     def test_ioslot_description(self):
-        self.assertEqual(self.test_ioslot.description, 'I/O Processor')
+        self.assertEqual('I/O Processor',
+                         self.test_ioslot_unassigned.description)
+        self.assertEqual('I/O Processor',
+                         self.test_ioslot_assigned.description)
 
     def test_ioslot_feat_codes(self):
-        self.assertEqual(self.test_ioslot.feat_codes, 0)
+        self.assertEqual(0, self.test_ioslot_unassigned.feat_codes)
+        self.assertIsNone(self.test_ioslot_assigned.feat_codes)
+
+    def test_ioslot_assignment(self):
+        self.assertIsNone(self.test_ioslot_unassigned.part_id)
+        self.assertIsNone(self.test_ioslot_unassigned.part_uuid)
+        self.assertIsNone(self.test_ioslot_unassigned.part_name)
+        self.assertIsNone(self.test_ioslot_unassigned.part_type)
+        self.assertEqual(2, self.test_ioslot_assigned.part_id)
+        self.assertEqual("02899D96-9D20-490F-8B1B-4D3DEE1210ED",
+                         self.test_ioslot_assigned.part_uuid)
+        self.assertEqual("vios1", self.test_ioslot_assigned.part_name)
+        self.assertEqual(bp.LPARType.VIOS, self.test_ioslot_assigned.part_type)
 
     def test_ioslot_pci_class(self):
-        self.assertEqual(self.test_ioslot.pci_class, 512)
+        self.assertEqual(0x200, self.test_ioslot_unassigned.pci_class)
+        self.assertEqual(0x200, self.test_ioslot_assigned.pci_class)
 
     def test_ioslot_pci_dev_id(self):
-        self.assertEqual(self.test_ioslot.pci_dev_id, 4660)
+        self.assertEqual(0x1234, self.test_ioslot_unassigned.pci_dev_id)
+        self.assertEqual(0x1234, self.test_ioslot_assigned.pci_dev_id)
 
     def test_ioslot_pci_subsys_dev_id(self):
-        self.assertEqual(self.test_ioslot.pci_subsys_dev_id, 1202)
+        self.assertEqual(0x04b2, self.test_ioslot_unassigned.pci_subsys_dev_id)
+        self.assertIsNone(self.test_ioslot_assigned.pci_subsys_dev_id)
 
     def test_ioslot_pci_rev_id(self):
-        self.assertEqual(self.test_ioslot.pci_rev_id, 0)
+        self.assertEqual(0, self.test_ioslot_unassigned.pci_rev_id)
+        self.assertEqual(0, self.test_ioslot_assigned.pci_rev_id)
 
     def test_ioslot_pci_vendor_id(self):
-        self.assertEqual(self.test_ioslot.pci_vendor_id, 4116)
+        self.assertEqual(0x1014, self.test_ioslot_unassigned.pci_vendor_id)
+        self.assertEqual(0x1014, self.test_ioslot_assigned.pci_vendor_id)
 
     def test_ioslot_pci_subsys_vendor_id(self):
-        self.assertEqual(self.test_ioslot.pci_subsys_vendor_id, 4116)
+        self.assertEqual(0x1014,
+                         self.test_ioslot_unassigned.pci_subsys_vendor_id)
+        self.assertIsNone(self.test_ioslot_assigned.pci_subsys_vendor_id)
 
     def test_ioslot_drc_index(self):
-        self.assertEqual(self.test_ioslot.drc_index,
-                         553713681)
+        self.assertEqual(0x21010011, self.test_ioslot_unassigned.drc_index)
+        self.assertEqual(0x21020011, self.test_ioslot_assigned.drc_index)
 
     def test_ioslot_drc_name(self):
-        self.assertEqual(self.test_ioslot.drc_name,
-                         'U5294.001.CEC1234-P01-C011')
+        self.assertEqual('U5294.001.CEC1234-P01-C011',
+                         self.test_ioslot_unassigned.drc_name)
+        self.assertEqual('U5294.001.CEC1234-P01-C012',
+                         self.test_ioslot_assigned.drc_name)
 
     def test_get_capabilities(self):
         good_cap = {'active_lpar_mobility_capable': True,
@@ -234,7 +261,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'dynamic_srr_capable': True,
                     'vnic_capable': True,
                     'vnic_failover_capable': True,
-                    'disable_secure_boot_capable': False}
+                    'disable_secure_boot_capable': False,
+                    'ioslot_owner_assignment_capable': True}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -250,7 +278,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'dynamic_srr_capable': False,
                    'vnic_capable': False,
                    'vnic_failover_capable': False,
-                   'disable_secure_boot_capable': False}
+                   'disable_secure_boot_capable': False,
+                   'ioslot_owner_assignment_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -282,10 +311,12 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'dynamic_srr_capable': True,
                          'vnic_capable': True,
                          'vnic_failover_capable': True,
-                         'disable_secure_boot_capable': False}
+                         'disable_secure_boot_capable': False,
+                         'ioslot_owner_assignment_capable': True}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
-                         'The returned data did not match expected values')
+                         "migration_data returned %s instead of %s" %
+                         (result_data, expected_data))
 
 
 class TestMTMS(unittest.TestCase):
