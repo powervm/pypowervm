@@ -62,7 +62,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
     of devices on a given vSCSI bus.  The throttle should be lower if the
     storage elements are high I/O, and higher otherwise.
 
-    :param host_uuid: The UUID of the host system.
+    :param host_uuid: Not used.
     :param vios: The virtual I/O server to which the mapping should be
                  added.  This may be the VIOS's UUID string OR an existing VIOS
                  EntryWrapper.  If the latter, it must have been retrieved
@@ -106,7 +106,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
         return vios_w
 
     # Build the mapping.
-    scsi_map = build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
+    scsi_map = build_vscsi_mapping(None, vios_w, lpar_uuid, storage_elem,
                                    fuse_limit=fuse_limit,
                                    lpar_slot_num=lpar_slot_num, lua=lua)
 
@@ -138,7 +138,7 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     of devices on a given vSCSI bus.  The throttle should be lower if the
     storage elements are high I/O, and higher otherwise.
 
-    :param host_uuid: The UUID of the host system.
+    :param host_uuid: Not used.
     :param vios_w: The virtual I/O server wrapper that the mapping is intended
                    to be attached to.  The method will call the update against
                    the API.  It will only update the in memory wrapper.
@@ -164,7 +164,7 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
     adapter = storage_elem.adapter
 
     # Get the client lpar href
-    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, host_uuid,
+    lpar_href = pvm_vios.VSCSIMapping.crt_related_href(adapter, None,
                                                        lpar_uuid)
 
     # Separate out the mappings into the applicable ones for this client.
@@ -192,7 +192,7 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
             target_name=target_name)
     else:
         scsi_map = pvm_vios.VSCSIMapping.bld(
-            adapter, host_uuid, lpar_uuid, storage_elem,
+            adapter, None, lpar_uuid, storage_elem,
             lpar_slot_num=lpar_slot_num, lua=lua, target_name=target_name)
     return scsi_map
 
@@ -201,7 +201,8 @@ def _separate_mappings(vios_w, client_href):
     """Separates out the systems existing mappings into silos.
 
     :param vios_w: The pypowervm wrapper for the VIOS.
-    :param client_href: The client to separate the mappings for.
+    :param client_href: The REST URI of the client to separate the mappings
+                        for.  May be a ROOT or CHILD URI.
     :return: A dictionary where the key is the server adapter (which is
              bound to the client).  The value is the list mappings that use
              the server adapter.
@@ -209,10 +210,13 @@ def _separate_mappings(vios_w, client_href):
     # The key is server_adapter.udid, the value is the list of applicable
     # mappings to the server adapter.
     resp = {}
+    client_lpar_uuid = util.get_req_path_uuid(client_href)
 
     existing_mappings = vios_w.scsi_mappings
     for existing_map in existing_mappings:
-        if (existing_map.client_lpar_href == client_href and
+        ex_lpar_uuid = util.get_req_path_uuid(
+            existing_map.client_lpar_href or '')
+        if (ex_lpar_uuid == client_lpar_uuid and
                 # ignore orphaned mappings
                 existing_map.client_adapter is not None):
             # Valid map to consider
