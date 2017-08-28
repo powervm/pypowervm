@@ -170,6 +170,32 @@ class TestSCSIMapper(testtools.TestCase):
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
+    def test_add_vscsi_mapping_root_uri(self):
+        # Use root lpar URI
+        href = ('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/' +
+                LPAR_UUID)
+        self.mock_crt_href.return_value = href
+
+        self.adpt.read.return_value = self.v2resp
+
+        # Validate that mapping was modified
+        def validate_update(*kargs, **kwargs):
+            vios_w = kargs[0]
+            # Assert that the new mapping is using the root URI
+            self.assertEqual(href, vios_w.scsi_mappings[-1].client_lpar_href)
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
+
+        # Add the vscsi mapping
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
+                                      pv)
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
+
     def test_add_map(self):
         """Tests the add_map method."""
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
@@ -575,8 +601,20 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(maps[26], matches[1])
 
     def test_separate_mappings(self):
+        # Test with child URI
         client_href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                        '726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/'
+                       '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
+        sep = scsi_mapper._separate_mappings(self.v2wrap, client_href)
+        self.assertEqual(2, len(sep))
+        self.assertEqual(
+            {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
+            set(sep.keys()))
+        self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
+                         self.v2wrap.scsi_mappings[-2])
+
+        # Test with root URI
+        client_href = ('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/'
                        '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
         sep = scsi_mapper._separate_mappings(self.v2wrap, client_href)
         self.assertEqual(2, len(sep))
