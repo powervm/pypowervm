@@ -185,6 +185,8 @@ class DefaultStandardize(Standardize):
         :param avail_priority: availability priority of the LPAR
         :param srr: simplified remote restart capable
         :param proc_compat: processor compatibility mode value
+        :param enable_lpar_metric: LPAR performance data collection attribute
+            enabled only if value is true
         """
 
         super(DefaultStandardize, self).__init__()
@@ -702,7 +704,7 @@ class IDBoundField(IntBoundField):
 
 
 class EnableLparMetric(BoolField):
-    _name = 'Enable Lpar Metric'
+    _name = 'Enable LPAR Metric'
 
 
 class SimplifiedRemoteRestart(BoolField):
