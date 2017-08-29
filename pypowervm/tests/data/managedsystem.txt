@@ -124,6 +124,7 @@ BODY{
         <VirtualNICDedicatedSRIOVCapable kxe="false" kb="ROO">true</VirtualNICDedicatedSRIOVCapable>
         <VirtualNICFailOverCapable ksv="V1_4_0" kxe="false" kb="ROO">true</VirtualNICFailOverCapable>
         <DynamicSimplifiedRemoteRestartToggleCapable ksv="V1_5_0" kb="ROO" kxe="false">true</DynamicSimplifiedRemoteRestartToggleCapable>
+        <CustomPhysicalPageTableRatioCapable ksv="V1_6_0" kb="ROO" kxe="false">true</CustomPhysicalPageTableRatioCapable>
     </AssociatedSystemCapabilities>
     <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>

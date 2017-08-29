@@ -36,6 +36,12 @@ MEM = 'memory'
 MAX_MEM = 'max_mem'
 MIN_MEM = 'min_mem'
 AME_FACTOR = 'ame_factor'
+PPT_RATIO = 'ppt_ratio'
+# Contains the mapping of the ratio to REST accepted values. REST does
+# not take the actual ratio value as argument, instead it takes an
+# enumeration of accepted values starting from 0.
+ALLOWED_PPT_RATIOS = {'1:64': 0, '1:128': 1, '1:256': 2, '1:512': 3,
+                      '1:1024': 4, '1:2048': 5, '1:4096': 6}
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -247,6 +253,13 @@ class DefaultStandardize(Standardize):
                      attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
         mem.validate()
+
+        host_ppt_cap = self.mngd_sys.get_capability(
+            'physical_page_table_ratio_capable')
+        pptr = PhysicalPageTableRatio(attrs.get(PPT_RATIO), host_ppt_cap)
+        pptr.validate()
+        if pptr.value:
+            self.attr[PPT_RATIO] = pptr.convert_value(pptr.value)
 
     def _validate_shared_proc(self, attrs=None, partial=False):
         if attrs is None:
@@ -709,6 +722,36 @@ class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
 
 
+class PhysicalPageTableRatio(ChoiceField):
+    _name = 'Physical Page Table Ratio'
+    _choices = ALLOWED_PPT_RATIOS.keys()
+
+    def __init__(self, value, host_cap, allow_none=True):
+        super(PhysicalPageTableRatio, self).__init__(
+            value, allow_none=allow_none)
+        self.host_cap = host_cap
+
+    @classmethod
+    def convert_value(cls, value):
+        """Converts the ratio as a string to the REST accepted values."""
+        return ALLOWED_PPT_RATIOS[value]
+
+    def _convert_value(self, value):
+        # Override Field class definition to avoid KeyErrors on bad values
+        # when validation is run.
+        return value
+
+    def validate(self):
+        """Performs validation of the PPT ratio attribute."""
+        super(PhysicalPageTableRatio, self).validate()
+
+        # Validate the host capability
+        if not self.host_cap and self.value:
+            msg = ("The managed system does not support setting the physical "
+                   "page table ratio.")
+            raise ValueError(msg)
+
+
 class RestrictedIO(BoolField):
     _name = 'Restricted IO'
 
@@ -757,6 +800,10 @@ class LPARBuilder(object):
         if self.attr.get(AME_FACTOR) is not None:
             exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
             mem_wrap.exp_factor = exp_fact_float
+        # The PPT ratio should've been converted to REST format by the
+        # Standardizer.
+        if self.stdz.attr.get(PPT_RATIO) is not None:
+            mem_wrap.ppt_ratio = self.stdz.attr.get(PPT_RATIO)
         return mem_wrap
 
     def _shared_proc_keys_specified(self):
