@@ -1141,16 +1141,19 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
     """
 
     @classmethod
-    def bld(cls, adapter, max_virt_slots):
+    def bld(cls, adapter, max_virt_slots, io_slots=None):
         """Builds a Partition IO configuration wrapper.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
         :param max_virt_slots: Number of virtual slots (int)
+        :param io_slots: I/O slots to assign to the LPAR (list of IOSlot).
         :returns: Partition IO configuration wrapper
 
         """
         cfg = super(PartitionIOConfiguration, cls)._bld(adapter)
         cfg.max_virtual_slots = max_virt_slots
+        if io_slots is not None:
+            cfg.io_slots = io_slots
 
         return cfg
 
