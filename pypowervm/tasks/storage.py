@@ -664,28 +664,35 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
 
 
-def rescan_vstor(vio, vstor):
+def rescan_vstor(vio, vstor, adapter=None):
     """Update the internal metadata for a virtual storage object.
 
-    :param vio: A VIOS wrapper of the VIOS on which to perform the rescan.
-    :param vstor: The VDisk or FileIO wrapper of the storage object to rescan.
+    :param vio: A VIOS wrapper or UUID string of the VIOS on which to perform
+                the rescan.
+    :param vstor: The VDisk wrapper or udid of the storage object to rescan.
+    :param adapter: A pypowervm.adapter.Adapter for REST API communication.
+                    Required if neither vio nor vstor is a wrapper, optional
+                    otherwise.
     :raises AdapterNotFound: If no adapter attribute can be found.
     :raises JobRequestFailed: If the rescan failed.
     :raises JobRequestTimedOut: If the rescan Job timed out.
     """
-
-    adapter = getattr(vio, 'adapter', None) or getattr(vstor, 'adapter', None)
+    adapter = (adapter or getattr(vio, 'adapter', None)
+               or getattr(vstor, 'adapter', None))
     if not adapter:
         raise exc.AdapterNotFound()
 
+    vio_uuid = getattr(vio, 'uuid', vio)
+    stor_udid = getattr(vstor, 'udid', vstor)
+
     job_w = job.Job.wrap(adapter.read(
-        vios.VIOS.schema_type, root_id=vio.uuid,
+        vios.VIOS.schema_type, root_id=vio_uuid,
         suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_RESCAN_VSTOR))
 
-    job_p = [job_w.create_job_parameter('VirtualDiskUDID', vstor.udid)]
+    job_p = [job_w.create_job_parameter('VirtualDiskUDID', stor_udid)]
 
     # Exceptions raise up.  Otherwise, no news is good news.
-    job_w.run_job(vio.uuid, job_parms=job_p)
+    job_w.run_job(vio_uuid, job_parms=job_p)
 
 
 @lock.synchronized(_LOCK_VOL_GRP)

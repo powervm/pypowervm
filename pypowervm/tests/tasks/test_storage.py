@@ -615,6 +615,11 @@ class TestVDisk(testtools.TestCase):
         self.assertEqual(1, self.adpt.read.call_count)
         self.assertEqual(1, mock_run_job.call_count)
 
+        mock_vio = "vios_uuid"
+        mock_vopt = "stor_udid"
+        ts.rescan_vstor(mock_vio, mock_vopt, adapter=self.adpt)
+        self.assertEqual(2, mock_run_job.call_count)
+
 
 class TestRMStorage(testtools.TestCase):
     def setUp(self):
