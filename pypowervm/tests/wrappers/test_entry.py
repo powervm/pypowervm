@@ -1157,7 +1157,7 @@ class TestRefresh(testtools.TestCase):
 
 class TestUpdate(testtools.TestCase):
     clust_uuid = 'cluster_uuid'
-    clust_path = '/rest/api/uom/Cluster' + clust_uuid
+    clust_path = '/rest/api/uom/Cluster/' + clust_uuid
     clust_href = 'https://server:12443' + clust_path
     clust_etag = '123'
 
@@ -1182,6 +1182,24 @@ class TestUpdate(testtools.TestCase):
         newcl = self.cl.update()
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path, timeout=3600)
+        _assert_clusters_equal(self, self.cl, newcl)
+        self.assertEqual(newcl.etag, new_etag)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_force_update(self, mock_ubp):
+        # Update the entry with the new properties
+        get_href = self.clust_href + "?group=None"
+        props = {'id': self.clust_uuid, 'links': {'SELF': [get_href]}}
+        self.cl.entry.properties = props
+
+        new_etag = '456'
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp.entry = self.cl.entry
+        mock_ubp.return_value = resp
+        newcl = self.cl.update(force=True)
+        mock_ubp.assert_called_with(
+            self.cl, self.clust_etag, self.clust_path +
+            '?group=None&force=true', timeout=3600)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
