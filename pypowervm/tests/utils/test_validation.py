@@ -56,7 +56,7 @@ class TestValidator(testtools.TestCase):
                       env='AIX/Linux', proc_compat='Default', srr_enabled=True,
                       min_vcpus=1, des_vcpus=2, max_vcpus=4,
                       min_proc_units=0.1, max_proc_units=1.0, pool_id=None,
-                      exp_factor=0.0, ame_enabled=False, ppt_ratio=0):
+                      exp_factor=0.0, ame_enabled=False, ppt_ratio=None):
             lpar_w = mock.MagicMock()
             # name, states, env, etc.
             lpar_w.name = name
@@ -255,6 +255,10 @@ class TestValidator(testtools.TestCase):
         vldr = vldn.LPARWrapperValidator(self.lpar_ppt_1, self.mngd_sys,
                                          cur_lpar_w=self.lpar_ppt_2)
         self.assertRaises(vldn.ValidatorException, vldr.validate_all)
+        # Test not changing PPT ratio passes during active resize
+        vldr = vldn.LPARWrapperValidator(self.lpar_1_proc, self.mngd_sys,
+                                         cur_lpar_w=self.lpar_ppt_2)
+        vldr.validate_all()
         # Test resizing lpar from defaultSPP to non-defaultSPP passes
         vldr = vldn.LPARWrapperValidator(self.lpar_non_default_spp,
                                          self.mngd_sys,
