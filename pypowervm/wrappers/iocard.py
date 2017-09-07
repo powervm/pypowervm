@@ -33,6 +33,7 @@ _IO_ADPT_CHOICE = 'IOAdapterChoice'
 # SR-IOV Adapter constants
 _SRIOV_ADAPTER_ID = 'SRIOVAdapterID'
 _SRIOV_ADAPTER_MODE = 'AdapterMode'
+_SRIOV_ADAPTER_PERSONALITY = 'Personality'
 _SRIOV_ADAPTER_STATE = 'AdapterState'
 
 _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
@@ -126,6 +127,7 @@ _SRIOVLP_IS_DEBUG = 'IsDebug'
 _SRIOVLP_IS_HUGE_DMA = 'IsHugeDMA'
 _SRIOVLP_DEV_NAME = 'DeviceName'
 _SRIOVLP_CFG_CAPACITY = 'ConfiguredCapacity'
+_SRIOVLP_CFG_MAX_CAPACITY = 'ConfiguredMaxCapacity'
 _SRIOVLP_PPORT_ID = 'PhysicalPortID'
 _SRIOVLP_PVID = 'PortVLANID'
 _SRIOVLP_LOC_CODE = 'LocationCode'
@@ -145,11 +147,11 @@ _SRIOVLP_EL_ORDER = (
     _SRIOVLP_CFG_ID, _SRIOVLP_ID, _SRIOVLP_ADPT_ID, _SRIOVLP_DRC_NAME,
     _SRIOVLP_IS_FUNC, _SRIOVLP_IS_PROMISC, _SRIOVLP_IS_DIAG, _SRIOVLP_IS_DEBUG,
     _SRIOVLP_IS_HUGE_DMA, _SRIOVLP_DEV_NAME, _SRIOVLP_CFG_CAPACITY,
-    _SRIOVLP_PPORT_ID, _SRIOVLP_PVID, _SRIOVLP_LOC_CODE,
-    _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE, _SRIOVLP_ASSOC_LPARS,
-    _SRIOVLP_ALLOWED_MACS, _SRIOVLP_MAC, _SRIOVLP_CUR_MAC,
-    _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI, _SRIOVLP_MAC_FLAGS,
-    _SRIOVLP_NUM_ALLOWED_VLANS, _SRIOVLP_ALLOWED_VLANS)
+    _SRIOVLP_CFG_MAX_CAPACITY, _SRIOVLP_PPORT_ID, _SRIOVLP_PVID,
+    _SRIOVLP_LOC_CODE, _SRIOVLP_TUNING_BUF_ID, _SRIOVLP_VNIC_PORT_USAGE,
+    _SRIOVLP_ASSOC_LPARS, _SRIOVLP_ALLOWED_MACS, _SRIOVLP_MAC,
+    _SRIOVLP_CUR_MAC, _SRIOVLP_8021Q_ALLOW_PRI, _SRIOVLP_8021Q_PRI,
+    _SRIOVLP_MAC_FLAGS, _SRIOVLP_NUM_ALLOWED_VLANS, _SRIOVLP_ALLOWED_VLANS)
 
 # Top-level VNIC properties
 _VNIC_DED = 'VirtualNICDedicated'
@@ -182,6 +184,9 @@ _VNICD_OS_DEV_NAME = 'OSDeviceName'
 _VNICD_DES_MODE = 'DesiredMode'
 _VNICD_DES_CAP_PCT = 'DesiredCapacityPercentage'
 _VNICD_AUTO_FB = 'AutoFailBack'
+_VNICD_IP_ADDR = 'IPAddress'
+_VNICD_SUBNET_MASK = 'SubnetMask'
+_VNICD_GATEWAY = 'Gateway'
 
 _VNICD_EL_ORDER = (
     _VNICD_PVID, _VNICD_PVID_PRI, _VNICD_ALLOWED_VLANS, _VNICD_MAC,
@@ -201,9 +206,11 @@ _VNICBD_FAILOVER_PRI = 'FailOverPriority'
 _VNICBD_ACTION = 'BackingDeviceAction'
 _VNICBD_SRIOV_ADP_ID = 'RelatedSRIOVAdapterID'
 _VNICBD_CUR_CAP_PCT = 'CurrentCapacityPercentage'
+_VNICBD_MAX_CAP_PCT = 'MaxCapacityPercentage'
 _VNICBD_PPORT_ID = 'RelatedSRIOVPhysicalPortID'
 _VNICBD_LPORT = 'RelatedSRIOVLogicalPort'
 _VNICBD_DES_CAP_PCT = 'DesiredCapacityPercentage'
+_VNIC_BD_DES_MAX_CAP_PCT = 'DesiredMaxCapacityPercentage'
 # For building the VIOS HREF.  (Would have liked to use pypowervm.wrappers.
 # virtual_io_server.VIOS.schema_type, but circular import.)
 _VIOS = 'VirtualIOServer'
@@ -211,8 +218,9 @@ _VIOS = 'VirtualIOServer'
 _VNICBD_EL_ORDER = (
     _VNICBD_DEV_TYP, _VNICBD_VIOS, _VNICBD_SWITCH, _VNICBD_VNIC,
     _VNICBD_ACTIVE, _VNICBD_STATUS, _VNICBD_FAILOVER_PRI, _VNICBD_ACTION,
-    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_PPORT_ID, _VNICBD_LPORT,
-    _VNICBD_DES_CAP_PCT)
+    _VNICBD_SRIOV_ADP_ID, _VNICBD_CUR_CAP_PCT, _VNICBD_MAX_CAP_PCT,
+    _VNICBD_PPORT_ID, _VNICBD_LPORT, _VNICBD_DES_CAP_PCT,
+    _VNIC_BD_DES_MAX_CAP_PCT)
 
 # Physical Fibre Channel Port Constants
 _PFC_PORT_LOC_CODE = 'LocationCode'
@@ -231,6 +239,14 @@ class SRIOVAdapterMode(object):
     DEDICATED = 'Dedicated'
     FORCE_DEDICATED = 'ForceDedicated'
     UNKNOWN = 'unknown'
+
+
+class SRIOVAdapterPersonality(object):
+    """Enum for SR-IOV adapter personalities (from SRIOVPersonality.Enum). """
+    NO_QOS = "NO_QOS"
+    MIN_CAPACITY = "MIN_CAPACITY"
+    MAX_MIN_CAPACITY = "MAX_MIN_CAPACITY"
+    UNKNOWN = "UNKNOWN"
 
 
 class SRIOVAdapterState(object):
@@ -412,6 +428,10 @@ class SRIOVAdapter(IOAdapter):
         self.set_parm_value(_SRIOV_ADAPTER_MODE, value)
 
     @property
+    def personality(self):
+        return self._get_val_str(_SRIOV_ADAPTER_PERSONALITY)
+
+    @property
     def state(self):
         return self._get_val_str(_SRIOV_ADAPTER_STATE)
 
@@ -585,7 +605,7 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
     @classmethod
     def bld(cls, adapter, sriov_adap_id, pport_id, pvid=None, mac=None,
             allowed_vlans=u.VLANList.ALL, allowed_macs=u.MACList.ALL,
-            is_promisc=False, cfg_capacity=None):
+            is_promisc=False, cfg_capacity=None, max_capacity=None):
         """Create a wrapper used to create a logical port on the server.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -613,7 +633,13 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
                              this logical port will receive, as a percentage
                              of bandwidth available from the physical port.
                              The valid values are 0.0 <= x <= 1.0 up to 2
-                             decimal places.  This will be intrepreted as a
+                             decimal places.  This will be interpreted as a
+                             percentage, where 0.02 == 2%.
+        :param max_capacity: The configured max capacity of the logical port as
+                             a percentage.  This represents the maximum
+                             bandwidth this logical port will receive.
+                             The valid values are 0.0 <= x <= 1.0 up to 2
+                             decimal places.  This will be interpreted as a
                              percentage, where 0.02 == 2%.
         """
         lport = super(SRIOVEthLPort, cls)._bld(adapter)
@@ -626,8 +652,10 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
             lport._mac(mac)
         lport.allowed_macs = allowed_macs
         lport._is_promisc(is_promisc)
-        if cfg_capacity:
+        if cfg_capacity is not None:
             lport._cfg_capacity(cfg_capacity)
+        if max_capacity is not None:
+            lport._cfg_max_capacity(max_capacity)
         return lport
 
     @property
@@ -666,10 +694,29 @@ class SRIOVEthLPort(ewrap.EntryWrapper):
         """The configured capacity
 
         :param value: The configured capacity value.  The valid values are
-                      0.0 <= x <=1.0 up to 2 decimal places.  This will be
-                      intrepreted as a percentage, where 0.02 == 2%.
+                      0.0 <= x <= 1.0 up to 2 decimal places.  This will be
+                      interpreted as a percentage, where 0.02 == 2%.
         """
         self.set_parm_value(_SRIOVLP_CFG_CAPACITY,
+                            u.sanitize_percent_for_api(value))
+
+    @property
+    def cfg_max_capacity(self):
+        """Gets the configured maximum capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_SRIOVLP_CFG_MAX_CAPACITY)
+
+    def _cfg_max_capacity(self, value):
+        """The configured maximum capacity
+
+        :param value: The configured max capacity value.  The valid values are
+                      0.0 <= x <= 1.0 up to 2 decimal places.  This will be
+                      interpreted as a percentage, where 0.02 == 2%.
+        """
+        self.set_parm_value(_SRIOVLP_CFG_MAX_CAPACITY,
                             u.sanitize_percent_for_api(value))
 
     @property
@@ -893,6 +940,21 @@ class VNIC(ewrap.EntryWrapper):
     def auto_pri_failover(self, val):
         self._details.auto_pri_failover = val
 
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def ip_address(self):
+        """Returns the IP Address of the network interface."""
+        return self._details.ip_address
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface."""
+        return self._details.subnet_mask
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def gateway(self):
+        """Returns the gateway of the network interface."""
+        return self._details.gateway
+
 
 @ewrap.ElementWrapper.pvm_type(_VNIC_DETAILS, has_metadata=True,
                                child_order=_VNICD_EL_ORDER)
@@ -977,6 +1039,36 @@ class _VNICDetails(ewrap.ElementWrapper):
     def auto_pri_failover(self, val):
         self.set_parm_value(_VNICD_AUTO_FB, u.sanitize_bool_for_api(val))
 
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def ip_address(self):
+        """Returns the IP Address of the network interface.
+
+        Typical format would be: 255.255.255.255 (IPv4)
+        and ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff (IPv6)
+        or other short forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_IP_ADDR)
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def subnet_mask(self):
+        """Returns the subnet mask of the network interface.
+
+        Typical format would be: 255.255.255.0 (IPv4)
+        and ffff:ffff:ffff:ffff:: (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_SUBNET_MASK)
+
+    @ewrap.Wrapper.xag_property(pc.XAG.ADV)
+    def gateway(self):
+        """Returns the gateway of the network interface.
+
+        Typical format would be: 10.0.0.1 (IPv4)
+        and cafe::1 (IPv6)
+        or other forms of IPv6 address
+        """
+        return self._get_val_str(_VNICD_GATEWAY)
+
 
 @ewrap.ElementWrapper.pvm_type(_VNICBD, has_metadata=True,
                                child_order=_VNICBD_EL_ORDER)
@@ -985,7 +1077,7 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     @classmethod
     def bld(cls, adapter, vios_uuid, sriov_adap_id, pport_id, capacity=None,
-            failover_pri=None):
+            failover_pri=None, max_capacity=None):
         """Create a new VNICBackDev, suitable for inclusion in a VNIC wrapper.
 
         :param adapter: pypowervm.adapter.Adapter for REST API communication.
@@ -1004,6 +1096,9 @@ class VNICBackDev(ewrap.ElementWrapper):
                          SRIOVEthPPort.min_granularity is used by the platform.
         :param failover_pri: Positive integer value representing the failover
                              priority of this backing device.
+        :param max_capacity: Float value between 0.0 and 1.0 indicating the
+                             maximum fraction of the physical port's bandwidth
+                             allocated to traffic over this backing device.
         :return: A new VNICBackDev, suitable for inclusion in a VNIC wrapper.
         """
         bdev = super(VNICBackDev, cls)._bld(adapter)
@@ -1015,6 +1110,8 @@ class VNICBackDev(ewrap.ElementWrapper):
             bdev._capacity(capacity)
         if failover_pri is not None:
             bdev.failover_pri = failover_pri
+        if max_capacity is not None:
+            bdev._max_capacity(max_capacity)
         return bdev
 
     @property
@@ -1054,6 +1151,28 @@ class VNICBackDev(ewrap.ElementWrapper):
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
                             u.sanitize_percent_for_api(float_val))
+
+    @property
+    def max_capacity(self):
+        """Gets the max capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_VNICBD_MAX_CAP_PCT)
+
+    def _max_capacity(self, float_val):
+        self.set_parm_value(_VNICBD_MAX_CAP_PCT,
+                            u.sanitize_percent_for_api(float_val))
+
+    @property
+    def desired_max_capacity(self):
+        """Gets the desired max capacity in a float-percentage format.
+
+        :return: If the property is say "2.45%", a value of .0245 will be
+                 returned.
+        """
+        return self._get_val_percent(_VNIC_BD_DES_MAX_CAP_PCT)
 
     @property
     def failover_pri(self):

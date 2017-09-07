@@ -23,7 +23,9 @@ from pypowervm.utils import wrappers as wutil
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import enterprise_pool as epool
 from pypowervm.wrappers import entry_wrapper as ewrap
+from pypowervm.wrappers import iocard
 from pypowervm.wrappers import logical_partition as lpar
+from pypowervm.wrappers import network
 from pypowervm.wrappers import virtual_io_server as vios
 
 
@@ -75,6 +77,12 @@ class TestXAGs(testtools.TestCase):
             elif wcls in (bp.BasePartition, lpar.LPAR):
                 self.verify_xags(wcls, {
                     'nvram': c.XAG.NVRAM
+                })
+            elif wcls in (network.CNA, iocard.VNIC, iocard._VNICDetails):
+                self.verify_xags(wcls, {
+                    'ip_address': c.XAG.ADV,
+                    'subnet_mask': c.XAG.ADV,
+                    'gateway': c.XAG.ADV
                 })
             # Include an elif for each Wrapper subclass that has xags defined.
             else:

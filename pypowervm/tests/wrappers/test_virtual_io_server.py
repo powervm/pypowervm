@@ -558,11 +558,15 @@ class TestCrtRelatedHref(unittest.TestCase):
     @mock.patch('pypowervm.adapter.Session')
     def test_crt_related_href(self, mock_sess):
         """Tests to make sure that related elements are well formed."""
+        # Test with host_uuid defined
         mock_sess.dest = 'root'
         adapter = adpt.Adapter(mock_sess)
         href = vios.VStorageMapping.crt_related_href(adapter, 'host', 'lpar')
         self.assertEqual('root/rest/api/uom/ManagedSystem/host/'
                          'LogicalPartition/lpar', href)
+        # Test with host_uuid = None
+        href = vios.VStorageMapping.crt_related_href(adapter, None, 'lpar')
+        self.assertEqual('root/rest/api/uom/LogicalPartition/lpar', href)
 
 
 class TestVSCSIBus(twrap.TestWrapper):

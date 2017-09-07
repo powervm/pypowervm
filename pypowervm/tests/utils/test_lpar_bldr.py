@@ -38,7 +38,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.sections = xml_sections.load_xml_sections(LPAR_BLDR_DATA)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
-        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame):
+        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame, ppt):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -50,7 +50,8 @@ class TestLPARBuilder(testtools.TestCase):
                 capabilities = {
                     'simplified_remote_restart_capable': srr,
                     'ibmi_restrictedio_capable': True,
-                    'active_memory_expansion_capable': ame
+                    'active_memory_expansion_capable': ame,
+                    'physical_page_table_ratio_capable': ppt
                 }
                 return capabilities[cap]
             mngd_sys.get_capability.side_effect = get_cap
@@ -60,18 +61,21 @@ class TestLPARBuilder(testtools.TestCase):
             return mngd_sys
 
         self.mngd_sys = _bld_mgd_sys(20.0, 128, True,
-                                     bp.LPARCompat.ALL_VALUES, False)
+                                     bp.LPARCompat.ALL_VALUES, False, False)
         self.mngd_sys_no_srr = _bld_mgd_sys(20.0, 128, False, ['POWER6'],
-                                            False)
+                                            False, False)
         self.mngd_sys_ame = _bld_mgd_sys(20.0, 128, True,
-                                         bp.LPARCompat.ALL_VALUES, True)
+                                         bp.LPARCompat.ALL_VALUES, True, False)
+        self.mngd_sys_ppt = _bld_mgd_sys(20.0, 128, True,
+                                         bp.LPARCompat.ALL_VALUES, False, True)
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
         self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
+        self.stdz_sys4 = lpar_bldr.DefaultStandardize(self.mngd_sys_ppt)
 
     def assert_xml(self, entry, string):
-        self.assertEqual(entry.element.toxmlstring(),
-                         six.b(string.rstrip('\n')))
+        self.assertEqual(six.b(string.rstrip('\n')),
+                         entry.element.toxmlstring())
 
     def test_proc_modes(self):
         # Base minimum attrs
@@ -170,6 +174,13 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['shared_lpar'])
 
+        # Check the PPT ratio element builds correctly
+        attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
+                    vcpu=1, ppt_ratio='1:512')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys4)
+        new_lpar = bldr.build()
+        self.assert_xml(new_lpar, self.sections['ppt_lpar'])
+
         # LPAR name too long
         attr = dict(name='lparlparlparlparlparlparlparlparlparlparlparlpar'
                     'lparlparlparlparlparlparlparlparlparlparlparlparlparlpar',
@@ -220,10 +231,10 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)
 
-        # Uncapped / capped shared procs
+        # Uncapped / capped shared procs and enabled lpar metrics
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
                     vcpu=1, sharing_mode=bp.SharingMode.CAPPED,
-                    srr_capability='true')
+                    srr_capability='true', enable_lpar_metric=True)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['capped_lpar'])
@@ -266,6 +277,18 @@ class TestLPARBuilder(testtools.TestCase):
         # AME outside valid range
         attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
                     ame_factor='0.5')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
+        self.assertRaises(ValueError, bldr.build)
+
+        # PPT not supported on host
+        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
+                    ppt_ratio='1:64')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
+        self.assertRaises(ValueError, bldr.build)
+
+        # PPT ratio not a valid choice
+        attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
+                    ppt_ratio='1:76')
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
         self.assertRaises(ValueError, bldr.build)
 
@@ -358,6 +381,26 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assertEqual(new_lpar.avail_priority, 255)
 
+        # Enable Lpar metric with correct value as true
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='true')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.allow_perf_data_collection, True)
+
+        # Enable Lpar metric with correct value as false
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='false')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        self.assertEqual(new_lpar.allow_perf_data_collection, False)
+
+        # Enable Lpar Metric with bad parm other than true or false
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enable_lpar_metric='BADVALUE')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        self.assertRaises(ValueError, bldr.build)
+
         # Proc compat
         for pc in bp.LPARCompat.ALL_VALUES:
             attr = dict(name='name', memory=1024, vcpu=1,
@@ -386,9 +429,11 @@ class TestLPARBuilder(testtools.TestCase):
         except Exception as e:
             self.assertEqual(six.text_type(e), exp_msg)
 
-        # Build a VIOS
+        # Build a VIOS with I/O slots
+        slots = [bp.IOSlot.bld(self.adpt, True, 12345),
+                 bp.IOSlot.bld(self.adpt, False, 54321)]
         attr = dict(name='TheName', env=bp.LPARType.VIOS, memory=1024,
-                    vcpu=1, dedicated_proc=True)
+                    vcpu=1, dedicated_proc=True, phys_io_slots=slots)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertIsNotNone(bldr)
 
@@ -422,3 +467,21 @@ class TestLPARBuilder(testtools.TestCase):
         self.assertEqual('CONSOLE', tag_io.console)
         self.assertEqual('9', tag_io.load_src)
         self.assertEqual('9', tag_io.alt_load_src)
+
+    def test_io_slots(self):
+        attr = dict(name='TheName', memory=1024, vcpu=1)
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual([], nlpar.io_config.io_slots)
+
+        attr = dict(name='TheName', memory=1024, vcpu=1, phys_io_slots=[])
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual([], nlpar.io_config.io_slots)
+
+        slots = [bp.IOSlot.bld(self.adpt, True, 12345),
+                 bp.IOSlot.bld(self.adpt, False, 54321)]
+        attr = dict(name='TheName', memory=1024, vcpu=1, phys_io_slots=slots)
+        nlpar = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1).build()
+        self.assertEqual(len(slots), len(nlpar.io_config.io_slots))
+        for exp, act in zip(slots, nlpar.io_config.io_slots):
+            self.assertEqual(exp.drc_index, act.drc_index)
+            self.assertEqual(exp.bus_grp_required, act.bus_grp_required)

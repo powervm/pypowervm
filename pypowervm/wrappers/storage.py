@@ -32,6 +32,12 @@ LOG = logging.getLogger(__name__)
 
 UDID = 'UniqueDeviceID'
 
+# "Any" server adapters are SCSI adapters without client
+# adapters that map to remote LPAR slot number 65535. They
+# can map to any client and are not recommended but are
+# still supported.
+ANY_SLOT = 65535
+
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
 _DISK_CAPACITY = 'DiskCapacity'
@@ -56,6 +62,7 @@ class VDiskType(object):
     """From VirtualDiskType.Enum."""
     FILE = 'File'
     LV = 'LogicalVolume'
+    RBD = 'RBD'
 
 
 class BackStoreType(object):
@@ -64,6 +71,8 @@ class BackStoreType(object):
     FILE_IO = 'fileio'
     # A user-space handler that supports RAW, QCOW or QCOW2 files.
     USER_QCOW = 'user:qcow'
+    # A user-space handler that supports rbd
+    USER_RBD = 'user:rbd'
 
 
 class FileFormatType(object):
@@ -764,6 +773,33 @@ class FileIO(_VDisk):
     def path(self):
         """Alias for 'label'."""
         return self.label
+
+
+@ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
+                               child_order=_VDISK_EL_ORDER)
+class RBD(_VDisk):
+    """A special case of VirtualDisk representing an RBD object.
+
+    Do not PUT (.create) this wrapper directly.  Attach it to a VSCSIMapping
+    and PUT that instead.
+    """
+    target_dev_type = VDiskTargetDev
+
+    @classmethod
+    def bld_ref(cls, adapter, name):
+        """Creates a FileIO reference for inclusion in a VSCSIMapping.
+
+        :param adapter: A pypowervm.adapter.Adapter for the REST API.
+        :param path: The file system path of the File I/O object.
+        :return: An Element that can be attached to a VSCSIMapping to create a
+                 File I/O mapping on the server.
+        """
+        rbd = super(RBD, cls)._bld(adapter)
+        rbd.name = name
+        rbd._label(name)
+        rbd._vdtype(VDiskType.RBD)
+        rbd._backstore_type(BackStoreType.USER_RBD)
+        return rbd
 
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,

@@ -49,6 +49,9 @@ BODY{
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kxe="false" kb="ROR">0</VirtualSwitchID>
     <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=994580c7-df12-4865-b066-6e5587475b7c,iface-status=active,attached-mac=fa:6c:c2:55:0a:20,vm-uuid=8702dd36-e405-407f-bd75-224babc04da5</OvsPortExternalIds>
     <VirtualNetworks kxe="false" kb="CUR">
         <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualNetwork/25a38933-a9e8-3cb2-baf3-0db62f1e258b" rel="related"/>
     </VirtualNetworks>
@@ -86,6 +89,9 @@ BODY{
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kxe="false" kb="ROR">0</VirtualSwitchID>
     <TrunkPriority kb="CUD" kxe="false">1</TrunkPriority>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=f35362c3-5213-4398-b1d8-c06dce3a50ca,iface-status=active,attached-mac=fa:a7:49:c0:1a:20,vm-uuid=abf12ade-9743-4a5a-af5e-1bc88d505886</OvsPortExternalIds>
     <VirtualNetworks kxe="false" kb="CUR">
         <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualNetwork/848e3f18-16a5-33ae-87a2-3ad1a697ff97" rel="related"/>
     </VirtualNetworks>
@@ -122,6 +128,9 @@ BODY{
         <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualSwitch/31cd66a8-ddd5-3bf2-95fe-2301d10e0fad" rel="related"/>
     </AssociatedVirtualSwitch>
     <VirtualSwitchID kxe="false" kb="ROR">1</VirtualSwitchID>
+    <ConfiguredMTU ksv="V1_6_0" kxe="false" kb="CUD">1500</ConfiguredMTU>
+    <OvsBridge ksv="V1_6_0" kb="CUD" kxe="false">br-int</OvsBridge>
+    <OvsPortExternalIds ksv="V1_6_0" kxe="false" kb="CUD">iface-id=ba9d8ec3-64b2-47fe-9f50-e12ba373814c,iface-status=active,attached-mac=fa:e6:c8:3f:80:20,vm-uuid=64443c49-920d-47d7-9b78-1216845c51f5</OvsPortExternalIds>
     <VirtualNetworks kxe="false" kb="CUR">
         <link href="http://localhost:12080/rest/api/uom/ManagedSystem/95c2990a-e412-3ac8-92f4-058278b32ea2/VirtualNetwork/cd9135e6-503a-3757-8460-b089c0addafc" rel="related"/>
     </VirtualNetworks>

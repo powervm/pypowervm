@@ -18,6 +18,7 @@
 import mock
 import testtools
 
+from pypowervm import exceptions as exc
 from pypowervm.tasks import scsi_mapper
 from pypowervm.tests.tasks import util as tju
 from pypowervm.tests import test_fixtures as fx
@@ -169,6 +170,31 @@ class TestSCSIMapper(testtools.TestCase):
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
+    def test_add_vscsi_mapping_root_uri(self):
+        # Use root lpar URI
+        href = ('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/' +
+                LPAR_UUID)
+        self.mock_crt_href.return_value = href
+
+        self.adpt.read.return_value = self.v2resp
+
+        # Validate that mapping was modified
+        def validate_update(*kargs, **kwargs):
+            vios_w = kargs[0]
+            # Assert that the new mapping is using the root URI
+            self.assertEqual(href, vios_w.scsi_mappings[-1].client_lpar_href)
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
+
+        # Add the vscsi mapping
+        scsi_mapper.add_vscsi_mapping('host_uuid', 'vios_uuid', LPAR_UUID,
+                                      pv)
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+
     def test_add_map(self):
         """Tests the add_map method."""
         pv = pvm_stor.PV.bld(self.adpt, 'pv_name', 'pv_udid')
@@ -200,6 +226,80 @@ class TestSCSIMapper(testtools.TestCase):
                                       stg_elem=pv)
         self.assertEqual(1, len(found))
         self.assertEqual(scsi_map, found[0])
+
+    def test_remap_storage_vopt(self):
+        # Mock data
+        self.adpt.read.return_value = self.v1resp
+
+        # Validate that mapping was modified
+        def validate_update(*kargs, **kwargs):
+            vios_w = kargs[0]
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        # Run modify code using media name
+        media_name = 'bldr1_dfe05349_kyleh_config.iso'
+        vopt = pvm_stor.VOptMedia.bld(self.adpt, 'new_media.iso', size=1)
+        vios, mod_map = scsi_mapper.modify_vopt_mapping(
+            self.adpt, 'fake_vios_uuid', 2,
+            new_media=vopt, media_name=media_name)
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertIsNotNone(mod_map)
+        self.assertIsInstance(mod_map.backing_storage, pvm_stor.VOptMedia)
+        self.assertEqual(mod_map.backing_storage.name, vopt.name)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
+
+        # Ensure exceptions raised correctly
+        vopt2 = pvm_stor.VOptMedia.bld(self.adpt, 'new_media2.iso', size=1)
+        vopt3 = pvm_stor.VOptMedia.bld(self.adpt, 'new_media3.iso', size=1)
+        scsi_mapper.add_vscsi_mapping(
+            'host_uuid', 'vios_uuid', LPAR_UUID, vopt3)
+
+        self.adpt.update_by_path.reset_mock()
+        self.adpt.read.reset_mock()
+
+        # Zero matching maps found
+        self.assertRaises(
+            exc.SingleMappingNotFoundRemapError,
+            scsi_mapper.modify_vopt_mapping, self.adpt, 'fake_vios_uuid', 2,
+            new_media=vopt, media_name="no_matches.iso")
+        self.assertEqual(0, self.adpt.update_py_path.call_count)
+
+        # More than one matching maps found
+        self.assertRaises(
+            exc.SingleMappingNotFoundRemapError,
+            scsi_mapper.modify_vopt_mapping, self.adpt,
+            'fake_vios_uuid', 2, new_media=vopt2)
+        self.assertEqual(0, self.adpt.update_py_path.call_count)
+
+        # New storage element already mapped
+        self.assertRaises(
+            exc.StorageMapExistsRemapError,
+            scsi_mapper.modify_vopt_mapping, self.adpt,
+            'fake_vios_uuid', 2, new_media=vopt3, media_name=vopt.name)
+        self.assertEqual(0, self.adpt.update_py_path.call_count)
+
+        # Run modify code using VIOS wrapper and media udid
+        media_udid = '0ebldr1_dfe05349_kyleh_config.iso'
+        vios_wrap = pvm_vios.VIOS.wrap(
+            tju.load_file(VIO_MULTI_MAP_FILE, self.adpt))
+        self.adpt.read.reset_mock()
+        vios, mod_map = scsi_mapper.modify_vopt_mapping(
+            self.adpt, vios_wrap, LPAR_UUID,
+            new_media=vopt, udid=media_udid)
+
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertIsNotNone(mod_map)
+        self.assertIsInstance(mod_map.backing_storage, pvm_stor.VOptMedia)
+        self.assertEqual(mod_map.backing_storage.name, vopt.name)
+        # But the VIOS was not "looked up"
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(vios_wrap.entry, vios.entry)
 
     def test_remove_storage_vopt(self):
         # Mock Data
@@ -500,6 +600,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(maps[26], matches[1])
 
     def test_separate_mappings(self):
+        # Test with child URI
         client_href = ('https://9.1.2.3:12443/rest/api/uom/ManagedSystem/'
                        '726e9cb3-6576-3df5-ab60-40893d51d074/LogicalPartition/'
                        '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
@@ -509,7 +610,18 @@ class TestSCSIMapper(testtools.TestCase):
             {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
             set(sep.keys()))
         self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
-                         self.v2wrap.scsi_mappings[-1])
+                         self.v2wrap.scsi_mappings[-2])
+
+        # Test with root URI
+        client_href = ('https://9.1.2.3:12443/rest/api/uom/LogicalPartition/'
+                       '0C0A6EBE-7BF4-4707-8780-A140F349E42E')
+        sep = scsi_mapper._separate_mappings(self.v2wrap, client_href)
+        self.assertEqual(2, len(sep))
+        self.assertEqual(
+            {'1eU8246.L2C.0604C7A-V1-C13', '1eU8246.L2C.0604C7A-V1-C25'},
+            set(sep.keys()))
+        self.assertEqual(sep['1eU8246.L2C.0604C7A-V1-C13'][0],
+                         self.v2wrap.scsi_mappings[-2])
 
     def test_index_mappings(self):
         idx = scsi_mapper.index_mappings(self.v2wrap.scsi_mappings)
@@ -519,7 +631,9 @@ class TestSCSIMapper(testtools.TestCase):
 
         exp_lpar_ids = ('2', '5', '6', '7', '10', '11', '12', '13', '14', '15',
                         '16', '17', '18', '19', '20', '21', '22', '23', '24',
-                        '27', '28', '29', '33', '35', '36', '39', '40')
+                        '27', '28', '29', '33', '35', '36', '39', '40',
+                        str(pvm_stor.ANY_SLOT))
+
         self.assertEqual(set(exp_lpar_ids), set(idx['by-lpar-id'].keys()))
         # Each mapping has a different LPAR ID, so each LPAR ID only has one
         # mapping
@@ -550,8 +664,8 @@ class TestSCSIMapper(testtools.TestCase):
             else:
                 self.assertEqual(1, len(maplist))
 
-        # Only five mappings have storage, and all are different
-        self.assertEqual(5, len(idx['by-storage-udid'].keys()))
+        # Only six mappings have storage, and all are different
+        self.assertEqual(6, len(idx['by-storage-udid'].keys()))
         for sudid in idx['by-storage-udid']:
             self.assertEqual(1, len(idx['by-storage-udid'][sudid]))
 

@@ -137,6 +137,10 @@ class LPARNotFound(AbstractMsgFmtError):
     msg_fmt = _('LPAR not found: %(lpar_name)s')
 
 
+class AdapterNotFound(AbstractMsgFmtError):
+    msg_fmt = _('Adapter not found')
+
+
 class JobRequestFailed(AbstractMsgFmtError):
     msg_fmt = _("The '%(operation_name)s' operation failed. %(error)s")
 
@@ -233,6 +237,18 @@ class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
                 "using a PV obtained through an unsupported property chain.  "
                 "The PV must be accessed via VIOS.phys_vols, VG.phys_vols, or "
                 "VIOS.scsi_mappings[n].backing_storage.")
+
+
+class SingleMappingNotFoundRemapError(AbstractMsgFmtError):
+    msg_fmt = _("Unable to remap storage element of vSCSI mapping. Expected "
+                "to find exactly one matching mapping, found "
+                "%(num_mappings)d.")
+
+
+class StorageMapExistsRemapError(AbstractMsgFmtError):
+    msg_fmt = _("Unable to remap storage element of vSCSI mapping. A mapping "
+                "for storage element %(stg_name)s already exists to client "
+                "LPAR %(lpar_uuid)s.")
 
 
 class FoundDevMultipleTimes(AbstractMsgFmtError):

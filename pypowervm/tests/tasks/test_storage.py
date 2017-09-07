@@ -582,6 +582,44 @@ class TestVDisk(testtools.TestCase):
         self.assertEqual(10, ret.capacity)
         self.assertEqual(stor.FileFormatType.RAW, ret.file_format)
 
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_rescan_vstor(self, mock_adpt_read, mock_run_job):
+        mock_vio = mock.Mock(adapter=None, uuid='vios_uuid')
+        mock_vopt = mock.Mock(adapter=None, udid='stor_udid')
+        mock_adpt_read.return_value = self.vg_resp
+
+        def verify_run_job(vios_uuid, job_parms=None):
+            self.assertEqual('vios_uuid', vios_uuid)
+            self.assertEqual(1, len(job_parms))
+            job_parm = (b'<web:JobParameter xmlns:web="http://www.ibm.com/'
+                        b'xmlns/systems/power/firmware/web/mc/2012_10/" '
+                        b'schemaVersion="V1_0"><web:ParameterName>'
+                        b'VirtualDiskUDID</web:ParameterName>'
+                        b'<web:ParameterValue>stor_udid</web:ParameterValue>'
+                        b'</web:JobParameter>')
+            self.assertEqual(job_parm, job_parms[0].toxmlstring())
+
+        mock_run_job.side_effect = verify_run_job
+
+        # Ensure that AdapterNotFound exception is raised correctly
+        self.assertRaises(
+            exc.AdapterNotFound, ts.rescan_vstor, mock_vio, mock_vopt)
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(0, mock_run_job.call_count)
+
+        # Add valid adapter
+        mock_vio.adapter = self.adpt
+        ts.rescan_vstor(mock_vio, mock_vopt)
+        # Validate method invocations
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(1, mock_run_job.call_count)
+
+        mock_vio = "vios_uuid"
+        mock_vopt = "stor_udid"
+        ts.rescan_vstor(mock_vio, mock_vopt, adapter=self.adpt)
+        self.assertEqual(2, mock_run_job.call_count)
+
 
 class TestRMStorage(testtools.TestCase):
     def setUp(self):
@@ -1153,9 +1191,13 @@ class TestScrub3(testtools.TestCase):
             self.assertIsNone(srm.client_adapter)
         # The right number of maps remain.
         self.assertEqual(vscsi_len - 18, len(vwrap.scsi_mappings))
+        # Assert the "any" adapter still exists in the mappings.
+        self.assertIn(stor.ANY_SLOT, [smp.server_adapter.lpar_slot_num for
+                                      smp in vwrap.scsi_mappings])
         # Remaining maps are not orphans.
         for smp in vwrap.scsi_mappings:
-            self.assertIsNotNone(smp.client_adapter)
+            if smp.server_adapter.lpar_slot_num != stor.ANY_SLOT:
+                self.assertIsNotNone(smp.client_adapter)
         # _RemoveOrphanVfcMaps doesn't "provide", so the following are limited.
         # The right number of maps remain.
         self.assertEqual(vfc_len - 19, len(vwrap.vfc_mappings))

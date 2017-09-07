@@ -415,10 +415,24 @@ class VStorageMapping(ewrap.ElementWrapper):
 
     @staticmethod
     def crt_related_href(adapter, host_uuid, client_lpar_uuid):
-        """Creates the Element for the 'AssociatedLogicalPartition'."""
-        return adapter.build_href(ms.System.schema_type, host_uuid,
-                                  lpar.LPAR.schema_type, client_lpar_uuid,
-                                  xag=[])
+        """Creates the Element for the 'AssociatedLogicalPartition'.
+
+        :param adapter: A pypowervm.adapter.Adapter.
+        :param host_uuid: The UUID of the ManagedSystem.  Specify None to get a
+                          ROOT link.
+        :param client_lpar_uuid: The UUID of the LPAR to which the mapping is
+                                 to be attached.
+        """
+        if host_uuid is None:
+            return adapter.build_href(lpar.LPAR.schema_type,
+                                      root_id=client_lpar_uuid,
+                                      xag=[])
+        else:
+            return adapter.build_href(ms.System.schema_type,
+                                      root_id=host_uuid,
+                                      child_type=lpar.LPAR.schema_type,
+                                      child_id=client_lpar_uuid,
+                                      xag=[])
 
     @property
     def client_lpar_href(self):
@@ -461,7 +475,7 @@ class VStorageMapping(ewrap.ElementWrapper):
 class _STDevMethods(ewrap.ElementWrapper):
     """Methods for storage and target common to STDev and VSCSIMapping."""
     def _set_stg_and_tgt(self, adapter, stg_ref, lua=None, target_name=None):
-        self._backing_storage(stg_ref)
+        self.backing_storage = stg_ref
         if lua is not None or target_name is not None:
             # Build a *TargetDev of the appropriate type for this stg_ref
             self._target_dev(stg_ref.target_dev_type.bld(adapter, lua,
@@ -489,7 +503,8 @@ class _STDevMethods(ewrap.ElementWrapper):
         return ewrap.ElementWrapper.wrap(stor_elems[0],
                                          parent_entry=parent_entry)
 
-    def _backing_storage(self, stg):
+    @backing_storage.setter
+    def backing_storage(self, stg):
         """Sets the backing storage of this mapping to a VDisk, VOpt, LU or PV.
 
         :param stg: Either a VDisk, VOpt, LU or PV wrapper representing the
@@ -587,7 +602,7 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
 
         :param adapter: The pypowervm Adapter that will be used to create the
                         mapping.
-        :param host_uuid: The host system's UUID.
+        :param host_uuid: Not used.
         :param client_lpar_uuid: The client LPAR's UUID.
         :param stg_ref: The backing storage element (PV, LU, VDisk, or
                         VOptMedia) to use in the new mapping.
@@ -606,7 +621,7 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
         s_map = super(VSCSIMapping, cls)._bld(adapter)
         # Create the 'Associated Logical Partition' element of the mapping.
         s_map._client_lpar_href(
-            cls.crt_related_href(adapter, host_uuid, client_lpar_uuid))
+            cls.crt_related_href(adapter, None, client_lpar_uuid))
         s_map._client_adapter(stor.VClientStorageAdapterElement.bld(
             adapter, slot_num=lpar_slot_num))
         s_map._server_adapter(stor.VServerStorageAdapterElement.bld(adapter))
@@ -645,7 +660,7 @@ class VSCSIMapping(VStorageMapping, _STDevMethods):
         if existing_map.server_adapter is not None:
             new_map._server_adapter(copy.deepcopy(existing_map.server_adapter))
         if stg_ref is not None:
-            new_map._backing_storage(copy.deepcopy(stg_ref))
+            new_map.backing_storage = copy.deepcopy(stg_ref)
         if lpar_slot_num is not None:
             # Set the slot number and remove the 'UseNextAvailableSlot' tag.
             new_map.client_adapter._lpar_slot_num(lpar_slot_num)

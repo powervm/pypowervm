@@ -47,6 +47,9 @@ BODY{
         <PortVLANIDPriority kb="CUD" kxe="false">0</PortVLANIDPriority>
         <AllowedVLANIDs kb="CUD" kxe="false">ALL</AllowedVLANIDs>
         <MACAddress kb="COD" kxe="false">AE7A25E59A07</MACAddress>
+        <IPAddress group="Advanced" ksv="V1_6_0" kxe="false" kb="ROR">192.168.2.7</IPAddress>
+        <SubnetMask group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">255.255.255.0</SubnetMask>
+        <Gateway group="Advanced" ksv="V1_6_0" kb="ROR" kxe="false">192.168.2.0</Gateway>
         <AllowedOperatingSystemMACAddresses kxe="false" kb="CUD">ALL</AllowedOperatingSystemMACAddresses>
         <OSDeviceName group="VNIC" kxe="false" kb="ROO">unavailable</OSDeviceName>
         <DesiredMode kb="ROO" kxe="false">DEDICATED</DesiredMode>
@@ -67,8 +70,11 @@ BODY{
                 <Status ksv="V1_4_0" kxe="false" kb="ROR">LINK_DOWN</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">1</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
+                <MaxCapacityPercentage kxe="false" kb="COD">100.0%</MaxCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
                 <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1-3496-9af6-8cd562f0e839" rel="related"/>
+                <DesiredCapacityPercentage ksv="V1_4_0" kxe="false" kb="ROR">2.0%</DesiredCapacityPercentage>
+                <DesiredMaxCapacityPercentage ksv="V1_4_0" kb="ROR" kxe="false">100.0%</DesiredMaxCapacityPercentage>
             </VirtualNICSRIOVBackingDevice>
             <VirtualNICSRIOVBackingDevice schemaVersion="V1_4_0">
                 <Metadata>
@@ -80,8 +86,11 @@ BODY{
                 <Status ksv="V1_4_0" kxe="false" kb="ROR">OPERATIONAL</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">2</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">42.42%</CurrentCapacityPercentage>
+                <MaxCapacityPercentage kxe="false" kb="COD">17.0%</MaxCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
                 <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/af2a8c95-58d1-3496-9af6-8cd562f0e839" rel="related"/>
+                <DesiredCapacityPercentage ksv="V1_4_0" kxe="false" kb="ROR">2.0%</DesiredCapacityPercentage>
+                <DesiredMaxCapacityPercentage ksv="V1_4_0" kb="ROR" kxe="false">100.0%</DesiredMaxCapacityPercentage>
             </VirtualNICSRIOVBackingDevice>
         </VirtualNICBackingDeviceChoice>
     </AssociatedBackingDevices>
@@ -136,8 +145,11 @@ BODY{
                 <Status ksv="V1_4_0" kxe="false" kb="ROR">OPERATIONAL</Status>
                 <RelatedSRIOVAdapterID kxe="false" kb="COR">2</RelatedSRIOVAdapterID>
                 <CurrentCapacityPercentage kxe="false" kb="COD">2.0%</CurrentCapacityPercentage>
+                <MaxCapacityPercentage kxe="false" kb="COD">70.0%</MaxCapacityPercentage>
                 <RelatedSRIOVPhysicalPortID kb="COR" kxe="false">0</RelatedSRIOVPhysicalPortID>
                 <RelatedSRIOVLogicalPort kxe="false" kb="ROR" href="https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/3E3F9BFC-C4EE-439E-B70A-1D369213ED83/SRIOVEthernetLogicalPort/b77d3d91-29e5-3f20-b2b2-c9c59a97f83c" rel="related"/>
+                <DesiredCapacityPercentage ksv="V1_4_0" kxe="false" kb="ROR">2.0%</DesiredCapacityPercentage>
+                <DesiredMaxCapacityPercentage ksv="V1_4_0" kb="ROR" kxe="false">100.0%</DesiredMaxCapacityPercentage>
             </VirtualNICSRIOVBackingDevice>
         </VirtualNICBackingDeviceChoice>
     </AssociatedBackingDevices>

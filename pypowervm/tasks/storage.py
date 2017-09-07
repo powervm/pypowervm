@@ -39,6 +39,7 @@ from pypowervm.tasks import vfc_mapper as fm
 from pypowervm import util
 from pypowervm.utils import retry
 from pypowervm.utils import transaction as tx
+from pypowervm.wrappers import job
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import managed_system as sys
 from pypowervm.wrappers import storage as stor
@@ -46,6 +47,7 @@ from pypowervm.wrappers import vios_file as vf
 from pypowervm.wrappers import virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
+_RESCAN_VSTOR = 'RescanVirtualDisk'
 
 # Setup logging
 LOG = logging.getLogger(__name__)
@@ -662,6 +664,37 @@ def crt_vdisk(adapter, v_uuid, vol_grp_uuid, d_name, d_size_gb,
     raise exc.Error(_("Unable to locate new vDisk on file upload."))
 
 
+def rescan_vstor(vio, vstor, adapter=None):
+    """Update the internal metadata for a virtual storage object.
+
+    :param vio: A VIOS wrapper or UUID string of the VIOS on which to perform
+                the rescan.
+    :param vstor: The VDisk wrapper or udid of the storage object to rescan.
+    :param adapter: A pypowervm.adapter.Adapter for REST API communication.
+                    Required if neither vio nor vstor is a wrapper, optional
+                    otherwise.
+    :raises AdapterNotFound: If no adapter attribute can be found.
+    :raises JobRequestFailed: If the rescan failed.
+    :raises JobRequestTimedOut: If the rescan Job timed out.
+    """
+    adapter = (adapter or getattr(vio, 'adapter', None)
+               or getattr(vstor, 'adapter', None))
+    if not adapter:
+        raise exc.AdapterNotFound()
+
+    vio_uuid = getattr(vio, 'uuid', vio)
+    stor_udid = getattr(vstor, 'udid', vstor)
+
+    job_w = job.Job.wrap(adapter.read(
+        vios.VIOS.schema_type, root_id=vio_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_RESCAN_VSTOR))
+
+    job_p = [job_w.create_job_parameter('VirtualDiskUDID', stor_udid)]
+
+    # Exceptions raise up.  Otherwise, no news is good news.
+    job_w.run_job(vio_uuid, job_parms=job_p)
+
+
 @lock.synchronized(_LOCK_VOL_GRP)
 @retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
              delay_func=retry.STEPPED_RANDOM_DELAY)
@@ -940,8 +973,11 @@ def _remove_orphan_maps(vwrap, type_str, lpar_id=None):
     msgargs = dict(vios_name=vwrap.name, stg_type=type_str)
     # Make a list of orphans first (since we can't remove while iterating).
     # If requested, limit candidates to those matching the specified LPAR ID.
+    # Also don't remove "any" type server adapters which are server adapters
+    # without a client adapter that can map to any client.
     removals = [mp for mp in maps if mp.client_adapter is None and (
-        lpar_id is None or mp.server_adapter.lpar_id == lpar_id)]
+        lpar_id is None or mp.server_adapter.lpar_id == lpar_id) and (
+            mp.server_adapter.lpar_slot_num != stor.ANY_SLOT)]
     for rm_map in removals:
         maps.remove(rm_map)
     if removals:

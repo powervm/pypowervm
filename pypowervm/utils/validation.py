@@ -176,8 +176,14 @@ class MemValidator(BaseValidator):
     :attr max_mem: maximum memory of the new lpar
     :attr min_mem: minimum memory of the new lpar
     :attr avail_mem: available memory on the host
+    :attr ppt_ratio: desired ppt ratio of the new lpar
     :attr res_name: name of the resource
     """
+    def __init__(self, lpar_w, host_w, cur_lpar_w=None):
+        super(MemValidator, self).__init__(lpar_w, host_w,
+                                           cur_lpar_w=cur_lpar_w)
+        self.ppt_ratio = None
+
     def _populate_new_values(self):
         """Set newly desired LPAR attributes as instance attributes."""
         mem_cfg = self.lpar_w.mem_config
@@ -186,6 +192,7 @@ class MemValidator(BaseValidator):
         self.min_mem = mem_cfg.min
         self.exp_fact = mem_cfg.exp_factor
         self.avail_mem = self.host_w.memory_free
+        self.ppt_ratio = mem_cfg.ppt_ratio
         self.res_name = _('memory')
 
     def _populate_resize_diffs(self):
@@ -215,6 +222,12 @@ class MemValidator(BaseValidator):
             msg = (_("The virtual machine must be powered off before changing "
                      "the expansion factor. Power off virtual machine %s and "
                      "try again.") % self.cur_lpar_w.name)
+            raise ValidatorException(msg)
+        if (self.ppt_ratio is not None and
+                self.ppt_ratio != curr_mem_cfg.ppt_ratio):
+            msg = ("The virtual machine must be powered off before changing "
+                   "the physical page table ratio. Power off virtual "
+                   "machine %s and try again.") % self.cur_lpar_w.name
             raise ValidatorException(msg)
         # Common validations for both active & inactive resizes.
         self._validate_resize_common()

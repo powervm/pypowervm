@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from pypowervm import exceptions as pvm_ex
 from pypowervm.i18n import _
 from pypowervm.tasks import partition
+from pypowervm.utils import retry as pvm_retry
 from pypowervm.wrappers import storage as pvm_stg
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
@@ -29,6 +30,7 @@ _cur_vios_uuid = None
 _cur_vg_uuid = None
 
 
+@pvm_retry.retry(tries=6)
 def validate_vopt_repo_exists(
         adapter, vopt_media_volume_group='rootvg', vopt_media_rep_size=1):
     """Will ensure that the virtual optical media repository exists.

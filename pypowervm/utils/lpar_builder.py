@@ -21,7 +21,7 @@ import six
 
 from oslo_log import log as logging
 
-from pypowervm import i18n
+from pypowervm.i18n import _
 from pypowervm.wrappers import base_partition as bp
 from pypowervm.wrappers import logical_partition as lpar
 from pypowervm.wrappers import virtual_io_server as vios
@@ -36,6 +36,12 @@ MEM = 'memory'
 MAX_MEM = 'max_mem'
 MIN_MEM = 'min_mem'
 AME_FACTOR = 'ame_factor'
+PPT_RATIO = 'ppt_ratio'
+# Contains the mapping of the ratio to REST accepted values. REST does
+# not take the actual ratio value as argument, instead it takes an
+# enumeration of accepted values starting from 0.
+ALLOWED_PPT_RATIOS = {'1:64': 0, '1:128': 1, '1:256': 2, '1:512': 3,
+                      '1:1024': 4, '1:2048': 5, '1:4096': 6}
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -51,10 +57,15 @@ PROC_UNITS_KEYS = (PROC_UNITS, MAX_PROC_U, MIN_PROC_U)
 SHARING_MODE = 'sharing_mode'
 UNCAPPED_WEIGHT = 'uncapped_weight'
 SPP = 'proc_pool'
-MAX_IO_SLOTS = 'max_io_slots'
 AVAIL_PRIORITY = 'avail_priority'
 SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
+ENABLE_LPAR_METRIC = 'enable_lpar_metric'
+
+# I/O configuration
+# Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
+MAX_IO_SLOTS = 'max_io_slots'
+PHYS_IO_SLOTS = 'phys_io_slots'
 
 # IBMi specific keys
 ALT_LOAD_SRC = 'alt_load_src'
@@ -79,11 +90,10 @@ DEF_UNCAPPED_WT = 64
 DEF_SPP = 0
 DEF_AVAIL_PRI = 127
 DEF_SRR = 'false'
+DEF_LPAR_METRIC = False
+DEF_PHYS_IO_SLOTS = None
 
 LOG = logging.getLogger(__name__)
-
-# TODO(IBM) translation
-_LE = i18n._
 
 
 class LPARBuilderException(Exception):
@@ -147,11 +157,19 @@ class Standardize(object):
         """
         pass
 
+    def io_config(self):
+        """Validates and standardizes the LPAR's I/O configuration.
+
+        :returns: dict of attributes.
+            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+        """
+        pass
+
 
 class DefaultStandardize(Standardize):
     """Default standardizer.
 
-    This class implements the Standardizer interface.  It takes a
+    This class implements the Standardize interface.  It takes a
     simple approach for augmenting missing LPAR settings.  It does
     reasonable validation of the LPAR attributes.
 
@@ -160,13 +178,13 @@ class DefaultStandardize(Standardize):
     it validates what it's sending back to the caller.  If any validation
     rules are missed, the PowerVM management interface will catch them
     and surface an error at that time.
-
     """
     def __init__(self, mngd_sys,
                  proc_units_factor=DEF_PROC_UNIT_FACT, max_slots=DEF_MAX_SLOT,
                  uncapped_weight=DEF_UNCAPPED_WT, spp=DEF_SPP,
                  avail_priority=DEF_AVAIL_PRI, srr=DEF_SRR,
-                 proc_compat=bp.LPARCompat.DEFAULT):
+                 proc_compat=bp.LPARCompat.DEFAULT,
+                 enable_lpar_metric=DEF_LPAR_METRIC):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -182,20 +200,23 @@ class DefaultStandardize(Standardize):
         :param avail_priority: availability priority of the LPAR
         :param srr: simplified remote restart capable
         :param proc_compat: processor compatibility mode value
+        :param enable_lpar_metric: LPAR performance data collection attribute
+            enabled only if value is true
         """
 
         super(DefaultStandardize, self).__init__()
         self.mngd_sys = mngd_sys
         self.proc_units_factor = proc_units_factor
         if proc_units_factor > 1 or proc_units_factor < 0.05:
-            msg = _LE('Processor units factor must be between 0.05 and 1.0. '
-                      'Value: %s') % proc_units_factor
+            msg = _('Processor units factor must be between 0.05 and 1.0. '
+                    'Value: %s') % proc_units_factor
             raise LPARBuilderException(msg)
         self.max_slots = max_slots
         self.uncapped_weight = uncapped_weight
         self.spp = spp
         self.avail_priority = avail_priority
         self.srr = srr
+        self.enable_lpar_metric = enable_lpar_metric
         self.proc_compat = proc_compat
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
@@ -214,12 +235,14 @@ class DefaultStandardize(Standardize):
         name_len = len(attrs[NAME])
         if name_len < 1 or name_len > MAX_LPAR_NAME_LEN:
 
-            msg = _LE("Logical partition name has invalid length."
-                      " Name: %s") % attrs[NAME]
+            msg = _("Logical partition name has invalid length. "
+                    "Name: %s") % attrs[NAME]
             raise LPARBuilderException(msg)
         LPARType(attrs.get(ENV), allow_none=partial).validate()
         IOSlots(attrs.get(MAX_IO_SLOTS), allow_none=partial).validate()
         AvailPriority(attrs.get(AVAIL_PRIORITY), allow_none=partial).validate()
+        EnableLparMetric(attrs.get(ENABLE_LPAR_METRIC),
+                         allow_none=partial).validate()
         IDBoundField(attrs.get(ID), allow_none=True).validate()
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
@@ -241,6 +264,13 @@ class DefaultStandardize(Standardize):
                      attrs.get(AME_FACTOR), host_ame_cap,
                      self.mngd_sys.memory_region_size, allow_none=partial)
         mem.validate()
+
+        host_ppt_cap = self.mngd_sys.get_capability(
+            'physical_page_table_ratio_capable')
+        pptr = PhysicalPageTableRatio(attrs.get(PPT_RATIO), host_ppt_cap)
+        pptr.validate()
+        if pptr.value:
+            self.attr[PPT_RATIO] = pptr.convert_value(pptr.value)
 
     def _validate_shared_proc(self, attrs=None, partial=False):
         if attrs is None:
@@ -276,6 +306,7 @@ class DefaultStandardize(Standardize):
                       convert_func=LPARType.convert_value)
         self._set_val(bld_attr, MAX_IO_SLOTS, self.max_slots)
         self._set_val(bld_attr, AVAIL_PRIORITY, self.avail_priority)
+        self._set_val(bld_attr, ENABLE_LPAR_METRIC, self.enable_lpar_metric)
         # See if the host is capable of SRR before setting it.
         srr_cap = self.mngd_sys.get_capability(
             'simplified_remote_restart_capable')
@@ -367,6 +398,17 @@ class DefaultStandardize(Standardize):
         self._validate_lpar_ded_cpu(attrs=bld_attr)
         return bld_attr
 
+    def io_config(self):
+        """Validates and standardizes the LPAR's I/O configuration.
+
+        :returns: dict of attributes.
+            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+        """
+        return {
+            MAX_IO_SLOTS: self.max_slots,
+            PHYS_IO_SLOTS: self.attr.get(PHYS_IO_SLOTS, DEF_PHYS_IO_SLOTS),
+        }
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Field(object):
@@ -386,7 +428,7 @@ class Field(object):
 
     def _type_error(self, value, exc=TypeError):
         values = dict(field=self.name, value=value)
-        msg = _LE("Field '%(field)s' has invalid value: '%(value)s'") % values
+        msg = _("Field '%(field)s' has invalid value: '%(value)s'") % values
         LOG.error(msg)
         raise exc(msg)
 
@@ -441,16 +483,15 @@ class ChoiceField(Field):
     @classmethod
     def _validate_choices(cls, value, choices):
         if value is None:
-            raise ValueError(_LE('None value is not valid.'))
+            raise ValueError(_('None value is not valid.'))
         for choice in choices:
             if value.lower() == choice.lower():
                 return choice
         # If we didn't find it, that's a problem...
         values = dict(value=value, field=cls._name,
                       choices=choices)
-        msg = _LE("Value '%(value)s' is not valid "
-                  "for field '%(field)s' with acceptable "
-                  "choices: %(choices)s") % values
+        msg = _("Value '%(value)s' is not valid for field '%(field)s' with "
+                "acceptable choices: %(choices)s") % values
         raise ValueError(msg)
 
     def validate(self):
@@ -474,8 +515,8 @@ class BoundField(Field):
                 self.typed_value < self._convert_value(self._min_bound)):
             values = dict(field=self.name, value=self.typed_value,
                           minimum=self._min_bound)
-            msg = _LE("Field '%(field)s' has a value below the minimum. "
-                      "Value: %(value)s; Minimum: %(minimum)s") % values
+            msg = _("Field '%(field)s' has a value below the minimum. "
+                    "Value: %(value)s; Minimum: %(minimum)s") % values
             LOG.error(msg)
             raise ValueError(msg)
 
@@ -483,8 +524,8 @@ class BoundField(Field):
                 self.typed_value > self._convert_value(self._max_bound)):
             values = dict(field=self.name, value=self.typed_value,
                           maximum=self._max_bound)
-            msg = _LE("Field '%(field)s' has a value above the maximum. "
-                      "Value: %(value)s; Maximum: %(maximum)s") % values
+            msg = _("Field '%(field)s' has a value above the maximum. "
+                    "Value: %(value)s; Maximum: %(maximum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -537,9 +578,9 @@ class MinDesiredMaxField(object):
                           max_field=self.max_field.name,
                           desired=self.des_field.typed_value,
                           maximum=self.max_field.typed_value)
-            msg = _LE("The '%(desired_field)s' has a value above the "
-                      "'%(max_field)s' value. "
-                      "Desired: %(desired)s Maximum: %(maximum)s") % values
+            msg = _("The '%(desired_field)s' has a value above the "
+                    "'%(max_field)s' value. Desired: %(desired)s Maximum: "
+                    "%(maximum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -550,9 +591,9 @@ class MinDesiredMaxField(object):
                           min_field=self.min_field.name,
                           desired=self.des_field.typed_value,
                           minimum=self.min_field.typed_value)
-            msg = _LE("The '%(desired_field)s' has a value below the "
-                      "'%(min_field)s' value. "
-                      "Desired: %(desired)s Minimum: %(minimum)s") % values
+            msg = _("The '%(desired_field)s' has a value below the "
+                    "'%(min_field)s' value. Desired: %(desired)s Minimum: "
+                    "%(minimum)s") % values
 
             LOG.error(msg)
             raise ValueError(msg)
@@ -594,9 +635,9 @@ class Memory(MinDesiredMaxField):
                       self.max_field.typed_value]:
                 if x is not None and (x % self.lmb_size) != 0:
                     values = dict(lmb_size=self.lmb_size, value=x)
-                    msg = _LE("Memory value is not a multiple of the "
-                              "logical memory block size (%(lmb_size)s) of "
-                              " the host.  Value: %(value)s") % values
+                    msg = _("Memory value is not a multiple of the "
+                            "logical memory block size (%(lmb_size)s) of "
+                            " the host.  Value: %(value)s") % values
                     raise ValueError(msg)
 
     def _validate_ame(self):
@@ -605,17 +646,16 @@ class Memory(MinDesiredMaxField):
             exp_fact_float = round(float(self.ame_ef), 2)
             values = dict(value=self.ame_ef)
             if not self.host_ame_cap and exp_fact_float != 0:
-                msg = _LE("The managed system does not support active memory "
-                          "expansion. The expansion factor value '%(value)s' "
-                          "is not valid.") % values
+                msg = _("The managed system does not support active memory "
+                        "expansion. The expansion factor value '%(value)s' "
+                        "is not valid.") % values
                 raise ValueError(msg)
             if (exp_fact_float != 0 and exp_fact_float < 1 or
                     exp_fact_float > 10):
-                msg = _LE("Active memory expansion value must be greater "
-                          "than or equal to 1.0 and less than or equal to "
-                          "10.0. A value of 0 is also valid and indicates "
-                          "that AME is off. '%(value)s' is not "
-                          "valid.") % values
+                msg = _("Active memory expansion value must be greater than "
+                        "or equal to 1.0 and less than or equal to 10.0. A "
+                        "value of 0 is also valid and indicates that AME is "
+                        "off. '%(value)s' is not valid.") % values
                 raise ValueError(msg)
 
 
@@ -675,9 +715,15 @@ class DedProcShareMode(ChoiceField):
 
 
 class IOSlots(IntBoundField):
+    """Maximum virtual I/O slots.
+
+    This is not to be confused with the actual io_slots (list of IOSlot) in the
+    partition's io_config (PartitionIOConfiguration), which is set in the
+    builder via the 'phys_io_slots' (PHYS_IO_SLOTS) key.
+    """
     _min_bound = 2  # slot 0 & 1 are always in use
     _max_bound = 65534
-    _name = 'I/O Slots'
+    _name = 'Maximum Virtual I/O Slots'
 
     def __init__(self, value, allow_none=False):
         super(IOSlots, self).__init__(value, allow_none=allow_none)
@@ -694,8 +740,42 @@ class IDBoundField(IntBoundField):
     _name = 'ID'
 
 
+class EnableLparMetric(BoolField):
+    _name = 'Enable LPAR Metric'
+
+
 class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
+
+
+class PhysicalPageTableRatio(ChoiceField):
+    _name = 'Physical Page Table Ratio'
+    _choices = ALLOWED_PPT_RATIOS.keys()
+
+    def __init__(self, value, host_cap, allow_none=True):
+        super(PhysicalPageTableRatio, self).__init__(
+            value, allow_none=allow_none)
+        self.host_cap = host_cap
+
+    @classmethod
+    def convert_value(cls, value):
+        """Converts the ratio as a string to the REST accepted values."""
+        return ALLOWED_PPT_RATIOS[value]
+
+    def _convert_value(self, value):
+        # Override Field class definition to avoid KeyErrors on bad values
+        # when validation is run.
+        return value
+
+    def validate(self):
+        """Performs validation of the PPT ratio attribute."""
+        super(PhysicalPageTableRatio, self).validate()
+
+        # Validate the host capability
+        if not self.host_cap and self.value:
+            msg = ("The managed system does not support setting the physical "
+                   "page table ratio.")
+            raise ValueError(msg)
 
 
 class RestrictedIO(BoolField):
@@ -746,7 +826,17 @@ class LPARBuilder(object):
         if self.attr.get(AME_FACTOR) is not None:
             exp_fact_float = round(float(self.attr.get(AME_FACTOR)), 2)
             mem_wrap.exp_factor = exp_fact_float
+        # The PPT ratio should've been converted to REST format by the
+        # Standardizer.
+        if self.stdz.attr.get(PPT_RATIO) is not None:
+            mem_wrap.ppt_ratio = self.stdz.attr.get(PPT_RATIO)
         return mem_wrap
+
+    def build_io_config(self):
+        std = self.stdz.io_config()
+        io_config = bp.PartitionIOConfiguration.bld(
+            self.adapter, std[MAX_IO_SLOTS], io_slots=std[PHYS_IO_SLOTS])
+        return io_config
 
     def _shared_proc_keys_specified(self):
         # Check for any shared proc keys
@@ -839,12 +929,12 @@ class LPARBuilder(object):
         lpar_w.name = std[NAME]
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
         lpar_w.proc_compat_mode = std[PROC_COMPAT]
+        lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
             lpar_w.srr_enabled = std[SRR_CAPABLE]
-        io_cfg = bp.PartitionIOConfiguration.bld(self.adapter,
-                                                 std[MAX_IO_SLOTS])
+        io_cfg = self.build_io_config()
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg

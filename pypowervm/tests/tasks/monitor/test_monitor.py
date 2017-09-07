@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -229,18 +229,18 @@ class TestMonitors(testtools.TestCase):
         # Set up the return data.
         mock_phyp_metric = mock.MagicMock()
         mock_phyp_metric.category = 'phyp'
-        mock_phyp_metric.updated_datetime = 1
-        mock_phyp_metric.link = 'bad'
+        mock_phyp_metric.updated_datetime = 2
+        mock_phyp_metric.link = 'phyp'
 
         mock_phyp2_metric = mock.MagicMock()
         mock_phyp2_metric.category = 'phyp'
-        mock_phyp2_metric.updated_datetime = 2
+        mock_phyp2_metric.updated_datetime = 1
         mock_phyp2_metric.link = 'phyp'
 
         mock_vio1_metric = mock.MagicMock()
         mock_vio1_metric.category = 'vios_1'
         mock_vio1_metric.updated_datetime = 1
-        mock_vio1_metric.link = 'bad'
+        mock_vio1_metric.link = 'vio'
 
         mock_vio2_metric = mock.MagicMock()
         mock_vio2_metric.category = 'vios_1'
@@ -257,11 +257,17 @@ class TestMonitors(testtools.TestCase):
         mock_lpar1_metric.updated_datetime = 2
         mock_lpar1_metric.link = 'lpar'
 
+        mock_lpar2_metric = mock.MagicMock()
+        mock_lpar2_metric.category = 'lpar'
+        mock_lpar2_metric.updated_datetime = 1
+        mock_lpar2_metric.link = 'lpar'
+
         # Reset as this was invoked once up front.
         mock_ltm_feed.reset_mock()
         mock_ltm_feed.return_value = [mock_phyp_metric, mock_phyp2_metric,
                                       mock_vio1_metric, mock_vio2_metric,
-                                      mock_vio3_metric, mock_lpar1_metric]
+                                      mock_vio3_metric, mock_lpar1_metric,
+                                      mock_lpar2_metric]
 
         # Data for the responses.
         phyp_resp = self._load(PHYP_DATA)
@@ -292,6 +298,7 @@ class TestMonitors(testtools.TestCase):
         self.assertIsInstance(resp_vioses[1], pvm_mon_vios.ViosInfo)
         self.assertEqual(6, len(resp_lpars.lpars_util))
         self.assertIsInstance(resp_lpars, pvm_mon_lpar.LparInfo)
+        self.assertIsNotNone(resp_date)
 
         # Invoke again, but set to ignore vioses
         resp_date, resp_phyp, resp_vioses, resp_lpars = (
@@ -299,6 +306,18 @@ class TestMonitors(testtools.TestCase):
         self.assertIsNotNone(resp_phyp)
         self.assertIsInstance(resp_phyp, pvm_mon_phyp.PhypInfo)
         self.assertEqual(0, len(resp_vioses))
+        self.assertIsNotNone(resp_date)
+
+        # Run a pass for previous data
+        prev_date, prev_phyp, prev_vioses, prev_lpars = (
+            pvm_t_mon.latest_stats(self.adpt, mock.Mock(), second_latest=True))
+        self.assertIsNotNone(prev_phyp)
+        self.assertIsInstance(prev_phyp, pvm_mon_phyp.PhypInfo)
+        self.assertEqual(1, len(prev_vioses))
+        self.assertIsInstance(prev_vioses[0], pvm_mon_vios.ViosInfo)
+        self.assertEqual(6, len(prev_lpars.lpars_util))
+        self.assertIsInstance(prev_lpars, pvm_mon_lpar.LparInfo)
+        self.assertIsNotNone(prev_date)
 
     @mock.patch('pypowervm.tasks.monitor.util.vm_metrics')
     @mock.patch('pypowervm.tasks.monitor.util.query_ltm_feed')
@@ -335,6 +354,7 @@ class TestMetricsCache(testtools.TestCase):
     @mock.patch('pypowervm.tasks.monitor.util.ensure_ltm_monitors')
     def test_refresh(self, mock_ensure_monitor, mock_stats,
                      mock_vm_metrics):
+        ret_prev = None
         ret1 = None
         ret2 = {'lpar_uuid': 2}
         ret3 = {'lpar_uuid': 3}
@@ -344,10 +364,11 @@ class TestMetricsCache(testtools.TestCase):
         date_ret3 = date_ret2 + datetime.timedelta(milliseconds=250)
 
         mock_stats.side_effect = [
+            (None, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret1, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret2, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret3, mock.Mock(), mock.Mock(), mock.Mock())]
-        mock_vm_metrics.side_effect = [ret1, ret2, ret3]
+        mock_vm_metrics.side_effect = [ret_prev, ret1, ret2, ret3]
 
         # Creation invokes the refresh once automatically.
         metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
