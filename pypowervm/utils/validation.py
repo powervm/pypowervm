@@ -223,7 +223,8 @@ class MemValidator(BaseValidator):
                      "the expansion factor. Power off virtual machine %s and "
                      "try again.") % self.cur_lpar_w.name)
             raise ValidatorException(msg)
-        if self.ppt_ratio != curr_mem_cfg.ppt_ratio:
+        if (self.ppt_ratio is not None and
+           self.ppt_ratio != curr_mem_cfg.ppt_ratio):
             msg = ("The virtual machine must be powered off before changing "
                    "the physical page table ratio. Power off virtual "
                    "machine %s and try again.") % self.cur_lpar_w.name
