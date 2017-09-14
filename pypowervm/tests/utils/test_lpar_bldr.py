@@ -124,8 +124,9 @@ class TestLPARBuilder(testtools.TestCase):
 
     def test_builder(self):
         # Build the minimum attributes, Shared Procs
+        # shared_lpar test file uses non-default max I/O slots
         attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
-                    vcpu=1)
+                    vcpu=1, max_io_slots=2000)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertIsNotNone(bldr)
 
@@ -169,7 +170,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.assertRaises(ValueError, bldr.build)
 
         # Check the validation of the LPAR type when not specified
-        attr = dict(name='TheName', memory=1024, vcpu=1)
+        attr = dict(name='TheName', memory=1024, vcpu=1, max_io_slots=2000)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['shared_lpar'])
@@ -218,8 +219,8 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)
 
-        # Good non-defaulted IO Slots and SRR
-        attr = dict(name='TheName', memory=1024, max_io_slots=64,
+        # Good non-default IO Slots and SRR
+        attr = dict(name='TheName', memory=1024, max_io_slots=2000,
                     env=bp.LPARType.AIXLINUX, vcpu=1, srr_capability=False)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         new_lpar = bldr.build()

@@ -161,7 +161,7 @@ class Standardize(object):
         """Validates and standardizes the LPAR's I/O configuration.
 
         :returns: dict of attributes.
-            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+            Expected: MAX_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
         """
         pass
 
@@ -402,10 +402,10 @@ class DefaultStandardize(Standardize):
         """Validates and standardizes the LPAR's I/O configuration.
 
         :returns: dict of attributes.
-            Expected: MAX_VIRT_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
+            Expected: MAX_IO_SLOTS, PHYS_IO_SLOTS (may be empty)
         """
         return {
-            MAX_IO_SLOTS: self.max_slots,
+            MAX_IO_SLOTS: self.attr.get(MAX_IO_SLOTS, self.max_slots),
             PHYS_IO_SLOTS: self.attr.get(PHYS_IO_SLOTS, DEF_PHYS_IO_SLOTS),
         }
 
