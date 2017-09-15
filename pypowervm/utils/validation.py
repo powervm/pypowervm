@@ -56,14 +56,18 @@ class LPARWrapperValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate_all(self):
-        """Invoke attribute validation classes to perform validation"""
+    def validate_all(self, force=False):
+        """Invoke attribute validation classes to perform validation
+
+        :param force: indicates whether the validate is called as part of
+            an operation requested with force option.
+        """
         ProcValidator(self.lpar_w, self.host_w,
-                      cur_lpar_w=self.cur_lpar_w).validate()
+                      cur_lpar_w=self.cur_lpar_w).validate(force=force)
         MemValidator(self.lpar_w, self.host_w,
-                     cur_lpar_w=self.cur_lpar_w).validate()
+                     cur_lpar_w=self.cur_lpar_w).validate(force=force)
         CapabilitiesValidator(self.lpar_w, self.host_w,
-                              cur_lpar_w=self.cur_lpar_w).validate()
+                              cur_lpar_w=self.cur_lpar_w).validate(force=force)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -85,15 +89,19 @@ class BaseValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate(self):
-        """Determines what validation is requested and invokes it."""
+    def validate(self, force=False):
+        """Determines what validation is requested and invokes it.
+
+        :param force: flag indicating if validate is called with a force
+            option.
+        """
         # Deploy
         self._populate_new_values()
         if self.cur_lpar_w is None:
             self._validate_deploy()
         # Resize
         else:
-            self._can_modify()
+            self._can_modify(force=force)
             self._populate_resize_diffs()
             # Inactive Resize
             if self.cur_lpar_w.state == bp.LPARState.NOT_ACTIVATED:
@@ -143,13 +151,16 @@ class BaseValidator(object):
         """
 
     @abc.abstractmethod
-    def _can_modify(self):
+    def _can_modify(self, force=False):
         """Abstract method to check if resource may be modified
 
         This method should invoke the corresponding can_modify
         method in the LPAR class for the resource and raise an
         exception if it returns False. Should only be called for
         resize validation when cur_lpar_w is passed in.
+
+        :param force: flag indicating if the resize operation is requested
+            with force option.
         """
 
     def _validate_host_has_available_res(self, des, avail, res_name):
@@ -241,9 +252,9 @@ class MemValidator(BaseValidator):
         # TODO(IBM):
         pass
 
-    def _can_modify(self):
+    def _can_modify(self, force=False):
         """Checks mem dlpar and rmc state if LPAR not activated."""
-        modifiable, reason = self.cur_lpar_w.can_modify_mem()
+        modifiable, reason = self.cur_lpar_w.can_modify_mem(force=force)
         if not modifiable:
             LOG.error(reason)
             raise ValidatorException(reason)
@@ -420,9 +431,9 @@ class ProcValidator(BaseValidator):
         self._validate_host_max_allowed_procs_per_lpar()
         self._validate_host_max_sys_procs_limit()
 
-    def _can_modify(self):
+    def _can_modify(self, force=False):
         """Checks proc dlpar and rmc state if LPAR not activated."""
-        modifiable, reason = self.cur_lpar_w.can_modify_proc()
+        modifiable, reason = self.cur_lpar_w.can_modify_proc(force=force)
         if not modifiable:
             LOG.error(reason)
             raise ValidatorException(reason)
@@ -539,6 +550,6 @@ class CapabilitiesValidator(BaseValidator):
         """Enforce operation agnostic validation rules."""
         pass
 
-    def _can_modify(self):
+    def _can_modify(self, force=False):
         """Check if capabilities may be modified."""
         pass

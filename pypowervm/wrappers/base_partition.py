@@ -409,12 +409,14 @@ class KeylockPos(object):
 
 
 class _DlparCapable(object):
-    def _can_modify(self, dlpar_cap, cap_desc):
+    def _can_modify(self, dlpar_cap, cap_desc, force=False):
         """Checks to determine if the partition can be modified.
 
         :param dlpar_cap: The appropriate DLPAR attribute to validate.  Only
                           used if system is active.
         :param cap_desc: A translated string indicating the DLPAR capability.
+        :param force: True if this validation is invoked as part of force
+            resize.
         :return capable: True if HW can be added/removed.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of modification.  If capable is True, the
@@ -423,12 +425,14 @@ class _DlparCapable(object):
         # First check is the not activated state
         if self.state == LPARState.NOT_ACTIVATED:
             return True, None
-        if self.rmc_state != RMCState.ACTIVE and not self.is_mgmt_partition:
-            return False, _('Partition does not have an active RMC '
-                            'connection.')
-        if not dlpar_cap:
-            return False, _('Partition does not have an active DLPAR '
-                            'capability for %s.') % cap_desc
+        if not force:
+            if (self.rmc_state != RMCState.ACTIVE and not
+                    self.is_mgmt_partition):
+                return False, _('Partition does not have an active RMC '
+                                'connection.')
+            if not dlpar_cap:
+                return False, _('Partition does not have an active DLPAR '
+                                'capability for %s.') % cap_desc
         return True, None
 
     def can_modify_io(self):
@@ -441,25 +445,29 @@ class _DlparCapable(object):
         """
         return self._can_modify(self.capabilities.io_dlpar, _('I/O'))
 
-    def can_modify_mem(self):
+    def can_modify_mem(self, force=False):
         """Determines if a partition is capable of adding/removing Memory.
 
+        :param force: True if this is called as part of force resize.
         :return capable: True if memory can be added/removed.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of modification.  If capable is True, the
                         reason will be None.
         """
-        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'))
+        return self._can_modify(self.capabilities.mem_dlpar, _('Memory'),
+                                force=force)
 
-    def can_modify_proc(self):
+    def can_modify_proc(self, force=False):
         """Determines if a partition is capable of adding/removing processors.
 
+        :param force: True if this is called as part of force resize.
         :return capable: True if procs can be added/removed.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of modification.  If capable is True, the
                         reason will be None.
         """
-        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'))
+        return self._can_modify(self.capabilities.proc_dlpar, _('Processors'),
+                                force=force)
 
 
 @ewrap.Wrapper.base_pvm_type

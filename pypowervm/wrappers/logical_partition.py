@@ -127,12 +127,13 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return super(LPAR, cls)._bld_base(adapter, name, mem_cfg, proc_cfg,
                                           env, io_cfg)
 
-    def _can_modify(self, dlpar_cap, cap_desc):
+    def _can_modify(self, dlpar_cap, cap_desc, force=False):
         """Checks to determine if the LPAR can be modified.
 
         :param dlpar_cap: The appropriate DLPAR attribute to validate.  Only
                           used if system is active.
         :param cap_desc: A translated string indicating the DLPAR capability.
+        :param force: True if this is called as part of force resize.
         :return capable: True if HW can be added/removed.  False otherwise.
         :return reason: A translated message that will indicate why it was not
                         capable of modification.  If capable is True, the
@@ -142,7 +143,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         # If it is an OS400 type, then we can add/remove HW no matter what.
         if self.env == bp.LPARType.OS400:
             return True, None
-        return super(LPAR, self)._can_modify(dlpar_cap, cap_desc)
+        return super(LPAR, self)._can_modify(dlpar_cap, cap_desc, force=force)
 
     def can_lpm(self, host_w, migr_data=None):
         """Determines if a LPAR is ready for Live Partition Migration.
