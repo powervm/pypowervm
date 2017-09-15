@@ -423,7 +423,7 @@ class _DlparCapable(object):
         # First check is the not activated state
         if self.state == LPARState.NOT_ACTIVATED:
             return True, None
-        if self.rmc_state != RMCState.ACTIVE and not self.is_mgmt_partition:
+        if (self.rmc_state != RMCState.ACTIVE and not self.is_mgmt_partition):
             return False, _('Partition does not have an active RMC '
                             'connection.')
         if not dlpar_cap:
