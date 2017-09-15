@@ -48,7 +48,7 @@ LPAR_FEED = 'lpar.txt'
 LU_FEED = 'lufeed.txt'
 
 
-def _mock_update_by_path(ssp, etag, path, timeout=-1):
+def _mock_update_by_path(ssp, etag, path, timeout=-1, force=False):
     # Spoof adding UDID and defaulting thinness
     for lu in ssp.logical_units:
         if not lu.udid:

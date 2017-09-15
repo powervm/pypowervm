@@ -1119,7 +1119,7 @@ class EntryWrapper(Wrapper):
         self.adapter.delete_by_href(self.href, etag=self.etag)
 
     # TODO(IBM): Remove deprecated xag parameter
-    def update(self, xag='__DEPRECATED__', timeout=-1):
+    def update(self, xag='__DEPRECATED__', timeout=-1, force=False):
         """Performs adapter.update of this wrapper.
 
         :param xag: DEPRECATED - do not use.
@@ -1127,6 +1127,7 @@ class EntryWrapper(Wrapper):
                         time out the POST request.  -1, the default, causes the
                         request to use the timeout value configured on the
                         Session belonging to the Adapter.
+        :param force: True if this is called as part of force resize.
         :return: The updated wrapper, per the response from the Adapter.update.
         """
         if xag != '__DEPRECATED__':
@@ -1145,7 +1146,8 @@ class EntryWrapper(Wrapper):
         # '/rest/api/uom/Object/UUID'), not the whole href.
         path = util.dice_href(self.href, include_fragment=False)
         return self.wrap(self.adapter.update_by_path(self, self.etag, path,
-                                                     timeout=timeout))
+                                                     timeout=timeout,
+                                                     force=force))
 
     @property
     def element(self):
