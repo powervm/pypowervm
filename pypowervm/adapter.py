@@ -830,7 +830,7 @@ class Adapter(object):
                                    sensitive=sensitive, helpers=helpers)
 
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
-                       sensitive=False, helpers=None):
+                       sensitive=False, helpers=None, force=False):
         """Update an existing resource where the URI path is already known."""
         path = util.dice_href(path)
         m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
@@ -849,6 +849,8 @@ class Adapter(object):
             body = data.toxmlstring()
         else:
             body = data
+        if force:
+            path += '&force=true'
         resp = self._request(
             'POST', path, helpers=helpers, headers=headers, body=body,
             timeout=timeout, auditmemento=auditmemento, sensitive=sensitive)

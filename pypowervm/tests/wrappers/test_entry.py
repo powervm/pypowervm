@@ -1181,7 +1181,8 @@ class TestUpdate(testtools.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update()
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path, timeout=3600)
+            self.cl, self.clust_etag, self.clust_path, timeout=3600,
+            force=False)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -1194,7 +1195,8 @@ class TestUpdate(testtools.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=123)
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path, timeout=123)
+            self.cl, self.clust_etag, self.clust_path, timeout=123,
+            force=False)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
@@ -1214,7 +1216,7 @@ class TestUpdate(testtools.TestCase):
         newcl = self.cl.update(xag=['should', 'be', 'ignored'], timeout=-1)
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
-            timeout=3600)
+            timeout=3600, force=False)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)

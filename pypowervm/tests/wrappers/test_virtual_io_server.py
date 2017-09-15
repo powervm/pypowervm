@@ -35,20 +35,20 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.adpt.update_by_path.return_value = self.dwrap.entry
         self.assertEqual(self.dwrap.entry, self.dwrap.update().entry)
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
-                                                    timeout=3600)
+                                                    timeout=3600, force=False)
         self.assertEqual(self.dwrap.entry, self.dwrap.update(timeout=42).entry)
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
-                                                    timeout=42)
+                                                    timeout=42, force=False)
         # If the session is configured for longer...
         self.adpt.session.timeout = 10000
         self.assertEqual(self.dwrap.entry, self.dwrap.update().entry)
         # ...default to the longer value.
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
-                                                    timeout=10000)
+                                                    timeout=10000, force=False)
         # But explicit timeout can still be set.
         self.assertEqual(self.dwrap.entry, self.dwrap.update(timeout=42).entry)
         self.adpt.update_by_path.assert_called_with(self.dwrap, None, mock.ANY,
-                                                    timeout=42)
+                                                    timeout=42, force=False)
 
     def test_get_ip_addresses(self):
         expected_ips = ('9.1.2.4', '10.10.10.5')
