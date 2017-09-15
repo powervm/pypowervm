@@ -1156,7 +1156,7 @@ class TestRefresh(testtools.TestCase):
 
 
 class TestUpdate(testtools.TestCase):
-    clust_uuid = 'cluster_uuid'
+    clust_uuid = '/cluster_uuid'
     clust_path = '/rest/api/uom/Cluster' + clust_uuid
     clust_href = 'https://server:12443' + clust_path
     clust_etag = '123'
@@ -1181,7 +1181,26 @@ class TestUpdate(testtools.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update()
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path, timeout=3600)
+            self.cl, self.clust_etag, self.clust_path, timeout=3600,
+            force=False)
+        _assert_clusters_equal(self, self.cl, newcl)
+        self.assertEqual(newcl.etag, new_etag)
+
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    def test_force_update(self, mock_ubp):
+        # Update the entry with the new properties
+        get_href = self.clust_href + "?group=None"
+        props = {'id': self.clust_uuid, 'links': {'SELF': [get_href]}}
+        self.cl.entry.properties = props
+
+        new_etag = '456'
+        resp = apt.Response('meth', 'path', 200, 'reason', {'etag': new_etag})
+        resp.entry = self.cl.entry
+        mock_ubp.return_value = resp
+        newcl = self.cl.update(force=True)
+        mock_ubp.assert_called_with(
+            self.cl, self.clust_etag, self.clust_path + '?group=None',
+            timeout=3600, force=True)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
 
@@ -1194,7 +1213,8 @@ class TestUpdate(testtools.TestCase):
         mock_ubp.return_value = resp
         newcl = self.cl.update(xag=['one', 'two', 'three'], timeout=123)
         mock_ubp.assert_called_with(
-            self.cl, self.clust_etag, self.clust_path, timeout=123)
+            self.cl, self.clust_etag, self.clust_path, timeout=123,
+            force=False)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
@@ -1214,7 +1234,7 @@ class TestUpdate(testtools.TestCase):
         newcl = self.cl.update(xag=['should', 'be', 'ignored'], timeout=-1)
         mock_ubp.assert_called_with(
             self.cl, self.clust_etag, self.clust_path + '?group=one,three,two',
-            timeout=3600)
+            timeout=3600, force=False)
         _assert_clusters_equal(self, self.cl, newcl)
         self.assertEqual(newcl.etag, new_etag)
         mock_warn.assert_called_with(mock.ANY, DeprecationWarning)

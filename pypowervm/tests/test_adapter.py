@@ -454,6 +454,33 @@ class TestAdapter(testtools.TestCase):
         self.assertEqual(200, ret_update_value.status)
         self.assertEqual(reqpath, ret_update_value.reqpath)
 
+    def test_update_by_path(self):
+        """Test update_by_path() method found in the Adapter class."""
+        # Init test data
+        data = 'data'
+        etag = 'etag'
+        basepath = c.API_BASE_PATH + 'uom/LogicalPartition/'
+        uuid = "abcdef01-2345-2345-2345-67890abcdef0"
+        path = basepath + uuid + '?group=None'
+        adapter = adp.Adapter(self.sess)
+
+        # mock the expected path
+        expected_path = path + '&force=true'
+        expected_headers = {'Accept': 'application/atom+xml; charset=UTF-8',
+                            'Content-Type':
+                                'application/vnd.ibm.powervm.uom+xml; '
+                                'type=LogicalPartition',
+                            'If-Match': 'etag'}
+
+        # Run the actual test
+        with mock.patch.object(adapter, '_request') as mock_request:
+            adapter.update_by_path(data, etag, path, force=True)
+
+        # Verify that request was made with force appended in path
+        mock_request.assert_called_once_with(
+            'POST', expected_path, helpers=None, headers=expected_headers,
+            body=data, timeout=-1, auditmemento=None, sensitive=False)
+
     @mock.patch('requests.Session')
     def test_upload(self, mock_session):
         # Build the adapter
