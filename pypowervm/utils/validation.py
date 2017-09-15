@@ -56,14 +56,22 @@ class LPARWrapperValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate_all(self):
-        """Invoke attribute validation classes to perform validation"""
+    def validate_all(self, check_dlpar=True):
+        """Invoke attribute validation classes to perform validation
+
+        :param check_dlpar: indicates whether the need to validate the dlpar
+            capability. It is False when update is requested with force
+            option.
+        """
         ProcValidator(self.lpar_w, self.host_w,
-                      cur_lpar_w=self.cur_lpar_w).validate()
+                      cur_lpar_w=self.cur_lpar_w).validate(
+                          check_dlpar=check_dlpar)
         MemValidator(self.lpar_w, self.host_w,
-                     cur_lpar_w=self.cur_lpar_w).validate()
+                     cur_lpar_w=self.cur_lpar_w).validate(
+                         check_dlpar=check_dlpar)
         CapabilitiesValidator(self.lpar_w, self.host_w,
-                              cur_lpar_w=self.cur_lpar_w).validate()
+                              cur_lpar_w=self.cur_lpar_w).validate(
+                                  check_dlpar=check_dlpar)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -85,15 +93,19 @@ class BaseValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate(self):
-        """Determines what validation is requested and invokes it."""
+    def validate(self, check_dlpar=True):
+        """Determines what validation is requested and invokes it.
+
+        :param check_dlpar: flag indicating if we need to validate dlpar
+            capability.
+        """
         # Deploy
         self._populate_new_values()
         if self.cur_lpar_w is None:
             self._validate_deploy()
         # Resize
         else:
-            self._can_modify()
+            self._can_modify(check_dlpar=check_dlpar)
             self._populate_resize_diffs()
             # Inactive Resize
             if self.cur_lpar_w.state == bp.LPARState.NOT_ACTIVATED:
@@ -143,13 +155,16 @@ class BaseValidator(object):
         """
 
     @abc.abstractmethod
-    def _can_modify(self):
+    def _can_modify(self, check_dlpar=True):
         """Abstract method to check if resource may be modified
 
         This method should invoke the corresponding can_modify
         method in the LPAR class for the resource and raise an
         exception if it returns False. Should only be called for
         resize validation when cur_lpar_w is passed in.
+
+        :param check_dlpar: flag indicating if the dlpar capability should
+            be checked.
         """
 
     def _validate_host_has_available_res(self, des, avail, res_name):
@@ -241,9 +256,15 @@ class MemValidator(BaseValidator):
         # TODO(IBM):
         pass
 
-    def _can_modify(self):
-        """Checks mem dlpar and rmc state if LPAR not activated."""
-        modifiable, reason = self.cur_lpar_w.can_modify_mem()
+    def _can_modify(self, check_dlpar=True):
+        """Checks mem dlpar and rmc state if LPAR not activated.
+
+        :param check_dlpar: flag indicating if dlpar capability
+            should be checked for modify.
+        """
+        modifiable, reason = True, None
+        if check_dlpar:
+            modifiable, reason = self.cur_lpar_w.can_modify_mem()
         if not modifiable:
             LOG.error(reason)
             raise ValidatorException(reason)
@@ -420,9 +441,15 @@ class ProcValidator(BaseValidator):
         self._validate_host_max_allowed_procs_per_lpar()
         self._validate_host_max_sys_procs_limit()
 
-    def _can_modify(self):
-        """Checks proc dlpar and rmc state if LPAR not activated."""
-        modifiable, reason = self.cur_lpar_w.can_modify_proc()
+    def _can_modify(self, check_dlpar=True):
+        """Checks proc dlpar and rmc state if LPAR not activated.
+
+        :param check_dlpar: flag indicating if dlpar capability
+            should be checked for modify.
+        """
+        modifiable, reason = True, None
+        if check_dlpar:
+            modifiable, reason = self.cur_lpar_w.can_modify_proc()
         if not modifiable:
             LOG.error(reason)
             raise ValidatorException(reason)
@@ -539,6 +566,10 @@ class CapabilitiesValidator(BaseValidator):
         """Enforce operation agnostic validation rules."""
         pass
 
-    def _can_modify(self):
-        """Check if capabilities may be modified."""
+    def _can_modify(self, check_dlpar=True):
+        """Check if capabilities may be modified.
+
+        :param check_dlpar: flag indicating if dlpar capability
+            should be checked for modify.
+        """
         pass
