@@ -56,14 +56,22 @@ class LPARWrapperValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate_all(self):
-        """Invoke attribute validation classes to perform validation"""
+    def validate_all(self, check_dlpar=True):
+        """Invoke attribute validation classes to perform validation
+
+        :param check_dlpar: indicates whether the need to validate the dlpar
+            capability. It is False when update is requested with force
+            option.
+        """
         ProcValidator(self.lpar_w, self.host_w,
-                      cur_lpar_w=self.cur_lpar_w).validate()
+                      cur_lpar_w=self.cur_lpar_w).validate(
+                          check_dlpar=check_dlpar)
         MemValidator(self.lpar_w, self.host_w,
-                     cur_lpar_w=self.cur_lpar_w).validate()
+                     cur_lpar_w=self.cur_lpar_w).validate(
+                         check_dlpar=check_dlpar)
         CapabilitiesValidator(self.lpar_w, self.host_w,
-                              cur_lpar_w=self.cur_lpar_w).validate()
+                              cur_lpar_w=self.cur_lpar_w).validate(
+                                  check_dlpar=check_dlpar)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -85,15 +93,20 @@ class BaseValidator(object):
         self.host_w = host_w
         self.cur_lpar_w = cur_lpar_w
 
-    def validate(self):
-        """Determines what validation is requested and invokes it."""
+    def validate(self, check_dlpar=True):
+        """Determines what validation is requested and invokes it.
+
+        :param check_dlpar: flag indicating if we need to validate dlpar
+            capability.
+        """
         # Deploy
         self._populate_new_values()
         if self.cur_lpar_w is None:
             self._validate_deploy()
         # Resize
         else:
-            self._can_modify()
+            if check_dlpar:
+                self._can_modify()
             self._populate_resize_diffs()
             # Inactive Resize
             if self.cur_lpar_w.state == bp.LPARState.NOT_ACTIVATED:

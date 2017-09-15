@@ -382,3 +382,19 @@ class TestValidator(testtools.TestCase):
             proc_vldr.validate()
             self.assertTrue(active_resize_checks.called,
                             'Active resize validations not performed.')
+
+    @mock.patch('pypowervm.utils.validation.ProcValidator.validate')
+    @mock.patch('pypowervm.utils.validation.MemValidator.validate')
+    def test_validator_check_dlpar(self, mem_val_validate, proc_val_validate):
+        vldr = vldn.LPARWrapperValidator(self.lpar_1_proc, self.mngd_sys,
+                                         cur_lpar_w=self.lpar_no_rmc)
+        vldr.validate_all(check_dlpar=False)
+        mem_val_validate.assert_called_once_with(check_dlpar=False)
+        proc_val_validate.assert_called_once_with(check_dlpar=False)
+        mem_val_validate.reset_mock()
+        proc_val_validate.reset_mock()
+        vldr = vldn.LPARWrapperValidator(self.lpar_running, self.mngd_sys,
+                                         cur_lpar_w=self.lpar_running)
+        vldr.validate_all()
+        mem_val_validate.assert_called_once_with(check_dlpar=True)
+        proc_val_validate.assert_called_once_with(check_dlpar=True)
