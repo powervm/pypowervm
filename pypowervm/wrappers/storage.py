@@ -105,6 +105,13 @@ _PV_EL_ORDER = [_PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
                 _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
                 _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83]
 
+
+class PVState(object):
+    ACTIVE = "active"
+    MISSING = "missing"
+    REMOVED = "removed"
+    VARIED_OFF = "varied off"
+
 # Virtual Optical Media Constants
 VOPT_ROOT = 'VirtualOpticalMedia'
 VOPT_NAME = 'MediaName'
