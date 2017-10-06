@@ -1377,6 +1377,7 @@ BODY{
         <CurrentMirroredMemory kb="ROR" kxe="false">0</CurrentMirroredMemory>
         <DeconfiguredSystemMemory kb="CUD" kxe="false">0</DeconfiguredSystemMemory>
         <DefaultHardwarePageTableRatio kb="COR" kxe="false">7</DefaultHardwarePageTableRatio>
+        <DefaultPhysicalPageTableRatio kxe="false" kb="COR">4</DefaultPhysicalPageTableRatio>
         <DefaultHardwarePagingTableRatioForDedicatedMemoryPartition kxe="false" kb="CUD">7</DefaultHardwarePagingTableRatioForDedicatedMemoryPartition>
         <HugePageCount kb="CUD" kxe="false">0</HugePageCount>
         <HugePageSize kb="CUD" kxe="false">16</HugePageSize>
