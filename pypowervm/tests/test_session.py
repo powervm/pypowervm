@@ -20,8 +20,8 @@ import mock
 import os
 import requests.models as req_mod
 import requests.structures as req_struct
-import six
 import subunit
+import sys
 import testtools
 
 import pypowervm.adapter as adp
@@ -140,7 +140,9 @@ class TestSession(subunit.IsolatedTestCase, testtools.TestCase):
         # The clone was not logged off
         self.assertFalse(mock_logoff.called)
 
-        if six.PY2:
+        # Deep copy (properly) raises TypeError in py2 and py3 >= 3.6.
+        pyver = sys.version_info
+        if pyver.major == 2 or (pyver.major == 3 and pyver.minor >= 6):
             # Ensure deep copies raise an exception.
             self.assertRaises(TypeError, copy.deepcopy, sess)
         else:
