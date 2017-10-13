@@ -143,6 +143,9 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_page_table_ratio(self):
         self.call_simple_getter("page_table_ratio", 7, 0)
 
+    def test_default_ppt_ratio(self):
+        self.call_simple_getter("default_ppt_ratio", 4, 6)
+
     def test_get_system_name(self):
         self.wrapper.set_parm_value(ms._SYSTEM_NAME, 'XYZ')
         name = self.wrapper.system_name
