@@ -206,7 +206,8 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns, preserve=True):
         # Preserve an existing mapping if preserve=True. Otherwise, the
         # backing_port may not be set and this is not an error condition if
         # the vfc mapping is getting rebuilt.
-        if vfc_map is not None and preserve:
+        if (vfc_map is not None and preserve and
+                vfc_map.backing_port is not None):
             mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
             existing_maps.append(mapping)
         else:
