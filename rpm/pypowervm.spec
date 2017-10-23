@@ -38,9 +38,6 @@ find $RPM_BUILD_ROOT/usr/lib/$PYVERSION/site-packages -type f -name "*.pyc" -del
 for lc in $(ls -d pypowervm/locale/*/ | cut -f3 -d'/'); do
     mkdir -p $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES
     python setup.py compile_catalog -f --input-file $RPM_SOURCE_DIR/pypowervm/locale/$lc/pypowervm.po --output-file $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES/pypowervm.mo
-    for lvl in log-critical log-error log-info log-warning; do
-        python setup.py compile_catalog -f --input-file $RPM_SOURCE_DIR/pypowervm/locale/$lc/pypowervm-$lvl.po --output-file $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES/pypowervm-$lvl.mo
-    done
 done
 
 
