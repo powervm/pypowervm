@@ -54,9 +54,8 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
     alt_load_source = None
     client_adapters = []
     if boot_type == pvm_lpar.BootStorageType.VFC:
-        msg = _LI("Setting Virtual Fibre Channel slot as load source for VM "
-                  "%s") % lpar_w.name
-        LOG.info(msg)
+        LOG.info("Setting Virtual Fibre Channel slot as load source for VM %s",
+                 lpar_w.name)
         for vios_wrap in pvm_vios.VIOS.get(adapter, xag=[c.XAG.VIO_FMAP]):
             existing_maps = pvm_vfcmap.find_maps(
                 vios_wrap.vfc_mappings, lpar_w.id)
@@ -66,9 +65,8 @@ def update_ibmi_settings(adapter, lpar_w, boot_type):
     else:
         # That boot volume, which is vscsi physical volume, ssp lu
         # and local disk, could be handled here.
-        msg = _LI("Setting Virtual SCSI slot slot as load source for VM "
-                  "%s") % lpar_w.name
-        LOG.info(msg)
+        LOG.info("Setting Virtual SCSI slot slot as load source for VM %s",
+                 lpar_w.name)
         for vios_wrap in pvm_vios.VIOS.get(adapter, xag=[c.XAG.VIO_SMAP]):
             existing_maps = pvm_smap.find_maps(
                 vios_wrap.scsi_mappings, lpar_w.id)
