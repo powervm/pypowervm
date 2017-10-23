@@ -1,0 +1,8 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+2: Edmonds, William M. (Matthew) <edmondsw@us.ibm.com>
+Code-Review+2: BERGLUND, ERIC S. <esberglu@us.ibm.com>
+Submitted-by: FRIED, ERIC P. <efried@us.ibm.com>
+Submitted-at: Mon, 23 Oct 2017 14:08:19 -0500
+Reviewed-on: http://morpheus.pok.stglabs.ibm.com/6070
+Project: pypowervm
+Branch: refs/heads/develop
