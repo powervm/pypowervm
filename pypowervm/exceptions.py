@@ -239,8 +239,8 @@ class UnableToBuildPG83EncodingMissingParent(AbstractMsgFmtError):
                 "VIOS.scsi_mappings[n].backing_storage.")
 
 
-class SingleMappingNotFoundRemapError(AbstractMsgFmtError):
-    msg_fmt = _("Unable to remap storage element of vSCSI mapping. Expected "
+class SingleMappingNotFoundUpdateError(AbstractMsgFmtError):
+    msg_fmt = _("Unable to update storage element of vSCSI mapping. Expected "
                 "to find exactly one matching mapping, found "
                 "%(num_mappings)d.")
 
