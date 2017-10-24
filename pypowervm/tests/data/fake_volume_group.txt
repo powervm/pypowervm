@@ -96,6 +96,8 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <ReadIOPS ksv="V1_7_0" kxe="false" kb="CUD">22</ReadIOPS>
+            <WriteIOPS ksv="V1_7_0" kb="CUD" kxe="false">33</WriteIOPS>
             <Description kb="CUD" kxe="false">SAS RAID 0 Disk Array</Description>
             <LocationCode kb="ROR" kxe="false">U78C9.001.WZS0095-P1-C14-R1-L405D828300-L0</LocationCode>
             <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
@@ -118,6 +120,8 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <ReadIOPS ksv="V1_7_0" kxe="false" kb="CUD">44</ReadIOPS>
+            <WriteIOPS ksv="V1_7_0" kb="CUD" kxe="false">55</WriteIOPS>
             <DiskCapacity kb="CUR" kxe="false">1</DiskCapacity>
             <DiskLabel kb="CUR" kxe="false">None</DiskLabel>
             <DiskName kb="CUR" kxe="false">asdf</DiskName>

@@ -703,6 +703,46 @@ def rescan_vstor(vio, vstor, adapter=None):
             raise
 
 
+def throttle_io(vio, storage, stor_qos, vg=None):
+    """Set an IOPS limit on the read & write I/O for given storage device.
+
+    :param vio: A VIOS wrapper or UUID string of the VIOS on which to perform
+                the update in the case of a PhysicalVolume.
+    :param storage: The storage object wrapper or udid of the storage
+                    object to throttle. Only PV and VDisk are currently
+                    supported.
+    :param stor_qos: A pair of values [READ_IOPS_LIMIT, WRITE_IOPS_LIMIT] that
+                     represent the throttles placed on the storage device.
+    :param vg: A VolumeGroup wrapper on which to perform the update in the
+               case of a VDisk.
+    :raises StorageQoSNotSupported: If an unsupported storage type is passed
+                                    in. (Not PV or VDisk)
+    :return The updated VIOS or VG wrapper
+    """
+    storage.read_iops_limit = int(stor_qos[0])
+    storage.write_iops_limit = int(stor_qos[1])
+
+    if isinstance(storage, stor.PV):
+        # Throttle a physical volume
+        adapter = storage.adapter
+        # If the 'vio' param is a string UUID, retrieve the VIOS wrapper.
+        if not isinstance(vio, vios.VIOS):
+            vios_w = vios.VIOS.wrap(
+                adapter.read(vios.VIOS.schema_type, root_id=vio,
+                             xag=[c.XAG.VIO_SMAP]))
+        else:
+            vios_w = vio
+        return vios_w.update()
+
+    elif isinstance(storage, stor.VDisk):
+        # Throttle a virtual disk
+        # update volume group
+        return vg.update()
+
+    else:
+        raise exc.StorageQoSNotSupported(stor_type=storage.__class__.__name__)
+
+
 @lock.synchronized(_LOCK_VOL_GRP)
 @retry.retry(argmod_func=retry.refresh_wrapper, tries=60,
              delay_func=retry.STEPPED_RANDOM_DELAY)

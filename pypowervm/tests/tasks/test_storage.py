@@ -620,6 +620,37 @@ class TestVDisk(testtools.TestCase):
         ts.rescan_vstor(mock_vio, mock_vopt, adapter=self.adpt)
         self.assertEqual(2, mock_run_job.call_count)
 
+    @mock.patch('pypowervm.adapter.Adapter.update_by_path')
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_throttle_io(self, mock_adpt_read, mock_update):
+        mock_vio = mock.Mock(adapter=self.adpt, uuid='vios_uuid')
+        mock_update.return_value = self.vg_resp
+        mock_adpt_read.return_value = self.vg_resp
+        vg_wrap = stor.VG.wrap(self.vg_resp)
+        vdisk = vg_wrap.virtual_disks[0]
+        vopt = vg_wrap.vmedia_repos[0].optical_media[0]
+        pv = vg_wrap.phys_vols[0]
+
+        # VDisk throttle
+        ts.throttle_io(mock_vio, vdisk, [20, 30], vg=vg_wrap)
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(1, mock_update.call_count)
+        self.assertEqual(20, vdisk.read_iops_limit)
+        self.assertEqual(30, vdisk.write_iops_limit)
+
+        # invalid storage type
+        self.assertRaises(exc.StorageQoSNotSupported, ts.throttle_io,
+                          mock_vio, vopt, [20, 30], vg=vg_wrap)
+        self.assertEqual(0, self.adpt.read.call_count)
+        self.assertEqual(1, mock_update.call_count)
+
+        # PV throttle
+        ts.throttle_io(mock_vio, pv, [20, 30], vg=vg_wrap)
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(2, mock_update.call_count)
+        self.assertEqual(20, pv.read_iops_limit)
+        self.assertEqual(30, pv.write_iops_limit)
+
 
 class TestRMStorage(testtools.TestCase):
     def setUp(self):

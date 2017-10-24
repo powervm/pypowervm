@@ -431,3 +431,8 @@ class ISCSILogoutFailed(AbstractMsgFmtError):
 
 class VstorNotFound(AbstractMsgFmtError):
     msg_fmt = _("Vstor %(stor_udid)s not found for VIOS %(vios_uuid)s.")
+
+
+class StorageQoSNotSupported(AbstractMsgFmtError):
+    msg_fmt = _("Storage QoS capabilities are not supported for storage "
+                "type %(stor_type)s")
