@@ -40,6 +40,8 @@ ANY_SLOT = 65535
 
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
+_DISK_READ_IOPS = 'ReadIOPS'
+_DISK_WRITE_IOPS = 'WriteIOPS'
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
@@ -52,10 +54,11 @@ _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
 _DISK_FILEFORMAT = 'FileFormat'
 _DISK_OPTIONAL_PARMS = 'OptionalParameters'
-_VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
-                   _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
-                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
+_VDISK_EL_ORDER = [_DISK_READ_IOPS, _DISK_WRITE_IOPS, _DISK_CAPACITY,
+                   _DISK_LABEL, DISK_NAME, _DISK_MAX_LOGICAL_VOLS,
+                   _DISK_PART_SIZE, _DISK_VG, _DISK_BASE, _DISK_UDID,
+                   _DISK_TYPE, _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT,
+                   _DISK_OPTIONAL_PARMS]
 
 
 class VDiskType(object):
@@ -83,6 +86,8 @@ class FileFormatType(object):
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
 PHYS_VOL = 'PhysicalVolume'
+_PV_READ_IOPS = 'ReadIOPS'
+_PV_WRITE_IOPS = 'WriteIOPS'
 _PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
 _PV_VOL_DESC = 'Description'
 _PV_LOC_CODE = 'LocationCode'
@@ -99,11 +104,12 @@ _PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
 _PV_STG_LABEL = 'StorageLabel'
 _PV_PG83 = 'DescriptorPage83'
-_PV_EL_ORDER = [_PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
-                _PV_PERSISTENT_RESERVE, _PV_RES_POLICY, _PV_RES_POLICY_ALGO,
-                _PV_TOTAL_PHYS_PARTS, _PV_UDID, _PV_AVAIL_FOR_USE,
-                _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
-                _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83]
+_PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_AVAIL_PHYS_PART,
+                _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
+                _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS,
+                _PV_UDID, _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME,
+                _PV_VOL_STATE, _PV_VOL_UNIQUE_ID, _PV_FC_BACKED,
+                _PV_STG_LABEL, _PV_PG83]
 
 
 class PVState(object):
@@ -592,6 +598,26 @@ class PV(ewrap.ElementWrapper):
         return pv
 
     @property
+    def read_iops_limit(self):
+        """The device's I/O Read limit"""
+        return self._get_val_int(_PV_READ_IOPS)
+
+    @read_iops_limit.setter
+    def read_iops_limit(self, new_read_iops_limit):
+        self.set_parm_value(
+            _PV_READ_IOPS, new_read_iops_limit, attrib=c.ATTR_KSV170)
+
+    @property
+    def write_iops_limit(self):
+        """The device's I/O Write limit"""
+        return self._get_val_int(_PV_WRITE_IOPS)
+
+    @write_iops_limit.setter
+    def write_iops_limit(self, new_write_iops_limit):
+        self.set_parm_value(
+            _PV_WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
+
+    @property
     def udid(self):
         """The unique device id."""
         return self._get_val_str(_PV_UDID)
@@ -857,6 +883,26 @@ class VDisk(_VDisk):
     @property
     def vg_uri(self):
         return self.get_href(_DISK_VG, one_result=True)
+
+    @property
+    def read_iops_limit(self):
+        """The device's I/O Read limit"""
+        return self._get_val_int(_DISK_READ_IOPS)
+
+    @read_iops_limit.setter
+    def read_iops_limit(self, new_read_iops_limit):
+        self.set_parm_value(
+            _DISK_READ_IOPS, new_read_iops_limit, attrib=c.ATTR_KSV170)
+
+    @property
+    def write_iops_limit(self):
+        """The device's I/O Write limit"""
+        return self._get_val_int(_DISK_WRITE_IOPS)
+
+    @write_iops_limit.setter
+    def write_iops_limit(self, new_write_iops_limit):
+        self.set_parm_value(
+            _DISK_WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
 
 
 @six.add_metaclass(abc.ABCMeta)

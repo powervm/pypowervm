@@ -48,7 +48,7 @@ def _argmod(this_try, max_tries, *args, **kwargs):
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
 def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
-                      lpar_slot_num=None, lua=None):
+                      lpar_slot_num=None, lua=None, stor_qos=None):
     """Will add a vSCSI mapping to a Virtual I/O Server.
 
     This method is used to connect a storage element (either a vDisk, vOpt,
@@ -108,7 +108,8 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
     # Build the mapping.
     scsi_map = build_vscsi_mapping(None, vios_w, lpar_uuid, storage_elem,
                                    fuse_limit=fuse_limit,
-                                   lpar_slot_num=lpar_slot_num, lua=lua)
+                                   lpar_slot_num=lpar_slot_num, lua=lua,
+                                   stor_qos=stor_qos)
 
     # Add the mapping.  It may have been updated to have a different client
     # and server adapter.  It may be the original (which creates a new client
@@ -127,7 +128,7 @@ def add_vscsi_mapping(host_uuid, vios, lpar_uuid, storage_elem, fuse_limit=32,
 
 def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
                         fuse_limit=32, lpar_slot_num=None, lua=None,
-                        target_name=None):
+                        target_name=None, stor_qos=None):
     """Will build a vSCSI mapping that can be added to a VIOS.
 
     This method is used to create a mapping element (for either a vDisk, vOpt,
@@ -172,6 +173,11 @@ def build_vscsi_mapping(host_uuid, vios_w, lpar_uuid, storage_elem,
 
     # Used if we need to clone an existing mapping
     clonable_map = None
+
+    # set the storage element's QoS values, if specified
+    if stor_qos:
+        storage_elem.read_iops_limit = int(stor_qos[0])
+        storage_elem.write_iops_limit = int(stor_qos[1])
 
     # What we need to figure out is, within the existing mappings, can we
     # reuse the existing client and server adapter (which we can only do if
@@ -315,16 +321,17 @@ def detach_storage(vwrap, client_lpar_id, match_func=None):
 @lock.synchronized('vscsi_mapping')
 @pvm_retry.retry(tries=60, argmod_func=_argmod,
                  delay_func=pvm_retry.STEPPED_RANDOM_DELAY)
-def _modify_storage_elem(adapter, vios, client_lpar_id, match_func, new_media):
-    """Replaces the storage element of a vSCSI mapping.
+def _modify_storage_elem(adapter, vios, client_lpar_id, match_func,
+                         new_media=None, new_stor_qos=None):
+    """Updates the storage element of a vSCSI mapping.
 
-    Will change the vSCSI Mapping backing storage element if the match_func
-    indicates that the mapping is a match. The match_func is only invoked if
-    the client_lpar_id matches. If more than one match exists, the VIOS will
-    not update, and exception will be raised.
+    Will update attributes of vSCSI Mapping backing storage element
+    if the match_func indicates that the mapping is a match. The match_func
+    is only invoked if the client_lpar_id matches. If more than one match
+    exists, the VIOS will not update, and exception will be raised.
 
     :param adapter: The pypowervm adapter for API communication.
-    :param vios: The virtual I/O server where the mapping is being changed.
+    :param vios: The virtual I/O server where the mapping is being updated.
                  This may be the VIOS's UUID string OR an existing
                  VIOS EntryWrapper.  If the latter, it must have been retrieved
                  using the VIO_SMAP extended attribute group.
@@ -332,9 +339,11 @@ def _modify_storage_elem(adapter, vios, client_lpar_id, match_func, new_media):
     :param match_func: Matching function suitable for passing to find_maps.
                        See that method's match_func parameter.
     :param new_media: The replacement VOptMedia backing storage element.
+    :param new_stor_qos: The new Read/Write IOPS limit to throttle the
+                         backing storage element.
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
-    :return: The SCSI mapping that was remapped.
+    :return: The SCSI mapping that was modified.
     """
 
     # If the 'vios' param is a string UUID, retrieve the VIOS wrapper.
@@ -345,20 +354,30 @@ def _modify_storage_elem(adapter, vios, client_lpar_id, match_func, new_media):
         vios.scsi_mappings, client_lpar_id=client_lpar_id,
         match_func=match_func, include_orphans=True)
 
-    new_media_maps = find_maps(
-        vios.scsi_mappings, client_lpar_id=client_lpar_id,
-        match_func=gen_match_func(pvm_stor.VOptMedia, names=[new_media.name]))
-
     # Ensure only one map match is returned for current stg element
     if len(map_modified) != 1:
-        raise exc.SingleMappingNotFoundRemapError(
+        raise exc.SingleMappingNotFoundUpdateError(
             num_mappings=len(map_modified))
-    # Ensure no mappings already exist for new stg element
-    if len(new_media_maps) > 0:
-        raise exc.StorageMapExistsRemapError(
-            stg_name=new_media.name, lpar_uuid=client_lpar_id)
 
-    map_modified[0].backing_storage = new_media
+    if new_media:
+        # This is a vopt media change
+        new_media_maps = find_maps(
+            vios.scsi_mappings, client_lpar_id=client_lpar_id,
+            match_func=gen_match_func(
+                pvm_stor.VOptMedia, names=[new_media.name]))
+
+        # Ensure no mappings already exist for new stg element
+        if len(new_media_maps) > 0:
+            raise exc.StorageMapExistsRemapError(
+                stg_name=new_media.name, lpar_uuid=client_lpar_id)
+
+        map_modified[0].backing_storage = new_media
+
+    if new_stor_qos:
+        # This is a storage QoS update
+        map_modified[0].backing_storage.read_iops_limit = new_stor_qos[0]
+        map_modified[0].backing_storage.write_iops_limit = new_stor_qos[1]
+
     vios = vios.update()
     return vios, map_modified[0]
 
@@ -604,7 +623,7 @@ def modify_vopt_mapping(adapter, vios, client_lpar_id, new_media,
     :return: The VIOS wrapper representing the updated Virtual I/O Server.
              This is current with respect to etag and SCSI mappings.
     :return: The remapped SCSI mapping with new backing storage.
-    :raises: SingleMappingNotFoundRemapError: If the number of VOptMedia
+    :raises: SingleMappingNotFoundUpdateError: If the number of VOptMedia
              matches found for the given media name and/or udid is not one.
     """
 
@@ -649,6 +668,43 @@ def remove_vopt_mapping(adapter, vios, client_lpar_id, media_name=None,
         adapter, vios, client_lpar_id, gen_match_func(
             pvm_stor.VOptMedia, name_prop='media_name', names=names,
             udids=udids))
+
+
+def modify_vdisk_mapping(adapter, vios, client_lpar_id, new_stor_qos,
+                         stor_name=None, udid=None):
+    """Will update VDisk mapping with new storage QoS values.
+
+    This method will change the read and write IOPS limits for a storage
+    element associated with a specific SCSI mapping.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios: The virtual I/O server on which the mapping should be
+                 modified.  This may be the VIOS's UUID string OR an existing
+                 VIOS EntryWrapper.  If the latter, it must have been retrieved
+                 using the VIO_SMAP extended attribute group.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param new_stor_qos: Pair of values representing the [Read,Write] IOPS
+                         limits to throttle the storage element.
+    :param stor_name: (Optional) The name of the current virtual disk
+                       to modify on the SCSI bus.
+    :param udid: (Optional) The UDID of the current virtual disk to
+                 modify on the SCSI bus. Ignored if stor_name is specified.
+                 If neither is specified, search will return all mappings on
+                 LPAR and fail if there's more than one.
+    :return: The VIOS wrapper representing the updated Virtual I/O Server.
+             This is current with respect to etag and SCSI mappings.
+    :return: The updated SCSI mapping with new storage IOPS limits.
+    :raises: SingleMappingNotFoundUpdateError: If the number of VDisk
+             matches found for the given storage name and/or udid is not one.
+    """
+
+    names = [stor_name] if stor_name else None
+    udids = [udid] if udid else None
+
+    return _modify_storage_elem(
+        adapter, vios, client_lpar_id,
+        gen_match_func(pvm_stor.VDisk, names=names, udids=udids),
+        new_stor_qos=new_stor_qos)
 
 
 def remove_vdisk_mapping(adapter, vios, client_lpar_id, disk_names=None,
@@ -730,6 +786,43 @@ def remove_lu_mapping(adapter, vios, client_lpar_id, disk_names=None,
         adapter, vios, client_lpar_id, gen_match_func(
             pvm_stor.LU, names=disk_names, prefixes=disk_prefixes,
             udids=udids))
+
+
+def modify_pv_mapping(adapter, vios, client_lpar_id, new_stor_qos,
+                      stor_name=None, udid=None):
+    """Will update Physical Volume mapping with new storage QoS values.
+
+    This method will change the read and write IOPS limits for a storage
+    element associated with a specific SCSI mapping.
+
+    :param adapter: The pypowervm adapter for API communication.
+    :param vios: The virtual I/O server on which the mapping should be
+                 modified.  This may be the VIOS's UUID string OR an existing
+                 VIOS EntryWrapper.  If the latter, it must have been retrieved
+                 using the VIO_SMAP extended attribute group.
+    :param client_lpar_id: The integer short ID or string UUID of the client VM
+    :param new_stor_qos: Pair of values representing the [Read,Write] IOPS
+                         limits to throttle the storage element.
+    :param stor_name: (Optional) The name of the current physical volume
+                       to modify on the SCSI bus.
+    :param udid: (Optional) The UDID of the current physical volume to
+                 modify on the SCSI bus. Ignored if stor_name is specified.
+                 If neither is specified, search will return all mappings on
+                 LPAR and fail if there's more than one.
+    :return: The VIOS wrapper representing the updated Virtual I/O Server.
+             This is current with respect to etag and SCSI mappings.
+    :return: The updated SCSI mapping with new IOPS limits.
+    :raises: SingleMappingNotFoundUpdateError: If the number of PV
+             matches found for the given storage name and/or udid is not one.
+    """
+
+    names = [stor_name] if stor_name else None
+    udids = [udid] if udid else None
+
+    return _modify_storage_elem(
+        adapter, vios, client_lpar_id, gen_match_func(
+            pvm_stor.PV, names=names, udids=udids),
+        new_stor_qos=new_stor_qos)
 
 
 def remove_pv_mapping(adapter, vios, client_lpar_id, backing_dev, udid=None):
