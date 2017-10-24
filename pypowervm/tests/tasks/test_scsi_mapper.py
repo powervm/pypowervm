@@ -135,7 +135,7 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(3, attempt_count)
 
     def test_mapping_new_mapping(self):
-        """Fuse limit, slot number, LUA via add_vscsi_mapping."""
+        """Fuse limit, slot number, LUA, Storage QoS via add_vscsi_mapping."""
         # Mock Data
         self.adpt.read.return_value = self.v1resp
 
@@ -150,9 +150,11 @@ class TestSCSIMapper(testtools.TestCase):
                                 new_map.client_adapter)
             self.assertNotEqual(vios_w.scsi_mappings[0].server_adapter,
                                 new_map.server_adapter)
-            # Make sure we got the right slot number and LUA
+            # Make sure we got the right slot number, LUA, and IOPS limits
             self.assertEqual(23, new_map.client_adapter.lpar_slot_num)
             self.assertEqual('the_lua', new_map.target_dev.lua)
+            self.assertEqual(12, new_map.backing_storage.read_iops_limit)
+            self.assertEqual(34, new_map.backing_storage.write_iops_limit)
             return vios_w.entry
 
         self.adpt.update_by_path.side_effect = validate_update
@@ -165,7 +167,7 @@ class TestSCSIMapper(testtools.TestCase):
         # validates those kwargs in build_vscsi_mapping too.
         scsi_mapper.add_vscsi_mapping(
             'host_uuid', 'vios_uuid', LPAR_UUID, pv, fuse_limit=5,
-            lpar_slot_num=23, lua='the_lua')
+            lpar_slot_num=23, lua='the_lua', stor_qos=[12, 34])
 
         # Make sure that our validation code above was invoked
         self.assertEqual(1, self.adpt.update_by_path.call_count)
@@ -227,7 +229,59 @@ class TestSCSIMapper(testtools.TestCase):
         self.assertEqual(1, len(found))
         self.assertEqual(scsi_map, found[0])
 
-    def test_remap_storage_vopt(self):
+    def test_update_storage_pv(self):
+        # Mock data
+        self.adpt.read.return_value = self.v1resp
+
+        # Validate that the physical volume was modified
+        def validate_update(*args, **kwargs):
+            vios_w = args[0]
+            mod_map = vios_w.scsi_mappings[1]
+
+            # Make sure we got the right IOPS limits
+            self.assertEqual(mod_map.backing_storage.read_iops_limit, 33)
+            self.assertEqual(mod_map.backing_storage.write_iops_limit, 44)
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        vios, mod_map = scsi_mapper.modify_pv_mapping(
+            self.adpt, 'fake_vios_uuid', 2, [33, 44], stor_name='hdisk10')
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertIsNotNone(mod_map)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
+
+    def test_update_storage_vdisk(self):
+        # Mock data
+        self.adpt.read.return_value = self.v1resp
+
+        # Validate that the virtual disk was modified
+        def validate_update(*args, **kwargs):
+            vios_w = args[0]
+            mod_map = vios_w.scsi_mappings[0]
+
+            # Make sure we got the right IOPS limits
+            self.assertEqual(mod_map.backing_storage.read_iops_limit, 33)
+            self.assertEqual(mod_map.backing_storage.write_iops_limit, 44)
+            return vios_w.entry
+
+        self.adpt.update_by_path.side_effect = validate_update
+
+        vios, mod_map = scsi_mapper.modify_vdisk_mapping(
+            self.adpt, 'fake_vios_uuid', 2, [33, 44], stor_name='Ubuntu1410')
+
+        # Make sure that our validation code above was invoked
+        self.assertEqual(1, self.adpt.update_by_path.call_count)
+        self.assertIsNotNone(mod_map)
+        # And the VIOS was "looked up"
+        self.assertEqual(1, self.adpt.read.call_count)
+        self.assertEqual(self.v1resp.atom, vios.entry)
+
+    def test_update_storage_vopt(self):
         # Mock data
         self.adpt.read.return_value = self.v1resp
 
@@ -265,14 +319,14 @@ class TestSCSIMapper(testtools.TestCase):
 
         # Zero matching maps found
         self.assertRaises(
-            exc.SingleMappingNotFoundRemapError,
+            exc.SingleMappingNotFoundUpdateError,
             scsi_mapper.modify_vopt_mapping, self.adpt, 'fake_vios_uuid', 2,
             new_media=vopt, media_name="no_matches.iso")
         self.assertEqual(0, self.adpt.update_py_path.call_count)
 
         # More than one matching maps found
         self.assertRaises(
-            exc.SingleMappingNotFoundRemapError,
+            exc.SingleMappingNotFoundUpdateError,
             scsi_mapper.modify_vopt_mapping, self.adpt,
             'fake_vios_uuid', 2, new_media=vopt2)
         self.assertEqual(0, self.adpt.update_py_path.call_count)
