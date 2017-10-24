@@ -32,6 +32,10 @@ LOG = logging.getLogger(__name__)
 
 UDID = 'UniqueDeviceID'
 
+# Storage QoS Constants - common to Physical Volume & Virtual Disk
+_READ_IOPS = 'ReadIOPS'
+_WRITE_IOPS = 'WriteIOPS'
+
 # "Any" server adapters are SCSI adapters without client
 # adapters that map to remote LPAR slot number 65535. They
 # can map to any client and are not recommended but are
@@ -40,6 +44,8 @@ ANY_SLOT = 65535
 
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
+_DISK_READ_IOPS = _READ_IOPS
+_DISK_WRITE_IOPS = _WRITE_IOPS
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
@@ -52,10 +58,11 @@ _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
 _DISK_FILEFORMAT = 'FileFormat'
 _DISK_OPTIONAL_PARMS = 'OptionalParameters'
-_VDISK_EL_ORDER = [_DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
-                   _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
-                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
+_VDISK_EL_ORDER = [_DISK_READ_IOPS, _DISK_WRITE_IOPS, _DISK_CAPACITY,
+                   _DISK_LABEL, DISK_NAME, _DISK_MAX_LOGICAL_VOLS,
+                   _DISK_PART_SIZE, _DISK_VG, _DISK_BASE, _DISK_UDID,
+                   _DISK_TYPE, _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT,
+                   _DISK_OPTIONAL_PARMS]
 
 
 class VDiskType(object):
@@ -83,6 +90,8 @@ class FileFormatType(object):
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
 PHYS_VOL = 'PhysicalVolume'
+_PV_READ_IOPS = _READ_IOPS
+_PV_WRITE_IOPS = _WRITE_IOPS
 _PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
 _PV_VOL_DESC = 'Description'
 _PV_LOC_CODE = 'LocationCode'
@@ -99,11 +108,12 @@ _PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
 _PV_STG_LABEL = 'StorageLabel'
 _PV_PG83 = 'DescriptorPage83'
-_PV_EL_ORDER = [_PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
-                _PV_PERSISTENT_RESERVE, _PV_RES_POLICY, _PV_RES_POLICY_ALGO,
-                _PV_TOTAL_PHYS_PARTS, _PV_UDID, _PV_AVAIL_FOR_USE,
-                _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
-                _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83]
+_PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_AVAIL_PHYS_PART,
+                _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
+                _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS,
+                _PV_UDID, _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME,
+                _PV_VOL_STATE, _PV_VOL_UNIQUE_ID, _PV_FC_BACKED,
+                _PV_STG_LABEL, _PV_PG83]
 
 
 class PVState(object):
@@ -562,9 +572,34 @@ class VOptMedia(ewrap.ElementWrapper):
         self.set_parm_value(_VOPT_MOUNT_TYPE, new_mount_type)
 
 
+@ewrap.Wrapper.base_pvm_type
+class _StorageQoS(ewrap.Wrapper):
+    """StorageQoS mixin fields/methods common to PV and VDisk."""
+
+    @property
+    def read_iops_limit(self):
+        """The device's I/O Read limit"""
+        return self._get_val_int(_READ_IOPS)
+
+    @read_iops_limit.setter
+    def read_iops_limit(self, new_read_iops_limit):
+        self.set_parm_value(
+            _READ_IOPS, new_read_iops_limit, attrib=c.ATTR_KSV170)
+
+    @property
+    def write_iops_limit(self):
+        """The device's I/O Write limit"""
+        return self._get_val_int(_WRITE_IOPS)
+
+    @write_iops_limit.setter
+    def write_iops_limit(self, new_write_iops_limit):
+        self.set_parm_value(
+            _WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
+
+
 @ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True,
                                child_order=_PV_EL_ORDER)
-class PV(ewrap.ElementWrapper):
+class PV(ewrap.ElementWrapper, _StorageQoS):
     """A physical volume that backs a Volume Group."""
     target_dev_type = PVTargetDev
 
@@ -811,7 +846,7 @@ class RBD(_VDisk):
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
-class VDisk(_VDisk):
+class VDisk(_VDisk, _StorageQoS):
     """A virtual disk that can be attached to a VM."""
     target_dev_type = VDiskTargetDev
 
