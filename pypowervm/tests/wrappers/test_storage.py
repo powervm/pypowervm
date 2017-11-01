@@ -71,6 +71,8 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual('SAS RAID 0 Disk Array', pv.description)
         self.assertEqual('U78C9.001.WZS0095-P1-C14-R1-L405D828300-L0',
                          pv.loc_code)
+        self.assertEqual(22, pv.read_iops_limit)
+        self.assertEqual(33, pv.write_iops_limit)
 
     def test_virtual_disk(self):
         """Tests the virtual disk gets."""
@@ -87,6 +89,8 @@ class TestVolumeGroup(twrap.TestWrapper):
             "https://9.1.2.3:12443/rest/api/uom/VirtualIOServer/14B854F7-42CE-"
             "4FF0-BD57-1D117054E701/VolumeGroup/b6bdbf1f-eddf-3c81-8801-9859eb"
             "6fedcb", vdisk.vg_uri)
+        self.assertEqual(44, vdisk.read_iops_limit)
+        self.assertEqual(55, vdisk.write_iops_limit)
 
         # Test setters
         vdisk.capacity = 2
