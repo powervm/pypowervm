@@ -180,6 +180,9 @@ class TestVNCSocketListener(testtools.TestCase):
 
         self.srv = vterm._VNCSocketListener(
             self.adpt, '5901', '1.2.3.4', True, remote_ips=['1.2.3.5'])
+        self.srv_6 = vterm._VNCSocketListener(
+            self.adpt, '5901', 'fe80:1234', True,
+            remote_ips=['fe80:7890'])
         self.rptr = vterm._VNCRepeaterServer(self.adpt, 'uuid', '5800')
 
         vterm._VNC_LOCAL_PORT_TO_REPEATER['5800'] = self.rptr
@@ -222,6 +225,25 @@ class TestVNCSocketListener(testtools.TestCase):
         self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
                          self.rptr.peers)
 
+    @mock.patch('select.select')
+    @mock.patch('socket.socket')
+    def test_new_client_6(self, mock_sock, mock_select):
+        mock_srv = mock.MagicMock()
+        mock_s_sock, mock_c_sock = mock.MagicMock(), mock.MagicMock()
+        mock_sock.return_value = mock_s_sock
+        mock_select.return_value = [mock_c_sock], None, None
+        mock_srv.accept.return_value = mock_c_sock, ('fe80:7890', '40675')
+        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
+
+        self.srv_6._new_client(mock_srv)
+
+        mock_c_sock.sendall.assert_called_once_with(
+            "HTTP/1.8 200 OK\r\n\r\n")
+        mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
+
+        self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
+                         self.rptr.peers)
+
     def test_check_http_connect(self):
         sock = mock.MagicMock()
         sock.recv.return_value = "INVALID"
@@ -243,6 +265,16 @@ class TestVNCSocketListener(testtools.TestCase):
         mock_srv.accept.return_value = mock_c_sock, ('1.2.3.8', '40675')
 
         self.srv._new_client(mock_srv)
+
+        self.assertEqual(self.rptr.peers, {})
+        self.assertEqual(1, mock_c_sock.close.call_count)
+
+    def test_new_client_bad_ip6(self):
+        mock_srv = mock.MagicMock()
+        mock_c_sock = mock.MagicMock()
+        mock_srv.accept.return_value = mock_c_sock, ('fe80:5678', '40675')
+
+        self.srv_6._new_client(mock_srv)
 
         self.assertEqual(self.rptr.peers, {})
         self.assertEqual(1, mock_c_sock.close.call_count)

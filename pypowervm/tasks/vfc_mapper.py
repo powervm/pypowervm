@@ -207,13 +207,22 @@ def derive_npiv_map(vios_wraps, p_port_wwpns, v_port_wwpns, preserve=True):
         # backing_port may not be set and this is not an error condition if
         # the vfc mapping is getting rebuilt.
         if vfc_map is not None and preserve:
-            mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
-            existing_maps.append(mapping)
+            # Maps without backing ports are effectively stale. We shouldn't
+            # need to preserve them.
+            if vfc_map.backing_port is not None:
+                mapping = (vfc_map.backing_port.wwpn, fused_v_wwpn)
+                existing_maps.append(mapping)
         else:
             new_fused_wwpns.append(fused_v_wwpn)
             LOG.debug("Add new map for client wwpns %s. Existing map=%s, "
                       "preserve=%s", fused_v_wwpn, vfc_map, preserve)
 
+    return _derive_npiv_map(
+        vios_wraps, new_fused_wwpns, p_port_wwpns, existing_maps)
+
+
+def _derive_npiv_map(vios_wraps, new_fused_wwpns, p_port_wwpns,
+                     existing_maps):
     # Determine how many mappings are needed.
     needed_maps = len(new_fused_wwpns)
     newly_built_maps = []

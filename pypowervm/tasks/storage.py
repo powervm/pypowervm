@@ -48,6 +48,7 @@ from pypowervm.wrappers import virtual_io_server as vios
 
 FILE_UUID = 'FileUUID'
 _RESCAN_VSTOR = 'RescanVirtualDisk'
+VOLUME_NOT_FOUND = '-1'
 
 # Setup logging
 LOG = logging.getLogger(__name__)
@@ -692,7 +693,14 @@ def rescan_vstor(vio, vstor, adapter=None):
     job_p = [job_w.create_job_parameter('VirtualDiskUDID', stor_udid)]
 
     # Exceptions raise up.  Otherwise, no news is good news.
-    job_w.run_job(vio_uuid, job_parms=job_p)
+    try:
+        job_w.run_job(vio_uuid, job_parms=job_p)
+    except exc.JobRequestFailed:
+        results = job_w.get_job_results_as_dict()
+        if results.get("RETURN_CODE") == VOLUME_NOT_FOUND:
+            raise exc.VstorNotFound(stor_udid=stor_udid, vios_uuid=vio_uuid)
+        else:
+            raise
 
 
 @lock.synchronized(_LOCK_VOL_GRP)

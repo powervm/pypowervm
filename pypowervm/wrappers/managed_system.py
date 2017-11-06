@@ -115,6 +115,7 @@ _MEMORY_CONFIGURABLE = u.xpath(_SYS_MEM_CONFIG, 'ConfigurableSystemMemory')
 _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
 _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
+_DEFAULT_PPT_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultPhysicalPageTableRatio')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -278,6 +279,12 @@ class System(ewrap.EntryWrapper):
     @property
     def page_table_ratio(self):
         return self._get_val_int(_PAGE_TABLE_RATIO, 0)
+
+    @property
+    def default_ppt_ratio(self):
+        # Platforms that don't provide the default PPTR from REST
+        # have a default value of 6 (1:4096).
+        return self._get_val_int(_DEFAULT_PPT_RATIO, 6)
 
     @property
     def host_ip_address(self):
