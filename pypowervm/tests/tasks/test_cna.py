@@ -50,7 +50,7 @@ class TestCNA(twrap.TestWrapper):
         self.adpt.create.side_effect = validate_of_create
         self.adpt.read.return_value = self.resp
 
-        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5)
+        n_cna = cna.crt_cna(self.adpt, None, 'fake_lpar', 5)
         self.assertIsNotNone(n_cna)
         self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(1, mock_vnet_find.call_count)
@@ -76,7 +76,7 @@ class TestCNA(twrap.TestWrapper):
             return pvm_net.CNA.bld(self.adpt, 1, 'href').entry
         self.adpt.create.side_effect = validate_of_create
 
-        n_cna = cna.crt_cna(self.adpt, 'fake_host', 'fake_lpar', 5, slot_num=1)
+        n_cna = cna.crt_cna(self.adpt, None, 'fake_lpar', 5, slot_num=1)
         self.assertIsNotNone(n_cna)
         self.assertIsInstance(n_cna, pvm_net.CNA)
         self.assertEqual(0, mock_vnet_find.call_count)
@@ -85,8 +85,7 @@ class TestCNA(twrap.TestWrapper):
         """Validates that a vswitch can be created."""
         self.adpt.read.return_value = self.resp
         # Test that it finds the right vSwitch
-        vswitch_w = cna._find_or_create_vswitch(self.adpt, 'fake_host',
-                                                'ETHERNET0', True)
+        vswitch_w = cna._find_or_create_vswitch(self.adpt, 'ETHERNET0', True)
         self.assertIsNotNone(vswitch_w)
 
         # Create a side effect that can validate the input into the create call
@@ -100,15 +99,14 @@ class TestCNA(twrap.TestWrapper):
         self.adpt.create.side_effect = validate_of_create
 
         # Test the create
-        vswitch_w = cna._find_or_create_vswitch(self.adpt, 'fake_host',
-                                                'Temp', True)
+        vswitch_w = cna._find_or_create_vswitch(self.adpt, 'Temp', True)
         self.assertIsNotNone(vswitch_w)
         self.assertTrue(self.adpt.create.called)
 
         # Make sure that if the create flag is set to false, an error is thrown
         # when the vswitch can't be found.
         self.assertRaises(exc.Error, cna._find_or_create_vswitch, self.adpt,
-                          'fake_host', 'Temp', False)
+                          'Temp', False)
 
 
 class TestVNET(twrap.TestWrapper):
@@ -123,7 +121,6 @@ class TestVNET(twrap.TestWrapper):
         fake_vs.switch_id = 0
         fake_vs.name = 'ETHERNET0'
 
-        host_uuid = '67dca605-3923-34da-bd8f-26a378fc817f'
         fake_vs.related_href = ('https://9.1.2.3:12443/rest/api/uom/'
                                 'ManagedSystem/'
                                 '67dca605-3923-34da-bd8f-26a378fc817f/'
@@ -131,8 +128,7 @@ class TestVNET(twrap.TestWrapper):
                                 'ec8aaa54-9837-3c23-a541-a4e4be3ae489')
 
         # This should find a vnet.
-        vnet_resp = cna._find_or_create_vnet(self.adpt, host_uuid, '2227',
-                                             fake_vs)
+        vnet_resp = cna._find_or_create_vnet(self.adpt, '2227', fake_vs)
         self.assertIsNotNone(vnet_resp)
 
         # Now flip to a CNA that requires a create...
@@ -140,8 +136,7 @@ class TestVNET(twrap.TestWrapper):
         resp.entry = ewrap.EntryWrapper._bld(
             self.adpt, tag='VirtualNetwork').entry
         self.adpt.create.return_value = resp
-        vnet_resp = cna._find_or_create_vnet(self.adpt, host_uuid, '2228',
-                                             fake_vs)
+        vnet_resp = cna._find_or_create_vnet(self.adpt, '2228', fake_vs)
         self.assertIsNotNone(vnet_resp)
         self.assertEqual(1, self.adpt.create.call_count)
 
@@ -149,7 +144,6 @@ class TestVNET(twrap.TestWrapper):
         """Tests that a free VLAN can be found."""
         self.adpt.read.return_value = self.resp
         # Mock data specific to the VNET File
-        host_uuid = '67dca605-3923-34da-bd8f-26a378fc817f'
         fake_vs = mock.Mock()
         fake_vs.name = 'ETHERNET0'
         fake_vs.related_href = ('https://9.1.2.3:12443/rest/api/uom/'
@@ -158,7 +152,7 @@ class TestVNET(twrap.TestWrapper):
                                 'VirtualSwitch/'
                                 'ec8aaa54-9837-3c23-a541-a4e4be3ae489')
 
-        self.assertEqual(1, cna._find_free_vlan(self.adpt, host_uuid, fake_vs))
+        self.assertEqual(1, cna._find_free_vlan(self.adpt, fake_vs))
 
     @mock.patch('pypowervm.wrappers.network.VNet.wrap')
     def test_find_free_vlan_mocked(self, mock_vnet_wrap):
@@ -177,20 +171,18 @@ class TestVNET(twrap.TestWrapper):
 
         # Test when all the vnet's are on a single switch.
         mock_vnet_wrap.return_value = build_mock_vnets(3000, 'test_vs')
-        self.assertEqual(3001, cna._find_free_vlan(self.adpt, 'host_uuid',
-                                                   mock_vswitch))
+        self.assertEqual(3001, cna._find_free_vlan(self.adpt, mock_vswitch))
 
         # Test with multiple switches.  The second vswitch with a higher vlan
         # should not impact the vswitch we're searching for.
         mock_vnet_wrap.return_value = (build_mock_vnets(2000, 'test_vs') +
                                        build_mock_vnets(4000, 'test_vs2'))
-        self.assertEqual(2001, cna._find_free_vlan(self.adpt, 'host_uuid',
-                                                   mock_vswitch))
+        self.assertEqual(2001, cna._find_free_vlan(self.adpt, mock_vswitch))
 
         # Test when all the VLANs are consumed
         mock_vnet_wrap.return_value = build_mock_vnets(4094, 'test_vs')
         self.assertRaises(exc.Error, cna._find_free_vlan, self.adpt,
-                          'host_uuid', mock_vswitch)
+                          mock_vswitch)
 
     @mock.patch('pypowervm.tasks.cna._find_free_vlan')
     def test_assign_free_vlan(self, mock_find_vlan):
@@ -231,7 +223,7 @@ class TestVNET(twrap.TestWrapper):
         # Invoke the create
         mock_ext_ids = {'test': 'value', 'test2': 'value2'}
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
-            self.adpt, 'host_uuid', 'lpar_uuid',
+            self.adpt, None, 'lpar_uuid',
             ['src_io_host_uuid', 'vios_uuid2'], mock_vswitch, crt_vswitch=True,
             slot_num=1, mac_addr='aabbccddeeff', ovs_bridge='br-ex',
             ovs_ext_ids=mock_ext_ids, configured_mtu=1450)
@@ -279,7 +271,7 @@ class TestVNET(twrap.TestWrapper):
 
         # Invoke the create
         client_adpt, trunk_adpts = cna.crt_p2p_cna(
-            self.adpt, 'host_uuid', 'lpar_uuid',
+            self.adpt, None, 'lpar_uuid',
             ['mgmt_lpar_uuid'], mock_vswitch, crt_vswitch=True,
             mac_addr='aabbccddeeff', dev_name='tap-12345')
 
@@ -321,7 +313,7 @@ class TestVNET(twrap.TestWrapper):
         # Invoke the create
         mock_ext_id = {'test1': 'value1', 'test2': 'value2'}
         trunk_adpts = cna.crt_trunk_with_free_vlan(
-            self.adpt, 'host_uuid', ['vios_uuid1'],
+            self.adpt, None, ['vios_uuid1'],
             mock_vswitch, crt_vswitch=True, dev_name='tap-12345',
             ovs_bridge='br-int', ovs_ext_ids=mock_ext_id, configured_mtu=1450)
 

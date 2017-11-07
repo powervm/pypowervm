@@ -37,7 +37,7 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     powered off, then it will update it offline.
 
     :param adapter: The pypowervm adapter to perform the update through.
-    :param host_uuid: The host UUID that the CNA will be put on.
+    :param host_uuid: Not used.
     :param lpar_uuid: The lpar UUID to update.
     :param pvid: The primary VLAN ID.
     :param vswitch: The name of the virtual switch that this CNA will be
@@ -63,12 +63,11 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     pvid = str(pvid)
 
     # Find the appropriate virtual switch.
-    vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vswitch,
-                                        crt_vswitch)
+    vswitch_w = _find_or_create_vswitch(adapter, vswitch, crt_vswitch)
 
     # Find the virtual network.  Ensures that the system is ready for this.
     if adapter.traits.vnet_aware:
-        _find_or_create_vnet(adapter, host_uuid, pvid, vswitch_w)
+        _find_or_create_vnet(adapter, pvid, vswitch_w)
 
     # Build and create the CNA
     net_adpt = pvm_net.CNA.bld(
@@ -77,11 +76,12 @@ def crt_cna(adapter, host_uuid, lpar_uuid, pvid,
     return net_adpt.create(parent_type=lpar.LPAR, parent_uuid=lpar_uuid)
 
 
-def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
+def _find_or_create_vnet(adapter, vlan, vswitch):
     # Read the existing virtual networks.  Try to locate...
-    vnet_feed_resp = adapter.read(pvm_ms.System.schema_type, host_uuid,
-                                  pvm_net.VNet.schema_type)
-    vnets = pvm_net.VNet.wrap(vnet_feed_resp)
+    vnets = pvm_net.VNet.get(adapter,
+                             parent_type=pvm_ms.System.schema_type,
+                             parent_uuid=adapter.sys_uuid)
+
     for vnet in vnets:
         if vlan == str(vnet.vlan) and vnet.vswitch_id == vswitch.switch_id:
             return vnet
@@ -93,14 +93,13 @@ def _find_or_create_vnet(adapter, host_uuid, vlan, vswitch):
     # used for 'Flat' networks most likely.
     tagged = (vlan != '1')
     vnet = pvm_net.VNet.bld(adapter, name, vlan, vswitch.related_href, tagged)
-    return vnet.create(parent_type=pvm_ms.System, parent_uuid=host_uuid)
+    return vnet.create(parent_type=pvm_ms.System, parent_uuid=adapter.sys_uuid)
 
 
-def _find_or_create_vswitch(adapter, host_uuid, vs_name, crt_vswitch):
+def _find_or_create_vswitch(adapter, vs_name, crt_vswitch):
     """Finds (or creates) the appropriate virtual switch.
 
     :param adapter: The pypowervm adapter to perform the update through.
-    :param host_uuid: The host UUID that the CNA will be put on.
     :param vs_name: The name of the virtual switch that this CNA will be
                     attached to.
     :param crt_vswitch: A boolean to indicate that if the vSwitch can not be
@@ -108,31 +107,28 @@ def _find_or_create_vswitch(adapter, host_uuid, vs_name, crt_vswitch):
                         the default parameters - ex: Veb mode).
     """
     vswitch_w = pvm_net.VSwitch.search(adapter, parent_type=pvm_ms.System,
-                                       parent_uuid=host_uuid, one_result=True,
-                                       name=vs_name)
+                                       parent_uuid=adapter.sys_uuid,
+                                       one_result=True, name=vs_name)
 
     if vswitch_w is None:
         if crt_vswitch:
             vswitch_w = pvm_net.VSwitch.bld(adapter, vs_name)
             vswitch_w = vswitch_w.create(parent_type=pvm_ms.System,
-                                         parent_uuid=host_uuid)
+                                         parent_uuid=adapter.sys_uuid)
         else:
             raise exc.Error(_('Unable to find the Virtual Switch %s on the '
                               'system.') % vs_name)
     return vswitch_w
 
 
-def _find_free_vlan(adapter, host_uuid, vswitch_w):
+def _find_free_vlan(adapter, vswitch_w):
     """Finds a free VLAN on the vswitch specified."""
 
     # A Virtual Network (VNet) will exist for every PowerVM vSwitch / VLAN
     # combination in the system.  Getting the feed is a quick way to determine
     # which VLANs are in use.
-    vnet_resp_feed = adapter.read(pvm_ms.System.schema_type,
-                                  root_id=host_uuid,
-                                  child_type=pvm_net.VNet.schema_type)
-    vnets = pvm_net.VNet.wrap(vnet_resp_feed)
-
+    vnets = pvm_net.VNet.get(adapter, parent_type=pvm_ms.System.schema_type,
+                             parent_uuid=adapter.sys_uuid)
     # Use that feed to get the VLANs in use, but only get the ones in use for
     # the vSwitch passed in.
     used_vids = [x.vlan for x in vnets
@@ -152,8 +148,8 @@ def _find_free_vlan(adapter, host_uuid, vswitch_w):
 def assign_free_vlan(adapter, host_uuid, vswitch_w, cna, ensure_enabled=False):
     """Assigns a free vlan to a given cna. Also ensure the CNA is enabled.
 
-    :param adapter: The adapter to read the vnet information from
-    :param host_uuid: The host UUID that the CNA is on
+    :param adapter: The adapter to read the vnet information from.
+    :param host_uuid: Not used.
     :param vswitch_w: The vswitch wrapper to find the free vlan on.
     :param cna: The CNA wrapper to be updated with a new vlan.
     :param ensure_enabled: (Optional, Default: False) If true, enable the CNA
@@ -161,7 +157,7 @@ def assign_free_vlan(adapter, host_uuid, vswitch_w, cna, ensure_enabled=False):
     :return: The updated CNA.
     """
 
-    vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+    vlan = _find_free_vlan(adapter, vswitch_w)
     cna.pvid = vlan
     if ensure_enabled:
         cna.enabled = True
@@ -177,7 +173,7 @@ def crt_trunk_with_free_vlan(
     """Creates a trunk adapter(s) with a free VLAN on the system.
 
     :param adapter: The pypowervm adapter to perform the update through.
-    :param host_uuid: The host UUID that the CNA will be put on.
+    :param host_uuid: Not used.
     :param src_io_host_uuids: The list of UUIDs of the LPARs that will host the
                               Trunk Adapters.  At least one UUID is required.
                               Multiple will be supported, and the Trunk
@@ -212,11 +208,10 @@ def crt_trunk_with_free_vlan(
              src_io_host_uuids were passed in.
     """
     # Make sure we have the appropriate vSwitch
-    vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
-                                        crt_vswitch)
+    vswitch_w = _find_or_create_vswitch(adapter, vs_name, crt_vswitch)
 
     # Find the free VLAN
-    vlan = _find_free_vlan(adapter, host_uuid, vswitch_w)
+    vlan = _find_free_vlan(adapter, vswitch_w)
 
     # Need to get the VIOS uuids to determine if the src_io_host_uuid is a VIOS
     iohost_wraps = partition.get_partitions(
@@ -261,7 +256,7 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
     there for future facing compatibility.
 
     :param adapter: The pypowervm adapter to perform the update through.
-    :param host_uuid: The host UUID that the CNA will be put on.
+    :param host_uuid: Not used.
     :param lpar_uuid: The lpar UUID to update.
     :param src_io_host_uuids: The list of UUIDs of the LPARs that will host the
                               Trunk Adapters.  At least one UUID is required.
@@ -303,14 +298,13 @@ def crt_p2p_cna(adapter, host_uuid, lpar_uuid, src_io_host_uuids, vs_name,
     """
 
     trunk_adpts = crt_trunk_with_free_vlan(
-        adapter, host_uuid, src_io_host_uuids, vs_name,
+        adapter, None, src_io_host_uuids, vs_name,
         crt_vswitch=crt_vswitch, dev_name=dev_name, ovs_bridge=ovs_bridge,
         ovs_ext_ids=ovs_ext_ids, configured_mtu=configured_mtu)
 
     # Darn lack of re-entrant locks
     with lockutils.lock(VLAN_LOCK):
-        vswitch_w = _find_or_create_vswitch(adapter, host_uuid, vs_name,
-                                            crt_vswitch)
+        vswitch_w = _find_or_create_vswitch(adapter, vs_name, crt_vswitch)
         client_adpt = pvm_net.CNA.bld(
             adapter, trunk_adpts[0].pvid, vswitch_w.related_href,
             slot_num=slot_num, mac_addr=mac_addr)
