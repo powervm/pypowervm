@@ -613,6 +613,11 @@ class Adapter(object):
     def traits(self):
         return self.session.traits
 
+    @property
+    def sys_uuid(self):
+        resp = self.read('ManagedSystem')
+        return resp.feed.entries[0].uuid
+
     def _request(self, method, path, helpers=None, **kwds):
         """Common request method.
 
