@@ -1115,12 +1115,12 @@ class CNA(ewrap.EntryWrapper):
             cna._dev_name(dev_name)
 
         if ovs_bridge is not None:
-            cna._ovs_bridge(ovs_bridge)
+            cna.ovs_bridge = ovs_bridge
             if ovs_ext_ids is not None:
-                cna._ovs_ext_ids(ovs_ext_ids)
+                cna.ovs_ext_ids = ovs_ext_ids
 
         if configured_mtu is not None:
-            cna._configured_mtu(configured_mtu)
+            cna.configured_mtu = configured_mtu
 
         # If a trunk priority is specified, set it. It will make this CNA
         # build out a trunk adapter. However, if it is not specified, we
@@ -1364,7 +1364,8 @@ class CNA(ewrap.EntryWrapper):
         """
         return self._get_val_int(_VADPT_MTU)
 
-    def _configured_mtu(self, value):
+    @configured_mtu.setter
+    def configured_mtu(self, value):
         self.set_parm_value(_VADPT_MTU, value, attrib=c.ATTR_KSV160)
 
     @property
@@ -1372,7 +1373,8 @@ class CNA(ewrap.EntryWrapper):
         """The Open vSwitch bridge it is connected to.  Otherwise None."""
         return self._get_val_str(_VADPT_OVS_BRIDGE)
 
-    def _ovs_bridge(self, value):
+    @ovs_bridge.setter
+    def ovs_bridge(self, value):
         self.set_parm_value(_VADPT_OVS_BRIDGE, value, attrib=c.ATTR_KSV160)
 
     @property
@@ -1388,7 +1390,8 @@ class CNA(ewrap.EntryWrapper):
         """
         return self._get_val_str(_VADPT_OVS_EXT_IDS)
 
-    def _ovs_ext_ids(self, value):
+    @ovs_ext_ids.setter
+    def ovs_ext_ids(self, value):
         self.set_parm_value(_VADPT_OVS_EXT_IDS, value, attrib=c.ATTR_KSV160)
 
     @ewrap.Wrapper.xag_property(c.XAG.ADV)
