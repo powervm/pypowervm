@@ -124,6 +124,37 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(None, vdisk.udid)
         self.assertEqual('cache', vdisk._get_val_str(stor._DISK_BASE))
         self.assertEqual(stor.FileFormatType.RAW, vdisk.file_format)
+        self.assertEqual(stor.VDiskType.LV, vdisk.vdtype)
+
+        # Try a remove
+        self.dwrap.virtual_disks.remove(vdisk)
+        self.assertEqual(1, len(self.dwrap.virtual_disks))
+
+    def test_add_lv(self):
+        """Duplicate of above with the LV alias."""
+        vdisks = self.dwrap.virtual_disks
+
+        self.assertEqual(1, len(vdisks))
+
+        disk = stor.LV.bld(
+            None, 'disk_name', 10.9876543, label='label', base_image='cache',
+            file_format=stor.FileFormatType.RAW)
+        self.assertIsNotNone(disk)
+
+        vdisks.append(disk)
+        self.dwrap.virtual_disks = vdisks
+
+        self.assertEqual(2, len(self.dwrap.virtual_disks))
+
+        # make sure the second virt disk matches what we put in
+        vdisk = self.dwrap.virtual_disks[1]
+        self.assertEqual('disk_name', vdisk.name)
+        self.assertEqual(10.987654, vdisk.capacity)
+        self.assertEqual('label', vdisk.label)
+        self.assertEqual(None, vdisk.udid)
+        self.assertEqual('cache', vdisk._get_val_str(stor._DISK_BASE))
+        self.assertEqual(stor.FileFormatType.RAW, vdisk.file_format)
+        self.assertEqual(stor.VDiskType.LV, vdisk.vdtype)
 
         # Try a remove
         self.dwrap.virtual_disks.remove(vdisk)
