@@ -878,7 +878,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
 
 @ewrap.Wrapper.base_pvm_type
 class _VDisk(ewrap.ElementWrapper):
-    """Methods common to VDisk and FileIO."""
+    """Methods common to VDisk, FileIO, and RBD."""
 
     @property
     def name(self):
@@ -1024,7 +1024,7 @@ class RBD(_VDisk):
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
 class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
-    """A virtual disk that can be attached to a VM."""
+    """A Logical Volume virtual disk that can be attached to a VM."""
     target_dev_type = VDiskTargetDev
 
     @classmethod
@@ -1058,6 +1058,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
             vd._base_image(base_image)
         if file_format:
             vd._file_format(file_format)
+        vd._vdtype(VDiskType.LV)
         if tag:
             vd._tag(tag)
         return vd
@@ -1067,6 +1068,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
         """Creates a VDisk Wrapper for referring to an existing VDisk."""
         vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
+        vd._vdtype(VDiskType.LV)
         if tag:
             vd._tag(tag)
         return vd
@@ -1074,6 +1076,10 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
     @property
     def vg_uri(self):
         return self.get_href(_DISK_VG, one_result=True)
+
+
+# Alias for VDisk making it explicit that it's a Logical Volume type
+LV = VDisk
 
 
 @six.add_metaclass(abc.ABCMeta)

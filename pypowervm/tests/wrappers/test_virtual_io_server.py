@@ -235,6 +235,7 @@ class TestViosMappings(twrap.TestWrapper):
             'UseNextAvailableSlotID'))
         self.assertEqual('Server', vmap3.server_adapter.side)
         self.assertEqual('disk_name', vmap3.backing_storage.name)
+        self.assertEqual('LogicalVolume', vmap3.backing_storage.vdtype)
         self.assertEqual('a_link', vmap3.client_lpar_href)
         self.assertIsInstance(vmap3.backing_storage, pvm_stor.VDisk)
 
@@ -255,6 +256,7 @@ class TestViosMappings(twrap.TestWrapper):
             'UseNextAvailableSlotID'))
         self.assertEqual('Server', vmap.server_adapter.side)
         self.assertEqual('disk_name', vmap.backing_storage.name)
+        self.assertEqual('LogicalVolume', vmap.backing_storage.vdtype)
         self.assertEqual('a_link', vmap.client_lpar_href)
         self.assertIsInstance(vmap.backing_storage, pvm_stor.VDisk)
 
@@ -272,6 +274,7 @@ class TestViosMappings(twrap.TestWrapper):
             'UseNextAvailableSlotID'))
         self.assertEqual('Server', vmap2.server_adapter.side)
         self.assertEqual('disk_name2', vmap2.backing_storage.name)
+        self.assertEqual('LogicalVolume', vmap2.backing_storage.vdtype)
         self.assertEqual('a_link', vmap2.client_lpar_href)
         self.assertIsInstance(vmap2.backing_storage, pvm_stor.VDisk)
 
@@ -645,6 +648,7 @@ class TestVSCSIBus(twrap.TestWrapper):
         std2 = vios.STDev.bld(self.adpt, vdisk1, lua='vdisk1_lua')
         self.assertIsInstance(std2.backing_storage, pvm_stor.VDisk)
         self.assertEqual('vdisk1', std2.backing_storage.name)
+        self.assertEqual('LogicalVolume', std2.backing_storage.vdtype)
         self.assertIsInstance(std2.target_dev, pvm_stor.VDiskTargetDev)
         self.assertEqual('vdisk1_lua', std2.target_dev.lua)
         # Add 'em to a bus
