@@ -842,6 +842,24 @@ class TestAdapter(testtools.TestCase):
         mock_unm_feed.assert_not_called()
         mock_unm_ent.assert_not_called()
 
+    @mock.patch('pypowervm.adapter.Adapter.read')
+    def test_sys_uuid(self, mock_read):
+
+        # Set and return the sys_uuid if not yet defined
+        adapter = adp.Adapter(self.sess)
+        mock_resp = mock.MagicMock()
+        mock_resp.feed.entries[0].uuid = 'uuid'
+        mock_read.return_value = mock_resp
+        sys_uuid = adapter.sys_uuid
+        mock_read.assert_called_once_with('ManagedSystem')
+        self.assertEqual('uuid', sys_uuid)
+        self.assertEqual('uuid', adapter._sys_uuid)
+
+        # Return sys_uuid if defined already
+        mock_read.reset_mock()
+        sys_uuid = adapter.sys_uuid
+        mock_read.assert_not_called()
+
 
 class TestElement(testtools.TestCase):
     def setUp(self):
