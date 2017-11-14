@@ -596,6 +596,7 @@ class Adapter(object):
 
         self.session = session if session else Session()
         self._helpers = self._standardize_helper_list(helpers)
+        self._sys_uuid = None
 
     @staticmethod
     def _standardize_helper_list(helpers):
@@ -608,6 +609,14 @@ class Adapter(object):
     def helpers(self):
         """Returns a copy of the list of helpers for the adapter."""
         return list(self._helpers) if self._helpers else []
+
+    @property
+    def sys_uuid(self):
+        if self._sys_uuid is None:
+            # Can't use the wrapper here without a local import
+            resp = self.read('ManagedSystem')
+            self._sys_uuid = resp.feed.entries[0].uuid
+        return self._sys_uuid
 
     @property
     def traits(self):
