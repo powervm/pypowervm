@@ -167,19 +167,6 @@ class TestVFCMapper(unittest.TestCase):
         unique_keys = set([i[0] for i in resp])
         self.assertEqual({'10000090FA1B6899'}, unique_keys)
 
-    @mock.patch('pypowervm.wrappers.virtual_io_server.VFCMapping.backing_port',
-                new_callable=mock.PropertyMock, return_value=None)
-    def test_derive_npiv_map_existing_no_bp(self, mock_bp):
-        vios_file = 'fake_vios_mappings.txt'
-        vios_w = pvm_vios.VIOS.wrap(tju.load_file(vios_file).entry)
-        # Subset the WWPNs on that VIOS
-        p_wwpns = ['10000090FA1B6898', '10000090FA1B6899']
-        v_port_wwpns = ['c05076065a7c02e4', 'c05076065a7c02e5']
-        resp = vfc_mapper.derive_npiv_map([vios_w], p_wwpns, v_port_wwpns)
-        # We shouldn't have returned the existing mapping that didn't have
-        # a backing port.
-        self.assertEqual([], resp)
-
     def test_derive_base_npiv_map(self):
         vios_w = pvm_vios.VIOS.wrap(tju.load_file(VIOS_FILE).entry)
         vios_wraps = [vios_w]
@@ -423,8 +410,8 @@ class TestPortMappings(twrap.TestWrapper):
     def test_find_pfc_wwpn_by_name(self):
         vio_w = self.entries[0]
         self.assertEqual('10000090FA5371F1',
-                         vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcs0'))
-        self.assertIsNone(vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcsX'))
+                         vfc_mapper.find_pfc_wwpn_by_name(vio_w, 'fcs0'))
+        self.assertIsNone(vfc_mapper.find_pfc_wwpn_by_name(vio_w, 'fcsX'))
 
     @mock.patch('lxml.etree.tostring')
     def test_add_port_bad_pfc(self, mock_tostring):

@@ -373,7 +373,7 @@ def _fuse_vfc_ports(wwpn_list):
     return list(map(' '.join, zip(l[::2], l[1::2])))
 
 
-def _find_pfc_wwpn_by_name(vios_w, pfc_name):
+def find_pfc_wwpn_by_name(vios_w, pfc_name):
     """Returns the physical port wwpn within a VIOS based off the FC port name.
 
     :param vios_w: VIOS wrapper.
