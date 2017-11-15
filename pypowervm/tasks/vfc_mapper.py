@@ -373,7 +373,7 @@ def _fuse_vfc_ports(wwpn_list):
     return list(map(' '.join, zip(l[::2], l[1::2])))
 
 
-def _find_pfc_wwpn_by_name(vios_w, pfc_name):
+def find_pfc_wwpn_by_name(vios_w, pfc_name):
     """Returns the physical port wwpn within a VIOS based off the FC port name.
 
     :param vios_w: VIOS wrapper.
@@ -409,13 +409,6 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
     is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
 
-    # Match pfc port wwpn
-    match_func = lambda p_map: (
-        p_map is not None and
-        port_map is not None and
-        p_map.backing_port is not None and
-        p_map.backing_port.wwpn == port_map[0])
-
     if port_map:
         v_wwpns = [u.sanitize_wwpn_for_api(x) for x in port_map[1].split()]
 
@@ -428,10 +421,6 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
         elif not is_uuid and vfc_map.server_adapter.lpar_id != client_id:
             # Use the server adapter ^^ in case this is an orphan.
             continue
-
-        if match_func(vfc_map):
-            matching_maps.append(vfc_map)
-            break
 
         # If there is a client adapter, and it is not a 'ANY WWPN', then
         # check to see if the mappings match.
@@ -542,17 +531,6 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
     """
     # This is meant to find the physical port.  Can run against a single
     # element.  We assume invoker has passed correct VIOS.
-
-    if find_maps(vios_w.vfc_mappings, client_lpar_id=lpar_uuid,
-                 port_map=port_map):
-        LOG.info(_("Found existing VFC mapping of %(pfc_port_name)s "
-                   "physical fc port from Virtual I/O Server %(vios_w_name)s"
-                   " to client LPAR %(lpar_uuid)s."),
-                 {'pfc_port_name': vios_w.name,
-                  'vios_w_name': vios_w.name,
-                  'lpar_uuid': lpar_uuid})
-        return None
-
     new_vios_w, p_port = find_vios_for_wwpn([vios_w], port_map[0])
     if new_vios_w is None:
         if error_if_invalid:
@@ -601,7 +579,6 @@ def add_map(vios_w, host_uuid, lpar_uuid, port_map, error_if_invalid=True,
                                       p_port.name, client_wwpns=v_wwpns,
                                       lpar_slot_num=lpar_slot_num)
     vios_w.vfc_mappings.append(vfc_map)
-    vios_w.update()
     return vfc_map
 
 
