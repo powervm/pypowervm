@@ -423,8 +423,8 @@ class TestPortMappings(twrap.TestWrapper):
     def test_find_pfc_wwpn_by_name(self):
         vio_w = self.entries[0]
         self.assertEqual('10000090FA5371F1',
-                         vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcs0'))
-        self.assertIsNone(vfc_mapper._find_pfc_wwpn_by_name(vio_w, 'fcsX'))
+                         vfc_mapper.find_pfc_wwpn_by_name(vio_w, 'fcs0'))
+        self.assertIsNone(vfc_mapper.find_pfc_wwpn_by_name(vio_w, 'fcsX'))
 
     @mock.patch('lxml.etree.tostring')
     def test_add_port_bad_pfc(self, mock_tostring):
