@@ -23,6 +23,7 @@ from oslo_log import log as logging
 import six
 
 import pypowervm.const as c
+import pypowervm.entities as ent
 import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 import pypowervm.util as u
@@ -36,6 +37,25 @@ UDID = 'UniqueDeviceID'
 _READ_IOPS = 'ReadIOPS'
 _WRITE_IOPS = 'WriteIOPS'
 
+# Storage Encryption Constants - common to Physical Volume and Virtual Disk
+_ENCRYPTION_STATE = 'EncryptionState'
+_ENCRYPTION_KEY = 'EncryptionKey'
+_ENCRYPTION_AGENT = 'EncryptionAgent'
+
+
+class EncryptionState(object):
+    """From EncryptionState.Enum."""
+    UNENCRYPTED = 'Unencrypted'
+    FORMATTED = 'Formatted'
+    UNLOCKED = 'Unlocked'
+
+# LUKS-specific encryptor constants
+LUKS_ENCRYPTOR = 'LUKSEncryptor'
+_LUKS_CIPHER = 'Cipher'
+_LUKS_KEY_SIZE = 'KeySize'
+_LUKS_HASH_SPEC = 'Hash'
+_LUKS_EL_ORDER = [_LUKS_CIPHER, _LUKS_KEY_SIZE, _LUKS_HASH_SPEC]
+
 # "Any" server adapters are SCSI adapters without client
 # adapters that map to remote LPAR slot number 65535. They
 # can map to any client and are not recommended but are
@@ -46,6 +66,9 @@ ANY_SLOT = 65535
 DISK_ROOT = 'VirtualDisk'
 _DISK_READ_IOPS = _READ_IOPS
 _DISK_WRITE_IOPS = _WRITE_IOPS
+_DISK_ENCRYPTION_STATE = _ENCRYPTION_STATE
+_DISK_ENCRYPTION_KEY = _ENCRYPTION_KEY
+_DISK_ENCRYPTION_AGENT = _ENCRYPTION_AGENT
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
@@ -58,11 +81,12 @@ _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
 _DISK_FILEFORMAT = 'FileFormat'
 _DISK_OPTIONAL_PARMS = 'OptionalParameters'
-_VDISK_EL_ORDER = [_DISK_READ_IOPS, _DISK_WRITE_IOPS, _DISK_CAPACITY,
-                   _DISK_LABEL, DISK_NAME, _DISK_MAX_LOGICAL_VOLS,
-                   _DISK_PART_SIZE, _DISK_VG, _DISK_BASE, _DISK_UDID,
-                   _DISK_TYPE, _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT,
-                   _DISK_OPTIONAL_PARMS]
+_VDISK_EL_ORDER = [_DISK_READ_IOPS, _DISK_WRITE_IOPS, _DISK_ENCRYPTION_STATE,
+                   _DISK_ENCRYPTION_KEY, _DISK_ENCRYPTION_AGENT,
+                   _DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
+                   _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
+                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
+                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
 
 
 class VDiskType(object):
@@ -92,6 +116,9 @@ PVS = 'PhysicalVolumes'
 PHYS_VOL = 'PhysicalVolume'
 _PV_READ_IOPS = _READ_IOPS
 _PV_WRITE_IOPS = _WRITE_IOPS
+_PV_ENCRYPTION_STATE = _ENCRYPTION_STATE
+_PV_ENCRYPTION_KEY = _ENCRYPTION_KEY
+_PV_ENCRYPTION_AGENT = _ENCRYPTION_AGENT
 _PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
 _PV_VOL_DESC = 'Description'
 _PV_LOC_CODE = 'LocationCode'
@@ -108,7 +135,8 @@ _PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
 _PV_STG_LABEL = 'StorageLabel'
 _PV_PG83 = 'DescriptorPage83'
-_PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_AVAIL_PHYS_PART,
+_PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_ENCRYPTION_STATE,
+                _PV_ENCRYPTION_KEY, _PV_ENCRYPTION_AGENT, _PV_AVAIL_PHYS_PART,
                 _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
                 _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS,
                 _PV_UDID, _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME,
@@ -597,9 +625,110 @@ class _StorageQoS(ewrap.Wrapper):
             _WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
 
 
+@ewrap.ElementWrapper.pvm_type(LUKS_ENCRYPTOR, has_metadata=True,
+                               child_order=_LUKS_EL_ORDER)
+class LUKSEncryptor(ewrap.ElementWrapper):
+    """An encryption agent that uses Linux Unified Key Setup (LUKS)."""
+
+    @classmethod
+    def bld(cls, adapter, cipher=None, key_size=None, hash_spec=None):
+        """Creates a new LUKSEncryptor wrapper.
+
+        This can be attached to a disk wrapper during disk create and update
+        operations to specify encryption parameters for the device.
+
+        :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
+        :param cipher: A string containing the encryption algorithm, mode, and
+                       initialization vector (e.g. aes-xts-plain64). Optional.
+        :param key_size: The key size of the data encryption key. Optional.
+        :param hash_spec: The hash algorithm used for data encryption key
+                          derivation. Optional.
+        """
+        encryptor = super(LUKSEncryptor, cls)._bld(adapter)
+        if cipher is not None:
+            encryptor.cipher = cipher
+        if key_size is not None:
+            encryptor.key_size = key_size
+        if hash_spec is not None:
+            encryptor.hash_spec = hash_spec
+        return encryptor
+
+    @property
+    def cipher(self):
+        """Cipher mode for translating between ciphertext and cleartext."""
+        return self._get_val_str(_LUKS_CIPHER)
+
+    @cipher.setter
+    def cipher(self, new_cipher):
+        self.set_parm_value(_LUKS_CIPHER, new_cipher, attrib=c.ATTR_KSV170)
+
+    @property
+    def key_size(self):
+        """Size of the master encryption key used for data encryption."""
+        return self._get_val_int(_LUKS_KEY_SIZE)
+
+    @key_size.setter
+    def key_size(self, new_key_size):
+        self.set_parm_value(_LUKS_KEY_SIZE, new_key_size, attrib=c.ATTR_KSV170)
+
+    @property
+    def hash_spec(self):
+        """Hash algorithm used for key derivation."""
+        return self._get_val_str(_LUKS_HASH_SPEC)
+
+    @hash_spec.setter
+    def hash_spec(self, new_hash_spec):
+        self.set_parm_value(_LUKS_HASH_SPEC, new_hash_spec,
+                            attrib=c.ATTR_KSV170)
+
+
+@ewrap.Wrapper.base_pvm_type
+class _StorageEncryption(ewrap.Wrapper):
+    """Encryption fields/methods common to PV and VDisk."""
+
+    @property
+    def encryption_state(self):
+        """The device's encryption state"""
+        return self._get_val_str(_ENCRYPTION_STATE)
+
+    @encryption_state.setter
+    def encryption_state(self, new_encryption_state):
+        self.set_parm_value(
+            _ENCRYPTION_STATE, new_encryption_state, attrib=c.ATTR_KSV170)
+
+    @property
+    def encryption_agent(self):
+        """The encryption agent used to encrypt the device."""
+        elem = self._find(_ENCRYPTION_AGENT)
+        if elem is None:
+            return None
+        agent_elems = list(elem)
+        if len(agent_elems) != 1:
+            return None
+        return ewrap.ElementWrapper.wrap(agent_elems[0])
+
+    @encryption_agent.setter
+    def encryption_agent(self, new_encryption_agent):
+        agent_elem = ent.Element(_ENCRYPTION_AGENT, self.adapter,
+                                 attrib=c.ATTR_KSV170)
+        if new_encryption_agent is not None:
+            agent_elem.inject(new_encryption_agent.element)
+        self.inject(agent_elem)
+
+    @property
+    def encryption_key(self):
+        """The encryption key used to format and unlock an encrypted device"""
+        return self._get_val_str(_ENCRYPTION_KEY)
+
+    @encryption_key.setter
+    def encryption_key(self, new_encryption_key):
+        self.set_parm_value(
+            _ENCRYPTION_KEY, new_encryption_key, attrib=c.ATTR_KSV170)
+
+
 @ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True,
                                child_order=_PV_EL_ORDER)
-class PV(ewrap.ElementWrapper, _StorageQoS):
+class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     """A physical volume that backs a Volume Group."""
     target_dev_type = PVTargetDev
 
@@ -846,13 +975,14 @@ class RBD(_VDisk):
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
-class VDisk(_VDisk, _StorageQoS):
+class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
     """A virtual disk that can be attached to a VM."""
     target_dev_type = VDiskTargetDev
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None, base_image=None,
-            file_format=None):
+            file_format=None, encryptor=None, encryption_state=None,
+            encryption_key=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -869,6 +999,12 @@ class VDisk(_VDisk, _StorageQoS):
                            Not required.
         :param file_format: (Optional) File format of VDisk.  See
                             FileFormatType enumeration for valid formats.
+        :param encryptor: (Optional) An encryption agent wrapper used to
+                          encrypt the VDisk.
+        :param encryption_state: (Optional) Specifies the encryption state
+                                 of the VDisk.  Defaults to 'Unencrypted'
+        :param encryption_key: (Optional) Plaintext passphrase string used
+                               to format and unlock the encrypted disk.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -880,6 +1016,9 @@ class VDisk(_VDisk, _StorageQoS):
             vd._base_image(base_image)
         if file_format:
             vd._file_format(file_format)
+        vd.encryption_agent = encryptor
+        vd.encryption_state = encryption_state
+        vd.encryption_key = encryption_key
         return vd
 
     @classmethod

@@ -122,6 +122,17 @@ BODY{
             </Metadata>
             <ReadIOPS ksv="V1_7_0" kxe="false" kb="CUD">44</ReadIOPS>
             <WriteIOPS ksv="V1_7_0" kb="CUD" kxe="false">55</WriteIOPS>
+            <EncryptionState ksv="V1_7_0" kxe="false" kb="CUD">Unlocked</EncryptionState>
+            <EncryptionAgent ksv="V1_7_0" kb="CUD" kxe="false">
+                <LUKSEncryptor schemaVersion="V1_7_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Cipher ksv="V1_7_0" kb="CUD" kxe="false">aes-xts-plain64</Cipher>
+                    <KeySize ksv="V1_7_0" kxe="false" kb="CUD">256</KeySize>
+                    <Hash ksv="V1_7_0" kb="CUD" kxe="false">sha1</Hash>
+                </LUKSEncryptor>
+            </EncryptionAgent>
             <DiskCapacity kb="CUR" kxe="false">1</DiskCapacity>
             <DiskLabel kb="CUR" kxe="false">None</DiskLabel>
             <DiskName kb="CUR" kxe="false">asdf</DiskName>

@@ -531,6 +531,17 @@ BODY{
             <Metadata>
                 <Atom/>
             </Metadata>
+            <EncryptionState ksv="V1_7_0" kb="CUD" kxe="false">Unlocked</EncryptionState>
+            <EncryptionAgent ksv="V1_7_0" kxe="false" kb="CUD">
+                <LUKSEncryptor schemaVersion="V1_7_0">
+                    <Metadata>
+                        <Atom/>
+                    </Metadata>
+                    <Cipher ksv="V1_7_0" kb="CUD" kxe="false">aes-cbc-essiv:sha256</Cipher>
+                    <KeySize ksv="V1_7_0" kxe="false" kb="CUD">512</KeySize>
+                    <Hash ksv="V1_7_0" kxe="false" kb="CUD">sha512</Hash>
+                </LUKSEncryptor>
+            </EncryptionAgent>
             <Description kb="CUD" kxe="false">SAS Disk Drive</Description>
             <LocationCode kxe="false" kb="ROR">U78AB.001.WZSJBM3-P3-D1</LocationCode>
             <ReservePolicy kb="CUD" kxe="false">NoReserve</ReservePolicy>
