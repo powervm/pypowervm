@@ -848,5 +848,20 @@ class TestCNAWrapper(twrap.TestWrapper):
         self.dwrap.enabled = True
         self.assertTrue(self.dwrap.enabled)
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_ovs_attrs(self):
+        self.assertEqual(
+            'iface-id=ba9d8ec3-64b2-47fe-9f50-e12ba373814c,'
+            'iface-status=active,'
+            'attached-mac=fa:e6:c8:3f:80:20,'
+            'vm-uuid=64443c49-920d-47d7-9b78-1216845c51f5',
+            self.dwrap.ovs_ext_ids)
+        self.assertEqual('br-int', self.dwrap.ovs_bridge)
+        self.dwrap.ovs_ext_ids = 'foo'
+        self.assertEqual('foo', self.dwrap.ovs_ext_ids)
+        self.dwrap.ovs_bridge = 'bar'
+        self.assertEqual('bar', self.dwrap.ovs_bridge)
+
+    def test_mtu(self):
+        self.assertEqual(1500, self.dwrap.configured_mtu)
+        self.dwrap.configured_mtu = 2000
+        self.assertEqual(2000, self.dwrap.configured_mtu)
