@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -151,10 +151,10 @@ class TestVIOSWrapper(twrap.TestWrapper):
         self.assertEqual(phys_vols[0].capacity, 572325)
         self.assertEqual(phys_vols[0].name, 'hdisk0')
         self.assertEqual(phys_vols[0].state, 'active')
-        self.assertEqual(phys_vols[0].encryption_state, 'Unlocked')
-        self.assertIsNone(phys_vols[0].encryption_key)
-        agent = phys_vols[0].encryption_agent
-        self.assertIsInstance(agent, pvm_stor.LUKSEncryptor)
+        self.assertEqual(phys_vols[0]._encryption_state, 'Unlocked')
+        self.assertIsNone(phys_vols[0]._encryption_key)
+        agent = phys_vols[0]._encryption_agent
+        self.assertIsInstance(agent, pvm_stor._LUKSEncryptor)
         self.assertEqual(agent.key_size, 512)
         self.assertEqual(agent.cipher, 'aes-cbc-essiv:sha256')
         self.assertEqual(agent.hash_spec, 'sha512')

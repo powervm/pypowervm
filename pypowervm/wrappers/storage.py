@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -43,14 +43,18 @@ _ENCRYPTION_KEY = 'EncryptionKey'
 _ENCRYPTION_AGENT = 'EncryptionAgent'
 
 
-class EncryptionState(object):
-    """From EncryptionState.Enum."""
+class _EncryptionState(object):
+    """From EncryptionState.Enum.
+
+    This class is part of an experimental API change and may be subject to
+    breaking changes until it is publicized.
+    """
     UNENCRYPTED = 'Unencrypted'
     FORMATTED = 'Formatted'
     UNLOCKED = 'Unlocked'
 
 # LUKS-specific encryptor constants
-LUKS_ENCRYPTOR = 'LUKSEncryptor'
+_LUKS_ENCRYPTOR = 'LUKSEncryptor'
 _LUKS_CIPHER = 'Cipher'
 _LUKS_KEY_SIZE = 'KeySize'
 _LUKS_HASH_SPEC = 'Hash'
@@ -625,10 +629,14 @@ class _StorageQoS(ewrap.Wrapper):
             _WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
 
 
-@ewrap.ElementWrapper.pvm_type(LUKS_ENCRYPTOR, has_metadata=True,
+@ewrap.ElementWrapper.pvm_type(_LUKS_ENCRYPTOR, has_metadata=True,
                                child_order=_LUKS_EL_ORDER)
-class LUKSEncryptor(ewrap.ElementWrapper):
-    """An encryption agent that uses Linux Unified Key Setup (LUKS)."""
+class _LUKSEncryptor(ewrap.ElementWrapper):
+    """An encryption agent that uses Linux Unified Key Setup (LUKS).
+
+    This class is part of an experimental API change and may be subject to
+    breaking changes until it is publicized.
+    """
 
     @classmethod
     def bld(cls, adapter, cipher=None, key_size=None, hash_spec=None):
@@ -644,7 +652,7 @@ class LUKSEncryptor(ewrap.ElementWrapper):
         :param hash_spec: The hash algorithm used for data encryption key
                           derivation. Optional.
         """
-        encryptor = super(LUKSEncryptor, cls)._bld(adapter)
+        encryptor = super(_LUKSEncryptor, cls)._bld(adapter)
         if cipher is not None:
             encryptor.cipher = cipher
         if key_size is not None:
@@ -684,21 +692,33 @@ class LUKSEncryptor(ewrap.ElementWrapper):
 
 @ewrap.Wrapper.base_pvm_type
 class _StorageEncryption(ewrap.Wrapper):
-    """Encryption fields/methods common to PV and VDisk."""
+    """Encryption properties/methods common to PV and VDisk.
+
+    The members of this class are part of an experimental API change and may be
+    subject to breaking changes until they are publicized.
+    """
 
     @property
-    def encryption_state(self):
-        """The device's encryption state"""
+    def _encryption_state(self):
+        """The device's encryption state
+
+        This property is part of an experimental API change and may be subject
+        to breaking changes until it is publicized.
+        """
         return self._get_val_str(_ENCRYPTION_STATE)
 
-    @encryption_state.setter
-    def encryption_state(self, new_encryption_state):
+    @_encryption_state.setter
+    def _encryption_state(self, new_encryption_state):
         self.set_parm_value(
             _ENCRYPTION_STATE, new_encryption_state, attrib=c.ATTR_KSV170)
 
     @property
-    def encryption_agent(self):
-        """The encryption agent used to encrypt the device."""
+    def _encryption_agent(self):
+        """The encryption agent used to encrypt the device.
+
+        This property is part of an experimental API change and may be subject
+        to breaking changes until it is publicized.
+        """
         elem = self._find(_ENCRYPTION_AGENT)
         if elem is None:
             return None
@@ -707,8 +727,8 @@ class _StorageEncryption(ewrap.Wrapper):
             return None
         return ewrap.ElementWrapper.wrap(agent_elems[0])
 
-    @encryption_agent.setter
-    def encryption_agent(self, new_encryption_agent):
+    @_encryption_agent.setter
+    def _encryption_agent(self, new_encryption_agent):
         agent_elem = ent.Element(_ENCRYPTION_AGENT, self.adapter,
                                  attrib=c.ATTR_KSV170)
         if new_encryption_agent is not None:
@@ -716,12 +736,16 @@ class _StorageEncryption(ewrap.Wrapper):
         self.inject(agent_elem)
 
     @property
-    def encryption_key(self):
-        """The encryption key used to format and unlock an encrypted device"""
+    def _encryption_key(self):
+        """The encryption key used to format and unlock an encrypted device
+
+        This property is part of an experimental API change and may be subject
+        to breaking changes until it is publicized.
+        """
         return self._get_val_str(_ENCRYPTION_KEY)
 
-    @encryption_key.setter
-    def encryption_key(self, new_encryption_key):
+    @_encryption_key.setter
+    def _encryption_key(self, new_encryption_key):
         self.set_parm_value(
             _ENCRYPTION_KEY, new_encryption_key, attrib=c.ATTR_KSV170)
 
@@ -981,8 +1005,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None, base_image=None,
-            file_format=None, encryptor=None, encryption_state=None,
-            encryption_key=None):
+            file_format=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -999,12 +1022,6 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
                            Not required.
         :param file_format: (Optional) File format of VDisk.  See
                             FileFormatType enumeration for valid formats.
-        :param encryptor: (Optional) An encryption agent wrapper used to
-                          encrypt the VDisk.
-        :param encryption_state: (Optional) Specifies the encryption state
-                                 of the VDisk.  Defaults to 'Unencrypted'
-        :param encryption_key: (Optional) Plaintext passphrase string used
-                               to format and unlock the encrypted disk.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -1016,9 +1033,6 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
             vd._base_image(base_image)
         if file_format:
             vd._file_format(file_format)
-        vd.encryption_agent = encryptor
-        vd.encryption_state = encryption_state
-        vd.encryption_key = encryption_key
         return vd
 
     @classmethod
