@@ -1,0 +1,7 @@
+Verified+1: jenkins <nobody@nowhere.ibm.com>
+Code-Review+2: FRIED, ERIC P. <efried@us.ibm.com>
+Submitted-by: CASTET, NICOLAS V (Nicolas) <nvcastet@us.ibm.com>
+Submitted-at: Wed, 24 Jan 2018 07:41:55 -0600
+Reviewed-on: https://morpheus.pok.stglabs.ibm.com:8443/6262
+Project: pypowervm
+Branch: refs/heads/develop
