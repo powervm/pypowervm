@@ -38,8 +38,20 @@ LOG = logging.getLogger(__name__)
 PPORT_MOD_LOCK = lock.ReaderWriterLock()
 
 
+def validate_capacity(min_capacity, max_capacity):
+    if max_capacity:
+        if max_capacity > 1:
+            raise ValueError('Maximum capacity cannot be greater than '
+                             '100 percent')
+
+        if max_capacity < min_capacity:
+            raise ValueError('Maximum capacity cannot be less than '
+                             'min capacity')
+
+
 def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
-                       capacity=None, check_port_status=False):
+                       capacity=None, max_capacity=None,
+                       check_port_status=False):
     """Set a vNIC's backing devices over given SRIOV physical ports and VIOSes.
 
     Assign the backing devices to a iocard.VNIC wrapper using an anti-affinity
@@ -113,6 +125,9 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
                      assigned to each individual backing device after the fact
                      to achieve more control; but in that case, the consumer is
                      responsible for validating sufficient available capacity.)
+    :param max_capacity: (float) Maximum capacity to assign to each backing
+                         device. Must bet greater or equal to capacity and
+                         less than 1.0.
     :param check_port_status: If True, only ports with link-up status will be
                               considered for allocation.  If False (the
                               default), link-down ports may be used.
@@ -130,6 +145,10 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
     :raise VNICFailoverNotSupportedVIOS: If redundancy > 1, and there are no
                                          vNIC failover-capable VIOSes.
     """
+
+    # Validations for maximum capacity
+    validate_capacity(capacity, max_capacity)
+
     # An Adapter to work with
     adap = vnic_w.adapter
     if adap is None:
@@ -183,7 +202,8 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
             del card_use[said]
         # Create and add the backing device
         vnic_w.back_devs.append(card.VNICBackDev.bld(
-            adap, vio.uuid, said, pp2use.port_id, capacity=capacity))
+            adap, vio.uuid, said, pp2use.port_id, capacity=capacity,
+            max_capacity=max_capacity))
         # Remove the port we just used from subsequent consideration.
         pport_wraps.remove(pp2use)
 
