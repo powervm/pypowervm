@@ -574,7 +574,7 @@ class TestAddRemoveMap(twrap.TestWrapper):
 
         # See if we can find that mapping.
         maps = vfc_mapper.find_maps(v_wrap.vfc_mappings, self.lpar_uuid,
-                                    port_map=p_map_vio1)
+                                    client_adpt=['wwpns', p_map_vio1[1]])
         self.assertEqual(1, len(maps))
 
         # Even though we were searching for a 'FUSED' wwpn, the mapping itself
@@ -605,7 +605,7 @@ class TestAddRemoveMap(twrap.TestWrapper):
 
         # Make sure the map was not there initially.
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
-                                    port_map=fabric_map)
+                                    client_adpt=['wwpns', fabric_map[1]])
         self.assertEqual(0, len(maps))
 
         # Now call the add action
@@ -616,7 +616,7 @@ class TestAddRemoveMap(twrap.TestWrapper):
 
         # Verify the update is now found.
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
-                                    port_map=fabric_map)
+                                    client_adpt=['wwpns', fabric_map[1]])
         self.assertEqual(1, len(maps))
         self.assertEqual(vios1_orig_map_count + 1, len(vios_wrap.vfc_mappings))
 
@@ -631,7 +631,7 @@ class TestAddRemoveMap(twrap.TestWrapper):
         # We should only find one here...the original add.  Not two even though
         # we've called add twice.
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
-                                    port_map=fabric_map)
+                                    client_adpt=['wwpns', fabric_map[1]])
         self.assertEqual(1, len(maps))
 
         # This time, remove the backing port of the existing mapping and try
@@ -654,6 +654,6 @@ class TestAddRemoveMap(twrap.TestWrapper):
         self.assertEqual(vios1_orig_map_count + 2, len(vios_wrap.vfc_mappings))
         # Verify the update is now found.
         maps = vfc_mapper.find_maps(vios_wrap.vfc_mappings, self.lpar_uuid,
-                                    port_map=fabric_map)
+                                    client_adpt=['wwpns', fabric_map[1]])
         self.assertEqual(1, len(maps))
         self.assertEqual(3, maps[0].client_adapter.lpar_slot_num)

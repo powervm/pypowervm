@@ -385,8 +385,9 @@ def find_pfc_wwpn_by_name(vios_w, pfc_name):
     return None
 
 
-def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
-    """Filter a list of VFC mappings by LPAR ID.
+def find_maps(mapping_list, client_lpar_id, serv_adpt=None, client_adpt=None,
+              port=None, vios_slot_num=None, lpar_slot_num=None):
+    """Filter a list of VFC mappings based on args passed.
 
     This is based on scsi_mapper.find_maps, but does not yet provide all the
     same functionality.
@@ -397,49 +398,70 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
                            relies on the presence of the client_lpar_href
                            field.  Some mappings lack this field, and would
                            therefore be ignored.
+    :param serv_adpt: (Optional, Default=None) If set, will only include the
+                      mapping if the server adapter's attribute matches.
+                      Example: ['udid', '1dU8247.22L.2125D6A-V2-C12']
     :param client_adpt: (Optional, Default=None) If set, will only include the
                         mapping if the client adapter's WWPNs match as well.
-    :param port_map: (Optional, Default=None) If set, will look for a matching
-                     mapping based off the client WWPNs as specified by the
-                     port mapping.  The format of this is defined by the
-                     derive_npiv_map method.
-    :return: A list comprising the subset of the input mapping_list whose
-             client LPAR IDs match client_lpar_id.
+                        Format: ['wwpns', '3 2']
+    :param port: (Optional, Default=None) If set, will look for a matching
+                 mapping based off the physical port's attribute.
+                 Example: ['name', 'fcs0']
+    :param vios_slot_num: (Optional, Default=None) If set, will look for a
+                          matching mapping based off the VIOS slot number.
+    :param lpar_slot_num: (Optional, Default=None) If set, will look for a
+                          matching mapping based off the LPAR slot number.
+    :return: A list comprising the subset of vfc mappings whose attributes
+             match the ones specified in the params.
     """
-    is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
     matching_maps = []
 
-    if port_map:
-        v_wwpns = [u.sanitize_wwpn_for_api(x) for x in port_map[1].split()]
-
     for vfc_map in mapping_list:
-        # If to a different VM, continue on.
-        href = vfc_map.client_lpar_href
-        if is_uuid and (not href or client_id != u.get_req_path_uuid(
-                href, preserve_case=True)):
-            continue
-        elif not is_uuid and vfc_map.server_adapter.lpar_id != client_id:
-            # Use the server adapter ^^ in case this is an orphan.
+        # Check VIOS slot num match
+        if (vios_slot_num and
+                vios_slot_num != vfc_map.server_adapter.vios_slot_num):
             continue
 
-        # If there is a client adapter, and it is not a 'ANY WWPN', then
-        # check to see if the mappings match.
-        if client_adpt and client_adpt.wwpns != {_ANY_WWPN}:
-            # If they passed in a client adapter, but the map doesn't have
-            # one, then we have to ignore
+        # Check server adapter attribute match
+        if (serv_adpt and
+                getattr(vfc_map.server_adapter, serv_adpt[0]) != serv_adpt[1]):
+            continue
+
+        # Check LPAR ID match
+        if client_lpar_id:
+            is_uuid, client_id = uuid.id_or_uuid(client_lpar_id)
+            href = vfc_map.client_lpar_href
+            # No matching UUID...
+            if is_uuid and (not href or client_id != u.get_req_path_uuid(
+                    href, preserve_case=True)):
+                continue
+            # No matching integer short ID...
+            elif not is_uuid and (vfc_map.server_adapter.lpar_id != client_id):
+                continue
+
+        # Check LPAR slot num match
+        if (lpar_slot_num and
+                lpar_slot_num != vfc_map.server_adapter.lpar_slot_num):
+            continue
+
+        # Check physical port existence and attribute match
+        if port:
+            # If they passed in a port attribute, but the map
+            # doesn't have one, then we have to ignore
+            if not vfc_map.backing_port:
+                continue
+
+            # Check to make sure the attributes between the two match
+            if getattr(vfc_map.backing_port, port[0]) != port[1]:
+                continue
+
+        # Check client adapter attribute match, only wwpns supported currently
+        if client_adpt and client_adpt[0] == 'wwpns':
+            v_wwpns = [u.sanitize_wwpn_for_api(x)
+                       for x in client_adpt[1].split()]
+            # If they passed in a client adapter attribute, but the map
+            # doesn't have an adapter, then we have to ignore
             if not vfc_map.client_adapter:
-                continue
-
-            # Check to make sure the WWPNs between the two match.  This should
-            # be an order independence check (as this query shouldn't care...
-            # but the API itself does care about order).
-            if set(client_adpt.wwpns) != set(vfc_map.client_adapter.wwpns):
-                continue
-
-        # If the user had a port map, do the virtual WWPNs from that port
-        # map match the client adapter wwpn map.
-        if port_map:
-            if vfc_map.client_adapter is None:
                 continue
 
             # If it is a new mapping with generated WWPNs, then the client
@@ -447,10 +469,13 @@ def find_maps(mapping_list, client_lpar_id, client_adpt=None, port_map=None):
             if v_wwpns == [_ANY_WWPN, _ANY_WWPN]:
                 if vfc_map.client_adapter.wwpns != []:
                     continue
-            elif set(vfc_map.client_adapter.wwpns) != set(v_wwpns):
+            # Check to make sure the WWPNs between the two match.  This should
+            # be an order independence check (as this query shouldn't care...
+            # but the API itself does care about order).
+            elif set(v_wwpns) != set(vfc_map.client_adapter.wwpns):
                 continue
 
-        # Found a match!
+        # If we made it here...passed all matching criteria specified
         matching_maps.append(vfc_map)
 
     return matching_maps
@@ -462,21 +487,25 @@ def remove_maps(v_wrap, client_lpar_id, client_adpt=None, port_map=None):
     The changes are not flushed back to the REST server.
 
     :param v_wrap: VIOS EntryWrapper representing the Virtual I/O Server whose
-                   VFC mappings are to be updated.
+                   VFC mappings are to be removed.
     :param client_lpar_id: The integer short ID or string UUID of the client VM
     :param client_adpt: (Optional, Default=None) If set, will only add the
                         mapping if the client adapter's WWPNs match as well.
     :param port_map: (Optional, Default=None) If set, will look for a matching
                      mapping based off the client WWPNs as specified by the
                      port mapping.  The format of this is defined by the
-                     derive_npiv_map method.
+                     derive_npiv_map method. Overrides client_adpt option.
     :return: The mappings removed from the VIOS wrapper.
     """
     resp_list = []
+    client_adpt_arg = None
+    if client_adpt:
+        client_adpt_arg = ['wwpns', " ".join(client_adpt.wwpns)]
+    if port_map:
+        client_adpt_arg = ['wwpns', port_map[1]]
 
     for matching_map in find_maps(v_wrap.vfc_mappings, client_lpar_id,
-                                  client_adpt=client_adpt,
-                                  port_map=port_map):
+                                  client_adpt=client_adpt_arg):
         v_wrap.vfc_mappings.remove(matching_map)
         resp_list.append(matching_map)
     return resp_list
