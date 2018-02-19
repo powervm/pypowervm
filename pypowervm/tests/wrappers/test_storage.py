@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -91,6 +91,13 @@ class TestVolumeGroup(twrap.TestWrapper):
             "6fedcb", vdisk.vg_uri)
         self.assertEqual(44, vdisk.read_iops_limit)
         self.assertEqual(55, vdisk.write_iops_limit)
+        self.assertEqual('Unlocked', vdisk._encryption_state)
+        self.assertIsNone(vdisk._encryption_key)
+        agent = vdisk._encryption_agent
+        self.assertIsInstance(agent, stor._LUKSEncryptor)
+        self.assertEqual(agent.key_size, 256)
+        self.assertEqual(agent.cipher, 'aes-xts-plain64')
+        self.assertEqual(agent.hash_spec, 'sha1')
 
         # Test setters
         vdisk.capacity = 2
@@ -99,16 +106,34 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual('new_name', vdisk.name)
         vdisk._base_image('base_image')
         self.assertEqual('base_image', vdisk._get_val_str(stor._DISK_BASE))
+        vdisk._encryption_state = 'Formatted'
+        self.assertEqual('Formatted', vdisk._encryption_state)
+        vdisk._encryption_key = 'blahblahblah'
+        self.assertEqual('blahblahblah', vdisk._encryption_key)
+        vdisk._encryption_agent = None
+        self.assertIsNone(vdisk._encryption_agent)
+        agent.key_size = 512
+        self.assertEqual(512, agent.key_size)
+        agent.cipher = 'aes-cbc-essiv:sha256'
+        self.assertEqual('aes-cbc-essiv:sha256', agent.cipher)
+        agent.hash_spec = 'sha256'
+        self.assertEqual('sha256', agent.hash_spec)
 
     def test_add_vdisk(self):
         """Performs a test flow that adds a virtual disk."""
         vdisks = self.dwrap.virtual_disks
 
         self.assertEqual(1, len(vdisks))
+        encryptor = stor._LUKSEncryptor.bld(None,
+                                            cipher='aes-cbc-essiv:sha256',
+                                            key_size=512, hash_spec='sha256')
 
         disk = stor.VDisk.bld(
             None, 'disk_name', 10.9876543, label='label', base_image='cache',
             file_format=stor.FileFormatType.RAW)
+        disk._encryption_agent = encryptor
+        disk._encryption_key = 'password'
+        disk._encryption_state = 'Unlocked'
         self.assertIsNotNone(disk)
 
         vdisks.append(disk)
@@ -124,6 +149,13 @@ class TestVolumeGroup(twrap.TestWrapper):
         self.assertEqual(None, vdisk.udid)
         self.assertEqual('cache', vdisk._get_val_str(stor._DISK_BASE))
         self.assertEqual(stor.FileFormatType.RAW, vdisk.file_format)
+        self.assertEqual('password', vdisk._encryption_key)
+        self.assertEqual('Unlocked', vdisk._encryption_state)
+        self.assertIsInstance(vdisk._encryption_agent, stor._LUKSEncryptor)
+        self.assertEqual('aes-cbc-essiv:sha256',
+                         vdisk._encryption_agent.cipher)
+        self.assertEqual(512, vdisk._encryption_agent.key_size)
+        self.assertEqual('sha256', vdisk._encryption_agent.hash_spec)
 
         # Try a remove
         self.dwrap.virtual_disks.remove(vdisk)

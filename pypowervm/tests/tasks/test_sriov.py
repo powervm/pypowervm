@@ -1,4 +1,4 @@
-# Copyright 2016 IBM Corp.
+# Copyright 2016, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -218,6 +218,34 @@ class TestSriov(testtools.TestCase):
                           tsriov._check_and_filter_vioses, 'adap', None, 2)
 
     @mock.patch('pypowervm.tasks.sriov._check_and_filter_vioses')
+    def test_set_vnic_back_devs_max_less_than_capacity(self, mock_vioget):
+        """Test set_vnic_back_devs with max capacity less than min capacity"""
+        mock_sys = sys_wrapper(self.fake_sriovs)
+        mock_vioget.return_value = [mock.Mock(uuid='vios_uuid1')]
+        self.adpt.build_href.side_effect = lambda *a, **k: str(a[1])
+        vnic = card.VNIC.bld(self.adpt, pvid=5)
+        self.assertEqual(0, len(vnic.back_devs))
+        # Should raise ValueError 'Maximum capacity cannot be less
+        # than min capacity'
+        self.assertRaises(
+            ValueError, tsriov.set_vnic_back_devs, vnic, [],
+            sys_w=mock_sys, max_capacity=0.1, capacity=0.5)
+
+    @mock.patch('pypowervm.tasks.sriov._check_and_filter_vioses')
+    def test_set_vnic_back_devs_max_greaterthan_100(self, mock_vioget):
+        """Test set_vnic_back_devs with max capacity greater than 1"""
+        mock_sys = sys_wrapper(self.fake_sriovs)
+        mock_vioget.return_value = [mock.Mock(uuid='vios_uuid1')]
+        self.adpt.build_href.side_effect = lambda *a, **k: '%s' % a[1]
+        vnic = card.VNIC.bld(self.adpt, pvid=5)
+        self.assertEqual(0, len(vnic.back_devs))
+        # Should raise ValueError 'Maximum capacity cannot be greater
+        # than 100 percent'
+        self.assertRaises(
+            ValueError, tsriov.set_vnic_back_devs, vnic, [],
+            max_capacity=1.1, sys_w=mock_sys)
+
+    @mock.patch('pypowervm.tasks.sriov._check_and_filter_vioses')
     @mock.patch('random.shuffle')
     def test_set_vnic_back_devs(self, mock_shuffle, mock_vioget):
         """Test set_vnic_back_devs."""
@@ -293,6 +321,25 @@ class TestSriov(testtools.TestCase):
                            bd.capacity) for bd in vnic.back_devs])
 
         self.assertEqual(5, mock_shuffle.call_count)
+
+        # When max capacity is not specified during set_vnic_back_devs,
+        # max_capacity should be None
+        self.assertEqual(None, vnic.back_devs[0].max_capacity)
+
+    @mock.patch('pypowervm.tasks.sriov._check_and_filter_vioses')
+    def test_set_vnic_back_devs_max_capacity_invoked(self, mock_vioget):
+        mock_sys = sys_wrapper(self.fake_sriovs)
+        mock_vioget.return_value = [mock.Mock(uuid='vios_uuid1')]
+        self.adpt.build_href.side_effect = lambda *a, **k: '%s' % a[1]
+        vnic = card.VNIC.bld(self.adpt, pvid=5)
+        self.assertEqual(0, len(vnic.back_devs))
+        tsriov.set_vnic_back_devs(vnic, ['pport_loc%d' % x for x in range(60)],
+                                  sys_w=mock_sys, capacity=0.02, redundancy=1,
+                                  max_capacity=0.75)
+        # Ensure that the max and min capacities attached to back_devices as
+        # expected
+        self.assertEqual(0.02, vnic.back_devs[0].capacity)
+        self.assertEqual(0.75, vnic.back_devs[0].max_capacity)
 
     @mock.patch('pypowervm.wrappers.managed_system.System.get')
     def test_find_pports_for_portlabel(self, mock_sys_get):
