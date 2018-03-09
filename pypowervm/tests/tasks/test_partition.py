@@ -20,6 +20,7 @@ import mock
 import testtools
 
 import pypowervm.const as c
+import pypowervm.entities as ent
 import pypowervm.exceptions as ex
 import pypowervm.tasks.partition as tpar
 import pypowervm.tests.tasks.util as tju
@@ -345,3 +346,18 @@ class TestVios(twrap.TestWrapper):
             adpt, vioses=False, mgmt=True))
         self.assertEqual(vioses + [mgmt], tpar.get_partitions(
             adpt, lpars=False, mgmt=True))
+
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    def test_clone_uuid(self, mock_run_job):
+
+        mock_resp = mock.MagicMock()
+        mock_resp.entry = ent.Entry(
+            {}, ent.Element('Dummy', self.adpt), self.adpt)
+        self.adpt.read.side_effect = [mock_resp]
+        mock_run_job.side_effect = tju.get_parm_checker(
+            self, '1234', [('targetLparName', 'abc')])
+        tpar.clone_uuid(self.adpt, '1234', 'abc')
+        self.adpt.read.assert_called_once_with('LogicalPartition',
+                                               root_id='1234',
+                                               suffix_type='do',
+                                               suffix_parm='CloneUUID')

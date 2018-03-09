@@ -25,6 +25,7 @@ from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.utils.transaction as tx
 import pypowervm.wrappers.base_partition as bp
+from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as lpar
 import pypowervm.wrappers.virtual_io_server as vios
 
@@ -44,6 +45,8 @@ _DOWN_VM_STATES = (bp.LPARState.NOT_ACTIVATED, bp.LPARState.ERROR,
                    bp.LPARState.NOT_AVAILBLE, bp.LPARState.SHUTTING_DOWN,
                    bp.LPARState.SUSPENDED, bp.LPARState.SUSPENDING,
                    bp.LPARState.UNKNOWN)
+
+_SUFFIX_PARM_CLONE_UUID = 'CloneUUID'
 
 _LOW_WAIT_TIME = 120
 _HIGH_WAIT_TIME = 600
@@ -363,3 +366,23 @@ def has_physical_io(part_w):
             return True
     # We got through all the I/O slots without finding a physical I/O adapter
     return False
+
+
+def clone_uuid(adapter, lpar_uuid, surrogate_lpar_name):
+    """Issue the CloneUUID job.
+
+    The CloneUUID job deletes the original LPAR and changes the surrogate
+    LPAR's UUID to be the original LPAR's UUID.
+
+    :param adapter: The pypowervm adapter to issue the job.
+    :param lpar_uuid: Original LPAR's UUID.
+    :param surrogate_lpar_name: Surrogate LPAR's name.
+    """
+    resp = adapter.read(lpar.LPAR.schema_type, root_id=lpar_uuid,
+                        suffix_type=c.SUFFIX_TYPE_DO,
+                        suffix_parm=_SUFFIX_PARM_CLONE_UUID)
+    job_wrapper = job.Job.wrap(resp.entry)
+    job_parms = [job_wrapper.create_job_parameter('targetLparName',
+                                                  surrogate_lpar_name)]
+
+    job_wrapper.run_job(lpar_uuid, job_parms=job_parms)
