@@ -700,3 +700,13 @@ class TestStorageTypes(testtools.TestCase):
         self.assertEqual('pool/volume', rbd.label)
         self.assertEqual('RBD', rbd.vdtype)
         self.assertEqual('user:rbd', rbd.backstore_type)
+
+    def test_pv(self):
+        pv = stor.PV.bld('adap', 'name')
+        self.assertEqual('name', pv.name)
+        self.assertIsNone(pv.udid)
+        self.assertIsNone(pv.tag)
+        pv = stor.PV.bld('adap', 'name', udid='udid', tag='tag')
+        self.assertEqual('name', pv.name)
+        self.assertEqual('udid', pv.udid)
+        self.assertEqual('tag', pv.tag)

@@ -123,6 +123,7 @@ _PV_WRITE_IOPS = _WRITE_IOPS
 _PV_ENCRYPTION_STATE = _ENCRYPTION_STATE
 _PV_ENCRYPTION_KEY = _ENCRYPTION_KEY
 _PV_ENCRYPTION_AGENT = _ENCRYPTION_AGENT
+_PV_TAG = 'Tag'
 _PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
 _PV_VOL_DESC = 'Description'
 _PV_LOC_CODE = 'LocationCode'
@@ -140,12 +141,12 @@ _PV_FC_BACKED = 'IsFibreChannelBacked'
 _PV_STG_LABEL = 'StorageLabel'
 _PV_PG83 = 'DescriptorPage83'
 _PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_ENCRYPTION_STATE,
-                _PV_ENCRYPTION_KEY, _PV_ENCRYPTION_AGENT, _PV_AVAIL_PHYS_PART,
-                _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
-                _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS,
-                _PV_UDID, _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME,
-                _PV_VOL_STATE, _PV_VOL_UNIQUE_ID, _PV_FC_BACKED,
-                _PV_STG_LABEL, _PV_PG83]
+                _PV_ENCRYPTION_KEY, _PV_ENCRYPTION_AGENT, _PV_TAG,
+                _PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE,
+                _PV_PERSISTENT_RESERVE, _PV_RES_POLICY, _PV_RES_POLICY_ALGO,
+                _PV_TOTAL_PHYS_PARTS, _PV_UDID, _PV_AVAIL_FOR_USE,
+                _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE, _PV_VOL_UNIQUE_ID,
+                _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83]
 
 
 class PVState(object):
@@ -757,7 +758,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     target_dev_type = PVTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, udid=None):
+    def bld(cls, adapter, name, udid=None, tag=None):
         """Creates the a fresh PV wrapper.
 
         This should be used when wishing to add physical volumes to a Volume
@@ -770,13 +771,17 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
         :param name: The name of the physical volume on the Virtual I/O Server
                      to add to the Volume Group.  Ex. 'hdisk1'.
         :param udid: Universal Disk Identifier.
-        :returns: An Element that can be used for a PhysicalVolume create.
+        :param tag: String with which to tag the physical device upon mapping.
+        :returns: An Element that can be used for a PhysicalVolume create or
+                  mapping.
         """
         pv = super(PV, cls)._bld(adapter)
         # Assignment order is significant
         if udid:
             pv.udid = udid
         pv.name = name
+        if tag:
+            pv._tag(tag)
         return pv
 
     @property
@@ -865,6 +870,13 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
                           'it failed to decode (%(type_error)s).'),
                         {'pg83_raw': encoded, 'type_error': te.args[0]})
         return None
+
+    @property
+    def tag(self):
+        return self._get_val_str(_PV_TAG)
+
+    def _tag(self, tag):
+        self.set_parm_value(_PV_TAG, tag, attrib=c.ATTR_KSV190)
 
 
 @ewrap.Wrapper.base_pvm_type
