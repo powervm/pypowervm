@@ -280,15 +280,18 @@ class TestLUEnt(twrap.TestWrapper):
             'acity><uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.
             encode('utf-8'))
         lu = stor.LUEnt.bld(None, 'lu_name', 1.2345678, thin=True,
-                            typ=stor.LUType.IMAGE)
+                            typ=stor.LUType.IMAGE, tag='my_tag')
         self.assertEqual(
             lu.toxmlstring(),
             '<uom:LogicalUnit xmlns:uom="http://www.ibm.com/xmlns/systems/powe'
-            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0"><uom:Metadata><u'
-            'om:Atom/></uom:Metadata><uom:ThinDevice>true</uom:ThinDevice><uom'
-            ':UnitCapacity>1.234568</uom:UnitCapacity><uom:LogicalUnitType>Vir'
-            'tualIO_Image</uom:LogicalUnitType><uom:UnitName>lu_name</uom:Unit'
-            'Name></uom:LogicalUnit>'.encode('utf-8'))
+            'r/firmware/uom/mc/2012_10/" schemaVersion="V1_0">'
+            '<uom:Metadata><uom:Atom/></uom:Metadata>'
+            '<uom:Tag ksv="V1_9_0">my_tag</uom:Tag>'
+            '<uom:ThinDevice>true</uom:ThinDevice>'
+            '<uom:UnitCapacity>1.234568</uom:UnitCapacity>'
+            '<uom:LogicalUnitType>VirtualIO_Image</uom:LogicalUnitType>'
+            '<uom:UnitName>lu_name</uom:UnitName></uom:LogicalUnit>'.encode(
+                'utf-8'))
         lu = stor.LUEnt.bld(None, 'lu_name', .12300019999, thin=False,
                             clone=mock.Mock(capacity=1.23,
                                             udid='cloned_from_udid'))
@@ -300,6 +303,16 @@ class TestLUEnt(twrap.TestWrapper):
             'm:UnitCapacity>1.230000</uom:UnitCapacity><uom:ClonedFrom>cloned_'
             'from_udid</uom:ClonedFrom><uom:UnitName>lu_name</uom:UnitName></u'
             'om:LogicalUnit>'.encode('utf-8'))
+
+    def test_lu_bld_ref(self):
+        lu = stor.LU.bld_ref(None, 'name', 'udid')
+        self.assertEqual('name', lu.name)
+        self.assertEqual('udid', lu.udid)
+        self.assertIsNone(lu.tag)
+        lu = stor.LU.bld_ref(None, 'name', 'udid', tag='tag')
+        self.assertEqual('name', lu.name)
+        self.assertEqual('udid', lu.udid)
+        self.assertEqual('tag', lu.tag)
 
     def test_lu_ordering(self):
         lu = stor.LUEnt._bld(None)
@@ -681,16 +694,19 @@ class TestStorageTypes(testtools.TestCase):
         self.assertEqual('path', fio.name)
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
+        self.assertIsNone(fio.tag)
         self.assertEqual('File', fio.vdtype)
         self.assertIsNone(fio.backstore_type)
         # Explicit backstore, legacy bld method
-        fio = stor.FileIO.bld('adap', 'path',
-                              backstore_type=stor.BackStoreType.FILE_IO)
+        fio = stor.FileIO.bld(
+            'adap', 'path', backstore_type=stor.BackStoreType.FILE_IO,
+            tag='tag')
         self.assertEqual('path', fio.label)
         self.assertEqual('path', fio.path)
         self.assertEqual('path', fio.name)
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
+        self.assertEqual('tag', fio.tag)
         self.assertEqual('File', fio.vdtype)
         self.assertEqual('fileio', fio.backstore_type)
 
@@ -700,3 +716,44 @@ class TestStorageTypes(testtools.TestCase):
         self.assertEqual('pool/volume', rbd.label)
         self.assertEqual('RBD', rbd.vdtype)
         self.assertEqual('user:rbd', rbd.backstore_type)
+        self.assertIsNone(rbd.tag)
+        rbd = stor.RBD.bld_ref('adap', 'pool/volume', tag='tag')
+        self.assertEqual('pool/volume', rbd.name)
+        self.assertEqual('pool/volume', rbd.label)
+        self.assertEqual('RBD', rbd.vdtype)
+        self.assertEqual('user:rbd', rbd.backstore_type)
+        self.assertEqual('tag', rbd.tag)
+
+    def test_vdisk(self):
+        vdisk = stor.VDisk.bld('adap', 'name', 10)
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual(10, vdisk.capacity)
+        self.assertEqual('None', vdisk.label)
+        self.assertIsNone(vdisk._get_val_str('BaseImage'))
+        self.assertIsNone(vdisk.file_format)
+        self.assertIsNone(vdisk.tag)
+        vdisk = stor.VDisk.bld(
+            'adap', 'name', 10, label='label', base_image='img',
+            file_format='format', tag='tag')
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual(10, vdisk.capacity)
+        self.assertEqual('label', vdisk.label)
+        self.assertEqual('img', vdisk._get_val_str('BaseImage'))
+        self.assertEqual('format', vdisk.file_format)
+        self.assertEqual('tag', vdisk.tag)
+        vdisk = stor.VDisk.bld_ref('adap', 'name')
+        self.assertEqual('name', vdisk.name)
+        self.assertIsNone(vdisk.tag)
+        vdisk = stor.VDisk.bld_ref('adap', 'name', tag='tag')
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual('tag', vdisk.tag)
+
+    def test_pv(self):
+        pv = stor.PV.bld('adap', 'name')
+        self.assertEqual('name', pv.name)
+        self.assertIsNone(pv.udid)
+        self.assertIsNone(pv.tag)
+        pv = stor.PV.bld('adap', 'name', udid='udid', tag='tag')
+        self.assertEqual('name', pv.name)
+        self.assertEqual('udid', pv.udid)
+        self.assertEqual('tag', pv.tag)
