@@ -681,16 +681,19 @@ class TestStorageTypes(testtools.TestCase):
         self.assertEqual('path', fio.name)
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
+        self.assertIsNone(fio.tag)
         self.assertEqual('File', fio.vdtype)
         self.assertIsNone(fio.backstore_type)
         # Explicit backstore, legacy bld method
-        fio = stor.FileIO.bld('adap', 'path',
-                              backstore_type=stor.BackStoreType.FILE_IO)
+        fio = stor.FileIO.bld(
+            'adap', 'path', backstore_type=stor.BackStoreType.FILE_IO,
+            tag='tag')
         self.assertEqual('path', fio.label)
         self.assertEqual('path', fio.path)
         self.assertEqual('path', fio.name)
         self.assertIsNone(fio.capacity)
         self.assertIsNone(fio.udid)
+        self.assertEqual('tag', fio.tag)
         self.assertEqual('File', fio.vdtype)
         self.assertEqual('fileio', fio.backstore_type)
 
@@ -700,3 +703,44 @@ class TestStorageTypes(testtools.TestCase):
         self.assertEqual('pool/volume', rbd.label)
         self.assertEqual('RBD', rbd.vdtype)
         self.assertEqual('user:rbd', rbd.backstore_type)
+        self.assertIsNone(rbd.tag)
+        rbd = stor.RBD.bld_ref('adap', 'pool/volume', tag='tag')
+        self.assertEqual('pool/volume', rbd.name)
+        self.assertEqual('pool/volume', rbd.label)
+        self.assertEqual('RBD', rbd.vdtype)
+        self.assertEqual('user:rbd', rbd.backstore_type)
+        self.assertEqual('tag', rbd.tag)
+
+    def test_vdisk(self):
+        vdisk = stor.VDisk.bld('adap', 'name', 10)
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual(10, vdisk.capacity)
+        self.assertEqual('None', vdisk.label)
+        self.assertIsNone(vdisk._get_val_str('BaseImage'))
+        self.assertIsNone(vdisk.file_format)
+        self.assertIsNone(vdisk.tag)
+        vdisk = stor.VDisk.bld(
+            'adap', 'name', 10, label='label', base_image='img',
+            file_format='format', tag='tag')
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual(10, vdisk.capacity)
+        self.assertEqual('label', vdisk.label)
+        self.assertEqual('img', vdisk._get_val_str('BaseImage'))
+        self.assertEqual('format', vdisk.file_format)
+        self.assertEqual('tag', vdisk.tag)
+        vdisk = stor.VDisk.bld_ref('adap', 'name')
+        self.assertEqual('name', vdisk.name)
+        self.assertIsNone(vdisk.tag)
+        vdisk = stor.VDisk.bld_ref('adap', 'name', tag='tag')
+        self.assertEqual('name', vdisk.name)
+        self.assertEqual('tag', vdisk.tag)
+
+    def test_pv(self):
+        pv = stor.PV.bld('adap', 'name')
+        self.assertEqual('name', pv.name)
+        self.assertIsNone(pv.udid)
+        self.assertIsNone(pv.tag)
+        pv = stor.PV.bld('adap', 'name', udid='udid', tag='tag')
+        self.assertEqual('name', pv.name)
+        self.assertEqual('udid', pv.udid)
+        self.assertEqual('tag', pv.tag)

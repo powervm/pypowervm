@@ -755,7 +755,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     target_dev_type = PVTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, udid=None):
+    def bld(cls, adapter, name, udid=None, tag=None):
         """Creates the a fresh PV wrapper.
 
         This should be used when wishing to add physical volumes to a Volume
@@ -768,13 +768,17 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
         :param name: The name of the physical volume on the Virtual I/O Server
                      to add to the Volume Group.  Ex. 'hdisk1'.
         :param udid: Universal Disk Identifier.
-        :returns: An Element that can be used for a PhysicalVolume create.
+        :param tag: String with which to tag the physical device upon mapping.
+        :returns: An Element that can be used for a PhysicalVolume create or
+                  mapping.
         """
         pv = super(PV, cls)._bld(adapter)
         # Assignment order is significant
         if udid:
             pv.udid = udid
         pv.name = name
+        if tag:
+            pv._tag(tag)
         return pv
 
     @property
@@ -864,6 +868,13 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
                         {'pg83_raw': encoded, 'type_error': te.args[0]})
         return None
 
+    @property
+    def tag(self):
+        return self._get_val_str(_STOR_TAG)
+
+    def _tag(self, tag):
+        self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
+
 
 @ewrap.Wrapper.base_pvm_type
 class _VDisk(ewrap.ElementWrapper):
@@ -931,6 +942,13 @@ class _VDisk(ewrap.ElementWrapper):
         """
         self.set_parm_value(_DISK_FILEFORMAT, val, attrib=c.ATTR_KSV150)
 
+    @property
+    def tag(self):
+        return self._get_val_str(_STOR_TAG)
+
+    def _tag(self, tag):
+        self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -943,13 +961,14 @@ class FileIO(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld_ref(cls, adapter, path, backstore_type=None):
+    def bld_ref(cls, adapter, path, backstore_type=None, tag=None):
         """Creates a FileIO reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
         :param path: The file system path of the File I/O object.
         :param backstore_type: The type of backing storage, one of the
                                BackStoreType enum values.
+        :param tag: String with which to tag the device upon mapping.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  File I/O mapping on the server.
         """
@@ -959,6 +978,8 @@ class FileIO(_VDisk):
         fio._vdtype(VDiskType.FILE)
         if backstore_type is not None:
             fio._backstore_type(backstore_type)
+        if tag:
+            fio._tag(tag)
         return fio
 
     # Maintained for backward compatibility.  FileIOs aren't created by REST.
@@ -981,11 +1002,12 @@ class RBD(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld_ref(cls, adapter, name):
+    def bld_ref(cls, adapter, name, tag=None):
         """Creates a FileIO reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
         :param name: The name of the RBD object.  Also used as the label.
+        :param tag: String with which to tag the device upon mapping.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  File I/O mapping on the server.
         """
@@ -994,6 +1016,8 @@ class RBD(_VDisk):
         rbd._label(name)
         rbd._vdtype(VDiskType.RBD)
         rbd._backstore_type(BackStoreType.USER_RBD)
+        if tag:
+            rbd._tag(tag)
         return rbd
 
 
@@ -1005,7 +1029,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None, base_image=None,
-            file_format=None):
+            file_format=None, tag=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -1022,6 +1046,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
                            Not required.
         :param file_format: (Optional) File format of VDisk.  See
                             FileFormatType enumeration for valid formats.
+        :param tag: String with which to tag the device upon mapping.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -1033,13 +1058,17 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
             vd._base_image(base_image)
         if file_format:
             vd._file_format(file_format)
+        if tag:
+            vd._tag(tag)
         return vd
 
     @classmethod
-    def bld_ref(cls, adapter, name):
+    def bld_ref(cls, adapter, name, tag=None):
         """Creates a VDisk Wrapper for referring to an existing VDisk."""
         vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
+        if tag:
+            vd._tag(tag)
         return vd
 
     @property
