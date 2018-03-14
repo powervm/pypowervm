@@ -33,14 +33,19 @@ LOG = logging.getLogger(__name__)
 
 UDID = 'UniqueDeviceID'
 
-# Storage QoS Constants - common to Physical Volume & Virtual Disk
-_READ_IOPS = 'ReadIOPS'
-_WRITE_IOPS = 'WriteIOPS'
+# The following are common to all VSCSI storage types
+# Storage QoS Constants
+_STOR_READ_IOPS = 'ReadIOPS'
+_STOR_WRITE_IOPS = 'WriteIOPS'
+# Storage Encryption Constants
+_STOR_ENCRYPTION_STATE = 'EncryptionState'
+_STOR_ENCRYPTION_KEY = 'EncryptionKey'
+_STOR_ENCRYPTION_AGENT = 'EncryptionAgent'
+# Device tag
+_STOR_TAG = 'Tag'
 
-# Storage Encryption Constants - common to Physical Volume and Virtual Disk
-_ENCRYPTION_STATE = 'EncryptionState'
-_ENCRYPTION_KEY = 'EncryptionKey'
-_ENCRYPTION_AGENT = 'EncryptionAgent'
+_STOR_EL_ORDER = (_STOR_READ_IOPS, _STOR_WRITE_IOPS, _STOR_ENCRYPTION_STATE,
+                  _STOR_ENCRYPTION_KEY, _STOR_ENCRYPTION_AGENT, _STOR_TAG)
 
 
 class _EncryptionState(object):
@@ -52,6 +57,7 @@ class _EncryptionState(object):
     UNENCRYPTED = 'Unencrypted'
     FORMATTED = 'Formatted'
     UNLOCKED = 'Unlocked'
+
 
 # LUKS-specific encryptor constants
 _LUKS_ENCRYPTOR = 'LUKSEncryptor'
@@ -68,11 +74,6 @@ ANY_SLOT = 65535
 
 # Virtual Disk Constants
 DISK_ROOT = 'VirtualDisk'
-_DISK_READ_IOPS = _READ_IOPS
-_DISK_WRITE_IOPS = _WRITE_IOPS
-_DISK_ENCRYPTION_STATE = _ENCRYPTION_STATE
-_DISK_ENCRYPTION_KEY = _ENCRYPTION_KEY
-_DISK_ENCRYPTION_AGENT = _ENCRYPTION_AGENT
 _DISK_CAPACITY = 'DiskCapacity'
 _DISK_LABEL = 'DiskLabel'
 DISK_NAME = 'DiskName'
@@ -85,12 +86,10 @@ _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
 _DISK_FILEFORMAT = 'FileFormat'
 _DISK_OPTIONAL_PARMS = 'OptionalParameters'
-_VDISK_EL_ORDER = [_DISK_READ_IOPS, _DISK_WRITE_IOPS, _DISK_ENCRYPTION_STATE,
-                   _DISK_ENCRYPTION_KEY, _DISK_ENCRYPTION_AGENT,
-                   _DISK_CAPACITY, _DISK_LABEL, DISK_NAME,
-                   _DISK_MAX_LOGICAL_VOLS, _DISK_PART_SIZE, _DISK_VG,
-                   _DISK_BASE, _DISK_UDID, _DISK_TYPE, _DISK_BACKSTORE_TYPE,
-                   _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS]
+_VDISK_EL_ORDER = _STOR_EL_ORDER + (
+    _DISK_CAPACITY, _DISK_LABEL, DISK_NAME, _DISK_MAX_LOGICAL_VOLS,
+    _DISK_PART_SIZE, _DISK_VG, _DISK_BASE, _DISK_UDID, _DISK_TYPE,
+    _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS)
 
 
 class VDiskType(object):
@@ -115,14 +114,10 @@ class FileFormatType(object):
     RAW = 'raw'
     QCOW2 = 'qcow2'
 
+
 # Physical Volume Constants
 PVS = 'PhysicalVolumes'
 PHYS_VOL = 'PhysicalVolume'
-_PV_READ_IOPS = _READ_IOPS
-_PV_WRITE_IOPS = _WRITE_IOPS
-_PV_ENCRYPTION_STATE = _ENCRYPTION_STATE
-_PV_ENCRYPTION_KEY = _ENCRYPTION_KEY
-_PV_ENCRYPTION_AGENT = _ENCRYPTION_AGENT
 _PV_AVAIL_PHYS_PART = 'AvailablePhysicalPartitions'
 _PV_VOL_DESC = 'Description'
 _PV_LOC_CODE = 'LocationCode'
@@ -139,13 +134,11 @@ _PV_VOL_UNIQUE_ID = 'VolumeUniqueID'
 _PV_FC_BACKED = 'IsFibreChannelBacked'
 _PV_STG_LABEL = 'StorageLabel'
 _PV_PG83 = 'DescriptorPage83'
-_PV_EL_ORDER = [_PV_READ_IOPS, _PV_WRITE_IOPS, _PV_ENCRYPTION_STATE,
-                _PV_ENCRYPTION_KEY, _PV_ENCRYPTION_AGENT, _PV_AVAIL_PHYS_PART,
-                _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
-                _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS,
-                _PV_UDID, _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME,
-                _PV_VOL_STATE, _PV_VOL_UNIQUE_ID, _PV_FC_BACKED,
-                _PV_STG_LABEL, _PV_PG83]
+_PV_EL_ORDER = _STOR_EL_ORDER + (
+    _PV_AVAIL_PHYS_PART, _PV_VOL_DESC, _PV_LOC_CODE, _PV_PERSISTENT_RESERVE,
+    _PV_RES_POLICY, _PV_RES_POLICY_ALGO, _PV_TOTAL_PHYS_PARTS, _PV_UDID,
+    _PV_AVAIL_FOR_USE, _PV_VOL_SIZE, _PV_VOL_NAME, _PV_VOL_STATE,
+    _PV_VOL_UNIQUE_ID, _PV_FC_BACKED, _PV_STG_LABEL, _PV_PG83)
 
 
 class PVState(object):
@@ -154,13 +147,15 @@ class PVState(object):
     REMOVED = "removed"
     VARIED_OFF = "varied off"
 
+
 # Virtual Optical Media Constants
 VOPT_ROOT = 'VirtualOpticalMedia'
 VOPT_NAME = 'MediaName'
-_VOPT_SIZE = 'Size'
 _VOPT_UDID = 'MediaUDID'
 _VOPT_MOUNT_TYPE = 'MountType'
-_VOPT_EL_ORDER = [VOPT_NAME, _VOPT_UDID, _VOPT_MOUNT_TYPE, _VOPT_SIZE]
+_VOPT_SIZE = 'Size'
+_VOPT_EL_ORDER = _STOR_EL_ORDER + (
+    VOPT_NAME, _VOPT_UDID, _VOPT_MOUNT_TYPE, _VOPT_SIZE)
 
 # Virtual Media Repository Constants
 _VREPO_ROOT = 'VirtualMediaRepository'
@@ -196,8 +191,10 @@ _LU_TYPE = 'LogicalUnitType'
 _LU_CLONED_FROM = 'ClonedFrom'
 _LU_IN_USE = 'InUse'
 _LU_NAME = 'UnitName'
-_LU_EL_ORDER = (_LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM,
-                _LU_IN_USE, _LU_NAME)
+_LU_MIG = 'LogicalUnitMigration'
+_LU_EL_ORDER = _STOR_EL_ORDER + (
+    _LU_THIN, _LU_UDID, _LU_CAPACITY, _LU_TYPE, _LU_CLONED_FROM, _LU_IN_USE,
+    _LU_NAME, _LU_MIG)
 
 
 class LUType(object):
@@ -205,6 +202,7 @@ class LUType(object):
     HIBERNATION = "VirtualIO_Hibernation"
     IMAGE = "VirtualIO_Image"
     AMS = "VirtualIO_Active_Memory_Sharing"
+
 
 _CAPACITY = 'Capacity'
 
@@ -611,22 +609,22 @@ class _StorageQoS(ewrap.Wrapper):
     @property
     def read_iops_limit(self):
         """The device's I/O Read limit"""
-        return self._get_val_int(_READ_IOPS)
+        return self._get_val_int(_STOR_READ_IOPS)
 
     @read_iops_limit.setter
     def read_iops_limit(self, new_read_iops_limit):
         self.set_parm_value(
-            _READ_IOPS, new_read_iops_limit, attrib=c.ATTR_KSV170)
+            _STOR_READ_IOPS, new_read_iops_limit, attrib=c.ATTR_KSV170)
 
     @property
     def write_iops_limit(self):
         """The device's I/O Write limit"""
-        return self._get_val_int(_WRITE_IOPS)
+        return self._get_val_int(_STOR_WRITE_IOPS)
 
     @write_iops_limit.setter
     def write_iops_limit(self, new_write_iops_limit):
         self.set_parm_value(
-            _WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
+            _STOR_WRITE_IOPS, new_write_iops_limit, attrib=c.ATTR_KSV170)
 
 
 @ewrap.ElementWrapper.pvm_type(_LUKS_ENCRYPTOR, has_metadata=True,
@@ -705,12 +703,12 @@ class _StorageEncryption(ewrap.Wrapper):
         This property is part of an experimental API change and may be subject
         to breaking changes until it is publicized.
         """
-        return self._get_val_str(_ENCRYPTION_STATE)
+        return self._get_val_str(_STOR_ENCRYPTION_STATE)
 
     @_encryption_state.setter
     def _encryption_state(self, new_encryption_state):
         self.set_parm_value(
-            _ENCRYPTION_STATE, new_encryption_state, attrib=c.ATTR_KSV170)
+            _STOR_ENCRYPTION_STATE, new_encryption_state, attrib=c.ATTR_KSV170)
 
     @property
     def _encryption_agent(self):
@@ -719,7 +717,7 @@ class _StorageEncryption(ewrap.Wrapper):
         This property is part of an experimental API change and may be subject
         to breaking changes until it is publicized.
         """
-        elem = self._find(_ENCRYPTION_AGENT)
+        elem = self._find(_STOR_ENCRYPTION_AGENT)
         if elem is None:
             return None
         agent_elems = list(elem)
@@ -729,7 +727,7 @@ class _StorageEncryption(ewrap.Wrapper):
 
     @_encryption_agent.setter
     def _encryption_agent(self, new_encryption_agent):
-        agent_elem = ent.Element(_ENCRYPTION_AGENT, self.adapter,
+        agent_elem = ent.Element(_STOR_ENCRYPTION_AGENT, self.adapter,
                                  attrib=c.ATTR_KSV170)
         if new_encryption_agent is not None:
             agent_elem.inject(new_encryption_agent.element)
@@ -742,12 +740,12 @@ class _StorageEncryption(ewrap.Wrapper):
         This property is part of an experimental API change and may be subject
         to breaking changes until it is publicized.
         """
-        return self._get_val_str(_ENCRYPTION_KEY)
+        return self._get_val_str(_STOR_ENCRYPTION_KEY)
 
     @_encryption_key.setter
     def _encryption_key(self, new_encryption_key):
         self.set_parm_value(
-            _ENCRYPTION_KEY, new_encryption_key, attrib=c.ATTR_KSV170)
+            _STOR_ENCRYPTION_KEY, new_encryption_key, attrib=c.ATTR_KSV170)
 
 
 @ewrap.ElementWrapper.pvm_type(PHYS_VOL, has_metadata=True,
@@ -950,6 +948,8 @@ class FileIO(_VDisk):
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
         :param path: The file system path of the File I/O object.
+        :param backstore_type: The type of backing storage, one of the
+                               BackStoreType enum values.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  File I/O mapping on the server.
         """
@@ -982,12 +982,12 @@ class RBD(_VDisk):
 
     @classmethod
     def bld_ref(cls, adapter, name):
-        """Creates a FileIO reference for inclusion in a VSCSIMapping.
+        """Creates a RBD reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
-        :param path: The file system path of the File I/O object.
+        :param name: The name of the RBD object.  Also used as the label.
         :return: An Element that can be attached to a VSCSIMapping to create a
-                 File I/O mapping on the server.
+                 RBD mapping on the server.
         """
         rbd = super(RBD, cls)._bld(adapter)
         rbd.name = name
