@@ -85,11 +85,12 @@ def find_vios_for_wwpn(vios_wraps, p_port_wwpn):
     return None, None
 
 
-def find_vios_for_vfc_wwpns(vios_wraps, vfc_wwpns):
+def find_vios_for_vfc_wwpns(vios_wraps, vfc_wwpns, ignore_stale=False):
     """Will find the VIOS that is hosting the vfc_wwpns.
 
     :param vios_wraps: A list or set of VIOS wrappers.
     :param vfc_wwpns: The list or set of virtual fibre channel WWPNs.
+    :param ignore_stale: If True, mappings without a backing port are ignored.
     :return: The VIOS wrapper that supports the vfc adapters.  If there is not
              one, then None will be returned.
     :return: The VFCMapping on the VIOS that supports the client adapters.
@@ -100,6 +101,11 @@ def find_vios_for_vfc_wwpns(vios_wraps, vfc_wwpns):
         for vfc_map in vios_w.vfc_mappings:
             # If the map has no client adapter...then move on
             if not vfc_map.client_adapter:
+                continue
+
+            # Maps without backing ports are effectively stale. We shouldn't
+            # consider them.
+            if ignore_stale and vfc_map.backing_port is None:
                 continue
 
             # If the WWPNs match, return it

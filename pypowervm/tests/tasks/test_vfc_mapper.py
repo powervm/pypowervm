@@ -23,6 +23,7 @@ from pypowervm import exceptions as e
 from pypowervm.tasks import vfc_mapper
 from pypowervm.tests.tasks import util as tju
 from pypowervm.tests.test_utils import test_wrapper_abc as twrap
+from pypowervm.wrappers import storage as pvm_stor
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
 VIOS_FILE = 'fake_vios.txt'
@@ -419,6 +420,38 @@ class TestPortMappings(twrap.TestWrapper):
         vios, vmap = vfc_mapper.find_vios_for_vfc_wwpns(self.entries, v_wwpns)
         self.assertEqual(self.entries[1], vios)
         self.assertEqual('10000090FA53720A', vmap.backing_port.wwpn)
+
+        # test to check fabrics with no backing port are ignored
+        mock_client_adap1 = mock.create_autospec(
+            pvm_stor.VFCClientAdapter, spec_set=True)
+        mock_client_adap1.configure_mock(
+            wwpns=['C05076065A7C02E4', 'C05076065A7C02E5'])
+        mock_map1 = mock.create_autospec(pvm_vios.VFCMapping, spec_set=True)
+        mock_map1.configure_mock(
+            backing_port=None, client_adapter=mock_client_adap1)
+
+        vios_w = mock.Mock(vfc_mappings=[mock_map1])
+        v_port_wwpns = ['C05076065A7C02E4', 'C05076065A7C02E5']
+        vmap = vfc_mapper.find_vios_for_vfc_wwpns(
+            [vios_w], v_port_wwpns, ignore_stale=True)[1]
+        self.assertIsNone(vmap)
+
+        mock_client_adap2 = mock.create_autospec(
+            pvm_stor.VFCClientAdapter, spec_set=True)
+        mock_client_adap2.configure_mock(
+            wwpns=['C05076065A7C02E4', 'C05076065A7C02E5'])
+        mock_map2 = mock.create_autospec(pvm_vios.VFCMapping, spec_set=True)
+        mock_map2.configure_mock(
+            backing_port=None, client_adapter=mock_client_adap2)
+
+        mock_map2 = mock.Mock(
+            backing_port='port1', client_adapter=mock.Mock(
+                wwpns=['C05076065A7C02E4', 'C05076065A7C02E5']))
+        vios_w = mock.Mock(vfc_mappings=[mock_map1, mock_map2])
+        v_port_wwpns = ['C05076065A7C02E4', 'C05076065A7C02E5']
+        vmap = vfc_mapper.find_vios_for_vfc_wwpns(
+            [vios_w], v_port_wwpns, ignore_stale=True)[1]
+        self.assertEqual(mock_map2, vmap)
 
     def test_find_pfc_wwpn_by_name(self):
         vio_w = self.entries[0]
