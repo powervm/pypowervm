@@ -1,4 +1,4 @@
-# Copyright 2015, 2016 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -196,6 +196,18 @@ class TestVios(twrap.TestWrapper):
         expected = {'21000024FF649104'}
         result = set(tpar.get_physical_wwpns(self.adpt))
         self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_called_once_with(
+            self.adpt, xag=[c.XAG.VIO_STOR])
+        # Test caching
+        self.mock_vios_get.reset_mock()
+        result = set(tpar.get_physical_wwpns(self.adpt, force_refresh=False))
+        self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_not_called()
+        # Test force_refresh
+        result = set(tpar.get_physical_wwpns(self.adpt, force_refresh=True))
+        self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_called_once_with(
+            self.adpt, xag=[c.XAG.VIO_STOR])
 
     @mock.patch('pypowervm.tasks.partition.get_active_vioses')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
