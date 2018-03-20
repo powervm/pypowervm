@@ -176,16 +176,28 @@ def get_partitions(adapter, lpars=True, vioses=True, mgmt=False):
     return rets
 
 
-def get_physical_wwpns(adapter):
+# A global variable that will cache the physical WWPNs on the system.
+_vscsi_pfc_wwpns = None
+
+
+def get_physical_wwpns(adapter, force_refresh=True):
     """Returns the active WWPNs of the FC ports across all VIOSes on system.
 
     :param adapter: pypowervm.adapter.Adapter for REST API communication.
+    :param force_refresh: The value discovered by this method is cached.  If
+                          force_refresh is False, the cached value is returned.
+                          If True, the value is refetched from the server (and
+                          re-cached).
     """
-    vios_feed = vios.VIOS.get(adapter, xag=[c.XAG.VIO_STOR])
-    wwpn_list = []
-    for vwrap in vios_feed:
-        wwpn_list.extend(vwrap.get_active_pfc_wwpns())
-    return wwpn_list
+    global _vscsi_pfc_wwpns
+    # TODO(IBM): Have a REST event posted when adapters power cycle, and force
+    # refresh the cache.
+    if force_refresh or _vscsi_pfc_wwpns is None:
+        vios_feed = vios.VIOS.get(adapter, xag=[c.XAG.VIO_STOR])
+        _vscsi_pfc_wwpns = []
+        for vwrap in vios_feed:
+            _vscsi_pfc_wwpns.extend(vwrap.get_active_pfc_wwpns())
+    return _vscsi_pfc_wwpns
 
 
 def build_active_vio_feed_task(adapter, name='vio_feed_task', xag=(
