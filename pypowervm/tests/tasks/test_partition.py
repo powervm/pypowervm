@@ -1,4 +1,4 @@
-# Copyright 2015, 2016 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,7 @@ import mock
 import testtools
 
 import pypowervm.const as c
+import pypowervm.entities as ent
 import pypowervm.exceptions as ex
 import pypowervm.tasks.partition as tpar
 import pypowervm.tests.tasks.util as tju
@@ -195,6 +196,18 @@ class TestVios(twrap.TestWrapper):
         expected = {'21000024FF649104'}
         result = set(tpar.get_physical_wwpns(self.adpt))
         self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_called_once_with(
+            self.adpt, xag=[c.XAG.VIO_STOR])
+        # Test caching
+        self.mock_vios_get.reset_mock()
+        result = set(tpar.get_physical_wwpns(self.adpt, force_refresh=False))
+        self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_not_called()
+        # Test force_refresh
+        result = set(tpar.get_physical_wwpns(self.adpt, force_refresh=True))
+        self.assertSetEqual(expected, result)
+        self.mock_vios_get.assert_called_once_with(
+            self.adpt, xag=[c.XAG.VIO_STOR])
 
     @mock.patch('pypowervm.tasks.partition.get_active_vioses')
     @mock.patch('pypowervm.utils.transaction.FeedTask')
@@ -345,3 +358,18 @@ class TestVios(twrap.TestWrapper):
             adpt, vioses=False, mgmt=True))
         self.assertEqual(vioses + [mgmt], tpar.get_partitions(
             adpt, lpars=False, mgmt=True))
+
+    @mock.patch('pypowervm.wrappers.job.Job.run_job')
+    def test_clone_uuid(self, mock_run_job):
+
+        mock_resp = mock.MagicMock()
+        mock_resp.entry = ent.Entry(
+            {}, ent.Element('Dummy', self.adpt), self.adpt)
+        self.adpt.read.side_effect = [mock_resp]
+        mock_run_job.side_effect = tju.get_parm_checker(
+            self, '1234', [('targetLparName', 'abc')])
+        tpar.clone_uuid(self.adpt, '1234', 'abc')
+        self.adpt.read.assert_called_once_with('LogicalPartition',
+                                               root_id='1234',
+                                               suffix_type='do',
+                                               suffix_parm='CloneUUID')

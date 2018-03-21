@@ -102,6 +102,11 @@ def find_vios_for_vfc_wwpns(vios_wraps, vfc_wwpns):
             if not vfc_map.client_adapter:
                 continue
 
+            # Maps without backing ports are effectively stale. We shouldn't
+            # consider them.
+            if vfc_map.backing_port is None:
+                continue
+
             # If the WWPNs match, return it
             if vfc_wwpns == set(vfc_map.client_adapter.wwpns):
                 return vios_w, vfc_map

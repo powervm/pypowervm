@@ -8,8 +8,6 @@ Current versions should utilize the local authentication mechanism.  The remote
 authentication mechanism is intended only for development and test purposes for
 the time being.
 
-See the VERSION.rst for detailed information about current version.
-
 Overview
 --------
 pypowervm provides a Python-based API wrapper for interaction with IBM
