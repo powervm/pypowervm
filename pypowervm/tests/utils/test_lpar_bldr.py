@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -38,7 +38,8 @@ class TestLPARBuilder(testtools.TestCase):
         self.sections = xml_sections.load_xml_sections(LPAR_BLDR_DATA)
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
-        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame, ppt):
+        def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame,
+                         ppt, affinity=False):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -51,7 +52,8 @@ class TestLPARBuilder(testtools.TestCase):
                     'simplified_remote_restart_capable': srr,
                     'ibmi_restrictedio_capable': True,
                     'active_memory_expansion_capable': ame,
-                    'physical_page_table_ratio_capable': ppt
+                    'physical_page_table_ratio_capable': ppt,
+                    'affinity_check_capable': affinity
                 }
                 return capabilities[cap]
             mngd_sys.get_capability.side_effect = get_cap
@@ -68,10 +70,14 @@ class TestLPARBuilder(testtools.TestCase):
                                          bp.LPARCompat.ALL_VALUES, True, False)
         self.mngd_sys_ppt = _bld_mgd_sys(20.0, 128, True,
                                          bp.LPARCompat.ALL_VALUES, False, True)
+        self.mngd_sys_affinity = _bld_mgd_sys(20.0, 128, True,
+                                              bp.LPARCompat.ALL_VALUES, False,
+                                              True, affinity=True)
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
         self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
         self.stdz_sys4 = lpar_bldr.DefaultStandardize(self.mngd_sys_ppt)
+        self.stdz_sys5 = lpar_bldr.DefaultStandardize(self.mngd_sys_affinity)
 
     def assert_xml(self, entry, string):
         self.assertEqual(six.b(string.rstrip('\n')),
@@ -291,6 +297,18 @@ class TestLPARBuilder(testtools.TestCase):
         attr = dict(name='lpar', memory=1024, env=bp.LPARType.AIXLINUX, vcpu=1,
                     ppt_ratio='1:76')
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys3)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Affinity unsupported host
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enforce_affinity_check='true')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys4)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Enforce affinity score check for Lpar with incorrect value
+        attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=3,
+                    enforce_affinity_check='BADVALUE')
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys5)
         self.assertRaises(ValueError, bldr.build)
 
         # Desired vcpu outside min
