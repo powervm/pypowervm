@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -131,6 +131,11 @@ _ACTIVE_MIGR_RUNNING = u.xpath(
 _INACTIVE_MIGR_RUNNING = u.xpath(
     _MIGR_INFO, 'NumberOfInactiveMigrationsInProgress')
 _MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
+_AFFINITY_CHECK_CAP = u.xpath(
+    _MIGR_INFO, 'LogicalPartitionAffinityCheckCapable')
+# add affinity check capability to the capability_map
+_CAPABILITY_MAP['affinity_check_capable'] = {
+    'prop': _AFFINITY_CHECK_CAP, 'default': False}
 
 _PROC_UNITS_INSTALLED = u.xpath(
     _SYS_PROC_CONFIG, 'InstalledSystemProcessorUnits')

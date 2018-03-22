@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -266,7 +266,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'vnic_failover_capable': True,
                     'disable_secure_boot_capable': False,
                     'physical_page_table_ratio_capable': True,
-                    'ioslot_owner_assignment_capable': True}
+                    'ioslot_owner_assignment_capable': True,
+                    'affinity_check_capable': True}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -284,7 +285,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'vnic_failover_capable': False,
                    'disable_secure_boot_capable': False,
                    'physical_page_table_ratio_capable': False,
-                   'ioslot_owner_assignment_capable': False}
+                   'ioslot_owner_assignment_capable': False,
+                   'affinity_check_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -318,7 +320,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'vnic_capable': True,
                          'vnic_failover_capable': True,
                          'disable_secure_boot_capable': False,
-                         'ioslot_owner_assignment_capable': True}
+                         'ioslot_owner_assignment_capable': True,
+                         'affinity_check_capable': True}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %
