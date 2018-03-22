@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -41,6 +41,7 @@ SRC_MSP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
 OVS_OVERRIDE = 'OVSOverride'
 VLAN_BRIDGE_OVERRIDE = 'VLANBridgeOverride'
+AFFINITY = 'Affinity'
 
 _OVERRIDE_OK = '2'
 
@@ -50,7 +51,8 @@ def migrate_lpar(
         tgt_mgmt_usr=None, virtual_fc_mappings=None,
         virtual_scsi_mappings=None, dest_msp_name=None, source_msp_name=None,
         spp_id=None, timeout=CONF.pypowervm_job_request_timeout * 4,
-        sdn_override=False, vlan_check_override=False, vlan_mappings=None):
+        sdn_override=False, vlan_check_override=False, vlan_mappings=None,
+        check_affinity_score=False):
     """Method to migrate a logical partition.
 
     :param lpar: The LPAR wrapper of the logical partition to migrate.
@@ -81,6 +83,9 @@ def migrate_lpar(
     :param vlan_mappings: The vlan mappings that indicate what the VLAN should
         be on the target system for a given MAC address.  If not provided, the
         original VLANs will be used.  See information below.
+    :param check_affinity_score: (Optional, Default: False) If set to True,
+                                 will require a check that the LPAR's affinity
+                                 score is not lower on the destination host.
 
     virtual_fc_mappings:
 
@@ -176,6 +181,15 @@ def migrate_lpar(
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, ",".join(val)))
+
+    # Set affinity flag to 'true' as part of LPM. If enabled for the VM,
+    # an additional flag will be passed as part of migration parameters.
+    # Otherwise, this flag will not be passed. The default behavior is
+    # not to check for affinity score on the destination host.
+    if check_affinity_score:
+        enforce_affinity_check = str(check_affinity_score).lower()
+        job_parms.append(
+            job_wrapper.create_job_parameter(AFFINITY, enforce_affinity_check))
 
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
 

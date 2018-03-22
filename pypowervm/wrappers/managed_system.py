@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -66,6 +66,23 @@ _DISABLE_SECURE_BOOT_CAP = u.xpath(
 _IOSLOT_OWNER_ASSMT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
 
+# Migration Constants
+_SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
+_PROC_COMPAT_MODES = u.xpath(
+    _SYS_PROC_CONFIG, 'SupportedPartitionProcessorCompatibilityModes')
+_MIN_PROC_UNITS_PER_CPU = u.xpath(
+    _SYS_PROC_CONFIG, 'MinimumProcessorUnitsPerVirtualProcessor')
+_MIGR_INFO = 'SystemMigrationInformation'
+_MAX_ACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumActiveMigrations')
+_MAX_INACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumInactiveMigrations')
+_ACTIVE_MIGR_RUNNING = u.xpath(
+    _MIGR_INFO, 'NumberOfActiveMigrationsInProgress')
+_INACTIVE_MIGR_RUNNING = u.xpath(
+    _MIGR_INFO, 'NumberOfInactiveMigrationsInProgress')
+_MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
+_AFFINITY_CHECK_CAP = u.xpath(
+    _MIGR_INFO, 'LogicalPartitionAffinityCheckCapable')
+
 _CAPABILITY_MAP = {
     'active_lpar_mobility_capable': {
         'prop': _ACTIVE_LPM_CAP, 'default': False},
@@ -82,6 +99,8 @@ _CAPABILITY_MAP = {
         'prop': _SIMP_REMOTE_RESTART_CAP, 'default': False},
     'physical_page_table_ratio_capable': {
         'prop': _PPT_CAP, 'default': False},
+    'affinity_check_capable': {
+        'prop': _AFFINITY_CHECK_CAP, 'default': False},
     'active_memory_expansion_capable': {
         'prop': _AME_CAP, 'default': False},
     # aix_capable defaults to True for backward compat (that is what we
@@ -116,21 +135,6 @@ _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
 _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
 _DEFAULT_PPT_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultPhysicalPageTableRatio')
-
-# Migration Constants
-_SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
-_PROC_COMPAT_MODES = u.xpath(
-    _SYS_PROC_CONFIG, 'SupportedPartitionProcessorCompatibilityModes')
-_MIN_PROC_UNITS_PER_CPU = u.xpath(
-    _SYS_PROC_CONFIG, 'MinimumProcessorUnitsPerVirtualProcessor')
-_MIGR_INFO = 'SystemMigrationInformation'
-_MAX_ACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumActiveMigrations')
-_MAX_INACTIVE_MIGR = u.xpath(_MIGR_INFO, 'MaximumInactiveMigrations')
-_ACTIVE_MIGR_RUNNING = u.xpath(
-    _MIGR_INFO, 'NumberOfActiveMigrationsInProgress')
-_INACTIVE_MIGR_RUNNING = u.xpath(
-    _MIGR_INFO, 'NumberOfInactiveMigrationsInProgress')
-_MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
 
 _PROC_UNITS_INSTALLED = u.xpath(
     _SYS_PROC_CONFIG, 'InstalledSystemProcessorUnits')
