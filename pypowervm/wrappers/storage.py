@@ -776,6 +776,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
         # Assignment order is significant
         if udid:
             pv.udid = udid
+            pv.vol_uid = udid
         pv.name = name
         if tag:
             pv.tag = tag
@@ -789,6 +790,15 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     @udid.setter
     def udid(self, new_udid):
         self.set_parm_value(_PV_UDID, new_udid)
+
+    @property
+    def vol_uid(self):
+        """The volume unique id."""
+        return self._get_val_str(_PV_VOL_UNIQUE_ID)
+
+    @vol_uid.setter
+    def vol_uid(self, new_udid):
+        self.set_parm_value(_PV_VOL_UNIQUE_ID, new_udid)
 
     @property
     def capacity(self):
