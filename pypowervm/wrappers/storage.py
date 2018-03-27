@@ -778,7 +778,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
             pv.udid = udid
         pv.name = name
         if tag:
-            pv._tag(tag)
+            pv.tag = tag
         return pv
 
     @property
@@ -872,7 +872,13 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     def tag(self):
         return self._get_val_str(_STOR_TAG)
 
-    def _tag(self, tag):
+    @tag.setter
+    def tag(self, tag):
+        """Set the tag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
 
 
@@ -946,7 +952,13 @@ class _VDisk(ewrap.ElementWrapper):
     def tag(self):
         return self._get_val_str(_STOR_TAG)
 
-    def _tag(self, tag):
+    @tag.setter
+    def tag(self, tag):
+        """Set the tag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
 
 
@@ -979,7 +991,7 @@ class FileIO(_VDisk):
         if backstore_type is not None:
             fio._backstore_type(backstore_type)
         if tag:
-            fio._tag(tag)
+            fio.tag = tag
         return fio
 
     # Maintained for backward compatibility.  FileIOs aren't created by REST.
@@ -1017,7 +1029,7 @@ class RBD(_VDisk):
         rbd._vdtype(VDiskType.RBD)
         rbd._backstore_type(BackStoreType.USER_RBD)
         if tag:
-            rbd._tag(tag)
+            rbd.tag = tag
         return rbd
 
 
@@ -1060,7 +1072,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
             vd._file_format(file_format)
         vd._vdtype(VDiskType.LV)
         if tag:
-            vd._tag(tag)
+            vd.tag = tag
         return vd
 
     @classmethod
@@ -1070,7 +1082,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
         vd.name = name
         vd._vdtype(VDiskType.LV)
         if tag:
-            vd._tag(tag)
+            vd.tag = tag
         return vd
 
     @property
@@ -1121,7 +1133,7 @@ class _LUBase(ewrap.Wrapper):
             # New LU must be at least as big as the backing LU.
             lu._capacity(max(capacity, clone.capacity))
         if tag:
-            lu._tag(tag)
+            lu.tag = tag
         return lu
 
     @classmethod
@@ -1140,7 +1152,7 @@ class _LUBase(ewrap.Wrapper):
         lu._name(name)
         lu._udid(udid)
         if tag:
-            lu._tag(tag)
+            lu.tag = tag
         return lu
 
     def __eq__(self, other):
@@ -1219,7 +1231,13 @@ class _LUBase(ewrap.Wrapper):
     def tag(self):
         return self._get_val_str(_STOR_TAG)
 
-    def _tag(self, tag):
+    @tag.setter
+    def tag(self, tag):
+        """Set the tag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
 
 

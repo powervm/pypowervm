@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -42,6 +42,7 @@ PPT_RATIO = 'ppt_ratio'
 # enumeration of accepted values starting from 0.
 ALLOWED_PPT_RATIOS = {'1:64': 0, '1:128': 1, '1:256': 2, '1:512': 3,
                       '1:1024': 4, '1:2048': 5, '1:4096': 6}
+ENFORCE_AFFINITY_CHECK = 'enforce_affinity_check'
 
 DED_PROCS = 'dedicated_proc'
 VCPU = 'vcpu'
@@ -254,6 +255,12 @@ class DefaultStandardize(Standardize):
         # Validate fields specific to IBMi
         if attrs.get(ENV, '') == bp.LPARType.OS400:
             RestrictedIO(attrs.get(RESTRICTED_IO), allow_none=True).validate()
+
+        # Validate affinity check attribute based on host capability
+        host_affinity_cap = self.mngd_sys.get_capability(
+            'affinity_check_capable')
+        EnforceAffinityCheck(attrs.get(ENFORCE_AFFINITY_CHECK),
+                             host_affinity_cap).validate()
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -775,6 +782,25 @@ class PhysicalPageTableRatio(ChoiceField):
         if not self.host_cap and self.value:
             msg = ("The managed system does not support setting the physical "
                    "page table ratio.")
+            raise ValueError(msg)
+
+
+class EnforceAffinityCheck(BoolField):
+    _name = 'Enforce Affinity Check'
+
+    def __init__(self, value, host_cap, allow_none=True):
+        super(EnforceAffinityCheck, self).__init__(
+            value, allow_none=allow_none)
+        self.host_cap = host_cap
+
+    def validate(self):
+        """Performs validation of the affinity check attribute."""
+        super(EnforceAffinityCheck, self).validate()
+
+        # Validate the host capability
+        if (str(self.value).lower() == 'true') and (not self.host_cap):
+            msg = ("The managed system does not support affinity score checks "
+                   "as part of migration.")
             raise ValueError(msg)
 
 
