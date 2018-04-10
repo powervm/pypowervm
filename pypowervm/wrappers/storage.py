@@ -43,9 +43,12 @@ _STOR_ENCRYPTION_KEY = 'EncryptionKey'
 _STOR_ENCRYPTION_AGENT = 'EncryptionAgent'
 # Device tag
 _STOR_TAG = 'Tag'
+# Emulate model alias
+_STOR_EMULATE_MODEL = 'EmulateModel'
 
 _STOR_EL_ORDER = (_STOR_READ_IOPS, _STOR_WRITE_IOPS, _STOR_ENCRYPTION_STATE,
-                  _STOR_ENCRYPTION_KEY, _STOR_ENCRYPTION_AGENT, _STOR_TAG)
+                  _STOR_ENCRYPTION_KEY, _STOR_ENCRYPTION_AGENT, _STOR_TAG,
+                  _STOR_EMULATE_MODEL)
 
 
 class _EncryptionState(object):
@@ -755,7 +758,7 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
     target_dev_type = PVTargetDev
 
     @classmethod
-    def bld(cls, adapter, name, udid=None, tag=None):
+    def bld(cls, adapter, name, udid=None, tag=None, emulate_model=None):
         """Creates the a fresh PV wrapper.
 
         This should be used when wishing to add physical volumes to a Volume
@@ -769,6 +772,8 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
                      to add to the Volume Group.  Ex. 'hdisk1'.
         :param udid: Universal Disk Identifier.
         :param tag: String with which to tag the physical device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :returns: An Element that can be used for a PhysicalVolume create or
                   mapping.
         """
@@ -779,6 +784,8 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
         pv.name = name
         if tag:
             pv.tag = tag
+        if emulate_model is not None:
+            pv.emulate_model = emulate_model
         return pv
 
     @property
@@ -881,6 +888,20 @@ class PV(ewrap.ElementWrapper, _StorageQoS, _StorageEncryption):
         """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
 
+    @property
+    def emulate_model(self):
+        return self._get_val_bool(_STOR_EMULATE_MODEL, default=True)
+
+    @emulate_model.setter
+    def emulate_model(self, em):
+        """Set the emulate model alias flag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
+        self.set_parm_value(_STOR_EMULATE_MODEL, u.sanitize_bool_for_api(em),
+                            attrib=c.ATTR_KSV190)
+
 
 @ewrap.Wrapper.base_pvm_type
 class _VDisk(ewrap.ElementWrapper):
@@ -961,6 +982,20 @@ class _VDisk(ewrap.ElementWrapper):
         """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
 
+    @property
+    def emulate_model(self):
+        return self._get_val_bool(_STOR_EMULATE_MODEL, default=True)
+
+    @emulate_model.setter
+    def emulate_model(self, em):
+        """Set the emulate model alias flag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
+        self.set_parm_value(_STOR_EMULATE_MODEL, u.sanitize_bool_for_api(em),
+                            attrib=c.ATTR_KSV190)
+
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
                                child_order=_VDISK_EL_ORDER)
@@ -973,7 +1008,8 @@ class FileIO(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld_ref(cls, adapter, path, backstore_type=None, tag=None):
+    def bld_ref(cls, adapter, path, backstore_type=None, tag=None,
+                emulate_model=None):
         """Creates a FileIO reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
@@ -981,6 +1017,8 @@ class FileIO(_VDisk):
         :param backstore_type: The type of backing storage, one of the
                                BackStoreType enum values.
         :param tag: String with which to tag the device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  File I/O mapping on the server.
         """
@@ -992,6 +1030,8 @@ class FileIO(_VDisk):
             fio._backstore_type(backstore_type)
         if tag:
             fio.tag = tag
+        if emulate_model is not None:
+            fio.emulate_model = emulate_model
         return fio
 
     # Maintained for backward compatibility.  FileIOs aren't created by REST.
@@ -1014,12 +1054,14 @@ class RBD(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld_ref(cls, adapter, name, tag=None):
+    def bld_ref(cls, adapter, name, tag=None, emulate_model=None):
         """Creates a RBD reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
         :param name: The name of the RBD object.  Also used as the label.
         :param tag: String with which to tag the device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  RBD mapping on the server.
         """
@@ -1030,6 +1072,8 @@ class RBD(_VDisk):
         rbd._backstore_type(BackStoreType.USER_RBD)
         if tag:
             rbd.tag = tag
+        if emulate_model is not None:
+            rbd.emulate_model = emulate_model
         return rbd
 
 
@@ -1041,7 +1085,7 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
 
     @classmethod
     def bld(cls, adapter, name, capacity, label=None, base_image=None,
-            file_format=None, tag=None):
+            file_format=None, tag=None, emulate_model=None):
         """Creates a VDisk Wrapper for creating a new VDisk.
 
         This should be used when the user wishes to add a new Virtual Disk to
@@ -1059,6 +1103,8 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
         :param file_format: (Optional) File format of VDisk.  See
                             FileFormatType enumeration for valid formats.
         :param tag: String with which to tag the device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :returns: An Element that can be used for a VirtualDisk create.
         """
         vd = super(VDisk, cls)._bld(adapter)
@@ -1073,16 +1119,20 @@ class VDisk(_VDisk, _StorageQoS, _StorageEncryption):
         vd._vdtype(VDiskType.LV)
         if tag:
             vd.tag = tag
+        if emulate_model is not None:
+            vd.emulate_model = emulate_model
         return vd
 
     @classmethod
-    def bld_ref(cls, adapter, name, tag=None):
+    def bld_ref(cls, adapter, name, tag=None, emulate_model=None):
         """Creates a VDisk Wrapper for referring to an existing VDisk."""
         vd = super(VDisk, cls)._bld(adapter)
         vd.name = name
         vd._vdtype(VDiskType.LV)
         if tag:
             vd.tag = tag
+        if emulate_model is not None:
+            vd.emulate_model = emulate_model
         return vd
 
     @property
@@ -1107,7 +1157,7 @@ class _LUBase(ewrap.Wrapper):
 
     @classmethod
     def bld(cls, adapter, name, capacity, thin=None, typ=None, clone=None,
-            tag=None):
+            tag=None, emulate_model=None):
         """Build a fresh wrapper for LU creation within an SSP.
 
         :param adapter: A pypowervm.adapter.Adapter (for traits, etc.)
@@ -1118,6 +1168,8 @@ class _LUBase(ewrap.Wrapper):
         :param clone: If the new LU is to be a linked clone, this param is a
                       LU(Ent) wrapper representing the backing image LU.
         :param tag: String with which to tag the device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :return: A new LU wrapper suitable for adding to SSP.logical_units
                  prior to update.
         """
@@ -1134,10 +1186,12 @@ class _LUBase(ewrap.Wrapper):
             lu._capacity(max(capacity, clone.capacity))
         if tag:
             lu.tag = tag
+        if emulate_model is not None:
+            lu.emulate_model = emulate_model
         return lu
 
     @classmethod
-    def bld_ref(cls, adapter, name, udid, tag=None):
+    def bld_ref(cls, adapter, name, udid, tag=None, emulate_model=None):
         """Creates the a fresh LU wrapper.
 
         The name matches the device name on the system.
@@ -1146,6 +1200,8 @@ class _LUBase(ewrap.Wrapper):
         :param name: The name of the logical unit on the Virtual I/O Server.
         :param udid: Universal Disk Identifier.
         :param tag: String with which to tag the device upon mapping.
+        :param emulate_model: Boolean emulate model alias flag to set on the
+                              physical device upon mapping.
         :returns: An Element that can be used for a PhysicalVolume create.
         """
         lu = super(_LUBase, cls)._bld(adapter)
@@ -1153,6 +1209,8 @@ class _LUBase(ewrap.Wrapper):
         lu._udid(udid)
         if tag:
             lu.tag = tag
+        if emulate_model is not None:
+            lu.emulate_model = emulate_model
         return lu
 
     def __eq__(self, other):
@@ -1239,6 +1297,20 @@ class _LUBase(ewrap.Wrapper):
         VSCSI mapping.  It is ignored by .update().
         """
         self.set_parm_value(_STOR_TAG, tag, attrib=c.ATTR_KSV190)
+
+    @property
+    def emulate_model(self):
+        return self._get_val_bool(_STOR_EMULATE_MODEL, default=True)
+
+    @emulate_model.setter
+    def emulate_model(self, em):
+        """Set the emulate model alias flag on the storage element.
+
+        NOTE: This is only to be used when adding the storage element to a
+        VSCSI mapping.  It is ignored by .update().
+        """
+        self.set_parm_value(_STOR_EMULATE_MODEL, u.sanitize_bool_for_api(em),
+                            attrib=c.ATTR_KSV190)
 
 
 @ewrap.ElementWrapper.pvm_type('LogicalUnit', has_metadata=True,
