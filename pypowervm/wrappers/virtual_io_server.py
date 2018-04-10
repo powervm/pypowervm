@@ -253,21 +253,33 @@ class VIOS(bp.BasePartition):
     def hdisk_from_uuid(self, disk_uuid):
         """Get the hdisk name from the volume uuid.
 
-        :param disk_uuid: The uuid of the hdisk.
+        :param disk_uuid: The UniqueDeviceID of the hdisk.
         :returns: The associated hdisk name.
         """
-        name = None
+        return self._hdisk_from_key(stor.UDID, disk_uuid)
 
+    def hdisk_from_udid(self, disk_udid):
+        """Get the hdisk name from the volume udid.
+
+        :param disk_udid: The VolumeUniqueID of the hdisk.
+        :returns: The associated hdisk name.
+        """
+        return self._hdisk_from_key(_VOL_UID, disk_udid)
+
+    def _hdisk_from_key(self, key, value):
         # Get all the physical volume elements and look for a diskname match
+        name = None
         volumes = self.element.findall(_PVS_PATH)
         for volume in volumes:
-            vol_uuid = volume.findtext(stor.UDID)
-            if vol_uuid:
-                LOG.debug('get_hdisk_from_uuid match: %s' % vol_uuid)
-                LOG.debug('get_hdisk_from_uuid disk_uuid: %s' % disk_uuid)
-                if vol_uuid == disk_uuid:
-                    name = volume.findtext(_VOL_NAME)
-                    break
+            val = volume.findtext(key)
+            if val and val == value:
+                LOG.debug('found match with %(key)s=%(val)s' %
+                          {'key': key, 'val': val})
+                name = volume.findtext(_VOL_NAME)
+                break
+            else:
+                LOG.debug('%(key)s=%(val)s does not match %(value)s' %
+                          {'key': key, 'val': val, 'value': value})
 
         return name
 

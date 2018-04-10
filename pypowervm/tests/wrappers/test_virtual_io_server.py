@@ -91,6 +91,15 @@ class TestVIOSWrapper(twrap.TestWrapper):
         found_name = self.dwrap.hdisk_from_uuid('Bogus')
         self.assertIsNone(found_name)
 
+    def test_hdisk_from_udid_found(self):
+        found_name = self.dwrap.hdisk_from_udid(
+            '33213600507630083804130000000000008B504214503IBMfcp')
+        self.assertEqual('hdisk7', found_name)
+
+    def test_hdisk_from_udid_notfound(self):
+        found_name = self.dwrap.hdisk_from_udid('Bogus')
+        self.assertIsNone(found_name)
+
     def test_seas(self):
         self.assertEqual(1, len(self.dwrap.seas))
         sea = self.dwrap.seas[0]
