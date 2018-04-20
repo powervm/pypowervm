@@ -15,6 +15,8 @@
 #    under the License.
 
 
+import six
+
 from pypowervm.utils import uuid as uuid_utils
 
 import unittest
@@ -38,12 +40,17 @@ class TestUUID(unittest.TestCase):
 
     def test_id_or_uuid(self):
         self.assertEqual((False, 123), uuid_utils.id_or_uuid(123))
-        self.assertEqual((False, 123), uuid_utils.id_or_uuid('123'))
-        self.assertEqual(
-            (True, '12345678-abcd-ABCD-0000-0a1B2c3D4e5F'),
-            uuid_utils.id_or_uuid('12345678-abcd-ABCD-0000-0a1B2c3D4e5F'))
-        self.assertRaises(ValueError, uuid_utils.id_or_uuid,
-                          '12345678abcdABCD00000a1B2c3D4e5F')
-        # This one has too many digits
-        self.assertRaises(ValueError, uuid_utils.id_or_uuid,
-                          '12345678-abcd-ABCD-0000-0a1B2c3D4e5F0')
+        # Test all stringish permutations
+        converters = [lambda x: x, six.u, six.text_type]
+        # NOTE(efried): bytes don't work in py3.  Do they need to?
+        if six.PY2:
+            converters.append(six.b)
+        for conv in converters:
+            self.assertEqual((False, 123), uuid_utils.id_or_uuid(conv('123')))
+            uuid = conv('12345678-abcd-ABCD-0000-0a1B2c3D4e5F')
+            self.assertEqual((True, uuid), uuid_utils.id_or_uuid(uuid))
+            uuid = conv('12345678abcdABCD00000a1B2c3D4e5F')
+            self.assertEqual((True, uuid), uuid_utils.id_or_uuid(uuid))
+            # This one has too many digits
+            self.assertRaises(ValueError, uuid_utils.id_or_uuid,
+                              conv('12345678-abcd-ABCD-0000-0a1B2c3D4e5F0'))
