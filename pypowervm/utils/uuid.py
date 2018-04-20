@@ -16,9 +16,7 @@
 
 """Utilities around Universally-Unique Identifiers (UUIDs)."""
 
-import re
-
-from pypowervm import const
+from oslo_utils import uuidutils
 
 
 def convert_uuid_to_pvm(uuid):
@@ -47,7 +45,7 @@ def id_or_uuid(an_id):
     :return: The input ID, either converted to int, or in its original string
              form if a UUID.
     """
-    if isinstance(an_id, str) and re.match(const.UUID_REGEX_WORD, an_id):
+    if uuidutils.is_uuid_like(an_id):
         is_uuid = True
         ret_id = an_id
     else:
