@@ -1,0 +1,40 @@
+####################################################
+# This file was manually generated.
+#
+####################################################
+INFO{
+{'comment': 'Fake...This file was manually generated.', 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'rest/api/pcm/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/RawMetrics/LongTermMonitor/LTM_8247-22L*2125D4A_vios_1_20150527T081730+0000.json'}
+END OF SECTION}
+
+HEADERS{
+{'content-length': '1878', 'x-powered-by': 'Servlet/3.0', 'last-modified': 'Thu, 30 Apr 2015 03:53:05 GMT', 'etag': '1430365985674', 'date': 'Thu, 30 Apr 2015 03:53:04 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+
+BODY{
+
+{
+  "systemUtil": {
+    "utilInfo": {
+      "version": "1.0.0",
+      "metricType": "Raw",
+      "monitoringType": "LTM",
+      "mtms": "8247-22L*2125D4A"
+    },
+    "utilSample": {
+      "timeStamp": "2015-05-27T00:22:00+0000",
+      "viosUtil": [
+        {
+          "id": "1",
+          "name": "IOServer - SN2125D4A",
+          "memory": {},
+          "network": {},
+          "storage": {}
+        }
+      ],
+      "status": 0,
+      "errorInfo": []
+    }
+  }
+}
+
+END OF SECTION}
