@@ -167,7 +167,7 @@ class LparMetricCache(MetricCache):
     go out of scope and it will be cleared.  No manual clean up is required.
     """
 
-    def __init__(self, adapter, host_uuid, refresh_delta=30):
+    def __init__(self, adapter, host_uuid, refresh_delta=30, include_vio=True):
         """Creates an instance of the cache.
 
         :param adapter: The pypowervm Adapter.
@@ -178,6 +178,9 @@ class LparMetricCache(MetricCache):
                               interval has been passed and the user invokes a
                               cache query.  Will not update in the background,
                               only if the cache is used.
+        :param include_vio: (Optional) Defaults to True.  If set to False, the
+                            cur_vioses and prev_vioses will always be
+                            unavailable.  This increases the speed for refresh.
         """
         # Ensure these elements are defined up front so that references don't
         # error out if they haven't been set yet.  These will be the results
@@ -186,7 +189,8 @@ class LparMetricCache(MetricCache):
 
         # Invoke the parent to seed the metrics.
         super(LparMetricCache, self).__init__(adapter, host_uuid,
-                                              refresh_delta=refresh_delta)
+                                              refresh_delta=refresh_delta,
+                                              include_vio=include_vio)
 
     @lockutils.synchronized('pvm_lpar_metrics_get')
     def get_latest_metric(self, lpar_uuid):
