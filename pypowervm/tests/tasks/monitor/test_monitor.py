@@ -363,16 +363,28 @@ class TestMetricsCache(testtools.TestCase):
         date_ret2 = date_ret1 + datetime.timedelta(milliseconds=250)
         date_ret3 = date_ret2 + datetime.timedelta(milliseconds=250)
 
+        # LparMetricCache creation invokes latest_stats twice to set both
+        # prev and cur
         mock_stats.side_effect = [
+            (None, mock.Mock(), mock.Mock(), mock.Mock()),
+            (date_ret1, mock.Mock(), mock.Mock(), mock.Mock()),
             (None, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret1, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret2, mock.Mock(), mock.Mock(), mock.Mock()),
             (date_ret3, mock.Mock(), mock.Mock(), mock.Mock())]
-        mock_vm_metrics.side_effect = [ret_prev, ret1, ret2, ret3]
+        mock_vm_metrics.side_effect = [ret_prev, ret1, ret_prev, ret1, ret2,
+                                       ret3]
 
-        # Creation invokes the refresh once automatically.
+        # Validate that include_vio is passed to latest_stats
+        metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
+                                                 refresh_delta=.25,
+                                                 include_vio=False)
+        mock_stats.assert_called_with(self.adpt, 'host_uuid',
+                                      include_vio=False)
         metric_cache = pvm_t_mon.LparMetricCache(self.adpt, 'host_uuid',
                                                  refresh_delta=.25)
+        mock_stats.assert_called_with(self.adpt, 'host_uuid',
+                                      include_vio=True)
 
         # Make sure the current and prev are none.
         self.assertEqual(date_ret1, metric_cache.cur_date)
