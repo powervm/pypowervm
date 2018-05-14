@@ -103,17 +103,28 @@ class VDiskType(object):
 
 
 class BackStoreType(object):
-    """From BackStoreType.Enum."""
+    """From BackStoreType.Enum
+
+    Desribes the type of backstore handler to use for VDisks.
+    FILE_IO, USER_QCOW, and LOOP are used with the FileIO VDisk type.
+    USER_RBD is used with the RBD VDisk type.
+    """
     # A kernel-space handler that supports raw files.
     FILE_IO = 'fileio'
     # A user-space handler that supports RAW, QCOW or QCOW2 files.
     USER_QCOW = 'user:qcow'
-    # A user-space handler that supports rbd
+    # Create a loop device for the file, and use the kernel-space block
+    # handler. LOOP has higher performance than FILE_IO.
+    LOOP = 'loop'
+    # A user-space handler that supports rbd. (Used with RBD)
     USER_RBD = 'user:rbd'
 
 
 class FileFormatType(object):
-    """From FileFormatType.Enum"""
+    """From FileFormatType.Enum
+
+    The format type of the image that will be stored in the VDisk (aka LV).
+    """
     RAW = 'raw'
     QCOW2 = 'qcow2'
 
