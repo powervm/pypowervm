@@ -761,13 +761,14 @@ class TestStorageTypes(testtools.TestCase):
         self.assertIsNone(rbd.tag)
         self.assertTrue(rbd.emulate_model)
         rbd = stor.RBD.bld_ref('adap', 'pool/volume', tag='tag',
-                               emulate_model=False)
+                               emulate_model=False, user='tester')
         self.assertEqual('pool/volume', rbd.name)
         self.assertEqual('pool/volume', rbd.label)
         self.assertEqual('RBD', rbd.vdtype)
         self.assertEqual('user:rbd', rbd.backstore_type)
         self.assertEqual('tag', rbd.tag)
         self.assertFalse(rbd.emulate_model)
+        self.assertEqual('tester', rbd._get_val_str('RbdUser'))
 
     def test_vdisk(self):
         vdisk = stor.VDisk.bld('adap', 'name', 10)

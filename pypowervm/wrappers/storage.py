@@ -88,11 +88,13 @@ _DISK_UDID = UDID
 _DISK_TYPE = 'VirtualDiskType'
 _DISK_BACKSTORE_TYPE = 'BackStoreType'
 _DISK_FILEFORMAT = 'FileFormat'
+_DISK_RBD_USER = 'RbdUser'
 _DISK_OPTIONAL_PARMS = 'OptionalParameters'
 _VDISK_EL_ORDER = _STOR_EL_ORDER + (
     _DISK_CAPACITY, _DISK_LABEL, DISK_NAME, _DISK_MAX_LOGICAL_VOLS,
     _DISK_PART_SIZE, _DISK_VG, _DISK_BASE, _DISK_UDID, _DISK_TYPE,
-    _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT, _DISK_OPTIONAL_PARMS)
+    _DISK_BACKSTORE_TYPE, _DISK_FILEFORMAT, _DISK_RBD_USER,
+    _DISK_OPTIONAL_PARMS)
 
 
 class VDiskType(object):
@@ -1065,7 +1067,7 @@ class RBD(_VDisk):
     target_dev_type = VDiskTargetDev
 
     @classmethod
-    def bld_ref(cls, adapter, name, tag=None, emulate_model=None):
+    def bld_ref(cls, adapter, name, tag=None, emulate_model=None, user=None):
         """Creates a RBD reference for inclusion in a VSCSIMapping.
 
         :param adapter: A pypowervm.adapter.Adapter for the REST API.
@@ -1073,6 +1075,7 @@ class RBD(_VDisk):
         :param tag: String with which to tag the device upon mapping.
         :param emulate_model: Boolean emulate model alias flag to set on the
                               physical device upon mapping.
+        :param user: The user id used to access the rbd cluster.
         :return: An Element that can be attached to a VSCSIMapping to create a
                  RBD mapping on the server.
         """
@@ -1085,7 +1088,12 @@ class RBD(_VDisk):
             rbd.tag = tag
         if emulate_model is not None:
             rbd.emulate_model = emulate_model
+        if user is not None:
+            rbd._user(user)
         return rbd
+
+    def _user(self, user):
+        self.set_parm_value(_DISK_RBD_USER, user, attrib=c.ATTR_KSV190)
 
 
 @ewrap.ElementWrapper.pvm_type(DISK_ROOT, has_metadata=True,
