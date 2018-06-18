@@ -38,6 +38,8 @@ VSCSI_MAPPINGS = 'VirtualSCSIMappings'
 VLAN_MAPPINGS = 'VlanMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
+DEST_MSP_IP = 'DestMSPIPaddr'
+SRC_MSP_IP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
 OVS_OVERRIDE = 'OVSOverride'
 VLAN_BRIDGE_OVERRIDE = 'VLANBridgeOverride'
@@ -52,7 +54,7 @@ def migrate_lpar(
         virtual_scsi_mappings=None, dest_msp_name=None, source_msp_name=None,
         spp_id=None, timeout=CONF.pypowervm_job_request_timeout * 4,
         sdn_override=False, vlan_check_override=False, vlan_mappings=None,
-        check_affinity_score=False):
+        check_affinity_score=False, src_msp_ip=None, dest_msp_ip=None):
     """Method to migrate a logical partition.
 
     :param lpar: The LPAR wrapper of the logical partition to migrate.
@@ -160,7 +162,8 @@ def migrate_lpar(
     # Generic 'raw' format job parameters.
     for kw, val in [(TGT_RMT_HMC, tgt_mgmt_svr),
                     (TGT_RMT_HMC_USR, tgt_mgmt_usr), (DEST_MSP, dest_msp_name),
-                    (SRC_MSP, source_msp_name), (SPP_ID, spp_id)]:
+                    (SRC_MSP, source_msp_name), (SPP_ID, spp_id),
+                    (DEST_MSP_IP, dest_msp_ip), (SRC_MSP_IP, src_msp_ip)]:
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))
