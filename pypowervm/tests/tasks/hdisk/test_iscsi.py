@@ -116,6 +116,71 @@ class TestIscsi(testtools.TestCase):
         self.assertEqual('devName', device_name)
         self.assertEqual('udid', udid)
 
+    @mock.patch('pypowervm.tasks.hdisk._iscsi.remove_iscsi')
+    @mock.patch('pypowervm.tasks.hdisk._iscsi._discover_iscsi')
+    @mock.patch('pypowervm.utils.transaction.FeedTask')
+    @mock.patch('pypowervm.tasks.storage.add_lpar_storage_scrub_tasks')
+    @mock.patch('pypowervm.tasks.storage.find_stale_lpars')
+    @mock.patch('pypowervm.wrappers.entry_wrapper.EntryWrapper.get',
+                new=mock.Mock())
+    def test_discover_iscsi_scrub(self, mock_fsl, mock_alsst,
+                                  mock_ftsk, mock_discover, mock_remove):
+        def set_discover_side_effect(_stat, _dev):
+            """Set up the iscsi discovery mock's side effect.
+
+            The second return will always be the same - used to verify that we
+            really called twice when appropriate.
+            The first return will be (_stat, _dev, "udid"), per the params.
+            """
+            mock_discover.reset_mock()
+            mock_discover.side_effect = [(_stat, _dev, 'udid'),
+                                         (iscsi.ISCSIStatus.ISCSI_SUCCESS,
+                                          'ok_h', 'ok_u')]
+        stale_lpar_ids = [12, 34]
+        # should cause a scrub-and-retry
+        # These should *not* cause a scrub-and-retry
+        mock_arg = mock.MagicMock()
+        mock_host_ip = '10.0.0.1:3290'
+        mock_lunid = 2
+        mock_user = 'username'
+        mock_pass = 'password'
+        mock_iqn = 'fake_iqn'
+        mock_uuid = 'uuid'
+        mock_iface_name = 'iface_name'
+        mock_fsl.return_value = stale_lpar_ids
+        set_discover_side_effect(iscsi.ISCSIStatus.ISCSI_ERR_ODM_QUERY,
+                                 'dev1')
+        device_name, udid = iscsi.discover_iscsi(
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            iface_name=mock_iface_name, lunid=mock_lunid, auth=mock_arg,
+            discovery_auth=mock_arg, discovery_username=mock_arg,
+            discovery_password=mock_arg, multipath=True)
+        self.assertEqual('ok_h', device_name)
+        self.assertEqual('ok_u', udid)
+        self.assertEqual(1, mock_fsl.call_count)
+        mock_ftsk.assert_called_with('scrub_vios_uuid', mock.ANY)
+        self.assertEqual(1, mock_alsst.call_count)
+        self.assertEqual(1, mock_remove.call_count)
+        mock_fsl.reset_mock()
+        mock_alsst.reset_mock()
+        mock_ftsk.reset_mock()
+        mock_remove.reset_mock()
+
+        # Check in the case of good discovery no retry
+        set_discover_side_effect(iscsi.ISCSIStatus.ISCSI_SUCCESS,
+                                 'dev1')
+        device_name, udid = iscsi.discover_iscsi(
+            self.adpt, mock_host_ip, mock_user, mock_pass, mock_iqn, mock_uuid,
+            iface_name=mock_iface_name, lunid=mock_lunid, auth=mock_arg,
+            discovery_auth=mock_arg, discovery_username=mock_arg,
+            discovery_password=mock_arg, multipath=True)
+        self.assertEqual('dev1', device_name)
+        self.assertEqual('udid', udid)
+        mock_fsl.assert_not_called()
+        mock_ftsk.assert_not_called()
+        mock_alsst.assert_not_called()
+        mock_remove.assert_not_called()
+
     @mock.patch('pypowervm.wrappers.job.Job.wrap')
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     @mock.patch('pypowervm.wrappers.job.Job.get_job_results_as_dict')
