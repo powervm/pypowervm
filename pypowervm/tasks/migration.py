@@ -67,10 +67,11 @@ def migrate_lpar(
         during the migration.  See information below.
     :param virtual_scsi_mappings: The virtual scsi mappings to move during the
         migration. See information below.
-    :param dest_msp_name: The name of the destination VIOS to use for the mover
-        partition.
-    :param source_msp_name: The name of the source VIOS to use for the mover
-        partition.
+    :param dest_msp_name: A comma-separated list of destination VIOS IP
+        addresses identifying which interface(s) the Mover Service Partition
+        should use.
+    :param source_msp_name: A comma-separated list of source VIOS IP addresses
+        identifying which interface(s) the Mover Service Partition should use.
     :param spp_id: The shared processor pool id to use on the target system.
     :param timeout: maximum number of seconds for job to complete
     :param sdn_override: (Optional, Default: False) If set to True, will allow
