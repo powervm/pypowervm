@@ -119,6 +119,20 @@ class TestMigration(testtools.TestCase):
                                                suffix_parm='MigrateValidate',
                                                suffix_type='do')
 
+        # Test migrate with MSP IP parameters
+        self.adpt.read.reset_mock()
+        parm_list = [(mig.TGT_MGD_SYS, 'abc'),
+                     (mig.SRC_MSP, '1.1.1.1'),
+                     (mig.DEST_MSP, '2.2.2.2')]
+        mock_run_job.side_effect = u.get_parm_checker(
+            self, '1234', parm_list, exp_timeout=1800 * 4)
+        mock_run_job.reset_mock()
+        mig.migrate_lpar(self.lpar_w, 'abc', source_msp_name='1.1.1.1',
+                         dest_msp_name='2.2.2.2')
+        self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
+                                               suffix_parm='Migrate',
+                                               suffix_type='do')
+
     @mock.patch('pypowervm.wrappers.job.Job.run_job')
     def test_migration_recover(self, mock_run_job):
         # Test simple call
