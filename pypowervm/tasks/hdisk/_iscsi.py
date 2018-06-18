@@ -20,6 +20,11 @@ from oslo_log import log as logging
 
 import pypowervm.const as c
 from pypowervm import exceptions as pexc
+
+
+from pypowervm.i18n import _
+import pypowervm.tasks.storage as tsk_stg
+import pypowervm.utils.transaction as tx
 from pypowervm.wrappers import job
 from pypowervm.wrappers.virtual_io_server import VIOS
 
@@ -43,6 +48,7 @@ class ISCSIStatus(object):
     ISCSI_ERR_NO_OBJS_FOUND = '21'
     ISCSI_ERR_HOST_NOT_FOUND = '23'
     ISCSI_ERR_LOGIN_AUTH_FAILED = '24'
+    ISCSI_ERR_ODM_QUERY = '27'
     ISCSI_COMMAND_NOT_FOUND = '127'
 
 
@@ -50,6 +56,15 @@ _GOOD_DISCOVERY_STATUSES = [ISCSIStatus.ISCSI_SUCCESS,
                             ISCSIStatus.ISCSI_ERR_SESS_EXISTS]
 _GOOD_REMOVE_STATUSES = [ISCSIStatus.ISCSI_SUCCESS,
                          ISCSIStatus.ISCSI_ERR_NO_OBJS_FOUND]
+
+
+def good_discovery(status, device_name):
+    """Checks the hdisk discovery results for a good discovery.
+
+    Acceptable discovery statuses are _GOOD_DISCOVERY_STATUSES
+   """
+    return (device_name is not None and status in
+            _GOOD_DISCOVERY_STATUSES)
 
 
 def _find_dev_by_iqn(cmd_output, iqn, host_ip):
@@ -83,6 +98,29 @@ def _find_dev_by_iqn(cmd_output, iqn, host_ip):
     return None, None
 
 
+def _process_iscsi_result(result, iqn, host_ip):
+    """Process iSCSIDiscovery Job results
+
+    Checks the job result return status code and return.
+    :return: status, device_name and udid
+    """
+    status = result.get('RETURN_CODE')
+    # Ignore if command performed on unsupported AIX VIOS
+    if not status or status == ISCSIStatus.ISCSI_COMMAND_NOT_FOUND:
+        LOG.warning(_("There is no ISCSI command status returned, or "
+                      "ISCSI command performed on unsupported VIOS host "
+                      "%s"), host_ip)
+        return None, None, None
+
+    # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
+    output = ast.literal_eval(result.get('DEV_OUTPUT'))
+
+    # Find dev corresponding to given IQN
+    dev_name, udid = _find_dev_by_iqn(output, iqn, host_ip)
+
+    return status, dev_name, udid
+
+
 def _add_parameter(job_parms, name, value):
     """Adds key/value to job parameter list
 
@@ -102,11 +140,63 @@ def _add_parameter(job_parms, name, value):
         job_parms.append(job.Job.create_job_parameter(name, value))
 
 
+def _discover_iscsi(adapter, host_ip, vios_uuid, multipath, **kwargs):
+    """Runs iscsi discovery and login job
+
+    :param adapter: pypowervm adapter
+    :param host_ip: The portal or list of portals for the iscsi target. A
+                    portal looks like ip:port.
+    :param vios_uuid: The uuid of the VIOS (VIOS must be a Novalink VIOS type).
+    :param multipath: Whether the connection is multipath or not.
+    :param kwargs: List of iSCSI authentication parameters.
+    :return: status code of the iSCSIDiscover job
+    :return: The device name of the created volume.
+    :return: The UniqueDeviceId of the create volume.
+    """
+
+    resp = adapter.read(VIOS.schema_type, vios_uuid,
+                        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=(_JOB_NAME))
+    job_wrapper = job.Job.wrap(resp)
+
+    # Create job parameters
+    job_parms = []
+    _add_parameter(job_parms, 'auth', kwargs.get('auth'))
+    _add_parameter(job_parms, 'user', kwargs.get('user'))
+    _add_parameter(job_parms, 'password', kwargs.get('password'))
+    _add_parameter(job_parms, 'ifaceName', (kwargs.get('iface_name') or
+                                            kwargs.get('transport_type')))
+    _add_parameter(job_parms, 'targetIQN', kwargs.get('iqn'))
+    _add_parameter(job_parms, 'hostIP', host_ip)
+    _add_parameter(job_parms, 'targetLUN', kwargs.get('lunid'))
+    _add_parameter(job_parms, 'multipath', multipath)
+    if multipath:
+        _add_parameter(job_parms, 'discoveryAuth',
+                       kwargs.get('discovery_auth'))
+        _add_parameter(job_parms, 'discoveryUser',
+                       kwargs.get('discovery_username'))
+        _add_parameter(job_parms, 'discoveryPassword',
+                       kwargs.get('discovery_password'))
+
+    try:
+        job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
+    except pexc.JobRequestFailed:
+        # Pass the exception, will process based on return codes
+        results = job_wrapper.get_job_results_as_dict()
+        if not results.get('RETURN_CODE'):
+            LOG.error("iSCSI Discovery Job Failed")
+            raise
+
+    results = job_wrapper.get_job_results_as_dict()
+
+    return _process_iscsi_result(results, kwargs.get('iqn'), host_ip)
+
+
 def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
                    transport_type=None, lunid=None, iface_name=None, auth=None,
                    discovery_auth=None, discovery_username=None,
                    discovery_password=None, multipath=False):
-    """Runs iscsi discovery and login job
+
+    """Initiates the iSCSI discovery and login job
 
     :param adapter: pypowervm adapter
     :param host_ip: The portal or list of portals for the iscsi target. A
@@ -129,52 +219,48 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
     :param multipath: Whether the connection is multipath or not.
     :return: The device name of the created volume.
     :return: The UniqueDeviceId of the create volume.
+    :raise: JobRequestFailed in case of failure
     :raise: ISCSIDiscoveryFailed in case of bad return code.
-    :raise: JobRequestFailed in case of failure.
     """
 
-    resp = adapter.read(VIOS.schema_type, vios_uuid,
-                        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=(_JOB_NAME))
-    job_wrapper = job.Job.wrap(resp)
+    kwargs = {
+        'user': user, 'password': password,
+        'iqn': iqn, 'transport_type': transport_type,
+        'lunid': lunid, 'iface_name': iface_name,
+        'auth': auth, 'discovery_auth': discovery_auth,
+        'discovery_username': discovery_username,
+        'discovery_password': discovery_password
+        }
 
-    # Create job parameters
-    job_parms = []
-    _add_parameter(job_parms, 'auth', auth)
-    _add_parameter(job_parms, 'user', user)
-    _add_parameter(job_parms, 'password', password)
-    _add_parameter(job_parms, 'ifaceName', iface_name or transport_type)
-    _add_parameter(job_parms, 'targetIQN', iqn)
-    _add_parameter(job_parms, 'hostIP', host_ip)
-    _add_parameter(job_parms, 'targetLUN', lunid)
-    _add_parameter(job_parms, 'multipath', multipath)
-    if multipath:
-        _add_parameter(job_parms, 'discoveryAuth', discovery_auth)
-        _add_parameter(job_parms, 'discoveryUser',
-                       discovery_username)
-        _add_parameter(job_parms, 'discoveryPassword',
-                       discovery_password)
+    status, devname, udid = _discover_iscsi(adapter, host_ip, vios_uuid,
+                                            multipath, **kwargs)
+    # If status is ISCSI_ERR_ODM_QUERY, then there are chance of stale iscsi
+    # disks, cleanup and re-discover.
+    if status == ISCSIStatus.ISCSI_ERR_ODM_QUERY:
+        vwrap = VIOS.get(adapter, uuid=vios_uuid, xag=[c.XAG.VIO_SMAP])
+        # Check for stale lpars with SCSI mappings
+        scrub_ids = tsk_stg.find_stale_lpars(vwrap)
+        if scrub_ids:
+            # Detailed warning message by _log_lua_status
+            LOG.warning(_("iSCSI discovery failed; will scrub stale storage "
+                          "for LPAR IDs %s and retry."), scrub_ids)
+            # Scrub from just the VIOS in question.
+            scrub_task = tx.FeedTask('scrub_vios_%s' % vios_uuid, [vwrap])
+            tsk_stg.add_lpar_storage_scrub_tasks(scrub_ids, scrub_task)
+            scrub_task.execute()
 
-    try:
-        job_wrapper.run_job(vios_uuid, job_parms=job_parms, timeout=120)
-    except pexc.JobRequestFailed:
-        results = job_wrapper.get_job_results_as_dict()
-        # Ignore if the command is performed on NotSupported AIX VIOS
-        if results.get('RETURN_CODE') != ISCSIStatus.ISCSI_COMMAND_NOT_FOUND:
-            raise
-        return None, None
+        # iSCSI Discover does not autoclean the hdisk, so remove iscsi hdisk.
+        remove_iscsi(adapter, iqn, vios_uuid, iface_name, lunid, host_ip,
+                     multipath)
 
-    results = job_wrapper.get_job_results_as_dict()
+        # Re-discover the volume
+        status, devname, udid = _discover_iscsi(adapter, host_ip, vios_uuid,
+                                                multipath, **kwargs)
 
-    # RETURN_CODE: for iscsiadm status
-    status = results.get('RETURN_CODE')
-    if status not in _GOOD_DISCOVERY_STATUSES:
+    if not good_discovery(status, devname):
         raise pexc.ISCSIDiscoveryFailed(vios_uuid=vios_uuid, status=status)
 
-    # DEV_OUTPUT: ["IQN1 dev1 udid", "IQN2 dev2 udid"]
-    output = ast.literal_eval(results.get('DEV_OUTPUT'))
-
-    # Find dev corresponding to given IQN
-    return _find_dev_by_iqn(output, iqn, host_ip)
+    return devname, udid
 
 
 def discover_iscsi_initiator(adapter, vios_uuid):
