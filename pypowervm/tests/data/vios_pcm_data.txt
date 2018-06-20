@@ -119,8 +119,7 @@ BODY{
                 "numOfWrites": 0,
                 "readBytes": 0,
                 "writeBytes": 0,
-                "runningSpeed": 8,
-                "ports": []
+                "runningSpeed": 8
               },
               {
                 "id": "fcs1",

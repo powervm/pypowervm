@@ -22,6 +22,7 @@ from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers.pcm import vios as pcm_vios
 
 VIOS_DATA = 'vios_pcm_data.txt'
+VIOS_DATA_SPARSE = 'vios_pcm_data_sparse.txt'
 
 
 class TestViosLTM(testtools.TestCase):
@@ -131,3 +132,36 @@ class TestViosLTM(testtools.TestCase):
         self.assertEqual(123452, ssp.used_space)
         self.assertEqual(123825, ssp.read_bytes)
         self.assertEqual(375322, ssp.write_bytes)
+
+
+class TestViosLTMSparse(testtools.TestCase):
+
+    def setUp(self):
+        super(TestViosLTMSparse, self).setUp()
+
+        self.raw_json = pvmhttp.PVMFile(VIOS_DATA_SPARSE).body
+
+    def test_parse(self):
+        info = pcm_vios.ViosInfo(self.raw_json)
+        self.assertIsNotNone(info)
+
+        # Validate the info
+        self.assertEqual('1.0.0', info.info.version)
+        self.assertEqual('Raw', info.info.metric_type)
+        self.assertEqual('LTM', info.info.monitoring_type)
+        self.assertEqual('8247-22L*2125D4A', info.info.mtms)
+
+        # Validate some samples
+        sample = info.sample
+        self.assertEqual(u'2015-05-27T00:22:00+0000', sample.time_stamp)
+        self.assertEqual(1, sample.id)
+        self.assertEqual('IOServer - SN2125D4A', sample.name)
+
+        # Validate Memory
+        self.assertIsNone(sample.mem)
+
+        # Validate the Network
+        self.assertIsNone(sample.network)
+
+        # Validate the Storage
+        self.assertIsNone(sample.storage)

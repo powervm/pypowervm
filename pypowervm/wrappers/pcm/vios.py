@@ -83,9 +83,10 @@ class ViosNetwork(object):
     """The Network elements within the VIOS."""
 
     def __init__(self, net):
-        self.adpts = [ViosNetworkAdpt(x) for x in net.get('genericAdapters')]
+        self.adpts = [ViosNetworkAdpt(x)
+                      for x in net.get('genericAdapters', [])]
         self.seas = [ViosSharedEthernetAdapter(x)
-                     for x in net.get('sharedAdapters')]
+                     for x in net.get('sharedAdapters', [])]
 
 
 class ViosNetworkAdpt(object):
@@ -115,16 +116,16 @@ class ViosStorage(object):
     """Represents the storage elements on the VIOS."""
 
     def __init__(self, storage):
-        fc_adpts = storage.get('fiberChannelAdapters')
+        fc_adpts = storage.get('fiberChannelAdapters', [])
         self.fc_adpts = [ViosFCPhysAdpt(x) for x in fc_adpts]
 
-        phys_adpts = storage.get('genericPhysicalAdapters')
+        phys_adpts = storage.get('genericPhysicalAdapters', [])
         self.phys_adpts = [ViosStoragePAdpt(x) for x in phys_adpts]
 
-        virt_adpts = storage.get('genericVirtualAdapters')
+        virt_adpts = storage.get('genericVirtualAdapters', [])
         self.virt_adpts = [ViosStorageVAdpt(x) for x in virt_adpts]
 
-        ssps = storage.get('sharedStoragePools')
+        ssps = storage.get('sharedStoragePools', [])
         self.ssps = [ViosSSP(x) for x in ssps]
 
 
@@ -152,7 +153,7 @@ class ViosFCPhysAdpt(ViosStorageAdpt):
         self.running_speed = adpt.get('runningSpeed')
 
         # TODO(thorst) Add FC Ports (need vfc mappings)
-        vadpts = adpt.get('ports')
+        vadpts = adpt.get('ports', [])
         self.ports = [ViosFCVirtAdpt(x) for x in vadpts]
 
 
