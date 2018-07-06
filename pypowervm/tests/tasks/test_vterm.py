@@ -180,6 +180,8 @@ class TestVNCSocketListener(testtools.TestCase):
 
         self.srv = vterm._VNCSocketListener(
             self.adpt, '5901', '1.2.3.4', True, remote_ips=['1.2.3.5'])
+        self.srv_no_verify = vterm._VNCSocketListener(
+            self.adpt, '5800', '1.2.3.4', False, remote_ips=['1.2.3.5'])
         self.srv_6 = vterm._VNCSocketListener(
             self.adpt, '5901', 'fe80:1234', True,
             remote_ips=['fe80:7890'])
@@ -205,6 +207,21 @@ class TestVNCSocketListener(testtools.TestCase):
         self.assertTrue(self.srv.alive)
         self.srv.stop()
         self.assertFalse(self.srv.alive)
+
+    @mock.patch('socket.socket')
+    def test_new_client_no_verify(self, mock_sock):
+        mock_srv = mock.MagicMock()
+        mock_s_sock, mock_c_sock = mock.MagicMock(), mock.MagicMock()
+        mock_sock.return_value = mock_s_sock
+        mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
+        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
+
+        self.srv_no_verify._new_client(mock_srv)
+
+        mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
+
+        self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
+                         self.rptr.peers)
 
     @mock.patch('select.select')
     @mock.patch('socket.socket')
