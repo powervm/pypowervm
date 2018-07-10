@@ -1,5 +1,5 @@
 /build/
-.testrepository
+.stestr/
 .tox/
 *.pyc
 pypowervm.egg-info/
