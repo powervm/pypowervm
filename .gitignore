@@ -9,5 +9,4 @@ cover/
 *.orig
 *.sw[pon]
 *.*~
-.gitreview
 .sonar/
