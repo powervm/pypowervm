@@ -1,0 +1,5 @@
+[gerrit]
+host=morpheus.pok.stglabs.ibm.com
+port=29418
+project=powervm/pypowervm.git
+defaultbranch=develop
