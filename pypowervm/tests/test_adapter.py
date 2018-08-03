@@ -502,7 +502,7 @@ class TestAdapter(testtools.TestCase):
         """Test an upload request with a filehandle."""
         # filehandle is a read()able
         fhdata = ['one', 'two']
-        mock_fh = mock.Mock(read=mock.Mock(side_effect=fhdata))
+        mock_fh = mock.Mock(read=mock.Mock(side_effect=(fhdata + [None])))
         self._test_upload_request(mock_rq, mock_fh, fhdata)
         # Make sure the file handle's read method was invoked
         mock_fh.read.assert_has_calls([mock.call(65536)] * len(fhdata))
