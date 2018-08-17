@@ -267,7 +267,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'disable_secure_boot_capable': False,
                     'physical_page_table_ratio_capable': True,
                     'ioslot_owner_assignment_capable': True,
-                    'affinity_check_capable': True}
+                    'affinity_check_capable': True,
+                    'partition_secure_boot_capable': True}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -286,7 +287,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'disable_secure_boot_capable': False,
                    'physical_page_table_ratio_capable': False,
                    'ioslot_owner_assignment_capable': False,
-                   'affinity_check_capable': False}
+                   'affinity_check_capable': False,
+                   'partition_secure_boot_capable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -307,6 +309,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'shared_processor_pool_capable': True,
                          'active_memory_expansion_capable': True,
                          'physical_page_table_ratio_capable': True,
+                         'partition_secure_boot_capable': True,
                          'max_migration_ops_supported': 9,
                          'active_migrations_supported': 0,
                          'inactive_migrations_supported': 5,

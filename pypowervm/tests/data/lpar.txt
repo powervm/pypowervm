@@ -170,6 +170,8 @@ BODY{
     <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <IsManagementPartition kxe="false" kb="ROR">true</IsManagementPartition>
     <BootMode kxe="false" kb="ROR">Normal</BootMode>
+    <PendingSecureBoot ksv="V1_10_0" kxe="false" kb="CUD">2</PendingSecureBoot>
+    <CurrentSecureBoot ksv="V1_10_0" kxe="false" kb="ROO">1</CurrentSecureBoot>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable kb="COD" kxe="false">true</SimplifiedRemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
