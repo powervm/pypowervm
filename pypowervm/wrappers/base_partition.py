@@ -28,6 +28,7 @@ _BP_AVAIL_PRIORITY = 'AvailabilityPriority'
 _BP_CURR_BSR_ARRAYS = 'CurrentAllocatedBarrierSynchronizationRegisterArrays'
 _BP_CURRENT_PROC_MODE = 'CurrentProcessorCompatibilityMode'
 _BP_PROFILE_SYNC = 'CurrentProfileSync'
+_BP_CURR_SECURE_BOOT = 'CurrentSecureBoot'
 _BP_HOSTNAME = 'Hostname'
 _BP_BOOTABLE = 'IsBootable'
 _BP_CALL_HOME = 'IsCallHomeEnabled'
@@ -51,6 +52,7 @@ _BP_STATE = 'PartitionState'
 _BP_TYPE = 'PartitionType'
 _BP_UUID = 'PartitionUUID'
 _BP_PENDING_PROC_MODE = 'PendingProcessorCompatibilityMode'
+_BP_PENDING_SECURE_BOOT = 'PendingSecureBoot'
 _BP_PROC_POOL = 'ProcessorPool'
 _BP_PROG_DATA_REMAIN = 'ProgressPartitionDataRemaining'
 _BP_PROG_DATA_TOTAL = 'ProgressPartitionDataTotal'
@@ -93,8 +95,9 @@ BP_EL_ORDER = (
     _BP_SRIOV_ETH, _BP_SRIOV_ROCE, _BP_SRIOV_FC_ETH, _BP_CNAS, _BP_HOST_ETH,
     _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
-    _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_ASSOC_GROUPS,
-    _BP_POWER_ON_WITH_HYP, _BP_ASSOC_TASKS, _BP_DESC
+    _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_PENDING_SECURE_BOOT,
+    _BP_CURR_SECURE_BOOT, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_ASSOC_TASKS, _BP_DESC
 )
 
 # Partition Capabilities (_CAP)
@@ -666,6 +669,35 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         self.set_parm_value(
             _BP_DISABLE_SECURE_BOOT, u.sanitize_bool_for_api(value),
             attrib=const.ATTR_KSV150)
+
+    @property
+    def pending_secure_boot(self):
+        """The Pending Secure Boot Policy Value
+
+        This parameter can be set while the LPAR is running. It will
+        be the policy used when the LPAR is next booted.
+        """
+        return self._get_val_int(_BP_PENDING_SECURE_BOOT, default=0)
+
+    @pending_secure_boot.setter
+    def pending_secure_boot(self, value):
+        self.set_parm_value(
+            _BP_PENDING_SECURE_BOOT, value, attrib=const.ATTR_KSV1100)
+
+    @property
+    def current_secure_boot(self):
+        """The Secure Boot Policy Value
+
+        The secure boot value will determine what level of enforcement will
+        take place when the LPAR is booted. The following are the values
+        and their interpretations:
+          * 0: Secure boot disabled
+          * 1: Secure boot enabled (log only)
+          * 2: Secure boot enabled and enforced
+          * 3-9: Secure boot enabled and enforced. Firmware or OS may
+                 take additional measures.
+        """
+        return self._get_val_int(_BP_CURR_SECURE_BOOT)
 
     @property
     def allow_perf_data_collection(self):
