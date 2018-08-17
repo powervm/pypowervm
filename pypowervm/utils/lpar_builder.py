@@ -62,6 +62,7 @@ AVAIL_PRIORITY = 'avail_priority'
 SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
 ENABLE_LPAR_METRIC = 'enable_lpar_metric'
+SECURE_BOOT = 'secure_boot'
 
 # I/O configuration
 # Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
@@ -92,6 +93,7 @@ DEF_SPP = 0
 DEF_AVAIL_PRI = 127
 DEF_SRR = 'false'
 DEF_LPAR_METRIC = False
+DEF_SECURE_BOOT = 0
 DEF_PHYS_IO_SLOTS = None
 
 LOG = logging.getLogger(__name__)
@@ -185,7 +187,8 @@ class DefaultStandardize(Standardize):
                  uncapped_weight=DEF_UNCAPPED_WT, spp=DEF_SPP,
                  avail_priority=DEF_AVAIL_PRI, srr=DEF_SRR,
                  proc_compat=bp.LPARCompat.DEFAULT,
-                 enable_lpar_metric=DEF_LPAR_METRIC):
+                 enable_lpar_metric=DEF_LPAR_METRIC,
+                 secure_boot=DEF_SECURE_BOOT):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -203,6 +206,7 @@ class DefaultStandardize(Standardize):
         :param proc_compat: processor compatibility mode value
         :param enable_lpar_metric: LPAR performance data collection attribute
             enabled only if value is true
+        :param secure_boot: The secure boot policy value
         """
 
         super(DefaultStandardize, self).__init__()
@@ -219,6 +223,7 @@ class DefaultStandardize(Standardize):
         self.srr = srr
         self.enable_lpar_metric = enable_lpar_metric
         self.proc_compat = proc_compat
+        self.secure_boot = secure_boot
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
@@ -251,6 +256,9 @@ class DefaultStandardize(Standardize):
         ProcCompatMode(attrs.get(PROC_COMPAT),
                        host_modes=self.mngd_sys.proc_compat_modes,
                        allow_none=partial).validate()
+        SecureBoot(attrs.get(SECURE_BOOT, DEF_SECURE_BOOT),
+                   self.mngd_sys.get_capability(
+                       'partition_secure_boot_capable')).validate()
 
         # Validate fields specific to IBMi
         if attrs.get(ENV, '') == bp.LPARType.OS400:
@@ -322,7 +330,9 @@ class DefaultStandardize(Standardize):
                           convert_func=SimplifiedRemoteRestart.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
-
+        if self.mngd_sys.get_capability('partition_secure_boot_capable'):
+            self._set_val(bld_attr, SECURE_BOOT, self.secure_boot,
+                          convert_func=int)
         # Build IBMi attributes
         if bld_attr[ENV] == bp.LPARType.OS400:
             self._set_val(bld_attr, CONSOLE, value='HMC')
@@ -713,6 +723,27 @@ class ProcCompatMode(ChoiceField):
             self._choices = host_modes
 
 
+class SecureBoot(IntBoundField):
+    """Secure boot policy.
+
+    """
+    _min_bound = 0
+    _max_bound = 9
+    _name = 'Secure Boot'
+
+    def __init__(self, value, host_cap, allow_none=False):
+        super(SecureBoot, self).__init__(value, allow_none=allow_none)
+        self.host_cap = host_cap
+
+    def validate(self):
+        """Performs the additional host capability check for secure boot."""
+        super(SecureBoot, self).validate()
+
+        if self.value > 0 and not self.host_cap:
+            msg = ("The managed system does not support secure boot.")
+            raise ValueError(msg)
+
+
 class DedProcShareMode(ChoiceField):
     _choices = bp.DedicatedSharingMode.ALL_VALUES
     _name = 'Dedicated Processor Sharing Mode'
@@ -956,6 +987,8 @@ class LPARBuilder(object):
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
         lpar_w.proc_compat_mode = std[PROC_COMPAT]
         lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
+        if std.get(SECURE_BOOT) is not None:
+            lpar_w.pending_secure_boot = std[SECURE_BOOT]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:

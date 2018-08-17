@@ -63,6 +63,8 @@ _DYN_SRR_CAP = u.xpath(
 _IBMi_NATIVE_IO_CAP = u.xpath(_SYS_CAPABILITIES, 'IBMiNativeIOCapable')
 _DISABLE_SECURE_BOOT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DisableSecureBootCapable')
+_PARTITION_SECURE_BOOT_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'PartitionSecureBootCapable')
 _IOSLOT_OWNER_ASSMT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
 
@@ -123,6 +125,8 @@ _CAPABILITY_MAP = {
         'prop': _IBMi_NATIVE_IO_CAP, 'default': False},
     'disable_secure_boot_capable': {
         'prop': _DISABLE_SECURE_BOOT_CAP, 'default': False},
+    'partition_secure_boot_capable': {
+        'prop': _PARTITION_SECURE_BOOT_CAP, 'default': False},
     'ioslot_owner_assignment_capable': {
         'prop': _IOSLOT_OWNER_ASSMT_CAP, 'default': False},
 }
