@@ -399,7 +399,7 @@ BODY{
                             <ConfiguredEthernetLogicalPorts kxe="false" kb="ROR">2</ConfiguredEthernetLogicalPorts>
                             <MaximumPortVLANID kb="ROR" kxe="false">4094</MaximumPortVLANID>
                             <MaximumVLANID kb="ROR" kxe="false">4094</MaximumVLANID>
-                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">2.0%</MinimumEthernetCapacityGranularity>
+                            <MinimumEthernetCapacityGranularity kxe="false" kb="ROR">200</MinimumEthernetCapacityGranularity>
                             <MinimumPortVLANID kxe="false" kb="ROR">2</MinimumPortVLANID>
                             <MinimumVLANID kxe="false" kb="ROR">2</MinimumVLANID>
                             <MaxSupportedEthernetLogicalPorts kb="ROR" kxe="false">20</MaxSupportedEthernetLogicalPorts>

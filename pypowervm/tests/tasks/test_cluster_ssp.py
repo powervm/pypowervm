@@ -70,8 +70,8 @@ class TestClusterSSP(unittest.TestCase):
                 'm:Model><uom:SerialNumber>ZZZZZZZ</uom:SerialNumber></uom:Mac'
                 'hineTypeModelAndSerialNumber><uom:VirtualIOServer href="https'
                 '://a.example.com:12443/rest/api/uom/VirtualIOServer/12345678-'
-                '1234-1234-1234-123456789012" rel="related"/></uom:Node></uom:'
-                'Node></uom:Cluster>')
+                '1234-1234-1234-123456789012" rel="related" ksv="V1_3_0"/></uo'
+                'm:Node></uom:Node></uom:Cluster>')
             self.assertEqual(
                 param_vals[1],
                 '<uom:SharedStoragePool xmlns:uom="http://www.ibm.com/xmlns/sy'

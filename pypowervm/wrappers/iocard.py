@@ -541,7 +541,12 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
         :return: If the property is say "2.45%", a value of .0245 will be
                  returned.
         """
-        return self._get_val_percent(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
+        mg = self._get_val_percent(_SRIOVPP_MIN_ETHERNET_CAPACITY_GRAN)
+        if mg > 1:
+            # Some older versions of PowerVM incorrectly return the minimum
+            # granularity scaled by 100x.  Compensate here.
+            mg = mg / 100
+        return mg
 
     @property
     def supp_max_lps(self):
@@ -827,7 +832,8 @@ class VNIC(ewrap.EntryWrapper):
                           created.
         :return: A new VNIC wrapper.
         """
-        vnic = super(VNIC, cls)._bld(adapter)
+        vnic = super(VNIC, cls)._bld(adapter,
+                                     attrib={'schemaVersion': 'V1_4_0'})
         if slot_num is not None:
             vnic._slot(slot_num)
         else:
@@ -924,13 +930,17 @@ class VNIC(ewrap.EntryWrapper):
 
     @property
     def back_devs(self):
-        return ewrap.WrapperElemList(self._find_or_seed(_VNIC_BACK_DEVS),
-                                     child_class=VNICBackDev,
-                                     indirect=_VNICBD_CHOICE)
+        return ewrap.WrapperElemList(
+            self._find_or_seed(_VNIC_BACK_DEVS, attrib=pc.ATTR_SCHEMA_KSV130),
+            child_class=VNICBackDev,
+            indirect=_VNICBD_CHOICE,
+            attrib=pc.ATTR_SCHEMA_KSV130)
 
     @back_devs.setter
     def back_devs(self, new_devs):
-        self.replace_list(_VNIC_BACK_DEVS, new_devs, indirect=_VNICBD_CHOICE)
+        self.replace_list(_VNIC_BACK_DEVS, new_devs,
+                          attrib=pc.ATTR_SCHEMA_KSV130,
+                          indirect=_VNICBD_CHOICE)
 
     @property
     def auto_pri_failover(self):
@@ -982,7 +992,8 @@ class _VNICDetails(ewrap.ElementWrapper):
                              on this vNIC.  Default: ALL.
         :return: A new _VNICDetails wrapper.
         """
-        vnicd = super(_VNICDetails, cls)._bld(adapter)
+        vnicd = super(_VNICDetails, cls)._bld(adapter,
+                                              attrib=pc.ATTR_SCHEMA_KSV130)
         if pvid is not None:
             vnicd.pvid = pvid
         vnicd.allowed_vlans = allowed_vlans
@@ -998,16 +1009,19 @@ class _VNICDetails(ewrap.ElementWrapper):
 
     @pvid.setter
     def pvid(self, val):
-        self.set_parm_value(_VNICD_PVID, val)
+        self.set_parm_value(_VNICD_PVID, val, attrib=pc.ATTR_KSV130)
 
     @property
     def allowed_vlans(self):
         vlan_str = self._get_val_str(_VNICD_ALLOWED_VLANS)
-        return u.VLANList.unmarshal(vlan_str) if vlan_str is not None else None
+        if vlan_str is not None:
+            return u.VLANList.unmarshal(vlan_str)
+        return None
 
     @allowed_vlans.setter
     def allowed_vlans(self, vlans):
-        self.set_parm_value(_VNICD_ALLOWED_VLANS, u.VLANList.marshal(vlans))
+        self.set_parm_value(_VNICD_ALLOWED_VLANS, u.VLANList.marshal(vlans),
+                            attrib=pc.ATTR_KSV130)
 
     @property
     def mac(self):
@@ -1015,7 +1029,8 @@ class _VNICDetails(ewrap.ElementWrapper):
         return self._get_val_str(_VNICD_MAC)
 
     def _mac(self, val):
-        self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val))
+        self.set_parm_value(_VNICD_MAC, u.sanitize_mac_for_api(val),
+                            attrib=pc.ATTR_KSV130)
 
     @property
     def allowed_macs(self):
@@ -1024,7 +1039,8 @@ class _VNICDetails(ewrap.ElementWrapper):
 
     @allowed_macs.setter
     def allowed_macs(self, maclist):
-        self.set_parm_value(_VNICD_ALLOWED_OS_MACS, u.MACList.marshal(maclist))
+        self.set_parm_value(_VNICD_ALLOWED_OS_MACS,
+                            u.MACList.marshal(maclist), attrib=pc.ATTR_KSV130)
 
     @property
     def capacity(self):
@@ -1106,6 +1122,7 @@ class VNICBackDev(ewrap.ElementWrapper):
         bdev._vios_href(adapter.build_href(_VIOS, vios_uuid, xag=[]))
         bdev._sriov_adap_id(sriov_adap_id)
         bdev._pport_id(pport_id)
+        bdev.set_parm_value(_VNICBD_DEV_TYP, 'SRIOV', attrib=pc.ATTR_KSV130)
         if capacity is not None:
             bdev._capacity(capacity)
         if failover_pri is not None:
@@ -1126,14 +1143,14 @@ class VNICBackDev(ewrap.ElementWrapper):
         return self._get_val_int(_VNICBD_SRIOV_ADP_ID)
 
     def _sriov_adap_id(self, val):
-        self.set_parm_value(_VNICBD_SRIOV_ADP_ID, val)
+        self.set_parm_value(_VNICBD_SRIOV_ADP_ID, val, attrib=pc.ATTR_KSV130)
 
     @property
     def pport_id(self):
         return self._get_val_int(_VNICBD_PPORT_ID)
 
     def _pport_id(self, val):
-        self.set_parm_value(_VNICBD_PPORT_ID, val)
+        self.set_parm_value(_VNICBD_PPORT_ID, val, attrib=pc.ATTR_KSV130)
 
     @property
     def lport_href(self):
@@ -1150,7 +1167,8 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
-                            u.sanitize_percent_for_api(float_val))
+                            u.sanitize_percent_for_api(float_val),
+                            attrib=pc.ATTR_KSV130)
 
     @property
     def max_capacity(self):
@@ -1186,7 +1204,7 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     @failover_pri.setter
     def failover_pri(self, val):
-        self.set_parm_value(_VNICBD_FAILOVER_PRI, val, attrib=pc.ATTR_KSV140)
+        self.set_parm_value(_VNICBD_FAILOVER_PRI, val, attrib=pc.ATTR_KSV130)
 
     @property
     def is_active(self):

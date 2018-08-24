@@ -606,6 +606,7 @@ class Wrapper(object):
         # handle is in the link var.
         link.attrib['href'] = href
         link.attrib['rel'] = 'related'
+        link.attrib['ksv'] = pc._SCHEMA_VER130
 
     def toxmlstring(self, pretty=False):
         """Produce an XML dump of this Wrapper's Element.
