@@ -39,7 +39,7 @@ class TestLPARBuilder(testtools.TestCase):
         self.adpt = self.useFixture(fx.AdapterFx()).adpt
 
         def _bld_mgd_sys(proc_units, mem_reg, srr, pcm, ame,
-                         ppt, affinity=False):
+                         ppt, affinity=False, psbc=False):
             # Build a fake managed system wrapper
             mngd_sys = mock.Mock()
             type(mngd_sys).proc_units_avail = (
@@ -53,7 +53,8 @@ class TestLPARBuilder(testtools.TestCase):
                     'ibmi_restrictedio_capable': True,
                     'active_memory_expansion_capable': ame,
                     'physical_page_table_ratio_capable': ppt,
-                    'affinity_check_capable': affinity
+                    'affinity_check_capable': affinity,
+                    'partition_secure_boot_capable': psbc
                 }
                 return capabilities[cap]
             mngd_sys.get_capability.side_effect = get_cap
@@ -73,11 +74,16 @@ class TestLPARBuilder(testtools.TestCase):
         self.mngd_sys_affinity = _bld_mgd_sys(20.0, 128, True,
                                               bp.LPARCompat.ALL_VALUES, False,
                                               True, affinity=True)
+        self.mngd_sys_secure_boot = _bld_mgd_sys(20.0, 128, True,
+                                                 bp.LPARCompat.ALL_VALUES,
+                                                 False, True, psbc=True)
         self.stdz_sys1 = lpar_bldr.DefaultStandardize(self.mngd_sys)
         self.stdz_sys2 = lpar_bldr.DefaultStandardize(self.mngd_sys_no_srr)
         self.stdz_sys3 = lpar_bldr.DefaultStandardize(self.mngd_sys_ame)
         self.stdz_sys4 = lpar_bldr.DefaultStandardize(self.mngd_sys_ppt)
         self.stdz_sys5 = lpar_bldr.DefaultStandardize(self.mngd_sys_affinity)
+        self.stdz_sys6 = lpar_bldr.DefaultStandardize(
+            self.mngd_sys_secure_boot)
 
     def assert_xml(self, entry, string):
         self.assertEqual(six.b(string.rstrip('\n')),
@@ -187,6 +193,13 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys4)
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['ppt_lpar'])
+
+        # Ensure secure boot is set properly
+        attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.AIXLINUX,
+                    vcpu=1, secure_boot=2)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys6)
+        new_lpar = bldr.build()
+        self.assert_xml(new_lpar, self.sections['secure_boot_lpar'])
 
         # LPAR name too long
         attr = dict(name='lparlparlparlparlparlparlparlparlparlparlparlpar'
@@ -311,10 +324,31 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys5)
         self.assertRaises(ValueError, bldr.build)
 
+        # Secure boot on unsupported host
+        attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.AIXLINUX,
+                    vcpu=1, secure_boot=2)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys5)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Secure boot bad value
+        attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.AIXLINUX,
+                    vcpu=1, secure_boot=10)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys6)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Secure boot as 0 on unsupported host
+        # This dictionary should equate to the 'dedicated_lpar' XML on an
+        # unsupported host.
+        attr = dict(name='TheName', env=bp.LPARType.AIXLINUX, memory=1024,
+                    vcpu=1, dedicated_proc=True, secure_boot=0)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        new_lpar = bldr.build()
+        self.assert_xml(new_lpar, self.sections['dedicated_lpar'])
+
         # Desired vcpu outside min
         attr = dict(name='lpar', memory=2048, env=bp.LPARType.AIXLINUX, vcpu=1,
                     min_vcpu=2)
-        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys5)
         self.assertRaises(ValueError, bldr.build)
 
         # Desired vcpu outside max

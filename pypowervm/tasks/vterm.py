@@ -1,4 +1,4 @@
-# Copyright 2015 IBM Corp.
+# Copyright 2015, 2018 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -408,8 +408,8 @@ class _VNCSocketListener(threading.Thread):
         # going to be the same as the remote port and we need to figure
         # out what the LPAR UUID is for that given local port VNC session
         else:
-            lpar_uuid = (k for k, v in _VNC_UUID_TO_LOCAL_PORT.items()
-                         if v == self.remote_port).next()
+            lpar_uuid = next(k for k, v in _VNC_UUID_TO_LOCAL_PORT.items()
+                             if v == self.remote_port)
 
         # Setup the forwarding socket to the local LinuxVNC session
         self._setup_forwarding_socket(lpar_uuid, client_socket)

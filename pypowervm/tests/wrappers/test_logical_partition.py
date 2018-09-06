@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 IBM Corp.
+# Copyright 2014, 2017 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -213,6 +213,14 @@ class TestLogicalPartition(testtools.TestCase):
     def test_get_operating_system(self):
         self.call_simple_getter(
             "operating_system", EXPECTED_OPERATING_SYSTEM_VER, "Unknown")
+
+    def test_get_pending_secure_boot(self):
+        self.call_simple_getter(
+            "pending_secure_boot", 2, 0)
+
+    def test_get_current_secure_boot(self):
+        self.call_simple_getter(
+            "current_secure_boot", 1, 0)
 
     @mock.patch('warnings.warn')
     def test_rr_off(self, mock_warn):
