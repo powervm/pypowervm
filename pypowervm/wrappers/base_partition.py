@@ -682,7 +682,7 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @pending_secure_boot.setter
     def pending_secure_boot(self, value):
         self.set_parm_value(
-            _BP_PENDING_SECURE_BOOT, value, attrib=const.ATTR_KSV1100)
+            _BP_PENDING_SECURE_BOOT, value, attrib=const.ATTR_KSV180)
 
     @property
     def current_secure_boot(self):
