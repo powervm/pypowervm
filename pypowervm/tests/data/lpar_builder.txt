@@ -132,7 +132,7 @@ SECTION:secure_boot_lpar
 <uom:SharingMode>uncapped</uom:SharingMode></uom:PartitionProcessorConfiguration>
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
-<uom:PendingSecureBoot ksv="V1_10_0">2</uom:PendingSecureBoot>
+<uom:PendingSecureBoot ksv="V1_8_0">2</uom:PendingSecureBoot>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
 </uom:LogicalPartition>
 END OF SECTION

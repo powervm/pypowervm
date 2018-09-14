@@ -125,7 +125,7 @@ BODY{
         <VirtualNICFailOverCapable ksv="V1_4_0" kxe="false" kb="ROO">true</VirtualNICFailOverCapable>
         <DynamicSimplifiedRemoteRestartToggleCapable ksv="V1_5_0" kb="ROO" kxe="false">true</DynamicSimplifiedRemoteRestartToggleCapable>
         <CustomPhysicalPageTableRatioCapable ksv="V1_6_0" kb="ROO" kxe="false">true</CustomPhysicalPageTableRatioCapable>
-        <PartitionSecureBootCapable ksv="V1_10_0" kb="ROO" kxe="false">true</PartitionSecureBootCapable>
+        <PartitionSecureBootCapable ksv="V1_8_0" kb="ROO" kxe="false">true</PartitionSecureBootCapable>
         <IOSlotOwnerAssignmentCapable ksv="V1_6_0" kxe="false" kb="ROO">true</IOSlotOwnerAssignmentCapable>
     </AssociatedSystemCapabilities>
     <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_0">
