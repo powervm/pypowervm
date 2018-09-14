@@ -67,6 +67,8 @@ _PARTITION_SECURE_BOOT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PartitionSecureBootCapable')
 _IOSLOT_OWNER_ASSMT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
+_DED_PROC_POOL_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'DedicatedProcessorPartitionCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -129,6 +131,8 @@ _CAPABILITY_MAP = {
         'prop': _PARTITION_SECURE_BOOT_CAP, 'default': False},
     'ioslot_owner_assignment_capable': {
         'prop': _IOSLOT_OWNER_ASSMT_CAP, 'default': False},
+    'dedicated_processor_partition_capable': {
+        'prop': _DED_PROC_POOL_CAP, 'default': True},
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
