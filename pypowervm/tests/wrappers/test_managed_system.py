@@ -333,6 +333,12 @@ class TestMSEntryWrapper(unittest.TestCase):
                          "migration_data returned %s instead of %s" %
                          (result_data, expected_data))
 
+    def test_get_metered_pool_id(self):
+        self.call_simple_getter("metered_pool_id", '6689', None)
+
+    def test_processor_is_throttled(self):
+        self.call_simple_getter("processor_is_throttled", True, False)
+
 
 class TestMTMS(unittest.TestCase):
     def test_mtms(self):
