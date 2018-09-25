@@ -1548,6 +1548,8 @@ BODY{
     <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">true</IsManagementPartitionPowerVMManagementMaster>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsHMCPowerVMManagementMaster>
+    <MeteredPoolID ksv="V1_8_0" kb="ROR" kxe="false">6689</MeteredPoolID>
+    <ProcessorThrottling ksv="V1_8_0" kxe="false" kb="ROR">true</ProcessorThrottling>
 </ManagedSystem:ManagedSystem>
         </content>
     </entry>
