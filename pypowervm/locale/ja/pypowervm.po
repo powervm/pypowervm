@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.1.11.dev15\n"
+"Project-Id-Version: pypowervm 1.1.11.dev47\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2018-03-19 18:25-0400\n"
-"PO-Revision-Date: 2018-03-19 18:30-0400\n"
+"POT-Creation-Date: 2018-10-02 09:44-0400\n"
+"PO-Revision-Date: 2018-10-02 11:01-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -850,7 +850,7 @@ msgstr ""
 "UUID が「%(host)s」のホストのホスト・メモリー・オーバーヘッドの取得エラーです: "
 "%(error)s."
 
-#: pypowervm/tasks/partition.py:321
+#: pypowervm/tasks/partition.py:333
 #, python-format
 msgid ""
 "Timed out waiting for the RMC state of all the powered on Virtual I/O "
@@ -859,7 +859,7 @@ msgid ""
 msgstr ""
 "電源がオンになっているすべての Virtual I/O Server の RMC 状態がアクティブになるまで待機しているときにタイムアウトになりました。 待機時間は %(time)d 秒でした。 アクティブにならなかった VIOS は %(vioses)s でした。"
 
-#: pypowervm/tasks/partition.py:364
+#: pypowervm/tasks/partition.py:376
 #, python-format
 msgid "Assuming description-less slot is physical I/O: %s"
 msgstr "記述なしのスロットは物理入出力であると想定されます: %s"
@@ -1255,7 +1255,70 @@ msgstr ""
 "XML 出力に pg83 ディスクリプターが見つかりませんでした:\n"
 "%s"
 
-#: pypowervm/tasks/monitor/util.py:448
+#: pypowervm/tasks/hdisk/_iscsi.py:64
+msgid "ISCSI command completed successfully"
+msgstr "ISCSI コマンドが正常に完了しました"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:66
+msgid "ISCSI session already exists and logged in"
+msgstr "ISCSI セッションは既に存在し、ログインしています"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:68
+msgid "ISCSI command performed on unsupported VIOS, host."
+msgstr "ISCSI コマンドが、サポートされていない VIOS (ホスト) で実行されました"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:71
+msgid "ISCSI discovery found stale entries in the ODM database."
+msgstr "ISCSI ディスカバリーによって、不整合な項目が ODM データベースに見つかりました。"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:74
+msgid "ISCSI session could not be found "
+msgstr "ISCSI セッションが見つかりませんでした"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:76
+msgid "No records/targets/sessions/portals found to execute operation on"
+msgstr "操作を実行する対象のレコード/ターゲット/セッション/ポータルが見つかりません"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:79
+#, python-format
+msgid "ISCSI command failed with internal error status = %s"
+msgstr "ISCSI コマンドが失敗しました。内部エラー状況 = %s"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:82
+msgid "ISCSI generic error code"
+msgstr "ISCSI の一般的なエラー・コード"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:84
+msgid "ISCSI session login failure"
+msgstr "ISCSI セッション・ログイン失敗"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:86
+msgid "ISCSI command invalid arguments"
+msgstr "ISCSI コマンドの引数が無効"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:88
+msgid "ISCSI connection timer exired while trying to connect."
+msgstr "接続を試みているときに、ISCSI 接続タイマーの期限が切れました。"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:90
+msgid "ISCSI command could not lookup host"
+msgstr "ISCSI コマンドはホストを参照できませんでした"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:92
+#, python-format
+msgid "ISCSI command returned unexpected status = %s"
+msgstr "ISCSI コマンドが予期しない状況 %s を返しました"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:151
+msgid "ISCSI command performed on unsupported VIOS "
+msgstr "ISCSI コマンドが、サポートされていない VIOS で実行されました"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:287
+#, python-format
+msgid "Scrub stale storage for LPAR IDs %s and retry iSCSI discovery."
+msgstr "LPAR ID %s の不整合なストレージを修正し、iSCSI ディスカバリーを再試行してください。"
+
+#: pypowervm/tasks/monitor/util.py:452
 msgid ""
 "Metric data is not available.  This may be due to the metrics being "
 "recently initialized."
@@ -1270,26 +1333,26 @@ msgstr "これはテストです"
 msgid "This is a message for which a translation doesn't exist"
 msgstr "このメッセージには翻訳が存在しません"
 
-#: pypowervm/utils/lpar_builder.py:211
+#: pypowervm/utils/lpar_builder.py:216
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr "処理装置係数は 0.05 から 1.0 の範囲内でなければなりません。値: %s"
 
-#: pypowervm/utils/lpar_builder.py:238
+#: pypowervm/utils/lpar_builder.py:244
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "論理区画名の長さが無効です。 名前: %s"
 
-#: pypowervm/utils/lpar_builder.py:431
+#: pypowervm/utils/lpar_builder.py:448
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "フィールド「%(field)s」に無効な値「%(value)s」があります"
 
-#: pypowervm/utils/lpar_builder.py:486
+#: pypowervm/utils/lpar_builder.py:503
 msgid "None value is not valid."
 msgstr "値なしは無効です。"
 
-#: pypowervm/utils/lpar_builder.py:493
+#: pypowervm/utils/lpar_builder.py:510
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -1298,7 +1361,7 @@ msgstr ""
 "値「%(value)s」は、許容される選択項目 %(choices)s のあるフィールド"
 "「%(field)s」には無効です"
 
-#: pypowervm/utils/lpar_builder.py:518
+#: pypowervm/utils/lpar_builder.py:535
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s; "
@@ -1307,7 +1370,7 @@ msgstr ""
 "フィールド「%(field)s」の値が最小値を下回っています。 値: %(value)s "
 "最小: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:527
+#: pypowervm/utils/lpar_builder.py:544
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s; "
@@ -1316,7 +1379,7 @@ msgstr ""
 "フィールド「%(field)s」の値が最大値を上回っています。 値: %(value)s "
 "最大: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:581
+#: pypowervm/utils/lpar_builder.py:598
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
@@ -1325,7 +1388,7 @@ msgstr ""
 "「%(desired_field)s」の値が「%(max_field)s」値を上回っています。 "
 "推奨: %(desired)s 最大: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:594
+#: pypowervm/utils/lpar_builder.py:611
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
@@ -1334,7 +1397,7 @@ msgstr ""
 "「%(desired_field)s」の値が「%(min_field)s」値を下回っています。 "
 "推奨: %(desired)s 最小: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:638
+#: pypowervm/utils/lpar_builder.py:655
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
@@ -1343,7 +1406,7 @@ msgstr ""
 "メモリー値がホストの論理メモリー・ブロック・サイズ (%(lmb_size)s) の"
 "倍数ではありません。値: %(value)s"
 
-#: pypowervm/utils/lpar_builder.py:649
+#: pypowervm/utils/lpar_builder.py:666
 #, python-format
 msgid ""
 "The managed system does not support active memory expansion. The "
@@ -1352,7 +1415,7 @@ msgstr ""
 "この管理対象システムでは Active Memory Expansion はサポートされていません。 "
 "拡張係数値「%(value)s」が無効です。"
 
-#: pypowervm/utils/lpar_builder.py:655
+#: pypowervm/utils/lpar_builder.py:672
 #, python-format
 msgid ""
 "Active memory expansion value must be greater than or equal to 1.0 and "
@@ -1522,38 +1585,38 @@ msgid ""
 msgstr ""
 "簡易リモート再始動機能を変更する前に仮想マシンの電源をオフにする必要があります。 仮想マシン %s の電源をオフにして、再試行してください。"
 
-#: pypowervm/wrappers/base_partition.py:431
+#: pypowervm/wrappers/base_partition.py:434
 msgid "Partition does not have an active RMC connection."
 msgstr "アクティブな RMC 接続がパーティションにありません。"
 
-#: pypowervm/wrappers/base_partition.py:434
+#: pypowervm/wrappers/base_partition.py:437
 #, python-format
 msgid "Partition does not have an active DLPAR capability for %s."
 msgstr "%s 用のアクティブな DLPAR 機能がパーティションにありません。"
 
-#: pypowervm/wrappers/base_partition.py:446
+#: pypowervm/wrappers/base_partition.py:449
 msgid "I/O"
 msgstr "入出力"
 
-#: pypowervm/wrappers/base_partition.py:456
+#: pypowervm/wrappers/base_partition.py:459
 msgid "Memory"
 msgstr "メモリー"
 
-#: pypowervm/wrappers/base_partition.py:466
+#: pypowervm/wrappers/base_partition.py:469
 msgid "Processors"
 msgstr "プロセッサー"
 
-#: pypowervm/wrappers/base_partition.py:646
+#: pypowervm/wrappers/base_partition.py:649
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "KeylockPos「%s」が無効です。"
 
-#: pypowervm/wrappers/base_partition.py:657
+#: pypowervm/wrappers/base_partition.py:660
 #, python-format
 msgid "Invalid BootMode '%s'."
 msgstr "BootMode「%s」が無効です。"
 
-#: pypowervm/wrappers/base_partition.py:1469
+#: pypowervm/wrappers/base_partition.py:1501
 msgid "IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."
 msgstr "IOSlot.adapter は推奨されません。代わりに IOSlot.io_adapter を使用してください。"
 
@@ -1733,23 +1796,23 @@ msgstr ""
 msgid "Invalid IPLSrc '%s'."
 msgstr "IPLSrc「%s」が無効です。"
 
-#: pypowervm/wrappers/managed_system.py:484
+#: pypowervm/wrappers/managed_system.py:506
 msgid "This property is deprecated! Use pci_subsys_dev_id instead."
 msgstr "このプロパティーは推奨されません。 代わりに pci_subsys_dev_id を使用してください。"
 
-#: pypowervm/wrappers/managed_system.py:496
+#: pypowervm/wrappers/managed_system.py:518
 msgid "This property is deprecated! Use pci_rev_id instead."
 msgstr "このプロパティーは推奨されません。 代わりに pci_rev_id を使用してください。"
 
-#: pypowervm/wrappers/managed_system.py:512
+#: pypowervm/wrappers/managed_system.py:534
 msgid "This property is deprecated! Use pci_subsys_vendor_id instead."
 msgstr "このプロパティーは推奨されません。 代わりに pci_subsys_vendor_id を使用してください。"
 
-#: pypowervm/wrappers/managed_system.py:524
+#: pypowervm/wrappers/managed_system.py:546
 msgid "This property is deprecated! Use drc_index instead."
 msgstr "このプロパティーは推奨されません。 代わりに drc_index を使用してください。"
 
-#: pypowervm/wrappers/managed_system.py:536
+#: pypowervm/wrappers/managed_system.py:558
 msgid "This property is deprecated! Use drc_name instead."
 msgstr "このプロパティーは推奨されません。 代わりに drc_name を使用してください。"
 
@@ -1757,7 +1820,7 @@ msgstr "このプロパティーは推奨されません。 代わりに drc_nam
 msgid "Invalid parent spec for CNA.create."
 msgstr "CNA.create の親スペックが無効です。"
 
-#: pypowervm/wrappers/storage.py:866
+#: pypowervm/wrappers/storage.py:886
 #, python-format
 msgid ""
 "PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
@@ -1782,6 +1845,6 @@ msgid "Can't specify target device LUA without a backing storage device!"
 msgstr "バッキング・ストレージ・デバイスがなければ、ターゲット・デバイス LUA を指定できません。"
 
 
-# ENGL1SH_VERS10N 14380_39 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 29539_40 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 23
-# T9N_SH1P_STR1NG VC141AAP001 1
+# T9N_SH1P_STR1NG VC142AAP001 2

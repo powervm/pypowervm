@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.1.11.dev15\n"
+"Project-Id-Version: pypowervm 1.1.11.dev47\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2018-03-19 18:25-0400\n"
-"PO-Revision-Date: 2018-03-19 18:30-0400\n"
+"POT-Creation-Date: 2018-10-02 09:44-0400\n"
+"PO-Revision-Date: 2018-10-02 11:01-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -670,8 +670,8 @@ msgid ""
 "Unable to locate the volume group %(vol_grp)s to store the virtual "
 "optical media within.  Unable to create the media repository."
 msgstr ""
-"Não é possível localizar o grupo de volumes %(vol_grp)s no qual armazenar a mídia "
-"virtual ótica. Impossível criar o repositório de mídia."
+"Não é possível localizar o grupo de volumes %(vol_grp)s para armazenar a mídia "
+"virtual ótica.  Impossível criar o repositório de mídia."
 
 #: pypowervm/exceptions.py:383
 #, python-format
@@ -861,7 +861,7 @@ msgstr ""
 "Erro ao obter a sobrecarga da memória do host para o host com UUID '%(host)s': "
 "%(error)s."
 
-#: pypowervm/tasks/partition.py:321
+#: pypowervm/tasks/partition.py:333
 #, python-format
 msgid ""
 "Timed out waiting for the RMC state of all the powered on Virtual I/O "
@@ -872,7 +872,7 @@ msgstr ""
 "Servidores que devem estar ativos. O tempo de espera foi de: %(time)d segundos. VIOSs que "
 "não se tornaram ativos foram: %(vioses)s."
 
-#: pypowervm/tasks/partition.py:364
+#: pypowervm/tasks/partition.py:376
 #, python-format
 msgid "Assuming description-less slot is physical I/O: %s"
 msgstr "Assumindo que o slot com menos descrição seja a E/S física: %s"
@@ -1274,7 +1274,70 @@ msgstr ""
 "Falha ao localizar o descritor pg83 na saída XML:\n"
 "%s"
 
-#: pypowervm/tasks/monitor/util.py:448
+#: pypowervm/tasks/hdisk/_iscsi.py:64
+msgid "ISCSI command completed successfully"
+msgstr "Comando da ISCSI concluído com êxito"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:66
+msgid "ISCSI session already exists and logged in"
+msgstr "A sessão da ISCSI já existe e efetuou login"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:68
+msgid "ISCSI command performed on unsupported VIOS, host."
+msgstr "O comando da ISCSI foi executado em um VIOS não suportado, host."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:71
+msgid "ISCSI discovery found stale entries in the ODM database."
+msgstr "A descoberta da ISCSI localizou entradas antigas no banco de dados do ODM."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:74
+msgid "ISCSI session could not be found "
+msgstr "Não foi possível localizar a sessão da ISCSI "
+
+#: pypowervm/tasks/hdisk/_iscsi.py:76
+msgid "No records/targets/sessions/portals found to execute operation on"
+msgstr "Nenhum registro/destino/sessão/portal foi localizado no qual executar a operação"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:79
+#, python-format
+msgid "ISCSI command failed with internal error status = %s"
+msgstr "O comando da ISCSI falhou com status de erro interno = %s"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:82
+msgid "ISCSI generic error code"
+msgstr "Código de erro genérico da ISCSI"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:84
+msgid "ISCSI session login failure"
+msgstr "Falha de login de sessão da ISCSI"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:86
+msgid "ISCSI command invalid arguments"
+msgstr "Argumentos inválidos do comando da ISCSI"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:88
+msgid "ISCSI connection timer exired while trying to connect."
+msgstr "O cronômetro de conexão da ISCSI expirou ao tentar se conectar."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:90
+msgid "ISCSI command could not lookup host"
+msgstr "Não foi possível para o comando da ISCSI consultar o host"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:92
+#, python-format
+msgid "ISCSI command returned unexpected status = %s"
+msgstr "O comando da ISCSI retornou um status inesperado = %s"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:151
+msgid "ISCSI command performed on unsupported VIOS "
+msgstr "O comando da ISCSI foi executado em um VIOS não suportado "
+
+#: pypowervm/tasks/hdisk/_iscsi.py:287
+#, python-format
+msgid "Scrub stale storage for LPAR IDs %s and retry iSCSI discovery."
+msgstr "Limpe o armazenamento antigo para IDs de LPAR %s e tente novamente a descoberta da iSCSI."
+
+#: pypowervm/tasks/monitor/util.py:452
 msgid ""
 "Metric data is not available.  This may be due to the metrics being "
 "recently initialized."
@@ -1290,26 +1353,26 @@ msgstr "Isso é um teste"
 msgid "This is a message for which a translation doesn't exist"
 msgstr "Esta é uma mensagem para a qual uma tradução não existe"
 
-#: pypowervm/utils/lpar_builder.py:211
+#: pypowervm/utils/lpar_builder.py:216
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr "O fator de unidades do processador deve estar entre 0,05 e 1,0. Valor: %s"
 
-#: pypowervm/utils/lpar_builder.py:238
+#: pypowervm/utils/lpar_builder.py:244
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "O nome da partição lógica possui um comprimento inválido. Nome: %s"
 
-#: pypowervm/utils/lpar_builder.py:431
+#: pypowervm/utils/lpar_builder.py:448
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "O campo '%(field)s' tem o valor inválido: '%(value)s'"
 
-#: pypowervm/utils/lpar_builder.py:486
+#: pypowervm/utils/lpar_builder.py:503
 msgid "None value is not valid."
 msgstr "O valor None não é válido."
 
-#: pypowervm/utils/lpar_builder.py:493
+#: pypowervm/utils/lpar_builder.py:510
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -1318,7 +1381,7 @@ msgstr ""
 "O valor '%(value)s' não é válido para o campo '%(field)s' com opções "
 "aceitáveis: %(choices)s"
 
-#: pypowervm/utils/lpar_builder.py:518
+#: pypowervm/utils/lpar_builder.py:535
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s; "
@@ -1327,7 +1390,7 @@ msgstr ""
 "O campo '%(field)s' tem um valor abaixo do mínimo. Valor: %(value)s; "
 "Mínimo: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:527
+#: pypowervm/utils/lpar_builder.py:544
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s; "
@@ -1336,7 +1399,7 @@ msgstr ""
 "O campo '%(field)s' tem um valor acima do máximo. Valor: %(value)s; "
 "Máximo: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:581
+#: pypowervm/utils/lpar_builder.py:598
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
@@ -1345,7 +1408,7 @@ msgstr ""
 "O '%(desired_field)s' tem um valor acima do valor '%(max_field)s'. "
 "Desejado: %(desired)s Máximo: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:594
+#: pypowervm/utils/lpar_builder.py:611
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
@@ -1354,7 +1417,7 @@ msgstr ""
 "O '%(desired_field)s' tem um valor abaixo do valor '%(min_field)s'. "
 "Desejado: %(desired)s Mínimo: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:638
+#: pypowervm/utils/lpar_builder.py:655
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
@@ -1363,7 +1426,7 @@ msgstr ""
 "O valor de memória não é um múltiplo do tamanho de bloco da memória lógico "
 "(%(lmb_size)s) do host.  Valor: %(value)s"
 
-#: pypowervm/utils/lpar_builder.py:649
+#: pypowervm/utils/lpar_builder.py:666
 #, python-format
 msgid ""
 "The managed system does not support active memory expansion. The "
@@ -1372,7 +1435,7 @@ msgstr ""
 "O sistema gerenciado não suporta a expansão de memória ativa. Os "
 "valor do fator de expansão '%(value)s' não é válido."
 
-#: pypowervm/utils/lpar_builder.py:655
+#: pypowervm/utils/lpar_builder.py:672
 #, python-format
 msgid ""
 "Active memory expansion value must be greater than or equal to 1.0 and "
@@ -1543,40 +1606,40 @@ msgstr ""
 "A máquina virtual deverá ser desligada antes de mudar o recurso "
 "recurso de reinicialização remota. Desligue a máquina virtual %s e tente novamente."
 
-#: pypowervm/wrappers/base_partition.py:431
+#: pypowervm/wrappers/base_partition.py:434
 msgid "Partition does not have an active RMC connection."
 msgstr "A partição não tem uma conexão RMC ativa."
 
-#: pypowervm/wrappers/base_partition.py:434
+#: pypowervm/wrappers/base_partition.py:437
 #, python-format
 msgid "Partition does not have an active DLPAR capability for %s."
 msgstr "A partição não tem uma capacidade DLPAR ativa para %s."
 
-#: pypowervm/wrappers/base_partition.py:446
+#: pypowervm/wrappers/base_partition.py:449
 msgid "I/O"
 msgstr "E/S"
 
-#: pypowervm/wrappers/base_partition.py:456
+#: pypowervm/wrappers/base_partition.py:459
 msgid "Memory"
 msgstr "Memória"
 
-#: pypowervm/wrappers/base_partition.py:466
+#: pypowervm/wrappers/base_partition.py:469
 msgid "Processors"
 msgstr "Processadores"
 
-#: pypowervm/wrappers/base_partition.py:646
+#: pypowervm/wrappers/base_partition.py:649
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "KeylockPos '%s' inválido."
 
-#: pypowervm/wrappers/base_partition.py:657
+#: pypowervm/wrappers/base_partition.py:660
 #, python-format
 msgid "Invalid BootMode '%s'."
 msgstr "BootMode '%s' inválido."
 
-#: pypowervm/wrappers/base_partition.py:1469
+#: pypowervm/wrappers/base_partition.py:1501
 msgid "IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."
-msgstr "O IOSlot.adapter foi descontinuado! Use o IOSlot.io_adapter."
+msgstr "O IOSlot.adapter foi descontinuado!  Use o IOSlot.io_adapter."
 
 #: pypowervm/wrappers/enterprise_pool.py:143
 #, python-format
@@ -1755,23 +1818,23 @@ msgstr ""
 msgid "Invalid IPLSrc '%s'."
 msgstr "IPLSrc '%s' inválido."
 
-#: pypowervm/wrappers/managed_system.py:484
+#: pypowervm/wrappers/managed_system.py:506
 msgid "This property is deprecated! Use pci_subsys_dev_id instead."
 msgstr "Esta propriedade foi descontinuada! Use pci_subsys_dev_id no lugar."
 
-#: pypowervm/wrappers/managed_system.py:496
+#: pypowervm/wrappers/managed_system.py:518
 msgid "This property is deprecated! Use pci_rev_id instead."
 msgstr "Esta propriedade foi descontinuada! Use pci_rev_id no lugar."
 
-#: pypowervm/wrappers/managed_system.py:512
+#: pypowervm/wrappers/managed_system.py:534
 msgid "This property is deprecated! Use pci_subsys_vendor_id instead."
 msgstr "Esta propriedade foi descontinuada! Use pci_subsys_vendor_id no lugar."
 
-#: pypowervm/wrappers/managed_system.py:524
+#: pypowervm/wrappers/managed_system.py:546
 msgid "This property is deprecated! Use drc_index instead."
 msgstr "Esta propriedade foi descontinuada! Use drc_index no lugar."
 
-#: pypowervm/wrappers/managed_system.py:536
+#: pypowervm/wrappers/managed_system.py:558
 msgid "This property is deprecated! Use drc_name instead."
 msgstr "Esta propriedade foi descontinuada! Use drc_name no lugar."
 
@@ -1779,7 +1842,7 @@ msgstr "Esta propriedade foi descontinuada! Use drc_name no lugar."
 msgid "Invalid parent spec for CNA.create."
 msgstr "Especificação inválida de pai para CNA.create."
 
-#: pypowervm/wrappers/storage.py:866
+#: pypowervm/wrappers/storage.py:886
 #, python-format
 msgid ""
 "PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
@@ -1805,6 +1868,6 @@ msgid "Can't specify target device LUA without a backing storage device!"
 msgstr "Não é possível especificar o dispositivo LUA de destino sem um dispositivo de armazenamento auxiliar."
 
 
-# ENGL1SH_VERS10N 14380_39 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 29539_40 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 23
-# T9N_SH1P_STR1NG VC141AAP001 1
+# T9N_SH1P_STR1NG VC142AAP001 2
