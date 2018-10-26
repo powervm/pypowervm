@@ -929,40 +929,37 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         # Ensure we get an EventListener
         self.assertIsInstance(sess.get_event_listener(), adp.EventListener)
 
-    def test_shutdown_session(self):
-        """Test garbage collection of the session.
-
-        Ensures the Session can be properly garbage collected.
-        """
+    @mock.patch('pypowervm.adapter._EventListener.shutdown',
+                side_effect=adp.EventListener.shutdown)
+    def test_shutdown_session(self, mock_elshutdown):
         # Get a session
         sess = adp.Session()
         # Mock the session token like we logged on
         sess._sessToken = 'token'.encode('utf-8')
-        # It should have logged on but not off.
+        # It should have logged on
         self.assertTrue(self.mock_logon.called)
-        self.assertFalse(self.mock_logoff.called)
 
-        # Get an event listener to test the weak references
+        # Construct and get the event listener
         event_listen = sess.get_event_listener()
-
         # Test the circular reference (but one link is weak)
         sess.hello = 'hello'
         self.assertEqual(sess.hello, event_listen.adp.session.hello)
+        # Test that we haven't already logged off
+        self.assertFalse(self.mock_logoff.called)
 
-        # There should be 1 reference to the session (ours)
-        self.assertEqual(1, len(gc.get_referrers(sess)))
+        # Stop referencing the session
+        sess = None
+        # Test that the event listener's shutdown has been triggered
+        mock_elshutdown.assert_called()
+        # Test that logoff has occurred
+        self.assertTrue(self.mock_logoff.called)
 
     def test_shutdown_adapter(self):
-        """Test garbage collection of the session, event listener.
-
-        Ensures the proper shutdown of the session and event listener when
-        we start with constructing an Adapter, implicit session and
-        EventListener.
-        """
-        # Get Adapter, implicit session
+        # Get Adapter
         adapter = adp.Adapter()
+        # Mock the implicit session token like we logged on
         adapter.session._sessToken = 'token'.encode('utf-8')
-        # Get construct and event listener
+        # Construct and get the event listener
         adapter.session.get_event_listener()
 
         # Turn off the event listener
@@ -970,8 +967,10 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         # Session is still active
         self.assertFalse(self.mock_logoff.called)
 
-        # The only thing that refers the adapter is our reference
-        self.assertEqual(1, len(gc.get_referrers(adapter)))
+        # Stop referencing the adapter
+        adapter = None
+        # Test that logoff has occurred
+        self.assertTrue(self.mock_logoff.called)
 
 
 class TestElementInject(testtools.TestCase):
