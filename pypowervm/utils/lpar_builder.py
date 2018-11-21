@@ -256,9 +256,18 @@ class DefaultStandardize(Standardize):
         ProcCompatMode(attrs.get(PROC_COMPAT),
                        host_modes=self.mngd_sys.proc_compat_modes,
                        allow_none=partial).validate()
+        if attrs.get(ENV, '') == bp.LPARType.OS400:
+            # NOTE(edmondsw) Secure boot is initially supported only for RPA
+            # partitions (AIX/Linux). It is blocked at the schema level for
+            # IBMi. See https://bugs.launchpad.net/pypowervm/+bug/1805610
+            # TODO(edmondsw): If/when secure boot is supported for IBMi, a new
+            # capability will need to be checked here.
+            secure_boot_cap = False
+        else:
+            secure_boot_cap = self.mngd_sys.get_capability(
+                'partition_secure_boot_capable')
         SecureBoot(attrs.get(SECURE_BOOT, DEF_SECURE_BOOT),
-                   self.mngd_sys.get_capability(
-                       'partition_secure_boot_capable')).validate()
+                   secure_boot_cap).validate()
 
         # Validate fields specific to IBMi
         if attrs.get(ENV, '') == bp.LPARType.OS400:
