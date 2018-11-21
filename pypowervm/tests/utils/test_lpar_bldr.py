@@ -201,6 +201,13 @@ class TestLPARBuilder(testtools.TestCase):
         new_lpar = bldr.build()
         self.assert_xml(new_lpar, self.sections['secure_boot_lpar'])
 
+        # Ensure secure boot disabled works for IBMi
+        attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.OS400,
+                    vcpu=1, secure_boot=0)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys6)
+        new_lpar = bldr.build()
+        self.assert_xml(new_lpar, self.sections['secure_boot_ibmi_lpar'])
+
         # LPAR name too long
         attr = dict(name='lparlparlparlparlparlparlparlparlparlparlparlpar'
                     'lparlparlparlparlparlparlparlparlparlparlparlparlparlpar',
@@ -328,6 +335,12 @@ class TestLPARBuilder(testtools.TestCase):
         attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.AIXLINUX,
                     vcpu=1, secure_boot=2)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys5)
+        self.assertRaises(ValueError, bldr.build)
+
+        # Secure boot of IBMi LPAR
+        attr = dict(name='SecureBoot', memory=1024, env=bp.LPARType.OS400,
+                    vcpu=1, secure_boot=2)
+        bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys6)
         self.assertRaises(ValueError, bldr.build)
 
         # Secure boot bad value
