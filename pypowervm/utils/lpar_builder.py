@@ -987,8 +987,16 @@ class LPARBuilder(object):
         lpar_w.avail_priority = std[AVAIL_PRIORITY]
         lpar_w.proc_compat_mode = std[PROC_COMPAT]
         lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
-        if std.get(SECURE_BOOT) is not None:
+        # Skip setting secure boot attribute for IBMi. This attribute
+        # is supported only for RPA partitions(AIX/Linux) and it is
+        # blocked at schema level for IBMi. For more details,
+        # refer to https://bugs.launchpad.net/pypowervm/+bug/1805610
+        if (lpar_w.env != bp.LPARType.OS400 and
+                std.get(SECURE_BOOT) is not None):
             lpar_w.pending_secure_boot = std[SECURE_BOOT]
+        else:
+            LOG.warning("Skip secure boot attribute setting for IBMi "
+                        "partition: %s", std[NAME])
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
