@@ -753,8 +753,8 @@ class SecureBoot(IntBoundField):
         super(SecureBoot, self).validate()
 
         if int(self.value) > 0 and not self.host_cap:
-            msg = ("The managed system or partition type does not support "
-                   "secure boot.")
+            msg = _("The managed system or partition type does not support "
+                    "secure boot.")
             raise ValueError(msg)
 
 
@@ -825,8 +825,8 @@ class PhysicalPageTableRatio(ChoiceField):
 
         # Validate the host capability
         if not self.host_cap and self.value:
-            msg = ("The managed system does not support setting the physical "
-                   "page table ratio.")
+            msg = _("The managed system does not support setting the physical "
+                    "page table ratio.")
             raise ValueError(msg)
 
 
@@ -844,8 +844,8 @@ class EnforceAffinityCheck(BoolField):
 
         # Validate the host capability
         if (str(self.value).lower() == 'true') and (not self.host_cap):
-            msg = ("The managed system does not support affinity score checks "
-                   "as part of migration.")
+            msg = _("The managed system does not support affinity score "
+                    "checks as part of migration.")
             raise ValueError(msg)
 
 
