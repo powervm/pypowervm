@@ -256,9 +256,9 @@ class DefaultStandardize(Standardize):
         ProcCompatMode(attrs.get(PROC_COMPAT),
                        host_modes=self.mngd_sys.proc_compat_modes,
                        allow_none=partial).validate()
+        secure_boot_cap = self._can_secure_boot_for_lpar(attrs.get(ENV, ''))
         SecureBoot(attrs.get(SECURE_BOOT, DEF_SECURE_BOOT),
-                   self.mngd_sys.get_capability(
-                       'partition_secure_boot_capable')).validate()
+                   secure_boot_cap).validate()
 
         # Validate fields specific to IBMi
         if attrs.get(ENV, '') == bp.LPARType.OS400:
@@ -269,6 +269,18 @@ class DefaultStandardize(Standardize):
             'affinity_check_capable')
         EnforceAffinityCheck(attrs.get(ENFORCE_AFFINITY_CHECK),
                              host_affinity_cap).validate()
+
+    def _can_secure_boot_for_lpar(self, lpar_type):
+        if lpar_type == bp.LPARType.OS400:
+            # NOTE(edmondsw) Secure boot is initially supported only for RPA
+            # partitions (AIX/Linux). It is blocked at the schema level for
+            # IBMi. See https://bugs.launchpad.net/pypowervm/+bug/1805610
+            # TODO(edmondsw): If/when secure boot is supported for IBMi, a new
+            # capability will need to be checked here.
+            return False
+        else:
+            return self.mngd_sys.get_capability(
+                'partition_secure_boot_capable')
 
     def _validate_memory(self, attrs=None, partial=False):
         if attrs is None:
@@ -330,7 +342,8 @@ class DefaultStandardize(Standardize):
                           convert_func=SimplifiedRemoteRestart.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
-        if self.mngd_sys.get_capability('partition_secure_boot_capable'):
+        # See if the host is capable of secure boot before setting it.
+        if self._can_secure_boot_for_lpar(bld_attr[ENV]):
             self._set_val(bld_attr, SECURE_BOOT, self.secure_boot,
                           convert_func=int)
         # Build IBMi attributes
@@ -740,7 +753,8 @@ class SecureBoot(IntBoundField):
         super(SecureBoot, self).validate()
 
         if int(self.value) > 0 and not self.host_cap:
-            msg = ("The managed system does not support secure boot.")
+            msg = _("The managed system or partition type does not support "
+                    "secure boot.")
             raise ValueError(msg)
 
 
@@ -811,8 +825,8 @@ class PhysicalPageTableRatio(ChoiceField):
 
         # Validate the host capability
         if not self.host_cap and self.value:
-            msg = ("The managed system does not support setting the physical "
-                   "page table ratio.")
+            msg = _("The managed system does not support setting the physical "
+                    "page table ratio.")
             raise ValueError(msg)
 
 
@@ -830,8 +844,8 @@ class EnforceAffinityCheck(BoolField):
 
         # Validate the host capability
         if (str(self.value).lower() == 'true') and (not self.host_cap):
-            msg = ("The managed system does not support affinity score checks "
-                   "as part of migration.")
+            msg = _("The managed system does not support affinity score "
+                    "checks as part of migration.")
             raise ValueError(msg)
 
 

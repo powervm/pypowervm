@@ -35,6 +35,8 @@ _HOST_IP_ADDRESS = _PRIMARY_IP_ADDRESS
 _STATE = 'State'
 _SYSTEM_NAME = 'SystemName'
 _MASTER_MODE = 'IsPowerVMManagementMaster'
+_PROC_THROTTLE = 'ProcessorThrottling'
+_METER_POOL_ID = 'MeteredPoolID'
 
 _SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
 _ACTIVE_LPM_CAP = u.xpath(
@@ -67,6 +69,8 @@ _PARTITION_SECURE_BOOT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'PartitionSecureBootCapable')
 _IOSLOT_OWNER_ASSMT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
+_DED_PROC_POOL_CAP = u.xpath(
+    _SYS_CAPABILITIES, 'DedicatedProcessorPartitionCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -129,6 +133,8 @@ _CAPABILITY_MAP = {
         'prop': _PARTITION_SECURE_BOOT_CAP, 'default': False},
     'ioslot_owner_assignment_capable': {
         'prop': _IOSLOT_OWNER_ASSMT_CAP, 'default': False},
+    'dedicated_processor_partition_capable': {
+        'prop': _DED_PROC_POOL_CAP, 'default': True},
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
@@ -394,6 +400,14 @@ class System(ewrap.EntryWrapper):
                   is the master.
         """
         return self._get_val_bool(_MASTER_MODE, True)
+
+    @property
+    def metered_pool_id(self):
+        return self._get_val_str(_METER_POOL_ID)
+
+    @property
+    def processor_is_throttled(self):
+        return self._get_val_bool(_PROC_THROTTLE)
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)

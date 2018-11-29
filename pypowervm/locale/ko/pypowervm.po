@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pypowervm 1.1.11.dev15\n"
+"Project-Id-Version: pypowervm 1.1.11.dev47\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2018-03-19 18:25-0400\n"
-"PO-Revision-Date: 2018-03-19 18:30-0400\n"
+"POT-Creation-Date: 2018-10-02 09:44-0400\n"
+"PO-Revision-Date: 2018-10-02 11:01-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -115,7 +115,7 @@ msgid ""
 "Failed to connect to REST server - is the pvm-rest service started?  "
 "Retrying %(try_num)d of %(max_tries)d after %(delay)d seconds."
 msgstr ""
-"REST 서버에 연결하는 데 실패했습니다. pvm-rest 서비스가 시작되었습니까?"
+"REST 서버에 연결하는 데 실패했습니다. pvm-rest 서비스가 시작되었습니까?  "
 "%(delay)d초 후에 최대 %(max_tries)d번 중 %(try_num)d번 재시도합니다."
 
 #: pypowervm/adapter.py:463
@@ -317,7 +317,7 @@ msgid ""
 " VIOS Extended Attribute Groups may have been insufficient.  The VIOS URI"
 " for the query was %(vio_uri)s."
 msgstr ""
-"WWPN %(wwpn)s에 대해 적합한 물리적 FC 포트를 유도할 수 없습니다.  "
+"WWPN %(wwpn)s에 대해 적합한 물리적 FC 포트를 유도할 수 없습니다. "
 " VIOS 확장 속성 그룹이 충분하지 않았을 수 있습니다. 조회의 VIOS URI는"
 " %(vio_uri)s입니다."
 
@@ -346,7 +346,7 @@ msgid ""
 "The '%(operation_name)s' operation failed. Failed to complete the task in"
 " %(seconds)d seconds."
 msgstr ""
-"'%(operation_name)s' 조작이 실패했습니다. %(seconds)d초에 "
+"'%(operation_name)s' 조작이 실패했습니다. %(seconds)d초에"
 " 태스크를 완료하는 데 실패했습니다."
 
 #: pypowervm/exceptions.py:154
@@ -383,7 +383,7 @@ msgid ""
 "Power on of Virtual Machine %(lpar_nm)s timed out after %(timeout)d "
 "seconds."
 msgstr ""
-"가상 머신 %(lpar_nm)s의 전원 공급이 %(timeout)d초 후 제한시간이"
+"가상 머신 %(lpar_nm)s의 전원 공급이 %(timeout)d초 후 제한시간이 "
 "초과되었습니다."
 
 #: pypowervm/exceptions.py:177
@@ -392,7 +392,7 @@ msgid ""
 "Unable to remove VLAN %(vlan_id)d as it is the Primary VLAN Identifier on"
 " a different Network Bridge."
 msgstr ""
-"다른 네트워크 브릿지의 1차 VLAN ID이므로 VLAN %(vlan_id)d을(를) "
+"다른 네트워크 브릿지의 1차 VLAN ID이므로 VLAN %(vlan_id)d을(를)"
 " 제거할 수 없습니다."
 
 #: pypowervm/exceptions.py:182
@@ -404,8 +404,8 @@ msgid ""
 "manually remove the device or add it to the Network Bridge before "
 "continuing."
 msgstr ""
-"VLAN %(vlan_id)d을(를) 프로비저닝할 수 없습니다. Virtual I/O Server"
-"%(vios)s의 '%(dev_name)s' 장치에 포함된 것으로 보입니다. 장치가 "
+"VLAN %(vlan_id)d을(를) 프로비저닝할 수 없습니다. Virtual I/O Server "
+"%(vios)s의 '%(dev_name)s' 장치에 포함된 것으로 보입니다. 장치가"
 " 네트워크 브릿지(공유 이더넷 어댑터)에 연결되지 않았습니다. 계속하기 "
 "전에 수동으로 장치를 제거하거나 네트워크 "
 "브릿지에 추가하십시오."
@@ -426,7 +426,7 @@ msgid ""
 " port specification for the physical Fibre Channel ports."
 msgstr ""
 "가상 파이버 채널 포트를 맵핑할 물리적 포트를 찾을 수 없습니다. "
-"이는 Virtual I/O Server가 사용 불가능하거나 물리적 파이버 채널 포트에 대한 포트 스펙이 "
+"이는 Virtual I/O Server가 사용 불가능하거나 물리적 파이버 채널 포트에 대한 포트 스펙이"
 " 적절하지 않기 때문입니다."
 
 #: pypowervm/exceptions.py:203
@@ -435,7 +435,7 @@ msgid ""
 " running in a non-local mode.  The console can only be deployed when "
 "pypowervm is co-located with the PowerVM API."
 msgstr ""
-"가상 머신에 대한 콘솔을 시작할 수 없습니다. pypowervm API가 "
+"가상 머신에 대한 콘솔을 시작할 수 없습니다. pypowervm API가"
 " 로컬이 아닌 모드에서 실행 중입니다. 콘솔은 pypowervm이 PowerVM API와 "
 "공존하는 경우에만 배치될 수 있습니다."
 
@@ -502,7 +502,7 @@ msgid ""
 "Unable to remap storage element of vSCSI mapping. A mapping for storage "
 "element %(stg_name)s already exists to client LPAR %(lpar_uuid)s."
 msgstr ""
-"vSCSI 맵핑의 스토리지 요소를 다시 맵핑할 수 없습니다. 스토리지"
+"vSCSI 맵핑의 스토리지 요소를 다시 맵핑할 수 없습니다. 스토리지 "
 "요소 %(stg_name)s에 대한 맵핑이 클라이언트 LPAR %(lpar_uuid)s에 이미 있습니다."
 
 #: pypowervm/exceptions.py:255
@@ -548,7 +548,7 @@ msgid ""
 "The device with UDID %(udid)s was not found on any of the Virtual I/O "
 "Servers."
 msgstr ""
-"Virtual I/O Server에서 UDID가 %(udid)s인 장치를 찾을 수"
+"Virtual I/O Server에서 UDID가 %(udid)s인 장치를 찾을 수 "
 "없었습니다."
 
 #: pypowervm/exceptions.py:306
@@ -557,7 +557,7 @@ msgid ""
 "There are not enough Virtual I/O Servers to support the virtual machine's"
 " device with UDID %(udid)s."
 msgstr ""
-"UDID %(udid)s의 가상 머신 장치를 지원하기에는 Virtual I/O Server가 "
+"UDID %(udid)s의 가상 머신 장치를 지원하기에는 Virtual I/O Server가"
 " 충분하지 않습니다."
 
 #: pypowervm/exceptions.py:311
@@ -585,8 +585,8 @@ msgid ""
 " match the number of slots on the client system (%(original_slots)d).  "
 "Unable to rebuild this virtual machine on this system."
 msgstr ""
-"대상 시스템의 VFC 슬롯 수(%(rebuild_slots)d)가 "
-" 클라이언트 시스템(%(original_slots)d)의 슬롯 수와 일치하지 않습니다."
+"대상 시스템의 VFC 슬롯 수(%(rebuild_slots)d)가"
+" 클라이언트 시스템(%(original_slots)d)의 슬롯 수와 일치하지 않습니다. "
 "이 시스템에서 이 가상 머신을 재빌드할 수 없습니다."
 
 #: pypowervm/exceptions.py:328
@@ -635,16 +635,16 @@ msgid ""
 "Unable to fulfill redundancy requirement of %(red)d.  Found %(found_vfs)d"
 " viable backing device(s)."
 msgstr ""
-"%(red)d의 중복성 요구사항을 수행할 수 없습니다. %(found_vfs)d "
+"%(red)d의 중복성 요구사항을 수행할 수 없습니다. %(found_vfs)d"
 " 실행 가능한 백업 장치를 찾았습니다."
 
 #: pypowervm/exceptions.py:359
 msgid "The Managed System is not vNIC capable."
-msgstr "관리 시스템이 vNIC 가능하지 않습니다. "
+msgstr "관리 시스템이 vNIC 가능하지 않습니다."
 
 #: pypowervm/exceptions.py:363
 msgid "There are no active vNIC-capable VIOSes."
-msgstr "활성 vNIC 가능 VIOS가 없습니다. "
+msgstr "활성 vNIC 가능 VIOS가 없습니다."
 
 #: pypowervm/exceptions.py:367
 #, python-format
@@ -652,7 +652,7 @@ msgid ""
 "A redundancy of %(red)d was specified, but the Managed System is not vNIC"
 " failover capable."
 msgstr ""
-"%(red)d의 중복성이 지정되었지만 관리 대상 시스템이 vNIC "
+"%(red)d의 중복성이 지정되었지만 관리 대상 시스템이 vNIC"
 " 장애 복구를 사용할 수 없습니다."
 
 #: pypowervm/exceptions.py:372
@@ -861,18 +861,18 @@ msgstr ""
 "UUID가 '%(host)s'인 호스트에 대한 호스트 메모리 오버헤드를 가져오는 중에 오류 발생: "
 "%(error)s."
 
-#: pypowervm/tasks/partition.py:321
+#: pypowervm/tasks/partition.py:333
 #, python-format
 msgid ""
 "Timed out waiting for the RMC state of all the powered on Virtual I/O "
 "Servers to be active. Wait time was: %(time)d seconds. VIOSes that did "
 "not go active were: %(vioses)s."
 msgstr ""
-"Virtual I/O Server에서 전원이 켜져 있는 모든 RMC 상태가 활성이 되기를 기다리는 동안"
+"Virtual I/O Server에서 전원이 켜져 있는 모든 RMC 상태가 활성이 되기를 기다리는 동안 "
 "제한시간이 초과되었습니다. 대기한 시간: %(time)d초. 활성이 되지 않은 "
 "VIOS: %(vioses)s."
 
-#: pypowervm/tasks/partition.py:364
+#: pypowervm/tasks/partition.py:376
 #, python-format
 msgid "Assuming description-less slot is physical I/O: %s"
 msgstr "설명이 없는 슬롯이 물리적 I/O라고 간주함: %s"
@@ -1008,13 +1008,13 @@ msgid ""
 "The crt_lu_linked_clone method is deprecated!  Please use the crt_lu "
 "method (clone=src_lu, size=lu_size_gb)."
 msgstr ""
-"crt_lu_linked_clone 메소드는 더 이상 사용되지 않습니다! crt_lu "
+"crt_lu_linked_clone 메소드는 더 이상 사용되지 않습니다!  crt_lu "
 "메소드(clone=src_lu, size=lu_size_gb)를 사용하십시오."
 
 #: pypowervm/tasks/storage.py:581
 #, python-format
 msgid "Disk Logical Unit %(luname)s has no backing image LU.  (UDID: %(udid)s) "
-msgstr "디스크 논리 장치 %(luname)s에 백업 이미지 LU가 없습니다. (UDID: %(udid)s)"
+msgstr "디스크 논리 장치 %(luname)s에 백업 이미지 LU가 없습니다. (UDID: %(udid)s) "
 
 #: pypowervm/tasks/storage.py:665
 msgid "Unable to locate new vDisk on file upload."
@@ -1274,7 +1274,70 @@ msgstr ""
 "XML 출력에서 pg83 디스크립터를 찾지 못함:\n"
 "%s"
 
-#: pypowervm/tasks/monitor/util.py:448
+#: pypowervm/tasks/hdisk/_iscsi.py:64
+msgid "ISCSI command completed successfully"
+msgstr "ISCSI 명령이 완료됨"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:66
+msgid "ISCSI session already exists and logged in"
+msgstr "ISCSI 세션이 이미 있으며 로그인됨"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:68
+msgid "ISCSI command performed on unsupported VIOS, host."
+msgstr "지원되지 않는 VIOS, 호스트에서 ISCSI 명령을 수행했습니다."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:71
+msgid "ISCSI discovery found stale entries in the ODM database."
+msgstr "ISCSI 검색을 통해 ODM 데이터베이스에서 시간이 경과된(stale) 항목을 찾았습니다."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:74
+msgid "ISCSI session could not be found "
+msgstr "ISCSI 세션을 찾을 수 없음 "
+
+#: pypowervm/tasks/hdisk/_iscsi.py:76
+msgid "No records/targets/sessions/portals found to execute operation on"
+msgstr "오퍼레이션을 실행할 레코드/대상/세션/포털을 찾을 수 없음"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:79
+#, python-format
+msgid "ISCSI command failed with internal error status = %s"
+msgstr "ISCSI 명령이 내부 오류 상태 = %s와 함께 실패함"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:82
+msgid "ISCSI generic error code"
+msgstr "ISCSI 일반 오류 코드"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:84
+msgid "ISCSI session login failure"
+msgstr "ISCSI 세션 로그인 실패"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:86
+msgid "ISCSI command invalid arguments"
+msgstr "ISCSI 명령에 올바르지 않은 인수가 있음"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:88
+msgid "ISCSI connection timer exired while trying to connect."
+msgstr "연결을 시도하는 중에 ISCSI 연결 타이머가 만료되었습니다."
+
+#: pypowervm/tasks/hdisk/_iscsi.py:90
+msgid "ISCSI command could not lookup host"
+msgstr "ISCSI 명령이 호스트를 검색할 수 없음"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:92
+#, python-format
+msgid "ISCSI command returned unexpected status = %s"
+msgstr "ISCSI 명령이 예상치 못한 상태 = %s을(를) 리턴함"
+
+#: pypowervm/tasks/hdisk/_iscsi.py:151
+msgid "ISCSI command performed on unsupported VIOS "
+msgstr "ISCSI 명령이 지원되지 않는 VIOS에서 수행됨 "
+
+#: pypowervm/tasks/hdisk/_iscsi.py:287
+#, python-format
+msgid "Scrub stale storage for LPAR IDs %s and retry iSCSI discovery."
+msgstr "LPAR IDs %s에 대한 시간이 경과된(stale) 스토리지를 제거하고 iSCSI 검색을 재시도하십시오."
+
+#: pypowervm/tasks/monitor/util.py:452
 msgid ""
 "Metric data is not available.  This may be due to the metrics being "
 "recently initialized."
@@ -1290,26 +1353,26 @@ msgstr "테스트입니다."
 msgid "This is a message for which a translation doesn't exist"
 msgstr "다음은 변환되지 않은 메시지입니다."
 
-#: pypowervm/utils/lpar_builder.py:211
+#: pypowervm/utils/lpar_builder.py:216
 #, python-format
 msgid "Processor units factor must be between 0.05 and 1.0. Value: %s"
 msgstr "프로세서 단위 인수는 0.05 - 1.0 사이여야 합니다. 값: %s"
 
-#: pypowervm/utils/lpar_builder.py:238
+#: pypowervm/utils/lpar_builder.py:244
 #, python-format
 msgid "Logical partition name has invalid length. Name: %s"
 msgstr "논리 파티션 이름의 길이가 올바르지 않습니다. 이름: %s"
 
-#: pypowervm/utils/lpar_builder.py:431
+#: pypowervm/utils/lpar_builder.py:448
 #, python-format
 msgid "Field '%(field)s' has invalid value: '%(value)s'"
 msgstr "'%(field)s' 필드의 값이 올바르지 않음: '%(value)s'"
 
-#: pypowervm/utils/lpar_builder.py:486
+#: pypowervm/utils/lpar_builder.py:503
 msgid "None value is not valid."
 msgstr "없음 값은 올바르지 않습니다."
 
-#: pypowervm/utils/lpar_builder.py:493
+#: pypowervm/utils/lpar_builder.py:510
 #, python-format
 msgid ""
 "Value '%(value)s' is not valid for field '%(field)s' with acceptable "
@@ -1318,7 +1381,7 @@ msgstr ""
 "값 '%(value)s'이(가) 허용 가능한 선택항목 %(choices)s이(가) 있는 "
 "'%(field)s' 필드에 대해 올바르지 않습니다."
 
-#: pypowervm/utils/lpar_builder.py:518
+#: pypowervm/utils/lpar_builder.py:535
 #, python-format
 msgid ""
 "Field '%(field)s' has a value below the minimum. Value: %(value)s; "
@@ -1327,7 +1390,7 @@ msgstr ""
 "필드 '%(field)s'에 최소값 미만의 값이 있습니다. 값: %(value)s, "
 "최소값: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:527
+#: pypowervm/utils/lpar_builder.py:544
 #, python-format
 msgid ""
 "Field '%(field)s' has a value above the maximum. Value: %(value)s; "
@@ -1336,7 +1399,7 @@ msgstr ""
 "필드 '%(field)s'에 최대값을 초과하는 값이 있습니다. 값: %(value)s, "
 "최대값: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:581
+#: pypowervm/utils/lpar_builder.py:598
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value above the '%(max_field)s' value. "
@@ -1345,7 +1408,7 @@ msgstr ""
 "%(desired_field)s'의 값이 '%(max_field)s' 값보다 큽니다. "
 "원하는 값: %(desired)s 최대값: %(maximum)s"
 
-#: pypowervm/utils/lpar_builder.py:594
+#: pypowervm/utils/lpar_builder.py:611
 #, python-format
 msgid ""
 "The '%(desired_field)s' has a value below the '%(min_field)s' value. "
@@ -1354,7 +1417,7 @@ msgstr ""
 "%(desired_field)s'의 값이 '%(min_field)s' 값보다 작습니다. "
 "원하는 값: %(desired)s 최소값: %(minimum)s"
 
-#: pypowervm/utils/lpar_builder.py:638
+#: pypowervm/utils/lpar_builder.py:655
 #, python-format
 msgid ""
 "Memory value is not a multiple of the logical memory block size "
@@ -1363,7 +1426,7 @@ msgstr ""
 "메모리 값이 호스트의 논리 메모리 블록 크기(%(lmb_size)s)의 배수가 "
 "아닙니다. 값: %(value)s"
 
-#: pypowervm/utils/lpar_builder.py:649
+#: pypowervm/utils/lpar_builder.py:666
 #, python-format
 msgid ""
 "The managed system does not support active memory expansion. The "
@@ -1372,7 +1435,7 @@ msgstr ""
 "관리 대상 시스템이 활성 메모리 확장을 지원하지 않습니다.  "
 "확장 계수 값 '%(value)s'이(가) 올바르지 않습니다."
 
-#: pypowervm/utils/lpar_builder.py:655
+#: pypowervm/utils/lpar_builder.py:672
 #, python-format
 msgid ""
 "Active memory expansion value must be greater than or equal to 1.0 and "
@@ -1380,8 +1443,8 @@ msgid ""
 " AME is off. '%(value)s' is not valid."
 msgstr ""
 "활성 메모리 확장 값은 1.0 이상 및 10.0 이하여야 합니다. "
-"0 값은 유효하고 AME가 해제되어 있음을 나타냅니다. "
-" AME가 오프 상태입니다. '%(value)s'이(가) 올바르지 않습니다. "
+"0 값은 유효하고 AME가 해제되어 있음을 나타냅니다."
+" AME가 오프 상태입니다. '%(value)s'이(가) 올바르지 않습니다."
 
 #: pypowervm/utils/retry.py:203
 #, python-format
@@ -1434,7 +1497,7 @@ msgid ""
 "FeedTask %s experienced multiple exceptions. They are logged individually"
 " below."
 msgstr ""
-"FeedTask %s에서 여러 예외가 발생했습니다. 이는 아래에 개별적으로 "
+"FeedTask %s에서 여러 예외가 발생했습니다. 이는 아래에 개별적으로"
 " 로깅됩니다."
 
 #: pypowervm/utils/validation.py:174
@@ -1457,7 +1520,7 @@ msgid ""
 "maximum memory. Power off virtual machine %s and try again."
 msgstr ""
 "최소 또는 최대 프로세서를 변경하기 전에 먼저 가상 머신의 전원을 "
-"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:235
 #, python-format
@@ -1465,8 +1528,8 @@ msgid ""
 "The virtual machine must be powered off before changing the expansion "
 "factor. Power off virtual machine %s and try again."
 msgstr ""
-"확장 요인을 변경하기 전에 가상 머신의 전원을 꺼야 합니다."
-" 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"확장 요인을 변경하기 전에 가상 머신의 전원을 꺼야 합니다. "
+" 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:328
 msgid "CPUs"
@@ -1483,7 +1546,7 @@ msgid ""
 "maximum processors. Power off virtual machine %s and try again."
 msgstr ""
 "최소 또는 최대 프로세서를 변경하기 전에 먼저 가상 머신의 전원을 "
-"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:395
 #, python-format
@@ -1492,7 +1555,7 @@ msgid ""
 "maximum processor units. Power off virtual machine %s and try again."
 msgstr ""
 "최소 또는 최대 프로세서를 변경하기 전에 먼저 가상 머신의 전원을 "
-"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:411
 #, python-format
@@ -1501,7 +1564,7 @@ msgid ""
 "compatibility mode. Power off virtual machine %s and try again."
 msgstr ""
 "프로세서 호환 모드를 변경하기 전에 먼저 가상 머신의 전원을 "
-"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:419
 #, python-format
@@ -1510,7 +1573,7 @@ msgid ""
 "mode. Power off virtual machine %s and try again."
 msgstr ""
 "처리 모드를 변경하기 전에 먼저 가상 머신의 전원을 꺼야 합니다. "
-"들어가지 못하게 했습니다.가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"들어가지 못하게 했습니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
 #: pypowervm/utils/validation.py:448
 #, python-format
@@ -1541,40 +1604,40 @@ msgid ""
 "remote restart capability. Power off virtual machine %s and try again."
 msgstr ""
 "단순 원격 다시 시작 기능을 변경하기 전에 먼저 가상 머신의 전원을 "
-"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오. "
+"꺼야 합니다. 가상 머신 %s의 전원을 끄고 다시 시도하십시오."
 
-#: pypowervm/wrappers/base_partition.py:431
+#: pypowervm/wrappers/base_partition.py:434
 msgid "Partition does not have an active RMC connection."
 msgstr "파티션에 활성 RMC 연결이 없습니다."
 
-#: pypowervm/wrappers/base_partition.py:434
+#: pypowervm/wrappers/base_partition.py:437
 #, python-format
 msgid "Partition does not have an active DLPAR capability for %s."
 msgstr "파티션에 %s에 대한 활성 DLPAR 기능이 없습니다."
 
-#: pypowervm/wrappers/base_partition.py:446
+#: pypowervm/wrappers/base_partition.py:449
 msgid "I/O"
 msgstr "I/O"
 
-#: pypowervm/wrappers/base_partition.py:456
+#: pypowervm/wrappers/base_partition.py:459
 msgid "Memory"
 msgstr "메모리"
 
-#: pypowervm/wrappers/base_partition.py:466
+#: pypowervm/wrappers/base_partition.py:469
 msgid "Processors"
 msgstr "프로세서"
 
-#: pypowervm/wrappers/base_partition.py:646
+#: pypowervm/wrappers/base_partition.py:649
 #, python-format
 msgid "Invalid KeylockPos '%s'."
 msgstr "올바르지 않은 KeylockPos %s입니다."
 
-#: pypowervm/wrappers/base_partition.py:657
+#: pypowervm/wrappers/base_partition.py:660
 #, python-format
 msgid "Invalid BootMode '%s'."
 msgstr "올바르지 않은 BootMode %s입니다."
 
-#: pypowervm/wrappers/base_partition.py:1469
+#: pypowervm/wrappers/base_partition.py:1501
 msgid "IOSlot.adapter is deprecated!  Use IOSlot.io_adapter instead."
 msgstr "IOSlot.adapter가 더 이상 사용되지 않습니다. 대신 IOSlot.io_adapter를 사용하십시오."
 
@@ -1586,7 +1649,7 @@ msgid ""
 " master console for the pool."
 msgstr ""
 "마스터 관리 콘솔 MTMS(머신 유형, 모델, 일련 번호)를 "
-"%(identifier)s에서 확인할 수 없습니다. 풀에 대한 마스터 콘솔로 표시된 %(param)s이(가) "
+"%(identifier)s에서 확인할 수 없습니다. 풀에 대한 마스터 콘솔로 표시된 %(param)s이(가)"
 " 없기 때문입니다."
 
 #: pypowervm/wrappers/entry_wrapper.py:251
@@ -1626,7 +1689,7 @@ msgid ""
 "Developer error: specify 'parent' or ('parent_type' and 'parent_uuid') to"
 " retrieve a CHILD object."
 msgstr ""
-"개발자 오류: CHILD 오브젝트를 검색하려면 'parent' 또는 "
+"개발자 오류: CHILD 오브젝트를 검색하려면 'parent' 또는"
 " ('parent_type' 및 'parent_uuid')를 지정하십시오."
 
 #: pypowervm/wrappers/entry_wrapper.py:866
@@ -1668,7 +1731,7 @@ msgid ""
 " it will result in a no-op.  At worst, it will give you incurable etag "
 "mismatch errors."
 msgstr ""
-"EntryWrapper.update에 대한 'xag' 매개변수는 더 이상 사용되지 않습니다! 최상의 경우, 이를 사용하면"
+"EntryWrapper.update에 대한 'xag' 매개변수는 더 이상 사용되지 않습니다!  최상의 경우, 이를 사용하면"
 " 조작 없음 결과가 발생합니다. 최악의 경우 교정할 수 없는 etag 불일치 오류가 "
 "발생합니다."
 
@@ -1704,7 +1767,7 @@ msgid ""
 "Issuing cancel request for job %(job_id)s. Will poll the job indefinitely"
 " for termination."
 msgstr ""
-"작업 %(job_id)s에 대한 취소 요청을 실행하는 중입니다. 종료될 때까지 작업이 무한정 "
+"작업 %(job_id)s에 대한 취소 요청을 실행하는 중입니다. 종료될 때까지 작업이 무한정"
 " 폴링됩니다."
 
 #: pypowervm/wrappers/job.py:343
@@ -1755,23 +1818,23 @@ msgstr ""
 msgid "Invalid IPLSrc '%s'."
 msgstr "올바르지 않은 IPLSrc %s입니다."
 
-#: pypowervm/wrappers/managed_system.py:484
+#: pypowervm/wrappers/managed_system.py:506
 msgid "This property is deprecated! Use pci_subsys_dev_id instead."
 msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 pci_subsys_dev_id를 사용하십시오."
 
-#: pypowervm/wrappers/managed_system.py:496
+#: pypowervm/wrappers/managed_system.py:518
 msgid "This property is deprecated! Use pci_rev_id instead."
 msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 pci_rev_id를 사용하십시오."
 
-#: pypowervm/wrappers/managed_system.py:512
+#: pypowervm/wrappers/managed_system.py:534
 msgid "This property is deprecated! Use pci_subsys_vendor_id instead."
 msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 pci_subsys_vendor_id를 사용하십시오."
 
-#: pypowervm/wrappers/managed_system.py:524
+#: pypowervm/wrappers/managed_system.py:546
 msgid "This property is deprecated! Use drc_index instead."
 msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 drc_index를 사용하십시오."
 
-#: pypowervm/wrappers/managed_system.py:536
+#: pypowervm/wrappers/managed_system.py:558
 msgid "This property is deprecated! Use drc_name instead."
 msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 drc_name을 사용하십시오."
 
@@ -1779,7 +1842,7 @@ msgstr "이 특성은 더 이상 사용되지 않습니다! 대신 drc_name을 �
 msgid "Invalid parent spec for CNA.create."
 msgstr "CNA.create에 대해 올바르지 않은 상위 스펙입니다."
 
-#: pypowervm/wrappers/storage.py:866
+#: pypowervm/wrappers/storage.py:886
 #, python-format
 msgid ""
 "PV had encoded pg83 descriptor \"%(pg83_raw)s\", but it failed to decode "
@@ -1793,7 +1856,7 @@ msgid ""
 "The 'xags' property of the VIOS EntryWrapper class is deprecated!  Please"
 " use values from pypowervm.const.XAG instead."
 msgstr ""
-"VIOS EntryWrapper 클래스의 'xags' 특성이 더 이상 사용되지 않습니다. 다음 "
+"VIOS EntryWrapper 클래스의 'xags' 특성이 더 이상 사용되지 않습니다. 다음"
 " 대신 pypowervm.const.XAG의 값을 사용하십시오."
 
 #: pypowervm/wrappers/virtual_io_server.py:400
@@ -1805,6 +1868,6 @@ msgid "Can't specify target device LUA without a backing storage device!"
 msgstr "지원되는 스토리지 장치 없이 대상 장치 LUA를 지정할 수 없습니다."
 
 
-# ENGL1SH_VERS10N 14380_39 DO NOT REMOVE OR CHANGE THIS LINE
+# ENGL1SH_VERS10N 29539_40 DO NOT REMOVE OR CHANGE THIS LINE
 # T9N_SRC_ID 23
-# T9N_SH1P_STR1NG VC141AAP001 1
+# T9N_SH1P_STR1NG VC142AAP001 2
