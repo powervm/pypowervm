@@ -154,7 +154,8 @@ def build_itls(i_wwpns, t_wwpns, lun):
     return [ITL(i, t, lun) for i, t in itertools.product(i_wwpns, t_wwpns)]
 
 
-def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
+def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER,
+                   device_id=None):
     """Attempt to discover a hard disk attached to a Virtual I/O Server.
 
     See lua_recovery.  This method attempts that call and analyzes the
@@ -178,6 +179,8 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     :param vios_uuid: The Virtual I/O Server UUID.
     :param itls: A list of ITL objects.
     :param vendor: The vendor for the LUN.  See the LUAType.* constants.
+    :param device_id: The device ID parameter in the LUA input XML.
+                      Typically the base 64 encoded pg83 value.
     :return status: The status code from the discover process.
                     See LUAStatus.* constants.
     :return dev_name: The name of the discovered hdisk.
@@ -185,7 +188,7 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     """
     # First attempt
     status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
-                                         vendor=vendor)
+                                         vendor=vendor, device_id=device_id)
     # Do we need to scrub and retry?
     if not good_discovery(status, devname):
         vwrap = pvm_vios.VIOS.get(adapter, uuid=vios_uuid,
@@ -201,11 +204,13 @@ def discover_hdisk(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
             tsk_stg.add_lpar_storage_scrub_tasks(scrub_ids, scrub_task)
             scrub_task.execute()
             status, devname, udid = lua_recovery(adapter, vios_uuid, itls,
-                                                 vendor=vendor)
+                                                 vendor=vendor,
+                                                 device_id=device_id)
     return status, devname, udid
 
 
-def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
+def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER,
+                 device_id=None):
     """Logical Unit Address Recovery - discovery of a FC-attached hdisk.
 
     When a new disk is created externally (say on a block device), the Virtual
@@ -216,6 +221,8 @@ def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     :param vios_uuid: The Virtual I/O Server UUID.
     :param itls: A list of ITL objects.
     :param vendor: The vendor for the LUN.  See the LUAType.* constants.
+    :param device_id: The device ID parameter in the LUA input XML.
+                      Typically the base 64 encoded pg83 value.
     :return status: The status code from the discover process.
                     See LUAStatus.* constants.
     :return dev_name: The name of the discovered hdisk.
@@ -225,7 +232,8 @@ def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     itls = set(itls)
 
     # Build the LUA recovery XML
-    lua_xml = _lua_recovery_xml(itls, adapter, vendor=vendor)
+    lua_xml = _lua_recovery_xml(itls, adapter, vendor=vendor,
+                                device_id=device_id)
 
     # Build up the job & invoke
     resp = adapter.read(
@@ -242,7 +250,7 @@ def lua_recovery(adapter, vios_uuid, itls, vendor=LUAType.OTHER):
     return status, devname, udid
 
 
-def _lua_recovery_xml(itls, adapter, vendor=LUAType.OTHER):
+def _lua_recovery_xml(itls, adapter, vendor=LUAType.OTHER, device_id=None):
     """Builds the XML that is used as input for the lua_recovery job.
 
     The lua_recovery provides a very quick way for the system to discover
@@ -252,6 +260,8 @@ def _lua_recovery_xml(itls, adapter, vendor=LUAType.OTHER):
                  between the server port (initiator), disk port (target) and
                  disk itself.
     :param vendor: The LUA vendor.  See the LUAType.* Constants.
+    :param device_id: The device ID parameter in the LUA input XML.
+                      Typically the base 64 encoded pg83 value.
     :return: The CDATA XML that is used for the lua_recovery job.
     """
     # Used for building the internal XML.
@@ -274,6 +284,8 @@ def _lua_recovery_xml(itls, adapter, vendor=LUAType.OTHER):
     device_list = ent.Element("deviceList", adapter, ns='')
     device = ent.Element("device", adapter, ns='')
     device.append(ent.Element("vendor", adapter, text=vendor, ns=''))
+    if device_id:
+        device.append(ent.Element("deviceID", adapter, text=device_id, ns=''))
     device.append(ent.Element("deviceTag", adapter, text="1", ns=''))
 
     itl_list = ent.Element("itlList", adapter, ns='')
