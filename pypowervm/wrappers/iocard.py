@@ -1,4 +1,4 @@
-# Copyright 2016, 2017 IBM Corp.
+# Copyright 2016, 2019 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -38,9 +38,9 @@ _SRIOV_ADAPTER_STATE = 'AdapterState'
 
 _SRIOV_CONVERGED_ETHERNET_PHYSICAL_PORTS = 'ConvergedEthernetPhysicalPorts'
 _SRIOV_ETHERNET_PHYSICAL_PORTS = 'EthernetPhysicalPorts'
+_ROCE_SRIOV_PHYSICAL_PORTS = 'SRIOVRoCEPhysicalPorts'
 
 # SR-IOV physical port constants
-
 _SRIOVPP_CFG_SPEED = 'ConfiguredConnectionSpeed'
 _SRIOVPP_CFG_FLOWCTL = 'ConfiguredFlowControl'
 _SRIOVPP_CFG_MTU = 'ConfiguredMTU'
@@ -442,6 +442,13 @@ class SRIOVAdapter(IOAdapter):
             return None
         return ewrap.WrapperElemList(elem, child_class=SRIOVConvPPort)
 
+    def _rocephysicalports(self):
+        """Retrieve all RoCE adapter physical ethernet ports."""
+        elem = self._find(_ROCE_SRIOV_PHYSICAL_PORTS)
+        if elem is None:
+            return None
+        return ewrap.WrapperElemList(elem, child_class=SRIOVRoCEPPort)
+
     def _ethernetphysicalports(self):
         """Retrieve all Ethernet physical ports."""
         elem = self._find(_SRIOV_ETHERNET_PHYSICAL_PORTS)
@@ -460,9 +467,13 @@ class SRIOVAdapter(IOAdapter):
         """
         allports = []
         cports = self._convergedphysicalports()
+        # Physical ports for RoCE adapters is part of different schema
+        rports = self._rocephysicalports()
         eports = self._ethernetphysicalports()
         for c in cports or []:
             allports.append(c)
+        for r in rports or []:
+            allports.append(r)
         for e in eports or []:
             allports.append(e)
         # Set the ports' backpointers to this SRIOVAdapter
@@ -594,6 +605,14 @@ class SRIOVEthPPort(ewrap.ElementWrapper):
                                child_order=_SRIOVCPP_EL_ORDER)
 class SRIOVConvPPort(SRIOVEthPPort):
     """The SR-IOV Converged Physical port."""
+    pass
+
+
+@ewrap.ElementWrapper.pvm_type('SRIOVRoCEPhysicalPort',
+                               has_metadata=True,
+                               child_order=_SRIOVCPP_EL_ORDER)
+class SRIOVRoCEPPort(SRIOVEthPPort):
+    """The SR-IOV RoCE Physical Ethernet port."""
     pass
 
 
