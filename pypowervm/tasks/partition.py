@@ -47,6 +47,7 @@ _DOWN_VM_STATES = (bp.LPARState.NOT_ACTIVATED, bp.LPARState.ERROR,
                    bp.LPARState.UNKNOWN)
 
 _SUFFIX_PARM_CLONE_UUID = 'CloneUUID'
+_SUFFIX_PARM_ADD_LICENSE = 'AddLicense'
 
 _LOW_WAIT_TIME = 120
 _HIGH_WAIT_TIME = 600
@@ -397,4 +398,20 @@ def clone_uuid(adapter, lpar_uuid, surrogate_lpar_name):
     job_parms = [job_wrapper.create_job_parameter('targetLparName',
                                                   surrogate_lpar_name)]
 
+    job_wrapper.run_job(lpar_uuid, job_parms=job_parms)
+
+def add_license_key(adapter, lpar_uuid, license_key):
+    """Issue the AddLicense job
+    The AddLicense job submits a license key to IBMi partition.
+
+    :param adapter: The pypowervm adapter to issue the job.
+    :param lpar_uuid: Original LPAR's UUID.
+    :param license_key: License Key for IBMi
+    """
+    resp = adapter.read(lpar.LPAR.schema_type, root_id=lpar_uuid,
+                        suffix_type=c.SUFFIX_TYPE_DO,
+                        suffix_parm=_SUFFIX_PARM_ADD_LICENSE)
+    job_wrapper = job.Job.wrap(resp.entry)
+    job_parms = [job_wrapper.create_job_parameter('licKey', license_key)]
+    
     job_wrapper.run_job(lpar_uuid, job_parms=job_parms)
