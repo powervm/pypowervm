@@ -206,7 +206,8 @@ class LoggingPatcher(SimplePatcher):
         """
         def _log(*a, **k):
             self.fx.log(self.name)
-            return a[0] if self.ret is self.FIRST_ARG else self.ret
+            return a[0] if self.ret is self.FIRST_ARG and len(a) != 0 \
+                else self.ret
         # This ignores/overrides the superclass's return_value semantic.
         self.ret = return_value
         super(LoggingPatcher, self).__init__(

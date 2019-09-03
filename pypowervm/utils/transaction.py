@@ -253,6 +253,8 @@ class _FunctorSubtask(Subtask):
         """Invoke saved callable with saved args."""
         if not ('provided' in reflection.get_callable_args(self._func)
                 or reflection.accepts_kwargs(self._func)):
+                _kwargs.pop('provided', None)
+        if 'provided' in _kwargs and _kwargs['provided'] == {}:
             _kwargs.pop('provided', None)
         if self._logspec:
             # Execute the log method (the first element in the list) with its
@@ -712,8 +714,8 @@ class FeedTask(tf_task.Task):
             # long as the assignment (by WrapperTask.execute) and the accessor
             # (WrapperTask.wrapper) remain atomic by using simple =/return.
             for wrap in self._feed:
-                if self.get_wrapper(wrap.uuid).etag != wrap.etag:
-                    # Refresh needed
+                if hasattr(self.get_wrapper(wrap.uuid), 'etag') \
+                        and self.get_wrapper(wrap.uuid).etag != wrap.etag:
                     self._feed = [tx.wrapper for tx in
                                   self.wrapper_tasks.values()]
                     break
