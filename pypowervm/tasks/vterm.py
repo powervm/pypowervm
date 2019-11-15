@@ -143,7 +143,14 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
         # The only error message that is fine is a return code of 3 that a
         # session is already started, where we got back the port back meaning
         # that it was started as VNC.  Else, raise up the error message.
-        if ret_code != 0 and not (ret_code == 3 and _parse_vnc_port(std_out)):
+
+        if not _parse_vnc_port(std_out):
+            raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
+
+        if ret_code == 3:
+            return _parse_vnc_port(std_out)
+
+        if ret_code != 0:
             raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
 
         # Parse the VNC Port out of the stdout returned from mkvterm
