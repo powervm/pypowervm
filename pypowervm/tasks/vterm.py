@@ -143,7 +143,7 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
         # The only error message that is fine is a return code of 3 that a
         # session is already started, where we got back the port back meaning
         # that it was started as VNC.  Else, raise up the error message.
-        if ret_code != 0 and not (ret_code == 3 and _parse_vnc_port(std_out)):
+        if ret_code != 0 and ret_code != 3:
             raise pvm_exc.VNCBasedTerminalFailedToOpen(err=std_err)
 
         # Parse the VNC Port out of the stdout returned from mkvterm
@@ -213,7 +213,8 @@ def open_remotable_vnc_vterm(
     # we need to listen for remote connections on the same port as the local
     # one so we know which VNC session to forward the connection's data to
     remote_port = _REMOTE_PORT if vnc_path is not None else local_port
-    _VNC_UUID_TO_LOCAL_PORT[lpar_uuid] = local_port
+    if local_port:
+        _VNC_UUID_TO_LOCAL_PORT[lpar_uuid] = local_port
 
     # We will use a flag to the Socket Listener to tell it whether the
     # user provided us a VNC Path we should use to look up the UUID from
