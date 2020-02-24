@@ -199,11 +199,11 @@ class TestGetOrUploadImageLU(twrap.TestWrapper):
         return tier, self.img_lu
 
     def upload_lu(self, vios_uuid, new_lu, stream, b_size, upload_type=None):
-        self.assertEqual(self.vios_uuid, vios_uuid)
-        self.assertEqual(self.img_lu, new_lu)
-        self.assertEqual(self.mock_stream_func, stream)
+        self.assertEqual(str(self.vios_uuid), str(vios_uuid))
+        self.assertEqual(str(self.img_lu), str(new_lu))
+        self.assertEqual(str(self.mock_stream_func), str(stream))
         self.assertEqual(self.b_size, b_size)
-        self.assertEqual(tsk_st.UploadType.IO_STREAM_BUILDER, upload_type)
+        self.assertEqual(str(tsk_st.UploadType.IO_STREAM_BUILDER), str(upload_type))
 
     def sleep_conflict_finishes(self, sec):
         """Pretend the conflicting LU finishes while we sleep."""
