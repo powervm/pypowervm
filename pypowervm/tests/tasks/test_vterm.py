@@ -131,8 +131,8 @@ class TestVterm(testtools.TestCase):
                    "Use 'rmvterm --id 4' to close it.")
         mock_run_proc.return_value = (3, std_out, std_err)
 
-        self.assertRaises(pexc.VNCBasedTerminalFailedToOpen,
-                          vterm.open_localhost_vnc_vterm, self.adpt,
+        self.assertRaises(six.ensure_str(pexc.VNCBasedTerminalFailedToOpen),
+                          six.ensure_str(vterm.open_localhost_vnc_vterm), self.adpt,
                           'lpar_uuid')
 
         # Validation
