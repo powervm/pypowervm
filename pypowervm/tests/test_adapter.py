@@ -21,15 +21,6 @@ from lxml import etree
 import six
 import subunit
 
-if six.PY2:
-    import __builtin__ as builtins
-elif six.PY3:
-    import builtins
-
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
 
 import mock
 import requests.models as req_mod
@@ -44,6 +35,16 @@ import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import storage as pvm_stor
+
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 logon_text = testlib.file2b("logon.xml")
 response_text = testlib.file2b("event.xml")

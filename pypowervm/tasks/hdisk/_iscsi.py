@@ -270,7 +270,7 @@ def discover_iscsi(adapter, host_ip, user, password, iqn, vios_uuid,
         'auth': auth, 'discovery_auth': discovery_auth,
         'discovery_username': discovery_username,
         'discovery_password': discovery_password
-        }
+    }
 
     status, devname, udid = _discover_iscsi(adapter, host_ip, vios_uuid,
                                             multipath, **kwargs)

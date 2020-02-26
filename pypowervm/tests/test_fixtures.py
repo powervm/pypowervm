@@ -47,6 +47,7 @@ def _mk_traits(local, hmc):
     _mk_traits_sessions.append(_sess)
     return trt.APITraits(_sess)
 
+
 LocalPVMTraits = _mk_traits(local=True, hmc=False)
 RemotePVMTraits = _mk_traits(local=False, hmc=False)
 RemoteHMCTraits = _mk_traits(local=False, hmc=True)
@@ -284,6 +285,7 @@ class SleepFx(SimplePatchingFx):
         """Create the fixture for time.sleep."""
         super(SleepFx, self).__init__()
         self.add_patchers(SleepPatcher(self, side_effect=side_effect))
+
 
 # Thread locking primitives are located slightly differently in py2 vs py3
 SEM_ENTER = 'threading.%sSemaphore.__enter__' % ('_' if six.PY2 else '')

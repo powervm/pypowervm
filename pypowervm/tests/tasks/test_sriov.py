@@ -47,6 +47,7 @@ def good_sriov(sriov_adap_id, pports):
     return fake_sriov(card.SRIOVAdapterMode.SRIOV,
                       card.SRIOVAdapterState.RUNNING, sriov_adap_id, pports)
 
+
 ded_sriov = fake_sriov(card.SRIOVAdapterMode.DEDICATED, None, 86, [])
 down_sriov = fake_sriov(card.SRIOVAdapterMode.SRIOV,
                         card.SRIOVAdapterState.FAILED, 68, [])

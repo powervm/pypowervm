@@ -59,7 +59,7 @@ class TestVIOSBusyHelper(unittest.TestCase):
         self.assertRaises(pvmex.Error, adpt._request, 'method', 'path',
                           body='the body', helpers=hlp)
         # Should have tried 'retries' times plus the initial one
-        self.assertEqual(mock_sess.request.call_count, retries+1)
+        self.assertEqual(mock_sess.request.call_count, retries + 1)
 
         # Test with None response
         mock_sess.reset_mock()

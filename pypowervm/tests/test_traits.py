@@ -150,5 +150,6 @@ class TestTraits(unittest.TestCase):
         self.assertIsInstance(mew, MyElementWrapper)
         self.assertEqual(sess.traits, mew.traits)
 
+
 if __name__ == '__main__':
     unittest.main()

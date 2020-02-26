@@ -87,10 +87,10 @@ class TestValidator(testtools.TestCase):
             lpar_w.mem_config.exp_factor = exp_factor
             lpar_w.mem_config.ppt_ratio = ppt_ratio
             # Can Modify
-            if (state != bp.LPARState.NOT_ACTIVATED
-               and rmc_state != bp.RMCState.ACTIVE):
-                    lpar_w.can_modify_proc.return_value = (False, 'Bad RMC')
-                    lpar_w.can_modify_mem.return_value = (False, 'Bad RMC')
+            if (state != bp.LPARState.NOT_ACTIVATED and
+                rmc_state != bp.RMCState.ACTIVE):
+                lpar_w.can_modify_proc.return_value = (False, 'Bad RMC')
+                lpar_w.can_modify_mem.return_value = (False, 'Bad RMC')
             else:
                 # Doesn't matter what the message is unless it's bad
                 # so always make it bad

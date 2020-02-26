@@ -710,84 +710,84 @@ class TestActionableList(unittest.TestCase):
     def test_extend(self):
         def test(new_list):
             self.assertEqual([1, 2, 3, 4, 5], new_list)
-        l = ewrap.ActionableList([1, 2, 3], test)
+        ll = ewrap.ActionableList([1, 2, 3], test)
 
         # Extend here.
-        l.extend([4, 5])
-        self.assertEqual(5, len(l))
-        self.assertEqual(5, l[4])
+        ll.extend([4, 5])
+        self.assertEqual(5, len(ll))
+        self.assertEqual(5, ll[4])
 
     def test_append(self):
         def test(new_list):
             self.assertEqual([1, 2, 3, 4], new_list)
-        l = ewrap.ActionableList([1, 2, 3], test)
+        ll = ewrap.ActionableList([1, 2, 3], test)
 
         # Append here.
-        l.append(4)
-        self.assertEqual(4, len(l))
-        self.assertEqual(4, l[3])
+        ll.append(4)
+        self.assertEqual(4, len(ll))
+        self.assertEqual(4, ll[3])
 
     def test_remove(self):
         def test(new_list):
             self.assertEqual([1, 3], new_list)
-        l = ewrap.ActionableList([1, 2, 3], test)
+        ll = ewrap.ActionableList([1, 2, 3], test)
 
         # Remove here.
-        l.remove(2)
-        self.assertEqual(2, len(l))
-        self.assertEqual(3, l[1])
+        ll.remove(2)
+        self.assertEqual(2, len(ll))
+        self.assertEqual(3, ll[1])
 
     def test_insert(self):
         def test(new_list):
             self.assertEqual([1, 2, 3, 4], new_list)
-        l = ewrap.ActionableList([1, 2, 3], test)
+        ll = ewrap.ActionableList([1, 2, 3], test)
 
         # Insert here.
-        l.insert(3, 4)
-        self.assertEqual(4, len(l))
-        self.assertEqual(4, l[3])
+        ll.insert(3, 4)
+        self.assertEqual(4, len(ll))
+        self.assertEqual(4, ll[3])
 
     def test_pop(self):
         def test(new_list):
             self.assertEqual([1, 2], new_list)
-        l = ewrap.ActionableList([1, 2, 3], test)
+        ll = ewrap.ActionableList([1, 2, 3], test)
 
         # Pop here.
-        l.pop(2)
-        self.assertEqual(2, len(l))
-        self.assertEqual(2, l[1])
+        ll.pop(2)
+        self.assertEqual(2, len(ll))
+        self.assertEqual(2, ll[1])
 
     def test_complex_path(self):
         function = mock.MagicMock()
 
-        l = ewrap.ActionableList([1, 2, 3], function)
-        self.assertEqual(3, len(l))
-        self.assertEqual(3, l[2])
+        ll = ewrap.ActionableList([1, 2, 3], function)
+        self.assertEqual(3, len(ll))
+        self.assertEqual(3, ll[2])
 
         # Try extending
-        l.extend([4, 5])
-        self.assertEqual(5, len(l))
-        self.assertEqual(5, l[4])
+        ll.extend([4, 5])
+        self.assertEqual(5, len(ll))
+        self.assertEqual(5, ll[4])
 
         # Try appending
-        l.append(6)
-        self.assertEqual(6, len(l))
-        self.assertEqual(6, l[5])
+        ll.append(6)
+        self.assertEqual(6, len(ll))
+        self.assertEqual(6, ll[5])
 
         # Try removing
-        l.remove(6)
-        self.assertEqual(5, len(l))
-        self.assertEqual(5, l[4])
+        ll.remove(6)
+        self.assertEqual(5, len(ll))
+        self.assertEqual(5, ll[4])
 
         # Try inserting
-        l.insert(5, 6)
-        self.assertEqual(6, len(l))
-        self.assertEqual(6, l[5])
+        ll.insert(5, 6)
+        self.assertEqual(6, len(ll))
+        self.assertEqual(6, ll[5])
 
         # Try popping
-        self.assertEqual(6, l.pop(5))
-        self.assertEqual(5, len(l))
-        self.assertEqual(5, l[4])
+        self.assertEqual(6, ll.pop(5))
+        self.assertEqual(5, len(ll))
+        self.assertEqual(5, ll[4])
 
         # Make sure our function was called each time
         self.assertEqual(5, function.call_count)

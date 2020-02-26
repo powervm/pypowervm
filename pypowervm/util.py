@@ -295,8 +295,8 @@ def round_gb_size_up(gb_size, dp=2):
     next highest ten).
     :return: A new decimal float which is greater than or equal to the input.
     """
-    shift = 10.0**dp
-    return float(math.ceil(gb_size * shift))/shift
+    shift = 10.0 ** dp
+    return float(math.ceil(gb_size * shift)) / shift
 
 
 def sanitize_mac_for_api(mac):

@@ -106,6 +106,7 @@ class IBMiPanelOperations(object):
     ALL_VALUES = (DUMPRESTART, DSTON, RETRYDUMP, REMOTEDSTOFF, REMOTEDSTON,
                   IOPRESET, IOPDUMP, CONSOLESERVICE)
 
+
 CONF = cfg.CONF
 IBMI_PANEL_JOB_SUFFIX = 'PanelFunction'
 IBMI_PARAM_KEY = 'operation'
