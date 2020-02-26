@@ -413,5 +413,6 @@ class TestVNIC(twrap.TestWrapper):
         self.assertEqual(0.42, backdev.max_capacity)
         self.assertEqual(1, backdev.desired_max_capacity)
 
+
 if __name__ == "__main__":
     unittest.main()

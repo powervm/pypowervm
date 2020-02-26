@@ -17,37 +17,36 @@ import copy
 import errno
 import hashlib
 import os
-import uuid
-
-if os.name == 'posix':
-    import pwd
 import re
 import threading
 import time
+import uuid
 import xml.sax.saxutils as sax_utils
 
-from lxml import etree
+import pypowervm.entities as ent
+import pypowervm.exceptions as pvmex
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
 
-from oslo_log import log as logging
 import requests
 import requests.exceptions as rqex
 import six
 import six.moves.urllib.parse as urllib
 import weakref
 
+from lxml import etree
+from oslo_log import log as logging
 from pypowervm import const as c
-import pypowervm.entities as ent
-import pypowervm.exceptions as pvmex
 from pypowervm.i18n import _
 from pypowervm import traits as pvm_traits
 from pypowervm import util
 from pypowervm.utils import retry
+if os.name == 'posix':
+    import pwd
 
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 # Preserve CDATA on the way in (also ensures it is not altered on the way out)
 etree.set_default_parser(etree.XMLParser(strip_cdata=False, encoding='utf-8'))

@@ -118,6 +118,7 @@ def get_txt_file():
         save_default_selection(txtfiles[line_index - 1])
         return txtfiles[line_index - 1]
 
+
 if __name__ == '__main__':
     txt_file = get_txt_file()
 

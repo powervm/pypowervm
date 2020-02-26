@@ -53,5 +53,6 @@ class TestSearch(unittest.TestCase):
             else:
                 self.assertEqual(sk, wcls.search_keys)
 
+
 if __name__ == '__main__':
     unittest.main()

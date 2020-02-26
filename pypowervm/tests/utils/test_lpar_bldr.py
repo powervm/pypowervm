@@ -240,7 +240,7 @@ class TestLPARBuilder(testtools.TestCase):
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)
 
-        attr = dict(name='lpar', memory=1024, max_io_slots=(65534+1),
+        attr = dict(name='lpar', memory=1024, max_io_slots=(65534 + 1),
                     env=bp.LPARType.AIXLINUX, vcpu=1)
         bldr = lpar_bldr.LPARBuilder(self.adpt, attr, self.stdz_sys1)
         self.assertRaises(ValueError, bldr.build)

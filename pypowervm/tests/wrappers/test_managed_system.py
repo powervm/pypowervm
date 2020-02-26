@@ -356,5 +356,6 @@ class TestMTMS(unittest.TestCase):
         self.assertEqual(mtms.serial, '0FEDCBA')
         self.assertEqual(mtms.mtms_str, '4321-765*0FEDCBA')
 
+
 if __name__ == "__main__":
     unittest.main()

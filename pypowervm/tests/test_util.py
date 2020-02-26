@@ -17,15 +17,15 @@
 import mock
 import six
 
-if six.PY2:
-    import __builtin__ as builtins
-elif six.PY3:
-    import builtins
 
 import unittest
 
 from pypowervm import const
 from pypowervm import util
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
 
 dummyuuid1 = "abcdef01-2345-2345-2345-67890abcdef0"
 dummyuuid2 = "67890abc-5432-5432-5432-def0abcdef01"

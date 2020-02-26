@@ -173,5 +173,6 @@ class TestCluster(twrap.TestWrapper):
         cl = clust.Cluster.bld(None, 'neotest', repos, node)
         self.assertEqual(cl.toxmlstring(), CLUSTER_RESP.encode('utf-8'))
 
+
 if __name__ == "__main__":
     unittest.main()
