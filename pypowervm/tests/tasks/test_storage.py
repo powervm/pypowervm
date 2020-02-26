@@ -174,7 +174,7 @@ class TestUploadLV(testtools.TestCase):
         # Ensure cleanup was called twice since the first uploads fails.
         self.adpt.delete.assert_has_calls([mock.call(
             'File', service='web',
-            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')]*2)
+            root_id='6233b070-31cc-4b57-99bd-37f80e845de9')] * 2)
 
     @mock.patch('pypowervm.tasks.storage._create_file')
     def test_upload_new_vopt_w_fail(self, mock_create_file):
@@ -820,7 +820,7 @@ class TestLU(testtools.TestCase):
         self.adpt.extend_path = lambda x, xag: x
         self.ssp = stor.SSP.bld(self.adpt, 'ssp1', [])
         for i in range(5):
-            lu = stor.LU.bld(self.adpt, 'lu%d' % i, i+1)
+            lu = stor.LU.bld(self.adpt, 'lu%d' % i, i + 1)
             lu._udid('udid_' + lu.name)
             self.ssp.logical_units.append(lu)
         self.ssp.entry.properties = {

@@ -768,7 +768,7 @@ class NetworkBridgerTA(NetworkBridger):
 
         # For each Trunk Adapter, change the VID to the new value.
         for ta in impacted_tas:
-                ta.pvid = new_vid
+            ta.pvid = new_vid
 
         # Call the update
         impacted_nb = impacted_nb.update()

@@ -26,8 +26,8 @@ def refresh_response(file_to_refresh):
     print("Loading original file: ", file_to_refresh)
     new_http = pvmhttp.load_pvm_resp(file_to_refresh)
     if new_http is None or new_http.refresh() is False:
-            print("Unable to refresh ", file_to_refresh)
-            return 1
+        print("Unable to refresh ", file_to_refresh)
+        return 1
 
     print("Saving refreshed file: ", file_to_refresh)
     new_http.save(file_to_refresh)

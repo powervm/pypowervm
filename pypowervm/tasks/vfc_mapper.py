@@ -374,8 +374,8 @@ def _find_ports_on_vio(vio_w, p_port_wwpns):
 
 def _fuse_vfc_ports(wwpn_list):
     """Returns a list of fused VFC WWPNs.  See derive_npiv_map."""
-    l = list(map(u.sanitize_wwpn_for_api, wwpn_list))
-    return list(map(' '.join, zip(l[::2], l[1::2])))
+    ll = list(map(u.sanitize_wwpn_for_api, wwpn_list))
+    return list(map(' '.join, zip(ll[::2], ll[1::2])))
 
 
 def find_pfc_wwpn_by_name(vios_w, pfc_name):

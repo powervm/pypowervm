@@ -32,6 +32,7 @@ from pypowervm.wrappers import virtual_io_server as vios
 def loadf(wcls, fname):
     return wcls.wrap(pvmhttp.load_pvm_resp(fname).get_response())
 
+
 # Load data files just once, since the wrappers will be read-only
 vio1 = loadf(vios.VIOS, 'fake_vios_ssp_npiv.txt')
 vio2 = loadf(vios.VIOS, 'fake_vios_mappings.txt')
@@ -948,6 +949,7 @@ class TestRebuildSlotMap(TestRebuildSlotMapLegacy):
         """Initialize with a particular SlotMapStore implementation."""
         super(TestRebuildSlotMap, self).__init__(*args, **kwargs)
         self.smt_impl = SlotMapTestImpl
+
 
 SCSI_W_VOPT = {
     1: {
