@@ -9,20 +9,12 @@ License: IBM Corp.
 Packager: IBM
 URL: http://github.com/powervm/pypowervm
 Vendor: IBM Corp.
-Requires: python-lxml >= 3.4.1
-Requires: python-oslo-i18n >= 1.2.0
-Requires: python-oslo-log >= 1.0.0
-Requires: python-oslo-utils >= 1.2.0
-Requires: python-pbr >= 0.5.21
-Requires: python-pyasn1-modules >= 0.0.5
-Requires: python-pyasn1 >= 0.0.12a
-Requires: python-requests >= 2.3.0
-Requires: python-six >= 1.7.0
-Requires: python-oslo-concurrency >= 0.3.0
-Requires: pytz
-Requires: python-futures
-Requires: python-taskflow >= 0.7.1
-Requires: python-oslo-context
+Requires: python3-pip <= 9.0.3-15.el8
+Requires: python3-lxml
+Requires: python3-six >= 1.7.0
+
+%install 
+python3 -m pip install taskflow
 
 %description
 Python API wrapper for PowerVM
