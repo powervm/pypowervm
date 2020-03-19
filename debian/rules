@@ -9,7 +9,7 @@ override_dh_auto_install:
 	python setup.py install --root=debian/pypowervm --install-layout=deb --install-lib=/usr/lib/`pyversions -d`/dist-packages/ --install-scripts=/usr/lib/`pyversions -d`/dist-packages/ ; \
         for lc in $$(ls -d pypowervm/locale/*/ | cut -f3 -d'/'); do \
             mkdir -p debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES ; \
-            python setup.py compile_catalog -f --input-file pypowervm/locale/$$lc/pypowervm.po --output-file debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES/pypowervm.mo; \
+            python3 setup.py compile_catalog -f --input-file pypowervm/locale/$$lc/pypowervm.po --output-file debian/pypowervm/usr/share/locale/$$lc/LC_MESSAGES/pypowervm.mo; \
         done
 
 override_dh_clean:
