@@ -3,7 +3,7 @@
 PACKAGE=pypowervm
 
 %:
-	dh $@ --with python3
+	dh $@ --with python
 
 override_dh_auto_install:
 	python setup.py install --root=debian/pypowervm --install-layout=deb --install-lib=/usr/lib/`pyversions -d`/dist-packages/ --install-scripts=/usr/lib/`pyversions -d`/dist-packages/ ; \
