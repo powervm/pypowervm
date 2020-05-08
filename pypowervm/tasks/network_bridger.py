@@ -1,4 +1,4 @@
-# Copyright 2015, 2016 IBM Corp.
+# Copyright 2015, 2020 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@ import copy
 import six
 
 from oslo_concurrency import lockutils as lock
+from oslo_config import cfg
 
 from pypowervm import const as c
 from pypowervm import exceptions as pvm_exc
@@ -31,8 +32,21 @@ from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import network as pvm_net
 from pypowervm.wrappers import virtual_io_server as pvm_vios
 
+_MAX_VEAS_PER_SEA = 15
 _MAX_VLANS_PER_VEA = 20
 _ENSURE_VLAN_LOCK = 'ensure_vlans_nb'
+
+CONF = cfg.CONF
+
+CONF.register_opt(
+    cfg.BoolOpt('load_balance_vlan_across_veas', default=False,
+                help='Determines whether or not the VLANs will '
+                     'be configured on a new VEA till the total VEA limit '
+                     'is reached. Post that, additional VLAN configuration '
+                     'will choose the least used VEA, to load balance '
+                     'VLAN config, for better performance. This is just '
+                     'so, to not overload a VEA till its limit is '
+                     'exhausted before creating a new VEA.'))
 
 
 def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
@@ -900,7 +914,15 @@ class NetworkBridgerTA(NetworkBridger):
         # Find a trunk with the lowest amount of VLANs on it.
         cur_min = None
         avail_count = 0
-        for trunk in nb.seas[0].addl_adpts:
+
+        trunks = nb.seas[0].addl_adpts
+        if CONF.load_balance_vlan_across_veas:
+            # Create trunk till the maximum limit is reached. This is to load
+            # balance VLANs across trunks for better performance.
+            if len(trunks) < _MAX_VEAS_PER_SEA:
+                return None
+
+        for trunk in trunks:
             # If this trunk has maxed out its VLANs, skip to next.
             if len(trunk.tagged_vlans) >= _MAX_VLANS_PER_VEA:
                 continue
@@ -908,7 +930,8 @@ class NetworkBridgerTA(NetworkBridger):
             # This could definitely support it...
             avail_count += 1
 
-            # But, is it the best?
+            # But, is it the best? Iterate over all trunks till we find
+            # a least used one.
             if (cur_min is None or
                     len(trunk.tagged_vlans) < len(cur_min.tagged_vlans)):
                 cur_min = trunk
