@@ -1,4 +1,4 @@
-# Copyright 2015, 2016 IBM Corp.
+# Copyright 2015, 2020 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -16,6 +16,8 @@
 
 import mock
 import testtools
+
+from oslo_config.cfg import CONF
 
 from pypowervm import adapter as adpt
 import pypowervm.entities as ent
@@ -641,8 +643,19 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         self.assertEqual(1, self.adpt.update_by_path.call_count)
 
     def test_find_available_trunks(self):
+        CONF.load_balance_vlan_across_veas = True
         nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+        trunks = bridger._find_available_trunks(nb)
+        self.assertIsNone(trunks)
+
+    def test_find_available_trunks_1(self):
+        nb = pvm_net.NetBridge.wrap(self.mgr_nbr_resp)[0]
+        bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
+
+        net_br._MAX_VEAS_PER_SEA = 1
+        net_br._MAX_VLANS_PER_VEA = 3
+
         trunks = bridger._find_available_trunks(nb)
         self.assertIsNotNone(trunks)
 
@@ -674,6 +687,7 @@ class TestNetworkBridgerTA(TestNetworkBridger):
         sea.addl_adpts = [trunk_addl, trunk_addl2, trunk_addl3]
         nb.seas = [sea]
 
+        net_br._MAX_VEAS_PER_SEA = 3
         bridger = net_br.NetworkBridgerTA(self.adpt, self.host_uuid)
         bridger._find_available_trunks(nb)
 
