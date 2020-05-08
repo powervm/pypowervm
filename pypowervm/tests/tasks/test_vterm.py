@@ -85,7 +85,7 @@ class TestVterm(testtools.TestCase):
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
     def test_open_vnc_vterm_nonascii(self, mock_get_lpar_id, mock_popen):
         """Validates errors in non-ascii encodings are handled properly"""
-        proc_mock = mock.Mock(returncode=3)
+        proc_mock = mock.Mock(returncode=4)
         mock_get_lpar_id.return_value = '4'
         mock_popen.return_value = proc_mock
         proc_mock.communicate.return_value = ('', '\xd0\x92')
@@ -129,7 +129,7 @@ class TestVterm(testtools.TestCase):
         std_out = ""
         std_err = ("The vterm is currently in use by process 120352.  "
                    "Use 'rmvterm --id 4' to close it.")
-        mock_run_proc.return_value = (3, std_out, std_err)
+        mock_run_proc.return_value = (4, std_out, std_err)
 
         self.assertRaises(pexc.VNCBasedTerminalFailedToOpen,
                           vterm.open_localhost_vnc_vterm, self.adpt,
