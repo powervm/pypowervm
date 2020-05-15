@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2020 IBM Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -1217,7 +1217,8 @@ class _EventListener(EventListener):
         if session.has_event_listener:
             raise ValueError(_('An event listener is already active on the '
                                'session.'))
-        self.appid = hashlib.md5(session._sessToken).hexdigest()
+        self.appid = hashlib.md5(
+            session._sessToken.encode('utf-8')).hexdigest()
         self.timeout = timeout if timeout != -1 else session.timeout
         self._lock = threading.RLock()
         self.handlers = []
