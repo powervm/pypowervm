@@ -454,7 +454,7 @@ class _FakeSocket(object):
 
     def recv(self, bufsize):
         bufsize = bufsize if isinstance(bufsize, int) else ord(bufsize)
-        chunk = self.recv_buffer[self.recv_bytes:self.recv_bytes+bufsize]
+        chunk = self.recv_buffer[self.recv_bytes:self.recv_bytes + bufsize]
         if not isinstance(chunk, six.binary_type):
             chunk = six.binary_type(chunk, 'utf-8')
         self.recv_bytes += bufsize
