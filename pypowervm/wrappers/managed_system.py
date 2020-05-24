@@ -71,6 +71,8 @@ _IOSLOT_OWNER_ASSMT_CAP = u.xpath(
     _SYS_CAPABILITIES, 'IOSlotOwnerAssignmentCapable')
 _DED_PROC_POOL_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DedicatedProcessorPartitionCapable')
+_PERSISTENT_MEM_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'PersistentMemoryCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -135,6 +137,8 @@ _CAPABILITY_MAP = {
         'prop': _IOSLOT_OWNER_ASSMT_CAP, 'default': False},
     'dedicated_processor_partition_capable': {
         'prop': _DED_PROC_POOL_CAP, 'default': True},
+    'PersistentMemoryCapable': {
+        'prop': _PERSISTENT_MEM_CAPABLE, 'default': False}
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
@@ -145,6 +149,26 @@ _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
 _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
 _DEFAULT_PPT_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultPhysicalPageTableRatio')
+
+_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
+_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'MaximumPersistentMemoryVolumes')
+_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'CurrentPersistentMemoryVolumes')
+_MAX_AIXLX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                  'MaximumAixLinuxPersistentMemoryVolumes')
+_MAX_OS400_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                  'MaximumOS400PersistentMemoryVolumes')
+_MAX_VIOS_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'MaximumVIOSPersistentMemoryVolumes')
+_DRAM_PMEM_VOLUME_BLKSIZE = u.xpath(_ASSOC_PMEM_CONFIG,
+                                    'DramPersistentMemoryVolumeBlockSize')
+_DRAM_PMEM_VOLUME_SIZE = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'DramPersistentMemoryVolumesSize')
+_DRAM_PMEM_VOLUME_CURSIZE = u.xpath(_ASSOC_PMEM_CONFIG,
+                                    'DramPersistentMemoryVolumesCurrentSize')
+_SUPP_PMEM_VOLUME_DEVTYPE = u.xpath(_ASSOC_PMEM_CONFIG,
+                                    'SupportedPersistentMemoryDeviceTypes')
 
 _PROC_UNITS_INSTALLED = u.xpath(
     _SYS_PROC_CONFIG, 'InstalledSystemProcessorUnits')
@@ -408,6 +432,42 @@ class System(ewrap.EntryWrapper):
     @property
     def processor_is_throttled(self):
         return self._get_val_bool(_PROC_THROTTLE)
+
+    @property
+    def max_pmem_volumes(self):
+        return self._get_val_int(_MAX_PMEM_VOLUMES)
+
+    @property
+    def cur_pmem_volumes(self):
+        return self._get_val_int(_CUR_PMEM_VOLUMES)
+
+    @property
+    def max_aix_lnx_pmem_volumes(self):
+        return self._get_val_int(_MAX_AIXLX_PMEM_VOLUMES)
+
+    @property
+    def max_os400_pmem_volumes(self):
+        return self._get_val_int(_MAX_OS400_PMEM_VOLUMES)
+
+    @property
+    def max_vios_pmem_volumes(self):
+        return self._get_val_int(_MAX_VIOS_PMEM_VOLUMES)
+
+    @property
+    def dram_pmem_vol_blksize(self):
+        return self._get_val_int(_DRAM_PMEM_VOLUME_BLKSIZE)
+
+    @property
+    def dram_pmem_vol_size(self):
+        return self._get_val_int(_DRAM_PMEM_VOLUME_SIZE)
+
+    @property
+    def dram_pmem_vol_cursize(self):
+        return self._get_val_int(_DRAM_PMEM_VOLUME_CURSIZE)
+
+    @property
+    def supported_pmem_vol_devtypes(self):
+        return self._get_val_str(_SUPP_PMEM_VOLUME_DEVTYPE)
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)
