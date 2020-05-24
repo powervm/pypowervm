@@ -269,7 +269,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'ioslot_owner_assignment_capable': True,
                     'affinity_check_capable': True,
                     'partition_secure_boot_capable': True,
-                    'dedicated_processor_partition_capable': True}
+                    'dedicated_processor_partition_capable': True,
+                    'PersistentMemoryCapable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -327,7 +328,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'disable_secure_boot_capable': False,
                          'ioslot_owner_assignment_capable': True,
                          'affinity_check_capable': True,
-                         'dedicated_processor_partition_capable': True}
+                         'dedicated_processor_partition_capable': True,
+                         'PersistentMemoryCapable': False}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %
