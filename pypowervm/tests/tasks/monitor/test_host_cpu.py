@@ -193,6 +193,7 @@ class TestHostCPUMetricCache(TestHostCPUBase):
         # Test that a previous sample allows us to gather the delta across all
         # of the VMs.  This should take into account the scenario where a LPAR
         # is deleted and a new one takes its place (LPAR ID 6)
+        mock_phyp.sample.lpars[0].processor.pool_id = 0
         delta = host_stats._delta_proc_cycles(mock_phyp.sample.lpars,
                                               mock_prev_phyp.sample.lpars)
         self.assertEqual(10010000000, delta)
@@ -210,6 +211,7 @@ class TestHostCPUMetricCache(TestHostCPUBase):
         prev_lpar_sample.util_cap_proc_cycles = 0
         prev_lpar_sample.util_uncap_proc_cycles = 0
         prev_lpar_sample.idle_proc_cycles = 0
+        mock_phyp.sample.lpars[0].processor.pool_id = 0
         delta3 = host_stats._delta_proc_cycles(mock_phyp.sample.lpars,
                                                mock_prev_phyp.sample.lpars)
         self.assertEqual(0, delta3)
