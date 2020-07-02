@@ -192,15 +192,26 @@ class HostCPUMetricCache(pcm_util.MetricCache):
                 prev_sample.processor.util_uncap_proc_cycles ==
                 prev_sample.processor.idle_proc_cycles == 0):
             return 0
-        # The VM utilization on host is its capped + uncapped - idle cycles.
-        # Donated proc cycles should not be considered as these are
-        # not guaranteed to be getting utilized by any other lpar on the host.
-        prev_amount = (prev_sample.processor.util_cap_proc_cycles +
-                       prev_sample.processor.util_uncap_proc_cycles -
-                       prev_sample.processor.idle_proc_cycles)
-        cur_amount = (cur_sample.processor.util_cap_proc_cycles +
-                      cur_sample.processor.util_uncap_proc_cycles -
-                      cur_sample.processor.idle_proc_cycles)
+        # For dedicated processor mode partition
+        # utilizedCappedProcCycles+utilizedUnCappedProcCycles-idleProcCycles
+        # For shared processor mode partition
+        # utilizedCappedProcCycles+utilizedUnCappedProcCycles-donatedProcCycles
+        # poolId is coming as 255 for dedicated mode partitions.
+        # Hence checking for 254
+        if cur_sample.processor.pool_id > 254:
+            prev_amount = (prev_sample.processor.util_cap_proc_cycles +
+                           prev_sample.processor.util_uncap_proc_cycles -
+                           prev_sample.processor.donated_proc_cycles)
+            cur_amount = (cur_sample.processor.util_cap_proc_cycles +
+                          cur_sample.processor.util_uncap_proc_cycles -
+                          cur_sample.processor.donated_proc_cycles)
+        else:
+            prev_amount = (prev_sample.processor.util_cap_proc_cycles +
+                           prev_sample.processor.util_uncap_proc_cycles -
+                           prev_sample.processor.idle_proc_cycles)
+            cur_amount = (cur_sample.processor.util_cap_proc_cycles +
+                          cur_sample.processor.util_uncap_proc_cycles -
+                          cur_sample.processor.idle_proc_cycles)
         return cur_amount - prev_amount
 
     @staticmethod
