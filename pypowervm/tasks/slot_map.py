@@ -75,8 +75,14 @@ class SlotMapStore(object):
         self._vswitch_map = None
         map_str = self.load() if load else None
         # Deserialize or initialize
-        self._slot_topo = pickle.loads(
-            base64utils.decode_as_bytes(map_str)) if map_str else {}
+        try:
+            self._slot_topo = pickle.loads(
+                base64utils.decode_as_bytes(map_str)) if map_str else {}
+        except UnicodeDecodeError:
+            # Retain old way of decoding slot map data. This is required
+            # for virtual machines deployed on a py2 env and upgraded to
+            # py3.
+            self._slot_topo = pickle.loads(map_str) if map_str else {}
         # Save a copy of the topology so we can tell when it has changed
         self._loaded_topo = copy.deepcopy(self._slot_topo)
 
