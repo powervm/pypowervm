@@ -231,12 +231,12 @@ class TestVNCSocketListener(testtools.TestCase):
         mock_sock.return_value = mock_s_sock
         mock_select.return_value = [mock_c_sock], None, None
         mock_srv.accept.return_value = mock_c_sock, ('1.2.3.5', '40675')
-        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
+        mock_c_sock.recv.return_value = b"CONNECT path HTTP/1.8\r\n\r\n"
 
         self.srv._new_client(mock_srv)
 
         mock_c_sock.sendall.assert_called_once_with(
-            "HTTP/1.8 200 OK\r\n\r\n")
+           b"HTTP/1.8 200 OK\r\n\r\n")
         mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
 
         self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
@@ -250,12 +250,11 @@ class TestVNCSocketListener(testtools.TestCase):
         mock_sock.return_value = mock_s_sock
         mock_select.return_value = [mock_c_sock], None, None
         mock_srv.accept.return_value = mock_c_sock, ('fe80:7890', '40675')
-        mock_c_sock.recv.return_value = "CONNECT path HTTP/1.8\r\n\r\n"
-
+        mock_c_sock.recv.return_value = b"CONNECT path HTTP/1.8\r\n\r\n"
         self.srv_6._new_client(mock_srv)
 
         mock_c_sock.sendall.assert_called_once_with(
-            "HTTP/1.8 200 OK\r\n\r\n")
+            b"HTTP/1.8 200 OK\r\n\r\n")
         mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
 
         self.assertEqual({mock_c_sock: mock_s_sock, mock_s_sock: mock_c_sock},
@@ -263,14 +262,14 @@ class TestVNCSocketListener(testtools.TestCase):
 
     def test_check_http_connect(self):
         sock = mock.MagicMock()
-        sock.recv.return_value = "INVALID"
+        sock.recv.return_value = b"INVALID"
         uuid, http_code = self.srv._check_http_connect(sock)
         self.assertIsNone(uuid)
         self.assertEqual('1.1', http_code)
 
         # Test a good string
         sock.reset_mock()
-        sock.recv.return_value = 'CONNECT test HTTP/2.0\r\n\r\n'
+        sock.recv.return_value = b'CONNECT test HTTP/2.0\r\n\r\n'
         uuid, http_code = self.srv._check_http_connect(sock)
         self.assertEqual('uuid', uuid)
         self.assertEqual('2.0', http_code)
@@ -313,11 +312,11 @@ class TestVNCSocketListener(testtools.TestCase):
         # Reset the select so that the validation check fails
         mock_c_sock.reset_mock()
         mock_select.return_value = [mock_c_sock], None, None
-        mock_c_sock.recv.return_value = 'bad_check'
+        mock_c_sock.recv.return_value = b'bad_check'
         self.srv._new_client(mock_srv)
         self.assertEqual(self.rptr.peers, {})
         mock_c_sock.sendall.assert_called_with(
-            "HTTP/1.1 400 Bad Request\r\n\r\n")
+            b"HTTP/1.1 400 Bad Request\r\n\r\n")
         self.assertEqual(1, mock_c_sock.close.call_count)
 
     @mock.patch('pypowervm.tasks.vterm._close_vterm_local')

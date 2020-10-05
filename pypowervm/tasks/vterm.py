@@ -398,11 +398,12 @@ class _VNCSocketListener(threading.Thread):
             lpar_uuid, http_code = self._check_http_connect(client_socket)
             if lpar_uuid:
                 # Send back the success message.
-                client_socket.sendall("HTTP/%s 200 OK\r\n\r\n" % http_code)
+                client_socket.sendall(encodeutils.safe_encode(
+                    "HTTP/%s 200 OK\r\n\r\n" % http_code))
             else:
                 # Was not a success, exit.
-                client_socket.sendall("HTTP/%s 400 Bad Request\r\n\r\n" %
-                                      http_code)
+                client_socket.sendall(encodeutils.safe_encode(
+                    "HTTP/%s 400 Bad Request\r\n\r\n" % http_code))
                 client_socket.close()
                 return
         # If we had no VNC Path to match against, then the local port is
@@ -508,7 +509,7 @@ class _VNCSocketListener(threading.Thread):
         # Say we only support VeNCrypt (19) authentication version 0.2
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(six.int2byte(19))
-        client_socket.sendall("\x00\x02")
+        client_socket.sendall(encodeutils.safe_encode("\x00\x02"))
         authtype = self._socket_receive(client_socket, 1)
         # Make sure the Client supports the VeNCrypt (19) authentication
         if len(authtype) < 1 or six.byte2int(authtype) != 19:
@@ -577,10 +578,14 @@ class _VNCSocketListener(threading.Thread):
         value = client_socket.recv(header_len)
 
         # Find the HTTP Code (if you can...)
-        pat = r'^CONNECT\s+(\S+)\s+HTTP/(.*)\r\n\r\n$'
+        pat = encodeutils.safe_encode(r'^CONNECT\s+(\S+)\s+HTTP/(.*)\r\n\r\n$')
         res = re.match(pat, value)
         vnc_path = res.groups()[0] if res else None
         http_code = res.groups()[1] if res else '1.1'
+        if vnc_path and  isinstance(vnc_path, bytes) :
+            vnc_path = vnc_path.decode()
+        if http_code and isinstance(http_code, bytes):
+            http_code = http_code.decode()
         return _VNC_PATH_TO_UUID.get(vnc_path), http_code
 
 
