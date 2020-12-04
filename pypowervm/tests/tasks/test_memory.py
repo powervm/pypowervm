@@ -83,7 +83,7 @@ class TestMemory(testtools.TestCase):
                                                              mock_host_uuid,
                                                              **kwargs2))
         self.assertEqual(6, mock_job_p.call_count)
-        self.assertEqual((1024-768), overhead)
+        self.assertEqual((1024 - 768), overhead)
         self.assertEqual(32768, avail)
         _reset_mocks()
 

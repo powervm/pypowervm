@@ -98,5 +98,6 @@ class TestExceptions(unittest.TestCase):
 
         self.assertRaises(KeyError, Bogus, **msg_params)
 
+
 if __name__ == "__main__":
     unittest.main()

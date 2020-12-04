@@ -295,8 +295,8 @@ def round_gb_size_up(gb_size, dp=2):
     next highest ten).
     :return: A new decimal float which is greater than or equal to the input.
     """
-    shift = 10.0**dp
-    return float(math.ceil(gb_size * shift))/shift
+    shift = 10.0 ** dp
+    return float(math.ceil(gb_size * shift)) / shift
 
 
 def sanitize_mac_for_api(mac):
@@ -378,12 +378,12 @@ def sanitize_file_name_for_api(name, prefix='', suffix='',
 
 
 def sanitize_partition_name_for_api(name, trunc_ok=True):
-    """Sanitize a string to be suitable for use as a partition name.
+    r"""Sanitize a string to be suitable for use as a partition name.
 
     PowerVM's partition name restrictions are:
     - Between 1 and 31 characters, inclusive;
     - Containing ASCII characters between 0x20 (space) and 0x7E (~), inclusive,
-      except ()\<>*$&?|[]'"`
+      except r()\<>*$&?|[]'"`
 
     :param name: The name to scrub.  Invalid characters will be replaced with
                  '_'.

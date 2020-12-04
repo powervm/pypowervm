@@ -498,7 +498,7 @@ class BoolField(Field):
             if value.lower() in ['false', 'no']:
                 return False
         elif isinstance(value, bool):
-                return value
+            return value
         raise ValueError('Could not convert %s.' % value)
 
 
@@ -931,7 +931,7 @@ class LPARBuilder(object):
         smode = self.attr.get(SHARING_MODE, None)
         if (smode is not None and
                 smode in bp.DedicatedSharingMode.ALL_VALUES):
-                return True
+            return True
 
     def _shared_procs_specified(self):
         """Determine if shared procs should be configured.

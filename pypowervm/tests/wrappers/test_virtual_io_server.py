@@ -876,5 +876,6 @@ class TestFeed3(twrap.TestWrapper):
         self.assertTrue(c.XAG.VIO_NET < self.dwrap.xags.SCSI_MAPPING)
         self.assertTrue(self.dwrap.xags.NETWORK < c.XAG.VIO_SMAP)
 
+
 if __name__ == "__main__":
     unittest.main()

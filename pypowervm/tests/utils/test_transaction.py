@@ -518,11 +518,21 @@ class TestFeedTask(twrap.TestWrapper):
                 self.assertIs(wt1.subtasks[i], wt2.subtasks[i])
 
         # "Functors" for easy subtask creation.  Named so we can identify them.
-        foo = lambda: None
-        bar = lambda: None
-        baz = lambda: None
-        xyz = lambda: None
-        abc = lambda: None
+        def foo():
+            return None
+
+        def bar():
+            return None
+
+        def baz():
+            return None
+
+        def xyz():
+            return None
+
+        def abc():
+            return None
+
         # setUp's initialization of feed_task creates empty dict and common_tx
         self.assertEqual({}, self.feed_task._tx_by_uuid)
         self.assertEqual(0, len(self.feed_task._common_tx.subtasks))

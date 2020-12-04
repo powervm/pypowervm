@@ -21,15 +21,6 @@ from lxml import etree
 import six
 import subunit
 
-if six.PY2:
-    import __builtin__ as builtins
-elif six.PY3:
-    import builtins
-
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
 
 import mock
 import requests.models as req_mod
@@ -44,6 +35,16 @@ import pypowervm.tests.lib as testlib
 import pypowervm.tests.test_fixtures as fx
 from pypowervm.tests.test_utils import pvmhttp
 from pypowervm.wrappers import storage as pvm_stor
+
+if six.PY2:
+    import __builtin__ as builtins
+elif six.PY3:
+    import builtins
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 logon_text = testlib.file2b("logon.xml")
 response_text = testlib.file2b("event.xml")
@@ -114,7 +115,7 @@ class TestAdapter(testtools.TestCase):
         with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
                 mock.patch.object(adp, '_EventPollThread') as mock_poll:
             # With some fake events, event listener can be initialized
-            self.sess._sessToken = 'token'.encode('utf-8')
+            self.sess._sessToken = 'token'
             m_events.return_value = {'general': 'init'}, 'raw_evt', 'wrap_evt'
             event_listen = self.sess.get_event_listener()
             self.assertIsNotNone(event_listen)
@@ -924,7 +925,7 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         self.assertRaises(TypeError, adp.EventListener, sess)
 
         # Mock the session token like we logged on
-        sess._sessToken = 'token'.encode('utf-8')
+        sess._sessToken = 'token'
         # Ensure we get an EventListener
         self.assertIsInstance(sess.get_event_listener(), adp.EventListener)
 
@@ -932,7 +933,7 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         # Get a session
         sess = adp.Session()
         # Fake the session token like we logged on
-        sess._sessToken = 'token'.encode('utf-8')
+        sess._sessToken = 'token'
         # It should have logged on
         self.assertTrue(self.mock_logon.called)
 
@@ -957,7 +958,7 @@ class TestAdapterClasses(subunit.IsolatedTestCase, testtools.TestCase):
         # Get Adapter
         adapter = adp.Adapter()
         # Fake the implicit session token like we logged on
-        adapter.session._sessToken = 'token'.encode('utf-8')
+        adapter.session._sessToken = 'token'
         # Construct and get the event listener
         adapter.session.get_event_listener()
 

@@ -529,7 +529,7 @@ class Wrapper(object):
         def str2percent(percent_str):
             if percent_str:
                 percent_str = re.findall(r"\d*\.?\d+", percent_str)[0]
-                return (float(percent_str))/100
+                return (float(percent_str)) / 100
             else:
                 return None
         return self.__get_val(property_name, default=default,

@@ -1,4 +1,4 @@
-# Copyright 2016, 2017 IBM Corp.
+# Copyright 2016, 2020 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@ import mock
 import six
 import testtools
 
+from oslo_serialization import base64
 from pypowervm import exceptions as pv_e
 from pypowervm.tasks import slot_map
 from pypowervm.tests.test_utils import pvmhttp
@@ -31,6 +32,7 @@ from pypowervm.wrappers import virtual_io_server as vios
 
 def loadf(wcls, fname):
     return wcls.wrap(pvmhttp.load_pvm_resp(fname).get_response())
+
 
 # Load data files just once, since the wrappers will be read-only
 vio1 = loadf(vios.VIOS, 'fake_vios_ssp_npiv.txt')
@@ -105,8 +107,9 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         doesnt_unpickle = self.smt_impl('foo')
         mock_unpickle.assert_not_called()
         self.assertEqual({}, doesnt_unpickle.topology)
-        unpickles = self.smt_impl('foo', load_ret='abc123')
-        mock_unpickle.assert_called_once_with('abc123')
+        val = base64.encode_as_text('abc123')
+        unpickles = self.smt_impl('foo', load_ret=val)
+        mock_unpickle.assert_called_once_with(b'abc123')
         self.assertEqual(mock_unpickle.return_value, unpickles.topology)
 
     @mock.patch('pickle.dumps')
@@ -454,7 +457,8 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
                 smt1.register_vfc_mapping(vfcmap, 'fab%d' % i)
                 i += 1
         # Serialize, and make a new slot map that loads that serialized data
-        smt2 = self.smt_impl('bar', load_ret=smt1.serialized)
+        smt_1 = base64.encode_as_text(smt1.serialized)
+        smt2 = self.smt_impl('bar', load_ret=smt_1)
         # Ensure their topologies are identical
         self.assertEqual(smt1.topology, smt2.topology)
 
@@ -948,6 +952,7 @@ class TestRebuildSlotMap(TestRebuildSlotMapLegacy):
         """Initialize with a particular SlotMapStore implementation."""
         super(TestRebuildSlotMap, self).__init__(*args, **kwargs)
         self.smt_impl = SlotMapTestImpl
+
 
 SCSI_W_VOPT = {
     1: {

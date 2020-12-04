@@ -59,7 +59,7 @@ def STEPPED_DELAY(attempt, max_attempts, *args, **kwds):
      - Attempt 5: 20s
      - Attempt 6+: 30s
     """
-    sleep_time = (0.25 * (3**(attempt-1)) - 0.25)
+    sleep_time = (0.25 * (3 ** (attempt - 1)) - 0.25)
     time.sleep(min(sleep_time, 30))
 
 
@@ -232,7 +232,7 @@ def retry(tries=3, delay_func=NO_DELAY,
             if _resp_checker is None:
                 _resp_checker = NO_CHECKER
             # Start retries
-            for try_ in moves.range(1, _tries+1):
+            for try_ in moves.range(1, _tries + 1):
                 try:
                     resp = func(*args, **kwds)
                     # No exception raised, call the response checker

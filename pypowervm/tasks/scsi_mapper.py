@@ -490,6 +490,7 @@ def find_maps(mapping_list, client_lpar_id=None, match_func=None,
     if not match_func:
         # Default no filter
         match_func = lambda x: True
+
     if stg_elem:
         # Match storage element on type and name
         match_func = lambda stg_el: (

@@ -59,5 +59,6 @@ class TestCDATA(twrap.TestWrapper):
         self.assertEqual(out, CORRECT_CDATA_CONTENT,
                          "CDATA was not preserved in Results!\n%s" % out)
 
+
 if __name__ == '__main__':
     unittest.main()
