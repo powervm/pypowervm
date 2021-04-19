@@ -1,4 +1,4 @@
-# Copyright 2016, 2018 IBM Corp.
+# Copyright 2016, 2021 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -51,7 +51,7 @@ def _validate_capacity(min_capacity, max_capacity):
 
 def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
                        capacity=None, max_capacity=None,
-                       check_port_status=False):
+                       check_port_status=False, redundant_pports=None):
     """Set a vNIC's backing devices over given SRIOV physical ports and VIOSes.
 
     Assign the backing devices to a iocard.VNIC wrapper using an anti-affinity
@@ -128,6 +128,12 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
     :param max_capacity: (float) Maximum capacity to assign to each backing
                          device. Must be greater or equal to capacity and
                          less than 1.0.
+    :param redundant_pports: List of physical location code strings
+                             (corresponding to the loc_code @property of
+                             iocard.SRIOV*PPort) for all SRIOV redundant
+                             physical ports to be considered as backing
+                             devices for the vNIC. This does not mean that
+                             all of these ports will be used.
     :param check_port_status: If True, only ports with link-up status will be
                               considered for allocation.  If False (the
                               default), link-down ports may be used.
@@ -167,45 +173,63 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
     # Try not to end up lopsided on one VIOS
     random.shuffle(vioses)
 
-    # Get the subset of backing ports corresponding to the specified location
-    # codes which have enough space for new VFs.
-    pport_wraps = _get_good_pport_list(sriov_adaps, pports, capacity,
-                                       redundancy, check_port_status)
-
     # At this point, we've validated enough that we won't raise.  Start by
     # clearing any existing backing devices.
     vnic_w.back_devs = []
 
-    card_use = {}
-    for pport in pport_wraps:
-        said = pport.sriov_adap_id
-        if said not in card_use:
-            card_use[said] = {'num_used': 0, 'ports_left': 0}
-        card_use[said]['ports_left'] += 1
-    vio_idx = 0
-    while pport_wraps and len(vnic_w.back_devs) < redundancy:
-        # Always rotate VIOSes
-        vio = vioses[vio_idx]
-        vio_idx = (vio_idx + 1) % len(vioses)
-        # Select the least-saturated port from among the least-used adapters.
-        least_uses = min([cud['num_used'] for cud in card_use.values()])
-        pp2use = min([pport for pport in pport_wraps if
-                      card_use[pport.sriov_adap_id]['num_used'] == least_uses],
-                     key=lambda pp: pp.allocated_capacity)
-        said = pp2use.sriov_adap_id
-        # Register a hit on the chosen port's card
-        card_use[said]['num_used'] += 1
-        # And take off a port
-        card_use[said]['ports_left'] -= 1
-        # If that was the last port, remove this card from consideration
-        if card_use[said]['ports_left'] == 0:
-            del card_use[said]
-        # Create and add the backing device
-        vnic_w.back_devs.append(card.VNICBackDev.bld(
-            adap, vio.uuid, said, pp2use.port_id, capacity=capacity,
-            max_capacity=max_capacity))
-        # Remove the port we just used from subsequent consideration.
-        pport_wraps.remove(pp2use)
+    # Get the subset of backing ports corresponding to the specified
+    # location codes which have enough space for new VFs.
+    pport_wraps = _get_good_pport_list(sriov_adaps, pports, capacity,
+                                       redundancy, check_port_status,
+                                       redundant_pports=redundant_pports)
+    if redundant_pports and (redundancy > 1):
+        redundant_pport_wraps = _get_good_pport_list(sriov_adaps,
+                                                     redundant_pports,
+                                                     capacity, redundancy,
+                                                     check_port_status,
+                                                     redundant_pports=redundant_pports)
+    if redundancy > 1 and len(pport_wraps) == 1 and len(redundant_pport_wraps) < 1:
+        raise ex.InsufficientSRIOVCapacity(red=redundancy,
+                                           found_vfs=len(pport_wraps))
+
+    def _pports_config(pport_wraps, vio_idx=0):
+        card_use = {}
+        for pport in pport_wraps:
+            said = pport.sriov_adap_id
+            if said not in card_use:
+                card_use[said] = {'num_used': 0, 'ports_left': 0}
+            card_use[said]['ports_left'] += 1
+        while pport_wraps and len(vnic_w.back_devs) < redundancy:
+            # Always rotate VIOSes
+            vio = vioses[vio_idx]
+            vio_idx = (vio_idx + 1) % len(vioses)
+            # Select the least-saturated port from among the least-used
+            # adapters.
+            least_uses = min([cud['num_used'] for cud in card_use.values()])
+            pp2use = min([pport for pport in pport_wraps if
+                          card_use[
+                              pport.sriov_adap_id]['num_used'] == least_uses],
+                         key=lambda pp: pp.allocated_capacity)
+            said = pp2use.sriov_adap_id
+            # Register a hit on the chosen port's card
+            card_use[said]['num_used'] += 1
+            # And take off a port
+            card_use[said]['ports_left'] -= 1
+            # If that was the last port, remove this card from consideration
+            if card_use[said]['ports_left'] == 0:
+                del card_use[said]
+            # Create and add the backing device
+            vnic_w.back_devs.append(card.VNICBackDev.bld(
+                adap, vio.uuid, said, pp2use.port_id, capacity=capacity,
+                max_capacity=max_capacity))
+            # Remove the port we just used from subsequent consideration.
+            pport_wraps.remove(pp2use)
+            if redundant_pports and redundancy == 2:
+                break
+
+    _pports_config(pport_wraps)
+    if redundant_pports and redundancy == 2:
+        _pports_config(pport_wraps, vio_idx=1)
 
 
 def _check_sys_vnic_capabilities(adap, sys_w, redundancy):
@@ -300,7 +324,7 @@ def _get_good_sriovs(sriov_adaps):
 
 
 def _get_good_pport_list(sriov_adaps, pports, capacity, redundancy,
-                         check_link_status):
+                         check_link_status, redundant_pports=None):
     """Get a list of SRIOV*PPort filtered by capacity and specified pports.
 
     Builds a list of pypowervm.wrappers.iocard.SRIOV*PPort from sriov_adaps
@@ -325,6 +349,8 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, redundancy,
                        raised.
     :param check_link_status: If True, ports with link-down status will not be
                               returned.  If False, link status is not checked.
+    :param redundant_pports: A list of string physical location codes of the physical
+                             redundant ports to consider.
     :raise InsufficientSRIOVCapacity: If the final list contains fewer than
                                       'redundancy' ports.
     :return: A filtered list of SRIOV*PPort wrappers.
@@ -356,7 +382,7 @@ def _get_good_pport_list(sriov_adaps, pports, capacity, redundancy,
                 pp2add = copy.deepcopy(pport)
                 pport_wraps.append(pp2add)
 
-    if len(pport_wraps) < redundancy:
+    if len(pport_wraps) < redundancy and not redundant_pports:
         raise ex.InsufficientSRIOVCapacity(red=redundancy,
                                            found_vfs=len(pport_wraps))
     LOG.debug('Filtered list of physical ports: %s' %
