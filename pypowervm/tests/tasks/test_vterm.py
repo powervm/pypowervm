@@ -65,6 +65,45 @@ class TestVterm(testtools.TestCase):
                                                '--local'])
         self.assertEqual(5903, resp)
 
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_type')
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_open_vnc_vterm_ibmi(self, mock_run_proc,
+                                 mock_get_lpar_id, mock_get_lpar_type):
+        """Validates the mkvterm command for ibmi console."""
+        mock_get_lpar_id.return_value = '4'
+        mock_get_lpar_type.return_value = 'OS400'
+        std_out = '5903'
+        std_err = ('VNC is started on port 5903 for localhost access '
+                   'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (0, std_out, std_err)
+
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
+
+        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
+                                               '--local', '--consolesettings',
+                                               'codepage=037'])
+        self.assertEqual(5903, resp)
+
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_type')
+    @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
+    @mock.patch('pypowervm.tasks.vterm._run_proc')
+    def test_open_vnc_vterm_non_ibmi(self, mock_run_proc,
+                                     mock_get_lpar_id, mock_get_lpar_type):
+        """Validates the mkvterm command for non ibmi console."""
+        mock_get_lpar_id.return_value = '4'
+        mock_get_lpar_type.return_value = 'AIX/Linux'
+        std_out = '5903'
+        std_err = ('VNC is started on port 5903 for localhost access '
+                   'only.  Use \'rmvterm --id 4\' to close it.')
+        mock_run_proc.return_value = (0, std_out, std_err)
+
+        resp = vterm.open_localhost_vnc_vterm(self.adpt, 'lpar_uuid')
+
+        mock_run_proc.assert_called_once_with(['mkvterm', '--id', '4', '--vnc',
+                                               '--local'])
+        self.assertEqual(5903, resp)
+
     @mock.patch('pypowervm.tasks.vterm._get_lpar_id')
     @mock.patch('pypowervm.tasks.vterm._run_proc')
     def test_open_vnc_vterm_existing(self, mock_run_proc, mock_get_lpar_id):

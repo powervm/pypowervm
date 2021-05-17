@@ -146,6 +146,15 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_default_ppt_ratio(self):
         self.call_simple_getter("default_ppt_ratio", 4, 6)
 
+    def test_supported_ibmi_console_codepage(self):
+        expected = ['930:930 Japanese (Katanaka)',
+                    'e930:e930 Japan (Katanaka Extended)',
+                    '939:939 Japan (Latin Extended)',
+                    '1399:1399 Japanese (Latin Unicode Extended)',
+                    'e1399:e1399 Japanese (Latin Unicode Extended: JIS2014)']
+        self.assertEqual(
+            self.wrapper.supported_ibmi_console_codepage, expected)
+
     def test_get_system_name(self):
         self.wrapper.set_parm_value(ms._SYSTEM_NAME, 'XYZ')
         name = self.wrapper.system_name
