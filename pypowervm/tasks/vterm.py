@@ -1,4 +1,4 @@
-# Copyright 2015, 2018 IBM Corp.
+# Copyright 2015, 2021 IBM Corp.
 #
 # All Rights Reserved.
 #
@@ -33,6 +33,7 @@ from oslo_utils import encodeutils
 import pypowervm.const as c
 from pypowervm import exceptions as pvm_exc
 from pypowervm.i18n import _
+import pypowervm.wrappers.base_partition as bp
 from pypowervm.wrappers import job
 import pypowervm.wrappers.logical_partition as pvm_lpar
 
@@ -106,7 +107,7 @@ def _close_vterm_local(adapter, lpar_uuid):
             _VNC_LOCAL_PORT_TO_REPEATER[vnc_port].stop()
 
 
-def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
+def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False, codepage="037"):
     """Opens a VNC vTerm to a given LPAR.  Always binds to localhost.
 
     :param adapter: The adapter to drive the PowerVM API
@@ -114,6 +115,8 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
     :param force: (Optional, Default: False) If set to true will force the
                   console to be opened as VNC even if it is already opened
                   via some other means.
+    :param codepage: (Optional, Default: 037) Language code for IBMi
+                  console. Default is 037 for English language.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -121,9 +124,13 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
         raise pvm_exc.ConsoleNotLocal()
 
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
+    lpar_type = _get_lpar_type(adapter, lpar_uuid)
 
-    def _run_mkvterm_cmd(lpar_uuid, force):
+    def _run_mkvterm_cmd(lpar_uuid, force, codepage=codepage):
         cmd = ['mkvterm', '--id', str(lpar_id), '--vnc', '--local']
+        if lpar_type.replace('"', '') == bp.LPARType.OS400:
+            ibmi_cmd = ['--consolesettings', 'codepage=' + str(codepage)]
+            cmd.extend(ibmi_cmd)
         ret_code, std_out, std_err = _run_proc(cmd)
 
         # If the vterm was already started, the mkvterm command will always
@@ -149,13 +156,13 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False):
         # Parse the VNC Port out of the stdout returned from mkvterm
         return _parse_vnc_port(std_out)
 
-    return _run_mkvterm_cmd(lpar_uuid, force)
+    return _run_mkvterm_cmd(lpar_uuid, force, codepage)
 
 
 def open_remotable_vnc_vterm(
         adapter, lpar_uuid, local_ip, remote_ips=None, vnc_path=None,
         use_x509_auth=False, ca_certs=None, server_cert=None, server_key=None,
-        force=False):
+        force=False, codepage="037"):
     """Opens a VNC vTerm to a given LPAR.  Wraps in some validation.
 
     Must run on the management partition.
@@ -199,6 +206,8 @@ def open_remotable_vnc_vterm(
     :param force: (Optional, Default: False) If set to true will force the
                   console to be opened as VNC even if it is already opened
                   via some other means.
+    :param codepage: (Optional, Default: 037) Language code for IBMi
+                  console. Default is 037 for English language.
     :return: The VNC Port that the terminal is running on.
     """
     # This API can only run if local.
@@ -207,7 +216,8 @@ def open_remotable_vnc_vterm(
 
     # Open the VNC Port.  If already open, it will just return the same port,
     # so no harm re-opening.  The stdout will just print out the existing port.
-    local_port = open_localhost_vnc_vterm(adapter, lpar_uuid, force=force)
+    local_port = open_localhost_vnc_vterm(
+        adapter, lpar_uuid, force=force, codepage=codepage)
     # If a VNC path is provided then we have a way to map an incoming
     # connection to a given LPAR and will use the single 5901 port, otherwise
     # we need to listen for remote connections on the same port as the local
@@ -265,6 +275,12 @@ def _run_proc(cmd):
 def _get_lpar_id(adapter, lpar_uuid):
     lpar_resp = adapter.read(pvm_lpar.LPAR.schema_type, root_id=lpar_uuid,
                              suffix_type='quick', suffix_parm='PartitionID')
+    return lpar_resp.body
+
+
+def _get_lpar_type(adapter, lpar_uuid):
+    lpar_resp = adapter.read(pvm_lpar.LPAR.schema_type, root_id=lpar_uuid,
+                             suffix_type='quick', suffix_parm='PartitionType')
     return lpar_resp.body
 
 
