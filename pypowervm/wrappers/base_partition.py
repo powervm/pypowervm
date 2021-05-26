@@ -358,9 +358,10 @@ class LPARCompat(object):
     POWER9_BASE = 'POWER9_Base'
     POWER9 = 'POWER9'
     POWER9_ENHANCED = 'POWER9_Enhanced'
+    POWER10 = 'POWER10'
     ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER6_PLUS_ENHANCED, POWER7,
                   POWER8, POWER8_ENHANCED, POWER9_BASE, POWER9,
-                  POWER9_ENHANCED)
+                  POWER9_ENHANCED, POWER10)
 
 
 class RMCState(object):
