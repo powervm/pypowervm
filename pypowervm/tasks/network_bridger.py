@@ -38,15 +38,21 @@ _ENSURE_VLAN_LOCK = 'ensure_vlans_nb'
 
 CONF = cfg.CONF
 
-CONF.register_opt(
-    cfg.BoolOpt('load_balance_vlan_across_veas', default=False,
-                help='Determines whether or not the VLANs will '
-                     'be configured on a new VEA till the total VEA limit '
-                     'is reached. Post that, additional VLAN configuration '
-                     'will choose the least used VEA, to load balance '
-                     'VLAN config, for better performance. This is just '
-                     'so, to not overload a VEA till its limit is '
-                     'exhausted before creating a new VEA.'))
+try:
+    CONF.register_opt(
+        cfg.BoolOpt('load_balance_vlan_across_veas', default=False,
+                    help='Determines whether or not the VLANs will '
+                         'be configured on a new VEA till the total VEA limit '
+                         'is reached. Post that, additional VLAN configuration'
+                         ' will choose the least used VEA, to load balance '
+                         'VLAN config, for better performance. This is just '
+                         'so, to not overload a VEA till its limit is '
+                         'exhausted before creating a new VEA.'))
+except cfg.DuplicateOptError:
+    # Registering load_balance_vlan_opt as part of compute service startup
+    # for Novalink host will raise this error, since it will be loaded as
+    # part of vif/driver.py module. Hence, this can be ignored here.
+    pass
 
 
 def ensure_vlans_on_nb(adapter, host_uuid, nb_uuid, vlan_ids):
