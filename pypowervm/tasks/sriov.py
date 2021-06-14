@@ -228,7 +228,7 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
 
     _pports_config(pport_wraps)
     if redundant_pports and redundancy == 2:
-        _pports_config(pport_wraps, vio_idx=1)
+        _pports_config(redundant_pport_wraps, vio_idx=1)
 
 
 def _check_sys_vnic_capabilities(adap, sys_w, redundancy):
