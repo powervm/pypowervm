@@ -222,6 +222,22 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter(
             "current_secure_boot", 1, 0)
 
+    def test_get_max_pmem_volumes(self):
+        self.call_simple_getter(
+            "max_pmem_volumes", 964, 0)
+
+    def test_get_cur_pmem_volumes(self):
+        self.call_simple_getter(
+            "cur_pmem_volumes", 2, 0)
+
+    def test_get_max_dram_pmem_volumes(self):
+        self.call_simple_getter(
+            "max_dram_pmem_volumes", 4, 0)
+
+    def test_get_cur_dram_pmem_volumes(self):
+        self.call_simple_getter(
+            "cur_dram_pmem_volumes", 2, 0)
+
     @mock.patch('warnings.warn')
     def test_rr_off(self, mock_warn):
         """Remote Restart fields when not RR capable."""
