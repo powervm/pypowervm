@@ -172,6 +172,15 @@ BODY{
     <BootMode kxe="false" kb="ROR">Normal</BootMode>
     <PendingSecureBoot ksv="V1_8_0" kxe="false" kb="CUD">2</PendingSecureBoot>
     <CurrentSecureBoot ksv="V1_8_0" kxe="false" kb="ROO">1</CurrentSecureBoot>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SimplifiedRemoteRestartCapable kb="COD" kxe="false">true</SimplifiedRemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
