@@ -178,6 +178,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/089FFB20-5D19-4A8C-BB80-13650627D985/VirtualSCSIClientAdapter/fc37013c-6fdd-36c7-aa3b-d3f39b903b9b" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -332,6 +341,15 @@ BODY{
     <ReferenceCodeFull kxe="true" kb="ROO">time_stamp=08/13/2016 23:52:08,refcode=00000000,word2=03D00000,fru_call_out_loc_codes=#47-Ubuntu SMP Fri Jun 24 10:09:20 UTC 2016</ReferenceCodeFull>
     <RemoteRestartCapable kb="COD" kxe="false">false</RemoteRestartCapable>
     <SuspendCapable kb="CUD" kxe="false">false</SuspendCapable>
+        <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -494,6 +512,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/3D3DE3FA-5DD6-439D-BF4C-1835C340A9BD/VirtualSCSIClientAdapter/5df4dc12-a025-3623-a7d1-bad77c4f6c28" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -802,6 +829,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/23FEE581-94AF-4E80-843D-B14409D9A101/VirtualSCSIClientAdapter/a135b72c-7a1c-35f8-8ebb-0f0ef2219bde" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -1703,6 +1739,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/120C6BDE-0217-4F8F-876F-30261C9D6F8F/VirtualSCSIClientAdapter/590a4453-69b0-3304-a4fb-0a36236b475e" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -1863,6 +1908,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/7AB1AB7B-178C-4C7C-B5AB-1F011A61335C/VirtualSCSIClientAdapter/6e3f1565-9e61-33fa-b143-1431f974df65" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -2291,6 +2345,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/5ADCEC07-B213-41FD-9B14-5130D65CCCBB/VirtualSCSIClientAdapter/c2d46ccc-1681-3e9e-af5f-eec5e2fa57fe" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -2607,6 +2670,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/799DCB11-5D0D-49BB-813E-315658EDCD1D/VirtualSCSIClientAdapter/4add5b29-0a99-3393-97e2-6d14cd208092" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -2911,6 +2983,15 @@ BODY{
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/1E45BAD5-8CE2-48DD-97BB-7FC0057D99EB/VirtualSCSIClientAdapter/08e79095-a01c-31f0-b6f9-ca2dccdd0d61" rel="related"/>
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/1E45BAD5-8CE2-48DD-97BB-7FC0057D99EB/VirtualSCSIClientAdapter/8354709a-2ea3-3feb-aa02-f6514d03d492" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
@@ -3073,6 +3154,15 @@ BODY{
     <VirtualSCSIClientAdapters kb="CUR" kxe="false">
         <link href="http://9.1.2.3:12080/rest/api/uom/LogicalPartition/09D4D2E7-162B-4478-8DFB-87CBC3E76343/VirtualSCSIClientAdapter/9880a9b8-8c04-379b-be5e-9e345bb6e505" rel="related"/>
     </VirtualSCSIClientAdapters>
+    <AssociatedPersistentMemoryConfiguration ksv="V1_10_0" kxe="false" kb="ROO" schemaVersion="V1_11_0">
+        <Metadata>
+            <Atom/>
+        </Metadata>
+        <MaximumPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">964</MaximumPersistentMemoryVolumes>
+        <CurrentPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentPersistentMemoryVolumes>
+        <MaximumDramPersistentMemoryVolumes ksv="V1_10_0" kb="ROR" kxe="false">4</MaximumDramPersistentMemoryVolumes>
+        <CurrentDramPersistentMemoryVolumes ksv="V1_10_0" kxe="false" kb="ROR">2</CurrentDramPersistentMemoryVolumes>
+    </AssociatedPersistentMemoryConfiguration>
 </LogicalPartition:LogicalPartition>
         </content>
     </entry>
