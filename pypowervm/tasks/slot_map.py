@@ -220,7 +220,10 @@ class SlotMapStore(object):
                        be incorporated.
         :param fab: The fabric name associated with the mapping.
         """
-        self._reg_slot(IOCLASS.VFC, fab, vfcmap.server_adapter.lpar_slot_num)
+        vfc_client_wwpn = vfcmap.client_adapter.wwpns
+        wwpn_list = vfcmap.client_adapter.wwpns
+        self._reg_slot(IOCLASS.VFC, fab, vfcmap.server_adapter.lpar_slot_num, extra_spec=wwpn_list)
+#        self._reg_slot(IOCLASS.VFC, fab, vfcmap.server_adapter.lpar_slot_num)
 
     def drop_vfc_mapping(self, vfcmap, fab):
         """Drops the client network adapter from the slot topology.
@@ -733,12 +736,13 @@ class RebuildSlotMap(BuildSlotMap):
         """
         seen_fabrics = set()
         for fabric in fabrics:
-            fabric_slots = []
+            fabric_slots = {}
             # Add the slot numbers for this fabric
             for slot, iomap in six.iteritems(self._slot_store.topology):
                 if fabric not in iomap.get(IOCLASS.VFC, {}):
                     continue
-                fabric_slots.append(slot)
+                #fabric_slots.append(slot)
+                fabric_slots[slot]= iomap.get(IOCLASS.VFC, {}).get(fabric, {})
                 seen_fabrics.add(fabric)
 
             self._put_novios_val(IOCLASS.VFC, fabric, fabric_slots)
