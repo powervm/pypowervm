@@ -152,7 +152,7 @@ class PVMResp(PVMFile):
             'status': self.response.status,
         }
 
-        with open(file_name, 'wb') as df:
+        with open(file_name, 'wt') as df:
             df.write("####################################################")
             df.write(EOL)
             df.write("# THIS IS AN AUTOMATICALLY GENERATED FILE")

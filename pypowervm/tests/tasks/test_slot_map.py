@@ -257,6 +257,7 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         i = 1
         for vio in (vio1, vio2):
             for vfcmap in vio.vfc_mappings:
+                vfcmap.client_adapter.wwpns = None
                 smt.register_vfc_mapping(vfcmap, 'fab%d' % i)
                 i += 1
         self.assertEqual({3: {'VFC': {'fab1': None, 'fab10': None,
