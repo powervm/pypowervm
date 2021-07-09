@@ -953,12 +953,20 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
 
         # Verify rebuild map was created successfully
         self.assertEqual(
-            {'VFC': {'fab1': {3: None, 9: None, 11: None},
-                     'fab10': {5: None}, 'fab2': {},
-                     'fab27': {},
-                     'fab7': {4: None, 12: None, 113: None, 114: None},
-                     'fab8': {6: None},
-                     'fab9': {7: None, 8: None, 10: None}}},
+            {'VFC': {'fab1': [3, 9, 11],
+                     'fab10': [5],
+                     'fab10_wwpn': {5: None},
+                     'fab1_wwpn': {3: None, 9: None, 11: None},
+                     'fab2': [],
+                     'fab27': [],
+                     'fab27_wwpn': {},
+                     'fab2_wwpn': {},
+                     'fab7': [4, 12, 113, 114],
+                     'fab7_wwpn': {4: None, 12: None, 113: None, 114: None},
+                     'fab8': [6],
+                     'fab8_wwpn': {6: None},
+                     'fab9': [7, 8, 10],
+                     'fab9_wwpn': {7: None, 8: None, 10: None}}},
             rsm._build_map)
 
         # Verify the getters return the slots correctly
