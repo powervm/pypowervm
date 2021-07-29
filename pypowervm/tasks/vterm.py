@@ -133,6 +133,20 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False, codepage="037"):
             cmd.extend(ibmi_cmd)
         ret_code, std_out, std_err = _run_proc(cmd)
 
+        if ret_code == 3 and lpar_type.replace('"', '') == bp.LPARType.OS400:
+            cmd_ps = ['pgrep', 'mkvtermutil', '--list-full']
+            ret_code1, std_out1, std_err1 = _run_proc(cmd_ps)
+            std_out1 = six.text_type(std_out1)
+            std_err1 = six.text_type(std_err1)
+            for line in std_out1.splitlines():
+                search = "--id " + str(lpar_id)
+                if search in line:
+                    break
+            search = "--codepage " + str(codepage)
+            if search not in line:
+                close_vterm(adapter, lpar_uuid)
+                ret_code, std_out, std_err = _run_proc(cmd)
+
         # If the vterm was already started, the mkvterm command will always
         # return an error message with a return code of 3.  However, there
         # are 2 scenarios here, one where it was started with the VNC option
@@ -141,6 +155,7 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False, codepage="037"):
         # where we will get no port.  If it is the out-of-band scenario and
         # they asked us to force the connection, then we will attempt to
         # terminate the old vterm session so we can start up one with VNC.
+
         if force and ret_code == 3 and not _parse_vnc_port(std_out):
             LOG.warning(_("Invalid output on vterm open.  Trying to reset the "
                           "vterm.  Error was %s"), std_err)
