@@ -415,4 +415,8 @@ def ibmi_add_license_key(adapter, lpar_uuid, license_key):
                         suffix_parm=_SUFFIX_PARM_ADD_LICENSE)
     job_wrapper = job.Job.wrap(resp.entry)
     job_parms = [job_wrapper.create_job_parameter('licKey', license_key)]
-    job_wrapper.run_job(lpar_uuid, job_parms=job_parms)
+    try:
+        job_wrapper.run_job(lpar_uuid, job_parms=job_parms)
+    except Exception:
+        LOG.exception(_('IBMi Key Injection Failed'))
+        raise
