@@ -37,6 +37,7 @@ _SYSTEM_NAME = 'SystemName'
 _MASTER_MODE = 'IsPowerVMManagementMaster'
 _PROC_THROTTLE = 'ProcessorThrottling'
 _METER_POOL_ID = 'MeteredPoolID'
+_SUPPORTED_IBMI_CONSOLE_CODEPAGE = 'SupportedIBMiConsoleCodePage'
 
 _SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
 _ACTIVE_LPM_CAP = u.xpath(
@@ -428,6 +429,10 @@ class System(ewrap.EntryWrapper):
     @property
     def metered_pool_id(self):
         return self._get_val_str(_METER_POOL_ID)
+
+    @property
+    def supported_ibmi_console_codepage(self):
+        return self._get_vals(_SUPPORTED_IBMI_CONSOLE_CODEPAGE)
 
     @property
     def processor_is_throttled(self):

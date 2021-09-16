@@ -291,6 +291,16 @@ IOAdapter = card.IOAdapter
 PhysFCAdapter = card.PhysFCAdapter
 PhysFCPort = card.PhysFCPort
 
+_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
+_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'MaximumPersistentMemoryVolumes')
+_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'CurrentPersistentMemoryVolumes')
+_MAX_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'MaximumDramPersistentMemoryVolumes')
+_CUR_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'CurrentDramPersistentMemoryVolumes')
+
 
 class SharingMode(object):
     """Shared Processor sharing modes.
@@ -358,9 +368,10 @@ class LPARCompat(object):
     POWER9_BASE = 'POWER9_Base'
     POWER9 = 'POWER9'
     POWER9_ENHANCED = 'POWER9_Enhanced'
+    POWER10 = 'POWER10'
     ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER6_PLUS_ENHANCED, POWER7,
                   POWER8, POWER8_ENHANCED, POWER9_BASE, POWER9,
-                  POWER9_ENHANCED)
+                  POWER9_ENHANCED, POWER10)
 
 
 class RMCState(object):
@@ -765,6 +776,22 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     def uptime(self):
         """Integer time since partition boot, in seconds."""
         return self._get_val_int(_BP_UPTIME)
+
+    @property
+    def max_pmem_volumes(self):
+        return self._get_val_int(_MAX_PMEM_VOLUMES)
+
+    @property
+    def cur_pmem_volumes(self):
+        return self._get_val_int(_CUR_PMEM_VOLUMES)
+
+    @property
+    def max_dram_pmem_volumes(self):
+        return self._get_val_int(_MAX_DRAM_PMEM_VOLUMES)
+
+    @property
+    def cur_dram_pmem_volumes(self):
+        return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,

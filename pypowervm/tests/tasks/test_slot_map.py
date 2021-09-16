@@ -259,24 +259,41 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
             for vfcmap in vio.vfc_mappings:
                 smt.register_vfc_mapping(vfcmap, 'fab%d' % i)
                 i += 1
-        self.assertEqual({3: {'VFC': {'fab1': None, 'fab10': None,
-                                      'fab11': None, 'fab12': None,
-                                      'fab13': None, 'fab14': None,
-                                      'fab15': None, 'fab16': None,
-                                      'fab17': None, 'fab18': None,
-                                      'fab19': None, 'fab20': None,
-                                      'fab21': None, 'fab22': None,
-                                      'fab23': None, 'fab24': None,
-                                      'fab25': None, 'fab26': None,
-                                      'fab28': None, 'fab29': None,
-                                      'fab3': None, 'fab30': None,
-                                      'fab31': None, 'fab32': None,
-                                      'fab33': None, 'fab4': None,
-                                      'fab5': None, 'fab6': None,
-                                      'fab7': None, 'fab8': None,
-                                      'fab9': None}},
-                          6: {'VFC': {'fab2': None}},
-                          8: {'VFC': {'fab27': None}}}, smt.topology)
+        self.assertEqual(
+            {3: {'VFC': {'fab1': ['C05076065A8B005A', 'C05076065A8B005B'],
+                         'fab10': None,
+                         'fab11': None,
+                         'fab12': ['C05076065A7C02D6', 'C05076065A7C02D7'],
+                         'fab13': ['C05076065A7C030E', 'C05076065A7C030F'],
+                         'fab14': None,
+                         'fab15': ['C05076065A7C02D4', 'C05076065A7C02D5'],
+                         'fab16': None,
+                         'fab17': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab18': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab19': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab20': None,
+                         'fab21': None,
+                         'fab22': None,
+                         'fab23': None,
+                         'fab24': None,
+                         'fab25': ['C05076065A7C0002', 'C05076065A7C0003'],
+                         'fab26': ['C05076065A7C030A', 'C05076065A7C030B'],
+                         'fab28': None,
+                         'fab29': None,
+                         'fab3': None,
+                         'fab30': ['C05076065A7C030C', 'C05076065A7C030D'],
+                         'fab31': None,
+                         'fab32': None,
+                         'fab33': None,
+                         'fab4': None,
+                         'fab5': ['C05076065A7C02E4', 'C05076065A7C02E5'],
+                         'fab6': None,
+                         'fab7': None,
+                         'fab8': ['C05076065A7C02E2', 'C05076065A7C02E3'],
+                         'fab9': None}},
+             6: {'VFC': {'fab2': ['C05076065A8B0060', 'C05076065A8B0061']}},
+             8: {'VFC': {'fab27': ['C05076065A7C0000', 'C05076065A7C0001']}}},
+            smt.topology)
 
     def test_drop_vfc_mapping(self):
         """Test drop_vfc_mapping."""
@@ -482,24 +499,41 @@ class TestSlotMapStoreLegacy(testtools.TestCase):
         # max_vslots still set
         self.assertEqual(234, smt.max_vslots)
         # Topology not polluted by max_vslots
-        self.assertEqual({3: {'VFC': {'fab1': None, 'fab10': None,
-                                      'fab11': None, 'fab12': None,
-                                      'fab13': None, 'fab14': None,
-                                      'fab15': None, 'fab16': None,
-                                      'fab17': None, 'fab18': None,
-                                      'fab19': None, 'fab20': None,
-                                      'fab21': None, 'fab22': None,
-                                      'fab23': None, 'fab24': None,
-                                      'fab25': None, 'fab26': None,
-                                      'fab28': None, 'fab29': None,
-                                      'fab3': None, 'fab30': None,
-                                      'fab31': None, 'fab32': None,
-                                      'fab33': None, 'fab4': None,
-                                      'fab5': None, 'fab6': None,
-                                      'fab7': None, 'fab8': None,
-                                      'fab9': None}},
-                          6: {'VFC': {'fab2': None}},
-                          8: {'VFC': {'fab27': None}}}, smt.topology)
+        self.assertEqual(
+            {3: {'VFC': {'fab1': ['C05076065A8B005A', 'C05076065A8B005B'],
+                         'fab10': None,
+                         'fab11': None,
+                         'fab12': ['C05076065A7C02D6', 'C05076065A7C02D7'],
+                         'fab13': ['C05076065A7C030E', 'C05076065A7C030F'],
+                         'fab14': None,
+                         'fab15': ['C05076065A7C02D4', 'C05076065A7C02D5'],
+                         'fab16': None,
+                         'fab17': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab18': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab19': ['C05076065A7C02E0', 'C05076065A7C02E1'],
+                         'fab20': None,
+                         'fab21': None,
+                         'fab22': None,
+                         'fab23': None,
+                         'fab24': None,
+                         'fab25': ['C05076065A7C0002', 'C05076065A7C0003'],
+                         'fab26': ['C05076065A7C030A', 'C05076065A7C030B'],
+                         'fab28': None,
+                         'fab29': None,
+                         'fab3': None,
+                         'fab30': ['C05076065A7C030C', 'C05076065A7C030D'],
+                         'fab31': None,
+                         'fab32': None,
+                         'fab33': None,
+                         'fab4': None,
+                         'fab5': ['C05076065A7C02E4', 'C05076065A7C02E5'],
+                         'fab6': None,
+                         'fab7': None,
+                         'fab8': ['C05076065A7C02E2', 'C05076065A7C02E3'],
+                         'fab9': None}},
+             6: {'VFC': {'fab2': ['C05076065A8B0060', 'C05076065A8B0061']}},
+             8: {'VFC': {'fab27': ['C05076065A7C0000', 'C05076065A7C0001']}}},
+            smt.topology)
 
 
 class TestSlotMapStore(TestSlotMapStoreLegacy):
@@ -918,16 +952,32 @@ class TestRebuildSlotMapLegacy(testtools.TestCase):
         rsm = slot_map.RebuildSlotMap(smt, [vios1, vios2], None, fabrics)
 
         # Verify rebuild map was created successfully
-        self.assertEqual({'VFC': {'fab1': [3, 9, 11], 'fab10': [5], 'fab2': [],
-                                  'fab27': [], 'fab7': [4, 12, 113, 114],
-                                  'fab8': [6], 'fab9': [7, 8, 10]}},
-                         rsm._build_map)
+        self.assertEqual(
+            {'VFC': {'fab1': [3, 9, 11],
+                     'fab10': [5],
+                     'fab10_wwpn': {5: None},
+                     'fab1_wwpn': {3: None, 9: None, 11: None},
+                     'fab2': [],
+                     'fab27': [],
+                     'fab27_wwpn': {},
+                     'fab2_wwpn': {},
+                     'fab7': [4, 12, 113, 114],
+                     'fab7_wwpn': {4: None, 12: None, 113: None, 114: None},
+                     'fab8': [6],
+                     'fab8_wwpn': {6: None},
+                     'fab9': [7, 8, 10],
+                     'fab9_wwpn': {7: None, 8: None, 10: None}}},
+            rsm._build_map)
 
         # Verify the getters return the slots correctly
-        self.assertEqual([3, 9, 11], rsm.get_vfc_slots('fab1', 3))
-        self.assertEqual([4, 12, 113, 114], rsm.get_vfc_slots('fab7', 4))
+        self.assertEqual(
+            [3, 9, 11], rsm.get_vfc_slots('fab1', 3))
+        self.assertEqual(
+            [4, 12, 113, 114],
+            rsm.get_vfc_slots('fab7', 4))
         self.assertEqual([6], rsm.get_vfc_slots('fab8', 1))
-        self.assertEqual([7, 8, 10], rsm.get_vfc_slots('fab9', 3))
+        self.assertEqual(
+            [7, 8, 10], rsm.get_vfc_slots('fab9', 3))
         self.assertEqual([5], rsm.get_vfc_slots('fab10', 1))
         self.assertEqual([], rsm.get_vfc_slots('fab2', 0))
         self.assertEqual([], rsm.get_vfc_slots('fab27', 0))
