@@ -1,3 +1,3 @@
 [gerrit]
 project=powervm/pypowervm.git
-defaultbranch=develop
+defaultbranch=release/1.1.28
