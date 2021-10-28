@@ -1546,6 +1546,7 @@ BODY{
         <LogicalPartitionAffinityCheckCapable ksv="V1_9_0" kxe="false" kb="ROR">true</LogicalPartitionAffinityCheckCapable>
     </SystemMigrationInformation>
     <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
+    <IsPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">true</IsPowerVMManagementController>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">true</IsManagementPartitionPowerVMManagementMaster>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsHMCPowerVMManagementMaster>
     <MeteredPoolID ksv="V1_8_0" kb="ROR" kxe="false">6689</MeteredPoolID>
@@ -2499,6 +2500,7 @@ BODY{
         <MaximumFirmwareActiveMigrations kb="ROR" kxe="false">16</MaximumFirmwareActiveMigrations>
     </SystemMigrationInformation>
     <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
+    <IsPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">true</IsPowerVMManagementController>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">true</IsManagementPartitionPowerVMManagementMaster>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsHMCPowerVMManagementMaster>
 	<SupportedIBMiConsoleCodePage ksv="V1_8_0" kxe="false" kb="ROO">930:930 Japanese (Katanaka)</SupportedIBMiConsoleCodePage>
@@ -3466,6 +3468,7 @@ BODY{
         <MaximumFirmwareActiveMigrations kb="ROR" kxe="false">16</MaximumFirmwareActiveMigrations>
     </SystemMigrationInformation>
     <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
+    <IsPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">true</IsPowerVMManagementController>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">true</IsManagementPartitionPowerVMManagementMaster>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsHMCPowerVMManagementMaster>
 	<SupportedIBMiConsoleCodePage ksv="V1_8_0" kxe="false" kb="ROO">930:930 Japanese (Katanaka)</SupportedIBMiConsoleCodePage>
