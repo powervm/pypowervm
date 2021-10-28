@@ -35,6 +35,7 @@ _HOST_IP_ADDRESS = _PRIMARY_IP_ADDRESS
 _STATE = 'State'
 _SYSTEM_NAME = 'SystemName'
 _MASTER_MODE = 'IsPowerVMManagementMaster'
+_CONTROLLER_MODE = 'IsPowerVMManagementController'
 _PROC_THROTTLE = 'ProcessorThrottling'
 _METER_POOL_ID = 'MeteredPoolID'
 _SUPPORTED_IBMI_CONSOLE_CODEPAGE = 'SupportedIBMiConsoleCodePage'
@@ -425,6 +426,17 @@ class System(ewrap.EntryWrapper):
                   is the master.
         """
         return self._get_val_bool(_MASTER_MODE, True)
+
+    @property
+    def session_is_controller(self):
+        """The controller mode state of this managed system.
+
+        Use pypowervm.tasks.controller_mode.request_controller 
+        to request controller mode
+        :returns: True if the management node of this System's adapter.session
+                  is the controller.
+        """
+        return self._get_val_bool(_CONTROLLER_MODE, True)
 
     @property
     def metered_pool_id(self):
