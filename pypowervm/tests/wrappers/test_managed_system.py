@@ -308,6 +308,9 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_session_is_master(self):
         self.assertTrue(self.wrapper.session_is_master)
 
+    def test_session_is_controller(self):
+        self.assertTrue(self.wrapper.session_is_controller)
+
     def test_migration_data(self):
         expected_data = {'active_lpar_mobility_capable': True,
                          'inactive_lpar_mobility_capable': True,
