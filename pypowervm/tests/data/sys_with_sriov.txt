@@ -1657,6 +1657,7 @@ BODY{
     </SystemMigrationInformation>
     <ReferenceCode kb="ROO" kxe="true">00000000</ReferenceCode>
     <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsPowerVMManagementMaster>
+    <IsPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">true</IsPowerVMManagementController>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">true</IsManagementPartitionPowerVMManagementMaster>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsHMCPowerVMManagementMaster>
     <AssociatedGroups ksv="V1_2_0" kb="ROO" kxe="false"/>
