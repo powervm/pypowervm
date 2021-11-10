@@ -15,9 +15,9 @@
 #    under the License.
 
 import copy
+from unittest import mock
 import unittest
 
-import mock
 
 import pypowervm.const as pc
 import pypowervm.tests.test_fixtures as fx

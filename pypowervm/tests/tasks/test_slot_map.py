@@ -15,7 +15,8 @@
 #    under the License.
 """Test pypowervm.tasks.slot_map."""
 
-import mock
+from unittest import mock
+
 import six
 import testtools
 

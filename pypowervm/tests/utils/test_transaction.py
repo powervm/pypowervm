@@ -17,7 +17,8 @@
 """Tests for pypowervm.utils.transaction."""
 
 import copy
-import mock
+from unittest import mock
+
 import oslo_concurrency.lockutils as lock
 import oslo_context.context as ctx
 from taskflow import engines as tf_eng

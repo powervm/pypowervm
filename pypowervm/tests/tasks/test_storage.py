@@ -14,10 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from six.moves import builtins
 
 import fixtures
-import mock
 import testtools
 
 import pypowervm.adapter as adp

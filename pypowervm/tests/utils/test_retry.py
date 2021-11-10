@@ -14,9 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import random
 import testtools
+from unittest import mock
 
 from pypowervm import adapter as adpt
 from pypowervm import const as c

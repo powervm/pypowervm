@@ -14,8 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import testtools
+from unittest import mock
 
 import pypowervm.exceptions as exc
 import pypowervm.tasks.power_opts as popts

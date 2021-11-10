@@ -17,8 +17,8 @@
 """Test for the monitoring functions."""
 
 import datetime
+from unittest import mock
 
-import mock
 import testtools
 
 from pypowervm import entities as pvm_e

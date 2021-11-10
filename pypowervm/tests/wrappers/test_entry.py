@@ -16,11 +16,11 @@
 
 import copy
 import re
+from unittest import mock
 import unittest
 import uuid
 
 from lxml import etree
-import mock
 import six
 import testtools
 

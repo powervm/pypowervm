@@ -15,9 +15,9 @@
 #    under the License.
 
 import functools
+from unittest import mock
 import unittest
 
-import mock
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex

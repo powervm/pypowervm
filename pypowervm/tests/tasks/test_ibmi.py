@@ -15,8 +15,9 @@
 #    under the License.
 
 
+from unittest import mock
+
 import fixtures
-import mock
 import testtools
 
 from pypowervm import exceptions as pvm_exc

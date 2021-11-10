@@ -16,8 +16,8 @@
 
 """Tests for pypowervm.tasks.partition."""
 
-import mock
 import testtools
+from unittest import mock
 
 import pypowervm.const as c
 import pypowervm.entities as ent

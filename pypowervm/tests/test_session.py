@@ -16,13 +16,13 @@
 
 import copy
 import gc
-import mock
 import os
 import requests.models as req_mod
 import requests.structures as req_struct
 import subunit
 import sys
 import testtools
+from unittest import mock
 
 import pypowervm.adapter as adp
 import pypowervm.exceptions as pvmex

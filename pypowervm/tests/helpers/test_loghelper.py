@@ -16,8 +16,8 @@
 
 import functools
 import logging as base_logging
-import mock
 import testtools
+from unittest import mock
 
 import pypowervm.adapter as adp
 import pypowervm.const as c

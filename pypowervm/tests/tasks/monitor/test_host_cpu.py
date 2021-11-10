@@ -15,8 +15,8 @@
 #    under the License.
 
 import logging
-import mock
 import testtools
+from unittest import mock
 
 from pypowervm.tasks.monitor import host_cpu
 import pypowervm.tests.test_fixtures as pvm_fx

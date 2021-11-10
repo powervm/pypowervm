@@ -16,13 +16,14 @@
 
 import copy
 import errno
+from unittest import mock
+
 import fixtures
 from lxml import etree
 import six
 import subunit
 
 
-import mock
 import requests.models as req_mod
 import requests.structures as req_struct
 import testtools

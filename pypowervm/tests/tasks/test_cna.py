@@ -15,7 +15,7 @@
 #    under the License.
 
 
-import mock
+from unittest import mock
 
 from pypowervm import adapter as adp
 from pypowervm import exceptions as exc

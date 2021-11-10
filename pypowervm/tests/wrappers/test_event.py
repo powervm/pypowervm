@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 import pypowervm.tests.test_utils.test_wrapper_abc as twrap
 from pypowervm.wrappers import event

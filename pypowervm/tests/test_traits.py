@@ -14,9 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
 import unittest
 
-import mock
 import requests.models as req_mod
 import requests.structures as req_struct
 

@@ -15,8 +15,8 @@
 #    under the License.
 
 
-import mock
 import testtools
+from unittest import mock
 
 from pypowervm import exceptions as exc
 from pypowervm.tasks import scsi_mapper

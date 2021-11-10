@@ -16,8 +16,8 @@
 
 """Tests for pypowervm.tasks.sriov."""
 
-import mock
 import testtools
+from unittest import mock
 
 import pypowervm.exceptions as ex
 import pypowervm.tasks.sriov as tsriov

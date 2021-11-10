@@ -14,8 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import testtools
+from unittest import mock
 
 import pypowervm.entities as ent
 from pypowervm.tasks import master_mode as m_mode

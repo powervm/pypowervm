@@ -16,9 +16,10 @@
 #
 
 import abc
+from unittest import mock
+
 import fixtures
 import importlib
-import mock
 import six
 
 from pypowervm import traits as trt

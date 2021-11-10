@@ -14,10 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
 import unittest
 import uuid
 
-import mock
 import testtools
 
 import pypowervm.tests.test_fixtures as fx

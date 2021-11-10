@@ -15,8 +15,8 @@
 #    under the License.
 
 import functools
+from unittest import mock
 
-import mock
 import testtools
 
 import pypowervm.adapter as adp

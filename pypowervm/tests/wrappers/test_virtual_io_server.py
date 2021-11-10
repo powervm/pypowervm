@@ -15,7 +15,7 @@
 #    under the License.
 
 import copy
-import mock
+from unittest import mock
 import unittest
 
 import pypowervm.adapter as adpt
