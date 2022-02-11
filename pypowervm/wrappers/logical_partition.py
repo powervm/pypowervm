@@ -47,6 +47,7 @@ _LPAR_STG_DEV_UDID = 'StorageDeviceUniqueDeviceID'
 _LPAR_DES_IPL_SRC = 'DesignatedIPLSource'
 _LPAR_DED_VNICS = 'DedicatedVirtualNICs'
 _LPAR_BOOTLIST_INFO = 'BootListInformation'
+_LPAR_VIRTUAL_SERIAL_NUM = 'VirtualSerialNumber'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_MIG_STG_VIOS_DATA_STATUS, _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR,
@@ -55,7 +56,8 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_PRI_PGING_SVC_PART, _LPAR_POWER_MGT_MODE, _LPAR_SEC_PGING_SVC_PART,
     _LPAR_USES_HSL_OPTICONN, _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS,
     _LPAR_VSCSI_CLIENT_ADPTS, _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID,
-    _LPAR_DES_IPL_SRC, _LPAR_DED_VNICS, _LPAR_BOOTLIST_INFO)
+    _LPAR_DES_IPL_SRC, _LPAR_DED_VNICS, _LPAR_BOOTLIST_INFO,
+    _LPAR_VIRTUAL_SERIAL_NUM)
 
 
 class IPLSrc(object):
@@ -272,3 +274,11 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         up_uuid = str(value).upper()
         super(LPAR, self).set_uuid(up_uuid)
         self.set_parm_value(bp._BP_UUID, up_uuid)
+
+    @property
+    def virtual_serial_number(self):
+        """Virtual Serial Number.
+
+        :returns: Returns VSN number
+        """
+        return self._get_val_str(_LPAR_VIRTUAL_SERIAL_NUM, 'none')
