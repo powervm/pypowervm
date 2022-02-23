@@ -282,3 +282,8 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         :returns: Returns VSN number
         """
         return self._get_val_str(_LPAR_VIRTUAL_SERIAL_NUM, 'none')
+
+    @virtual_serial_number.setter
+    def virtual_serial_number(self, value):
+        """Virtual Serial number"""
+        self.set_parm_value(_LPAR_VIRTUAL_SERIAL_NUM, value)

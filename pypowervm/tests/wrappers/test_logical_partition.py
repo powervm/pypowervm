@@ -238,6 +238,10 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter(
             "cur_dram_pmem_volumes", 2, None)
 
+    def test_virtual_serial_number(self):
+        self.call_simple_getter(
+            "virtual_serial_number", "ABC0001", 'none')
+
     @mock.patch('warnings.warn')
     def test_rr_off(self, mock_warn):
         """Remote Restart fields when not RR capable."""
