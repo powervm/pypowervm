@@ -343,8 +343,9 @@ class PowerOffOpts(_PowerOpts):
         """
         # OS shutdown is always available on IBMi partitions.
         # OS shutdown is available if RMC is up.
-        return (part.env == bp.LPARType.OS400) or (part.rmc_state ==
-                                                   bp.RMCState.ACTIVE)
+        return ((part.env == bp.LPARType.OS400 and
+               part.state != bp.LPARState.ERROR) or
+               (part.rmc_state == bp.RMCState.ACTIVE))
 
     @property
     def is_os(self):
