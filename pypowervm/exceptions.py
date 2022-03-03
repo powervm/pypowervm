@@ -437,3 +437,8 @@ class ISCSIRemoveFailed(AbstractMsgFmtError):
 
 class VstorNotFound(AbstractMsgFmtError):
     msg_fmt = _("Vstor %(stor_udid)s not found for VIOS %(vios_uuid)s.")
+
+
+class VSwitchModeInvalid(AbstractMsgFmtError):
+    msg_fmt = _("The virtual switch mode '%(vs_mode)s' is not valid.")
+
