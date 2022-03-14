@@ -440,4 +440,5 @@ class VstorNotFound(AbstractMsgFmtError):
 
 
 class VSwitchModeInvalid(AbstractMsgFmtError):
-    msg_fmt = _("The virtual switch mode '%(vs_mode)s' is not valid.")
+    msg_fmt = _("The virtual switch mode '%(vs_mode)s' is not valid."
+                " Valid values are ('veb', 'vepa')")
