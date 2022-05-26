@@ -31,6 +31,7 @@ from pypowervm.wrappers import job
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
+LPAR_ALREADY_POWERED_OFF = 2
 
 # Error codes indicate osshutdown is not supported
 _OSSHUTDOWN_RMC_ERRS = ['HSCL0DB4', 'PVME01050905', 'PVME01050402']
@@ -134,7 +135,7 @@ class PowerOp(object):
                     for err_prefix in _ALREADY_POWERED_OFF_ERRS) and
                     not opts.is_restart):
                 LOG.warning(_("Partition %s already powered off."), part.name)
-                return
+                return LPAR_ALREADY_POWERED_OFF
             LOG.exception(error)
             raise pexc.VMPowerOffFailure(lpar_nm=part.name, reason=emsg)
 

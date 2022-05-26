@@ -304,9 +304,12 @@ BODY{
         <NumberOfInactiveMigrationsInProgress kxe="false" kb="ROR">0</NumberOfInactiveMigrationsInProgress>
         <NumberOfActiveMigrationsInProgress kb="ROR" kxe="false">0</NumberOfActiveMigrationsInProgress>
     </SystemMigrationInformation>
-    <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">false</IsPowerVMManagementMaster>
+    <IsPowerVMManagementMaster ksv="V1_3_0" kxe="false" kb="ROO">false</kart>
+    <IsPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">false</IsPowerVMManagementController>
     <IsManagementPartitionPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsManagementPartitionPowerVMManagementMaster>
+     <IsManagementPartitionPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">false</IsManagementPartitionPowerVMManagementController>
     <IsHMCPowerVMManagementMaster ksv="V1_3_0" kb="ROO" kxe="false">false</IsHMCPowerVMManagementMaster>
+    <IsHMCPowerVMManagementController ksv="V1_12_0" kxe="false" kb="ROO">false</IsHMCPowerVMManagemenController>
     <AssociatedGroups ksv="V1_2_0" kb="ROO" kxe="false"/>
     <AssociatedTasks ksv="V1_2_0" kb="ROO" kxe="false"/>
 </ManagedSystem:ManagedSystem>
