@@ -286,4 +286,5 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @virtual_serial_number.setter
     def virtual_serial_number(self, value):
         """Virtual Serial number"""
-        self.set_parm_value(_LPAR_VIRTUAL_SERIAL_NUM, value)
+        self.set_parm_value(_LPAR_VIRTUAL_SERIAL_NUM, value,
+                            attrib=pc.ATTR_KSV1130)
