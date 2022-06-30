@@ -273,7 +273,7 @@ class TestAdapter(testtools.TestCase):
             'read', 'root_type', None, None, None, None, None, None)
         mock_bld.assert_called_once_with(
             'uom', 'root_type', None, None, None, None, None, None, xag=None,
-            add_qp=None)
+            add_qp=None, topology=None)
         mock_rbp.assert_called_once_with(
             mock_bld.return_value, None, timeout=-1, auditmemento=None, age=-1,
             sensitive=False, helpers=None)
@@ -287,13 +287,14 @@ class TestAdapter(testtools.TestCase):
             suffix_parm='suffix_parm', detail='detail', service='service',
             etag='etag', timeout='timeout', auditmemento='auditmemento',
             age='age', xag='xag', sensitive='sensitive', helpers='helpers',
-            add_qp='add_qp'))
+            add_qp='add_qp', topology='topology'))
         mock_val.assert_called_once_with(
             'read', 'root_type', 'root_id', 'child_type', 'child_id',
             'suffix_type', 'suffix_parm', 'detail')
         mock_bld.assert_called_once_with(
             'service', 'root_type', 'root_id', 'child_type', 'child_id',
-            'suffix_type', 'suffix_parm', 'detail', xag='xag', add_qp='add_qp')
+            'suffix_type', 'suffix_parm', 'detail', xag='xag', add_qp='add_qp',
+            topology='topology')
         mock_rbp.assert_called_once_with(
             mock_bld.return_value, 'etag', timeout='timeout',
             auditmemento='auditmemento', age='age', sensitive='sensitive',
@@ -308,7 +309,7 @@ class TestAdapter(testtools.TestCase):
             'service', 'root_type'))
         mock_exp.assert_called_once_with(
             '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
-            detail=None, xag=None, add_qp=None)
+            detail=None, xag=None, add_qp=None, topology=None)
         # child specs ignored if no root ID
         mock_exp.reset_mock()
         self.assertEqual(mock_exp.return_value, adap.build_path(
@@ -316,25 +317,26 @@ class TestAdapter(testtools.TestCase):
             child_id='child_id'))
         mock_exp.assert_called_once_with(
             '/rest/api/service/root_type', suffix_type=None, suffix_parm=None,
-            detail=None, xag=None, add_qp=None)
+            detail=None, xag=None, add_qp=None, topology=None)
         # child ID ignored if no child type
         mock_exp.reset_mock()
         self.assertEqual(mock_exp.return_value, adap.build_path(
             'service', 'root_type', root_id='root_id', child_id='child_id'))
         mock_exp.assert_called_once_with(
             '/rest/api/service/root_type/root_id', suffix_type=None,
-            suffix_parm=None, detail=None, xag=None, add_qp=None)
+            suffix_parm=None, detail=None, xag=None, add_qp=None,
+            topology=None)
         # Specified kwargs (including full child spec
         mock_exp.reset_mock()
         self.assertEqual(mock_exp.return_value, adap.build_path(
             'service', 'root_type', root_id='root_id', child_type='child_type',
             child_id='child_id', suffix_type='suffix_type',
             suffix_parm='suffix_parm', detail='detail', xag='xag',
-            add_qp='add_qp'))
+            add_qp='add_qp', topology='topology'))
         mock_exp.assert_called_once_with(
             '/rest/api/service/root_type/root_id/child_type/child_id',
             suffix_type='suffix_type', suffix_parm='suffix_parm',
-            detail='detail', xag='xag', add_qp='add_qp')
+            detail='detail', xag='xag', add_qp='add_qp', topology='topology')
 
     @mock.patch('pypowervm.adapter.Adapter._request')
     def test_headers(self, mock_request):
