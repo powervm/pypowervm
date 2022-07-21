@@ -711,7 +711,7 @@ class Adapter(object):
     def read(self, root_type, root_id=None, child_type=None, child_id=None,
              suffix_type=None, suffix_parm=None, detail=None, service='uom',
              etag=None, timeout=-1, auditmemento=None, age=-1, xag=None,
-             sensitive=False, helpers=None, add_qp=None):
+             sensitive=False, helpers=None, add_qp=None, topology=None):
         """Retrieve an existing resource.
 
         Will build the URI path using the provided arguments.
@@ -755,7 +755,7 @@ class Adapter(object):
                        suffix_type, suffix_parm, detail)
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
-                               xag=xag, add_qp=add_qp)
+                               xag=xag, add_qp=add_qp, topology=topology)
         return self.read_by_path(path, etag, timeout=timeout,
                                  auditmemento=auditmemento, age=age,
                                  sensitive=sensitive, helpers=helpers)
@@ -949,7 +949,7 @@ class Adapter(object):
     @classmethod
     def build_path(cls, service, root_type, root_id=None, child_type=None,
                    child_id=None, suffix_type=None, suffix_parm=None,
-                   detail=None, xag=None, add_qp=None):
+                   detail=None, xag=None, add_qp=None, topology=None):
         path = c.API_BASE_PATH + service + '/' + root_type
         if root_id:
             path += '/' + root_id
@@ -959,11 +959,11 @@ class Adapter(object):
                     path += '/' + child_id
         return cls.extend_path(path, suffix_type=suffix_type,
                                suffix_parm=suffix_parm, detail=detail,
-                               xag=xag, add_qp=add_qp)
+                               xag=xag, add_qp=add_qp, topology=topology)
 
     @staticmethod
     def extend_path(basepath, suffix_type=None, suffix_parm=None, detail=None,
-                    xag=None, add_qp=None):
+                    xag=None, add_qp=None, topology=None):
         """Extend a base path with zero or more of suffix, detail, and xag.
 
         :param basepath: The path string to be extended.
@@ -988,6 +988,11 @@ class Adapter(object):
                 path = util.extend_basepath(path, '/' + suffix_parm)
         if detail:
             path += ('&' if '?' in path else '?') + 'detail=' + detail
+
+        # Hack to query only relevent information in case of short query
+        # to improve pvmctl vea list performance
+        if ((topology) and ('ClientNetworkAdapter' in path)):
+            path += ('&' if '?' in path else '?') + 'topology=' + topology
 
         # Explicit xag is always honored as-is.  If unspecified, we usually
         # want to include group=None.  However, there are certain classes of
