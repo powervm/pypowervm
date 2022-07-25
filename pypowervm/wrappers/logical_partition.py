@@ -19,6 +19,7 @@
 from oslo_log import log as logging
 
 import pypowervm.const as pc
+import pypowervm.exceptions as ex
 from pypowervm.i18n import _
 import pypowervm.util as u
 import pypowervm.wrappers.base_partition as bp
@@ -254,6 +255,8 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
 
     @restrictedio.setter
     def restrictedio(self, value):
+        if self.env != bp.LPARType.OS400:
+            ex.AttributeInvalidForAixLinux(attr_name="restrictedio")
         self.set_parm_value(_LPAR_RESTRICTED_IO,
                             u.sanitize_bool_for_api(value))
 
