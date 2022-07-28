@@ -1112,6 +1112,8 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
     @max_virtual.setter
     def max_virtual(self, val):
+        u.convertAndValidateStrToInt(attr='max_virtual', value=val,
+                                     checkForPostiveValue=True)
         self.set_parm_value(_SPC_MAX_VIRT_PROC, val)
 
     @property
