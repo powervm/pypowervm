@@ -25,6 +25,12 @@ Requires: python3-future
 Requires: python3-taskflow
 Requires: python3-oslo-context
 
+%post
+rm -rf /usr/bin/python
+rm -rf /usr/bin/python3
+ln -s /usr/bin/python3.9 /usr/bin/python
+ln -s /usr/bin/python3.9 /usr/bin/python3
+
 %description
 Python API wrapper for PowerVM
 
