@@ -242,18 +242,6 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter(
             "virtual_serial_number", "ABC0001", 'none')
 
-    @mock.patch('warnings.warn')
-    def test_rr_off(self, mock_warn):
-        """Remote Restart fields when not RR capable."""
-        self.call_simple_getter("rr_enabled", None, None)
-        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
-        mock_warn.reset_mock()
-        self._shared_wrapper.rr_enabled = True
-        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
-        mock_warn.reset_mock()
-        self.call_simple_getter("rr_enabled", None, None)
-        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
-
     def test_srr(self):
         self.call_simple_getter("srr_enabled", True, False)
         self._shared_wrapper.srr_enabled = False
@@ -622,17 +610,6 @@ class TestIBMiSpecific(twrap.TestWrapper):
             'Atom/></uom:Metadata><uom:AlternateLoadSource>NONE</uom:Alternate'
             'LoadSource><uom:Console>HMC</uom:Console><uom:LoadSource>0</uom:L'
             'oadSource></uom:TaggedIO>'.encode('utf-8'), new_tio.toxmlstring())
-
-    @mock.patch('warnings.warn')
-    def test_rr_real_values(self, mock_warn):
-        """Test Remote Restart fields when RR capable."""
-        # Testing this under IBMi because the IBMi payload file happens to have
-        # real data to use.
-        self.assertIsNone(self.dwrap.rr_enabled)
-        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
-        mock_warn.reset_mock()
-        self.assertIsNone(self.dwrap.rr_state)
-        mock_warn.assert_called_with(mock.ANY, DeprecationWarning)
 
 
 class TestPartitionIOConfiguration(twrap.TestWrapper):

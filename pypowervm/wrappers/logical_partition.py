@@ -211,32 +211,6 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         return self._get_val_str(_LPAR_MIG_STATE, 'Not_Migrating')
 
     @property
-    def rr_enabled(self):
-        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
-        import warnings
-        warnings.warn(_("This is not the property you are looking for.  Use "
-                        "srr_enabled in a NovaLink environment."),
-                      DeprecationWarning)
-        return None
-
-    @rr_enabled.setter
-    def rr_enabled(self, value):
-        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
-        import warnings
-        warnings.warn(_("This is not the property you are looking for.  Use "
-                        "srr_enabled in a NovaLink environment."),
-                      DeprecationWarning)
-
-    @property
-    def rr_state(self):
-        """Deprecated (n/a for NovaLink) - use srr_enabled instead."""
-        import warnings
-        warnings.warn(_("This is not the property you are looking for.  Use "
-                        "srr_enabled in a NovaLink environment."),
-                      DeprecationWarning)
-        return None
-
-    @property
     def srr_enabled(self):
         """Simplied remote restart.
 
