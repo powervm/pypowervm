@@ -230,7 +230,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @restrictedio.setter
     def restrictedio(self, value):
         if self.env != bp.LPARType.OS400:
-            ex.AttributeInvalidForAixLinux(attr_name="restrictedio")
+            raise ex.AttributeInvalidForAixLinux(attr_name="restrictedio")
         self.set_parm_value(_LPAR_RESTRICTED_IO,
                             u.sanitize_bool_for_api(value))
 
