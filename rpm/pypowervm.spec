@@ -18,7 +18,7 @@ Requires: python3-pbr
 Requires: python3-pyasn1-modules
 Requires: python3-pyasn1
 Requires: python3-requests
-Requires: python3-six >= 1.16.0-1
+Requires: python39-six >= 1.16.0-1
 Requires: python3-oslo-concurrency
 Requires: python3-pytz
 Requires: python3-future
