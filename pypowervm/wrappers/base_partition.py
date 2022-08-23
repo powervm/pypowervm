@@ -1232,6 +1232,9 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 
     @max_virtual_slots.setter
     def max_virtual_slots(self, value):
+        u.convertAndValidateStrToInt(attr='max_virtual_slots', value=value,
+                                     checkForPostiveValue=True,
+                                     checkForMaxValue=True, maxValue=32767)
         self.set_parm_value(_IO_MAX_SLOTS, value)
 
     @property
