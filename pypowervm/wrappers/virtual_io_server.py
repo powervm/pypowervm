@@ -384,11 +384,13 @@ class VIOS(bp.BasePartition):
 
     @ewrap.Wrapper.xag_property(c.XAG.VIO_NET)
     def io_adpts_for_link_agg(self):
-        es = ewrap.WrapperElemList(
-            self._find_or_seed(_VIO_FREE_IO_ADPTS_FOR_LNAGG,
-                               attrib=u.xag_attrs(c.XAG.VIO_NET)),
-            LinkAggrIOAdapterChoice)
-        return es
+        vioFreeIo = self._find(_VIO_FREE_IO_ADPTS_FOR_LNAGG)
+        if vioFreeIo:
+            es = ewrap.WrapperElemList(
+                self._find_or_seed(_VIO_FREE_IO_ADPTS_FOR_LNAGG,
+                                   attrib=u.xag_attrs(c.XAG.VIO_NET)),
+                LinkAggrIOAdapterChoice)
+            return es
 
     def can_lpm(self, host_w, migr_data=None):
         """Determines if a partition is ready for Live Partition Migration.
