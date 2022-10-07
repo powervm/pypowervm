@@ -28,9 +28,7 @@ Requires: python39-six
 
 %post
 rm -rf /usr/bin/python
-rm -rf /usr/bin/python3
 ln -s /usr/bin/python3.9 /usr/bin/python
-ln -s /usr/bin/python3.9 /usr/bin/python3
 
 %description
 Python API wrapper for PowerVM
