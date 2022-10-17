@@ -54,7 +54,7 @@ def delete_vsn(vsn):
         raise
 
 
-def transfer_vsn(vsn, mgmt_usr, mgmt_svr):
+def transfer_vsn(vsn, mgmt_usr, mgmt_svr, sys):
     """Transfer VSN from systemi to other system.
 
     Note: The job will transfer given VNS .
@@ -69,7 +69,7 @@ def transfer_vsn(vsn, mgmt_usr, mgmt_svr):
     job_w = pvm_job.Job.wrap(resp.entry)
     job_p = [job_w.create_job_parameter('VirtualSerialNumber', vsn)]
     job_p.append(job_w.create_job_parameter('TargetManagedSystem',
-                 mgmt_svr))
+                 sys))
     job_p.append(job_w.create_job_parameter('UserName',
                  mgmt_usr))
     job_p.append(job_w.create_job_parameter('Host',
