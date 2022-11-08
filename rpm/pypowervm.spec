@@ -10,7 +10,7 @@ Packager: IBM
 URL: http://github.com/powervm/pypowervm
 Vendor: IBM Corp.
 Requires: python39
-Requires: python39-lxml
+Requires: python3-lxml
 Requires: python3-oslo-i18n
 Requires: python3-oslo-log
 Requires: python3-oslo-utils
@@ -24,7 +24,7 @@ Requires: python3-future
 Requires: python3-taskflow
 Requires: python3-oslo-context
 Requires: python3-six
-Requires: python39-six
+
 
 %post
 rm -rf /usr/bin/python
