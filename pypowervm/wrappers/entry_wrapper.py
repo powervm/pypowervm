@@ -793,7 +793,7 @@ class EntryWrapper(Wrapper):
                  appropriate type is returned.
         """
         etag = self.etag if use_etag else None
-        resp = self.adapter.read_by_href(self.href, etag=etag)
+        resp = self.adapter.read_by_href(self.href, etag=etag, xag="")
         if resp.status == pc.HTTPStatus.NO_CHANGE:
             return self
         return self.wrap(resp)
