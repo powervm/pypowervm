@@ -1112,6 +1112,8 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
     @max_virtual.setter
     def max_virtual(self, val):
+        u.convertAndValidateStrToInt(attr='max_virtual', value=val,
+                                     checkForPostiveValue=True)
         self.set_parm_value(_SPC_MAX_VIRT_PROC, val)
 
     @property
@@ -1230,6 +1232,9 @@ class PartitionIOConfiguration(ewrap.ElementWrapper):
 
     @max_virtual_slots.setter
     def max_virtual_slots(self, value):
+        u.convertAndValidateStrToInt(attr='max_virtual_slots', value=value,
+                                     checkForPostiveValue=True,
+                                     checkForMaxValue=True, maxValue=32767)
         self.set_parm_value(_IO_MAX_SLOTS, value)
 
     @property

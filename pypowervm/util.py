@@ -404,6 +404,35 @@ def sanitize_partition_name_for_api(name, trunc_ok=True):
     return re.sub(r'[^- !#%+,./0-9:;=@A-Z^_a-z{}]', '_', name)[:max_len]
 
 
+def convertAndValidateStrToInt(attr, value, checkForPostiveValue=False,
+                               checkForMaxValue=False, maxValue=0):
+    """Convert the string into it and returns the same.
+
+    If value is not integer then throw the exception.
+
+    :param attr: The attribute or element name.
+    :param value: the attribute or element value.
+    :param checkForPostiveValue: If its not none then check for postive value
+    """
+    valueInt = value
+    try:
+        valueInt = int(value)
+    except ValueError:
+        raise ValueError(_("The value '%(attr_val)s' of  '%(attr_name)s'"
+                           " is not valid.") %
+                         {'attr_val': value, 'attr_name': attr})
+
+    if checkForPostiveValue and valueInt < 0:
+        raise ValueError(_("The Value of '%(attr_name)s' should be "
+                           "greater than 0.") %
+                         {'attr_name': attr})
+
+    if checkForMaxValue and valueInt > maxValue:
+        raise ValueError(_("The Value of '%(attr_name)s' should not "
+                           "exceed  '%(max_val)s'.") %
+                         {'attr_name': attr, 'max_val': maxValue})
+
+
 def find_equivalent(elem, find_list):
     """Returns the element from the list that is equal to the one passed in.
 

@@ -9,6 +9,7 @@ License: IBM Corp.
 Packager: IBM
 URL: http://github.com/powervm/pypowervm
 Vendor: IBM Corp.
+Requires: python39
 Requires: python3-lxml
 Requires: python3-oslo-i18n
 Requires: python3-oslo-log
@@ -17,12 +18,17 @@ Requires: python3-pbr
 Requires: python3-pyasn1-modules
 Requires: python3-pyasn1
 Requires: python3-requests
-Requires: python3-six
 Requires: python3-oslo-concurrency
 Requires: python3-pytz
 Requires: python3-future
 Requires: python3-taskflow
 Requires: python3-oslo-context
+Requires: python3-six
+
+
+%post
+rm -rf /usr/bin/python
+ln -s /usr/bin/python3.9 /usr/bin/python
 
 %description
 Python API wrapper for PowerVM
@@ -37,7 +43,7 @@ python setup.py install --no-compile --root=$RPM_BUILD_ROOT --install-lib=/usr/l
 find $RPM_BUILD_ROOT/usr/lib/$PYVERSION/site-packages -type f -name "*.pyc" -delete
 for lc in $(ls -d pypowervm/locale/*/ | cut -f3 -d'/'); do
     mkdir -p $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES
-    python setup.py compile_catalog -f --input-file $RPM_SOURCE_DIR/pypowervm/locale/$lc/pypowervm.po --output-file $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES/pypowervm.mo
+    python3.6 setup.py compile_catalog -f --input-file $RPM_SOURCE_DIR/pypowervm/locale/$lc/pypowervm.po --output-file $RPM_BUILD_ROOT/usr/share/locale/$lc/LC_MESSAGES/pypowervm.mo
 done
 
 

@@ -55,6 +55,7 @@ class TestMigration(testtools.TestCase):
                      (mig.DEST_MSP, '1.1.1.1,2.2.2.2'),
                      (mig.SRC_MSP, '3.3.3.3,4.4.4.4'),
                      (mig.SPP_ID, '5'),
+                     (mig.PMEM_VOLUMES, 'vol1/vol2,vol1/vol2'),
                      (mig.OVS_OVERRIDE, '2'),
                      (mig.VLAN_BRIDGE_OVERRIDE, '2')]
         mapping_list = [(mig.VFC_MAPPINGS, ['1/1/1', '3/3/3//3']),
@@ -73,7 +74,8 @@ class TestMigration(testtools.TestCase):
                                         '001122334466/5/6 7'],
                          dest_msp_name='1.1.1.1,2.2.2.2',
                          source_msp_name='3.3.3.3,4.4.4.4',
-                         spp_id='5', sdn_override=True,
+                         spp_id='5', pmem_volumes='vol1/vol2,vol1/vol2',
+                         sdn_override=True,
                          vlan_check_override=True)
         self.adpt.read.assert_called_once_with('LogicalPartition', '1234',
                                                suffix_parm='Migrate',

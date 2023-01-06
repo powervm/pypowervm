@@ -75,6 +75,8 @@ _DED_PROC_POOL_CAP = u.xpath(
     _SYS_CAPABILITIES, 'DedicatedProcessorPartitionCapable')
 _PERSISTENT_MEM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'PersistentMemoryCapable')
+_VIRTUAL_SERIAL_NUM_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'VirtualSerialNumberCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -140,7 +142,9 @@ _CAPABILITY_MAP = {
     'dedicated_processor_partition_capable': {
         'prop': _DED_PROC_POOL_CAP, 'default': True},
     'PersistentMemoryCapable': {
-        'prop': _PERSISTENT_MEM_CAPABLE, 'default': False}
+        'prop': _PERSISTENT_MEM_CAPABLE, 'default': False},
+    'VirtualSerialNumberCapable': {
+        'prop': _VIRTUAL_SERIAL_NUM_CAPABLE, 'default': False}
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'

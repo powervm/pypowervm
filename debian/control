@@ -3,12 +3,12 @@ Section: python
 Priority: optional
 Maintainer: Eric P. Fried <efried@us.ibm.com>
 Build-Depends: debhelper(>= 9)
-Standards-Version: 3.9.5
+Standards-Version: 3.9.7
 Homepage: http://github.com/powervm/pypowervm
 
 Package: pypowervm
 Section: python
 Priority: optional
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, linuxvnc(>=0.9.9), python3-lxml, python3-oslo.i18n, python3-oslo.log , python3-oslo.utils , python3-pbr , python3-pyasn1-modules , python3-pyasn1 , python3-requests , python3-six , python3-oslo.concurrency , python3-tz, python3-future, python3-taskflow , python3-oslo.context , python3-pyrsistent , python3-zipp
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3.9, linuxvnc(>=0.9.9), python39-lxml, python3-oslo.i18n, python3-oslo.log , python3-oslo.utils , python3-pbr , python39-pyasn1-modules , python3-pyasn1 , python3-requests , python3-six , python3-oslo.concurrency , python3-tz, python3-future, python3-taskflow , python3-oslo.context , python3-pyrsistent , python3-zipp, python39-decorator, python39-fasteners, python39-netifaces, python3-dateutil, python3-jsonschema, python3-monotonic
 Description: Python API wrapper for PowerVM

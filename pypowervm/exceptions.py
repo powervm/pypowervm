@@ -441,3 +441,8 @@ class VstorNotFound(AbstractMsgFmtError):
 
 class VSwitchModeInvalid(AbstractMsgFmtError):
     msg_fmt = _("The virtual switch mode '%(vs_mode)s' is not valid.")
+
+
+class AttributeInvalidForAixLinux(AbstractMsgFmtError):
+    msg_fmt = _("The attribute '%(attr_name)s' is not valid for "
+                "AIX/Linux partition.")

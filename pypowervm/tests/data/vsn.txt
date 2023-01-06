@@ -1,0 +1,108 @@
+INFO{
+{'comment': None, 'status': 200, 'pw': 'abc123', 'reason': 'OK', 'host': '9.1.2.3', 'user': 'hscroot', 'path': 'ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation'}
+END OF SECTION}
+HEADERS{
+{'x-powered-by': 'Servlet/3.0', 'transfer-encoding': 'chunked', 'set-cookie': 'JSESSIONID=0000xpnw0wcrfjvFxAa4Dl1ZxW0:a034238f-7921-42e3-862d-89cae58dc68a; Path=/; HttpOnly', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'last-modified': 'Wed, 31 Jul 2013 17:26:12 GMT', 'etag': '798417269', 'cache-control': 'no-transform, must-revalidate, proxy-revalidate, no-cache=set-cookie', 'date': 'Wed, 31 Jul 2013 17:26:16 GMT', 'content-type': 'application/atom+xml'}
+END OF SECTION}
+BODY{
+
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:ns2="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns3="http://www.w3.org/1999/xhtml">
+    <id>18f6bd17-93f9-3d11-b637-196c6cb4fa11</id>
+    <updated>2022-06-09T04:10:18.158-04:00</updated>
+    <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation"/>
+    <generator>IBM Power Systems Management Console</generator>
+    <entry>
+        <id>2b6e762e-d891-3585-812e-b0b14bad7cfa</id>
+        <title>VirtualSerialNumberInformation</title>
+        <published>2022-06-09T04:10:18.162-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation/2b6e762e-d891-3585-812e-b0b14bad7cfa"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1060586589</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSerialNumberInformation">
+            <VirtualSerialNumberInformation:VirtualSerialNumberInformation xmlns:VirtualSerialNumberInformation="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_11_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>2b6e762e-d891-3585-812e-b0b14bad7cfa</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <VirtualSerialNumber ksv="V1_13_0" kxe="false" kb="ROR">ZCE0HF0</VirtualSerialNumber>
+                <AssociatedPartitionId ksv="V1_13_0" kb="ROR" kxe="false">65535</AssociatedPartitionId>
+                <IsAutoAssignCapable ksv="V1_13_0" kb="ROR" kxe="false">true</IsAutoAssignCapable>
+            </VirtualSerialNumberInformation:VirtualSerialNumberInformation>
+        </content>
+    </entry>
+    <entry>
+        <id>26a7751f-c041-3feb-b8e5-cc5615565d4e</id>
+        <title>VirtualSerialNumberInformation</title>
+        <published>2022-06-09T04:10:18.163-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation/26a7751f-c041-3feb-b8e5-cc5615565d4e"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1986651907</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSerialNumberInformation">
+            <VirtualSerialNumberInformation:VirtualSerialNumberInformation xmlns:VirtualSerialNumberInformation="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_11_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>26a7751f-c041-3feb-b8e5-cc5615565d4e</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <VirtualSerialNumber ksv="V1_13_0" kxe="false" kb="ROR">WXYZHF0</VirtualSerialNumber>
+                <AssociatedPartitionId ksv="V1_13_0" kb="ROR" kxe="false">65535</AssociatedPartitionId>
+                <IsAutoAssignCapable ksv="V1_13_0" kb="ROR" kxe="false">true</IsAutoAssignCapable>
+            </VirtualSerialNumberInformation:VirtualSerialNumberInformation>
+        </content>
+    </entry>
+    <entry>
+        <id>0b5797fe-e0e6-3a16-b247-b855babc284b</id>
+        <title>VirtualSerialNumberInformation</title>
+        <published>2022-06-09T04:10:18.164-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation/0b5797fe-e0e6-3a16-b247-b855babc284b"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1064944627</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSerialNumberInformation">
+            <VirtualSerialNumberInformation:VirtualSerialNumberInformation xmlns:VirtualSerialNumberInformation="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_11_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>0b5797fe-e0e6-3a16-b247-b855babc284b</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <VirtualSerialNumber ksv="V1_13_0" kxe="false" kb="ROR">ZCE0HD0</VirtualSerialNumber>
+                <AssociatedPartitionId ksv="V1_13_0" kb="ROR" kxe="false">65535</AssociatedPartitionId>
+                <IsAutoAssignCapable ksv="V1_13_0" kb="ROR" kxe="false">true</IsAutoAssignCapable>
+            </VirtualSerialNumberInformation:VirtualSerialNumberInformation>
+        </content>
+    </entry>
+    <entry>
+        <id>9969c402-91c2-3234-b8bd-6a2926cacbcf</id>
+        <title>VirtualSerialNumberInformation</title>
+        <published>2022-06-09T04:10:18.165-04:00</published>
+        <link rel="SELF" href="https://9.1.2.3:12443/rest/api/uom/ManagedSystem/c5d782c7-44e4-3086-ad15-b16fb039d63b/VirtualSerialNumberInformation/9969c402-91c2-3234-b8bd-6a2926cacbcf"/>
+        <author>
+            <name>IBM Power Systems Management Console</name>
+        </author>
+        <etag:etag xmlns:etag="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/">-1991009945</etag:etag>
+        <content type="application/vnd.ibm.powervm.uom+xml; type=VirtualSerialNumberInformation">
+            <VirtualSerialNumberInformation:VirtualSerialNumberInformation xmlns:VirtualSerialNumberInformation="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2" schemaVersion="V1_11_0">
+                <Metadata>
+                    <Atom>
+                        <AtomID>9969c402-91c2-3234-b8bd-6a2926cacbcf</AtomID>
+                        <AtomCreated>0</AtomCreated>
+                    </Atom>
+                </Metadata>
+                <VirtualSerialNumber ksv="V1_13_0" kxe="false" kb="ROR">WXYZHD0</VirtualSerialNumber>
+                <AssociatedPartitionId ksv="V1_13_0" kb="ROR" kxe="false">65535</AssociatedPartitionId>
+                <IsAutoAssignCapable ksv="V1_13_0" kb="ROR" kxe="false">true</IsAutoAssignCapable>
+            </VirtualSerialNumberInformation:VirtualSerialNumberInformation>
+        </content>
+    </entry>
+</feed>
+
+END OF SECTION}

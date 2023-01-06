@@ -1,4 +1,4 @@
-# Copyright 2015, 2018 IBM Corp.
+# Copyright 2015, 2018 IBM Corp
 #
 # All Rights Reserved.
 #
@@ -39,6 +39,7 @@ VLAN_MAPPINGS = 'VlanMappings'
 DEST_MSP = 'DestMSPIPaddr'
 SRC_MSP = 'SourceMSPIPaddr'
 SPP_ID = 'SharedProcPoolID'
+PMEM_VOLUMES = 'PMEMVolumes'
 OVS_OVERRIDE = 'OVSOverride'
 VLAN_BRIDGE_OVERRIDE = 'VLANBridgeOverride'
 AFFINITY = 'Affinity'
@@ -50,7 +51,8 @@ def migrate_lpar(
         lpar, tgt_mgd_sys, validate_only=False, tgt_mgmt_svr=None,
         tgt_mgmt_usr=None, virtual_fc_mappings=None,
         virtual_scsi_mappings=None, dest_msp_name=None, source_msp_name=None,
-        spp_id=None, timeout=CONF.pypowervm_job_request_timeout * 4,
+        spp_id=None, pmem_volumes=None,
+        timeout=CONF.pypowervm_job_request_timeout * 4,
         sdn_override=False, vlan_check_override=False, vlan_mappings=None,
         check_affinity_score=False):
     """Method to migrate a logical partition.
@@ -73,6 +75,8 @@ def migrate_lpar(
     :param source_msp_name: A comma-separated list of source VIOS IP addresses
         identifying which interface(s) the Mover Service Partition should use.
     :param spp_id: The shared processor pool id to use on the target system.
+    :param pmem_volumes: The Persistent Memory Volumes to use overrides the
+                         volume name
     :param timeout: maximum number of seconds for job to complete
     :param sdn_override: (Optional, Default: False) If set to True, will allow
                          a migration where the networking is hosted on a non-
@@ -161,7 +165,8 @@ def migrate_lpar(
     # Generic 'raw' format job parameters.
     for kw, val in [(TGT_RMT_HMC, tgt_mgmt_svr),
                     (TGT_RMT_HMC_USR, tgt_mgmt_usr), (DEST_MSP, dest_msp_name),
-                    (SRC_MSP, source_msp_name), (SPP_ID, spp_id)]:
+                    (SRC_MSP, source_msp_name), (SPP_ID, spp_id),
+                    (PMEM_VOLUMES, pmem_volumes)]:
         if val:
             job_parms.append(
                 job_wrapper.create_job_parameter(kw, str(val)))
