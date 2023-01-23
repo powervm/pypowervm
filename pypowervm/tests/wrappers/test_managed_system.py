@@ -280,7 +280,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'partition_secure_boot_capable': True,
                     'dedicated_processor_partition_capable': True,
                     'PersistentMemoryCapable': False,
-                    'VirtualSerialNumberCapable': False}
+                    'VirtualSerialNumberCapable': False,
+                    'PartitionKeyStoreCapable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -303,7 +304,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'partition_secure_boot_capable': False,
                    'dedicated_processor_partition_capable': True,
                    'PersistentMemoryCapable': False,
-                   'VirtualSerialNumberCapable': False}
+                   'VirtualSerialNumberCapable': False,
+                   'PartitionKeyStoreCapable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -345,7 +347,8 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'affinity_check_capable': True,
                          'dedicated_processor_partition_capable': True,
                          'PersistentMemoryCapable': False,
-                         'VirtualSerialNumberCapable': False}
+                         'VirtualSerialNumberCapable': False,
+                         'PartitionKeyStoreCapable': False}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %
@@ -356,6 +359,12 @@ class TestMSEntryWrapper(unittest.TestCase):
 
     def test_processor_is_throttled(self):
         self.call_simple_getter("processor_is_throttled", True, False)
+
+    def test_lpar_keystore_min_kbytes(self):
+        self.call_simple_getter("lpar_keystore_min_kbytes", 4, 0)
+
+    def test_lpar_keystore_max_kbytes(self):
+        self.call_simple_getter("lpar_keystore_max_kbytes", 64, 0)
 
 
 class TestMTMS(unittest.TestCase):
