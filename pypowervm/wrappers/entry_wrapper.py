@@ -1,4 +1,4 @@
-# Copyright 2014, 2017 IBM Corp.
+# Copyright 2014, 2017 IBM Corp
 #
 # All Rights Reserved.
 #
@@ -793,7 +793,10 @@ class EntryWrapper(Wrapper):
                  appropriate type is returned.
         """
         etag = self.etag if use_etag else None
-        resp = self.adapter.read_by_href(self.href, etag=etag)
+        if 'group=None' in self.href:
+            resp = self.adapter.read_by_href(self.href, etag=etag, xag="")
+        else:
+            resp = self.adapter.read_by_href(self.href, etag=etag)
         if resp.status == pc.HTTPStatus.NO_CHANGE:
             return self
         return self.wrap(resp)
