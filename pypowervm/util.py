@@ -428,9 +428,8 @@ def convertAndValidateStrToInt(attr, value, checkForPostiveValue=False,
                          {'attr_name': attr})
 
     if checkForMaxValue and valueInt > maxValue:
-        raise ValueError(_("The Value of '%(attr_name)s' should not "
-                           "exceed  '%(max_val)s'.") %
-                         {'attr_name': attr, 'max_val': maxValue})
+        raise ValueError(_("The Value of '%(attr_name)s' is invalid.") %
+                         {'attr_name': attr})
 
 
 def find_equivalent(elem, find_list):

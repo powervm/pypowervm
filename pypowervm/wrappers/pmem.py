@@ -257,6 +257,8 @@ class VirtualPMEMVolume(ewrap.EntryWrapper, ewrap.WrapperSetUUIDMixin):
 
     @assoc_partition_id.setter
     def assoc_partition_id(self, value):
+        u.convertAndValidateStrToInt(attr='Partition ID', value=value,
+                                     checkForPostiveValue=True)
         return self.set_parm_value(_VIRT_PMEM_VOL_ASC_PARTID, value,
                                    attrib=c.ATTR_KSV1100)
 

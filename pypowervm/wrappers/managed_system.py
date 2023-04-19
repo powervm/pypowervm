@@ -39,6 +39,8 @@ _CONTROLLER_MODE = 'IsPowerVMManagementController'
 _PROC_THROTTLE = 'ProcessorThrottling'
 _METER_POOL_ID = 'MeteredPoolID'
 _SUPPORTED_IBMI_CONSOLE_CODEPAGE = 'SupportedIBMiConsoleCodePage'
+_MINIMUM_KEY_STORE_SIZE = 'MinimumKeyStoreSize'
+_MAXIMUM_KEY_STORE_SIZE = 'MaximumkeyStoreSize'
 
 _SYS_CAPABILITIES = 'AssociatedSystemCapabilities'
 _ACTIVE_LPM_CAP = u.xpath(
@@ -77,6 +79,8 @@ _PERSISTENT_MEM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'PersistentMemoryCapable')
 _VIRTUAL_SERIAL_NUM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'VirtualSerialNumberCapable')
+_PARTITION_KEY_STORE_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'PartitionKeyStoreCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -144,7 +148,9 @@ _CAPABILITY_MAP = {
     'PersistentMemoryCapable': {
         'prop': _PERSISTENT_MEM_CAPABLE, 'default': False},
     'VirtualSerialNumberCapable': {
-        'prop': _VIRTUAL_SERIAL_NUM_CAPABLE, 'default': False}
+        'prop': _VIRTUAL_SERIAL_NUM_CAPABLE, 'default': False},
+    'PartitionKeyStoreCapable': {
+        'prop': _PARTITION_KEY_STORE_CAPABLE, 'default': False}
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
@@ -155,6 +161,7 @@ _MEMORY_REGION_SIZE = u.xpath(_SYS_MEM_CONFIG, 'MemoryRegionSize')
 _SYS_FIRMWARE_MEM = u.xpath(_SYS_MEM_CONFIG, 'MemoryUsedByHypervisor')
 _PAGE_TABLE_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultHardwarePageTableRatio')
 _DEFAULT_PPT_RATIO = u.xpath(_SYS_MEM_CONFIG, 'DefaultPhysicalPageTableRatio')
+
 
 _ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
 _MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
@@ -209,6 +216,7 @@ _ASIO_IOSLOTS = 'IOSlots'
 _ASIO_SRIOVS = 'SRIOVAdapters'
 _ASIO_ASVNET = 'AssociatedSystemVirtualNetwork'
 _ASIO_WWPN_PREFIX = 'WWPNPrefix'
+
 
 _IOSLOT_ROOT = 'IOSlot'
 _IOSLOT_BUS_GRP_REQ = 'BusGroupingRequired'
@@ -489,6 +497,14 @@ class System(ewrap.EntryWrapper):
     @property
     def supported_pmem_vol_devtypes(self):
         return self._get_val_str(_SUPP_PMEM_VOLUME_DEVTYPE)
+
+    @property
+    def lpar_keystore_min_kbytes(self):
+        return self._get_val_int(_MINIMUM_KEY_STORE_SIZE, 0)
+
+    @property
+    def lpar_keystore_max_kbytes(self):
+        return self._get_val_int(_MAXIMUM_KEY_STORE_SIZE, 0)
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)

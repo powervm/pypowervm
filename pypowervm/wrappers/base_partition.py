@@ -597,16 +597,6 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         self.set_parm_value(_BP_AVAIL_PRIORITY, value)
 
     @property
-    def profile_sync(self):
-        return self._get_val_str(_BP_PROFILE_SYNC, default='Off') == 'On'
-
-    @profile_sync.setter
-    def profile_sync(self, value):
-        if type(value) == bool:
-            value = 'On' if value else 'Off'
-        self.set_parm_value(_BP_PROFILE_SYNC, value)
-
-    @property
     def proc_compat_mode(self):
         """*Current* processor compatibility mode.
 

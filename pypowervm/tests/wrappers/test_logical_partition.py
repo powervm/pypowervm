@@ -242,6 +242,9 @@ class TestLogicalPartition(testtools.TestCase):
         self.call_simple_getter(
             "virtual_serial_number", "ABC0001", 'none')
 
+    def test_keystore_kbytes(self):
+        self.call_simple_getter("keystore_kbytes", 4, 0)
+
     def test_srr(self):
         self.call_simple_getter("srr_enabled", True, False)
         self._shared_wrapper.srr_enabled = False

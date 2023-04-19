@@ -1,4 +1,4 @@
-####################################################
+#####################################################
 # THIS IS AN AUTOMATICALLY GENERATED FILE
 # DO NOT EDIT. ANY EDITS WILL BE LOST ON NEXT UPDATE
 #
@@ -128,6 +128,8 @@ BODY{
         <PartitionSecureBootCapable ksv="V1_8_0" kb="ROO" kxe="false">true</PartitionSecureBootCapable>
         <IOSlotOwnerAssignmentCapable ksv="V1_6_0" kxe="false" kb="ROO">true</IOSlotOwnerAssignmentCapable>
         <DedicatedProcessorPartitionCapable ksv="V1_8_0" kb="ROO" kxe="false">true</DedicatedProcessorPartitionCapable>
+        <MinimumKeyStoreSize ksv="V1_13_1" kb="ROO" kxe="false">4</MinimumKeyStoreSize>
+        <MaximumKeyStoreSize ksv="V1_13_1" kb="ROO" kxe="false">64</MaximumKeyStoreSize>
     </AssociatedSystemCapabilities>
     <AssociatedSystemIOConfiguration kb="CUD" kxe="false" schemaVersion="V1_0">
         <Metadata>
