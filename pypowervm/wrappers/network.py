@@ -859,8 +859,10 @@ class TrunkAdapter(ewrap.ElementWrapper):
 class LoadGroup(ewrap.ElementWrapper):
     """Load Group (how the I/O load should be distributed) for a Network Bridge.
 
-    If using failover or load balancing, then the Load Group will have pairs of
-    Trunk Adapters, each with their own unique Trunk Priority.
+
+    If using failover or load balancing,
+    then the Load Group will have pairs of Trunk Adapters,
+    each with their own unique Trunk Priority.
     """
 
     @classmethod
