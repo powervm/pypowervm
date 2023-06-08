@@ -20,7 +20,7 @@ def no_log_warn(logical_line, filename):
 
     """
     if logical_line.startswith('LOG.warn('):
-        yield(0, 'P301 Use LOG.warning() rather than LOG.warn()')
+        yield (0, 'P301 Use LOG.warning() rather than LOG.warn()')
 
 
 def factory(register):
