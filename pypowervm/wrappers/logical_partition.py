@@ -83,6 +83,58 @@ class IPLSrc(object):
     ALL_VALUES = (A, B, C, D, UNKNOWN)
 
 
+class netInsType(object):
+    """Valid type of IBMi install.
+
+    Valid values for:
+    - LPAR.inst_type
+    """
+    KEY = 'InstType'
+    NFS = 'nfs'
+    ISCSI = 'iscsi'
+    ALL_VALUES = (NFS, ISCSI)
+
+
+class netDuplex(object):
+    """Valid duplex of IBMi install.
+
+    Valid values for:
+    - LPAR.duplex
+    """
+    KEY = 'Duplex'
+    DUPLEX_AUTO = 'auto'
+    DUPLEX_HALF = 'half'
+    DUPLEX_FULL = 'full'
+    ALL_VALUES = (DUPLEX_AUTO, DUPLEX_HALF, DUPLEX_FULL)
+
+
+class netInstMtu(object):
+    """Valid MTU of IBMi install.
+
+    Valid values for:
+    - LPAR.mtu
+    """
+    KEY = 'InstMtu'
+    OPT1500 = '1500'
+    OPT9000 = '9000'
+    ALL_VALUES = (OPT1500, OPT9000)
+
+
+class netSpeed(object):
+    """Valid network speed for IBMi install.
+
+    Valid values for:
+    - LPAR.speed
+    """
+    KEY = 'netSpeed'
+    AUTO = 'auto'
+    OPT1 = '1'
+    OPT10 = '10'
+    OPT100 = '100'
+    OPT1000 = '1000'
+    ALL_VALUES = (OPT1, OPT10, OPT100, OPT1000)
+
+
 class RRState(object):
     """Remote Restart states - mirror of PartitionRemoteRestart.Enum."""
     INVALID = "Invalid"
