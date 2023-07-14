@@ -190,6 +190,7 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
             len(redundant_pport_wraps) < 1):
         raise ex.InsufficientSRIOVCapacity(red=redundancy,
                                            found_vfs=len(pport_wraps))
+    port_selected = []
 
     def _pports_config(pport_wraps, vio_idx=0):
         card_use = {}
@@ -209,6 +210,7 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
                           card_use[
                               pport.sriov_adap_id]['num_used'] == least_uses],
                          key=lambda pp: pp.allocated_capacity)
+            port_selected.append(pp2use)
             said = pp2use.sriov_adap_id
             # Register a hit on the chosen port's card
             card_use[said]['num_used'] += 1
@@ -228,7 +230,26 @@ def set_vnic_back_devs(vnic_w, pports, sys_w=None, vioses=None, redundancy=1,
 
     _pports_config(pport_wraps)
     if redundant_pports and redundancy == 2:
-        _pports_config(redundant_pport_wraps, vio_idx=1)
+        redundant_pport_same_adap = []
+        redundant_pport_diff_adap = []
+        phys_adapt_id = port_selected[0].sriov_adap_id
+        for pport in redundant_pport_wraps:
+            said = pport.sriov_adap_id
+            if said == phys_adapt_id:
+                redundant_pport_same_adap.append(pport)
+            else:
+                redundant_pport_diff_adap.append(pport)
+        try:
+            if redundant_pport_diff_adap and redundancy == 2:
+                LOG.info("Attaching redundant port with same adapter")
+                _pports_config(redundant_pport_diff_adap, vio_idx=1)
+            if len(redundant_pport_diff_adap) == 0 and redundancy == 2:
+                LOG.info("Attaching redundant port with same adapter")
+                _pports_config(redundant_pport_same_adap, vio_idx=1)
+        except Exception:
+            if redundant_pport_same_adap and redundancy == 2:
+                LOG.info("Attaching redundant port with same adapter")
+                _pports_config(redundant_pport_same_adap, vio_idx=1)
 
 
 def _check_sys_vnic_capabilities(adap, sys_w, redundancy):
