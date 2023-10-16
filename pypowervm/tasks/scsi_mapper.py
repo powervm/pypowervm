@@ -228,7 +228,7 @@ def _separate_mappings(vios_w, client_href):
     return resp
 
 
-def add_map(vios_w, scsi_mapping):
+def add_map(vios_w, scsi_mapping, attach_vopt=False):
     """Will add the mapping to the VIOS wrapper, if not already included.
 
     This method has the logic in place to detect if the storage from the
@@ -249,7 +249,7 @@ def add_map(vios_w, scsi_mapping):
     existing_mappings = find_maps(vios_w.scsi_mappings,
                                   client_lpar_id=lpar_uuid,
                                   stg_elem=scsi_mapping.backing_storage)
-    if len(existing_mappings) > 0:
+    if len(existing_mappings) > 0 and not attach_vopt:
         return None
     vios_w.scsi_mappings.append(scsi_mapping)
     return scsi_mapping
