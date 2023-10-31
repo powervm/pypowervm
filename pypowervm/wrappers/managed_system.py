@@ -81,6 +81,10 @@ _VIRTUAL_SERIAL_NUM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'VirtualSerialNumberCapable')
 _PARTITION_KEY_STORE_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'PartitionKeyStoreCapable')
+_OS400_NET_INSTALL_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'os400NetInstallCapable')
+_OS400_NET_INSTALL_ISCSI_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'os400NetInstallIscsiCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -150,7 +154,11 @@ _CAPABILITY_MAP = {
     'VirtualSerialNumberCapable': {
         'prop': _VIRTUAL_SERIAL_NUM_CAPABLE, 'default': False},
     'PartitionKeyStoreCapable': {
-        'prop': _PARTITION_KEY_STORE_CAPABLE, 'default': False}
+        'prop': _PARTITION_KEY_STORE_CAPABLE, 'default': False},
+    'os400NetInstallCapable': {
+        'prop': _OS400_NET_INSTALL_CAPABLE, 'default': False},
+    'os400NetInstallIscsiCapable': {
+        'prop': _OS400_NET_INSTALL_ISCSI_CAPABLE, 'default': False}
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'

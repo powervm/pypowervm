@@ -386,7 +386,7 @@ def _find_cna_wraps(adapter, vswitch_id=None):
     # If a vswitch_id is passed in then filter to only cnas on that vswitch
     if (vswitch_id):
         for cna in cna_wraps:
-            if(cna.vswitch_id == vswitch_id):
+            if (cna.vswitch_id == vswitch_id):
                 filtered_cna_wraps.append(cna)
         cna_wraps = filtered_cna_wraps
     return cna_wraps

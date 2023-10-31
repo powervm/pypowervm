@@ -1094,6 +1094,8 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
     @desired_virtual.setter
     def desired_virtual(self, val):
+        u.convertAndValidateStrToInt(attr='desired_virtual', value=val,
+                                     checkForPostiveValue=True)
         self.set_parm_value(_SPC_DES_VIRT_PROC, val)
 
     @property
@@ -1112,6 +1114,8 @@ class SharedProcessorConfiguration(ewrap.ElementWrapper):
 
     @min_virtual.setter
     def min_virtual(self, val):
+        u.convertAndValidateStrToInt(attr='min_virtual', value=val,
+                                     checkForPostiveValue=True)
         self.set_parm_value(_SPC_MIN_VIRT_PROC, val)
 
     @property

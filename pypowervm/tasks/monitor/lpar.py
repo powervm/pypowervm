@@ -308,7 +308,7 @@ class LparStorage(object):
             return None
         for vfc_adpt in vio_pfc_adpt.ports:
             for wwpn in phyp_vfc_adpt.wwpn_pair:
-                if wwpn == vfc_adpt.wwpn:
+                if hex(wwpn)[2:] == vfc_adpt.wwpn:
                     return vfc_adpt
         return None
 
