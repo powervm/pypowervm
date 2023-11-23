@@ -261,6 +261,10 @@ class System(ewrap.EntryWrapper):
         return ASIOConfig.wrap(self.element.find(_ASIO_ROOT))
 
     @property
+    def associated_capabilities(self):
+        return AssociatedSystemCapabilities.wrap(self.element.find(_SYS_CAPABILITIES))
+
+    @property
     def system_state(self):
         return self._get_val_str(_STATE, 'unknown')
 
@@ -664,3 +668,92 @@ class IOSlot(ewrap.ElementWrapper):
             "This property is deprecated! "
             "Use drc_name instead."), DeprecationWarning)
         return self.drc_name
+
+
+@ewrap.ElementWrapper.pvm_type(_SYS_CAPABILITIES, has_metadata=True)
+class AssociatedSystemCapabilities(ewrap.ElementWrapper):
+    """The associated system capabilities for this system."""
+
+    @property
+    def active_lpar_mobility_capable(self):
+        return self._get_val_bool('ActiveLogicalPartitionMobilityCapable')
+
+    @property
+    def inactive_lpar_mobility_capable(self):
+        return self._get_val_bool('InactiveLogicalPartitionMobilityCapable')
+
+    @property
+    def custom_mac_addr_capable(self):
+        return self._get_val_bool('VirtualEthernetCustomMACAddressCapable')
+
+    @property
+    def ibmi_lpar_mobility_capable(self):
+        return self._get_val_bool('IBMiLogicalPartitionMobilityCapable')
+
+    @property
+    def ibmi_restrictedio_capable(self):
+        return self._get_val_bool('IBMiRestrictedIOModeCapable')
+
+    @property
+    def simplified_remote_restart_capable(self):
+        return self._get_val_bool('PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
+
+    @property
+    def physical_page_table_ratio_capable(self):
+        return self._get_val_bool('CustomPhysicalPageTableRatioCapable')
+
+    @property
+    def active_memory_expansion_capable(self):
+        return self._get_val_bool('ActiveMemoryExpansionCapable')
+
+    @property
+    def shared_processor_pool_capable(self):
+        return self._get_val_bool('SharedProcessorPoolCapable')
+
+    @property
+    def vnic_capable(self):
+        return self._get_val_bool('VirtualNICDedicatedSRIOVCapable')
+
+    @property
+    def vnic_failover_capable(self):
+        return self._get_val_bool('VirtualNICFailOverCapable')
+
+    @property
+    def ibmi_nativeio_capable(self):
+        return self._get_val_bool('IBMiNativeIOCapable')
+
+    @property
+    def disable_secure_boot_capable(self):
+        return self._get_val_bool('DisableSecureBootCapable')
+
+    @property
+    def partition_secure_boot_capable(self):
+        return self._get_val_bool('PartitionSecureBootCapable')
+
+    @property
+    def ioslot_owner_assignment_capable(self):
+        return self._get_val_bool('IOSlotOwnerAssignmentCapable')
+
+    @property
+    def dedicated_processor_partition_capable(self):
+        return self._get_val_bool('DedicatedProcessorPartitionCapable')
+
+    @property
+    def persistent_memory_capable(self):
+        return self._get_val_bool('PersistentMemoryCapable')
+
+    @property
+    def virtual_serial_number_capable(self):
+        return self._get_val_bool('VirtualSerialNumberCapable')
+
+    @property
+    def partition_key_store_capable(self):
+        return self._get_val_bool('PartitionKeyStoreCapable')
+
+    @property
+    def ibmi_network_install_capable(self):
+        return self._get_val_bool('IBMiNetworkInstallCapable')
+
+    @property
+    def ibmi_network_install_iscsi_capable(self):
+        return self._get_val_bool('IBMiNetworkInstalliSCSICapable')
