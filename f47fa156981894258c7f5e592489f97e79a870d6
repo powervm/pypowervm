@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2556b72_425f00aa",
+        "filename": "pypowervm/wrappers/managed_system.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1000460
+      },
+      "writtenOn": "2023-12-08T15:02:00Z",
+      "side": 1,
+      "message": "Remove this unused statement",
+      "revId": "f47fa156981894258c7f5e592489f97e79a870d6",
+      "serverId": "bde57bba-1f85-40c5-b33c-f2d0595fa095"
+    }
+  ]
+}
