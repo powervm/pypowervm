@@ -85,6 +85,8 @@ _OS400_NET_INSTALL_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'os400NetInstallCapable')
 _OS400_NET_INSTALL_ISCSI_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'os400NetInstallIscsiCapable')
+_IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'IBMiVirtualSoftwareTierCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -243,6 +245,16 @@ _IOSLOT_PCI_SUB_VEND_ID = 'PCISubsystemVendorID'
 _IOSLOT_DYN_REC_CON_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
 _IOSLOT_DYN_REC_CON_NAME = 'SlotDynamicReconfigurationConnectorName'
 
+# IBMiVirtualSoftwareTiers constants
+_IBMI_VIRTUAL_SOFT_TIERS_ROOT = 'IBMiVirtualSoftwareTiers'
+_IBMI_VIRTUAL_SOFT_TIERS_IBMI_VIRTUAL_SOFT_TIER = 'VirtualSoftwareTier'
+
+
+_IBMI_VIRTUAL_SOFT_TIER_ROOT = 'IBMiVirtualSoftwareTier'
+_IBMI_VIRTUAL_SOFT_TIER_TIER_NAME = 'TierName'
+_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_PROC = 'MaximumAllowedProcessors'
+_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_MEM = 'MaximumAllowedMemory'
+
 
 @ewrap.EntryWrapper.pvm_type('ManagedSystem')
 class System(ewrap.EntryWrapper):
@@ -259,6 +271,10 @@ class System(ewrap.EntryWrapper):
     @property
     def asio_config(self):
         return ASIOConfig.wrap(self.element.find(_ASIO_ROOT))
+
+    @property
+    def ibmivirtualsoftwaretiers(self):
+        return VirtualSoftwareTiers.wrap(self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT))
 
     @property
     def associated_capabilities(self):
@@ -757,3 +773,30 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
     @property
     def ibmi_network_install_iscsi_capable(self):
         return self._get_val_bool('IBMiNetworkInstalliSCSICapable')
+
+
+@ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
+class VirtualSoftwareTiers(ewrap.ElementWrapper):
+    """The IBMi Virtual Software Tiers for this system."""
+
+    @property
+    def virtual_software_tier(self):
+        es = ewrap.WrapperElemList(self.element, IBMiVirtualSoftwareTier)
+        return es
+
+
+@ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIER_ROOT, has_metadata=True)
+class IBMiVirtualSoftwareTier(ewrap.ElementWrapper):
+    """The IBMi Virtual Software Tier for this system."""
+
+    @property
+    def tier_name(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_TIER_NAME)
+
+    @property
+    def maximum_allowed_processors(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_PROC)
+
+    @property
+    def maximum_allowed_memory(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_MEM)
