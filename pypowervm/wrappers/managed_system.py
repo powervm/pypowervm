@@ -273,6 +273,8 @@ class System(ewrap.EntryWrapper):
 
     @property
     def ibmivirtualsoftwaretiers(self):
+        if self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT) is None:
+            return None
         return VirtualSoftwareTiers.wrap(self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT))
 
     @property
