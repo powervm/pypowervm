@@ -87,6 +87,9 @@ _OS400_NET_INSTALL_ISCSI_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'os400NetInstallIscsiCapable')
 _IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'IBMiVirtualSoftwareTierCapable')
+_KVM_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'KvmCapable')
+
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -160,7 +163,9 @@ _CAPABILITY_MAP = {
     'os400NetInstallCapable': {
         'prop': _OS400_NET_INSTALL_CAPABLE, 'default': False},
     'os400NetInstallIscsiCapable': {
-        'prop': _OS400_NET_INSTALL_ISCSI_CAPABLE, 'default': False}
+        'prop': _OS400_NET_INSTALL_ISCSI_CAPABLE, 'default': False},
+    'kvm_capable' : {
+        'prop' : _KVM_CAPABLE, 'default' : False}
 }
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
@@ -273,6 +278,8 @@ class System(ewrap.EntryWrapper):
 
     @property
     def ibmivirtualsoftwaretiers(self):
+        if self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT) is None:
+            return None
         return VirtualSoftwareTiers.wrap(self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT))
 
     @property
@@ -772,6 +779,10 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
     @property
     def ibmi_network_install_iscsi_capable(self):
         return self._get_val_bool('IBMiNetworkInstalliSCSICapable')
+
+    @property
+    def kvm_capable(self):
+        return self._get_val_bool('KvmCapable')
 
 
 @ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
