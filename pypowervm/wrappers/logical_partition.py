@@ -362,6 +362,8 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     def kvm_memory_overhead(self, value):
         """Partition kvm memory overhead"""
         floatVal = u.sanitize_float_for_api(value, 1)
+        if float(value) < 0.0 or float(value) > 100.0:
+            raise ex.InvalidKVMMemoryOverHeadValue()
         self.set_parm_value(_LPAR_KVM_MEMORY_OVERHEAD, floatVal,
                             attrib=pc.ATTR_KSV1140)
 
