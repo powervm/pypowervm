@@ -64,6 +64,7 @@ PROC_COMPAT = 'processor_compatibility'
 ENABLE_LPAR_METRIC = 'enable_lpar_metric'
 SECURE_BOOT = 'secure_boot'
 KVM_CAPABLE = 'kvm_capable'
+VIRTUAL_SERIAL_NUMBER = 'virtual_serial_number'
 
 # I/O configuration
 # Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
@@ -97,6 +98,7 @@ DEF_LPAR_METRIC = False
 DEF_SECURE_BOOT = 0
 DEF_PHYS_IO_SLOTS = None
 DEF_KVM_CAPABLE = 'False'
+DEF_VIRTUAL_SERIAL_NUMBER = None
 
 LOG = logging.getLogger(__name__)
 
@@ -191,6 +193,7 @@ class DefaultStandardize(Standardize):
                  proc_compat=bp.LPARCompat.DEFAULT,
                  enable_lpar_metric=DEF_LPAR_METRIC,
                  secure_boot=DEF_SECURE_BOOT,
+                 virtual_serial_number=DEF_VIRTUAL_SERIAL_NUMBER,
                  kvm_capable=DEF_KVM_CAPABLE):
         """Initialize the standardizer
 
@@ -229,6 +232,7 @@ class DefaultStandardize(Standardize):
         self.proc_compat = proc_compat
         self.secure_boot = secure_boot
         self.kvm_capable = kvm_capable
+        self.virtual_serial_number = virtual_serial_number
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
@@ -356,6 +360,8 @@ class DefaultStandardize(Standardize):
         if self._can_secure_boot_for_lpar(bld_attr[ENV]):
             self._set_val(bld_attr, SECURE_BOOT, self.secure_boot,
                           convert_func=int)
+        self._set_val(bld_attr, VIRTUAL_SERIAL_NUMBER,
+                      self.virtual_serial_number, convert_func=str)
         # Build IBMi attributes
         if bld_attr[ENV] == bp.LPARType.OS400:
             self._set_val(bld_attr, CONSOLE, value='HMC')
@@ -1017,6 +1023,8 @@ class LPARBuilder(object):
         lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
         if std.get(SECURE_BOOT) is not None:
             lpar_w.pending_secure_boot = std[SECURE_BOOT]
+        if std.get(VIRTUAL_SERIAL_NUMBER) is not None:
+            lpar_w.virtual_serial_number = std[VIRTUAL_SERIAL_NUMBER]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
