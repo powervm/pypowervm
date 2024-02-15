@@ -51,7 +51,7 @@ def migrate_lpar(
         lpar, tgt_mgd_sys, validate_only=False, tgt_mgmt_svr=None,
         tgt_mgmt_usr=None, virtual_fc_mappings=None,
         virtual_scsi_mappings=None, dest_msp_name=None, source_msp_name=None,
-        spp_id=None, pmem_volumes=None,
+        spp_id=None, pmem_volumes=None, message_list=[],
         timeout=CONF.pypowervm_job_request_timeout * 4,
         sdn_override=False, vlan_check_override=False, vlan_mappings=None,
         check_affinity_score=False):
@@ -197,6 +197,8 @@ def migrate_lpar(
             job_wrapper.create_job_parameter(AFFINITY, 'true'))
 
     job_wrapper.run_job(lpar.uuid, job_parms=job_parms, timeout=timeout)
+    if job_wrapper.get_job_message():
+        message_list.append(job_wrapper.get_job_message())
 
 
 def migrate_recover(lpar, force=False,
