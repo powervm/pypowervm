@@ -106,6 +106,8 @@ _INACTIVE_MIGR_RUNNING = u.xpath(
 _MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
 _AFFINITY_CHECK_CAP = u.xpath(
     _MIGR_INFO, 'LogicalPartitionAffinityCheckCapable')
+_VPMEM_LPM = u.xpath(
+    _MIGR_INFO, 'LogicalPartitionPersistentMemoryMigrationCapable')
 
 _CAPABILITY_MAP = {
     'active_lpar_mobility_capable': {
