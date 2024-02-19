@@ -106,6 +106,8 @@ _INACTIVE_MIGR_RUNNING = u.xpath(
 _MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
 _AFFINITY_CHECK_CAP = u.xpath(
     _MIGR_INFO, 'LogicalPartitionAffinityCheckCapable')
+_VPMEM_LPM = u.xpath(
+    _MIGR_INFO, 'LogicalPartitionPersistentMemoryMigrationCapable')
 
 _CAPABILITY_MAP = {
     'active_lpar_mobility_capable': {
@@ -166,7 +168,9 @@ _CAPABILITY_MAP = {
     'ibmi_virtual_software_tier_capable': {
         'prop': _IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE, 'default': False},
     'kvm_capable': {
-        'prop': _KVM_CAPABLE, 'default': False}
+        'prop': _KVM_CAPABLE, 'default': False},
+    'vpmem_lpm_capable': {
+        'prop': _VPMEM_LPM, 'default': False}
 }
 
 
