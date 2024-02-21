@@ -66,7 +66,7 @@ class PollAndDeleteThread(threading.Thread):
         self.job.poll_while_status([JobStatus.RUNNING], 0, self.sensitive)
         self.job.delete_job()
         # If the Job failed, we still want to log it.
-        if self.job.job_status != JobStatus.COMPLETED_OK:
+        if self.job.job_status != JobStatus.COMPLETED_OK and self.job.job_status != JobStatus.COMPLETED_WITH_WARNINGS:
             exc = pvmex.JobRequestFailed(
                 operation_name=self.job.op, error=self.job.get_job_message())
             LOG.error(exc.args[0])
@@ -244,7 +244,7 @@ class Job(ewrap.EntryWrapper):
             # _monitor_job spawned a subthread that will delete_job when done.
             return
         self.delete_job()
-        if self.job_status != JobStatus.COMPLETED_OK:
+        if self.job_status != JobStatus.COMPLETED_OK and self.job_status != JobStatus.COMPLETED_WITH_WARNINGS:
             exc = pvmex.JobRequestFailed(
                 operation_name=self.op, error=self.get_job_message(''))
             LOG.error(exc.args[0])
