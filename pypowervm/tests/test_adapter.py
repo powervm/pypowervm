@@ -112,7 +112,7 @@ class TestAdapter(testtools.TestCase):
     @mock.patch('time.sleep')
     def test_event_listener(self, mock_sleep, mock_evt_wrap):
 
-        with mock.patch.object(adp._EventListener, '_get_events') as m_events,\
+        with mock.patch.object(adp._EventListener, '_get_events') as m_events, \
                 mock.patch.object(adp, '_EventPollThread') as mock_poll:
             # With some fake events, event listener can be initialized
             self.sess._sessToken = 'token'
@@ -138,7 +138,7 @@ class TestAdapter(testtools.TestCase):
             self.assertEqual({'general': 'init'}, event_listen.getevents())
 
         # Outside our patching of _get_events, get the formatted events
-        with mock.patch.object(event_listen, '_format_events') as mock_format,\
+        with mock.patch.object(event_listen, '_format_events') as mock_format, \
                 mock.patch.object(event_listen.adp, 'read') as mock_read:
 
             # Ensure exception path doesn't kill the thread
