@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61faba91_60d89640",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000460
+      },
+      "writtenOn": "2024-02-22T06:10:19Z",
+      "side": 1,
+      "message": "Please don\u0027t touch job framework it will break many other functions",
+      "revId": "cc3600835b9a852e4ac6120889ae3442e77f6400",
+      "serverId": "bde57bba-1f85-40c5-b33c-f2d0595fa095"
+    }
+  ]
+}
