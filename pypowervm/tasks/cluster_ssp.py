@@ -140,7 +140,7 @@ def _upload_conflict(tier, luname, mkr_luname):
     # The lus list should be all markers at this point.  If there's
     # more than one (ours), then the first (by alpha sort) wins.
     if len(lus) > 1:
-        lus.sort(key=lambda l: l.name)
+        lus.sort(key=lambda ll: ll.name)
         winner = lus[0].name
         if winner != mkr_luname:
             # We lose.  Delete our LU and let the winner proceed
