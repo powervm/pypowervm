@@ -257,7 +257,13 @@ def open_remotable_vnc_vterm(
     # See if we have a VNC repeater already...if so, nothing to do.  If not,
     # start it up.
     with lock.lock('powervm_vnc_term'):
-        if remote_port not in _VNC_REMOTE_PORT_TO_LISTENER:
+        listen = 1
+        if local_ip and remote_port:
+            family = socket.AF_INET6 if ':' in local_ip else socket.AF_INET
+            sock = socket.socket(family, socket.SOCK_STREAM)
+            listen = sock.connect_ex((local_ip, remote_port))
+            sock.close()
+        if remote_port not in _VNC_REMOTE_PORT_TO_LISTENER or listen != 0:
             listener = _VNCSocketListener(
                 adapter, remote_port, local_ip, verify_vnc_path,
                 remote_ips=remote_ips)
