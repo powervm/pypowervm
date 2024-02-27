@@ -28,6 +28,7 @@ LOG = logging.getLogger(__name__)
 
 _DEL_VSN = 'RemoveVSN'
 _TRA_VSN = 'TransferVSN'
+_ADD_VSN = 'AddVSN'
 
 
 def delete_vsn(vsn):
@@ -53,6 +54,27 @@ def delete_vsn(vsn):
         LOG.exception(_('VSN Delete failed'))
         raise
 
+def add_vsn(vsn):
+    """Add VSN to the system.
+
+    Note: The job will Add given VNS .
+
+    vsn: Given vsn number to be Added
+    """
+    adap = adp.Adapter()
+    # Build up the job & invoke
+    ms_uuid = pvm_ms.System.get(adap)[0].uuid
+    resp = adap.read(
+        pvm_ms.System.schema_type, root_id=ms_uuid,
+        suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_ADD_VSN)
+    job_w = pvm_job.Job.wrap(resp.entry)
+    job_p = [job_w.create_job_parameter('VirtualSerialNumber', vsn)]
+
+    try:
+        job_w.run_job(ms_uuid, job_parms=job_p)
+    except Exception:
+        LOG.exception(_('VSN Add failed'))
+        raise
 
 def transfer_vsn(vsn, mgmt_usr, mgmt_svr, sys):
     """Transfer VSN from systemi to other system.
