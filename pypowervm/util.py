@@ -322,20 +322,23 @@ def sanitize_float_for_api(float_val, precision=2):
     return template % float(float_val)
 
 
-def sanitize_percent_for_api(float_val, precision=2):
+def sanitize_percent_for_api(float_val, field=str, precision=2):
     """Sanitizes a percent value for use in the API.
 
     :param float_val: A float where valid values are 0.0 <= x <= 1.0. For
                       example the input 0.02 will produce output '2%'.
+    :param field: A string representing the attribute name.
     :return: A string representation of the passed percentage.
     """
     percent_float = float(float_val)
     if percent_float < 0 or percent_float > 1:
-        raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+        if field == "":
+            raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+        else:
+            raise ValueError(str("The percentage value of " + str(field) + " should be between 0% to 100%."))
     percent_float *= 100
     percent_float = sanitize_float_for_api(percent_float, precision)
     return str(percent_float) + '%'
-
 
 def sanitize_wwpn_for_api(wwpn):
     """Updates the format of the WWPN to match the expected PowerVM format.
