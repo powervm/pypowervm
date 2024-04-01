@@ -1169,7 +1169,7 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     def _capacity(self, float_val):
         self.set_parm_value(_VNICBD_CUR_CAP_PCT,
-                            u.sanitize_percent_for_api(float_val))
+                            u.sanitize_percent_for_api(float_val, _VNICBD_CUR_CAP_PCT))
 
     @property
     def max_capacity(self):
@@ -1182,7 +1182,7 @@ class VNICBackDev(ewrap.ElementWrapper):
 
     def _max_capacity(self, float_val):
         self.set_parm_value(_VNICBD_MAX_CAP_PCT,
-                            u.sanitize_percent_for_api(float_val))
+                            u.sanitize_percent_for_api(float_val, _VNICBD_MAX_CAP_PCT))
 
     @property
     def desired_max_capacity(self):
