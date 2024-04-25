@@ -470,9 +470,15 @@ class _VNCSocketListener(threading.Thread):
         # If for some reason no mapping to a local port, then give up
         if local_port is None:
             client_socket.close()
+            LOG.error(_("There is no client port "
+                        "for lpar %s, use \"rmvterm --id <lpar id>\" "
+                        "and try again"), str(lpar_uuid))
+            return
+
         # Get the forwarder.  This will be the socket we read FROM the
         # localhost.  When this receives data, it will be sent to the client
         # socket.
+        
         fwd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         fwd.connect(('127.0.0.1', local_port))
 
