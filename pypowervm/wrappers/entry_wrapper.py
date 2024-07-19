@@ -1117,9 +1117,13 @@ class EntryWrapper(Wrapper):
                 child_type=self.schema_type, service=service, timeout=timeout)
         return self.wrap(resp)
 
-    def delete(self):
+    def delete(self, reusevsn=False):
         """Performs an adapter.delete (REST API DELETE) with this wrapper."""
-        self.adapter.delete_by_href(self.href, etag=self.etag)
+        if reusevsn:
+            self.adapter.delete_by_href(self.href, etag=self.etag,
+                                        reusevsn=True)
+        else:
+            self.adapter.delete_by_href(self.href, etag=self.etag)
 
     # TODO(IBM): Remove deprecated xag parameter
     def update(self, xag='__DEPRECATED__', timeout=-1, force=False):

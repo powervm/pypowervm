@@ -879,7 +879,7 @@ class Adapter(object):
                                    auditmemento=auditmemento, helpers=helpers)
 
     def delete_by_href(self, href, etag=None, timeout=-1, auditmemento=None,
-                       helpers=None):
+                       helpers=None, reusevsn=None):
         """Delete an existing resource based on a link's href."""
         o = urlparse.urlparse(href)
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
@@ -887,13 +887,18 @@ class Adapter(object):
             LOG.debug('href=%s will be modified to use %s:%s', href,
                       self.session.host, self.session.port)
         return self.delete_by_path(o.path, etag=etag, timeout=timeout,
-                                   auditmemento=auditmemento, helpers=helpers)
+                                   auditmemento=auditmemento,
+                                   reusevsn=reusevsn, helpers=helpers)
 
     def delete_by_path(self, path, etag=None, timeout=-1, auditmemento=None,
-                       helpers=None):
+                       helpers=None, reusevsn=None):
         """Delete an existing resource where the URI path is already known."""
         path = util.dice_href(path, include_query=False,
                               include_fragment=False)
+        if reusevsn:
+            path = self.extend_path(path, xag=[], add_qp=[('resetAutoAssign',
+                                                           'true')])
+        print(path)
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError(_('path=%s is not a PowerVM API reference') %

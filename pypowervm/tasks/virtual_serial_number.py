@@ -31,7 +31,7 @@ _TRA_VSN = 'TransferVSN'
 _ADD_VSN = 'AddVSN'
 
 
-def delete_vsn(vsn):
+def delete_vsn(vsn, reusevsn=False):
     """Delete VSN from system.
 
     Note: The job will delete given VNS .
@@ -47,6 +47,8 @@ def delete_vsn(vsn):
         suffix_type=c.SUFFIX_TYPE_DO, suffix_parm=_DEL_VSN)
     job_w = pvm_job.Job.wrap(resp.entry)
     job_p = [job_w.create_job_parameter('VirtualSerialNumber', vsn)]
+    if reusevsn:
+        job_p.append(job_w.create_job_parameter('ResetAutoAssign', 'true'))
 
     try:
         job_w.run_job(ms_uuid, job_parms=job_p)
