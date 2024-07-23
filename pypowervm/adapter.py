@@ -866,7 +866,7 @@ class Adapter(object):
 
     def delete(self, root_type, root_id=None, child_type=None, child_id=None,
                suffix_type=None, suffix_parm=None, service='uom', etag=None,
-               timeout=-1, auditmemento=None, helpers=None):
+               timeout=-1, auditmemento=None, helpers=None, reusevsn=None):
         """Delete an existing resource.
 
         Will build the URI path using the provided arguments.
@@ -876,7 +876,8 @@ class Adapter(object):
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm)
         return self.delete_by_path(path, etag, timeout=timeout,
-                                   auditmemento=auditmemento, helpers=helpers)
+                                   auditmemento=auditmemento,
+                                   helpers=helpers, reusevsn=reusevsn)
 
     def delete_by_href(self, href, etag=None, timeout=-1, auditmemento=None,
                        helpers=None, reusevsn=None):
