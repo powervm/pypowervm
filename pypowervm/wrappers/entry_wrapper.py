@@ -1126,7 +1126,7 @@ class EntryWrapper(Wrapper):
             self.adapter.delete_by_href(self.href, etag=self.etag)
 
     # TODO(IBM): Remove deprecated xag parameter
-    def update(self, xag='__DEPRECATED__', timeout=-1, force=False):
+    def update(self, xag='__DEPRECATED__', timeout=-1, force=False, reusevsn=None):
         """Performs adapter.update of this wrapper.
 
         :param xag: DEPRECATED - do not use.
@@ -1154,8 +1154,10 @@ class EntryWrapper(Wrapper):
         path = util.dice_href(self.href, include_fragment=False)
         if force:
             path = adpt.Adapter.extend_path(path, add_qp=[('force', 'true')])
-        return self.wrap(self.adapter.update_by_path(self, self.etag, path,
-                                                     timeout=timeout))
+        if reusevsn:
+            return self.wrap(self.adapter.update_by_path(self, self.etag, path, timeout=timeout, reusevsn=True))
+        else:
+            return self.wrap(self.adapter.update_by_path(self, self.etag, path, timeout=timeout))
 
     @property
     def element(self):
