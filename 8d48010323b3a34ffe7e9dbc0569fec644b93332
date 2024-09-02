@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d4ece4e_f6047067",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000528
+      },
+      "writtenOn": "2024-09-02T11:15:22Z",
+      "side": 1,
+      "message": "pypowervm transfer vsn changes",
+      "revId": "8d48010323b3a34ffe7e9dbc0569fec644b93332",
+      "serverId": "bde57bba-1f85-40c5-b33c-f2d0595fa095"
+    }
+  ]
+}
