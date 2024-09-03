@@ -80,7 +80,7 @@ def add_vsn(vsn):
         raise
 
 
-def transfer_vsn(vsn, mgmt_usr, mgmt_svr, sys):
+def transfer_vsn(vsn, mgmt_usr, mgmt_svr, sys, lpar_id):
     """Transfer VSN from systemi to other system.
 
     Note: The job will transfer given VNS .
@@ -100,6 +100,9 @@ def transfer_vsn(vsn, mgmt_usr, mgmt_svr, sys):
                  mgmt_usr))
     job_p.append(job_w.create_job_parameter('Host',
                  mgmt_svr))
+    if lpar_id is not None:
+        job_p.append(job_w.create_job_parameter('TargetLparID',
+                                                lpar_id))
 
     try:
         job_w.run_job(ms_uuid, job_parms=job_p)
