@@ -89,6 +89,8 @@ _IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'IBMiVirtualSoftwareTierCapable')
 _KVM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'KvmCapable')
+_LPAR_PLACEMENT_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'LparPlacementCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -170,7 +172,9 @@ _CAPABILITY_MAP = {
     'kvm_capable': {
         'prop': _KVM_CAPABLE, 'default': False},
     'vpmem_lpm_capable': {
-        'prop': _VPMEM_LPM, 'default': False}
+        'prop': _VPMEM_LPM, 'default': False},
+    'LparPlacementCapable': {
+        'prop': _LPAR_PLACEMENT_CAPABLE, 'default': False}
 }
 
 
@@ -794,6 +798,9 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
     def kvm_capable(self):
         return self._get_val_bool('KvmCapable')
 
+    @property
+    def lpar_placement_capable(self):
+        return self._get_val_bool('LparPlacementCapable')
 
 @ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
 class VirtualSoftwareTiers(ewrap.ElementWrapper):

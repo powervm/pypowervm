@@ -53,6 +53,7 @@ _LPAR_PARTITION_KEY_STORE = 'KeyStoreSize'
 _LPAR_KVM_CAPABLE = 'KvmCapable'
 _LPAR_KVM_MEMORY_OVERHEAD = 'KvmMemoryOverhead'
 _LPAR_VIRTUAL_SOFTWARE_TIER = 'AssociatedIBMiVirtualSoftwareTier'
+_LPAR_PLACEMENT = 'LparPlacement'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_MIG_STG_VIOS_DATA_STATUS, _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR,
@@ -62,7 +63,8 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_USES_HSL_OPTICONN, _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS,
     _LPAR_VSCSI_CLIENT_ADPTS, _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID,
     _LPAR_DES_IPL_SRC, _LPAR_DED_VNICS, _LPAR_BOOTLIST_INFO,
-    _LPAR_VIRTUAL_SERIAL_NUM, _LPAR_PARTITION_KEY_STORE)
+    _LPAR_VIRTUAL_SERIAL_NUM, _LPAR_PARTITION_KEY_STORE,
+    _LPAR_PLACEMENT)
 
 
 class IPLSrc(object):
@@ -383,4 +385,18 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         if self.env != bp.LPARType.OS400:
             raise ex.AttributeInvalidForAixLinux(attr_name="virtual_software_tier")
         self.set_parm_value(_LPAR_VIRTUAL_SOFTWARE_TIER, value,
+                            attrib=pc.ATTR_KSV1140)
+
+    @property
+    def lpar_placement(self):
+        """LPAR Placement.
+
+        :returns: Returns Lpar placement value
+        """
+        return self._get_val_int(_LPAR_PLACEMENT, 0)
+
+    @lpar_placement.setter
+    def lpar_placement(self, value):
+        """LPAR Placement"""
+        self.set_parm_value(_LPAR_PLACEMENT, value,
                             attrib=pc.ATTR_KSV1140)

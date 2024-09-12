@@ -65,6 +65,7 @@ ENABLE_LPAR_METRIC = 'enable_lpar_metric'
 SECURE_BOOT = 'secure_boot'
 KVM_CAPABLE = 'kvm_capable'
 VIRTUAL_SERIAL_NUMBER = 'virtual_serial_number'
+LPAR_PLACEMENT = 'lpar_placement'
 
 # I/O configuration
 # Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
@@ -99,6 +100,7 @@ DEF_SECURE_BOOT = 0
 DEF_PHYS_IO_SLOTS = None
 DEF_KVM_CAPABLE = 'False'
 DEF_VIRTUAL_SERIAL_NUMBER = None
+DEF_LPAR_PLACEMENT = 0
 
 LOG = logging.getLogger(__name__)
 
@@ -194,7 +196,8 @@ class DefaultStandardize(Standardize):
                  enable_lpar_metric=DEF_LPAR_METRIC,
                  secure_boot=DEF_SECURE_BOOT,
                  virtual_serial_number=DEF_VIRTUAL_SERIAL_NUMBER,
-                 kvm_capable=DEF_KVM_CAPABLE):
+                 kvm_capable=DEF_KVM_CAPABLE,
+                 lpar_placement=DEF_LPAR_PLACEMENT):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -233,6 +236,7 @@ class DefaultStandardize(Standardize):
         self.secure_boot = secure_boot
         self.kvm_capable = kvm_capable
         self.virtual_serial_number = virtual_serial_number
+        self.lpar_placement = lpar_placement
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
@@ -362,6 +366,8 @@ class DefaultStandardize(Standardize):
                           convert_func=int)
         self._set_val(bld_attr, VIRTUAL_SERIAL_NUMBER,
                       self.virtual_serial_number, convert_func=str)
+        self._set_val(bld_attr, LPAR_PLACEMENT,
+                      self.lpar_placement, convert_func=int)
         # Build IBMi attributes
         if bld_attr[ENV] == bp.LPARType.OS400:
             self._set_val(bld_attr, CONSOLE, value='HMC')
@@ -1031,6 +1037,8 @@ class LPARBuilder(object):
             lpar_w.srr_enabled = std[SRR_CAPABLE]
         if std.get(KVM_CAPABLE) is not None:
             lpar_w.kvm_capable = std[KVM_CAPABLE]
+        if std.get(LPAR_PLACEMENT) is not None:
+            lpar_w.lpar_placement = std[LPAR_PLACEMENT]
         io_cfg = self.build_io_config()
 
         # Now start replacing the sections
