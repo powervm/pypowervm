@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f9965f7d_164f9dc6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000528
+      },
+      "writtenOn": "2024-09-12T09:23:06Z",
+      "side": 1,
+      "message": "LPAR placement changes",
+      "revId": "6ba0cfc208af34df24c33bcd3288dae01945d979",
+      "serverId": "bde57bba-1f85-40c5-b33c-f2d0595fa095"
+    }
+  ]
+}
