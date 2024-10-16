@@ -66,6 +66,7 @@ SECURE_BOOT = 'secure_boot'
 KVM_CAPABLE = 'kvm_capable'
 VIRTUAL_SERIAL_NUMBER = 'virtual_serial_number'
 LPAR_PLACEMENT = 'lpar_placement'
+VIRTUAL_SOFTWARE_TIER = 'virtual_software_tier'
 
 # I/O configuration
 # Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
@@ -101,6 +102,7 @@ DEF_PHYS_IO_SLOTS = None
 DEF_KVM_CAPABLE = 'False'
 DEF_VIRTUAL_SERIAL_NUMBER = None
 DEF_LPAR_PLACEMENT = 0
+DEF_VIRTUAL_SOFTWARE_TIER = None
 
 LOG = logging.getLogger(__name__)
 
@@ -197,7 +199,8 @@ class DefaultStandardize(Standardize):
                  secure_boot=DEF_SECURE_BOOT,
                  virtual_serial_number=DEF_VIRTUAL_SERIAL_NUMBER,
                  kvm_capable=DEF_KVM_CAPABLE,
-                 lpar_placement=DEF_LPAR_PLACEMENT):
+                 lpar_placement=DEF_LPAR_PLACEMENT,
+                 virtual_software_tier=DEF_VIRTUAL_SOFTWARE_TIER):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -237,6 +240,7 @@ class DefaultStandardize(Standardize):
         self.kvm_capable = kvm_capable
         self.virtual_serial_number = virtual_serial_number
         self.lpar_placement = lpar_placement
+        self.virtual_software_tier = virtual_software_tier
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
@@ -376,6 +380,8 @@ class DefaultStandardize(Standardize):
             if self.mngd_sys.get_capability('ibmi_restrictedio_capable'):
                 self._set_val(bld_attr, RESTRICTED_IO, value=True,
                               convert_func=RestrictedIO.convert_value)
+            self._set_val(bld_attr, VIRTUAL_SOFTWARE_TIER,
+                          value=self.virtual_software_tier,convert_func=str)
 
         # Validate the attributes
         self._validate_general(attrs=bld_attr)
@@ -1031,6 +1037,8 @@ class LPARBuilder(object):
             lpar_w.pending_secure_boot = std[SECURE_BOOT]
         if std.get(VIRTUAL_SERIAL_NUMBER) is not None:
             lpar_w.virtual_serial_number = std[VIRTUAL_SERIAL_NUMBER]
+        if std.get(VIRTUAL_SOFTWARE_TIER) is not None:
+            lpar_w.virtual_software_tier = std[VIRTUAL_SOFTWARE_TIER]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
