@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ac5c6f8_f7454c54",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000528
+      },
+      "writtenOn": "2024-10-16T13:21:52Z",
+      "side": 1,
+      "message": "VST Changes",
+      "revId": "90b7c52f9e3d3769e3831f2e3a652ec487ef8706",
+      "serverId": "bde57bba-1f85-40c5-b33c-f2d0595fa095"
+    }
+  ]
+}
