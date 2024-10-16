@@ -101,7 +101,6 @@ DEF_SECURE_BOOT = 0
 DEF_PHYS_IO_SLOTS = None
 DEF_KVM_CAPABLE = 'False'
 DEF_VIRTUAL_SERIAL_NUMBER = None
-DEF_LPAR_PLACEMENT = 0
 DEF_VIRTUAL_SOFTWARE_TIER = None
 
 LOG = logging.getLogger(__name__)
@@ -199,7 +198,7 @@ class DefaultStandardize(Standardize):
                  secure_boot=DEF_SECURE_BOOT,
                  virtual_serial_number=DEF_VIRTUAL_SERIAL_NUMBER,
                  kvm_capable=DEF_KVM_CAPABLE,
-                 lpar_placement=DEF_LPAR_PLACEMENT,
+                 lpar_placement=None,
                  virtual_software_tier=DEF_VIRTUAL_SOFTWARE_TIER):
         """Initialize the standardizer
 
