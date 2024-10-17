@@ -81,6 +81,7 @@ _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
+_BP_LPAR_PLACEMENT = 'LparPlacement'
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -97,7 +98,7 @@ BP_EL_ORDER = (
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
     _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_PENDING_SECURE_BOOT,
     _BP_CURR_SECURE_BOOT, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
-    _BP_ASSOC_TASKS, _BP_DESC
+    _BP_ASSOC_TASKS, _BP_DESC, _BP_LPAR_PLACEMENT
 )
 
 # Partition Capabilities (_CAP)
@@ -782,6 +783,20 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def cur_dram_pmem_volumes(self):
         return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
+    
+    @property
+    def lpar_placement(self):
+        """LPAR Placement.
+
+        :returns: Returns Lpar placement value
+        """
+        return self._get_val_int(_BP_LPAR_PLACEMENT, 0)
+
+    @lpar_placement.setter
+    def lpar_placement(self, value):
+        """LPAR Placement"""
+        self.set_parm_value(_BP_LPAR_PLACEMENT, value,
+                            attrib=const.ATTR_KSV1140)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
