@@ -63,6 +63,8 @@ SRR_CAPABLE = 'srr_capability'
 PROC_COMPAT = 'processor_compatibility'
 ENABLE_LPAR_METRIC = 'enable_lpar_metric'
 SECURE_BOOT = 'secure_boot'
+KVM_CAPABLE = 'kvm_capable'
+VIRTUAL_SERIAL_NUMBER = 'virtual_serial_number'
 
 # I/O configuration
 # Sure would love to change this to MAX_VIRT_IO_SLOTS or similar, but compat...
@@ -95,6 +97,8 @@ DEF_SRR = 'false'
 DEF_LPAR_METRIC = False
 DEF_SECURE_BOOT = 0
 DEF_PHYS_IO_SLOTS = None
+DEF_KVM_CAPABLE = 'False'
+DEF_VIRTUAL_SERIAL_NUMBER = None
 
 LOG = logging.getLogger(__name__)
 
@@ -128,7 +132,7 @@ class Standardize(object):
         :returns: dict of attributes.
             Expected: NAME, ENV, MAX_IO_SLOTS, AVAIL_PRIORITY,
                       PROC_COMPAT
-            Optional: SRR_CAPABLE, UUID, ID
+            Optional: SRR_CAPABLE, UUID, ID, KVM_CAPABLE
                       IBMi value: CONSOLE, LOAD_SRC, ALT_LOAD_SRC,
                                   RESTRICTED_IO
         """
@@ -188,7 +192,9 @@ class DefaultStandardize(Standardize):
                  avail_priority=DEF_AVAIL_PRI, srr=DEF_SRR,
                  proc_compat=bp.LPARCompat.DEFAULT,
                  enable_lpar_metric=DEF_LPAR_METRIC,
-                 secure_boot=DEF_SECURE_BOOT):
+                 secure_boot=DEF_SECURE_BOOT,
+                 virtual_serial_number=DEF_VIRTUAL_SERIAL_NUMBER,
+                 kvm_capable=DEF_KVM_CAPABLE):
         """Initialize the standardizer
 
         :param mngd_sys: managed_system wrapper of the host to deploy to.
@@ -207,6 +213,7 @@ class DefaultStandardize(Standardize):
         :param enable_lpar_metric: LPAR performance data collection attribute
             enabled only if value is true
         :param secure_boot: The secure boot policy value
+        :param kvm_capable The KVM capability
         """
 
         super(DefaultStandardize, self).__init__()
@@ -224,6 +231,8 @@ class DefaultStandardize(Standardize):
         self.enable_lpar_metric = enable_lpar_metric
         self.proc_compat = proc_compat
         self.secure_boot = secure_boot
+        self.kvm_capable = kvm_capable
+        self.virtual_serial_number = virtual_serial_number
 
     def _set_prop(self, attr, prop, base_prop, convert_func=str):
         """Copies a property if present or copies the base property."""
@@ -253,6 +262,7 @@ class DefaultStandardize(Standardize):
         # SRR is always optional since the host may not be capable of it.
         SimplifiedRemoteRestart(attrs.get(SRR_CAPABLE),
                                 allow_none=True).validate()
+        KvmCapable(attrs.get(KVM_CAPABLE), allow_none=True).validate()
         ProcCompatMode(attrs.get(PROC_COMPAT),
                        host_modes=self.mngd_sys.proc_compat_modes,
                        allow_none=partial).validate()
@@ -340,12 +350,18 @@ class DefaultStandardize(Standardize):
         if srr_cap:
             self._set_val(bld_attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
+        kvm_cap = self.mngd_sys.get_capability('kvm_capable')
+        if kvm_cap:
+            self._set_val(bld_attr, KVM_CAPABLE, self.kvm_capable,
+                          convert_func=KvmCapable.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
         # See if the host is capable of secure boot before setting it.
         if self._can_secure_boot_for_lpar(bld_attr[ENV]):
             self._set_val(bld_attr, SECURE_BOOT, self.secure_boot,
                           convert_func=int)
+        self._set_val(bld_attr, VIRTUAL_SERIAL_NUMBER,
+                      self.virtual_serial_number, convert_func=str)
         # Build IBMi attributes
         if bld_attr[ENV] == bp.LPARType.OS400:
             self._set_val(bld_attr, CONSOLE, value='HMC')
@@ -800,6 +816,10 @@ class SimplifiedRemoteRestart(BoolField):
     _name = 'Simplified Remote Restart'
 
 
+class KvmCapable(BoolField):
+    _name = 'KVM Capable Partition'
+
+
 class PhysicalPageTableRatio(ChoiceField):
     _name = 'Physical Page Table Ratio'
     _choices = ALLOWED_PPT_RATIOS.keys()
@@ -1003,10 +1023,14 @@ class LPARBuilder(object):
         lpar_w.allow_perf_data_collection = std[ENABLE_LPAR_METRIC]
         if std.get(SECURE_BOOT) is not None:
             lpar_w.pending_secure_boot = std[SECURE_BOOT]
+        if std.get(VIRTUAL_SERIAL_NUMBER) is not None:
+            lpar_w.virtual_serial_number = std[VIRTUAL_SERIAL_NUMBER]
         # Host may not be capable of SRR, so only add it if it's in the
         # standardized attributes
         if std.get(SRR_CAPABLE) is not None:
             lpar_w.srr_enabled = std[SRR_CAPABLE]
+        if std.get(KVM_CAPABLE) is not None:
+            lpar_w.kvm_capable = std[KVM_CAPABLE]
         io_cfg = self.build_io_config()
 
         # Now start replacing the sections

@@ -1,3 +1,5 @@
 [gerrit]
+host=rchgit01.rchland.ibm.com
+port=29422
 project=powervm/pypowervm.git
-defaultbranch=release/1.1.32
+defaultbranch=release/1.1.33

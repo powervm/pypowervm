@@ -85,6 +85,10 @@ _OS400_NET_INSTALL_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'os400NetInstallCapable')
 _OS400_NET_INSTALL_ISCSI_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'os400NetInstallIscsiCapable')
+_IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'IBMiVirtualSoftwareTierCapable')
+_KVM_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'KvmCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -102,6 +106,8 @@ _INACTIVE_MIGR_RUNNING = u.xpath(
 _MAX_FIRMWARE_MIGR = u.xpath(_MIGR_INFO, 'MaximumFirmwareActiveMigrations')
 _AFFINITY_CHECK_CAP = u.xpath(
     _MIGR_INFO, 'LogicalPartitionAffinityCheckCapable')
+_VPMEM_LPM = u.xpath(
+    _MIGR_INFO, 'LogicalPartitionPersistentMemoryMigrationCapable')
 
 _CAPABILITY_MAP = {
     'active_lpar_mobility_capable': {
@@ -158,8 +164,15 @@ _CAPABILITY_MAP = {
     'os400NetInstallCapable': {
         'prop': _OS400_NET_INSTALL_CAPABLE, 'default': False},
     'os400NetInstallIscsiCapable': {
-        'prop': _OS400_NET_INSTALL_ISCSI_CAPABLE, 'default': False}
+        'prop': _OS400_NET_INSTALL_ISCSI_CAPABLE, 'default': False},
+    'ibmi_virtual_software_tier_capable': {
+        'prop': _IBMI_VIRTUAL_SOFTWARE_TIER_CAPABLE, 'default': False},
+    'kvm_capable': {
+        'prop': _KVM_CAPABLE, 'default': False},
+    'vpmem_lpm_capable': {
+        'prop': _VPMEM_LPM, 'default': False}
 }
+
 
 _SYS_MEM_CONFIG = 'AssociatedSystemMemoryConfiguration'
 _MEMORY_INSTALLED = u.xpath(_SYS_MEM_CONFIG, 'InstalledSystemMemory')
@@ -243,6 +256,15 @@ _IOSLOT_PCI_SUB_VEND_ID = 'PCISubsystemVendorID'
 _IOSLOT_DYN_REC_CON_INDEX = 'SlotDynamicReconfigurationConnectorIndex'
 _IOSLOT_DYN_REC_CON_NAME = 'SlotDynamicReconfigurationConnectorName'
 
+# IBMiVirtualSoftwareTiers constants
+_IBMI_VIRTUAL_SOFT_TIERS_ROOT = 'IBMiVirtualSoftwareTiers'
+
+
+_IBMI_VIRTUAL_SOFT_TIER_ROOT = 'IBMiVirtualSoftwareTier'
+_IBMI_VIRTUAL_SOFT_TIER_TIER_NAME = 'TierName'
+_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_PROC = 'MaximumAllowedProcessors'
+_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_MEM = 'MaximumAllowedMemory'
+
 
 @ewrap.EntryWrapper.pvm_type('ManagedSystem')
 class System(ewrap.EntryWrapper):
@@ -259,6 +281,16 @@ class System(ewrap.EntryWrapper):
     @property
     def asio_config(self):
         return ASIOConfig.wrap(self.element.find(_ASIO_ROOT))
+
+    @property
+    def ibmivirtualsoftwaretiers(self):
+        if self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT) is None:
+            return None
+        return VirtualSoftwareTiers.wrap(self.element.find(_IBMI_VIRTUAL_SOFT_TIERS_ROOT))
+
+    @property
+    def associated_capabilities(self):
+        return AssociatedSystemCapabilities.wrap(self.element.find(_SYS_CAPABILITIES))
 
     @property
     def system_state(self):
@@ -664,3 +696,127 @@ class IOSlot(ewrap.ElementWrapper):
             "This property is deprecated! "
             "Use drc_name instead."), DeprecationWarning)
         return self.drc_name
+
+
+@ewrap.ElementWrapper.pvm_type(_SYS_CAPABILITIES, has_metadata=True)
+class AssociatedSystemCapabilities(ewrap.ElementWrapper):
+    """The associated system capabilities for this system."""
+
+    @property
+    def active_lpar_mobility_capable(self):
+        return self._get_val_bool('ActiveLogicalPartitionMobilityCapable')
+
+    @property
+    def inactive_lpar_mobility_capable(self):
+        return self._get_val_bool('InactiveLogicalPartitionMobilityCapable')
+
+    @property
+    def custom_mac_addr_capable(self):
+        return self._get_val_bool('VirtualEthernetCustomMACAddressCapable')
+
+    @property
+    def ibmi_lpar_mobility_capable(self):
+        return self._get_val_bool('IBMiLogicalPartitionMobilityCapable')
+
+    @property
+    def ibmi_restrictedio_capable(self):
+        return self._get_val_bool('IBMiRestrictedIOModeCapable')
+
+    @property
+    def simplified_remote_restart_capable(self):
+        return self._get_val_bool('PowerVMLogicalPartitionSimplifiedRemoteRestartCapable')
+
+    @property
+    def physical_page_table_ratio_capable(self):
+        return self._get_val_bool('CustomPhysicalPageTableRatioCapable')
+
+    @property
+    def active_memory_expansion_capable(self):
+        return self._get_val_bool('ActiveMemoryExpansionCapable')
+
+    @property
+    def shared_processor_pool_capable(self):
+        return self._get_val_bool('SharedProcessorPoolCapable')
+
+    @property
+    def vnic_capable(self):
+        return self._get_val_bool('VirtualNICDedicatedSRIOVCapable')
+
+    @property
+    def vnic_failover_capable(self):
+        return self._get_val_bool('VirtualNICFailOverCapable')
+
+    @property
+    def ibmi_nativeio_capable(self):
+        return self._get_val_bool('IBMiNativeIOCapable')
+
+    @property
+    def disable_secure_boot_capable(self):
+        return self._get_val_bool('DisableSecureBootCapable')
+
+    @property
+    def partition_secure_boot_capable(self):
+        return self._get_val_bool('PartitionSecureBootCapable')
+
+    @property
+    def ioslot_owner_assignment_capable(self):
+        return self._get_val_bool('IOSlotOwnerAssignmentCapable')
+
+    @property
+    def dedicated_processor_partition_capable(self):
+        return self._get_val_bool('DedicatedProcessorPartitionCapable')
+
+    @property
+    def persistent_memory_capable(self):
+        return self._get_val_bool('PersistentMemoryCapable')
+
+    @property
+    def virtual_serial_number_capable(self):
+        return self._get_val_bool('VirtualSerialNumberCapable')
+
+    @property
+    def partition_key_store_capable(self):
+        return self._get_val_bool('PartitionKeyStoreCapable')
+
+    @property
+    def ibmi_network_install_capable(self):
+        return self._get_val_bool('IBMiNetworkInstallCapable')
+
+    @property
+    def ibmi_network_install_iscsi_capable(self):
+        return self._get_val_bool('IBMiNetworkInstalliSCSICapable')
+
+    @property
+    def ibmi_virtual_software_tier_capable(self):
+        return self._get_val_bool('IBMiVirtualSoftwareTierCapable')
+
+    @property
+    def kvm_capable(self):
+        return self._get_val_bool('KvmCapable')
+
+
+@ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
+class VirtualSoftwareTiers(ewrap.ElementWrapper):
+    """The IBMi Virtual Software Tiers for this system."""
+
+    @property
+    def virtual_software_tier(self):
+        es = ewrap.WrapperElemList(self.element, IBMiVirtualSoftwareTier)
+        return es
+
+
+@ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIER_ROOT, has_metadata=True)
+class IBMiVirtualSoftwareTier(ewrap.ElementWrapper):
+    """The IBMi Virtual Software Tier for this system."""
+
+    @property
+    def tier_name(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_TIER_NAME)
+
+    @property
+    def maximum_allowed_processors(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_PROC)
+
+    @property
+    def maximum_allowed_memory(self):
+        return self._get_val_str(_IBMI_VIRTUAL_SOFT_TIER_MAX_ALLOWED_MEM)

@@ -446,3 +446,8 @@ class VSwitchModeInvalid(AbstractMsgFmtError):
 class AttributeInvalidForAixLinux(AbstractMsgFmtError):
     msg_fmt = _("The attribute '%(attr_name)s' is not valid for "
                 "AIX/Linux partition.")
+
+
+class InvalidKVMMemoryOverHeadValue(AbstractMsgFmtError):
+    msg_fmt = _("The attribute kvm memory overhead value is not valid."
+                "It should be in range 0.0-100.0.")

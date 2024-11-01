@@ -50,6 +50,9 @@ _LPAR_DED_VNICS = 'DedicatedVirtualNICs'
 _LPAR_BOOTLIST_INFO = 'BootListInformation'
 _LPAR_VIRTUAL_SERIAL_NUM = 'VirtualSerialNumber'
 _LPAR_PARTITION_KEY_STORE = 'KeyStoreSize'
+_LPAR_KVM_CAPABLE = 'KvmCapable'
+_LPAR_KVM_MEMORY_OVERHEAD = 'KvmMemoryOverhead'
+_LPAR_VIRTUAL_SOFTWARE_TIER = 'AssociatedIBMiVirtualSoftwareTier'
 
 _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_MIG_STG_VIOS_DATA_STATUS, _LPAR_MIG_STG_VIOS_DATA_TIME, _LPAR_RR,
@@ -332,3 +335,52 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         """Partition Keystore Size"""
         self.set_parm_value(_LPAR_PARTITION_KEY_STORE, value,
                             attrib=pc.ATTR_KSV1131)
+
+    @property
+    def kvm_capable(self):
+        """Partition kvm capable.
+
+        :returns: Returns kvm capability
+        """
+        return self._get_val_bool(_LPAR_KVM_CAPABLE, False)
+
+    @kvm_capable.setter
+    def kvm_capable(self, value):
+        """Partition kvm capable"""
+        self.set_parm_value(_LPAR_KVM_CAPABLE, u.sanitize_bool_for_api(value),
+                            attrib=pc.ATTR_KSV1140)
+
+    @property
+    def kvm_memory_overhead(self):
+        """Partition kvm memory overhead percentage.
+
+        :returns: Returns kvm memory overhead
+        """
+        return self._get_val_float(_LPAR_KVM_MEMORY_OVERHEAD, 0.0)
+
+    @kvm_memory_overhead.setter
+    def kvm_memory_overhead(self, value):
+        """Partition kvm memory overhead"""
+        floatVal = u.sanitize_float_for_api(value, 1)
+        if float(value) < 0.0 or float(value) > 100.0:
+            raise ex.InvalidKVMMemoryOverHeadValue()
+        self.set_parm_value(_LPAR_KVM_MEMORY_OVERHEAD, floatVal,
+                            attrib=pc.ATTR_KSV1140)
+
+    @property
+    def virtual_software_tier(self):
+        """virtual_software_tier
+
+        :returns: Returns Virtual software tier
+        """
+        if self.env != bp.LPARType.OS400:
+            return 'null'
+        return self._get_val_str(_LPAR_VIRTUAL_SOFTWARE_TIER, 'none')
+
+    @virtual_software_tier.setter
+    def virtual_software_tier(self, value):
+        """virtual_software_tier"""
+        if self.env != bp.LPARType.OS400:
+            raise ex.AttributeInvalidForAixLinux(attr_name="virtual_software_tier")
+        self.set_parm_value(_LPAR_VIRTUAL_SOFTWARE_TIER, value,
+                            attrib=pc.ATTR_KSV1140)
