@@ -10,6 +10,6 @@ pyasn1-modules # BSD
 pyasn1 # BSD
 pytz>=2019.3 # MIT
 requests!=2.12.2,!=2.13.0,>=2.10.0 # Apache-2.0
-futures>=3.0.6;python_version=='311' # BSD
+futures>=3.0.6;python_version=='39' # BSD
 Taskflow>=3.8.0 # Apache-2.0
 babel

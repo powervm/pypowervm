@@ -783,7 +783,7 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def cur_dram_pmem_volumes(self):
         return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
-    
+ 
     @property
     def lpar_placement(self):
         """LPAR Placement.
