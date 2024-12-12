@@ -380,7 +380,7 @@ class DefaultStandardize(Standardize):
                 self._set_val(bld_attr, RESTRICTED_IO, value=True,
                               convert_func=RestrictedIO.convert_value)
             self._set_val(bld_attr, VIRTUAL_SOFTWARE_TIER,
-                          value=self.virtual_software_tier,convert_func=str)
+                          value=self.virtual_software_tier, convert_func=str)
 
         # Validate the attributes
         self._validate_general(attrs=bld_attr)
