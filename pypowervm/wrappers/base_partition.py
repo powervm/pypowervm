@@ -101,6 +101,15 @@ BP_EL_ORDER = (
     _BP_ASSOC_TASKS, _BP_DESC, _BP_LPAR_PLACEMENT
 )
 
+_LPAR_BOOTLIST_INFO = 'BootListInformation'
+_BL_PEND_BOOT_STR = 'PendingBootString'
+_BL_BOOT_DEV_LIST = 'BootDeviceList'
+_BL_SHADOW_BOOT_DEV_LIST = 'ShadowBootDeviceList'
+_BL_LAST_BOOT_DEV_STR = 'LastBootedDeviceString'
+
+_BL_ORDER = (_BL_PEND_BOOT_STR, _BL_BOOT_DEV_LIST,
+             _BL_SHADOW_BOOT_DEV_LIST, _BL_LAST_BOOT_DEV_STR)
+
 # Partition Capabilities (_CAP)
 _CAP_DLPAR_IO_CAPABLE = 'DynamicLogicalPartitionIOCapable'
 _CAP_DLPAR_MEM_CAPABLE = 'DynamicLogicalPartitionMemoryCapable'
@@ -716,6 +725,14 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         return PartitionCapabilities.wrap(elem)
 
     @property
+    def bootlist_info(self):
+        """The Boot List Information."""
+        elem = self._find(_LPAR_BOOTLIST_INFO)
+        bootlist_info = BootListInformation.wrap(elem)
+        bootlist_info.set_env(self.env)
+        return bootlist_info
+
+    @property
     def io_config(self):
         """The Partition I/O Configuration."""
         elem = self._find(_BP_IO_CFG)
@@ -798,6 +815,45 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         self.set_parm_value(_BP_LPAR_PLACEMENT, value,
                             attrib=const.ATTR_KSV1140)
 
+@ewrap.ElementWrapper.pvm_type(_LPAR_BOOTLIST_INFO, has_metadata=True,
+                               child_order=_BL_ORDER)
+class BootListInformation(ewrap.ElementWrapper):
+    """See BootListInformation"""
+    def set_env(self, env):
+        """Sets the env dynamically."""
+        self._env = env
+
+    @property
+    def pending_boot_string(self):
+        if self._env == 'OS400':
+            return 'unavailable'
+        else:
+            return self._get_val_str(_BL_PEND_BOOT_STR, default="none")
+
+    @pending_boot_string.setter
+    def pending_boot_string(self, value):
+        return self.set_parm_value(_BL_PEND_BOOT_STR, value)
+
+    @property
+    def boot_device_list(self):
+        if self._env == 'OS400':
+            return 'unavailable'
+        else:
+            return self._get_val_str(_BL_BOOT_DEV_LIST, default="none")
+
+    @property
+    def shadow_boot_device_list(self):
+        if self._env == 'OS400':
+            return 'unavailable'
+        else:
+            return self._get_val_str(_BL_SHADOW_BOOT_DEV_LIST, default="none")
+
+    @property
+    def last_booted_device_string(self):
+        if self._env == 'OS400':
+            return 'unavailable'
+        else:
+            return self._get_val_str(_BL_LAST_BOOT_DEV_STR, default="none")
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
                                child_order=_CAP_EL_ORDER)
