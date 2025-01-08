@@ -596,7 +596,7 @@ class VOptMedia(ewrap.ElementWrapper):
         return self.media_name
 
     def _media_name(self, new_name):
-        self.set_parm_value(VOPT_NAME, new_name)
+        self.set_parm_value(VOPT_NAME, u.sanitize_vopt_name_for_api(new_name))
 
     @property
     def size(self):
