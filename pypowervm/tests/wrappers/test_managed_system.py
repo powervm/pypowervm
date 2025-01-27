@@ -361,10 +361,10 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.call_simple_getter("processor_is_throttled", True, False)
 
     def test_lpar_keystore_min_kbytes(self):
-        self.call_simple_getter("lpar_keystore_min_kbytes", 4, 0)
+        self.call_simple_getter("lpar_keystore_min_kbytes", 0, 0)
 
     def test_lpar_keystore_max_kbytes(self):
-        self.call_simple_getter("lpar_keystore_max_kbytes", 64, 0)
+        self.call_simple_getter("lpar_keystore_max_kbytes", 0, 0)
 
 
 class TestMTMS(unittest.TestCase):

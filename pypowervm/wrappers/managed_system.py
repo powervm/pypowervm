@@ -548,7 +548,7 @@ class System(ewrap.EntryWrapper):
 
     @property
     def lpar_keystore_max_kbytes(self):
-        return self._get_val_int(_MAXIMUM_KEY_STORE_SIZE)
+        return self._get_val_int(_MAXIMUM_KEY_STORE_SIZE, 0)
 
 
 @ewrap.ElementWrapper.pvm_type(_ASIO_ROOT, has_metadata=True)
