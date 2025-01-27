@@ -800,7 +800,7 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def cur_dram_pmem_volumes(self):
         return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
-    
+
     @property
     def lpar_placement(self):
         """LPAR Placement.
@@ -814,6 +814,7 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         """LPAR Placement"""
         self.set_parm_value(_BP_LPAR_PLACEMENT, value,
                             attrib=const.ATTR_KSV1140)
+
 
 @ewrap.ElementWrapper.pvm_type(_LPAR_BOOTLIST_INFO, has_metadata=True,
                                child_order=_BL_ORDER)
@@ -854,6 +855,7 @@ class BootListInformation(ewrap.ElementWrapper):
             return 'unavailable'
         else:
             return self._get_val_str(_BL_LAST_BOOT_DEV_STR, default="none")
+
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
                                child_order=_CAP_EL_ORDER)
