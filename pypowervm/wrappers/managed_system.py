@@ -802,6 +802,7 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
     def lpar_placement_capable(self):
         return self._get_val_bool('LparPlacementCapable')
 
+
 @ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
 class VirtualSoftwareTiers(ewrap.ElementWrapper):
     """The IBMi Virtual Software Tiers for this system."""
