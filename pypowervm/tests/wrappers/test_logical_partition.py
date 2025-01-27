@@ -204,13 +204,15 @@ class TestLogicalPartition(testtools.TestCase):
         self.assertEqual(
             self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC), "On")
         self._shared_wrapper.profile_sync = False
-'''        self.call_simple_getter("profile_sync", False, False)
+'''
+        self.call_simple_getter("profile_sync", False, False)
         self.assertEqual(
             self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC), "Off")
         self._shared_wrapper.profile_sync = "Off"
         self.call_simple_getter("profile_sync", True, False)
         self.assertEqual(self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC),
-                         "On")'''
+                         "On")
+'''
 
     def test_get_operating_system(self):
         self.call_simple_getter(
