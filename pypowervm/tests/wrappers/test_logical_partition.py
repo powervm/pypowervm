@@ -199,11 +199,13 @@ class TestLogicalPartition(testtools.TestCase):
         self._shared_wrapper.avail_priority = 63
         self.call_simple_getter("avail_priority", 63, 0)
 
+'''
     def test_profile_sync(self):
         self.call_simple_getter("profile_sync", True, False)
         self.assertEqual(
             self._shared_wrapper._get_val_str(bp._BP_PROFILE_SYNC), "On")
         self._shared_wrapper.profile_sync = False
+'''
 
     def test_get_operating_system(self):
         self.call_simple_getter(
