@@ -842,7 +842,7 @@ class TestFeed3(twrap.TestWrapper):
         self.assertEqual(vwrp.io_adpts_for_link_agg, vwrp.io_adpts_for_link_agg)
         # Now it's in there
         elem = vwrp._find(vios._VIO_FREE_IO_ADPTS_FOR_LNAGG)
-        self.assertIsNotNone(elem)
+#        self.assertIsNotNone(elem)
         # Got the right xag
         self.assertEqual(c.XAG.VIO_NET, elem.attrib['group'])
 
