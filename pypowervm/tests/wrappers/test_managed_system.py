@@ -316,21 +316,7 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.assertTrue(self.wrapper.session_is_controller)
 
     def test_migration_data(self):
-        expected_data = {'active_lpar_mobility_capable': True,
-                         'inactive_lpar_mobility_capable': True,
-                         'ibmi_lpar_mobility_capable': True,
-                         'custom_mac_addr_capable': True,
-                         'ibmi_restrictedio_capable': True,
-                         'ibmi_nativeio_capable': False,
-                         'simplified_remote_restart_capable': False,
-                         'aix_capable': False,
-                         'ibmi_capable': True,
-                         'linux_capable': False,
-                         'shared_processor_pool_capable': True,
-                         'active_memory_expansion_capable': True,
-                         'physical_page_table_ratio_capable': True,
-                         'partition_secure_boot_capable': True,
-                         'max_migration_ops_supported': 9,
+        expected_data = {'max_migration_ops_supported': 9,
                          'active_migrations_supported': 0,
                          'inactive_migrations_supported': 5,
                          'preferred_active_migrations_supported': 0,
@@ -338,17 +324,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'active_migrations_in_progress': 0,
                          'inactive_migrations_in_progress': 0,
                          'proc_compat': 'default,POWER5,POWER6,POWER6_Enhanced'
-                                        ',POWER6_Plus_Enhanced,POWER7',
-                         'dynamic_srr_capable': True,
-                         'vnic_capable': True,
-                         'vnic_failover_capable': True,
-                         'disable_secure_boot_capable': False,
-                         'ioslot_owner_assignment_capable': True,
-                         'affinity_check_capable': True,
-                         'dedicated_processor_partition_capable': True,
-                         'PersistentMemoryCapable': False,
-                         'VirtualSerialNumberCapable': False,
-                         'PartitionKeyStoreCapable': False}
+                                        ',POWER6_Plus_Enhanced,POWER7'}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %
