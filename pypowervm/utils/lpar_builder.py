@@ -357,10 +357,10 @@ class DefaultStandardize(Standardize):
         if srr_cap:
             self._set_val(bld_attr, SRR_CAPABLE, self.srr,
                           convert_func=SimplifiedRemoteRestart.convert_value)
-#        kvm_cap = self.mngd_sys.get_capability('kvm_capable')
-#        if kvm_cap:
-        self._set_val(bld_attr, KVM_CAPABLE, self.kvm_capable,
-                      convert_func=KvmCapable.convert_value)
+        kvm_cap = self.mngd_sys.get_capability('kvm_capable')
+        if kvm_cap:
+            self._set_val(bld_attr, KVM_CAPABLE, self.kvm_capable,
+                          convert_func=KvmCapable.convert_value)
         self._set_val(bld_attr, PROC_COMPAT, bp.LPARCompat.DEFAULT,
                       convert_func=ProcCompatMode.convert_value)
         # See if the host is capable of secure boot before setting it.
