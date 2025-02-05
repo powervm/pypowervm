@@ -312,7 +312,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'dedicated_processor_partition_capable': False,
                    'PersistentMemoryCapable': True,
                    'VirtualSerialNumberCapable': True,
-                   'PartitionKeyStoreCapable': True
+                   'PartitionKeyStoreCapable': True,
                    'PartitionKeyStoreCapable': False,
                    'os400NetInstallCapable': True,
                    'os400NetInstallIscsiCapable': True,
