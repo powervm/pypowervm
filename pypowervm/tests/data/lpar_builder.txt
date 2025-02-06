@@ -76,6 +76,7 @@ SECTION:uncapped_lpar
 <uom:SharingMode>uncapped</uom:SharingMode></uom:PartitionProcessorConfiguration>
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>POWER6</uom:PendingProcessorCompatibilityMode>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
