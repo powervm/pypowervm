@@ -155,8 +155,8 @@ SECTION:secure_boot_ibmi_lpar
 <uom:PartitionType>OS400</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
-<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 <uom:IsRestrictedIOPartition>true</uom:IsRestrictedIOPartition>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
