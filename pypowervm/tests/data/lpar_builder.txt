@@ -28,6 +28,7 @@ SECTION:dedicated_lpar
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
@@ -44,6 +45,7 @@ SECTION:shared_lpar
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
@@ -59,6 +61,7 @@ SECTION:capped_lpar
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">true</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
@@ -73,6 +76,7 @@ SECTION:uncapped_lpar
 <uom:SharingMode>uncapped</uom:SharingMode></uom:PartitionProcessorConfiguration>
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>POWER6</uom:PendingProcessorCompatibilityMode>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
@@ -88,6 +92,7 @@ SECTION:ded_lpar_sre_idle_procs_always
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>POWER7</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
@@ -118,6 +123,7 @@ SECTION:ppt_lpar
 <uom:PartitionType>AIX/Linux</uom:PartitionType>
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 SECTION:secure_boot_lpar
@@ -134,6 +140,7 @@ SECTION:secure_boot_lpar
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:PendingSecureBoot ksv="V1_8_0">2</uom:PendingSecureBoot>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 SECTION:secure_boot_ibmi_lpar
@@ -150,6 +157,7 @@ SECTION:secure_boot_ibmi_lpar
 <uom:PendingProcessorCompatibilityMode>default</uom:PendingProcessorCompatibilityMode>
 <uom:SimplifiedRemoteRestartCapable ksv="V1_2_0">false</uom:SimplifiedRemoteRestartCapable>
 <uom:IsRestrictedIOPartition>true</uom:IsRestrictedIOPartition>
+<uom:KvmCapable ksv="V1_14_0">false</uom:KvmCapable>
 </uom:LogicalPartition>
 END OF SECTION
 #
