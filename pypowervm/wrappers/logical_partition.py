@@ -384,3 +384,4 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
             raise ex.AttributeInvalidForAixLinux(attr_name="virtual_software_tier")
         self.set_parm_value(_LPAR_VIRTUAL_SOFTWARE_TIER, value,
                             attrib=pc.ATTR_KSV1140)
+
