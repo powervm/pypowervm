@@ -353,7 +353,7 @@ def sanitize_wwpn_for_api(wwpn):
 def sanitize_vopt_name_for_api(vopt_name, max_len=const.MaxLen.VOPT_NAME):
     if len(vopt_name) > max_len:
         raise ValueError("The name parameter is too long. "
-                         "The name parameter must not exceed %d characters "%max_len)
+                         "The name parameter must not exceed %d characters " %max_len)
     return vopt_name
 
 
