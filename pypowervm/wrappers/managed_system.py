@@ -91,6 +91,8 @@ _KVM_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'KvmCapable')
 _LPAR_PLACEMENT_CAPABLE = u.xpath(
     _SYS_CAPABILITIES, 'LparPlacementCapable')
+_MIN_AFFINITY_SCORE_CAPABLE = u.xpath(
+    _SYS_CAPABILITIES, 'MinimumAffinityScoreCapable')
 
 # Migration Constants
 _SYS_PROC_CONFIG = 'AssociatedSystemProcessorConfiguration'
@@ -174,7 +176,9 @@ _CAPABILITY_MAP = {
     'vpmem_lpm_capable': {
         'prop': _VPMEM_LPM, 'default': False},
     'LparPlacementCapable': {
-        'prop': _LPAR_PLACEMENT_CAPABLE, 'default': False}
+        'prop': _LPAR_PLACEMENT_CAPABLE, 'default': False},
+    'MinAffinityScoreCapable': {
+        'prop': _MIN_AFFINITY_SCORE_CAPABLE, 'default': False}
 }
 
 
@@ -801,6 +805,10 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
     @property
     def lpar_placement_capable(self):
         return self._get_val_bool('LparPlacementCapable')
+
+    @property
+    def min_affinity_score_capable(self):
+        return self._get_val_bool('MinAffinityScoreCapable')
 
 
 @ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
