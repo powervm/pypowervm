@@ -288,7 +288,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'kvm_capable': False,
                     'vpmem_lpm_capable': False,
                     'LparPlacementCapable': False,
-                    'MinAffinityScoreCapable':False}
+                    'MinAffinityScoreCapable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -319,7 +319,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'kvm_capable': False,
                    'vpmem_lpm_capable': False,
                    'LparPlacementCapable': False,
-                   'MinAffinityScoreCapable':False}
+                   'MinAffinityScoreCapable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
