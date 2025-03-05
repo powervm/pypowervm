@@ -177,7 +177,7 @@ _CAPABILITY_MAP = {
         'prop': _VPMEM_LPM, 'default': False},
     'LparPlacementCapable': {
         'prop': _LPAR_PLACEMENT_CAPABLE, 'default': False},
-    'MinAffinityScoreCapable': {
+    'MinimumAffinityScoreCapable': {
         'prop': _MIN_AFFINITY_SCORE_CAPABLE, 'default': False}
 }
 
