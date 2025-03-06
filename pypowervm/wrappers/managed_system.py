@@ -808,7 +808,7 @@ class AssociatedSystemCapabilities(ewrap.ElementWrapper):
 
     @property
     def min_affinity_score_capable(self):
-        return self._get_val_bool('MinAffinityScoreCapable')
+        return self._get_val_bool('MinimumAffinityScoreCapable')
 
 
 @ewrap.ElementWrapper.pvm_type(_IBMI_VIRTUAL_SOFT_TIERS_ROOT, has_metadata=True)
