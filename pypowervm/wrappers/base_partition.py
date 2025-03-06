@@ -733,7 +733,6 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         if self.env == 'AIX/Linux':
             elem = self._find(_LPAR_BOOTLIST_INFO)
             bootlist_info = BootListInformation.wrap(elem)
-            bootlist_info.set_env(self.env)
             return bootlist_info
 
     @property
