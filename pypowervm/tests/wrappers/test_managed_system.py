@@ -288,7 +288,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                     'kvm_capable': False,
                     'vpmem_lpm_capable': False,
                     'LparPlacementCapable': False,
-                    'MinAffinityScoreCapable': False}
+                    'MinimumAffinityScoreCapable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -319,7 +319,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'kvm_capable': False,
                    'vpmem_lpm_capable': False,
                    'LparPlacementCapable': False,
-                   'MinAffinityScoreCapable': False}
+                   'MinimumAffinityScoreCapable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -369,7 +369,7 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'kvm_capable': False,
                          'ibmi_virtual_software_tier_capable': False,
                          'os400NetInstallCapable': False,
-                         'MinAffinityScoreCapable': False}
+                         'MinimumAffinityScoreCapable': False}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %

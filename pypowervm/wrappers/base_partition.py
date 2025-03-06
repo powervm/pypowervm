@@ -730,10 +730,10 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def bootlist_info(self):
         """The Boot List Information."""
-        elem = self._find(_LPAR_BOOTLIST_INFO)
-        bootlist_info = BootListInformation.wrap(elem)
-        bootlist_info.set_env(self.env)
-        return bootlist_info
+        if self.env == 'AIX/Linux':
+            elem = self._find(_LPAR_BOOTLIST_INFO)
+            bootlist_info = BootListInformation.wrap(elem)
+            return bootlist_info
 
     @property
     def io_config(self):
@@ -823,16 +823,9 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
                                child_order=_BL_ORDER)
 class BootListInformation(ewrap.ElementWrapper):
     """See BootListInformation"""
-    def set_env(self, env):
-        """Sets the env dynamically."""
-        self._env = env
-
     @property
     def pending_boot_string(self):
-        if self._env == 'OS400':
-            return 'unavailable'
-        else:
-            return self._get_val_str(_BL_PEND_BOOT_STR, default="none")
+        return self._get_val_str(_BL_PEND_BOOT_STR)
 
     @pending_boot_string.setter
     def pending_boot_string(self, value):
@@ -840,24 +833,15 @@ class BootListInformation(ewrap.ElementWrapper):
 
     @property
     def boot_device_list(self):
-        if self._env == 'OS400':
-            return 'unavailable'
-        else:
-            return self._get_val_str(_BL_BOOT_DEV_LIST, default="none")
+        return self._get_val_str(_BL_BOOT_DEV_LIST)
 
     @property
     def shadow_boot_device_list(self):
-        if self._env == 'OS400':
-            return 'unavailable'
-        else:
-            return self._get_val_str(_BL_SHADOW_BOOT_DEV_LIST, default="none")
+        return self._get_val_str(_BL_SHADOW_BOOT_DEV_LIST)
 
     @property
     def last_booted_device_string(self):
-        if self._env == 'OS400':
-            return 'unavailable'
-        else:
-            return self._get_val_str(_BL_LAST_BOOT_DEV_STR, default="none")
+        return self._get_val_str(_BL_LAST_BOOT_DEV_STR)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,
