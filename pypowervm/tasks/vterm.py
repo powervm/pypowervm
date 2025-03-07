@@ -98,7 +98,7 @@ def _close_vterm_local(adapter, lpar_uuid):
     :param lpar_uuid: partition uuid
     """
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
-    LOG.info("Invokling rmvterm for lpar id %s" %lpar_id)
+    LOG.info("Invokling rmvterm for lpar id %s" % lpar_id)
     _run_proc(['rmvterm', '--id', lpar_id])
 
     # Stop the port.
@@ -794,5 +794,5 @@ class _VNCKiller(threading.Thread):
             count += 1
 
         if not self._abort:
-            LOG.info("closing console - rmvterm for lpar id %s" %self.lpar_uuid)
+            LOG.info("closing console - rmvterm for lpar id %s" % self.lpar_uuid)
             _close_vterm_local(self.adapter, self.lpar_uuid)
