@@ -98,6 +98,7 @@ def _close_vterm_local(adapter, lpar_uuid):
     :param lpar_uuid: partition uuid
     """
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
+    LOG.info("Invokling rmvterm for lpar id %s" % lpar_id)
     _run_proc(['rmvterm', '--id', lpar_id])
 
     # Stop the port.
@@ -182,7 +183,7 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False, codepage="037"):
 def open_remotable_vnc_vterm(
         adapter, lpar_uuid, local_ip, remote_ips=None, vnc_path=None,
         use_x509_auth=False, ca_certs=None, server_cert=None, server_key=None,
-        force=False, codepage="037"):
+        force=False, codepage="037", vterm_timeout=300):
     """Opens a VNC vTerm to a given LPAR.  Wraps in some validation.
 
     Must run on the management partition.
@@ -266,7 +267,7 @@ def open_remotable_vnc_vterm(
         if remote_port not in _VNC_REMOTE_PORT_TO_LISTENER or listen != 0:
             LOG.info("Trying VNCSocket Listener")
             listener = _VNCSocketListener(
-                adapter, remote_port, local_ip, verify_vnc_path,
+                adapter, remote_port, local_ip, verify_vnc_path, vterm_timeout,
                 remote_ips=remote_ips)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
@@ -336,7 +337,7 @@ class _VNCSocketListener(threading.Thread):
     and setup a repeater to forward the data between the two sides.
     """
 
-    def __init__(self, adapter, remote_port, local_ip, verify_vnc_path,
+    def __init__(self, adapter, remote_port, local_ip, verify_vnc_path, vterm_timeout,
                  remote_ips=None):
         """Creates the listener bound to a remote-accessible port.
 
@@ -359,6 +360,7 @@ class _VNCSocketListener(threading.Thread):
         self.verify_vnc_path = verify_vnc_path
         self.remote_ips = remote_ips
         self.x509_certs = None
+        self.vterm_timeout = vterm_timeout
 
         self.alive = True
         self.vnc_killer = None
@@ -495,7 +497,8 @@ class _VNCSocketListener(threading.Thread):
         # See if we need to start up a new repeater for the given local port
         if local_port not in _VNC_LOCAL_PORT_TO_REPEATER:
             _VNC_LOCAL_PORT_TO_REPEATER[local_port] = _VNCRepeaterServer(
-                self.adapter, lpar_uuid, local_port, client_socket, fwd)
+                self.adapter, lpar_uuid, local_port, client_socket, fwd,
+                vterm_timeout=self.vterm_timeout)
             _VNC_LOCAL_PORT_TO_REPEATER[local_port].start()
         else:
             repeater = _VNC_LOCAL_PORT_TO_REPEATER[local_port]
@@ -657,7 +660,7 @@ class _VNCRepeaterServer(threading.Thread):
     """
 
     def __init__(self, adapter, lpar_uuid, local_port, client_socket=None,
-                 local_socket=None):
+                 local_socket=None, vterm_timeout=300):
         """Creates the repeater.
 
         :param adapter: The pypowervm adapter
@@ -676,6 +679,7 @@ class _VNCRepeaterServer(threading.Thread):
         self.local_port = local_port
         self.alive = True
         self.vnc_killer = None
+        self.vterm_timeout = vterm_timeout
 
         # Add the connection passed into us to the forwarding list
         if client_socket is not None and local_socket is not None:
@@ -703,6 +707,8 @@ class _VNCRepeaterServer(threading.Thread):
                 # 0, then we know that we're ready to close this.
                 data = s_input.recv(4096)
                 if len(data) == 0:
+                    LOG.info("The client connection will be closed "
+                             "since no data is received.")
                     self._close_client(s_input)
 
                     # Note that we have to break here.  We do that because the
@@ -749,7 +755,7 @@ class _VNCRepeaterServer(threading.Thread):
 
         # If this was the last port, close the local connection
         if len(self.peers) == 0:
-            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid)
+            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid, vterm_timeout=self.vterm_timeout)
             self.vnc_killer.start()
 
 
@@ -766,11 +772,12 @@ class _VNCKiller(threading.Thread):
     session will be closed out and the memory will be reclaimed.
     """
 
-    def __init__(self, adapter, lpar_uuid):
+    def __init__(self, adapter, lpar_uuid, vterm_timeout=300):
         super(_VNCKiller, self).__init__()
         self.adapter = adapter
         self.lpar_uuid = lpar_uuid
         self._abort = False
+        self.vterm_timeout = vterm_timeout
 
     def abort(self):
         """Call to stop the killer from completing its job."""
@@ -780,11 +787,12 @@ class _VNCKiller(threading.Thread):
         count = 0
 
         # Wait up to 5 minutes to see if any new negotiations came in
-        while count < 300 and not self._abort:
+        while count < self.vterm_timeout and not self._abort:
             time.sleep(1)
             if self._abort:
                 break
             count += 1
 
         if not self._abort:
+            LOG.info("closing console - rmvterm for lpar id %s" % self.lpar_uuid)
             _close_vterm_local(self.adapter, self.lpar_uuid)
