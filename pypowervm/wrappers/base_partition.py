@@ -82,6 +82,15 @@ _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
 _BP_LPAR_PLACEMENT = 'LparPlacement'
+_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
+_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'MaximumPersistentMemoryVolumes')
+_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'CurrentPersistentMemoryVolumes')
+_MAX_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'MaximumDramPersistentMemoryVolumes')
+_CUR_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'CurrentDramPersistentMemoryVolumes')
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -97,7 +106,7 @@ BP_EL_ORDER = (
     _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
     _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_PENDING_SECURE_BOOT,
-    _BP_CURR_SECURE_BOOT, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_CURR_SECURE_BOOT, _ASSOC_PMEM_CONFIG, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
     _BP_ASSOC_TASKS, _BP_DESC, _BP_LPAR_PLACEMENT
 )
 
@@ -300,16 +309,6 @@ PFC_PORT_ROOT = card.PFC_PORT_ROOT
 IOAdapter = card.IOAdapter
 PhysFCAdapter = card.PhysFCAdapter
 PhysFCPort = card.PhysFCPort
-
-_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
-_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                            'MaximumPersistentMemoryVolumes')
-_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                            'CurrentPersistentMemoryVolumes')
-_MAX_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                                 'MaximumDramPersistentMemoryVolumes')
-_CUR_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                                 'CurrentDramPersistentMemoryVolumes')
 
 
 class SharingMode(object):
