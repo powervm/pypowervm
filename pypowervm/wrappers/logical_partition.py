@@ -400,6 +400,8 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
     @min_affinity_score.setter
     def min_affinity_score(self, value):
         """Partition min affinity score"""
+        if int(value) > 100:
+            raise ex.InvalidAffinityScore()
         self.set_parm_value(_LPAR_MIN_AFFINITY_SCORE, value,
                             attrib=pc.ATTR_KSV1140)
 
