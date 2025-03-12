@@ -452,5 +452,6 @@ class InvalidKVMMemoryOverHeadValue(AbstractMsgFmtError):
     msg_fmt = _("The attribute kvm memory overhead value is not valid."
                 "It should be in range 0.0-100.0.")
 
+
 class InvalidAffinityScore(AbstractMsgFmtError):
     msg_fmt = _("The value for minimum affinity score should be between 0 to 100.")
