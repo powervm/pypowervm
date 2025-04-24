@@ -1064,9 +1064,11 @@ class LPARBuilder(object):
             lpar_w.min_affinity_score_action = std[MIN_AFFINITY_SCORE_ACTION]
         io_cfg = self.build_io_config()
         # Assigning load_src value to std from lpar_w object
-        if hasattr(lpar_w.io_config.tagged_io, 'load_src'):
-            std[LOAD_SRC] = lpar_w.io_config.tagged_io.load_src
-            std[ALT_LOAD_SRC] = std[LOAD_SRC]
+        if lpar_w.env == bp.LPARType.OS400:
+            if hasattr(lpar_w.io_config.tagged_io, 'load_src'):
+                std[LOAD_SRC] = lpar_w.io_config.tagged_io.load_src
+            if hasattr(lpar_w.io_config.tagged_io, 'alt_load_src'):
+                std[ALT_LOAD_SRC] = lpar_w.io_config.tagged_io.alt_load_src
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg
