@@ -1063,6 +1063,10 @@ class LPARBuilder(object):
         if std.get(MIN_AFFINITY_SCORE_ACTION) is not None:
             lpar_w.min_affinity_score_action = std[MIN_AFFINITY_SCORE_ACTION]
         io_cfg = self.build_io_config()
+        # Assigning load_src value to std from lpar_w object
+        if hasattr(lpar_w.io_config.tagged_io,'load_src'):
+            std[LOAD_SRC] = lpar_w.io_config.tagged_io.load_src
+            std[ALT_LOAD_SRC] = std[LOAD_SRC]
 
         # Now start replacing the sections
         lpar_w.mem_config = mem_cfg
