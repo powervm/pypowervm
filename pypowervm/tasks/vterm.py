@@ -482,11 +482,9 @@ class _VNCSocketListener(threading.Thread):
         # socket.
 
         fwd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if fwd.connect_ex(('127.0.0.1', local_port)) == 0:
-            fwd.connect(('127.0.0.1', local_port))
-        else:
+        if fwd.connect_ex(('127.0.0.1', local_port)) != 0:
             LOG.exception(_("Port %s is not listening "
-                          "maybe VNC is down "), local_port)
+                            "maybe VNC is down "), local_port)
             return
 
         # If we were told to enable VeNCrypt using X509 Authentication, do so
