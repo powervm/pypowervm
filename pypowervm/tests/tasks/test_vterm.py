@@ -297,7 +297,7 @@ class TestVNCSocketListener(testtools.TestCase):
 
         mock_c_sock.sendall.assert_called_once_with(
             b"HTTP/1.8 200 OK\r\n\r\n")
-        mock_s_sock.connect.assert_called_once_with(('127.0.0.1', '5800'))
+        mock_s_sock.connect_ex.assert_called_once_with(('127.0.0.1', '5800'))
 
         self.assertEqual({},
                          self.rptr.peers)
