@@ -280,8 +280,7 @@ class TestVNCSocketListener(testtools.TestCase):
             b"HTTP/1.8 200 OK\r\n\r\n")
         mock_s_sock.connect_ex.assert_called_once_with(('127.0.0.1', '5800'))
 
-
-        self.assertEqual({},self.rptr.peers)
+        self.assertEqual({}, self.rptr.peers)
 
     @mock.patch('select.select')
     @mock.patch('socket.socket')
