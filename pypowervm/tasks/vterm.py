@@ -517,7 +517,7 @@ class _VNCSocketListener(threading.Thread):
                              if there is an error.
         """
         try:
-            LOG.info("Entering into _enable_x509_authentication %s" % self.lpar_uuid)
+            LOG.info("--> _enable_x509_authentication %s" % self.lpar_uuid)
             # First perform the RFB Version negotiation between client/server
             self._version_negotiation(client_socket, server_socket)
             # Next perform the Security Authentication Type Negotiation
@@ -530,7 +530,7 @@ class _VNCSocketListener(threading.Thread):
             ca_certs = self.x509_certs.get('ca_certs')
             server_key = self.x509_certs.get('server_key')
             server_cert = self.x509_certs.get('server_cert')
-            LOG.info("Exiting _enable_x509_authentication %s" % self.lpar_uuid)
+            LOG.info("<-- _enable_x509_authentication %s" % self.lpar_uuid)
             return ssl.wrap_socket(
                 client_socket, server_side=True, ca_certs=ca_certs,
                 certfile=server_cert, keyfile=server_key,
@@ -549,7 +549,7 @@ class _VNCSocketListener(threading.Thread):
         """
         # Do a pass-thru of the RFB Version negotiation up-front
         # The length of the version is 12, such as 'RFB 003.007\n'
-        LOG.info("Entering into  _version_negotiation %s" % self.lpar_uuid)
+        LOG.info("--> _version_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(self._socket_receive(server_socket, 12))
         server_socket.sendall(self._socket_receive(client_socket, 12))
         # Since we are doing our own additional authentication
@@ -557,7 +557,7 @@ class _VNCSocketListener(threading.Thread):
         auth_size = self._socket_receive(server_socket, 1)
         self._socket_receive(server_socket, six.byte2int(auth_size))
         server_socket.sendall(six.int2byte(1))
-        LOG.info("Exiting _version_negotiation %s" % self.lpar_uuid)
+        LOG.info("<-- _version_negotiation %s" % self.lpar_uuid)
 
     def _auth_type_negotiation(self, client_socket):
         """Performs the VeNCrypt Authentication Type Negotiation.
@@ -567,7 +567,7 @@ class _VNCSocketListener(threading.Thread):
         """
         # Do the VeNCrypt handshake next before establishing SSL
         # Say we only support VeNCrypt (19) authentication version 0.2
-        LOG.info("Entering into _auth_type_negotiation %s" % self.lpar_uuid)
+        LOG.info("--> into _auth_type_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(six.int2byte(19))
         client_socket.sendall(encodeutils.safe_encode("\x00\x02"))
@@ -587,7 +587,7 @@ class _VNCSocketListener(threading.Thread):
         # Tell the Client we have accepted the authentication type
         # In this particular case 0 means the type was accepted
         client_socket.sendall(six.int2byte(0))
-        LOG.info("Exiting _auth_type_negotiation %s" % self.lpar_uuid)
+        LOG.info("<-- _auth_type_negotiation %s" % self.lpar_uuid)
         return True
 
     def _auth_subtype_negotiation(self, client_socket):
@@ -597,7 +597,7 @@ class _VNCSocketListener(threading.Thread):
         :return success:  Boolean whether the handshake was successful.
         """
         # Tell the client the authentication sub-type is x509None (260)
-        LOG.info("Entering into _auth_subtype_negotiation %s" % self.lpar_uuid)
+        LOG.info("--> into _auth_subtype_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(struct.pack('!I', 260))
         subtyp_raw = self._socket_receive(client_socket, 4)
@@ -609,7 +609,7 @@ class _VNCSocketListener(threading.Thread):
         # Tell the Client we have accepted the authentication handshake
         # In this particular case 1 means the sub-type was accepted
         client_socket.sendall(six.int2byte(1))
-        LOG.info("Exiting _auth_subtype_negotiation %s" % self.lpar_uuid)
+        LOG.info("<-- _auth_subtype_negotiation %s" % self.lpar_uuid)
         return True
 
     def _socket_receive(self, asocket, bufsize):
