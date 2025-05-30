@@ -218,13 +218,13 @@ class TestVNCSocketListener(testtools.TestCase):
             fx.AdapterFx(traits=fx.LocalPVMTraits)).adpt
 
         self.srv = vterm._VNCSocketListener(
-            self.adpt, '5901', '1.2.3.4', True, vterm_timeout=300,
+            self.adpt, 'uuid', '5901', '1.2.3.4', True, vterm_timeout=300,
             remote_ips=['1.2.3.5'])
         self.srv_no_verify = vterm._VNCSocketListener(
-            self.adpt, '5800', '1.2.3.4', False, vterm_timeout=300,
+            self.adpt, 'uuid', '5800', '1.2.3.4', False, vterm_timeout=300,
             remote_ips=['1.2.3.5'])
         self.srv_6 = vterm._VNCSocketListener(
-            self.adpt, '5901', 'fe80:1234', True, vterm_timeout=300,
+            self.adpt, 'uuid', '5901', 'fe80:1234', True, vterm_timeout=300,
             remote_ips=['fe80:7890'])
         self.rptr = vterm._VNCRepeaterServer(self.adpt, 'uuid', '5800')
 
