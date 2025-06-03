@@ -186,7 +186,7 @@ class Session(object):
 
     def __del__(self):
         # Refuse to clean up clones.
-        if self._init_by != id(self):
+        if not hasattr(self, '_init_by') or self._init_by != id(self):
             return
 
         try:
