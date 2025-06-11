@@ -49,7 +49,6 @@ _LPAR_DES_IPL_SRC = 'DesignatedIPLSource'
 _LPAR_DED_VNICS = 'DedicatedVirtualNICs'
 _LPAR_BOOTLIST_INFO = 'BootListInformation'
 _LPAR_VIRTUAL_SERIAL_NUM = 'VirtualSerialNumber'
-_LPAR_PARTITION_KEY_STORE = 'KeyStoreSize'
 _LPAR_KVM_CAPABLE = 'KvmCapable'
 _LPAR_KVM_MEMORY_OVERHEAD = 'KvmMemoryOverhead'
 _LPAR_VIRTUAL_SOFTWARE_TIER = 'AssociatedIBMiVirtualSoftwareTier'
@@ -64,7 +63,7 @@ _LPAR_EL_ORDER = bp.BP_EL_ORDER + (
     _LPAR_USES_HSL_OPTICONN, _LPAR_USES_VIRT_OPTICONN, _LPAR_VFC_CLIENT_ADPTS,
     _LPAR_VSCSI_CLIENT_ADPTS, _LPAR_RESTRICTED_IO, _LPAR_STG_DEV_UDID,
     _LPAR_DES_IPL_SRC, _LPAR_DED_VNICS, _LPAR_BOOTLIST_INFO,
-    _LPAR_VIRTUAL_SERIAL_NUM, _LPAR_VIRTUAL_SOFTWARE_TIER, _LPAR_PARTITION_KEY_STORE,
+    _LPAR_VIRTUAL_SERIAL_NUM, _LPAR_VIRTUAL_SOFTWARE_TIER,
     _LPAR_KVM_CAPABLE, _LPAR_KVM_MEMORY_OVERHEAD,
     _LPAR_MIN_AFFINITY_SCORE, _LPAR_MIN_AFFINITY_SCORE_ACTION)
 
@@ -327,20 +326,6 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
                             attrib=pc.ATTR_KSV1130)
 
     @property
-    def keystore_kbytes(self):
-        """Partition Keystore.
-
-        :returns: Returns PKS Size
-        """
-        return self._get_val_int(_LPAR_PARTITION_KEY_STORE, 0)
-
-    @keystore_kbytes.setter
-    def keystore_kbytes(self, value):
-        """Partition Keystore Size"""
-        self.set_parm_value(_LPAR_PARTITION_KEY_STORE, value,
-                            attrib=pc.ATTR_KSV1131)
-
-    @property
     def kvm_capable(self):
         """Partition kvm capable.
 
@@ -379,7 +364,7 @@ class LPAR(bp.BasePartition, ewrap.WrapperSetUUIDMixin):
         """
         if self.env != bp.LPARType.OS400:
             return 'null'
-        return self._get_val_str(_LPAR_VIRTUAL_SOFTWARE_TIER, 'none')
+        return self._get_val_str(_LPAR_VIRTUAL_SOFTWARE_TIER, None)
 
     @virtual_software_tier.setter
     def virtual_software_tier(self, value):

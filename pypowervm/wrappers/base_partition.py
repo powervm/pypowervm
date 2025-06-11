@@ -81,6 +81,7 @@ _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
+_BP_KEY_STORE = 'KeyStoreSize'
 _BP_LPAR_PLACEMENT = 'LparPlacement'
 _ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
 _MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
@@ -107,7 +108,7 @@ BP_EL_ORDER = (
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
     _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_PENDING_SECURE_BOOT,
     _BP_CURR_SECURE_BOOT, _ASSOC_PMEM_CONFIG, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
-    _BP_ASSOC_TASKS, _BP_DESC, _BP_LPAR_PLACEMENT
+    _BP_ASSOC_TASKS, _BP_DESC, _BP_KEY_STORE, _BP_LPAR_PLACEMENT
 )
 
 _LPAR_BOOTLIST_INFO = 'BootListInformation'
@@ -802,6 +803,20 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def cur_dram_pmem_volumes(self):
         return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
+
+    @property
+    def keystore_kbytes(self):
+        """Partition Keystore.
+
+        :returns: Returns PKS Size
+        """
+        return self._get_val_int(_BP_KEY_STORE, 0)
+
+    @keystore_kbytes.setter
+    def keystore_kbytes(self, value):
+        """Partition Keystore Size"""
+        self.set_parm_value(_BP_KEY_STORE, value,
+                            attrib=const.ATTR_KSV1131)
 
     @property
     def lpar_placement(self):
