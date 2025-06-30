@@ -810,7 +810,10 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
 
         :returns: Returns PKS Size
         """
-        return self._get_val_int(_BP_KEY_STORE, 0)
+        if self.env != 'Virtual IO Server':
+            return self._get_val_int(_BP_KEY_STORE, 0)
+        else:
+            return None
 
     @keystore_kbytes.setter
     def keystore_kbytes(self, value):
