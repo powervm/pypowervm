@@ -15,6 +15,7 @@
 import abc
 import copy
 import errno
+import eventlet
 import hashlib
 import os
 import re
@@ -564,11 +565,13 @@ class Session(object):
             if not self._logged_in:
                 return
             LOG.info(_("Session logging off %s"), self.host)
+
             def do_logoff():
                 try:
                     self.request('DELETE', c.LOGON_PATH, relogin=False)
                 except Exception:
                     LOG.exception(_('Problem logging off.  Ignoring.'))
+
             # Run the blocking call outside of the mainloop
             try:
                 if "eventlet" in sys.modules:
