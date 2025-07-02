@@ -32,7 +32,6 @@ import requests
 import requests.exceptions as rqex
 import six
 import six.moves.urllib.parse as urllib
-import sys
 import weakref
 
 from lxml import etree
