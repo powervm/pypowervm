@@ -574,8 +574,7 @@ class Session(object):
 
             # Run the blocking call outside of the mainloop
             try:
-                if "eventlet" in sys.modules:
-                    eventlet.spawn_n(do_logoff)
+                eventlet.spawn_n(do_logoff)
             except Exception:
                 pass
             self._logged_in = False
