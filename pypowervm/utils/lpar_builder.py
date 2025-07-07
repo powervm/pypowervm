@@ -1065,8 +1065,8 @@ class LPARBuilder(object):
         io_cfg = self.build_io_config()
         # Assigning load_src value to std from lpar_w object
         if lpar_w.env == bp.LPARType.OS400:
-            load_src = getattr(lpar_w.io_config.tagged_io,'load_src', None)
-            alt_load_src = getattr(lpar_w.io_config.tagged_io,'alt_load_src', None)
+            load_src = getattr(lpar_w.io_config.tagged_io, 'load_src', None)
+            alt_load_src = getattr(lpar_w.io_config.tagged_io, 'alt_load_src', None)
             if load_src is not None:
                 std[LOAD_SRC] = lpar_w.io_config.tagged_io.load_src
             if alt_load_src is not None:
