@@ -226,7 +226,7 @@ _MAX_PROCS_PER_PARTITION = u.xpath(
 
 _MAX_PROCS_PER_AIX_LINUX_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'CurrentMaximumProcessorsPerAIXOrLinuxPartition')
-    
+
 _MAX_PROCS_PER_OS400_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'CurrentMaximumProcessorsPerIBMiPartition')
 
