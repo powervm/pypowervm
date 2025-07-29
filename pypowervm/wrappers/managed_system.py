@@ -227,11 +227,17 @@ _MAX_PROCS_PER_PARTITION = u.xpath(
 _MAX_PROCS_PER_AIX_LINUX_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'CurrentMaximumProcessorsPerAIXOrLinuxPartition')
 
+_MAX_PROCS_PER_OS400_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG, 'CurrentMaximumProcessorsPerIBMiPartition')
+
 _MAX_VCPUS_PER_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'MaximumAllowedVirtualProcessorsPerPartition')
 
 _MAX_VCPUS_PER_AIX_LINUX_PARTITION = u.xpath(
     _SYS_PROC_CONFIG, 'CurrentMaximumVirtualProcessorsPerAIXOrLinuxPartition')
+
+_MAX_VCPU_PER_OS400_PARTITION = u.xpath(
+    _SYS_PROC_CONFIG, 'CurrentMaximumVirtualProcessorsPerIBMiPartition')
 
 _VIOS_LINK = u.xpath("AssociatedVirtualIOServers", c.LINK)
 
@@ -339,6 +345,20 @@ class System(ewrap.EntryWrapper):
         self.set_parm_value(_MAX_PROCS_PER_AIX_LINUX_PARTITION, str(value))
 
     @property
+    def max_procs_per_os400_lpar(self):
+        val = self._get_val_int(_MAX_PROCS_PER_OS400_PARTITION, 0)
+        # Some systems will not have maximum procs per lpar based on
+        # partition type. In that case, use system max procs per partition.
+        if val == 0:
+            val = self.max_sys_procs_limit
+
+        return val
+
+    @max_procs_per_os400_lpar.setter
+    def max_procs_per_os400_lpar(self, value):
+        self.set_parm_value(_MAX_PROCS_PER_OS400_PARTITION, str(value))
+
+    @property
     def max_sys_vcpus_limit(self):
         return self._get_val_int(_MAX_VCPUS_PER_PARTITION, 0)
 
@@ -355,6 +375,20 @@ class System(ewrap.EntryWrapper):
     @max_vcpus_per_aix_linux_lpar.setter
     def max_vcpus_per_aix_linux_lpar(self, value):
         self.set_parm_value(_MAX_VCPUS_PER_AIX_LINUX_PARTITION, str(value))
+
+    @property
+    def max_vcpus_per_os400_lpar(self):
+        val = self._get_val_int(_MAX_VCPU_PER_OS400_PARTITION, 0)
+        # Some systems will not have maximum vcpus per lpar based on
+        # partition type. In that case, use system max vcpus per partition.
+        if val == 0:
+            val = self.max_sys_vcpus_limit
+
+        return val
+
+    @max_vcpus_per_os400_lpar.setter
+    def max_vcpus_per_os400_lpar(self, value):
+        self.set_parm_value(_MAX_VCPU_PER_OS400_PARTITION, str(value))
 
     @property
     def memory_total(self):
