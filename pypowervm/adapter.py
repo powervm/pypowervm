@@ -15,7 +15,6 @@
 import abc
 import copy
 import errno
-import eventlet
 import hashlib
 import os
 import re
@@ -564,18 +563,11 @@ class Session(object):
             if not self._logged_in:
                 return
             LOG.info(_("Session logging off %s"), self.host)
-
-            def do_logoff():
-                try:
-                    self.request('DELETE', c.LOGON_PATH, relogin=False)
-                except Exception:
-                    LOG.exception(_('Problem logging off.  Ignoring.'))
-
-            # Run the blocking call outside of the mainloop
             try:
-                eventlet.spawn_n(do_logoff)
+                # relogin=False to prevent multiple attempts
+                self.request('DELETE', c.LOGON_PATH, relogin=False)
             except Exception:
-                pass
+                LOG.exception(_('Problem logging off.  Ignoring.'))
             self._logged_in = False
             # this should only ever be called when Session has gone out of
             # scope, but just in case someone calls it directly while requests
