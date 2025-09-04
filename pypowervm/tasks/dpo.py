@@ -15,6 +15,7 @@
 #    under the License.
 
 """Tasks specific to DPO (LPARs and VIOSes)."""
+import json
 from oslo_log import log as logging
 import pypowervm.adapter as adp
 import pypowervm.const as c
@@ -36,8 +37,9 @@ def dpo_job():
 
     try:
         job_w.run_job(ms_uuid, job_parms=None)
-        job_result = job_w.get_job_results_as_dict()
-        return job_result
+        job_result = job_w.get_job_results_message()
+        lpars = json.loads(job_result)
+        return lpars
     except Exception:
         LOG.exception('DPO Job failed')
         raise
