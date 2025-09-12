@@ -19,10 +19,11 @@ import json
 from oslo_log import log as logging
 import pypowervm.adapter as adp
 import pypowervm.const as c
-from pypowervm.wrappers import job
-from pypowervm.wrappers import managed_system as pvm_ms
 from pypowervm.wrappers import dpo as dpo_w
 from pypowervm.wrappers import entry_wrapper as ew
+from pypowervm.wrappers import job
+from pypowervm.wrappers import managed_system as pvm_ms
+
 
 LOG = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ def dpo_job():
     except Exception:
         LOG.exception('DPO Job failed')
         raise
+
 
 def dpo_objects():
     vals = dpo_job()
