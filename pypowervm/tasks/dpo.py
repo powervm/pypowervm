@@ -21,6 +21,8 @@ import pypowervm.adapter as adp
 import pypowervm.const as c
 from pypowervm.wrappers import job
 from pypowervm.wrappers import managed_system as pvm_ms
+from pypowervm.wrappers import dpo as dpo_w
+from pypowervm.wrappers import entry_wrapper as ew
 
 LOG = logging.getLogger(__name__)
 
@@ -43,3 +45,15 @@ def dpo_job():
     except Exception:
         LOG.exception('DPO Job failed')
         raise
+
+def dpo_objects():
+    vals = dpo_job()
+    dposob = []
+    for dpo in vals:
+        id = dpo.get("LPAR_ID")
+        vm = dpo.get("LPAR_NAME")
+        affinity = dpo.get("CURRENT_AFFINITY_SCORE")
+        dpoob = dpo_w.DPO.bld(ew.EntryWrapper.adapter,
+                              id, vm, affinity)
+        dposob.append(dpoob)
+    return dposob
