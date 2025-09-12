@@ -22,6 +22,7 @@ _VM_NAME = "VmName"
 _VM_ID = "VmID"
 _AFFINITY = "Affinity"
 
+
 @ewrap.EntryWrapper.pvm_type('GetDPOStatus')
 class DPO(ewrap.EntryWrapper):
     """Class VirtualSerialNumber.
