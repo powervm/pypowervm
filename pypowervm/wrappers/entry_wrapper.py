@@ -1038,9 +1038,13 @@ class EntryWrapper(Wrapper):
             raise ValueError(_("Wrapper class %(class)s does not support "
                                "search key '%(key)s'.") %
                              {'class': cls.__name__, 'key': key})
-        feedwrap = cls.wrap(cls._read_parent_or_child(adapter, target_type,
-                                                      parent_type, parent_uuid,
-                                                      xag=xag))
+        if target_type == 'GetDPOStatus':
+            import pypowervm.tasks.dpo as dpot
+            feedwrap = dpot.dpo_objects()
+        else:
+            feedwrap = cls.wrap(cls._read_parent_or_child(adapter, target_type,
+                                                          parent_type,
+                                                          parent_uuid, xag=xag))
         retlist = []
         val = str(val)
         for entry in feedwrap:

@@ -752,6 +752,10 @@ class Adapter(object):
         """
         self._validate('read', root_type, root_id, child_type, child_id,
                        suffix_type, suffix_parm, detail)
+        if child_type == 'GetDPOStatus':
+            import pypowervm.tasks.dpo as dpot
+            vals = dpot.dpo_objects()
+            return vals
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
                                xag=xag, add_qp=add_qp, topology=topology)
