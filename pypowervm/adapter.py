@@ -838,7 +838,7 @@ class Adapter(object):
                                    sensitive=sensitive, helpers=helpers)
 
     def update_by_path(self, data, etag, path, timeout=-1, auditmemento=None,
-                       sensitive=False, helpers=None):
+                       sensitive=False, helpers=None, reusevsn=None):
         """Update an existing resource where the URI path is already known."""
         path = util.dice_href(path)
         m = re.match(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
@@ -857,6 +857,8 @@ class Adapter(object):
             body = data.toxmlstring()
         else:
             body = data
+        if reusevsn:
+            path = self.extend_path(path, xag=[], add_qp=[('resetAutoAssign', 'true')])
         resp = self._request(
             'POST', path, helpers=helpers, headers=headers, body=body,
             timeout=timeout, auditmemento=auditmemento, sensitive=sensitive)
@@ -866,7 +868,7 @@ class Adapter(object):
 
     def delete(self, root_type, root_id=None, child_type=None, child_id=None,
                suffix_type=None, suffix_parm=None, service='uom', etag=None,
-               timeout=-1, auditmemento=None, helpers=None):
+               timeout=-1, auditmemento=None, helpers=None, reusevsn=None):
         """Delete an existing resource.
 
         Will build the URI path using the provided arguments.
@@ -876,10 +878,11 @@ class Adapter(object):
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm)
         return self.delete_by_path(path, etag, timeout=timeout,
-                                   auditmemento=auditmemento, helpers=helpers)
+                                   auditmemento=auditmemento,
+                                   helpers=helpers, reusevsn=reusevsn)
 
     def delete_by_href(self, href, etag=None, timeout=-1, auditmemento=None,
-                       helpers=None):
+                       helpers=None, reusevsn=None):
         """Delete an existing resource based on a link's href."""
         o = urlparse.urlparse(href)
         hostname_mismatch = (o.hostname.lower() != self.session.host.lower())
@@ -887,13 +890,17 @@ class Adapter(object):
             LOG.debug('href=%s will be modified to use %s:%s', href,
                       self.session.host, self.session.port)
         return self.delete_by_path(o.path, etag=etag, timeout=timeout,
-                                   auditmemento=auditmemento, helpers=helpers)
+                                   auditmemento=auditmemento,
+                                   reusevsn=reusevsn, helpers=helpers)
 
     def delete_by_path(self, path, etag=None, timeout=-1, auditmemento=None,
-                       helpers=None):
+                       helpers=None, reusevsn=None):
         """Delete an existing resource where the URI path is already known."""
         path = util.dice_href(path, include_query=False,
                               include_fragment=False)
+        if reusevsn:
+            path = self.extend_path(path, xag=[], add_qp=[('resetAutoAssign',
+                                                           'true')])
         m = re.search(r'%s(\w+)/(\w+)' % c.API_BASE_PATH, path)
         if not m:
             raise ValueError(_('path=%s is not a PowerVM API reference') %
