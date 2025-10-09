@@ -54,7 +54,8 @@ class TestLPARBuilder(testtools.TestCase):
                     'active_memory_expansion_capable': ame,
                     'physical_page_table_ratio_capable': ppt,
                     'affinity_check_capable': affinity,
-                    'partition_secure_boot_capable': psbc
+                    'partition_secure_boot_capable': psbc,
+                    'kvm_capable': True
                 }
                 return capabilities[cap]
             mngd_sys.get_capability.side_effect = get_cap

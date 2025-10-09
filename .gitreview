@@ -1,5 +1,3 @@
 [gerrit]
-host=rchgit01.rchland.ibm.com
-port=29422
 project=powervm/pypowervm.git
-defaultbranch=hotfix/1.1.33.1
+defaultbranch=develop

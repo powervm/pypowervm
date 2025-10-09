@@ -260,28 +260,35 @@ class TestMSEntryWrapper(unittest.TestCase):
     def test_get_capabilities(self):
         good_cap = {'active_lpar_mobility_capable': True,
                     'inactive_lpar_mobility_capable': True,
-                    'ibmi_lpar_mobility_capable': True,
                     'custom_mac_addr_capable': True,
+                    'ibmi_lpar_mobility_capable': True,
                     'ibmi_restrictedio_capable': True,
-                    'ibmi_nativeio_capable': False,
                     'simplified_remote_restart_capable': False,
+                    'physical_page_table_ratio_capable': True,
+                    'affinity_check_capable': True,
+                    'active_memory_expansion_capable': True,
                     'aix_capable': False,
                     'ibmi_capable': True,
                     'linux_capable': False,
                     'shared_processor_pool_capable': True,
-                    'active_memory_expansion_capable': True,
-                    'dynamic_srr_capable': True,
                     'vnic_capable': True,
                     'vnic_failover_capable': True,
+                    'dynamic_srr_capable': True,
+                    'ibmi_nativeio_capable': False,
                     'disable_secure_boot_capable': False,
-                    'physical_page_table_ratio_capable': True,
-                    'ioslot_owner_assignment_capable': True,
-                    'affinity_check_capable': True,
                     'partition_secure_boot_capable': True,
+                    'ioslot_owner_assignment_capable': True,
                     'dedicated_processor_partition_capable': True,
                     'PersistentMemoryCapable': False,
                     'VirtualSerialNumberCapable': False,
-                    'PartitionKeyStoreCapable': False}
+                    'PartitionKeyStoreCapable': False,
+                    'os400NetInstallCapable': False,
+                    'os400NetInstallIscsiCapable': False,
+                    'ibmi_virtual_software_tier_capable': False,
+                    'kvm_capable': False,
+                    'vpmem_lpm_capable': False,
+                    'LparPlacementCapable': False,
+                    'MinimumAffinityScoreCapable': False}
         bad_cap = {'active_lpar_mobility_capable': False,
                    'inactive_lpar_mobility_capable': False,
                    'ibmi_lpar_mobility_capable': False,
@@ -305,7 +312,14 @@ class TestMSEntryWrapper(unittest.TestCase):
                    'dedicated_processor_partition_capable': True,
                    'PersistentMemoryCapable': False,
                    'VirtualSerialNumberCapable': False,
-                   'PartitionKeyStoreCapable': False}
+                   'PartitionKeyStoreCapable': False,
+                   'os400NetInstallCapable': False,
+                   'os400NetInstallIscsiCapable': False,
+                   'ibmi_virtual_software_tier_capable': False,
+                   'kvm_capable': False,
+                   'vpmem_lpm_capable': False,
+                   'LparPlacementCapable': False,
+                   'MinimumAffinityScoreCapable': False}
         self.call_simple_getter("get_capabilities", good_cap,
                                 bad_cap)
 
@@ -348,7 +362,14 @@ class TestMSEntryWrapper(unittest.TestCase):
                          'dedicated_processor_partition_capable': True,
                          'PersistentMemoryCapable': False,
                          'VirtualSerialNumberCapable': False,
-                         'PartitionKeyStoreCapable': False}
+                         'PartitionKeyStoreCapable': False,
+                         'os400NetInstallIscsiCapable': False,
+                         'vpmem_lpm_capable': False,
+                         'LparPlacementCapable': False,
+                         'kvm_capable': False,
+                         'ibmi_virtual_software_tier_capable': False,
+                         'os400NetInstallCapable': False,
+                         'MinimumAffinityScoreCapable': False}
         result_data = self.wrapper.migration_data
         self.assertEqual(result_data, expected_data,
                          "migration_data returned %s instead of %s" %
@@ -361,10 +382,10 @@ class TestMSEntryWrapper(unittest.TestCase):
         self.call_simple_getter("processor_is_throttled", True, False)
 
     def test_lpar_keystore_min_kbytes(self):
-        self.call_simple_getter("lpar_keystore_min_kbytes", 4, 0)
+        self.call_simple_getter("lpar_keystore_min_kbytes", 0, 0)
 
     def test_lpar_keystore_max_kbytes(self):
-        self.call_simple_getter("lpar_keystore_max_kbytes", 64, 0)
+        self.call_simple_getter("lpar_keystore_max_kbytes", 0, 0)
 
 
 class TestMTMS(unittest.TestCase):

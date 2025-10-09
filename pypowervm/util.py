@@ -13,7 +13,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+#    sonar scan test
 """Pervasive/commonly-used utilities."""
 
 import abc
@@ -322,16 +322,20 @@ def sanitize_float_for_api(float_val, precision=2):
     return template % float(float_val)
 
 
-def sanitize_percent_for_api(float_val, precision=2):
+def sanitize_percent_for_api(float_val, field="", precision=2):
     """Sanitizes a percent value for use in the API.
 
     :param float_val: A float where valid values are 0.0 <= x <= 1.0. For
                       example the input 0.02 will produce output '2%'.
+    :param field: A string representing the attribute name.
     :return: A string representation of the passed percentage.
     """
     percent_float = float(float_val)
     if percent_float < 0 or percent_float > 1:
-        raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+        if field == "":
+            raise ValueError('A float value 0 <= x <= 1.0 must be provided.')
+        else:
+            raise ValueError(str("The percentage value of " + str(field) + " should be between 0% to 100%."))
     percent_float *= 100
     percent_float = sanitize_float_for_api(percent_float, precision)
     return str(percent_float) + '%'
@@ -344,6 +348,13 @@ def sanitize_wwpn_for_api(wwpn):
     :return: A WWPN of the format expected by the API.
     """
     return wwpn.upper().replace(':', '')
+
+
+def sanitize_vopt_name_for_api(vopt_name, max_len=const.MaxLen.VOPT_NAME):
+    if len(vopt_name) > max_len:
+        raise ValueError("The name parameter is too long. "
+                         "The name parameter must not exceed %d characters " % max_len)
+    return vopt_name
 
 
 def sanitize_file_name_for_api(name, prefix='', suffix='',

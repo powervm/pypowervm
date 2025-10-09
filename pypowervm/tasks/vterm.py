@@ -98,6 +98,7 @@ def _close_vterm_local(adapter, lpar_uuid):
     :param lpar_uuid: partition uuid
     """
     lpar_id = _get_lpar_id(adapter, lpar_uuid)
+    LOG.info("Invokling rmvterm for lpar id %s" % lpar_id)
     _run_proc(['rmvterm', '--id', lpar_id])
 
     # Stop the port.
@@ -182,7 +183,7 @@ def open_localhost_vnc_vterm(adapter, lpar_uuid, force=False, codepage="037"):
 def open_remotable_vnc_vterm(
         adapter, lpar_uuid, local_ip, remote_ips=None, vnc_path=None,
         use_x509_auth=False, ca_certs=None, server_cert=None, server_key=None,
-        force=False, codepage="037"):
+        force=False, codepage="037", vterm_timeout=300):
     """Opens a VNC vTerm to a given LPAR.  Wraps in some validation.
 
     Must run on the management partition.
@@ -266,8 +267,8 @@ def open_remotable_vnc_vterm(
         if remote_port not in _VNC_REMOTE_PORT_TO_LISTENER or listen != 0:
             LOG.info("Trying VNCSocket Listener")
             listener = _VNCSocketListener(
-                adapter, remote_port, local_ip, verify_vnc_path,
-                remote_ips=remote_ips)
+                adapter, lpar_uuid, remote_port, local_ip, verify_vnc_path,
+                vterm_timeout, remote_ips=remote_ips)
             # If we are doing x509 Authentication, then setup the certificates
             if use_x509_auth:
                 listener.set_x509_certificates(
@@ -336,8 +337,8 @@ class _VNCSocketListener(threading.Thread):
     and setup a repeater to forward the data between the two sides.
     """
 
-    def __init__(self, adapter, remote_port, local_ip, verify_vnc_path,
-                 remote_ips=None):
+    def __init__(self, adapter, lpar_uuid, remote_port, local_ip, verify_vnc_path,
+                 vterm_timeout, remote_ips=None):
         """Creates the listener bound to a remote-accessible port.
 
         :param adapter: The pypowervm adapter
@@ -354,11 +355,13 @@ class _VNCSocketListener(threading.Thread):
         super(_VNCSocketListener, self).__init__()
 
         self.adapter = adapter
+        self.lpar_uuid = lpar_uuid
         self.remote_port = remote_port
         self.local_ip = local_ip
         self.verify_vnc_path = verify_vnc_path
         self.remote_ips = remote_ips
         self.x509_certs = None
+        self.vterm_timeout = vterm_timeout
 
         self.alive = True
         self.vnc_killer = None
@@ -480,7 +483,10 @@ class _VNCSocketListener(threading.Thread):
         # socket.
 
         fwd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        fwd.connect(('127.0.0.1', local_port))
+        if fwd.connect_ex(('127.0.0.1', local_port)) != 0:
+            LOG.exception(_("Port %s is not listening "
+                            "maybe VNC is down "), local_port)
+            return
 
         # If we were told to enable VeNCrypt using X509 Authentication, do so
         if self.x509_certs is not None:
@@ -495,7 +501,8 @@ class _VNCSocketListener(threading.Thread):
         # See if we need to start up a new repeater for the given local port
         if local_port not in _VNC_LOCAL_PORT_TO_REPEATER:
             _VNC_LOCAL_PORT_TO_REPEATER[local_port] = _VNCRepeaterServer(
-                self.adapter, lpar_uuid, local_port, client_socket, fwd)
+                self.adapter, lpar_uuid, local_port, client_socket, fwd,
+                vterm_timeout=self.vterm_timeout)
             _VNC_LOCAL_PORT_TO_REPEATER[local_port].start()
         else:
             repeater = _VNC_LOCAL_PORT_TO_REPEATER[local_port]
@@ -510,6 +517,7 @@ class _VNCSocketListener(threading.Thread):
                              if there is an error.
         """
         try:
+            LOG.info("--> _enable_x509_authentication %s" % self.lpar_uuid)
             # First perform the RFB Version negotiation between client/server
             self._version_negotiation(client_socket, server_socket)
             # Next perform the Security Authentication Type Negotiation
@@ -522,6 +530,7 @@ class _VNCSocketListener(threading.Thread):
             ca_certs = self.x509_certs.get('ca_certs')
             server_key = self.x509_certs.get('server_key')
             server_cert = self.x509_certs.get('server_cert')
+            LOG.info("<-- _enable_x509_authentication %s" % self.lpar_uuid)
             return ssl.wrap_socket(
                 client_socket, server_side=True, ca_certs=ca_certs,
                 certfile=server_cert, keyfile=server_key,
@@ -540,6 +549,7 @@ class _VNCSocketListener(threading.Thread):
         """
         # Do a pass-thru of the RFB Version negotiation up-front
         # The length of the version is 12, such as 'RFB 003.007\n'
+        LOG.info("--> _version_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(self._socket_receive(server_socket, 12))
         server_socket.sendall(self._socket_receive(client_socket, 12))
         # Since we are doing our own additional authentication
@@ -547,6 +557,7 @@ class _VNCSocketListener(threading.Thread):
         auth_size = self._socket_receive(server_socket, 1)
         self._socket_receive(server_socket, six.byte2int(auth_size))
         server_socket.sendall(six.int2byte(1))
+        LOG.info("<-- _version_negotiation %s" % self.lpar_uuid)
 
     def _auth_type_negotiation(self, client_socket):
         """Performs the VeNCrypt Authentication Type Negotiation.
@@ -556,6 +567,7 @@ class _VNCSocketListener(threading.Thread):
         """
         # Do the VeNCrypt handshake next before establishing SSL
         # Say we only support VeNCrypt (19) authentication version 0.2
+        LOG.info("--> into _auth_type_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(six.int2byte(19))
         client_socket.sendall(encodeutils.safe_encode("\x00\x02"))
@@ -575,6 +587,7 @@ class _VNCSocketListener(threading.Thread):
         # Tell the Client we have accepted the authentication type
         # In this particular case 0 means the type was accepted
         client_socket.sendall(six.int2byte(0))
+        LOG.info("<-- _auth_type_negotiation %s" % self.lpar_uuid)
         return True
 
     def _auth_subtype_negotiation(self, client_socket):
@@ -584,6 +597,7 @@ class _VNCSocketListener(threading.Thread):
         :return success:  Boolean whether the handshake was successful.
         """
         # Tell the client the authentication sub-type is x509None (260)
+        LOG.info("--> into _auth_subtype_negotiation %s" % self.lpar_uuid)
         client_socket.sendall(six.int2byte(1))
         client_socket.sendall(struct.pack('!I', 260))
         subtyp_raw = self._socket_receive(client_socket, 4)
@@ -595,6 +609,7 @@ class _VNCSocketListener(threading.Thread):
         # Tell the Client we have accepted the authentication handshake
         # In this particular case 1 means the sub-type was accepted
         client_socket.sendall(six.int2byte(1))
+        LOG.info("<-- _auth_subtype_negotiation %s" % self.lpar_uuid)
         return True
 
     def _socket_receive(self, asocket, bufsize):
@@ -657,7 +672,7 @@ class _VNCRepeaterServer(threading.Thread):
     """
 
     def __init__(self, adapter, lpar_uuid, local_port, client_socket=None,
-                 local_socket=None):
+                 local_socket=None, vterm_timeout=300):
         """Creates the repeater.
 
         :param adapter: The pypowervm adapter
@@ -676,6 +691,7 @@ class _VNCRepeaterServer(threading.Thread):
         self.local_port = local_port
         self.alive = True
         self.vnc_killer = None
+        self.vterm_timeout = vterm_timeout
 
         # Add the connection passed into us to the forwarding list
         if client_socket is not None and local_socket is not None:
@@ -703,6 +719,8 @@ class _VNCRepeaterServer(threading.Thread):
                 # 0, then we know that we're ready to close this.
                 data = s_input.recv(4096)
                 if len(data) == 0:
+                    LOG.info("The client connection will be closed "
+                             "since no data is received for %s" % self.lpar_uuid)
                     self._close_client(s_input)
 
                     # Note that we have to break here.  We do that because the
@@ -749,7 +767,7 @@ class _VNCRepeaterServer(threading.Thread):
 
         # If this was the last port, close the local connection
         if len(self.peers) == 0:
-            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid)
+            self.vnc_killer = _VNCKiller(self.adapter, self.lpar_uuid, vterm_timeout=self.vterm_timeout)
             self.vnc_killer.start()
 
 
@@ -766,11 +784,12 @@ class _VNCKiller(threading.Thread):
     session will be closed out and the memory will be reclaimed.
     """
 
-    def __init__(self, adapter, lpar_uuid):
+    def __init__(self, adapter, lpar_uuid, vterm_timeout=300):
         super(_VNCKiller, self).__init__()
         self.adapter = adapter
         self.lpar_uuid = lpar_uuid
         self._abort = False
+        self.vterm_timeout = vterm_timeout
 
     def abort(self):
         """Call to stop the killer from completing its job."""
@@ -780,11 +799,12 @@ class _VNCKiller(threading.Thread):
         count = 0
 
         # Wait up to 5 minutes to see if any new negotiations came in
-        while count < 300 and not self._abort:
+        while count < self.vterm_timeout and not self._abort:
             time.sleep(1)
             if self._abort:
                 break
             count += 1
 
         if not self._abort:
+            LOG.info("closing console - rmvterm for lpar id %s" % self.lpar_uuid)
             _close_vterm_local(self.adapter, self.lpar_uuid)

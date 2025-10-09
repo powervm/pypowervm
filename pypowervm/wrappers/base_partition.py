@@ -81,6 +81,17 @@ _BP_ASSOC_GROUPS = 'AssociatedGroups'
 _BP_POWER_ON_WITH_HYP = 'PowerOnWithHypervisor'
 _BP_ASSOC_TASKS = 'AssociatedTasks'
 _BP_DESC = 'Description'
+_BP_KEY_STORE = 'KeyStoreSize'
+_BP_LPAR_PLACEMENT = 'LparPlacement'
+_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
+_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'MaximumPersistentMemoryVolumes')
+_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                            'CurrentPersistentMemoryVolumes')
+_MAX_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'MaximumDramPersistentMemoryVolumes')
+_CUR_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
+                                 'CurrentDramPersistentMemoryVolumes')
 
 BP_EL_ORDER = (
     _BP_ALLOW_PERF_DATA_COLL, _BP_ASSOC_PROF, _BP_AVAIL_PRIORITY,
@@ -96,9 +107,18 @@ BP_EL_ORDER = (
     _BP_MAC_PREF, _BP_SVC_PARTITION, _BP_MGMT_CAP, _BP_REF_CODE,
     _BP_REF_CODE_FULL, _BP_MGT_PARTITION, _BP_AUTO_START, _BP_BOOT_MODE,
     _BP_NVRAM, _BP_UPTIME, _BP_DISABLE_SECURE_BOOT, _BP_PENDING_SECURE_BOOT,
-    _BP_CURR_SECURE_BOOT, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
-    _BP_ASSOC_TASKS, _BP_DESC
+    _BP_CURR_SECURE_BOOT, _ASSOC_PMEM_CONFIG, _BP_ASSOC_GROUPS, _BP_POWER_ON_WITH_HYP,
+    _BP_ASSOC_TASKS, _BP_DESC, _BP_KEY_STORE, _BP_LPAR_PLACEMENT
 )
+
+_LPAR_BOOTLIST_INFO = 'BootListInformation'
+_BL_PEND_BOOT_STR = 'PendingBootString'
+_BL_BOOT_DEV_LIST = 'BootDeviceList'
+_BL_SHADOW_BOOT_DEV_LIST = 'ShadowBootDeviceList'
+_BL_LAST_BOOT_DEV_STR = 'LastBootedDeviceString'
+
+_BL_ORDER = (_BL_PEND_BOOT_STR, _BL_BOOT_DEV_LIST,
+             _BL_SHADOW_BOOT_DEV_LIST, _BL_LAST_BOOT_DEV_STR)
 
 # Partition Capabilities (_CAP)
 _CAP_DLPAR_IO_CAPABLE = 'DynamicLogicalPartitionIOCapable'
@@ -291,16 +311,6 @@ IOAdapter = card.IOAdapter
 PhysFCAdapter = card.PhysFCAdapter
 PhysFCPort = card.PhysFCPort
 
-_ASSOC_PMEM_CONFIG = 'AssociatedPersistentMemoryConfiguration'
-_MAX_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                            'MaximumPersistentMemoryVolumes')
-_CUR_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                            'CurrentPersistentMemoryVolumes')
-_MAX_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                                 'MaximumDramPersistentMemoryVolumes')
-_CUR_DRAM_PMEM_VOLUMES = u.xpath(_ASSOC_PMEM_CONFIG,
-                                 'CurrentDramPersistentMemoryVolumes')
-
 
 class SharingMode(object):
     """Shared Processor sharing modes.
@@ -369,9 +379,12 @@ class LPARCompat(object):
     POWER9 = 'POWER9'
     POWER9_ENHANCED = 'POWER9_Enhanced'
     POWER10 = 'POWER10'
+    POWER10_ENHANCED = 'POWER10_Enhanced'
+    POWER11 = 'POWER11'
+    POWER11_ENHANCED = 'POWER11_Enhanced'
     ALL_VALUES = (DEFAULT, POWER6, POWER6_PLUS, POWER6_PLUS_ENHANCED, POWER7,
                   POWER8, POWER8_ENHANCED, POWER9_BASE, POWER9,
-                  POWER9_ENHANCED, POWER10)
+                  POWER9_ENHANCED, POWER10, POWER10_ENHANCED, POWER11, POWER11_ENHANCED)
 
 
 class RMCState(object):
@@ -715,6 +728,14 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
         return PartitionCapabilities.wrap(elem)
 
     @property
+    def bootlist_info(self):
+        """The Boot List Information."""
+        if self.env == 'AIX/Linux':
+            elem = self._find(_LPAR_BOOTLIST_INFO)
+            bootlist_info = BootListInformation.wrap(elem)
+            return bootlist_info
+
+    @property
     def io_config(self):
         """The Partition I/O Configuration."""
         elem = self._find(_BP_IO_CFG)
@@ -782,6 +803,62 @@ class BasePartition(ewrap.EntryWrapper, _DlparCapable):
     @property
     def cur_dram_pmem_volumes(self):
         return self._get_val_int(_CUR_DRAM_PMEM_VOLUMES)
+
+    @property
+    def keystore_kbytes(self):
+        """Partition Keystore.
+
+        :returns: Returns PKS Size
+        """
+        if self.env != 'Virtual IO Server':
+            return self._get_val_int(_BP_KEY_STORE, 0)
+        else:
+            return None
+
+    @keystore_kbytes.setter
+    def keystore_kbytes(self, value):
+        """Partition Keystore Size"""
+        self.set_parm_value(_BP_KEY_STORE, value,
+                            attrib=const.ATTR_KSV1131)
+
+    @property
+    def lpar_placement(self):
+        """LPAR Placement.
+
+        :returns: Returns Lpar placement value
+        """
+        return self._get_val_int(_BP_LPAR_PLACEMENT, 0)
+
+    @lpar_placement.setter
+    def lpar_placement(self, value):
+        """LPAR Placement"""
+        self.set_parm_value(_BP_LPAR_PLACEMENT, value,
+                            attrib=const.ATTR_KSV1140)
+
+
+@ewrap.ElementWrapper.pvm_type(_LPAR_BOOTLIST_INFO, has_metadata=True,
+                               child_order=_BL_ORDER)
+class BootListInformation(ewrap.ElementWrapper):
+    """See BootListInformation"""
+    @property
+    def pending_boot_string(self):
+        return self._get_val_str(_BL_PEND_BOOT_STR)
+
+    @pending_boot_string.setter
+    def pending_boot_string(self, value):
+        return self.set_parm_value(_BL_PEND_BOOT_STR, value)
+
+    @property
+    def boot_device_list(self):
+        return self._get_val_str(_BL_BOOT_DEV_LIST)
+
+    @property
+    def shadow_boot_device_list(self):
+        return self._get_val_str(_BL_SHADOW_BOOT_DEV_LIST)
+
+    @property
+    def last_booted_device_string(self):
+        return self._get_val_str(_BL_LAST_BOOT_DEV_STR)
 
 
 @ewrap.ElementWrapper.pvm_type(_BP_CAPABILITIES, has_metadata=True,

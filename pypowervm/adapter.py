@@ -186,7 +186,7 @@ class Session(object):
 
     def __del__(self):
         # Refuse to clean up clones.
-        if self._init_by != id(self):
+        if not hasattr(self, '_init_by') or self._init_by != id(self):
             return
 
         try:
@@ -568,7 +568,6 @@ class Session(object):
                 self.request('DELETE', c.LOGON_PATH, relogin=False)
             except Exception:
                 LOG.exception(_('Problem logging off.  Ignoring.'))
-
             self._logged_in = False
             # this should only ever be called when Session has gone out of
             # scope, but just in case someone calls it directly while requests
@@ -753,6 +752,10 @@ class Adapter(object):
         """
         self._validate('read', root_type, root_id, child_type, child_id,
                        suffix_type, suffix_parm, detail)
+        if child_type == 'GetDPOStatus':
+            import pypowervm.tasks.dpo as dpot
+            vals = dpot.dpo_objects()
+            return vals
         path = self.build_path(service, root_type, root_id, child_type,
                                child_id, suffix_type, suffix_parm, detail,
                                xag=xag, add_qp=add_qp, topology=topology)
